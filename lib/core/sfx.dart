@@ -7,6 +7,12 @@ import 'package:flutter/foundation.dart';
 /// fiecare apel, ceea ce pe unele telefoane pierde tap-uri rapide
 /// (sunetul nu apucă să se încarce înainte de următorul tap) — seek+resume
 /// pe o sursă deja încărcată e instant și de încredere.
+///
+/// IMPORTANT: modul trebuie să fie [PlayerMode.mediaPlayer], nu
+/// [PlayerMode.lowLatency] — pe Android, lowLatency e susținut de
+/// SoundPool, care nu are un concept real de seek; apelul seek(0) de mai
+/// jos aștepta la nesfârșit evenimentul de finalizare (timeout după 30s),
+/// deci sunetul nu se auzea niciodată pe telefon, deși mergea pe web.
 class Sfx {
   static final AudioPlayer _next = AudioPlayer(playerId: 'sfx_next');
   static final AudioPlayer _reward = AudioPlayer(playerId: 'sfx_reward');
@@ -37,7 +43,7 @@ class Sfx {
           stayAwake: false,
           contentType: AndroidContentType.sonification,
           usageType: AndroidUsageType.assistanceSonification,
-          audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+          audioFocus: AndroidAudioFocus.none,
         ),
         iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
       ));
@@ -56,7 +62,7 @@ class Sfx {
 
   static Future<void> _prepare(AudioPlayer player, String asset) async {
     try {
-      await player.setPlayerMode(PlayerMode.lowLatency);
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
       await player.setReleaseMode(ReleaseMode.stop);
       await player.setVolume(1.0);
       await player.setSourceAsset('sfx/$asset');
