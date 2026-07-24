@@ -1,15 +1,28 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/mascot_sync.dart';
 import '../core/sfx.dart';
+import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../screens/clippy_bonus_screen.dart';
 import 'googly_eyes.dart';
+import 'mascot_props.dart';
 
-/// Câteva gesturi idle diferite, ca Clippy — pe lângă legănarea continuă de
-/// fundal, din când în când (interval aleatoriu) mai apare unul din ele,
-/// ca personajul să nu pară "înghețat" în aceeași mișcare tot timpul.
-enum _Gesture { stretch, hop, shimmy, spin, nod, peek, shake, bigBounce }
+/// Opt gesturi unice: șase idle "de personalitate" (declanșate local,
+/// aleatoriu) și două comune, sincronizate prin [MascotSync] cu celelalte
+/// mascote de pe Home — [checkClock] (toate trei deodată) și [askHow] (câte
+/// una, pe rând, cu un mesaj random).
+enum _Gesture { stretch, hop, shimmy, spin, peek, bigBounce, checkClock, askHow }
+
+const _localGestures = [
+  _Gesture.stretch,
+  _Gesture.hop,
+  _Gesture.shimmy,
+  _Gesture.spin,
+  _Gesture.peek,
+  _Gesture.bigBounce,
+];
 
 /// Mascotă decorativă în stil "Clippy" (asistentul din Windows XP): o
 /// agrafă cu ochi jucăuși, care se leagănă în loc, cu câteva "planete"
@@ -41,8 +54,10 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   bool _excited = false;
   bool _questionReady = false;
   _Gesture? _currentGesture;
+  String? _speechText;
   Timer? _readyPollTimer;
   Timer? _gestureTimer;
+  StreamSubscription<MascotEvent>? _syncSub;
   final _random = Random();
 
   static const _planetColors = [Color(0xFF534AB7), Color(0xFF1D9E75), Color(0xFFFF7A1A)];
@@ -52,9 +67,22 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     super.initState();
     _idle = AnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
-    _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
     _scheduleGesture();
     _refreshReady();
+    MascotSync.ensureStarted();
+    _syncSub = MascotSync.events.listen(_onSyncEvent);
+  }
+
+  void _onSyncEvent(MascotEvent event) {
+    if (!mounted || _gesture.isAnimating) return;
+    if (event.type == MascotEventType.checkClock) {
+      _gestureTimer?.cancel();
+      _playGesture(_Gesture.checkClock);
+    } else if (event.type == MascotEventType.greet && event.target == MascotId.clippy) {
+      _gestureTimer?.cancel();
+      _playGesture(_Gesture.askHow, message: event.message);
+    }
   }
 
   /// Citește disponibilitatea din storage (sursa de adevăr) și, dacă încă
@@ -77,14 +105,26 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   void _scheduleGesture() {
     _gestureTimer = Timer(Duration(milliseconds: 4200 + _random.nextInt(3600)), () {
       if (!mounted) return;
-      final options = _Gesture.values;
-      var next = options[_random.nextInt(options.length)];
-      while (next == _currentGesture && options.length > 1) {
-        next = options[_random.nextInt(options.length)];
+      var next = _localGestures[_random.nextInt(_localGestures.length)];
+      while (next == _currentGesture && _localGestures.length > 1) {
+        next = _localGestures[_random.nextInt(_localGestures.length)];
       }
-      setState(() => _currentGesture = next);
-      _gesture.forward(from: 0).whenComplete(() {
-        if (mounted) setState(() => _currentGesture = null);
+      _playGesture(next);
+    });
+  }
+
+  /// Rulează un gest (local sau declanșat de [MascotSync]) și, la final,
+  /// reia programarea locală — indiferent de sursa care l-a pornit.
+  void _playGesture(_Gesture gesture, {String? message}) {
+    setState(() {
+      _currentGesture = gesture;
+      _speechText = message;
+    });
+    _gesture.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _currentGesture = null;
+        _speechText = null;
       });
       _scheduleGesture();
     });
@@ -94,6 +134,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   void dispose() {
     _readyPollTimer?.cancel();
     _gestureTimer?.cancel();
+    _syncSub?.cancel();
     _idle.dispose();
     _excite.dispose();
     _gesture.dispose();
@@ -161,19 +202,21 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
                 case _Gesture.spin:
                   gestureAngle = g * 2 * pi;
                   break;
-                case _Gesture.nod:
-                  gestureAngle = sin(g * pi * 2) * 0.22 * (1 - g);
+                case _Gesture.checkClock:
+                  // se apleacă ușor, ca și cum și-ar scoate ceasul de după
+                  // spate și s-ar uita la el, apoi revine.
+                  gestureAngle = sin(g * pi) * -0.16;
+                  gestureDy = sin(g * pi) * 4;
+                  break;
+                case _Gesture.askHow:
+                  // legănare blândă, ca și cum ar vorbi.
+                  gestureDy = -sin(g * pi * 3) * 5 * (1 - g * 0.6);
                   break;
                 case _Gesture.peek:
                   // se apleacă într-o parte, ca și cum s-ar uita după colț,
                   // apoi revine — o singură leănare, nu oscilație repetată.
                   gestureAngle = sin(g * pi) * 0.4;
                   gestureDx = sin(g * pi) * 12;
-                  break;
-                case _Gesture.shake:
-                  // tremur rapid, mic, care se stinge — diferit de shimmy
-                  // (translație) prin faptul că e o rotație scurtă și "nervoasă".
-                  gestureAngle = sin(g * pi * 10) * 0.08 * (1 - g);
                   break;
                 case _Gesture.bigBounce:
                   // un singur salt mare, cu "aterizare" — se turtește puțin
@@ -189,6 +232,10 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
               clipBehavior: Clip.none,
               children: [
                 for (var i = 0; i < 3; i++) _buildPlanet(i, t),
+                if (_currentGesture == _Gesture.checkClock)
+                  Positioned(bottom: 4, right: 18, child: ClockProp(t: _gesture.value)),
+                if (_currentGesture == _Gesture.askHow && _speechText != null)
+                  Positioned(top: -14, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _gesture.value)),
                 // TOT ce ține de corpul agrafei (icon, ochi, notificare)
                 // trece prin ACELEAȘI transformări (bob/wobble/gesturi) —
                 // astfel notificarea rămâne "lipită" de ea, nu statică.

@@ -4,6 +4,7 @@ import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
+import '../widgets/discord_mascot.dart';
 import '../widgets/level_header.dart';
 import '../widgets/paperclip_mascot.dart';
 import '../widgets/ring_mascot.dart';
@@ -93,8 +94,9 @@ class _HomeScreenState extends State<HomeScreen> {
               // planetă centrală mare, în spațiul gol de sub butoane (nu se
               // suprapune cu ele), cu holograme ale categoriilor levitând
               // în jur — centrată pe toată lățimea ecranului.
-              const Positioned(top: 500, left: 0, right: 0, child: Center(child: SpinningPlanet(size: 76))),
+              const Positioned(top: 460, right: 8, child: SpinningPlanet(size: 76)),
               Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
+              const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
             ],
           ),
         ),

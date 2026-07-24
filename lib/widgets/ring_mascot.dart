@@ -1,9 +1,28 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/mascot_sync.dart';
 import '../core/sfx.dart';
+import '../core/theme.dart';
 import '../data/storage_service.dart';
 import 'googly_eyes.dart';
+import 'mascot_props.dart';
 import 'wheel_spin_dialog.dart';
+
+/// Opt gesturi unice: șase idle "de personalitate" (declanșate local,
+/// aleatoriu, peste legănarea continuă de fundal) și două comune,
+/// sincronizate prin [MascotSync] cu celelalte mascote de pe Home —
+/// [checkClock] (toate trei deodată) și [askHow] (câte una, pe rând).
+enum _RingGesture { spinBurst, bounce, colorFlash, squish, peekTilt, shiver, checkClock, askHow }
+
+const _localGestures = [
+  _RingGesture.spinBurst,
+  _RingGesture.bounce,
+  _RingGesture.colorFlash,
+  _RingGesture.squish,
+  _RingGesture.peekTilt,
+  _RingGesture.shiver,
+];
 
 /// A doua mascotă decorativă, aceeași "specie" ca PaperclipMascot (ochi
 /// jucăuși, personalitate proprie) dar cu alt corp — un inel cu margine
@@ -22,16 +41,63 @@ class RingMascot extends StatefulWidget {
 class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   late final AnimationController _idle;
   late final AnimationController _excite;
+  late final AnimationController _gesture;
   bool _excited = false;
   bool _ready = false;
   bool _checked = false;
+  _RingGesture? _currentGesture;
+  String? _speechText;
+  Timer? _gestureTimer;
+  StreamSubscription<MascotEvent>? _syncSub;
+  final _random = Random();
 
   @override
   void initState() {
     super.initState();
     _idle = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 850));
+    _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _refreshReady();
+    _scheduleGesture();
+    MascotSync.ensureStarted();
+    _syncSub = MascotSync.events.listen(_onSyncEvent);
+  }
+
+  void _onSyncEvent(MascotEvent event) {
+    if (!mounted || _gesture.isAnimating) return;
+    if (event.type == MascotEventType.checkClock) {
+      _gestureTimer?.cancel();
+      _playGesture(_RingGesture.checkClock);
+    } else if (event.type == MascotEventType.greet && event.target == MascotId.ring) {
+      _gestureTimer?.cancel();
+      _playGesture(_RingGesture.askHow, message: event.message);
+    }
+  }
+
+  void _scheduleGesture() {
+    _gestureTimer = Timer(Duration(milliseconds: 4600 + _random.nextInt(3800)), () {
+      if (!mounted) return;
+      var next = _localGestures[_random.nextInt(_localGestures.length)];
+      while (next == _currentGesture && _localGestures.length > 1) {
+        next = _localGestures[_random.nextInt(_localGestures.length)];
+      }
+      _playGesture(next);
+    });
+  }
+
+  void _playGesture(_RingGesture gesture, {String? message}) {
+    setState(() {
+      _currentGesture = gesture;
+      _speechText = message;
+    });
+    _gesture.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _currentGesture = null;
+        _speechText = null;
+      });
+      _scheduleGesture();
+    });
   }
 
   Future<void> _refreshReady() async {
@@ -45,8 +111,11 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _gestureTimer?.cancel();
+    _syncSub?.cancel();
     _idle.dispose();
     _excite.dispose();
+    _gesture.dispose();
     super.dispose();
   }
 
@@ -88,13 +157,55 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
         width: 78,
         height: 78,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_idle, _excite]),
+          animation: Listenable.merge([_idle, _excite, _gesture]),
           builder: (context, _) {
             final pulse = (sin(_idle.value * 2 * pi) + 1) / 2;
             final tilt = sin(_idle.value * 2 * pi * 0.5) * 0.07;
             final rimSpin = _idle.value * 2 * pi;
             final ripple = _excite.value;
             final exciteScale = _excited ? (1 - ripple) * 0.22 : 0.0;
+
+            var gestureDx = 0.0;
+            var gestureDy = 0.0;
+            var gestureAngle = 0.0;
+            var gestureScaleX = 1.0;
+            var gestureScaleY = 1.0;
+            var extraSpin = 0.0;
+            var flash = 0.0;
+            if (_currentGesture != null) {
+              final g = _gesture.value;
+              switch (_currentGesture!) {
+                case _RingGesture.spinBurst:
+                  // un tur rapid suplimentar, peste rotația continuă a rama.
+                  extraSpin = g * 4 * pi;
+                  break;
+                case _RingGesture.bounce:
+                  gestureDy = -sin(g * pi * 2).abs() * 14;
+                  break;
+                case _RingGesture.colorFlash:
+                  // rama se aprinde scurt, ca un semnal luminos.
+                  flash = sin(g * pi);
+                  break;
+                case _RingGesture.squish:
+                  gestureScaleX = 1 + sin(g * pi) * 0.22;
+                  gestureScaleY = 1 - sin(g * pi) * 0.18;
+                  break;
+                case _RingGesture.peekTilt:
+                  gestureAngle = sin(g * pi) * 0.5;
+                  gestureDx = sin(g * pi) * 10;
+                  break;
+                case _RingGesture.shiver:
+                  gestureDx = sin(g * pi * 11) * 4 * (1 - g);
+                  break;
+                case _RingGesture.checkClock:
+                  gestureAngle = sin(g * pi) * -0.14;
+                  gestureDy = sin(g * pi) * 3;
+                  break;
+                case _RingGesture.askHow:
+                  gestureDy = -sin(g * pi * 3) * 4 * (1 - g * 0.6);
+                  break;
+              }
+            }
 
             return Stack(
               alignment: Alignment.center,
@@ -120,11 +231,25 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
                       ),
                     ),
                   ),
-                Transform.rotate(
-                  angle: tilt,
-                  child: Transform.scale(
-                    scale: 1 + exciteScale,
-                    child: CustomPaint(size: const Size(56, 56), painter: _RingPainter(rimAngle: rimSpin, dimmed: !_ready)),
+                if (_currentGesture == _RingGesture.checkClock)
+                  Positioned(bottom: -4, right: 4, child: ClockProp(t: _gesture.value)),
+                if (_currentGesture == _RingGesture.askHow && _speechText != null)
+                  Positioned(top: -26, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _gesture.value)),
+                Transform.translate(
+                  offset: Offset(gestureDx, gestureDy),
+                  child: Transform.rotate(
+                    angle: tilt + gestureAngle,
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()..scale(gestureScaleX, gestureScaleY),
+                      child: Transform.scale(
+                        scale: 1 + exciteScale,
+                        child: CustomPaint(
+                          size: const Size(56, 56),
+                          painter: _RingPainter(rimAngle: rimSpin + extraSpin, dimmed: !_ready, flash: flash),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 if (_ready)
@@ -154,7 +279,8 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
 class _RingPainter extends CustomPainter {
   final double rimAngle;
   final bool dimmed;
-  const _RingPainter({required this.rimAngle, required this.dimmed});
+  final double flash;
+  const _RingPainter({required this.rimAngle, required this.dimmed, this.flash = 0});
 
   static const _rimColors = [
     Color(0xFF534AB7),
@@ -170,13 +296,23 @@ class _RingPainter extends CustomPainter {
     final center = size.center(Offset.zero);
     final radius = size.width / 2 - 4;
 
+    var colors = dimmed ? _rimColors.map((c) => c.withAlpha(90)).toList() : _rimColors;
+    if (flash > 0) {
+      colors = colors.map((c) => Color.lerp(c, Colors.white, flash * 0.65)!).toList();
+    }
+
+    if (flash > 0) {
+      canvas.drawCircle(
+        center,
+        radius + 6 * flash,
+        Paint()..color = Colors.white.withAlpha((flash * 90).round()),
+      );
+    }
+
     final rim = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 9
-      ..shader = SweepGradient(
-        colors: dimmed ? _rimColors.map((c) => c.withAlpha(90)).toList() : _rimColors,
-        transform: GradientRotation(rimAngle),
-      ).createShader(Rect.fromCircle(center: center, radius: radius));
+      ..shader = SweepGradient(colors: colors, transform: GradientRotation(rimAngle)).createShader(Rect.fromCircle(center: center, radius: radius));
     canvas.drawCircle(center, radius, rim);
 
     final core = Paint()..color = const Color(0xFF15152A);
@@ -191,5 +327,6 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter oldDelegate) => oldDelegate.rimAngle != rimAngle || oldDelegate.dimmed != dimmed;
+  bool shouldRepaint(covariant _RingPainter oldDelegate) =>
+      oldDelegate.rimAngle != rimAngle || oldDelegate.dimmed != dimmed || oldDelegate.flash != flash;
 }

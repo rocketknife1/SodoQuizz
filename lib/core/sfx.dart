@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 /// Efecte sonore scurte de UI — un player dedicat per sunet, cu sursa
 /// pre-încărcată o singură dată. Repornim cu seek(0)+resume() în loc de
@@ -20,7 +21,30 @@ class Sfx {
   /// (vezi main.dart), ca primul tap din sesiune să sune la fel de sigur
   /// ca oricare altul.
   static Future<void> preload() {
-    return _preloadFuture ??= Future.wait([
+    return _preloadFuture ??= _init();
+  }
+
+  /// Pe unele telefoane Android (mai ales cu skin-uri OEM stricte, ex.
+  /// Samsung), fără un AudioContext explicit sesiunea audio nu se
+  /// inițializează corect pe stream-ul media și playerii rămân muți deși
+  /// nu aruncă nicio eroare Dart — de-asta îl setăm explicit, global,
+  /// înainte de orice altceva.
+  static Future<void> _init() async {
+    try {
+      await AudioPlayer.global.setAudioContext(AudioContext(
+        android: const AudioContextAndroid(
+          isSpeakerphoneOn: true,
+          stayAwake: false,
+          contentType: AndroidContentType.sonification,
+          usageType: AndroidUsageType.assistanceSonification,
+          audioFocus: AndroidAudioFocus.gainTransientMayDuck,
+        ),
+        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
+      ));
+    } catch (e) {
+      debugPrint('Sfx: setAudioContext a eșuat: $e');
+    }
+    await Future.wait([
       _prepare(_next, 'next_tap.wav'),
       _prepare(_reward, 'reward_pop.wav'),
       _prepare(_coin, 'coin_hit.wav'),
@@ -36,8 +60,8 @@ class Sfx {
       await player.setReleaseMode(ReleaseMode.stop);
       await player.setVolume(1.0);
       await player.setSourceAsset('sfx/$asset');
-    } catch (_) {
-      // sunetul e strict decorativ — nu blocăm gameplay-ul dacă eșuează
+    } catch (e) {
+      debugPrint('Sfx: nu am putut pregăti $asset: $e');
     }
   }
 
@@ -46,7 +70,9 @@ class Sfx {
       await preload();
       await player.seek(Duration.zero);
       await player.resume();
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('Sfx: nu am putut reda sunetul: $e');
+    }
   }
 
   static void next() => _play(_next);
