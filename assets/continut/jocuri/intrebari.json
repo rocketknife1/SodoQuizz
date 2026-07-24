@@ -1,0 +1,574 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "gamers_cave": {
+      "mod": "4_variante",
+      "culoare_tema": "#FF4500",
+      "descriere": "Gamers Cave: 100 întrebări cu jocuri Steam",
+      "intrebari": [
+        {
+          "id": "poza1",
+          "raspuns": "HALO",
+          "variante": [
+            "HALO",
+            "PUBG",
+            "FORTNITE",
+            "APEX LEGENDS"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza1",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza2",
+          "raspuns": "MARIO",
+          "variante": [
+            "MARIO",
+            "FORTNITE",
+            "APEX LEGENDS",
+            "VALORANT"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza2",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza3",
+          "raspuns": "LARA CROFT",
+          "variante": [
+            "LARA CROFT",
+            "APEX LEGENDS",
+            "VALORANT",
+            "MINECRAFT"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza3",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza4",
+          "raspuns": "FORTNITE",
+          "variante": [
+            "FORTNITE",
+            "VALORANT",
+            "MINECRAFT",
+            "HALO INFINITE"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza4",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza5",
+          "raspuns": "OVERWATCH",
+          "variante": [
+            "OVERWATCH",
+            "MINECRAFT",
+            "HALO INFINITE",
+            "ROCKET LEAGUE"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza5",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza6",
+          "raspuns": "MINECRAFT",
+          "variante": [
+            "MINECRAFT",
+            "HALO INFINITE",
+            "OVERWATCH",
+            "ROCKET LEAGUE"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza6",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza7",
+          "raspuns": "CYBERPUNK 2077",
+          "variante": [
+            "CYBERPUNK 2077",
+            "OVERWATCH",
+            "ROCKET LEAGUE",
+            "STARCRAFT II"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza7",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza8",
+          "raspuns": "NINTENDO SWITCH",
+          "variante": [
+            "NINTENDO SWITCH",
+            "ROCKET LEAGUE",
+            "STARCRAFT II",
+            "DIABLO III"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza8",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza9",
+          "raspuns": "SONIC THE HEDGEHOG",
+          "variante": [
+            "SONIC THE HEDGEHOG",
+            "STARCRAFT II",
+            "DIABLO III",
+            "DOTA 2"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza9",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza10",
+          "raspuns": "ELDEN RING",
+          "variante": [
+            "ELDEN RING",
+            "DIABLO III",
+            "DOTA 2",
+            "LEAGUE OF LEGENDS"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza10",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza11",
+          "raspuns": "VALORANT",
+          "variante": [
+            "VALORANT",
+            "DOTA 2",
+            "LEAGUE OF LEGENDS",
+            "CS GO"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza11",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza12",
+          "raspuns": "APEX LEGENDS",
+          "variante": [
+            "APEX LEGENDS",
+            "LEAGUE OF LEGENDS",
+            "CS GO",
+            "CALL OF DUTY"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza12",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza13",
+          "raspuns": "FIFA 23",
+          "variante": [
+            "FIFA 23",
+            "CS GO",
+            "CALL OF DUTY",
+            "BATTLEFIELD 2042"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza13",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza14",
+          "raspuns": "ASSASSIN S CREED",
+          "variante": [
+            "ASSASSIN S CREED",
+            "CALL OF DUTY",
+            "BATTLEFIELD 2042",
+            "FIFA 23"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza14",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza15",
+          "raspuns": "THE WITCHER 3",
+          "variante": [
+            "THE WITCHER 3",
+            "BATTLEFIELD 2042",
+            "FIFA 23",
+            "MARIO KART 8"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza15",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza16",
+          "raspuns": "GTA V",
+          "variante": [
+            "GTA V",
+            "FIFA 23",
+            "MARIO KART 8",
+            "GOD OF WAR"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza16",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza17",
+          "raspuns": "UNCHARTED",
+          "variante": [
+            "UNCHARTED",
+            "MARIO KART 8",
+            "GOD OF WAR",
+            "METAL GEAR SOLID"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza17",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza18",
+          "raspuns": "SPIDER-MAN",
+          "variante": [
+            "SPIDER-MAN",
+            "GOD OF WAR",
+            "METAL GEAR SOLID",
+            "SKYRIM"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza18",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza19",
+          "raspuns": "FINAL FANTASY XIV",
+          "variante": [
+            "FINAL FANTASY XIV",
+            "METAL GEAR SOLID",
+            "SKYRIM",
+            "RESIDENT EVIL"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza19",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza20",
+          "raspuns": "CALL OF DUTY",
+          "variante": [
+            "CALL OF DUTY",
+            "SKYRIM",
+            "RESIDENT EVIL",
+            "HOLLOW KNIGHT"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza20",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza21",
+          "raspuns": "HALO INFINITE",
+          "variante": [
+            "HALO INFINITE",
+            "RESIDENT EVIL",
+            "HOLLOW KNIGHT",
+            "HORIZON ZERO DAWN"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza21",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza22",
+          "raspuns": "ZELDA BREATH OF THE WILD",
+          "variante": [
+            "ZELDA BREATH OF THE WILD",
+            "HOLLOW KNIGHT",
+            "HORIZON ZERO DAWN",
+            "DEAD SPACE"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza22",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza23",
+          "raspuns": "METAL GEAR SOLID",
+          "variante": [
+            "METAL GEAR SOLID",
+            "HORIZON ZERO DAWN",
+            "DEAD SPACE",
+            "DOOM ETERNAL"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza23",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza24",
+          "raspuns": "DEAD SPACE",
+          "variante": [
+            "DEAD SPACE",
+            "DOOM ETERNAL",
+            "BORDERLANDS 3",
+            "NO MANS SKY"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza24",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza25",
+          "raspuns": "DOOM ETERNAL",
+          "variante": [
+            "DOOM ETERNAL",
+            "BORDERLANDS 3",
+            "NO MANS SKY",
+            "FALLOUT 4"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza25",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza26",
+          "raspuns": "QUAKE",
+          "variante": [
+            "QUAKE",
+            "BORDERLANDS 3",
+            "NO MANS SKY",
+            "FALLOUT 4"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza26",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza27",
+          "raspuns": "DOTA 2",
+          "variante": [
+            "DOTA 2",
+            "NO MANS SKY",
+            "FALLOUT 4",
+            "THE WITCHER 3"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza27",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza28",
+          "raspuns": "LEAGUE OF LEGENDS",
+          "variante": [
+            "LEAGUE OF LEGENDS",
+            "FALLOUT 4",
+            "THE WITCHER 3",
+            "HALF-LIFE"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza28",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza29",
+          "raspuns": "BATTLEFIELD 2042",
+          "variante": [
+            "BATTLEFIELD 2042",
+            "THE WITCHER 3",
+            "HALF-LIFE",
+            "PORTAL 2"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza29",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza30",
+          "raspuns": "SKYRIM",
+          "variante": [
+            "SKYRIM",
+            "HALF-LIFE",
+            "PORTAL 2",
+            "MONSTER HUNTER"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza30",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza31",
+          "raspuns": "PUBG",
+          "variante": [
+            "PUBG",
+            "PORTAL 2",
+            "MONSTER HUNTER",
+            "GHOST OF TSUSHIMA"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza31",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza32",
+          "raspuns": "RUST",
+          "variante": [
+            "RUST",
+            "MONSTER HUNTER",
+            "GHOST OF TSUSHIMA",
+            "CYBERPUNK 2077"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza32",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "id": "poza33",
+          "raspuns": "STARCRAFT II",
+          "variante": [
+            "STARCRAFT II",
+            "GHOST OF TSUSHIMA",
+            "CYBERPUNK 2077",
+            "RESIDENT EVIL"
+          ],
+          "hint_1": "Nume de joc pe Steam",
+          "hint_2": "Alege titlul corect",
+          "hint_3": "Doar numele jocului contează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "poza33",
+          "imagine_sursa": "placeholder"
+        }
+      ]
+    }
+  }
+}

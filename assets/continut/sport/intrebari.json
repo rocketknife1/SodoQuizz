@@ -1,0 +1,863 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "sport": {
+      "mod": "4_variante",
+      "culoare_tema": "#16A085",
+      "descriere": "Sportivi & echipe celebre",
+      "intrebari": [
+        {
+          "id": "spo_001",
+          "raspuns": "LIONEL MESSI",
+          "variante": [
+            "LIONEL MESSI",
+            "CRISTIANO RONALDO",
+            "NEYMAR",
+            "LUIS SUAREZ"
+          ],
+          "hint_1": "8 Baloane de Aur",
+          "hint_2": "Campion mondial cu Argentina în 2022",
+          "hint_3": "Legenda Barcelonei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lionel Messi",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_002",
+          "raspuns": "CRISTIANO RONALDO",
+          "variante": [
+            "CRISTIANO RONALDO",
+            "LIONEL MESSI",
+            "KAKA",
+            "ZLATAN IBRAHIMOVIC"
+          ],
+          "hint_1": "CR7",
+          "hint_2": "Celebrarea 'Siuuu'",
+          "hint_3": "Golgheterul all-time al fotbalului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Cristiano Ronaldo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_003",
+          "raspuns": "NEYMAR",
+          "variante": [
+            "NEYMAR",
+            "VINICIUS JUNIOR",
+            "RONALDINHO",
+            "KYLIAN MBAPPE"
+          ],
+          "hint_1": "Starul brazilian al driblingurilor",
+          "hint_2": "Transferul record la PSG",
+          "hint_3": "Numărul 10 al Braziliei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Neymar",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_004",
+          "raspuns": "KYLIAN MBAPPE",
+          "variante": [
+            "KYLIAN MBAPPE",
+            "ERLING HAALAND",
+            "NEYMAR",
+            "ANTOINE GRIEZMANN"
+          ],
+          "hint_1": "Rapidul atacant francez",
+          "hint_2": "Campion mondial la 19 ani",
+          "hint_3": "Transferat la Real Madrid în 2024",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Kylian Mbappé",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_005",
+          "raspuns": "ERLING HAALAND",
+          "variante": [
+            "ERLING HAALAND",
+            "KYLIAN MBAPPE",
+            "HARRY KANE",
+            "ROBERT LEWANDOWSKI"
+          ],
+          "hint_1": "Vikingul golgheter",
+          "hint_2": "Mașina de goluri de la Manchester City",
+          "hint_3": "Norvegian cu fizic de robot",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Erling Haaland",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_006",
+          "raspuns": "MOHAMED SALAH",
+          "variante": [
+            "MOHAMED SALAH",
+            "SADIO MANE",
+            "RIYAD MAHREZ",
+            "KARIM BENZEMA"
+          ],
+          "hint_1": "'Faraonul egiptean'",
+          "hint_2": "Legenda lui Liverpool",
+          "hint_3": "Golgheter în repetate rânduri în Premier League",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mohamed Salah",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_007",
+          "raspuns": "ROBERT LEWANDOWSKI",
+          "variante": [
+            "ROBERT LEWANDOWSKI",
+            "ERLING HAALAND",
+            "KARIM BENZEMA",
+            "HARRY KANE"
+          ],
+          "hint_1": "Atacantul polonez",
+          "hint_2": "5 goluri în 9 minute contra lui Wolfsburg",
+          "hint_3": "A jucat la Bayern și Barcelona",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Robert Lewandowski",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_008",
+          "raspuns": "ZLATAN IBRAHIMOVIC",
+          "variante": [
+            "ZLATAN IBRAHIMOVIC",
+            "ROBERT LEWANDOWSKI",
+            "THIERRY HENRY",
+            "DIDIER DROGBA"
+          ],
+          "hint_1": "Suedezul cu ego legendar",
+          "hint_2": "Foarfeca de la 30 de metri",
+          "hint_3": "'Un Zlatan nu dă probe'",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Zlatan Ibrahimović",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_009",
+          "raspuns": "DAVID BECKHAM",
+          "variante": [
+            "DAVID BECKHAM",
+            "ZINEDINE ZIDANE",
+            "RYAN GIGGS",
+            "FRANK LAMPARD"
+          ],
+          "hint_1": "Maestrul loviturilor libere",
+          "hint_2": "Căsătorit cu o Spice Girl",
+          "hint_3": "Patron la Inter Miami",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "David Beckham",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_010",
+          "raspuns": "ZINEDINE ZIDANE",
+          "variante": [
+            "ZINEDINE ZIDANE",
+            "RONALDINHO",
+            "DAVID BECKHAM",
+            "THIERRY HENRY"
+          ],
+          "hint_1": "Poreclit 'Zizou'",
+          "hint_2": "Lovitura de cap din finala din 2006",
+          "hint_3": "Antrenor cu 3 Ligi ale Campionilor la rând",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Zinedine Zidane",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_011",
+          "raspuns": "RONALDINHO",
+          "variante": [
+            "RONALDINHO",
+            "NEYMAR",
+            "RIVALDO",
+            "KAKA"
+          ],
+          "hint_1": "Zâmbetul magiei braziliene",
+          "hint_2": "Balonul de Aur în 2005",
+          "hint_3": "Aplaudat în picioare de fanii Realului pe Bernabéu",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ronaldinho",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_012",
+          "raspuns": "PELE",
+          "variante": [
+            "PELE",
+            "DIEGO MARADONA",
+            "GARRINCHA",
+            "ZICO"
+          ],
+          "hint_1": "'Regele fotbalului'",
+          "hint_2": "3 Cupe Mondiale câștigate",
+          "hint_3": "Legenda braziliană cu peste 1000 de goluri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Pelé",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_013",
+          "raspuns": "DIEGO MARADONA",
+          "variante": [
+            "DIEGO MARADONA",
+            "PELE",
+            "LIONEL MESSI",
+            "RONALDINHO"
+          ],
+          "hint_1": "'Mâna lui Dumnezeu'",
+          "hint_2": "Golul secolului în 1986",
+          "hint_3": "Zeul orașului Napoli",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Diego Maradona",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_014",
+          "raspuns": "GHEORGHE HAGI",
+          "variante": [
+            "GHEORGHE HAGI",
+            "ADRIAN MUTU",
+            "GICA POPESCU",
+            "MIODRAG BELODEDICI"
+          ],
+          "hint_1": "'Maradona din Carpați'",
+          "hint_2": "Regele fotbalului românesc",
+          "hint_3": "Patron și antrenor la Farul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Gheorghe Hagi",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_015",
+          "raspuns": "ADRIAN MUTU",
+          "variante": [
+            "ADRIAN MUTU",
+            "GHEORGHE HAGI",
+            "CIPRIAN MARICA",
+            "FLORIN RADUCIOIU"
+          ],
+          "hint_1": "Poreclit 'Briliantul'",
+          "hint_2": "A jucat la Chelsea și Fiorentina",
+          "hint_3": "Atacant român cu carieră lungă în Italia",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Adrian Mutu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_016",
+          "raspuns": "CRISTIAN CHIVU",
+          "variante": [
+            "CRISTIAN CHIVU",
+            "GICA POPESCU",
+            "RAZVAN RAT",
+            "COSMIN CONTRA"
+          ],
+          "hint_1": "Căpitan la Ajax la doar 21 de ani",
+          "hint_2": "Campion al Europei cu Inter în 2010",
+          "hint_3": "Fundașul român cu cască de protecție",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cristian Chivu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_017",
+          "raspuns": "GICA POPESCU",
+          "variante": [
+            "GICA POPESCU",
+            "GHEORGHE HAGI",
+            "DAN PETRESCU",
+            "MIODRAG BELODEDICI"
+          ],
+          "hint_1": "Căpitan la FC Barcelona",
+          "hint_2": "Fundașul Generației de Aur",
+          "hint_3": "Cumnatul lui Hagi",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gheorghe Popescu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_018",
+          "raspuns": "SIMONA HALEP",
+          "variante": [
+            "SIMONA HALEP",
+            "SORANA CIRSTEA",
+            "EMMA RADUCANU",
+            "IRINA BEGU"
+          ],
+          "hint_1": "Fost număr 1 mondial la tenis",
+          "hint_2": "Campioană la Wimbledon în 2019",
+          "hint_3": "Sportiva din Constanța",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Simona Halep",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_019",
+          "raspuns": "NADIA COMANECI",
+          "variante": [
+            "NADIA COMANECI",
+            "LARISA IORDACHE",
+            "CATALINA PONOR",
+            "SIMONA AMANAR"
+          ],
+          "hint_1": "Primul 10 perfect din istoria gimnasticii",
+          "hint_2": "Eroina de la Montreal 1976",
+          "hint_3": "'Zeița de la Montreal'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Nadia Comăneci",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_020",
+          "raspuns": "DAVID POPOVICI",
+          "variante": [
+            "DAVID POPOVICI",
+            "ROBERT GLINTA",
+            "CAELEB DRESSEL",
+            "KYLE CHALMERS"
+          ],
+          "hint_1": "Înotătorul-minune al României",
+          "hint_2": "Aur olimpic la Paris 2024",
+          "hint_3": "Recordman mondial la 100 m liber",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "David Popovici",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_021",
+          "raspuns": "SERENA WILLIAMS",
+          "variante": [
+            "SERENA WILLIAMS",
+            "VENUS WILLIAMS",
+            "MARIA SHARAPOVA",
+            "NAOMI OSAKA"
+          ],
+          "hint_1": "23 de titluri de Grand Slam",
+          "hint_2": "Regina tenisului american",
+          "hint_3": "Sora ei e tot campioană",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Serena Williams",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_022",
+          "raspuns": "NOVAK DJOKOVIC",
+          "variante": [
+            "NOVAK DJOKOVIC",
+            "ROGER FEDERER",
+            "RAFAEL NADAL",
+            "ANDY MURRAY"
+          ],
+          "hint_1": "Sârbul cu cele mai multe Grand Slam-uri",
+          "hint_2": "Poreclit 'Nole'",
+          "hint_3": "Flexibilitate legendară pe teren",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Novak Djokovic",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_023",
+          "raspuns": "ROGER FEDERER",
+          "variante": [
+            "ROGER FEDERER",
+            "NOVAK DJOKOVIC",
+            "RAFAEL NADAL",
+            "PETE SAMPRAS"
+          ],
+          "hint_1": "Eleganța elvețiană",
+          "hint_2": "8 titluri la Wimbledon",
+          "hint_3": "Reverul cu o mână perfect",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Roger Federer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_024",
+          "raspuns": "RAFAEL NADAL",
+          "variante": [
+            "RAFAEL NADAL",
+            "ROGER FEDERER",
+            "NOVAK DJOKOVIC",
+            "CARLOS ALCARAZ"
+          ],
+          "hint_1": "'Regele zgurii'",
+          "hint_2": "14 titluri la Roland Garros",
+          "hint_3": "Stângaciul din Mallorca",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Rafael Nadal",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_025",
+          "raspuns": "LEBRON JAMES",
+          "variante": [
+            "LEBRON JAMES",
+            "MICHAEL JORDAN",
+            "KOBE BRYANT",
+            "KEVIN DURANT"
+          ],
+          "hint_1": "'King James'",
+          "hint_2": "Recordul de puncte all-time în NBA",
+          "hint_3": "A jucat alături de fiul său la Lakers",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "LeBron James",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_026",
+          "raspuns": "MICHAEL JORDAN",
+          "variante": [
+            "MICHAEL JORDAN",
+            "LEBRON JAMES",
+            "KOBE BRYANT",
+            "SCOTTIE PIPPEN"
+          ],
+          "hint_1": "'Air Jordan'",
+          "hint_2": "6 titluri cu Chicago Bulls",
+          "hint_3": "Considerat GOAT-ul baschetului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Michael Jordan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_027",
+          "raspuns": "KOBE BRYANT",
+          "variante": [
+            "KOBE BRYANT",
+            "MICHAEL JORDAN",
+            "LEBRON JAMES",
+            "SHAQUILLE ONEAL"
+          ],
+          "hint_1": "'Black Mamba'",
+          "hint_2": "81 de puncte într-un singur meci",
+          "hint_3": "Legenda Lakers cu numerele 8 și 24",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kobe Bryant",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_028",
+          "raspuns": "STEPHEN CURRY",
+          "variante": [
+            "STEPHEN CURRY",
+            "KLAY THOMPSON",
+            "KEVIN DURANT",
+            "JAMES HARDEN"
+          ],
+          "hint_1": "Cel mai bun shooter din istorie",
+          "hint_2": "A revoluționat aruncarea de 3 puncte",
+          "hint_3": "Vedeta Golden State Warriors",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Stephen Curry",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_029",
+          "raspuns": "USAIN BOLT",
+          "variante": [
+            "USAIN BOLT",
+            "TYSON GAY",
+            "CARL LEWIS",
+            "MO FARAH"
+          ],
+          "hint_1": "'Fulgerul' jamaican",
+          "hint_2": "9.58 secunde la 100 de metri",
+          "hint_3": "Poza cu fulgerul după curse",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Usain Bolt",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_030",
+          "raspuns": "MICHAEL PHELPS",
+          "variante": [
+            "MICHAEL PHELPS",
+            "IAN THORPE",
+            "CAELEB DRESSEL",
+            "MARK SPITZ"
+          ],
+          "hint_1": "23 de medalii olimpice de aur",
+          "hint_2": "'Rechinul din Baltimore'",
+          "hint_3": "Cel mai medaliat olimpic din istorie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Michael Phelps",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_031",
+          "raspuns": "LEWIS HAMILTON",
+          "variante": [
+            "LEWIS HAMILTON",
+            "MAX VERSTAPPEN",
+            "SEBASTIAN VETTEL",
+            "FERNANDO ALONSO"
+          ],
+          "hint_1": "7 titluri mondiale în Formula 1",
+          "hint_2": "S-a mutat la Ferrari în 2025",
+          "hint_3": "Pilotul britanic cu numărul 44",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lewis Hamilton",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_032",
+          "raspuns": "MAX VERSTAPPEN",
+          "variante": [
+            "MAX VERSTAPPEN",
+            "LEWIS HAMILTON",
+            "CHARLES LECLERC",
+            "LANDO NORRIS"
+          ],
+          "hint_1": "'Olandezul zburător'",
+          "hint_2": "Campion mondial cu Red Bull",
+          "hint_3": "Fiul unui fost pilot de Formula 1",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Max Verstappen",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_033",
+          "raspuns": "MICHAEL SCHUMACHER",
+          "variante": [
+            "MICHAEL SCHUMACHER",
+            "LEWIS HAMILTON",
+            "SEBASTIAN VETTEL",
+            "AYRTON SENNA"
+          ],
+          "hint_1": "Legenda Ferrari cu 7 titluri",
+          "hint_2": "'Baronul roșu' al Formulei 1",
+          "hint_3": "91 de victorii în Grand Prix-uri",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Michael Schumacher",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_034",
+          "raspuns": "MIKE TYSON",
+          "variante": [
+            "MIKE TYSON",
+            "MUHAMMAD ALI",
+            "FLOYD MAYWEATHER",
+            "EVANDER HOLYFIELD"
+          ],
+          "hint_1": "'Iron Mike'",
+          "hint_2": "Cel mai tânăr campion la categoria grea",
+          "hint_3": "A mușcat o ureche în ring",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mike Tyson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_035",
+          "raspuns": "MUHAMMAD ALI",
+          "variante": [
+            "MUHAMMAD ALI",
+            "MIKE TYSON",
+            "GEORGE FOREMAN",
+            "JOE FRAZIER"
+          ],
+          "hint_1": "'Float like a butterfly, sting like a bee'",
+          "hint_2": "Poreclit 'The Greatest'",
+          "hint_3": "Meciul Rumble in the Jungle",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Muhammad Ali",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_036",
+          "raspuns": "CONOR MCGREGOR",
+          "variante": [
+            "CONOR MCGREGOR",
+            "KHABIB NURMAGOMEDOV",
+            "JON JONES",
+            "ISRAEL ADESANYA"
+          ],
+          "hint_1": "'The Notorious'",
+          "hint_2": "Irlandezul vedetă din UFC",
+          "hint_3": "Campion simultan la două categorii",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Conor McGregor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_037",
+          "raspuns": "KHABIB NURMAGOMEDOV",
+          "variante": [
+            "KHABIB NURMAGOMEDOV",
+            "CONOR MCGREGOR",
+            "ISLAM MAKHACHEV",
+            "JON JONES"
+          ],
+          "hint_1": "Retras neînvins, 29-0",
+          "hint_2": "'Vulturul' din Daghestan",
+          "hint_3": "L-a învins pe McGregor în 2018",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Khabib Nurmagomedov",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_038",
+          "raspuns": "TIGER WOODS",
+          "variante": [
+            "TIGER WOODS",
+            "RORY MCILROY",
+            "PHIL MICKELSON",
+            "JACK NICKLAUS"
+          ],
+          "hint_1": "Legenda golfului",
+          "hint_2": "15 turnee majore câștigate",
+          "hint_3": "Revenirea istorică de la Masters 2019",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Tiger Woods",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_039",
+          "raspuns": "TOM BRADY",
+          "variante": [
+            "TOM BRADY",
+            "PEYTON MANNING",
+            "PATRICK MAHOMES",
+            "AARON RODGERS"
+          ],
+          "hint_1": "7 inele de Super Bowl",
+          "hint_2": "GOAT-ul fotbalului american",
+          "hint_3": "Ales abia în runda a 6-a la draft",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Tom Brady",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_040",
+          "raspuns": "REAL MADRID",
+          "variante": [
+            "REAL MADRID",
+            "FC BARCELONA",
+            "ATLETICO MADRID",
+            "BAYERN MUNCHEN"
+          ],
+          "hint_1": "'Los Blancos'",
+          "hint_2": "Recordul de Ligi ale Campionilor",
+          "hint_3": "Stadionul Santiago Bernabéu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Real Madrid CF",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_041",
+          "raspuns": "FC BARCELONA",
+          "variante": [
+            "FC BARCELONA",
+            "REAL MADRID",
+            "SEVILLA",
+            "MANCHESTER CITY"
+          ],
+          "hint_1": "'Mai mult decât un club'",
+          "hint_2": "Stadionul Camp Nou",
+          "hint_3": "Tiki-taka și academia La Masia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "FC Barcelona",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_042",
+          "raspuns": "MANCHESTER UNITED",
+          "variante": [
+            "MANCHESTER UNITED",
+            "MANCHESTER CITY",
+            "LIVERPOOL",
+            "ARSENAL"
+          ],
+          "hint_1": "'Diavolii Roșii'",
+          "hint_2": "Stadionul Old Trafford",
+          "hint_3": "Era de aur cu Sir Alex Ferguson",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Manchester United F.C.",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_043",
+          "raspuns": "LIVERPOOL",
+          "variante": [
+            "LIVERPOOL",
+            "MANCHESTER UNITED",
+            "EVERTON",
+            "CHELSEA"
+          ],
+          "hint_1": "'You'll Never Walk Alone'",
+          "hint_2": "Stadionul Anfield",
+          "hint_3": "Pasărea Liver pe siglă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Liverpool F.C.",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_044",
+          "raspuns": "JUVENTUS",
+          "variante": [
+            "JUVENTUS",
+            "AC MILAN",
+            "INTER MILANO",
+            "NAPOLI"
+          ],
+          "hint_1": "'Bătrâna Doamnă'",
+          "hint_2": "Echipa alb-negră din Torino",
+          "hint_3": "Recordul de titluri din Serie A",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Juventus FC",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_045",
+          "raspuns": "BAYERN MUNCHEN",
+          "variante": [
+            "BAYERN MUNCHEN",
+            "BORUSSIA DORTMUND",
+            "RB LEIPZIG",
+            "SCHALKE 04"
+          ],
+          "hint_1": "Gigantul Bavariei",
+          "hint_2": "Stadionul Allianz Arena",
+          "hint_3": "Campioana aproape eternă a Germaniei",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "FC Bayern Munich",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_046",
+          "raspuns": "PSG",
+          "variante": [
+            "PSG",
+            "OLYMPIQUE MARSEILLE",
+            "AS MONACO",
+            "OLYMPIQUE LYON"
+          ],
+          "hint_1": "Clubul orașului cu Turnul Eiffel",
+          "hint_2": "Messi, Neymar și Mbappé au jucat aici simultan",
+          "hint_3": "Stadionul Parc des Princes",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Paris Saint-Germain F.C.",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_047",
+          "raspuns": "FCSB",
+          "variante": [
+            "FCSB",
+            "DINAMO BUCURESTI",
+            "RAPID BUCURESTI",
+            "CFR CLUJ"
+          ],
+          "hint_1": "Roș-albaștrii Bucureștiului",
+          "hint_2": "Echipa patronată de Gigi Becali",
+          "hint_3": "Câștigătoarea Cupei Campionilor din 1986 (ca Steaua)",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "FCSB",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_048",
+          "raspuns": "DINAMO BUCURESTI",
+          "variante": [
+            "DINAMO BUCURESTI",
+            "FCSB",
+            "RAPID BUCURESTI",
+            "UNIVERSITATEA CRAIOVA"
+          ],
+          "hint_1": "'Câinii roșii'",
+          "hint_2": "Rivala eternă din Ștefan cel Mare",
+          "hint_3": "Echipa alb-roșie a Bucureștiului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "FC Dinamo București",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_049",
+          "raspuns": "CFR CLUJ",
+          "variante": [
+            "CFR CLUJ",
+            "UNIVERSITATEA CLUJ",
+            "FCSB",
+            "FARUL CONSTANTA"
+          ],
+          "hint_1": "Feroviarii din Gruia",
+          "hint_2": "Titluri consecutive în Liga 1",
+          "hint_3": "Vișiniul Ardealului",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "CFR Cluj",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_050",
+          "raspuns": "CUPA MONDIALA",
+          "variante": [
+            "CUPA MONDIALA",
+            "LIGA CAMPIONILOR",
+            "EUROPA LEAGUE",
+            "CUPA ROMANIEI"
+          ],
+          "hint_1": "Trofeul suprem al fotbalului",
+          "hint_2": "Se decernează o dată la 4 ani",
+          "hint_3": "Trofeu din aur de 18 carate",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "FIFA World Cup Trophy",
+          "imagine_sursa": "wikipedia"
+        }
+      ]
+    }
+  }
+}

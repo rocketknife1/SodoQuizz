@@ -1,0 +1,863 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "masini": {
+      "mod": "4_variante",
+      "culoare_tema": "#C0392B",
+      "descriere": "Bolizi & branduri auto",
+      "intrebari": [
+        {
+          "id": "mas_001",
+          "raspuns": "FERRARI",
+          "variante": [
+            "FERRARI",
+            "LAMBORGHINI",
+            "MASERATI",
+            "ALFA ROMEO"
+          ],
+          "hint_1": "Cal cabrat negru pe siglă",
+          "hint_2": "Fondată de Enzo în 1939",
+          "hint_3": "Bolizi roșii din Maranello",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ferrari",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_002",
+          "raspuns": "LAMBORGHINI",
+          "variante": [
+            "LAMBORGHINI",
+            "FERRARI",
+            "BUGATTI",
+            "MCLAREN"
+          ],
+          "hint_1": "Taur auriu pe siglă",
+          "hint_2": "Fondatorul făcea tractoare la început",
+          "hint_3": "Aventador și Huracán",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lamborghini",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_003",
+          "raspuns": "PORSCHE",
+          "variante": [
+            "PORSCHE",
+            "AUDI",
+            "BMW",
+            "MERCEDES"
+          ],
+          "hint_1": "Siglă cu cal negru, din Stuttgart",
+          "hint_2": "Celebrul model 911",
+          "hint_3": "Marcă germană de mașini sport",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Porsche",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_004",
+          "raspuns": "BUGATTI",
+          "variante": [
+            "BUGATTI",
+            "KOENIGSEGG",
+            "PAGANI",
+            "MCLAREN"
+          ],
+          "hint_1": "Marcă franceză de hypercar-uri",
+          "hint_2": "Veyron și Chiron",
+          "hint_3": "Peste 400 km/h viteză maximă",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bugatti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_005",
+          "raspuns": "ROLLS ROYCE",
+          "variante": [
+            "ROLLS ROYCE",
+            "BENTLEY",
+            "MAYBACH",
+            "JAGUAR"
+          ],
+          "hint_1": "Statueta Spirit of Ecstasy pe capotă",
+          "hint_2": "Simbol al luxului britanic",
+          "hint_3": "Phantom și Ghost",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Rolls-Royce Motor Cars",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_006",
+          "raspuns": "BENTLEY",
+          "variante": [
+            "BENTLEY",
+            "ROLLS ROYCE",
+            "ASTON MARTIN",
+            "JAGUAR"
+          ],
+          "hint_1": "Litera B cu aripi pe siglă",
+          "hint_2": "Lux britanic din Crewe",
+          "hint_3": "Continental GT",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bentley Continental GT",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_007",
+          "raspuns": "ASTON MARTIN",
+          "variante": [
+            "ASTON MARTIN",
+            "JAGUAR",
+            "BENTLEY",
+            "MASERATI"
+          ],
+          "hint_1": "Mașina lui James Bond",
+          "hint_2": "Aripi întinse pe siglă",
+          "hint_3": "DB11 și Vantage",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Aston Martin DB11",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_008",
+          "raspuns": "MASERATI",
+          "variante": [
+            "MASERATI",
+            "ALFA ROMEO",
+            "FERRARI",
+            "LANCIA"
+          ],
+          "hint_1": "Trident pe siglă",
+          "hint_2": "Marcă italiană din Modena",
+          "hint_3": "GranTurismo și Levante",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Maserati GranTurismo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_009",
+          "raspuns": "MCLAREN",
+          "variante": [
+            "MCLAREN",
+            "FERRARI",
+            "PORSCHE",
+            "LOTUS"
+          ],
+          "hint_1": "Marcă britanică cu echipă de Formula 1",
+          "hint_2": "Sigla portocalie tip 'swoosh'",
+          "hint_3": "720S și P1",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "McLaren 720S",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_010",
+          "raspuns": "KOENIGSEGG",
+          "variante": [
+            "KOENIGSEGG",
+            "PAGANI",
+            "BUGATTI",
+            "RIMAC"
+          ],
+          "hint_1": "Hypercar-uri suedeze",
+          "hint_2": "Fondată de Christian von Koenigsegg",
+          "hint_3": "Agera și Jesko",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Koenigsegg Agera",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_011",
+          "raspuns": "PAGANI",
+          "variante": [
+            "PAGANI",
+            "KOENIGSEGG",
+            "BUGATTI",
+            "LAMBORGHINI"
+          ],
+          "hint_1": "Hypercar italian fondat de un argentinian",
+          "hint_2": "Zonda și Huayra",
+          "hint_3": "Caroserii din carbon lucrate manual",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Pagani Huayra",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_012",
+          "raspuns": "FERRARI F40",
+          "variante": [
+            "FERRARI F40",
+            "FERRARI TESTAROSSA",
+            "LAMBORGHINI COUNTACH",
+            "PORSCHE 959"
+          ],
+          "hint_1": "Ultima mașină aprobată de Enzo Ferrari",
+          "hint_2": "Lansată în 1987",
+          "hint_3": "Legendă cu eleron uriaș",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Ferrari F40",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_013",
+          "raspuns": "LAMBORGHINI AVENTADOR",
+          "variante": [
+            "LAMBORGHINI AVENTADOR",
+            "LAMBORGHINI HURACAN",
+            "FERRARI 488",
+            "MCLAREN 720S"
+          ],
+          "hint_1": "V12 italian cu uși care se deschid în sus",
+          "hint_2": "Poartă numele unui taur de luptă",
+          "hint_3": "Flagship-ul cu peste 700 CP",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Aventador",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_014",
+          "raspuns": "LAMBORGHINI URUS",
+          "variante": [
+            "LAMBORGHINI URUS",
+            "PORSCHE CAYENNE",
+            "BENTLEY BENTAYGA",
+            "AUDI Q8"
+          ],
+          "hint_1": "SUV-ul super-sport italian",
+          "hint_2": "Taurul de teren al mărcii",
+          "hint_3": "SUV cu peste 650 CP",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lamborghini Urus",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_015",
+          "raspuns": "PORSCHE 911",
+          "variante": [
+            "PORSCHE 911",
+            "PORSCHE CAYMAN",
+            "NISSAN GTR",
+            "AUDI R8"
+          ],
+          "hint_1": "Silueta neschimbată din 1963",
+          "hint_2": "Motorul e în spate",
+          "hint_3": "Cel mai cunoscut model al mărcii",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Porsche 911",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_016",
+          "raspuns": "MERCEDES G CLASS",
+          "variante": [
+            "MERCEDES G CLASS",
+            "RANGE ROVER",
+            "JEEP WRANGLER",
+            "TOYOTA LAND CRUISER"
+          ],
+          "hint_1": "Cutia pătrată de lux germană",
+          "hint_2": "Poreclit 'Gelandewagen'",
+          "hint_3": "Off-roaderul favorit al vedetelor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mercedes-Benz G-Class",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_017",
+          "raspuns": "MERCEDES AMG GT",
+          "variante": [
+            "MERCEDES AMG GT",
+            "PORSCHE 911",
+            "BMW M8",
+            "AUDI R8"
+          ],
+          "hint_1": "Coupe sport cu stea pe grilă",
+          "hint_2": "Rival direct pentru 911",
+          "hint_3": "Construit la Affalterbach",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mercedes-AMG GT",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_018",
+          "raspuns": "BMW M3",
+          "variante": [
+            "BMW M3",
+            "BMW M5",
+            "AUDI RS4",
+            "MERCEDES C63"
+          ],
+          "hint_1": "Sedanul sport bavarez legendar",
+          "hint_2": "Litera M vine de la Motorsport",
+          "hint_3": "Bazat pe Seria 3",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "BMW M3",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_019",
+          "raspuns": "BMW I8",
+          "variante": [
+            "BMW I8",
+            "AUDI R8",
+            "HONDA NSX",
+            "TESLA ROADSTER"
+          ],
+          "hint_1": "Sportivă hibridă cu uși fluture",
+          "hint_2": "Design futurist lansat în 2014",
+          "hint_3": "Consum mic, aspect de supercar",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "BMW i8",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_020",
+          "raspuns": "AUDI R8",
+          "variante": [
+            "AUDI R8",
+            "LAMBORGHINI HURACAN",
+            "PORSCHE 911",
+            "NISSAN GTR"
+          ],
+          "hint_1": "Supercarul cu patru inele",
+          "hint_2": "Împarte motorul V10 cu Huracán",
+          "hint_3": "Mașina lui Iron Man",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Audi R8",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_021",
+          "raspuns": "TESLA MODEL S",
+          "variante": [
+            "TESLA MODEL S",
+            "TESLA MODEL 3",
+            "PORSCHE TAYCAN",
+            "LUCID AIR"
+          ],
+          "hint_1": "Sedanul electric american de lux",
+          "hint_2": "Modul 'Ludicrous' de accelerație",
+          "hint_3": "Fabricat de compania lui Elon Musk",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tesla Model S",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_022",
+          "raspuns": "TESLA CYBERTRUCK",
+          "variante": [
+            "TESLA CYBERTRUCK",
+            "HUMMER EV",
+            "RIVIAN R1T",
+            "FORD F150"
+          ],
+          "hint_1": "Camionetă electrică unghiulară",
+          "hint_2": "Caroserie din oțel inoxidabil",
+          "hint_3": "Geamurile 'incasabile' s-au spart la prezentare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tesla Cybertruck",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_023",
+          "raspuns": "DODGE VIPER",
+          "variante": [
+            "DODGE VIPER",
+            "CHEVROLET CORVETTE",
+            "FORD GT",
+            "SHELBY COBRA"
+          ],
+          "hint_1": "Șarpele american cu motor V10",
+          "hint_2": "Produs între 1991 și 2017",
+          "hint_3": "Muscle car extrem din Detroit",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Dodge Viper",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_024",
+          "raspuns": "CHEVROLET CORVETTE",
+          "variante": [
+            "CHEVROLET CORVETTE",
+            "DODGE VIPER",
+            "FORD MUSTANG",
+            "CHEVROLET CAMARO"
+          ],
+          "hint_1": "Sportiva americană emblemă din 1953",
+          "hint_2": "Poreclită 'Vette'",
+          "hint_3": "Generația C8 are motor central",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Chevrolet Corvette",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_025",
+          "raspuns": "FORD MUSTANG",
+          "variante": [
+            "FORD MUSTANG",
+            "CHEVROLET CAMARO",
+            "DODGE CHALLENGER",
+            "FORD GT"
+          ],
+          "hint_1": "Pony car cu cal în galop pe grilă",
+          "hint_2": "Lansat în 1964",
+          "hint_3": "Cel mai cunoscut muscle car american",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ford Mustang",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_026",
+          "raspuns": "NISSAN GTR",
+          "variante": [
+            "NISSAN GTR",
+            "TOYOTA SUPRA",
+            "MAZDA RX7",
+            "HONDA NSX"
+          ],
+          "hint_1": "Poreclit 'Godzilla'",
+          "hint_2": "Legendă japoneză cu tracțiune integrală",
+          "hint_3": "Celebru din Fast & Furious",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nissan GT-R",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_027",
+          "raspuns": "TOYOTA SUPRA",
+          "variante": [
+            "TOYOTA SUPRA",
+            "NISSAN GTR",
+            "MAZDA RX7",
+            "HONDA NSX"
+          ],
+          "hint_1": "Legenda japoneză cu motor 2JZ",
+          "hint_2": "Mașina portocalie din primul Fast & Furious",
+          "hint_3": "Relansată în 2019 cu ajutor de la BMW",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Toyota Supra",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_028",
+          "raspuns": "JAGUAR F TYPE",
+          "variante": [
+            "JAGUAR F TYPE",
+            "ASTON MARTIN VANTAGE",
+            "PORSCHE 911",
+            "BMW Z4"
+          ],
+          "hint_1": "Sportiva britanică cu felină pe siglă",
+          "hint_2": "Urmașul spiritual al lui E-Type",
+          "hint_3": "Sunet celebru de eșapament",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Jaguar F-Type",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_029",
+          "raspuns": "BUGATTI VEYRON",
+          "variante": [
+            "BUGATTI VEYRON",
+            "BUGATTI CHIRON",
+            "KOENIGSEGG CCX",
+            "MCLAREN F1"
+          ],
+          "hint_1": "Primul model de serie cu 1001 CP",
+          "hint_2": "Record mondial de viteză în 2005",
+          "hint_3": "Motor W16 cu 4 turbine",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bugatti Veyron",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_030",
+          "raspuns": "BUGATTI CHIRON",
+          "variante": [
+            "BUGATTI CHIRON",
+            "BUGATTI VEYRON",
+            "KOENIGSEGG JESKO",
+            "PAGANI HUAYRA"
+          ],
+          "hint_1": "Urmașul lui Veyron",
+          "hint_2": "1500 CP din fabrică",
+          "hint_3": "A depășit 490 km/h în 2019",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bugatti Chiron",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_031",
+          "raspuns": "FERRARI LAFERRARI",
+          "variante": [
+            "FERRARI LAFERRARI",
+            "MCLAREN P1",
+            "PORSCHE 918",
+            "FERRARI ENZO"
+          ],
+          "hint_1": "Hibridul hypercar din Maranello",
+          "hint_2": "Numele înseamnă chiar 'Ferrari-ul'",
+          "hint_3": "Face parte din 'sfânta treime' cu P1 și 918",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "LaFerrari",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_032",
+          "raspuns": "PORSCHE PANAMERA",
+          "variante": [
+            "PORSCHE PANAMERA",
+            "PORSCHE TAYCAN",
+            "AUDI A7",
+            "MERCEDES CLS"
+          ],
+          "hint_1": "Sedanul cu 4 uși de la Stuttgart",
+          "hint_2": "Numele vine de la cursa Carrera Panamericana",
+          "hint_3": "Fratele practic al lui 911",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche Panamera",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_033",
+          "raspuns": "LAMBORGHINI HURACAN",
+          "variante": [
+            "LAMBORGHINI HURACAN",
+            "LAMBORGHINI AVENTADOR",
+            "FERRARI 488",
+            "AUDI R8"
+          ],
+          "hint_1": "V10 italian, fratele mai mic al Aventadorului",
+          "hint_2": "Numit după un taur celebru din 1879",
+          "hint_3": "A înlocuit modelul Gallardo",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Huracán",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_034",
+          "raspuns": "ROLLS ROYCE CULLINAN",
+          "variante": [
+            "ROLLS ROYCE CULLINAN",
+            "BENTLEY BENTAYGA",
+            "LAMBORGHINI URUS",
+            "RANGE ROVER"
+          ],
+          "hint_1": "Primul SUV Rolls-Royce",
+          "hint_2": "Numit după cel mai mare diamant descoperit",
+          "hint_3": "Lux suprem la înălțime",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Rolls-Royce Cullinan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_035",
+          "raspuns": "BENTLEY BENTAYGA",
+          "variante": [
+            "BENTLEY BENTAYGA",
+            "ROLLS ROYCE CULLINAN",
+            "LAMBORGHINI URUS",
+            "PORSCHE CAYENNE"
+          ],
+          "hint_1": "SUV-ul de lux din Crewe",
+          "hint_2": "Numit după un vârf muntos din Canare",
+          "hint_3": "Interior din lemn și piele lucrat manual",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Bentley Bentayga",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_036",
+          "raspuns": "MCLAREN P1",
+          "variante": [
+            "MCLAREN P1",
+            "FERRARI LAFERRARI",
+            "PORSCHE 918",
+            "MCLAREN 720S"
+          ],
+          "hint_1": "Hibridul hypercar britanic",
+          "hint_2": "916 CP, doar 375 de bucăți",
+          "hint_3": "Parte din 'sfânta treime' hypercar",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "McLaren P1",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_037",
+          "raspuns": "PORSCHE TAYCAN",
+          "variante": [
+            "PORSCHE TAYCAN",
+            "TESLA MODEL S",
+            "AUDI E-TRON GT",
+            "PORSCHE PANAMERA"
+          ],
+          "hint_1": "Primul Porsche complet electric",
+          "hint_2": "Numele înseamnă 'mânz vioi'",
+          "hint_3": "Rivalul german al Teslei",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche Taycan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_038",
+          "raspuns": "AUDI RS6",
+          "variante": [
+            "AUDI RS6",
+            "BMW M5",
+            "MERCEDES E63",
+            "AUDI RS4"
+          ],
+          "hint_1": "Break-ul german de 600 CP",
+          "hint_2": "Combină familia cu circuitul",
+          "hint_3": "Avant — cel mai faimos break sport",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Audi RS 6",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_039",
+          "raspuns": "MERCEDES SLS AMG",
+          "variante": [
+            "MERCEDES SLS AMG",
+            "MERCEDES AMG GT",
+            "BMW I8",
+            "AUDI R8"
+          ],
+          "hint_1": "Uși 'gullwing', ca aripile unui pescăruș",
+          "hint_2": "Omagiu pentru 300 SL din anii '50",
+          "hint_3": "V8 de 6.2 litri atmosferic",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Mercedes-Benz SLS AMG",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_040",
+          "raspuns": "FERRARI 488",
+          "variante": [
+            "FERRARI 488",
+            "FERRARI F8",
+            "LAMBORGHINI HURACAN",
+            "MCLAREN 720S"
+          ],
+          "hint_1": "V8 biturbo cu motor central",
+          "hint_2": "A înlocuit modelul 458",
+          "hint_3": "Versiunile GTB și Spider",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Ferrari 488",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_041",
+          "raspuns": "LAMBORGHINI GALLARDO",
+          "variante": [
+            "LAMBORGHINI GALLARDO",
+            "LAMBORGHINI MURCIELAGO",
+            "FERRARI F430",
+            "AUDI R8"
+          ],
+          "hint_1": "Cel mai vândut Lambo al anilor 2000",
+          "hint_2": "Predecesorul lui Huracán",
+          "hint_3": "V10 din Sant'Agata",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Gallardo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_042",
+          "raspuns": "FORD GT",
+          "variante": [
+            "FORD GT",
+            "FORD MUSTANG",
+            "CHEVROLET CORVETTE",
+            "DODGE VIPER"
+          ],
+          "hint_1": "Supercarul american născut să bată Ferrari",
+          "hint_2": "Omagiu pentru GT40 de la Le Mans",
+          "hint_3": "Filmul 'Ford v Ferrari' îi spune povestea",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Ford GT",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_043",
+          "raspuns": "HONDA NSX",
+          "variante": [
+            "HONDA NSX",
+            "TOYOTA SUPRA",
+            "NISSAN GTR",
+            "MAZDA RX7"
+          ],
+          "hint_1": "Supercarul japonez dezvoltat cu Ayrton Senna",
+          "hint_2": "'Ferrari-ul de zi cu zi'",
+          "hint_3": "Vândut ca Acura în America",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Honda NSX",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_044",
+          "raspuns": "LEXUS LFA",
+          "variante": [
+            "LEXUS LFA",
+            "HONDA NSX",
+            "NISSAN GTR",
+            "TOYOTA SUPRA"
+          ],
+          "hint_1": "V10 japonez cu sunet legendar",
+          "hint_2": "Doar 500 de bucăți produse",
+          "hint_3": "Vine de la divizia de lux Toyota",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Lexus LFA",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_045",
+          "raspuns": "ALFA ROMEO GIULIA",
+          "variante": [
+            "ALFA ROMEO GIULIA",
+            "BMW M3",
+            "MASERATI GHIBLI",
+            "AUDI S4"
+          ],
+          "hint_1": "Sedan sport italian cu trifoi verde",
+          "hint_2": "Versiunea Quadrifoglio are motor derivat din Ferrari",
+          "hint_3": "Marcă din Milano cu șarpe pe siglă",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Alfa Romeo Giulia (952)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_046",
+          "raspuns": "PORSCHE CAYENNE",
+          "variante": [
+            "PORSCHE CAYENNE",
+            "LAMBORGHINI URUS",
+            "BMW X5",
+            "AUDI Q7"
+          ],
+          "hint_1": "SUV-ul care a salvat marca",
+          "hint_2": "Lansat în 2002",
+          "hint_3": "Fratele de teren al lui 911",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Porsche Cayenne",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_047",
+          "raspuns": "RANGE ROVER",
+          "variante": [
+            "RANGE ROVER",
+            "MERCEDES G CLASS",
+            "BMW X7",
+            "VOLVO XC90"
+          ],
+          "hint_1": "SUV-ul britanic regal",
+          "hint_2": "Produs de Land Rover",
+          "hint_3": "Favoritul familiei regale britanice",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Range Rover",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_048",
+          "raspuns": "FERRARI ENZO",
+          "variante": [
+            "FERRARI ENZO",
+            "FERRARI LAFERRARI",
+            "FERRARI F40",
+            "PAGANI ZONDA"
+          ],
+          "hint_1": "Poartă numele fondatorului",
+          "hint_2": "Tehnologie de Formula 1 din 2002",
+          "hint_3": "Doar 400 de exemplare",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Enzo Ferrari (automobile)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_049",
+          "raspuns": "MAYBACH",
+          "variante": [
+            "MAYBACH",
+            "ROLLS ROYCE",
+            "BENTLEY",
+            "LINCOLN"
+          ],
+          "hint_1": "Divizia ultra-lux Mercedes",
+          "hint_2": "Limuzine cu șofer prin excelență",
+          "hint_3": "57 și 62 au fost modelele clasice",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Maybach",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_050",
+          "raspuns": "ROLLS ROYCE PHANTOM",
+          "variante": [
+            "ROLLS ROYCE PHANTOM",
+            "ROLLS ROYCE GHOST",
+            "BENTLEY MULSANNE",
+            "MAYBACH 62"
+          ],
+          "hint_1": "Limuzina supremă britanică",
+          "hint_2": "Umbrele ascunse în uși",
+          "hint_3": "Flagship-ul cu Spirit of Ecstasy",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Rolls-Royce Phantom VIII",
+          "imagine_sursa": "wikipedia"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,1711 @@
+{
+  "categorii": {
+    "medical": {
+      "mod": "4_variante",
+      "culoare_tema": "#2EC4B6",
+      "descriere": "Obiecte medicale",
+      "intrebari": [
+        {
+          "id": "med_001",
+          "raspuns": "STETOSCOP",
+          "variante": [
+            "STETOSCOP",
+            "OTOSCOP",
+            "TENSIOMETRU",
+            "CIOCAN DE REFLEXE"
+          ],
+          "hint_1": "Îl poartă medicul la gât",
+          "hint_2": "Se pune pe piept sau pe spate",
+          "hint_3": "Cu el se ascultă inima și plămânii",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "stethoscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_002",
+          "raspuns": "SERINGA",
+          "variante": [
+            "SERINGA",
+            "BRANULA",
+            "PIPETA",
+            "EPRUBETA"
+          ],
+          "hint_1": "Are un ac la capăt",
+          "hint_2": "Se folosește la injecții",
+          "hint_3": "Cu ea se administrează vaccinuri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical syringe",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_003",
+          "raspuns": "SCAUN CU ROTILE",
+          "variante": [
+            "SCAUN CU ROTILE",
+            "CARJE",
+            "CADRU DE MERS",
+            "TARGA"
+          ],
+          "hint_1": "Ajută la deplasare",
+          "hint_2": "Are două roți mari laterale",
+          "hint_3": "Îl folosesc persoanele care nu pot merge",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "wheelchair",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_004",
+          "raspuns": "APARAT RMN",
+          "variante": [
+            "APARAT RMN",
+            "COMPUTER TOMOGRAF",
+            "ECOGRAF",
+            "MAMOGRAF"
+          ],
+          "hint_1": "Un tunel mare în care intri complet",
+          "hint_2": "Folosește câmp magnetic, nu radiații",
+          "hint_3": "Face imagini detaliate ale creierului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "MRI scanner machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_005",
+          "raspuns": "COMPUTER TOMOGRAF",
+          "variante": [
+            "COMPUTER TOMOGRAF",
+            "APARAT RMN",
+            "ECOGRAF",
+            "APARAT DE RADIOGRAFIE"
+          ],
+          "hint_1": "Un inel mare prin care trece patul",
+          "hint_2": "Folosește raze X rotite în jurul corpului",
+          "hint_3": "Prescurtat CT",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "CT scanner machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_006",
+          "raspuns": "ECOGRAF",
+          "variante": [
+            "ECOGRAF",
+            "APARAT RMN",
+            "SPIROMETRU",
+            "ELECTROCARDIOGRAF"
+          ],
+          "hint_1": "Folosește ultrasunete",
+          "hint_2": "Are o sondă care se plimbă pe piele cu gel",
+          "hint_3": "Cu el se văd bebelușii în burtică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "ultrasound machine hospital",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_007",
+          "raspuns": "BISTURIU",
+          "variante": [
+            "BISTURIU",
+            "FOARFECA CHIRURGICALA",
+            "PENSETA",
+            "AC DE SUTURA"
+          ],
+          "hint_1": "Instrument foarte ascuțit",
+          "hint_2": "Îl folosește chirurgul",
+          "hint_3": "Lama cu care se face incizia la operație",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "scalpel surgical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_008",
+          "raspuns": "PERFUZIE",
+          "variante": [
+            "PERFUZIE",
+            "TRANSFUZIE",
+            "BRANULA",
+            "INJECTOMAT"
+          ],
+          "hint_1": "Picură lent într-un tub",
+          "hint_2": "Punga atârnă lângă patul pacientului",
+          "hint_3": "Lichidul intră direct în venă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "intravenous therapy drip bag",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_009",
+          "raspuns": "BRANULA",
+          "variante": [
+            "BRANULA",
+            "SERINGA",
+            "CATETER",
+            "AC DE SUTURA"
+          ],
+          "hint_1": "Se montează pe mâna pacientului",
+          "hint_2": "Rămâne fixată în venă mai multe zile",
+          "hint_3": "Prin ea se conectează perfuzia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "IV cannula",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_010",
+          "raspuns": "TERMOMETRU",
+          "variante": [
+            "TERMOMETRU",
+            "TENSIOMETRU",
+            "PULSOXIMETRU",
+            "GLUCOMETRU"
+          ],
+          "hint_1": "Măsoară ceva în grade",
+          "hint_2": "Se ține sub braț sau în gură",
+          "hint_3": "Arată dacă ai febră",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical thermometer fever",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_011",
+          "raspuns": "TENSIOMETRU",
+          "variante": [
+            "TENSIOMETRU",
+            "PULSOXIMETRU",
+            "GLUCOMETRU",
+            "TERMOMETRU"
+          ],
+          "hint_1": "Are o manșetă care se umflă",
+          "hint_2": "Se pune pe braț",
+          "hint_3": "Măsoară tensiunea arterială",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "blood pressure monitor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_012",
+          "raspuns": "PULSOXIMETRU",
+          "variante": [
+            "PULSOXIMETRU",
+            "GLUCOMETRU",
+            "TENSIOMETRU",
+            "HOLTER"
+          ],
+          "hint_1": "Mic, cu clemă",
+          "hint_2": "Se prinde pe deget",
+          "hint_3": "Măsoară oxigenul din sânge și pulsul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "pulse oximeter finger",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_013",
+          "raspuns": "GLUCOMETRU",
+          "variante": [
+            "GLUCOMETRU",
+            "PULSOXIMETRU",
+            "TENSIOMETRU",
+            "SPIROMETRU"
+          ],
+          "hint_1": "Are nevoie de o picătură de sânge",
+          "hint_2": "Folosit zilnic de diabetici",
+          "hint_3": "Măsoară glicemia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "glucose meter diabetes",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_014",
+          "raspuns": "DEFIBRILATOR",
+          "variante": [
+            "DEFIBRILATOR",
+            "ELECTROCARDIOGRAF",
+            "STIMULATOR CARDIAC",
+            "MONITOR FUNCTII VITALE"
+          ],
+          "hint_1": "Se folosește în urgențe majore",
+          "hint_2": "Are două padele sau electrozi",
+          "hint_3": "Dă șocuri electrice ca să repornească inima",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "defibrillator AED",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_015",
+          "raspuns": "ELECTROCARDIOGRAF",
+          "variante": [
+            "ELECTROCARDIOGRAF",
+            "DEFIBRILATOR",
+            "HOLTER",
+            "SPIROMETRU"
+          ],
+          "hint_1": "Desenează linii pe hârtie sau ecran",
+          "hint_2": "Electrozii se lipesc pe piept",
+          "hint_3": "Înregistrează activitatea electrică a inimii — EKG",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "electrocardiograph ECG machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_016",
+          "raspuns": "CARJE",
+          "variante": [
+            "CARJE",
+            "BASTON",
+            "CADRU DE MERS",
+            "SCAUN CU ROTILE"
+          ],
+          "hint_1": "Se țin sub brațe sau de mânere",
+          "hint_2": "De obicei vin la pereche",
+          "hint_3": "Le folosești când ai piciorul rupt",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "crutches",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_017",
+          "raspuns": "TARGA",
+          "variante": [
+            "TARGA",
+            "PAT DE SPITAL",
+            "SCAUN CU ROTILE",
+            "MASA DE OPERATIE"
+          ],
+          "hint_1": "Pacientul stă întins pe ea",
+          "hint_2": "E cărată de doi oameni sau are roți",
+          "hint_3": "Cu ea se transportă răniții la ambulanță",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical stretcher ambulance",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_018",
+          "raspuns": "PAT DE SPITAL",
+          "variante": [
+            "PAT DE SPITAL",
+            "TARGA",
+            "MASA DE OPERATIE",
+            "SCAUN STOMATOLOGIC"
+          ],
+          "hint_1": "Are balustrade laterale",
+          "hint_2": "Se poate ridica și înclina electric",
+          "hint_3": "În el stau internații pe secție",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "hospital bed",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_019",
+          "raspuns": "MASCA CHIRURGICALA",
+          "variante": [
+            "MASCA CHIRURGICALA",
+            "MASCA DE OXIGEN",
+            "BONETA CHIRURGICALA",
+            "OCHELARI DE PROTECTIE"
+          ],
+          "hint_1": "Se poartă pe față",
+          "hint_2": "Are elastice pentru urechi",
+          "hint_3": "Acoperă nasul și gura în operație",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical mask",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_020",
+          "raspuns": "MANUSI CHIRURGICALE",
+          "variante": [
+            "MANUSI CHIRURGICALE",
+            "MASCA CHIRURGICALA",
+            "HALAT MEDICAL",
+            "BONETA CHIRURGICALA"
+          ],
+          "hint_1": "Se poartă pe mâini",
+          "hint_2": "De obicei din latex, sterile",
+          "hint_3": "Chirurgul le pune înainte de operație",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical gloves latex",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_021",
+          "raspuns": "HALAT MEDICAL",
+          "variante": [
+            "HALAT MEDICAL",
+            "BONETA CHIRURGICALA",
+            "MASCA CHIRURGICALA",
+            "MANUSI CHIRURGICALE"
+          ],
+          "hint_1": "Articol de îmbrăcăminte",
+          "hint_2": "De obicei alb, cu buzunare",
+          "hint_3": "Uniforma clasică a doctorului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "doctor white coat",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_022",
+          "raspuns": "PLASTURE",
+          "variante": [
+            "PLASTURE",
+            "BANDAJ",
+            "COMPRESA STERILA",
+            "LEUCOPLAST"
+          ],
+          "hint_1": "Mic și lipicios",
+          "hint_2": "Se pune pe zgârieturi",
+          "hint_3": "Îl lipești peste o rană mică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "adhesive bandage plaster",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_023",
+          "raspuns": "BANDAJ",
+          "variante": [
+            "BANDAJ",
+            "PLASTURE",
+            "GHIPS",
+            "ATELA"
+          ],
+          "hint_1": "Vine în rolă",
+          "hint_2": "Se înfășoară în jurul rănii",
+          "hint_3": "Fașa cu care se leagă o rană",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "gauze bandage roll",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_024",
+          "raspuns": "GAROU",
+          "variante": [
+            "GAROU",
+            "BANDAJ",
+            "LEUCOPLAST",
+            "ATELA"
+          ],
+          "hint_1": "O bandă care se strânge tare",
+          "hint_2": "Se leagă deasupra rănii sau înainte de recoltare",
+          "hint_3": "Oprește temporar circulația sângelui",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "tourniquet medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_025",
+          "raspuns": "ATELA",
+          "variante": [
+            "ATELA",
+            "GHIPS",
+            "ORTEZA",
+            "GULER CERVICAL"
+          ],
+          "hint_1": "Ține un membru nemișcat",
+          "hint_2": "Rigidă, se prinde cu fașă",
+          "hint_3": "Imobilizează fractura până la ghips",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical splint arm",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_026",
+          "raspuns": "GHIPS",
+          "variante": [
+            "GHIPS",
+            "ATELA",
+            "ORTEZA",
+            "BANDAJ"
+          ],
+          "hint_1": "Se întărește după aplicare",
+          "hint_2": "Colegii pot semna pe el",
+          "hint_3": "Îl porți săptămâni când ți-ai rupt mâna",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "orthopedic cast arm",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_027",
+          "raspuns": "GULER CERVICAL",
+          "variante": [
+            "GULER CERVICAL",
+            "ATELA",
+            "ORTEZA",
+            "GHIPS"
+          ],
+          "hint_1": "Se poartă în jurul gâtului",
+          "hint_2": "Se pune după accidente de mașină",
+          "hint_3": "Imobilizează coloana cervicală",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "cervical collar neck brace",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_028",
+          "raspuns": "PENSETA",
+          "variante": [
+            "PENSETA",
+            "FOARFECA CHIRURGICALA",
+            "BISTURIU",
+            "AC DE SUTURA"
+          ],
+          "hint_1": "Instrument mic de apucat",
+          "hint_2": "Are două brațe care se strâng",
+          "hint_3": "Cu ea scoți o așchie din piele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical tweezers forceps",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_029",
+          "raspuns": "FOARFECA CHIRURGICALA",
+          "variante": [
+            "FOARFECA CHIRURGICALA",
+            "BISTURIU",
+            "PENSETA",
+            "CLEMA HEMOSTATICA"
+          ],
+          "hint_1": "Instrument de tăiat, steril",
+          "hint_2": "Adesea cu vârf curbat",
+          "hint_3": "Cu ea chirurgul taie fire și bandaje",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical scissors",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_030",
+          "raspuns": "AC DE SUTURA",
+          "variante": [
+            "AC DE SUTURA",
+            "FIR DE SUTURA",
+            "SERINGA",
+            "BRANULA"
+          ],
+          "hint_1": "Mic, curbat, foarte ascuțit",
+          "hint_2": "Trece prin piele cu ață specială",
+          "hint_3": "Cu el se coase rana",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical suture needle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_031",
+          "raspuns": "FIR DE SUTURA",
+          "variante": [
+            "FIR DE SUTURA",
+            "AC DE SUTURA",
+            "LEUCOPLAST",
+            "BANDAJ"
+          ],
+          "hint_1": "Subțire, uneori se dizolvă singur",
+          "hint_2": "Se scoate la 7-10 zile",
+          "hint_3": "Ața cu care e cusută rana",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical suture thread",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_032",
+          "raspuns": "CIOCAN DE REFLEXE",
+          "variante": [
+            "CIOCAN DE REFLEXE",
+            "OTOSCOP",
+            "STETOSCOP",
+            "APASATOR DE LIMBA"
+          ],
+          "hint_1": "Mic instrument cu cap de cauciuc",
+          "hint_2": "Neurologul îl folosește des",
+          "hint_3": "Cu el se lovește ușor genunchiul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "reflex hammer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_033",
+          "raspuns": "OTOSCOP",
+          "variante": [
+            "OTOSCOP",
+            "OFTALMOSCOP",
+            "LARINGOSCOP",
+            "ENDOSCOP"
+          ],
+          "hint_1": "Are lumină și lupă",
+          "hint_2": "Se introduce puțin în canal",
+          "hint_3": "Cu el doctorul se uită în ureche",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "otoscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_034",
+          "raspuns": "OFTALMOSCOP",
+          "variante": [
+            "OFTALMOSCOP",
+            "OTOSCOP",
+            "LARINGOSCOP",
+            "MICROSCOP"
+          ],
+          "hint_1": "Instrument cu lumină",
+          "hint_2": "Îl folosește oculistul",
+          "hint_3": "Cu el se examinează interiorul ochiului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "ophthalmoscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_035",
+          "raspuns": "LARINGOSCOP",
+          "variante": [
+            "LARINGOSCOP",
+            "ENDOSCOP",
+            "OTOSCOP",
+            "OFTALMOSCOP"
+          ],
+          "hint_1": "Are o lamă metalică cu lumină",
+          "hint_2": "Folosit la intubare",
+          "hint_3": "Cu el se vede laringele și corzile vocale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "laryngoscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_036",
+          "raspuns": "ENDOSCOP",
+          "variante": [
+            "ENDOSCOP",
+            "LARINGOSCOP",
+            "CATETER",
+            "SONDA NAZOGASTRICA"
+          ],
+          "hint_1": "Un tub lung și flexibil cu cameră",
+          "hint_2": "Intră în corp prin gură",
+          "hint_3": "Cu el se vede interiorul stomacului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "endoscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_037",
+          "raspuns": "MICROSCOP",
+          "variante": [
+            "MICROSCOP",
+            "CENTRIFUGA",
+            "AUTOCLAV",
+            "OFTALMOSCOP"
+          ],
+          "hint_1": "Stă pe masa de laborator",
+          "hint_2": "Are lentile și oglindă sau lampă",
+          "hint_3": "Mărește celulele de sute de ori",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "laboratory microscope",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_038",
+          "raspuns": "EPRUBETA",
+          "variante": [
+            "EPRUBETA",
+            "PIPETA",
+            "CUTIE PETRI",
+            "LAMA DE MICROSCOP"
+          ],
+          "hint_1": "Din sticlă, subțire și alungită",
+          "hint_2": "Stă în stative de laborator",
+          "hint_3": "În ea se recoltează sângele la analize",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "test tube laboratory",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_039",
+          "raspuns": "PIPETA",
+          "variante": [
+            "PIPETA",
+            "EPRUBETA",
+            "SERINGA",
+            "CUTIE PETRI"
+          ],
+          "hint_1": "Ia lichid picătură cu picătură",
+          "hint_2": "Adesea cu pară de cauciuc sau piston",
+          "hint_3": "Cu ea se măsoară volume mici în laborator",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "laboratory pipette",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_040",
+          "raspuns": "CENTRIFUGA",
+          "variante": [
+            "CENTRIFUGA",
+            "AUTOCLAV",
+            "INCUBATOR NEONATAL",
+            "MICROSCOP"
+          ],
+          "hint_1": "Se învârte foarte repede",
+          "hint_2": "Separă componentele sângelui",
+          "hint_3": "În ea se pun eprubetele la rotit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "laboratory centrifuge",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_041",
+          "raspuns": "AUTOCLAV",
+          "variante": [
+            "AUTOCLAV",
+            "CENTRIFUGA",
+            "INCUBATOR NEONATAL",
+            "LAMPA CHIRURGICALA"
+          ],
+          "hint_1": "Funcționează cu abur sub presiune",
+          "hint_2": "Ca o oală sub presiune de laborator",
+          "hint_3": "În el se sterilizează instrumentele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "autoclave sterilizer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_042",
+          "raspuns": "CUTIE PETRI",
+          "variante": [
+            "CUTIE PETRI",
+            "EPRUBETA",
+            "LAMA DE MICROSCOP",
+            "PIPETA"
+          ],
+          "hint_1": "Rotundă, plată, transparentă",
+          "hint_2": "Are capac și gel nutritiv",
+          "hint_3": "În ea se cultivă bacteriile",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Petri dish bacteria",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_043",
+          "raspuns": "INCUBATOR NEONATAL",
+          "variante": [
+            "INCUBATOR NEONATAL",
+            "VENTILATOR MEDICAL",
+            "AUTOCLAV",
+            "PAT DE SPITAL"
+          ],
+          "hint_1": "O cutie transparentă încălzită",
+          "hint_2": "Se află la maternitate",
+          "hint_3": "În el stau bebelușii prematuri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "neonatal incubator baby",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_044",
+          "raspuns": "VENTILATOR MEDICAL",
+          "variante": [
+            "VENTILATOR MEDICAL",
+            "CONCENTRATOR DE OXIGEN",
+            "NEBULIZATOR",
+            "DEFIBRILATOR"
+          ],
+          "hint_1": "Aparat de la terapie intensivă",
+          "hint_2": "Se conectează printr-un tub la pacient",
+          "hint_3": "Respiră în locul pacientului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "medical ventilator ICU",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_045",
+          "raspuns": "CONCENTRATOR DE OXIGEN",
+          "variante": [
+            "CONCENTRATOR DE OXIGEN",
+            "BUTELIE DE OXIGEN",
+            "VENTILATOR MEDICAL",
+            "NEBULIZATOR"
+          ],
+          "hint_1": "Aparat pentru acasă sau spital",
+          "hint_2": "Extrage oxigen din aerul camerei",
+          "hint_3": "Furnizează oxigen prin canulă nazală",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "oxygen concentrator",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_046",
+          "raspuns": "BUTELIE DE OXIGEN",
+          "variante": [
+            "BUTELIE DE OXIGEN",
+            "CONCENTRATOR DE OXIGEN",
+            "AUTOCLAV",
+            "STATIV DE PERFUZIE"
+          ],
+          "hint_1": "Un tub metalic sub presiune",
+          "hint_2": "Adesea verde sau alb",
+          "hint_3": "Rezerva de oxigen a ambulanței",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "oxygen cylinder medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_047",
+          "raspuns": "MASCA DE OXIGEN",
+          "variante": [
+            "MASCA DE OXIGEN",
+            "MASCA CHIRURGICALA",
+            "CANULA NAZALA",
+            "NEBULIZATOR"
+          ],
+          "hint_1": "Se pune peste nas și gură",
+          "hint_2": "Are un tub conectat la o sursă",
+          "hint_3": "Prin ea pacientul primește oxigen",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "oxygen mask medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_048",
+          "raspuns": "CANULA NAZALA",
+          "variante": [
+            "CANULA NAZALA",
+            "MASCA DE OXIGEN",
+            "SONDA NAZOGASTRICA",
+            "CATETER"
+          ],
+          "hint_1": "Un tub subțire cu două vârfuri",
+          "hint_2": "Se agață după urechi",
+          "hint_3": "Duce oxigenul direct în nări",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "nasal cannula",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_049",
+          "raspuns": "NEBULIZATOR",
+          "variante": [
+            "NEBULIZATOR",
+            "INHALATOR",
+            "CONCENTRATOR DE OXIGEN",
+            "VENTILATOR MEDICAL"
+          ],
+          "hint_1": "Transformă lichidul în ceață",
+          "hint_2": "Folosit des la copii cu tuse",
+          "hint_3": "Prin el se inhalează medicamentele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "nebulizer machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_050",
+          "raspuns": "INHALATOR",
+          "variante": [
+            "INHALATOR",
+            "NEBULIZATOR",
+            "PULVERIZATOR NAZAL",
+            "MASCA DE OXIGEN"
+          ],
+          "hint_1": "Mic, de buzunar",
+          "hint_2": "Se apasă și se trage aer în piept",
+          "hint_3": "Salvarea astmaticilor în criză",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "asthma inhaler",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_051",
+          "raspuns": "LAMPA CHIRURGICALA",
+          "variante": [
+            "LAMPA CHIRURGICALA",
+            "MASA DE OPERATIE",
+            "LAMPA DE FOTOTERAPIE",
+            "MONITOR FUNCTII VITALE"
+          ],
+          "hint_1": "Foarte puternică, fără umbre",
+          "hint_2": "Atârnă deasupra mesei de operație",
+          "hint_3": "Luminează câmpul operator",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical light operating room",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_052",
+          "raspuns": "MASA DE OPERATIE",
+          "variante": [
+            "MASA DE OPERATIE",
+            "PAT DE SPITAL",
+            "TARGA",
+            "SCAUN STOMATOLOGIC"
+          ],
+          "hint_1": "În centrul sălii de operație",
+          "hint_2": "Se reglează pe înălțime și înclinare",
+          "hint_3": "Pe ea stă pacientul operat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "operating table surgery",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_053",
+          "raspuns": "MONITOR FUNCTII VITALE",
+          "variante": [
+            "MONITOR FUNCTII VITALE",
+            "ELECTROCARDIOGRAF",
+            "DEFIBRILATOR",
+            "HOLTER"
+          ],
+          "hint_1": "Un ecran care piuie lângă pat",
+          "hint_2": "Arată linii și cifre colorate",
+          "hint_3": "Urmărește pulsul, tensiunea și oxigenul",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "patient monitor vital signs",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_054",
+          "raspuns": "INJECTOMAT",
+          "variante": [
+            "INJECTOMAT",
+            "PERFUZIE",
+            "SERINGA",
+            "STATIV DE PERFUZIE"
+          ],
+          "hint_1": "O pompă electronică precisă",
+          "hint_2": "Împinge pistonul seringii automat",
+          "hint_3": "Administrează medicamentul cu viteză exactă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "syringe pump medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_055",
+          "raspuns": "CATETER",
+          "variante": [
+            "CATETER",
+            "BRANULA",
+            "SONDA NAZOGASTRICA",
+            "ENDOSCOP"
+          ],
+          "hint_1": "Un tub subțire și flexibil",
+          "hint_2": "Se introduce în corp prin vase sau canale",
+          "hint_3": "Prin el se drenează sau se administrează lichide",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "medical catheter",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_056",
+          "raspuns": "SONDA NAZOGASTRICA",
+          "variante": [
+            "SONDA NAZOGASTRICA",
+            "CATETER",
+            "CANULA NAZALA",
+            "ENDOSCOP"
+          ],
+          "hint_1": "Un tub lung și subțire",
+          "hint_2": "Intră prin nas",
+          "hint_3": "Ajunge până în stomac pentru hrănire",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "nasogastric tube",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_057",
+          "raspuns": "PUNGA DE SANGE",
+          "variante": [
+            "PUNGA DE SANGE",
+            "PERFUZIE",
+            "PUNGA CU GHEATA",
+            "EPRUBETA"
+          ],
+          "hint_1": "Pungă flexibilă cu lichid roșu",
+          "hint_2": "Se păstrează la frigider special",
+          "hint_3": "Din ea se face transfuzia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "blood bag transfusion",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_058",
+          "raspuns": "STATIV DE PERFUZIE",
+          "variante": [
+            "STATIV DE PERFUZIE",
+            "PERFUZIE",
+            "INJECTOMAT",
+            "PAT DE SPITAL"
+          ],
+          "hint_1": "Un suport înalt pe roți",
+          "hint_2": "Are cârlige în vârf",
+          "hint_3": "De el se agață punga de perfuzie",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "IV pole stand hospital",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_059",
+          "raspuns": "AMBULANTA",
+          "variante": [
+            "AMBULANTA",
+            "TARGA",
+            "ELICOPTER SMURD",
+            "MASINA DE POLITIE"
+          ],
+          "hint_1": "Vehicul cu girofar",
+          "hint_2": "Are sirenă și cruce pe caroserie",
+          "hint_3": "Mașina care duce bolnavii la urgență",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "ambulance",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_060",
+          "raspuns": "TRUSA DE PRIM AJUTOR",
+          "variante": [
+            "TRUSA DE PRIM AJUTOR",
+            "GEANTA MEDICALA",
+            "AUTOCLAV",
+            "CUTIE PETRI"
+          ],
+          "hint_1": "O cutie cu cruce pe capac",
+          "hint_2": "Obligatorie în orice mașină",
+          "hint_3": "Conține plasturi, fașă și dezinfectant",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "first aid kit",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_061",
+          "raspuns": "VATA",
+          "variante": [
+            "VATA",
+            "COMPRESA STERILA",
+            "BANDAJ",
+            "PLASTURE"
+          ],
+          "hint_1": "Albă și pufoasă",
+          "hint_2": "Se îmbibă cu spirt",
+          "hint_3": "Se pune pe braț după injecție",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "cotton wool medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_062",
+          "raspuns": "LEUCOPLAST",
+          "variante": [
+            "LEUCOPLAST",
+            "PLASTURE",
+            "BANDAJ",
+            "FIR DE SUTURA"
+          ],
+          "hint_1": "Vine în rolă, se rupe ușor",
+          "hint_2": "Lipicios pe o parte",
+          "hint_3": "Cu el se fixează pansamentul pe piele",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "medical adhesive tape roll",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_063",
+          "raspuns": "APASATOR DE LIMBA",
+          "variante": [
+            "APASATOR DE LIMBA",
+            "CIOCAN DE REFLEXE",
+            "PENSETA",
+            "SPECULUM"
+          ],
+          "hint_1": "Un bețișor lat de lemn",
+          "hint_2": "Doctorul îți spune să zici «aaa»",
+          "hint_3": "Ține limba jos ca să se vadă gâtul",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "tongue depressor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_064",
+          "raspuns": "APARAT DE DIALIZA",
+          "variante": [
+            "APARAT DE DIALIZA",
+            "APARAT RMN",
+            "VENTILATOR MEDICAL",
+            "INJECTOMAT"
+          ],
+          "hint_1": "Pacientul stă conectat ore întregi",
+          "hint_2": "Sângele trece prin el și se întoarce curat",
+          "hint_3": "Înlocuiește rinichii bolnavi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "dialysis machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_065",
+          "raspuns": "PROTEZA DENTARA",
+          "variante": [
+            "PROTEZA DENTARA",
+            "APARAT DENTAR",
+            "PROTEZA DE SOLD",
+            "IMPLANT DENTAR"
+          ],
+          "hint_1": "Se scoate noaptea într-un pahar",
+          "hint_2": "Înlocuiește ceva pierdut",
+          "hint_3": "Dinții falși ai bunicilor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "dentures false teeth",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_066",
+          "raspuns": "APARAT DENTAR",
+          "variante": [
+            "APARAT DENTAR",
+            "PROTEZA DENTARA",
+            "FREZA DENTARA",
+            "IMPLANT DENTAR"
+          ],
+          "hint_1": "Se poartă ani de zile pe dinți",
+          "hint_2": "Are sârme și bracketuri",
+          "hint_3": "Îndreaptă dinții strâmbi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "dental braces teeth",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_067",
+          "raspuns": "SCAUN STOMATOLOGIC",
+          "variante": [
+            "SCAUN STOMATOLOGIC",
+            "MASA DE OPERATIE",
+            "PAT DE SPITAL",
+            "SCAUN CU ROTILE"
+          ],
+          "hint_1": "Se lasă pe spate electric",
+          "hint_2": "Are lampă și tăviță cu instrumente",
+          "hint_3": "În el stai la dentist",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "dental chair",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_068",
+          "raspuns": "FREZA DENTARA",
+          "variante": [
+            "FREZA DENTARA",
+            "BISTURIU",
+            "APARAT DENTAR",
+            "PENSETA"
+          ],
+          "hint_1": "Scoate un sunet ascuțit temut",
+          "hint_2": "Se rotește foarte repede",
+          "hint_3": "Cu ea dentistul curăță caria",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "dental drill",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_069",
+          "raspuns": "APARAT DE RADIOGRAFIE",
+          "variante": [
+            "APARAT DE RADIOGRAFIE",
+            "COMPUTER TOMOGRAF",
+            "APARAT RMN",
+            "MAMOGRAF"
+          ],
+          "hint_1": "Vezi oasele cu el",
+          "hint_2": "Folosește radiații",
+          "hint_3": "Face poza alb-negru a scheletului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "X-ray machine hospital",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_070",
+          "raspuns": "MAMOGRAF",
+          "variante": [
+            "MAMOGRAF",
+            "ECOGRAF",
+            "APARAT DE RADIOGRAFIE",
+            "COMPUTER TOMOGRAF"
+          ],
+          "hint_1": "Aparat de screening",
+          "hint_2": "Folosit doar pentru o zonă a corpului",
+          "hint_3": "Depistează cancerul de sân",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "mammography machine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_071",
+          "raspuns": "SPIROMETRU",
+          "variante": [
+            "SPIROMETRU",
+            "PULSOXIMETRU",
+            "NEBULIZATOR",
+            "ELECTROCARDIOGRAF"
+          ],
+          "hint_1": "Sufli în el cât de tare poți",
+          "hint_2": "Măsoară aerul expirat",
+          "hint_3": "Testează capacitatea plămânilor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "spirometer lung test",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_072",
+          "raspuns": "CANTAR MEDICAL",
+          "variante": [
+            "CANTAR MEDICAL",
+            "TENSIOMETRU",
+            "TALIOMETRU",
+            "GLUCOMETRU"
+          ],
+          "hint_1": "Te urci pe el la control",
+          "hint_2": "Adesea are și tijă de înălțime",
+          "hint_3": "Măsoară greutatea corporală",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "medical scale weight",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_073",
+          "raspuns": "HOLTER",
+          "variante": [
+            "HOLTER",
+            "ELECTROCARDIOGRAF",
+            "PULSOXIMETRU",
+            "STIMULATOR CARDIAC"
+          ],
+          "hint_1": "Îl porți acasă 24 de ore",
+          "hint_2": "Mic aparat prins de curea cu electrozi",
+          "hint_3": "Înregistrează inima o zi întreagă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Holter monitor heart",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_074",
+          "raspuns": "STIMULATOR CARDIAC",
+          "variante": [
+            "STIMULATOR CARDIAC",
+            "DEFIBRILATOR",
+            "STENT",
+            "HOLTER"
+          ],
+          "hint_1": "Se implantează sub piele",
+          "hint_2": "Funcționează pe baterie ani de zile",
+          "hint_3": "Dă ritm inimii leneșe — pacemaker",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "artificial pacemaker",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_075",
+          "raspuns": "STENT",
+          "variante": [
+            "STENT",
+            "STIMULATOR CARDIAC",
+            "PROTEZA DE SOLD",
+            "BRANULA"
+          ],
+          "hint_1": "O plasă metalică minusculă",
+          "hint_2": "Se montează prin cateter",
+          "hint_3": "Ține artera inimii deschisă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "coronary stent",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_076",
+          "raspuns": "PROTEZA DE SOLD",
+          "variante": [
+            "PROTEZA DE SOLD",
+            "STENT",
+            "PROTEZA DENTARA",
+            "ORTEZA"
+          ],
+          "hint_1": "Din titan sau ceramică",
+          "hint_2": "Se pune la operația de șold",
+          "hint_3": "Înlocuiește articulația uzată",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "hip replacement prosthesis",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_077",
+          "raspuns": "APARAT AUDITIV",
+          "variante": [
+            "APARAT AUDITIV",
+            "IMPLANT COHLEAR",
+            "OTOSCOP",
+            "CASTI MEDICALE"
+          ],
+          "hint_1": "Mic, se poartă la ureche",
+          "hint_2": "Are baterie și microfon",
+          "hint_3": "Amplifică sunetele pentru cei care nu aud",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "hearing aid",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_078",
+          "raspuns": "OCHELARI DE VEDERE",
+          "variante": [
+            "OCHELARI DE VEDERE",
+            "LENTILE DE CONTACT",
+            "OCHELARI DE PROTECTIE",
+            "OFTALMOSCOP"
+          ],
+          "hint_1": "Se poartă pe nas",
+          "hint_2": "Au lentile cu dioptrii",
+          "hint_3": "Corectează miopia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "eyeglasses",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_079",
+          "raspuns": "LENTILE DE CONTACT",
+          "variante": [
+            "LENTILE DE CONTACT",
+            "OCHELARI DE VEDERE",
+            "OCHELARI DE PROTECTIE",
+            "LAMA DE MICROSCOP"
+          ],
+          "hint_1": "Aproape invizibile",
+          "hint_2": "Se pun direct pe ochi",
+          "hint_3": "Alternativa la ochelari",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "contact lenses",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_080",
+          "raspuns": "ELECTROZI EKG",
+          "variante": [
+            "ELECTROZI EKG",
+            "ELECTROCARDIOGRAF",
+            "HOLTER",
+            "DEFIBRILATOR"
+          ],
+          "hint_1": "Mici discuri lipicioase",
+          "hint_2": "Se lipesc pe piept",
+          "hint_3": "Prin ei se face electrocardiograma",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "ECG electrodes chest",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_081",
+          "raspuns": "GEL DE ECOGRAFIE",
+          "variante": [
+            "GEL DE ECOGRAFIE",
+            "DEZINFECTANT",
+            "APA OXIGENATA",
+            "VATA"
+          ],
+          "hint_1": "Rece și lipicios",
+          "hint_2": "Se întinde pe burtă",
+          "hint_3": "Fără el sonda ecografului nu vede",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "ultrasound gel",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_082",
+          "raspuns": "TERMOMETRU INFRAROSU",
+          "variante": [
+            "TERMOMETRU INFRAROSU",
+            "TERMOMETRU",
+            "PULSOXIMETRU",
+            "TENSIOMETRU"
+          ],
+          "hint_1": "Nu atinge pielea",
+          "hint_2": "Se îndreaptă spre frunte",
+          "hint_3": "Măsoară febra de la distanță",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "infrared thermometer forehead",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_083",
+          "raspuns": "DEZINFECTANT",
+          "variante": [
+            "DEZINFECTANT",
+            "APA OXIGENATA",
+            "GEL DE ECOGRAFIE",
+            "SER FIZIOLOGIC"
+          ],
+          "hint_1": "Lichid sau gel cu miros de alcool",
+          "hint_2": "Omoară microbii",
+          "hint_3": "Îl folosești pe mâini la intrarea în spital",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "hand sanitizer bottle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_084",
+          "raspuns": "APA OXIGENATA",
+          "variante": [
+            "APA OXIGENATA",
+            "DEZINFECTANT",
+            "SER FIZIOLOGIC",
+            "BETADINA"
+          ],
+          "hint_1": "Face spumă albă pe rană",
+          "hint_2": "Sticluță din farmacie",
+          "hint_3": "Cu ea se curăță rănile",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "hydrogen peroxide bottle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_085",
+          "raspuns": "COMPRESA STERILA",
+          "variante": [
+            "COMPRESA STERILA",
+            "VATA",
+            "PLASTURE",
+            "BANDAJ"
+          ],
+          "hint_1": "Pătrățele albe împachetate",
+          "hint_2": "Din tifon steril",
+          "hint_3": "Se pune direct pe rană sub bandaj",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "sterile gauze compress",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_086",
+          "raspuns": "BONETA CHIRURGICALA",
+          "variante": [
+            "BONETA CHIRURGICALA",
+            "MASCA CHIRURGICALA",
+            "HALAT MEDICAL",
+            "MANUSI CHIRURGICALE"
+          ],
+          "hint_1": "Se poartă pe cap",
+          "hint_2": "Acoperă tot părul",
+          "hint_3": "O poartă chirurgii în sală",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "surgical cap",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_087",
+          "raspuns": "OCHELARI DE PROTECTIE",
+          "variante": [
+            "OCHELARI DE PROTECTIE",
+            "OCHELARI DE VEDERE",
+            "LENTILE DE CONTACT",
+            "MASCA CHIRURGICALA"
+          ],
+          "hint_1": "Acoperă complet ochii",
+          "hint_2": "Din plastic transparent",
+          "hint_3": "Protejează ochii de stropi în laborator",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "safety goggles medical",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_088",
+          "raspuns": "SPECULUM",
+          "variante": [
+            "SPECULUM",
+            "APASATOR DE LIMBA",
+            "PENSETA",
+            "LARINGOSCOP"
+          ],
+          "hint_1": "Instrument de examinare",
+          "hint_2": "Deschide și ține deschis",
+          "hint_3": "Îl folosește ginecologul la consult",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "medical speculum",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_089",
+          "raspuns": "LAMA DE MICROSCOP",
+          "variante": [
+            "LAMA DE MICROSCOP",
+            "CUTIE PETRI",
+            "EPRUBETA",
+            "PIPETA"
+          ],
+          "hint_1": "Dreptunghi subțire de sticlă",
+          "hint_2": "Pe ea se pune proba",
+          "hint_3": "Se așază sub obiectivul microscopului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "microscope slide",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_090",
+          "raspuns": "DOPPLER FETAL",
+          "variante": [
+            "DOPPLER FETAL",
+            "ECOGRAF",
+            "STETOSCOP",
+            "MONITOR FUNCTII VITALE"
+          ],
+          "hint_1": "Aparat mic cu difuzor",
+          "hint_2": "Se plimbă pe burtica gravidei",
+          "hint_3": "Cu el se aude inima bebelușului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "fetal doppler",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_091",
+          "raspuns": "PULVERIZATOR NAZAL",
+          "variante": [
+            "PULVERIZATOR NAZAL",
+            "INHALATOR",
+            "NEBULIZATOR",
+            "PIPETA"
+          ],
+          "hint_1": "Flacon mic cu duză",
+          "hint_2": "Se introduce în nară",
+          "hint_3": "Din el se pulverizează medicament în nas",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "nasal spray bottle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_092",
+          "raspuns": "ACE DE ACUPUNCTURA",
+          "variante": [
+            "ACE DE ACUPUNCTURA",
+            "AC DE SUTURA",
+            "SERINGA",
+            "BRANULA"
+          ],
+          "hint_1": "Foarte subțiri și lungi",
+          "hint_2": "Se înfig puțin în piele",
+          "hint_3": "Terapie tradițională chinezească",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "acupuncture needles",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_093",
+          "raspuns": "TEST RAPID COVID",
+          "variante": [
+            "TEST RAPID COVID",
+            "GLUCOMETRU",
+            "TEST DE SARCINA",
+            "EPRUBETA"
+          ],
+          "hint_1": "O casetă mică de plastic",
+          "hint_2": "Aștepți 15 minute liniile",
+          "hint_3": "Două linii înseamnă pozitiv",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "rapid antigen test covid",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_094",
+          "raspuns": "TERMOFOR",
+          "variante": [
+            "TERMOFOR",
+            "PUNGA CU GHEATA",
+            "PERNA ELECTRICA",
+            "COMPRESA STERILA"
+          ],
+          "hint_1": "Se umple cu apă caldă",
+          "hint_2": "Din cauciuc, cu dop",
+          "hint_3": "Îl pui pe burtă când te doare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "hot water bottle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_095",
+          "raspuns": "PUNGA CU GHEATA",
+          "variante": [
+            "PUNGA CU GHEATA",
+            "TERMOFOR",
+            "PUNGA DE SANGE",
+            "COMPRESA STERILA"
+          ],
+          "hint_1": "Foarte rece",
+          "hint_2": "Se pune pe umflături",
+          "hint_3": "Prim ajutor la entorse",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "ice pack injury",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_096",
+          "raspuns": "ORTEZA",
+          "variante": [
+            "ORTEZA",
+            "GHIPS",
+            "ATELA",
+            "GULER CERVICAL"
+          ],
+          "hint_1": "Se poartă pe articulație",
+          "hint_2": "Cu arici și atele flexibile",
+          "hint_3": "Susține genunchiul după accidentare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "knee brace orthosis",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_097",
+          "raspuns": "CADRU DE MERS",
+          "variante": [
+            "CADRU DE MERS",
+            "CARJE",
+            "BASTON",
+            "SCAUN CU ROTILE"
+          ],
+          "hint_1": "Din aluminiu ușor, cu patru picioare",
+          "hint_2": "Îl ții în fața ta și pășești",
+          "hint_3": "Sprijin la mers pentru vârstnici",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "walking frame walker",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_098",
+          "raspuns": "BASTON",
+          "variante": [
+            "BASTON",
+            "CARJE",
+            "CADRU DE MERS",
+            "ATELA"
+          ],
+          "hint_1": "Simplu, cu mâner curbat",
+          "hint_2": "Se ține într-o singură mână",
+          "hint_3": "Sprijinul clasic al bunicului la plimbare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "walking cane stick",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_099",
+          "raspuns": "LAMPA DE FOTOTERAPIE",
+          "variante": [
+            "LAMPA DE FOTOTERAPIE",
+            "LAMPA CHIRURGICALA",
+            "INCUBATOR NEONATAL",
+            "LAMPA UV"
+          ],
+          "hint_1": "Emite lumină albastră",
+          "hint_2": "Se pune deasupra bebelușilor",
+          "hint_3": "Tratează icterul nou-născuților",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "phototherapy lamp jaundice baby",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_100",
+          "raspuns": "EPIPEN",
+          "variante": [
+            "EPIPEN",
+            "SERINGA",
+            "INJECTOMAT",
+            "INHALATOR"
+          ],
+          "hint_1": "Ca un pix gros",
+          "hint_2": "Se înfige în coapsă în urgență",
+          "hint_3": "Salvează viața la șoc alergic",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "epinephrine auto-injector EpiPen",
+          "imagine_sursa": "wikipedia"
+        }
+      ]
+    }
+  }
+}

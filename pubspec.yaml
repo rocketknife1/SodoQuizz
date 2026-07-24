@@ -1,0 +1,51 @@
+name: guess_it
+description: "A new Flutter project."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.3.0
+  cupertino_icons: ^1.0.8
+  audioplayers: ^6.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/branding/
+    - assets/continut/pixelat/
+    - assets/continut/pixelat/poze/
+    - assets/continut/logouri/
+    - assets/continut/logouri/poze/
+    - assets/continut/jocuri/
+    - assets/continut/jocuri/poze/
+    - assets/continut/medical/
+    - assets/continut/medical/poze/
+    - assets/continut/mecanica/
+    - assets/continut/mecanica/poze/
+    - assets/continut/aplicatii/
+    - assets/continut/aplicatii/poze/
+    - assets/continut/masini/
+    - assets/continut/masini/poze/
+    - assets/continut/celebritati/
+    - assets/continut/celebritati/poze/
+    - assets/continut/sport/
+    - assets/continut/sport/poze/
+    - assets/continut/romania/
+    - assets/continut/romania/poze/
+    - assets/sfx/
+
+  fonts:
+    - family: EdoSZ
+      fonts:
+        - asset: fonts/edosz/edosz.ttf

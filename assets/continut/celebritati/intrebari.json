@@ -1,0 +1,863 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "celebritati": {
+      "mod": "4_variante",
+      "culoare_tema": "#8E44AD",
+      "descriere": "Vedete & staruri",
+      "intrebari": [
+        {
+          "id": "cel_001",
+          "raspuns": "LEONARDO DICAPRIO",
+          "variante": [
+            "LEONARDO DICAPRIO",
+            "BRAD PITT",
+            "JOHNNY DEPP",
+            "MATT DAMON"
+          ],
+          "hint_1": "Actorul din Titanic",
+          "hint_2": "Oscar pentru The Revenant",
+          "hint_3": "Colaborări celebre cu Scorsese și Tarantino",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Leonardo DiCaprio",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_002",
+          "raspuns": "BRAD PITT",
+          "variante": [
+            "BRAD PITT",
+            "GEORGE CLOONEY",
+            "TOM CRUISE",
+            "LEONARDO DICAPRIO"
+          ],
+          "hint_1": "Actorul din Fight Club",
+          "hint_2": "Fost soț al Angelinei Jolie",
+          "hint_3": "Oscar pentru Once Upon a Time in Hollywood",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Brad Pitt",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_003",
+          "raspuns": "ANGELINA JOLIE",
+          "variante": [
+            "ANGELINA JOLIE",
+            "JENNIFER ANISTON",
+            "MONICA BELLUCCI",
+            "CHARLIZE THERON"
+          ],
+          "hint_1": "Actrița din Maleficent",
+          "hint_2": "Lara Croft în Tomb Raider",
+          "hint_3": "Ambasadoare a bunăvoinței la ONU",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Angelina Jolie",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_004",
+          "raspuns": "TOM CRUISE",
+          "variante": [
+            "TOM CRUISE",
+            "TOM HANKS",
+            "BRAD PITT",
+            "KEANU REEVES"
+          ],
+          "hint_1": "Își face singur cascadoriile",
+          "hint_2": "Seria Mission: Impossible",
+          "hint_3": "Pilotul din Top Gun",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tom Cruise",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_005",
+          "raspuns": "JOHNNY DEPP",
+          "variante": [
+            "JOHNNY DEPP",
+            "ORLANDO BLOOM",
+            "ROBERT DOWNEY JR",
+            "JARED LETO"
+          ],
+          "hint_1": "Căpitanul Jack Sparrow",
+          "hint_2": "Edward Mâini-de-Foarfecă",
+          "hint_3": "Proces celebru cu Amber Heard",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Johnny Depp",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_006",
+          "raspuns": "WILL SMITH",
+          "variante": [
+            "WILL SMITH",
+            "DENZEL WASHINGTON",
+            "KEVIN HART",
+            "JAMIE FOXX"
+          ],
+          "hint_1": "Prințul din Bel-Air",
+          "hint_2": "Agentul din Men in Black",
+          "hint_3": "Palma de la Oscarurile din 2022",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Will Smith",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_007",
+          "raspuns": "DWAYNE JOHNSON",
+          "variante": [
+            "DWAYNE JOHNSON",
+            "VIN DIESEL",
+            "JASON STATHAM",
+            "JOHN CENA"
+          ],
+          "hint_1": "Poreclit 'The Rock'",
+          "hint_2": "Fost wrestler WWE",
+          "hint_3": "Joacă în Fast & Furious și Jumanji",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Dwayne Johnson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_008",
+          "raspuns": "KEANU REEVES",
+          "variante": [
+            "KEANU REEVES",
+            "HUGH JACKMAN",
+            "CHRISTIAN BALE",
+            "TOM CRUISE"
+          ],
+          "hint_1": "Neo din Matrix",
+          "hint_2": "Asasinul John Wick",
+          "hint_3": "Considerat cel mai cumsecade om din Hollywood",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Keanu Reeves",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_009",
+          "raspuns": "TOM HANKS",
+          "variante": [
+            "TOM HANKS",
+            "TOM CRUISE",
+            "ROBIN WILLIAMS",
+            "MORGAN FREEMAN"
+          ],
+          "hint_1": "Forrest Gump",
+          "hint_2": "Vocea lui Woody din Toy Story",
+          "hint_3": "Naufragiatul din Cast Away",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tom Hanks",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_010",
+          "raspuns": "MORGAN FREEMAN",
+          "variante": [
+            "MORGAN FREEMAN",
+            "SAMUEL L JACKSON",
+            "DENZEL WASHINGTON",
+            "WILL SMITH"
+          ],
+          "hint_1": "Vocea inconfundabilă a documentarelor",
+          "hint_2": "Deținutul Red din Shawshank",
+          "hint_3": "L-a interpretat pe Dumnezeu în comedie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Morgan Freeman",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_011",
+          "raspuns": "ROBERT DOWNEY JR",
+          "variante": [
+            "ROBERT DOWNEY JR",
+            "CHRIS EVANS",
+            "CHRIS HEMSWORTH",
+            "MARK RUFFALO"
+          ],
+          "hint_1": "Iron Man",
+          "hint_2": "Sherlock Holmes în filmele lui Guy Ritchie",
+          "hint_3": "Oscar pentru Oppenheimer",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Robert Downey Jr.",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_012",
+          "raspuns": "SCARLETT JOHANSSON",
+          "variante": [
+            "SCARLETT JOHANSSON",
+            "JENNIFER LAWRENCE",
+            "MARGOT ROBBIE",
+            "GAL GADOT"
+          ],
+          "hint_1": "Black Widow din Avengers",
+          "hint_2": "Vocea din filmul Her",
+          "hint_3": "Actriță născută la New York",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Scarlett Johansson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_013",
+          "raspuns": "EMMA WATSON",
+          "variante": [
+            "EMMA WATSON",
+            "EMMA STONE",
+            "NATALIE PORTMAN",
+            "ANNE HATHAWAY"
+          ],
+          "hint_1": "Hermione din Harry Potter",
+          "hint_2": "Activistă pentru egalitate de gen",
+          "hint_3": "Belle din Beauty and the Beast",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Emma Watson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_014",
+          "raspuns": "JENNIFER LAWRENCE",
+          "variante": [
+            "JENNIFER LAWRENCE",
+            "SCARLETT JOHANSSON",
+            "EMMA STONE",
+            "ANNE HATHAWAY"
+          ],
+          "hint_1": "Katniss din Hunger Games",
+          "hint_2": "Oscar la doar 22 de ani",
+          "hint_3": "A căzut pe scări la Oscaruri",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jennifer Lawrence",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_015",
+          "raspuns": "RIHANNA",
+          "variante": [
+            "RIHANNA",
+            "BEYONCE",
+            "NICKI MINAJ",
+            "CARDI B"
+          ],
+          "hint_1": "Cântăreața din Barbados",
+          "hint_2": "Umbrella și Diamonds",
+          "hint_3": "Fondatoarea Fenty Beauty",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Rihanna",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_016",
+          "raspuns": "BEYONCE",
+          "variante": [
+            "BEYONCE",
+            "RIHANNA",
+            "ALICIA KEYS",
+            "MARIAH CAREY"
+          ],
+          "hint_1": "Poreclită 'Queen B'",
+          "hint_2": "Fostă solistă Destiny's Child",
+          "hint_3": "Soția lui Jay-Z",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Beyoncé",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_017",
+          "raspuns": "TAYLOR SWIFT",
+          "variante": [
+            "TAYLOR SWIFT",
+            "SELENA GOMEZ",
+            "ARIANA GRANDE",
+            "KATY PERRY"
+          ],
+          "hint_1": "Turneul 'The Eras Tour'",
+          "hint_2": "Shake It Off",
+          "hint_3": "Recorduri absolute la premiile Grammy",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Taylor Swift",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_018",
+          "raspuns": "ARIANA GRANDE",
+          "variante": [
+            "ARIANA GRANDE",
+            "SELENA GOMEZ",
+            "BILLIE EILISH",
+            "DUA LIPA"
+          ],
+          "hint_1": "Coada de păr semnătură",
+          "hint_2": "Thank U, Next",
+          "hint_3": "Glinda în filmul Wicked",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ariana Grande",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_019",
+          "raspuns": "SELENA GOMEZ",
+          "variante": [
+            "SELENA GOMEZ",
+            "ARIANA GRANDE",
+            "DEMI LOVATO",
+            "HAILEY BIEBER"
+          ],
+          "hint_1": "Fostă vedetă Disney",
+          "hint_2": "Fondatoarea Rare Beauty",
+          "hint_3": "Serialul Only Murders in the Building",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Selena Gomez",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_020",
+          "raspuns": "JUSTIN BIEBER",
+          "variante": [
+            "JUSTIN BIEBER",
+            "SHAWN MENDES",
+            "ZAYN MALIK",
+            "HARRY STYLES"
+          ],
+          "hint_1": "Descoperit pe YouTube la 13 ani",
+          "hint_2": "Baby și Sorry",
+          "hint_3": "Canadian căsătorit cu Hailey",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Justin Bieber",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_021",
+          "raspuns": "ED SHEERAN",
+          "variante": [
+            "ED SHEERAN",
+            "SAM SMITH",
+            "SHAWN MENDES",
+            "LEWIS CAPALDI"
+          ],
+          "hint_1": "Roșcatul cu chitara",
+          "hint_2": "Shape of You",
+          "hint_3": "Cântăreț britanic plin de tatuaje",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ed Sheeran",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_022",
+          "raspuns": "ADELE",
+          "variante": [
+            "ADELE",
+            "CELINE DION",
+            "LADY GAGA",
+            "DUA LIPA"
+          ],
+          "hint_1": "Voce puternică din Londra",
+          "hint_2": "Hello și Rolling in the Deep",
+          "hint_3": "Albume numite după vârsta ei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Adele",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_023",
+          "raspuns": "DUA LIPA",
+          "variante": [
+            "DUA LIPA",
+            "ARIANA GRANDE",
+            "RITA ORA",
+            "BILLIE EILISH"
+          ],
+          "hint_1": "Cântăreață britanică cu origini albaneze",
+          "hint_2": "Levitating",
+          "hint_3": "New Rules",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Dua Lipa",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_024",
+          "raspuns": "SHAKIRA",
+          "variante": [
+            "SHAKIRA",
+            "JENNIFER LOPEZ",
+            "RIHANNA",
+            "BEYONCE"
+          ],
+          "hint_1": "'Șoldurile nu mint'",
+          "hint_2": "Cântăreață columbiană",
+          "hint_3": "Waka Waka, imnul Cupei Mondiale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Shakira",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_025",
+          "raspuns": "JENNIFER LOPEZ",
+          "variante": [
+            "JENNIFER LOPEZ",
+            "SHAKIRA",
+            "BEYONCE",
+            "CARDI B"
+          ],
+          "hint_1": "J.Lo din Bronx",
+          "hint_2": "On the Floor",
+          "hint_3": "Relația celebră cu Ben Affleck",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jennifer Lopez",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_026",
+          "raspuns": "LADY GAGA",
+          "variante": [
+            "LADY GAGA",
+            "MADONNA",
+            "KATY PERRY",
+            "BILLIE EILISH"
+          ],
+          "hint_1": "Rochia din carne",
+          "hint_2": "Poker Face",
+          "hint_3": "Oscar pentru piesa Shallow",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lady Gaga",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_027",
+          "raspuns": "MADONNA",
+          "variante": [
+            "MADONNA",
+            "LADY GAGA",
+            "CHER",
+            "BRITNEY SPEARS"
+          ],
+          "hint_1": "Regina muzicii pop",
+          "hint_2": "Like a Prayer",
+          "hint_3": "Carieră de peste 40 de ani",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Madonna",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_028",
+          "raspuns": "EMINEM",
+          "variante": [
+            "EMINEM",
+            "DRAKE",
+            "SNOOP DOGG",
+            "50 CENT"
+          ],
+          "hint_1": "Alter ego-ul Slim Shady",
+          "hint_2": "Rapper din Detroit",
+          "hint_3": "Lose Yourself",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Eminem",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_029",
+          "raspuns": "DRAKE",
+          "variante": [
+            "DRAKE",
+            "EMINEM",
+            "KANYE WEST",
+            "THE WEEKND"
+          ],
+          "hint_1": "Rapper din Toronto",
+          "hint_2": "God's Plan",
+          "hint_3": "Rivalitatea celebră cu Kendrick Lamar",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Drake (musician)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_030",
+          "raspuns": "SNOOP DOGG",
+          "variante": [
+            "SNOOP DOGG",
+            "EMINEM",
+            "50 CENT",
+            "ICE CUBE"
+          ],
+          "hint_1": "Rapper din Long Beach",
+          "hint_2": "Prieten cu Martha Stewart",
+          "hint_3": "Stil relaxat West Coast",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Snoop Dogg",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_031",
+          "raspuns": "KANYE WEST",
+          "variante": [
+            "KANYE WEST",
+            "DRAKE",
+            "JAY Z",
+            "TRAVIS SCOTT"
+          ],
+          "hint_1": "Fost soț al lui Kim Kardashian",
+          "hint_2": "Brandul de adidași Yeezy",
+          "hint_3": "S-a redenumit Ye",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kanye West",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_032",
+          "raspuns": "KIM KARDASHIAN",
+          "variante": [
+            "KIM KARDASHIAN",
+            "KYLIE JENNER",
+            "PARIS HILTON",
+            "BEYONCE"
+          ],
+          "hint_1": "Vedetă de reality show",
+          "hint_2": "Brandul SKIMS",
+          "hint_3": "Cea mai cunoscută familie de surori din TV",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Kim Kardashian",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_033",
+          "raspuns": "ELON MUSK",
+          "variante": [
+            "ELON MUSK",
+            "JEFF BEZOS",
+            "MARK ZUCKERBERG",
+            "BILL GATES"
+          ],
+          "hint_1": "Șeful Tesla și SpaceX",
+          "hint_2": "A cumpărat Twitter și l-a redenumit X",
+          "hint_3": "Printre cei mai bogați oameni ai planetei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Elon Musk",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_034",
+          "raspuns": "BILL GATES",
+          "variante": [
+            "BILL GATES",
+            "STEVE JOBS",
+            "ELON MUSK",
+            "MARK ZUCKERBERG"
+          ],
+          "hint_1": "Fondatorul Microsoft",
+          "hint_2": "Filantrop miliardar",
+          "hint_3": "A creat sistemul Windows",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bill Gates",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_035",
+          "raspuns": "MARK ZUCKERBERG",
+          "variante": [
+            "MARK ZUCKERBERG",
+            "ELON MUSK",
+            "JEFF BEZOS",
+            "JACK DORSEY"
+          ],
+          "hint_1": "Fondatorul Facebook",
+          "hint_2": "A pornit rețeaua din camera de cămin",
+          "hint_3": "Șeful companiei Meta",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mark Zuckerberg",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_036",
+          "raspuns": "JEFF BEZOS",
+          "variante": [
+            "JEFF BEZOS",
+            "ELON MUSK",
+            "BILL GATES",
+            "WARREN BUFFETT"
+          ],
+          "hint_1": "Fondatorul Amazon",
+          "hint_2": "Zboruri spațiale cu Blue Origin",
+          "hint_3": "A început cu o librărie online",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jeff Bezos",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_037",
+          "raspuns": "OPRAH WINFREY",
+          "variante": [
+            "OPRAH WINFREY",
+            "ELLEN DEGENERES",
+            "MICHELLE OBAMA",
+            "WHOOPI GOLDBERG"
+          ],
+          "hint_1": "Regina talk-show-urilor",
+          "hint_2": "'You get a car!'",
+          "hint_3": "Miliardară din televiziune",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Oprah Winfrey",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_038",
+          "raspuns": "MRBEAST",
+          "variante": [
+            "MRBEAST",
+            "PEWDIEPIE",
+            "LOGAN PAUL",
+            "KSI"
+          ],
+          "hint_1": "Cel mai urmărit YouTuber din lume",
+          "hint_2": "Provocări cu premii uriașe în bani",
+          "hint_3": "Jimmy Donaldson pe numele real",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "MrBeast",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_039",
+          "raspuns": "ZENDAYA",
+          "variante": [
+            "ZENDAYA",
+            "BILLIE EILISH",
+            "SELENA GOMEZ",
+            "MILEY CYRUS"
+          ],
+          "hint_1": "MJ din filmele Spider-Man",
+          "hint_2": "Serialul Euphoria",
+          "hint_3": "Joacă în filmele Dune",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Zendaya",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_040",
+          "raspuns": "BILLIE EILISH",
+          "variante": [
+            "BILLIE EILISH",
+            "ARIANA GRANDE",
+            "DUA LIPA",
+            "OLIVIA RODRIGO"
+          ],
+          "hint_1": "Bad Guy",
+          "hint_2": "Stilul șoptit și părul verde-negru",
+          "hint_3": "Fratele Finneas îi produce piesele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Billie Eilish",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_041",
+          "raspuns": "THE WEEKND",
+          "variante": [
+            "THE WEEKND",
+            "DRAKE",
+            "BRUNO MARS",
+            "POST MALONE"
+          ],
+          "hint_1": "Blinding Lights",
+          "hint_2": "Canadian de origine etiopiană",
+          "hint_3": "Abel Tesfaye pe numele real",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "The Weeknd",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_042",
+          "raspuns": "BRUNO MARS",
+          "variante": [
+            "BRUNO MARS",
+            "THE WEEKND",
+            "JUSTIN TIMBERLAKE",
+            "USHER"
+          ],
+          "hint_1": "Uptown Funk",
+          "hint_2": "Cântăreț născut în Hawaii",
+          "hint_3": "24K Magic",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bruno Mars",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_043",
+          "raspuns": "KATY PERRY",
+          "variante": [
+            "KATY PERRY",
+            "LADY GAGA",
+            "TAYLOR SWIFT",
+            "MILEY CYRUS"
+          ],
+          "hint_1": "Firework",
+          "hint_2": "Jurată la American Idol",
+          "hint_3": "Roar",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Katy Perry",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_044",
+          "raspuns": "MILEY CYRUS",
+          "variante": [
+            "MILEY CYRUS",
+            "SELENA GOMEZ",
+            "DEMI LOVATO",
+            "KATY PERRY"
+          ],
+          "hint_1": "Fosta Hannah Montana",
+          "hint_2": "Wrecking Ball",
+          "hint_3": "Grammy pentru piesa Flowers",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Miley Cyrus",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_045",
+          "raspuns": "HARRY STYLES",
+          "variante": [
+            "HARRY STYLES",
+            "JUSTIN BIEBER",
+            "SHAWN MENDES",
+            "ZAYN MALIK"
+          ],
+          "hint_1": "Fost membru One Direction",
+          "hint_2": "Watermelon Sugar",
+          "hint_3": "Stil vestimentar excentric",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Harry Styles",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_046",
+          "raspuns": "INNA",
+          "variante": [
+            "INNA",
+            "DELIA",
+            "ANDRA",
+            "ALEXANDRA STAN"
+          ],
+          "hint_1": "Românca cu hituri ascultate global",
+          "hint_2": "Hot și Sun Is Up",
+          "hint_3": "Printre cele mai ascultate artiste române din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Inna",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_047",
+          "raspuns": "SMILEY",
+          "variante": [
+            "SMILEY",
+            "ALEX VELEA",
+            "RANDI",
+            "MARIUS MOGA"
+          ],
+          "hint_1": "Jurat la Vocea României",
+          "hint_2": "Hitul 'Acasă'",
+          "hint_3": "Andrei Maria pe numele real",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Smiley (singer)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_048",
+          "raspuns": "DELIA",
+          "variante": [
+            "DELIA",
+            "INNA",
+            "ANDRA",
+            "LOREDANA"
+          ],
+          "hint_1": "Jurată la iUmor",
+          "hint_2": "Fostă solistă N&D",
+          "hint_3": "Părul mereu în culori neon",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Delia Matache",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_049",
+          "raspuns": "ANDRA",
+          "variante": [
+            "ANDRA",
+            "DELIA",
+            "INNA",
+            "ELENA GHEORGHE"
+          ],
+          "hint_1": "Jurată la Românii au Talent",
+          "hint_2": "Căsătorită cu Cătălin Măruță",
+          "hint_3": "A început în copilărie cu muzică populară",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andra (singer)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_050",
+          "raspuns": "ANDREEA ESCA",
+          "variante": [
+            "ANDREEA ESCA",
+            "MIHAELA RADULESCU",
+            "SIMONA GHERGHE",
+            "TEO TRANDAFIR"
+          ],
+          "hint_1": "Prezentatoarea Știrilor PRO TV",
+          "hint_2": "Peste 25 de ani la pupitrul știrilor",
+          "hint_3": "Cel mai cunoscut chip din televiziunea română",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andreea Esca",
+          "imagine_sursa": "wikipedia"
+        }
+      ]
+    }
+  }
+}

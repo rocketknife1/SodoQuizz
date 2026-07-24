@@ -1,0 +1,863 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "romania": {
+      "mod": "4_variante",
+      "culoare_tema": "#2C3E90",
+      "descriere": "Cultură & simboluri",
+      "intrebari": [
+        {
+          "id": "rom_001",
+          "raspuns": "CASTELUL BRAN",
+          "variante": [
+            "CASTELUL BRAN",
+            "CASTELUL PELES",
+            "CETATEA CORVINILOR",
+            "CETATEA RASNOV"
+          ],
+          "hint_1": "'Castelul lui Dracula'",
+          "hint_2": "Între Bucegi și Piatra Craiului",
+          "hint_3": "Cel mai vizitat castel din România",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bran Castle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_002",
+          "raspuns": "CASTELUL PELES",
+          "variante": [
+            "CASTELUL PELES",
+            "CASTELUL BRAN",
+            "CETATEA CORVINILOR",
+            "PALATUL COTROCENI"
+          ],
+          "hint_1": "Reședința regală de la Sinaia",
+          "hint_2": "Construit de regele Carol I",
+          "hint_3": "Primul castel electrificat din Europa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Peleș Castle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_003",
+          "raspuns": "PALATUL PARLAMENTULUI",
+          "variante": [
+            "PALATUL PARLAMENTULUI",
+            "ATENEUL ROMAN",
+            "PALATUL COTROCENI",
+            "CASA PRESEI"
+          ],
+          "hint_1": "A doua cea mai mare clădire administrativă din lume",
+          "hint_2": "Numit și 'Casa Poporului'",
+          "hint_3": "Construit în epoca Ceaușescu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Palace of the Parliament",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_004",
+          "raspuns": "ATENEUL ROMAN",
+          "variante": [
+            "ATENEUL ROMAN",
+            "OPERA NATIONALA",
+            "PALATUL CEC",
+            "TEATRUL NATIONAL"
+          ],
+          "hint_1": "Sala de concerte emblemă a Bucureștiului",
+          "hint_2": "Aici cântă Filarmonica George Enescu",
+          "hint_3": "Cupolă și coloane neoclasice",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Romanian Athenaeum",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_005",
+          "raspuns": "ARCUL DE TRIUMF",
+          "variante": [
+            "ARCUL DE TRIUMF",
+            "ATENEUL ROMAN",
+            "PODUL MINCIUNILOR",
+            "TURNUL CHINDIEI"
+          ],
+          "hint_1": "Monument din nordul Bucureștiului",
+          "hint_2": "Inspirat de cel din Paris",
+          "hint_3": "Parada de 1 Decembrie trece pe sub el",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Arcul de Triumf",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_006",
+          "raspuns": "TRANSFAGARASAN",
+          "variante": [
+            "TRANSFAGARASAN",
+            "TRANSALPINA",
+            "VALEA PRAHOVEI",
+            "PASUL TIHUTA"
+          ],
+          "hint_1": "'Cea mai frumoasă șosea din lume' (Top Gear)",
+          "hint_2": "Traversează Munții Făgăraș",
+          "hint_3": "Construit la ordinul lui Ceaușescu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Transfăgărășan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_007",
+          "raspuns": "TRANSALPINA",
+          "variante": [
+            "TRANSALPINA",
+            "TRANSFAGARASAN",
+            "VALEA OLTULUI",
+            "PASUL PRISLOP"
+          ],
+          "hint_1": "'Drumul Regelui'",
+          "hint_2": "Cea mai înaltă șosea din România",
+          "hint_3": "Traversează Munții Parâng",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Transalpina",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_008",
+          "raspuns": "DELTA DUNARII",
+          "variante": [
+            "DELTA DUNARII",
+            "BALTA BRAILEI",
+            "LACUL RAZELM",
+            "LACUL SNAGOV"
+          ],
+          "hint_1": "Paradisul pelicanilor",
+          "hint_2": "Patrimoniu mondial UNESCO",
+          "hint_3": "Fluviul se varsă în mare prin trei brațe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Danube Delta",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_009",
+          "raspuns": "SARMALE",
+          "variante": [
+            "SARMALE",
+            "MICI",
+            "PIFTIE",
+            "CHIFTELE"
+          ],
+          "hint_1": "Rulouri de varză cu umplutură de carne",
+          "hint_2": "Nelipsite de Crăciun",
+          "hint_3": "Se servesc cu mămăligă și smântână",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Sarma (food)",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_010",
+          "raspuns": "MAMALIGA",
+          "variante": [
+            "MAMALIGA",
+            "SARMALE",
+            "ZACUSCA",
+            "BULZ"
+          ],
+          "hint_1": "'Pâinea' galbenă a țăranului",
+          "hint_2": "Se fierbe din mălai",
+          "hint_3": "Merge perfect cu brânză și smântână",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mămăligă",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_011",
+          "raspuns": "MICI",
+          "variante": [
+            "MICI",
+            "SARMALE",
+            "CARNATI",
+            "CHIFTELE"
+          ],
+          "hint_1": "Nelipsiți de 1 Mai la grătar",
+          "hint_2": "Se mănâncă tradițional cu muștar",
+          "hint_3": "Rulouri de carne tocată fără membrană",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mititei",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_012",
+          "raspuns": "COZONAC",
+          "variante": [
+            "COZONAC",
+            "CHEC",
+            "PASCA",
+            "PLACINTA"
+          ],
+          "hint_1": "Desertul sărbătorilor",
+          "hint_2": "Cu nucă, cacao sau rahat",
+          "hint_3": "Aluat dospit împletit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Cozonac",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_013",
+          "raspuns": "PAPANASI",
+          "variante": [
+            "PAPANASI",
+            "GOGOSI",
+            "CLATITE",
+            "GALUSTE"
+          ],
+          "hint_1": "Desert prăjit cu brânză dulce",
+          "hint_2": "Cu smântână și dulceață de afine deasupra",
+          "hint_3": "Vedeta meniurilor tradiționale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Papanași",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_014",
+          "raspuns": "ZACUSCA",
+          "variante": [
+            "ZACUSCA",
+            "SALATA DE VINETE",
+            "ICRE",
+            "PASTA DE ARDEI"
+          ],
+          "hint_1": "Conserva toamnei românești",
+          "hint_2": "Din vinete, ardei copți și ceapă",
+          "hint_3": "Se pune la borcan pentru iarnă",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Zacuscă",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_015",
+          "raspuns": "TUICA",
+          "variante": [
+            "TUICA",
+            "PALINCA",
+            "VISINATA",
+            "AFINATA"
+          ],
+          "hint_1": "Băutura tradițională din prune",
+          "hint_2": "'Un păhărel' înainte de masă",
+          "hint_3": "Distilată toamna în cazan de cupru",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Țuică",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_016",
+          "raspuns": "IA ROMANEASCA",
+          "variante": [
+            "IA ROMANEASCA",
+            "CATRINTA",
+            "MARAMA",
+            "OPINCILE"
+          ],
+          "hint_1": "Bluza tradițională brodată",
+          "hint_2": "Celebrată în fiecare an pe 24 iunie",
+          "hint_3": "L-a inspirat pe pictorul Matisse",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Romanian blouse",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_017",
+          "raspuns": "MARTISOR",
+          "variante": [
+            "MARTISOR",
+            "COCARDA",
+            "TURTA DULCE",
+            "SORCOVA"
+          ],
+          "hint_1": "Șnur alb-roșu dăruit pe 1 Martie",
+          "hint_2": "Vestitorul primăverii",
+          "hint_3": "Se oferă doamnelor și domnișoarelor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mărțișor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_018",
+          "raspuns": "VLAD TEPES",
+          "variante": [
+            "VLAD TEPES",
+            "STEFAN CEL MARE",
+            "MIRCEA CEL BATRAN",
+            "MIHAI VITEAZUL"
+          ],
+          "hint_1": "Domnitorul care l-a inspirat pe Dracula",
+          "hint_2": "Îi pedepsea pe hoți în țeapă",
+          "hint_3": "Domn al Țării Românești",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Vlad the Impaler",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_019",
+          "raspuns": "STEFAN CEL MARE",
+          "variante": [
+            "STEFAN CEL MARE",
+            "VLAD TEPES",
+            "MIHAI VITEAZUL",
+            "ALEXANDRU CEL BUN"
+          ],
+          "hint_1": "Domnitorul Moldovei timp de 47 de ani",
+          "hint_2": "A ridicat câte o biserică după fiecare bătălie",
+          "hint_3": "'Atletul lui Hristos'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Stephen the Great",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_020",
+          "raspuns": "MIHAI VITEAZUL",
+          "variante": [
+            "MIHAI VITEAZUL",
+            "STEFAN CEL MARE",
+            "VLAD TEPES",
+            "CONSTANTIN BRANCOVEANU"
+          ],
+          "hint_1": "Prima unire a celor trei țări române",
+          "hint_2": "Domnitor în jurul anului 1600",
+          "hint_3": "Statuia sa e în Piața Universității",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Michael the Brave",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_021",
+          "raspuns": "DECEBAL",
+          "variante": [
+            "DECEBAL",
+            "BUREBISTA",
+            "TRAIAN",
+            "DROMIHETE"
+          ],
+          "hint_1": "Ultimul rege al dacilor",
+          "hint_2": "Chipul său e sculptat în stâncă la Dunăre",
+          "hint_3": "Învins de împăratul Traian",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Rock sculpture of Decebalus",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_022",
+          "raspuns": "MIHAI EMINESCU",
+          "variante": [
+            "MIHAI EMINESCU",
+            "ION CREANGA",
+            "GEORGE COSBUC",
+            "VASILE ALECSANDRI"
+          ],
+          "hint_1": "'Luceafărul' poeziei românești",
+          "hint_2": "Născut la Ipotești",
+          "hint_3": "Chipul de pe bancnota de 500 de lei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mihai Eminescu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_023",
+          "raspuns": "ION CREANGA",
+          "variante": [
+            "ION CREANGA",
+            "MIHAI EMINESCU",
+            "ION LUCA CARAGIALE",
+            "MIHAIL SADOVEANU"
+          ],
+          "hint_1": "'Amintiri din copilărie'",
+          "hint_2": "Povestitorul din Humulești",
+          "hint_3": "Prieten bun cu Eminescu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ion Creangă",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_024",
+          "raspuns": "CONSTANTIN BRANCUSI",
+          "variante": [
+            "CONSTANTIN BRANCUSI",
+            "GEORGE ENESCU",
+            "NICOLAE GRIGORESCU",
+            "THEODOR AMAN"
+          ],
+          "hint_1": "Părintele sculpturii moderne",
+          "hint_2": "Născut la Hobița, Gorj",
+          "hint_3": "A creat 'Pasărea măiastră'",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Constantin Brâncuși",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_025",
+          "raspuns": "COLOANA INFINITULUI",
+          "variante": [
+            "COLOANA INFINITULUI",
+            "POARTA SARUTULUI",
+            "MASA TACERII",
+            "PASAREA MAIASTRA"
+          ],
+          "hint_1": "Sculptură de aproape 30 de metri la Târgu Jiu",
+          "hint_2": "Omagiu eroilor din Primul Război Mondial",
+          "hint_3": "Module romboidale repetate spre cer",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Endless Column",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_026",
+          "raspuns": "GEORGE ENESCU",
+          "variante": [
+            "GEORGE ENESCU",
+            "CIPRIAN PORUMBESCU",
+            "GHEORGHE ZAMFIR",
+            "DINU LIPATTI"
+          ],
+          "hint_1": "Cel mai mare compozitor român",
+          "hint_2": "'Rapsodia Română'",
+          "hint_3": "Festivalul internațional îi poartă numele",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "George Enescu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_027",
+          "raspuns": "HENRI COANDA",
+          "variante": [
+            "HENRI COANDA",
+            "TRAIAN VUIA",
+            "AUREL VLAICU",
+            "HERMANN OBERTH"
+          ],
+          "hint_1": "Pionierul avionului cu reacție",
+          "hint_2": "Aeroportul Otopeni îi poartă numele",
+          "hint_3": "A descoperit 'efectul Coandă'",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Henri Coandă",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_028",
+          "raspuns": "TRAIAN VUIA",
+          "variante": [
+            "TRAIAN VUIA",
+            "HENRI COANDA",
+            "AUREL VLAICU",
+            "GEORGE CONSTANTINESCU"
+          ],
+          "hint_1": "Zbor doar cu mijloacele de la bord, în 1906",
+          "hint_2": "Pionier bănățean al aviației",
+          "hint_3": "Aeroportul din Timișoara îi poartă numele",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Traian Vuia",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_029",
+          "raspuns": "ALBA CAROLINA",
+          "variante": [
+            "ALBA CAROLINA",
+            "CETATEA RASNOV",
+            "CETATEA SIGHISOARA",
+            "CETATEA FAGARAS"
+          ],
+          "hint_1": "Cetatea în formă de stea din Alba Iulia",
+          "hint_2": "Aici s-a înfăptuit Marea Unire din 1918",
+          "hint_3": "Fortificație Vauban cu 7 bastioane",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Alba Carolina Citadel",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_030",
+          "raspuns": "SIGHISOARA",
+          "variante": [
+            "SIGHISOARA",
+            "BRASOV",
+            "SIBIU",
+            "MEDIAS"
+          ],
+          "hint_1": "Cetate medievală locuită, în patrimoniul UNESCO",
+          "hint_2": "Turnul cu Ceas o veghează",
+          "hint_3": "Aici s-a născut Vlad Țepeș",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sighișoara",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_031",
+          "raspuns": "SALINA TURDA",
+          "variante": [
+            "SALINA TURDA",
+            "SALINA PRAID",
+            "SALINA SLANIC",
+            "SALINA CACICA"
+          ],
+          "hint_1": "Mină de sare cu parc de distracții",
+          "hint_2": "Roată panoramică în subteran",
+          "hint_3": "În apropiere de Cluj",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Salina Turda",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_032",
+          "raspuns": "MANASTIREA VORONET",
+          "variante": [
+            "MANASTIREA VORONET",
+            "MANASTIREA PUTNA",
+            "MANASTIREA SUCEVITA",
+            "MANASTIREA MOLDOVITA"
+          ],
+          "hint_1": "'Capela Sixtină a Estului'",
+          "hint_2": "Celebrul 'albastru de Voroneț'",
+          "hint_3": "Ctitorită de Ștefan cel Mare",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Voroneț Monastery",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_033",
+          "raspuns": "CIMITIRUL VESEL",
+          "variante": [
+            "CIMITIRUL VESEL",
+            "MANASTIREA BARSANA",
+            "CIMITIRUL BELLU",
+            "MUZEUL SATULUI"
+          ],
+          "hint_1": "Cruci albastre cu versuri hazlii",
+          "hint_2": "Se află la Săpânța, în Maramureș",
+          "hint_3": "Moartea luată în râs",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Merry Cemetery",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_034",
+          "raspuns": "SFINXUL DIN BUCEGI",
+          "variante": [
+            "SFINXUL DIN BUCEGI",
+            "BABELE",
+            "VARFUL OMU",
+            "CRUCEA CARAIMAN"
+          ],
+          "hint_1": "Stâncă cu chip uman la 2216 metri",
+          "hint_2": "Se află lângă Babele",
+          "hint_3": "Format prin eroziunea vântului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bucegi Sphinx",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_035",
+          "raspuns": "BABELE",
+          "variante": [
+            "BABELE",
+            "SFINXUL DIN BUCEGI",
+            "VULCANII NOROIOSI",
+            "DETUNATELE"
+          ],
+          "hint_1": "'Ciupercile' de piatră din Bucegi",
+          "hint_2": "La câțiva pași de Sfinx",
+          "hint_3": "Sculptate de vânt și ploaie",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Babele",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_036",
+          "raspuns": "VULCANII NOROIOSI",
+          "variante": [
+            "VULCANII NOROIOSI",
+            "BABELE",
+            "PESTERA URSILOR",
+            "RAPA ROSIE"
+          ],
+          "hint_1": "Peisaj selenar în județul Buzău",
+          "hint_2": "'Fierb' noroi rece la suprafață",
+          "hint_3": "La Pâclele Mari și Pâclele Mici",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Berca Mud Volcanoes",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_037",
+          "raspuns": "CASCADA BIGAR",
+          "variante": [
+            "CASCADA BIGAR",
+            "CASCADA CAILOR",
+            "CASCADA URLATOAREA",
+            "CASCADA VALUL MIRESEI"
+          ],
+          "hint_1": "Perdea de apă peste mușchi verde",
+          "hint_2": "În Cheile Nerei, în Banat",
+          "hint_3": "S-a prăbușit parțial în 2021",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Bigăr Waterfall",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_038",
+          "raspuns": "LACUL BALEA",
+          "variante": [
+            "LACUL BALEA",
+            "LACUL SFANTA ANA",
+            "LACUL ROSU",
+            "LACUL VIDRARU"
+          ],
+          "hint_1": "Lac glaciar la capătul Transfăgărășanului",
+          "hint_2": "Aici se construiește iarna hotelul de gheață",
+          "hint_3": "În Munții Făgăraș, la 2034 metri",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bâlea Lake",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_039",
+          "raspuns": "LACUL SFANTA ANA",
+          "variante": [
+            "LACUL SFANTA ANA",
+            "LACUL BALEA",
+            "LACUL ROSU",
+            "LACUL URSU"
+          ],
+          "hint_1": "Singurul lac vulcanic din România",
+          "hint_2": "S-a format în craterul Ciomatu",
+          "hint_3": "Lângă Băile Tușnad",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Lake Sfânta Ana",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_040",
+          "raspuns": "PESTERA SCARISOARA",
+          "variante": [
+            "PESTERA SCARISOARA",
+            "PESTERA URSILOR",
+            "PESTERA MUIERILOR",
+            "PESTERA POLOVRAGI"
+          ],
+          "hint_1": "Adăpostește un ghețar subteran",
+          "hint_2": "În Munții Apuseni",
+          "hint_3": "Gheață veche de peste 3500 de ani",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Scărișoara Cave",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_041",
+          "raspuns": "CETATEA CORVINILOR",
+          "variante": [
+            "CETATEA CORVINILOR",
+            "CASTELUL BRAN",
+            "CASTELUL PELES",
+            "CETATEA NEAMT"
+          ],
+          "hint_1": "Castel gotic la Hunedoara",
+          "hint_2": "A aparținut familiei lui Iancu de Hunedoara",
+          "hint_3": "Printre cele mai frumoase castele gotice din Europa",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Corvin Castle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_042",
+          "raspuns": "STEAGUL ROMANIEI",
+          "variante": [
+            "STEAGUL ROMANIEI",
+            "STEMA ROMANIEI",
+            "DRAPELUL UE",
+            "STEAGUL FRANTEI"
+          ],
+          "hint_1": "Albastru, galben și roșu",
+          "hint_2": "Tricolor cu benzi verticale",
+          "hint_3": "Aproape identic cu al Ciadului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Romania",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_043",
+          "raspuns": "STEMA ROMANIEI",
+          "variante": [
+            "STEMA ROMANIEI",
+            "STEAGUL ROMANIEI",
+            "SIGILIUL DACIEI",
+            "STEMA MOLDOVEI"
+          ],
+          "hint_1": "Acvila de aur cu cruce în cioc",
+          "hint_2": "Scut cu provinciile istorice",
+          "hint_3": "Apare pe pașaportul românesc",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Coat of arms of Romania",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_044",
+          "raspuns": "LEUL ROMANESC",
+          "variante": [
+            "LEUL ROMANESC",
+            "EURO",
+            "FORINTUL",
+            "LEVA"
+          ],
+          "hint_1": "Moneda națională",
+          "hint_2": "Subdiviziunea se numește ban",
+          "hint_3": "RON pe scurt",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Romanian leu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_045",
+          "raspuns": "VARFUL MOLDOVEANU",
+          "variante": [
+            "VARFUL MOLDOVEANU",
+            "VARFUL NEGOIU",
+            "VARFUL OMU",
+            "VARFUL PARANGUL MARE"
+          ],
+          "hint_1": "'Acoperișul' României",
+          "hint_2": "2544 de metri altitudine",
+          "hint_3": "În Munții Făgăraș",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Moldoveanu Peak",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_046",
+          "raspuns": "CAZINOUL DIN CONSTANTA",
+          "variante": [
+            "CAZINOUL DIN CONSTANTA",
+            "ATENEUL ROMAN",
+            "PALATUL CULTURII IASI",
+            "CAZINOUL SINAIA"
+          ],
+          "hint_1": "Bijuterie Art Nouveau pe faleză",
+          "hint_2": "Simbolul orașului de la malul mării",
+          "hint_3": "Restaurat și redeschis recent",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Constanța Casino",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_047",
+          "raspuns": "DACIA 1300",
+          "variante": [
+            "DACIA 1300",
+            "DACIA LOGAN",
+            "ARO 244",
+            "OLTCIT"
+          ],
+          "hint_1": "Mașina 'epocii de aur'",
+          "hint_2": "Visul oricărui român înainte de '89",
+          "hint_3": "Fabricată la Mioveni din 1969",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Dacia 1300",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_048",
+          "raspuns": "MANASTIREA CURTEA DE ARGES",
+          "variante": [
+            "MANASTIREA CURTEA DE ARGES",
+            "MANASTIREA VORONET",
+            "MANASTIREA PUTNA",
+            "MANASTIREA HOREZU"
+          ],
+          "hint_1": "Legată de legenda Meșterului Manole",
+          "hint_2": "Necropola regilor României",
+          "hint_3": "Turle răsucite unice",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Curtea de Argeș Cathedral",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_049",
+          "raspuns": "MUZEUL SATULUI",
+          "variante": [
+            "MUZEUL SATULUI",
+            "MUZEUL ANTIPA",
+            "MUZEUL TARANULUI",
+            "MUZEUL ASTRA"
+          ],
+          "hint_1": "Case țărănești autentice, în aer liber",
+          "hint_2": "În Parcul Herăstrău din București",
+          "hint_3": "Fondat de sociologul Dimitrie Gusti",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Dimitrie Gusti National Village Museum",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_050",
+          "raspuns": "CHEILE BICAZULUI",
+          "variante": [
+            "CHEILE BICAZULUI",
+            "CHEILE NEREI",
+            "CHEILE TURZII",
+            "DEFILEUL JIULUI"
+          ],
+          "hint_1": "Canion spectaculos între Neamț și Harghita",
+          "hint_2": "Drumul trece printre pereți de 300 de metri",
+          "hint_3": "Duce spre Lacul Roșu",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bicaz Canyon",
+          "imagine_sursa": "wikipedia"
+        }
+      ]
+    }
+  }
+}

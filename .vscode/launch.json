@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Guess It (Chrome)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "chrome",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Guess It (Edge)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "edge",
+      "program": "lib/main.dart"
+    },
+    {
+      "name": "Guess It (Windows)",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "windows",
+      "program": "lib/main.dart"
+    }
+  ]
+}

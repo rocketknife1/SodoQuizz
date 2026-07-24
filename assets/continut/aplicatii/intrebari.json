@@ -1,0 +1,897 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "aplicatii": {
+      "mod": "4_variante",
+      "culoare_tema": "#4C6FFF",
+      "descriere": "Aplicatii de telefon",
+      "intrebari": [
+        {
+          "id": "apl_001",
+          "raspuns": "TELEGRAM",
+          "variante": [
+            "TELEGRAM",
+            "VIBER",
+            "MESSENGER",
+            "WECHAT"
+          ],
+          "hint_1": "Aplicatie de mesagerie cu avion de hartie ca logo",
+          "hint_2": "Rivala WhatsApp, cunoscuta pentru canale si grupuri mari",
+          "hint_3": "Are si varianta secreta cu mesaje care se autodistrug",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Telegram app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_002",
+          "raspuns": "MESSENGER",
+          "variante": [
+            "MESSENGER",
+            "TELEGRAM",
+            "WHATSAPP",
+            "THREADS"
+          ],
+          "hint_1": "Aplicatie separata pentru chat, fulger albastru ca logo",
+          "hint_2": "A fost desprinsa din aplicatia principala Facebook",
+          "hint_3": "Prin ea trimiti mesaje prietenilor de pe Facebook",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Facebook Messenger app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_003",
+          "raspuns": "VIBER",
+          "variante": [
+            "VIBER",
+            "TELEGRAM",
+            "MESSENGER",
+            "WECHAT"
+          ],
+          "hint_1": "Aplicatie de mesagerie si apeluri gratuite, logo mov",
+          "hint_2": "Foarte populara in Europa de Est",
+          "hint_3": "Are un simbol in forma de receptor de telefon in bula de chat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Viber app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_004",
+          "raspuns": "WECHAT",
+          "variante": [
+            "WECHAT",
+            "TELEGRAM",
+            "VIBER",
+            "MESSENGER"
+          ],
+          "hint_1": "Super-aplicatie chinezeasca, logo verde cu doua bule vorbire",
+          "hint_2": "Combina mesagerie, plati si retea sociala intr-una singura",
+          "hint_3": "Cea mai folosita aplicatie de mesagerie din China",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "WeChat app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_005",
+          "raspuns": "THREADS",
+          "variante": [
+            "THREADS",
+            "MESSENGER",
+            "TELEGRAM",
+            "BEREAL"
+          ],
+          "hint_1": "Lansata de Meta ca rivala pentru X",
+          "hint_2": "Logo-ul e un simbol format dintr-o linie infasurata, ca un fir de ata",
+          "hint_3": "Legata direct de contul de Instagram",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Threads app logo Meta",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_006",
+          "raspuns": "BEREAL",
+          "variante": [
+            "BEREAL",
+            "THREADS",
+            "SNAPCHAT",
+            "VSCO"
+          ],
+          "hint_1": "Iti trimite o notificare random sa te fotografiezi",
+          "hint_2": "Foloseste camera fata si spate simultan",
+          "hint_3": "Numele ei inseamna sa fii autentic, fara filtre",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "BeReal app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_007",
+          "raspuns": "GMAIL",
+          "variante": [
+            "GMAIL",
+            "OUTLOOK",
+            "GOOGLE MAPS",
+            "GOOGLE DRIVE"
+          ],
+          "hint_1": "Serviciu de email cu plicul rosu si alb",
+          "hint_2": "Cel mai folosit serviciu de email din lume",
+          "hint_3": "Vine cu spatiu gratuit de stocare in cloud",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Gmail app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_008",
+          "raspuns": "GOOGLE MAPS",
+          "variante": [
+            "GOOGLE MAPS",
+            "WAZE",
+            "GMAIL",
+            "GOOGLE DRIVE"
+          ],
+          "hint_1": "Aplicatie de navigatie cu un pin rosu ca logo",
+          "hint_2": "Iti arata trafic in timp real si rute alternative",
+          "hint_3": "Are si vedere Street View a strazilor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Maps app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_009",
+          "raspuns": "WAZE",
+          "variante": [
+            "WAZE",
+            "GOOGLE MAPS",
+            "BOLT",
+            "LYFT"
+          ],
+          "hint_1": "Aplicatie de navigatie cu un mascota zambareata, logo albastru",
+          "hint_2": "Utilizatorii raporteaza radare si accidente in timp real",
+          "hint_3": "A fost cumparata de Google, dar ramane separata",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Waze app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_010",
+          "raspuns": "GOOGLE DRIVE",
+          "variante": [
+            "GOOGLE DRIVE",
+            "GMAIL",
+            "GOOGLE PHOTOS",
+            "GOOGLE MAPS"
+          ],
+          "hint_1": "Stocare in cloud cu logo triunghiular colorat",
+          "hint_2": "Aici salvezi documente, poze si fisiere online",
+          "hint_3": "Vine la pachet cu Docs, Sheets si Slides",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Drive app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_011",
+          "raspuns": "GOOGLE PHOTOS",
+          "variante": [
+            "GOOGLE PHOTOS",
+            "GOOGLE DRIVE",
+            "GMAIL",
+            "VSCO"
+          ],
+          "hint_1": "Aplicatie pentru pozele tale, logo cu morisca colorata",
+          "hint_2": "Face backup automat la toate fotografiile",
+          "hint_3": "Recunoaste fete si organizeaza albume singura",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Photos app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_012",
+          "raspuns": "GOOGLE CHROME",
+          "variante": [
+            "GOOGLE CHROME",
+            "GOOGLE MEET",
+            "GOOGLE TRANSLATE",
+            "GOOGLE MAPS"
+          ],
+          "hint_1": "Browser de internet, logo rotund in 4 culori",
+          "hint_2": "Cel mai folosit browser din lume",
+          "hint_3": "Are propriul motor de cautare Google incorporat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Chrome browser logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_013",
+          "raspuns": "GOOGLE TRANSLATE",
+          "variante": [
+            "GOOGLE TRANSLATE",
+            "GOOGLE CHROME",
+            "GMAIL",
+            "GOOGLE MEET"
+          ],
+          "hint_1": "Traduce text intre zeci de limbi, logo cu literele A si o alta litera",
+          "hint_2": "Poate traduce si folosind camera telefonului",
+          "hint_3": "Extrem de util in calatorii in strainatate",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Translate app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_014",
+          "raspuns": "GOOGLE MEET",
+          "variante": [
+            "GOOGLE MEET",
+            "ZOOM",
+            "SKYPE",
+            "MICROSOFT TEAMS"
+          ],
+          "hint_1": "Aplicatie de videoconferinta, logo cu forme colorate ca o camera video",
+          "hint_2": "Integrata direct cu Gmail si Calendar",
+          "hint_3": "Rivala Zoom si Microsoft Teams",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Meet app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_015",
+          "raspuns": "MICROSOFT TEAMS",
+          "variante": [
+            "MICROSOFT TEAMS",
+            "GOOGLE MEET",
+            "SKYPE",
+            "OUTLOOK"
+          ],
+          "hint_1": "Aplicatie de chat si videoconferinta, logo violet cu litera T",
+          "hint_2": "Foarte folosita in mediul de birou si scoli",
+          "hint_3": "Integrata cu Office 365",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Microsoft Teams app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_016",
+          "raspuns": "OUTLOOK",
+          "variante": [
+            "OUTLOOK",
+            "GMAIL",
+            "MICROSOFT TEAMS",
+            "SKYPE"
+          ],
+          "hint_1": "Aplicatie de email Microsoft, logo albastru cu litera O",
+          "hint_2": "Combina email, calendar si contacte",
+          "hint_3": "Foloseste mult mediul corporate alaturi de Teams",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Outlook app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_017",
+          "raspuns": "SKYPE",
+          "variante": [
+            "SKYPE",
+            "MICROSOFT TEAMS",
+            "GOOGLE MEET",
+            "OUTLOOK"
+          ],
+          "hint_1": "Aplicatie de apeluri video, logo albastru cu un nor",
+          "hint_2": "A fost printre primele aplicatii populare de video call",
+          "hint_3": "Cumparata de Microsoft acum multi ani",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Skype app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_018",
+          "raspuns": "NOTION",
+          "variante": [
+            "NOTION",
+            "TRELLO",
+            "EVERNOTE",
+            "TODOIST"
+          ],
+          "hint_1": "Aplicatie de organizare si notite, logo alb-negru simplu",
+          "hint_2": "Foarte populara printre studenti pentru planificare",
+          "hint_3": "Combina notite, tabele si baze de date intr-un singur loc",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Notion app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_019",
+          "raspuns": "TRELLO",
+          "variante": [
+            "TRELLO",
+            "NOTION",
+            "TODOIST",
+            "EVERNOTE"
+          ],
+          "hint_1": "Aplicatie de organizare cu carduri pe un panou, logo albastru",
+          "hint_2": "Foloseste sistemul de planse cu liste tip Kanban",
+          "hint_3": "Populara pentru gestionarea proiectelor in echipa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Trello app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_020",
+          "raspuns": "EVERNOTE",
+          "variante": [
+            "EVERNOTE",
+            "NOTION",
+            "TRELLO",
+            "TODOIST"
+          ],
+          "hint_1": "Aplicatie de notite, logo cu un elefant verde",
+          "hint_2": "Sincronizeaza notitele pe toate dispozitivele",
+          "hint_3": "Una dintre primele aplicatii mari de luat notite",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Evernote app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_021",
+          "raspuns": "TODOIST",
+          "variante": [
+            "TODOIST",
+            "TRELLO",
+            "NOTION",
+            "EVERNOTE"
+          ],
+          "hint_1": "Aplicatie de liste si sarcini zilnice, logo rosu cu bifa",
+          "hint_2": "Te ajuta sa nu uiti de task-uri si termene",
+          "hint_3": "Foarte folosita pentru productivitate personala",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Todoist app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_022",
+          "raspuns": "REVOLUT",
+          "variante": [
+            "REVOLUT",
+            "N26",
+            "BINANCE",
+            "CASH APP"
+          ],
+          "hint_1": "Aplicatie bancara digitala, logo negru cu o forma geometrica",
+          "hint_2": "Card si cont bancar direct din telefon, fara banca traditionala",
+          "hint_3": "Foarte populara pentru schimb valutar si plati internationale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Revolut app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_023",
+          "raspuns": "N26",
+          "variante": [
+            "N26",
+            "REVOLUT",
+            "BINANCE",
+            "VENMO"
+          ],
+          "hint_1": "Banca digitala germana, logo simplu cu literele N26",
+          "hint_2": "Functioneaza complet fara sucursale fizice",
+          "hint_3": "Rivala Revolut pe piata bancilor digitale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "N26 bank app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_024",
+          "raspuns": "BINANCE",
+          "variante": [
+            "BINANCE",
+            "REVOLUT",
+            "N26",
+            "CASH APP"
+          ],
+          "hint_1": "Platforma de criptomonede, logo galben cu forme de diamant",
+          "hint_2": "Una dintre cele mai mari burse de crypto din lume",
+          "hint_3": "Aici cumperi si vinzi Bitcoin si alte monede digitale",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Binance app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_025",
+          "raspuns": "VENMO",
+          "variante": [
+            "VENMO",
+            "CASH APP",
+            "REVOLUT",
+            "N26"
+          ],
+          "hint_1": "Aplicatie de plati intre prieteni, logo albastru cu litera V",
+          "hint_2": "Foarte populara in Statele Unite pentru a imparti nota la restaurant",
+          "hint_3": "Are un feed social unde vezi platile prietenilor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Venmo app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_026",
+          "raspuns": "CASH APP",
+          "variante": [
+            "CASH APP",
+            "VENMO",
+            "REVOLUT",
+            "BINANCE"
+          ],
+          "hint_1": "Aplicatie de plati rapide, logo verde cu simbolul dolar",
+          "hint_2": "Detinuta de compania din spatele Square",
+          "hint_3": "Permite si investitii in actiuni si Bitcoin",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Cash App logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_027",
+          "raspuns": "EMAG",
+          "variante": [
+            "EMAG",
+            "ALIEXPRESS",
+            "TEMU",
+            "WISH"
+          ],
+          "hint_1": "Cel mai mare magazin online din Romania, logo portocaliu",
+          "hint_2": "Are Black Friday anual foarte asteptat",
+          "hint_3": "Vinde de la electronice pana la alimente",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "eMAG app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_028",
+          "raspuns": "ALIEXPRESS",
+          "variante": [
+            "ALIEXPRESS",
+            "TEMU",
+            "WISH",
+            "EMAG"
+          ],
+          "hint_1": "Magazin online chinezesc, logo rosu-portocaliu",
+          "hint_2": "Detinut de gigantul Alibaba",
+          "hint_3": "Cunoscut pentru preturi mici si livrare lunga din China",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "AliExpress app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_029",
+          "raspuns": "TEMU",
+          "variante": [
+            "TEMU",
+            "ALIEXPRESS",
+            "WISH",
+            "EMAG"
+          ],
+          "hint_1": "Magazin online cu preturi foarte mici, logo portocaliu cu litera T",
+          "hint_2": "A devenit brusc foarte popular datorita reclamelor agresive",
+          "hint_3": "Sloganul lor e ca poti trai ca un rege la preturi mici",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Temu app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_030",
+          "raspuns": "WISH",
+          "variante": [
+            "WISH",
+            "TEMU",
+            "ALIEXPRESS",
+            "EMAG"
+          ],
+          "hint_1": "Magazin online, logo albastru cu o steluta",
+          "hint_2": "Cunoscut pentru produse ieftine si livrare foarte lenta",
+          "hint_3": "Numele inseamna dorinta in engleza",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Wish app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_031",
+          "raspuns": "BOLT",
+          "variante": [
+            "BOLT",
+            "LYFT",
+            "WAZE",
+            "WOLT"
+          ],
+          "hint_1": "Aplicatie de ride-sharing estona, logo verde cu un fulger",
+          "hint_2": "Rivala directa a companiei Uber in Europa",
+          "hint_3": "Ofera si trotinete electrice de inchiriat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bolt app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_032",
+          "raspuns": "LYFT",
+          "variante": [
+            "LYFT",
+            "BOLT",
+            "UBER EATS",
+            "WOLT"
+          ],
+          "hint_1": "Aplicatie de ride-sharing americana, logo roz-mov",
+          "hint_2": "Principala rivala a Uber pe piata din SUA",
+          "hint_3": "Numele vine de la cuvantul lift, adica a ridica sau a lua pe cineva",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Lyft app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_033",
+          "raspuns": "WOLT",
+          "variante": [
+            "WOLT",
+            "BOLT FOOD",
+            "GLOVO",
+            "UBER EATS"
+          ],
+          "hint_1": "Aplicatie de livrare mancare, logo albastru cu litera W",
+          "hint_2": "Fondata in Finlanda, foarte populara in Europa",
+          "hint_3": "Cumparata de compania din spatele DoorDash",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Wolt app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_034",
+          "raspuns": "BOLT FOOD",
+          "variante": [
+            "BOLT FOOD",
+            "WOLT",
+            "GLOVO",
+            "UBER EATS"
+          ],
+          "hint_1": "Serviciul de livrare mancare al companiei Bolt, logo verde",
+          "hint_2": "Frate cu aplicatia de ride-sharing Bolt",
+          "hint_3": "Livreaza mancare de la restaurante direct la usa",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bolt Food app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_035",
+          "raspuns": "DISNEY PLUS",
+          "variante": [
+            "DISNEY PLUS",
+            "HBO MAX",
+            "AMAZON PRIME VIDEO",
+            "NETFLIX"
+          ],
+          "hint_1": "Platforma de streaming, logo albastru cu D stilizat",
+          "hint_2": "Aici gasesti filmele Disney, Pixar, Marvel si Star Wars",
+          "hint_3": "Lansata ca sa concureze direct cu Netflix",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Disney Plus app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_036",
+          "raspuns": "HBO MAX",
+          "variante": [
+            "HBO MAX",
+            "DISNEY PLUS",
+            "AMAZON PRIME VIDEO",
+            "NETFLIX"
+          ],
+          "hint_1": "Platforma de streaming, logo alb-negru simplu cu HBO MAX",
+          "hint_2": "Cunoscuta pentru seriale premiate ca Game of Thrones",
+          "hint_3": "Rivala Netflix si Disney Plus",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "HBO Max app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_037",
+          "raspuns": "AMAZON PRIME VIDEO",
+          "variante": [
+            "AMAZON PRIME VIDEO",
+            "DISNEY PLUS",
+            "HBO MAX",
+            "NETFLIX"
+          ],
+          "hint_1": "Platforma de streaming a gigantului Amazon, logo albastru",
+          "hint_2": "Vine inclusa in abonamentul Amazon Prime",
+          "hint_3": "Difuzeaza si meciuri sportive live in unele tari",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Amazon Prime Video app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_038",
+          "raspuns": "SOUNDCLOUD",
+          "variante": [
+            "SOUNDCLOUD",
+            "SPOTIFY",
+            "SHAZAM",
+            "DEEZER"
+          ],
+          "hint_1": "Platforma audio, logo portocaliu cu forma de nor sonor",
+          "hint_2": "Foarte populara printre artistii independenti si rapperi",
+          "hint_3": "Multi artisti celebri si-au lansat prima piesa acolo",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "SoundCloud app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_039",
+          "raspuns": "SHAZAM",
+          "variante": [
+            "SHAZAM",
+            "SOUNDCLOUD",
+            "APPLE MUSIC",
+            "DEEZER"
+          ],
+          "hint_1": "Recunoaste melodii dupa ce le asculta cateva secunde, logo albastru cu S",
+          "hint_2": "O tii aproape de difuzor si iti spune ce piesa canta",
+          "hint_3": "Cumparata de Apple acum cativa ani",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Shazam app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_040",
+          "raspuns": "APPLE MUSIC",
+          "variante": [
+            "APPLE MUSIC",
+            "SPOTIFY",
+            "DEEZER",
+            "SOUNDCLOUD"
+          ],
+          "hint_1": "Serviciu de streaming muzical, logo rosu cu nota muzicala",
+          "hint_2": "Vine preinstalat pe orice iPhone",
+          "hint_3": "Rivala directa a Spotify",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Apple Music app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_041",
+          "raspuns": "DEEZER",
+          "variante": [
+            "DEEZER",
+            "SPOTIFY",
+            "APPLE MUSIC",
+            "SOUNDCLOUD"
+          ],
+          "hint_1": "Serviciu de streaming muzical francez, logo cu forme colorate",
+          "hint_2": "Alternativa europeana la Spotify",
+          "hint_3": "Ofera si versiune cu sunet in calitate audiofila",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Deezer app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_042",
+          "raspuns": "STRAVA",
+          "variante": [
+            "STRAVA",
+            "MYFITNESSPAL",
+            "HEADSPACE",
+            "CALM"
+          ],
+          "hint_1": "Aplicatie pentru alergat si ciclism, logo portocaliu",
+          "hint_2": "Iti urmareste traseele pe harta prin GPS",
+          "hint_3": "Foarte populara printre sportivii care posteaza kilometri parcursi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Strava app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_043",
+          "raspuns": "MYFITNESSPAL",
+          "variante": [
+            "MYFITNESSPAL",
+            "STRAVA",
+            "HEADSPACE",
+            "CALM"
+          ],
+          "hint_1": "Aplicatie de numarat calorii, logo albastru",
+          "hint_2": "Are o baza de date uriasa cu alimente scanate",
+          "hint_3": "Te ajuta sa tii evidenta dietei zilnice",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "MyFitnessPal app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_044",
+          "raspuns": "HEADSPACE",
+          "variante": [
+            "HEADSPACE",
+            "CALM",
+            "STRAVA",
+            "MYFITNESSPAL"
+          ],
+          "hint_1": "Aplicatie de meditatie, logo portocaliu cu un cap simplu",
+          "hint_2": "Te ghideaza prin exercitii de respiratie si mindfulness",
+          "hint_3": "Foarte folosita pentru somn mai bun si reducerea stresului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Headspace app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_045",
+          "raspuns": "CALM",
+          "variante": [
+            "CALM",
+            "HEADSPACE",
+            "STRAVA",
+            "MYFITNESSPAL"
+          ],
+          "hint_1": "Aplicatie de relaxare si somn, logo cu un cerc albastru linistit",
+          "hint_2": "Are povesti audio pentru adormit, spuse de celebritati",
+          "hint_3": "Rivala directa a Headspace",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Calm app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_046",
+          "raspuns": "TINDER",
+          "variante": [
+            "TINDER",
+            "BUMBLE",
+            "BEREAL",
+            "THREADS"
+          ],
+          "hint_1": "Aplicatie de dating, logo cu o flacara portocalie",
+          "hint_2": "Faci swipe la dreapta daca iti place cineva",
+          "hint_3": "Una dintre cele mai cunoscute aplicatii de intalniri din lume",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Tinder app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_047",
+          "raspuns": "BUMBLE",
+          "variante": [
+            "BUMBLE",
+            "TINDER",
+            "BEREAL",
+            "THREADS"
+          ],
+          "hint_1": "Aplicatie de dating, logo galben cu o albinuta",
+          "hint_2": "La intalnirile intre barbat si femeie, ea trebuie sa scrie prima",
+          "hint_3": "Rivala directa a aplicatiei Tinder",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bumble app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_048",
+          "raspuns": "CAPCUT",
+          "variante": [
+            "CAPCUT",
+            "VSCO",
+            "LIGHTROOM",
+            "PHOTOSHOP EXPRESS"
+          ],
+          "hint_1": "Aplicatie de editat video pe telefon, logo negru cu forma stilizata",
+          "hint_2": "Facuta de aceeasi companie din spatele TikTok",
+          "hint_3": "Foarte folosita pentru a crea clipuri scurte pentru social media",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "CapCut app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_049",
+          "raspuns": "VSCO",
+          "variante": [
+            "VSCO",
+            "CAPCUT",
+            "LIGHTROOM",
+            "PHOTOSHOP EXPRESS"
+          ],
+          "hint_1": "Aplicatie de editat poze cu filtre artistice, logo alb-negru simplu",
+          "hint_2": "Populara printre pasionatii de fotografie estetica",
+          "hint_3": "Are propria retea sociala de partajat poze editate",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "VSCO app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_050",
+          "raspuns": "LIGHTROOM",
+          "variante": [
+            "LIGHTROOM",
+            "VSCO",
+            "CAPCUT",
+            "PHOTOSHOP EXPRESS"
+          ],
+          "hint_1": "Aplicatie profesionala de editat poze, logo cu litere Lr",
+          "hint_2": "Facuta de Adobe, folosita mult de fotografi",
+          "hint_3": "Permite editare avansata a culorilor si luminii",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Adobe Lightroom app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_051",
+          "raspuns": "KAHOOT",
+          "variante": [
+            "KAHOOT",
+            "TODOIST",
+            "TRELLO",
+            "NOTION"
+          ],
+          "hint_1": "Aplicatie de quiz-uri interactive, logo violet cu forme geometrice",
+          "hint_2": "Foarte folosita la scoala pentru jocuri educative in clasa",
+          "hint_3": "Elevii raspund de pe telefon in timp ce intrebarea e pe ecran mare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Kahoot app logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_052",
+          "raspuns": "NORDVPN",
+          "variante": [
+            "NORDVPN",
+            "REVOLUT",
+            "N26",
+            "BINANCE"
+          ],
+          "hint_1": "Aplicatie VPN, logo albastru cu un scut",
+          "hint_2": "Iti ascunde locatia si iti cripteaza conexiunea la internet",
+          "hint_3": "Una dintre cele mai cunoscute aplicatii VPN din lume",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "NordVPN app logo",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}

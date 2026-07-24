@@ -1,0 +1,574 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "logo_firme": {
+      "mod": "4_variante",
+      "culoare_tema": "#1D9E75",
+      "descriere": "Ghicești marca sau firma după logo parțial ascuns",
+      "intrebari": [
+        {
+          "id": "lgf_001",
+          "raspuns": "APPLE",
+          "variante": [
+            "APPLE",
+            "SAMSUNG",
+            "HUAWEI",
+            "GOOGLE"
+          ],
+          "hint_1": "Companie americană de telefoane și calculatoare",
+          "hint_2": "Logo simplu: un măr cu o mușcătură",
+          "hint_3": "iPhone este produsul lor cel mai celebru",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Apple logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_002",
+          "raspuns": "NIKE",
+          "variante": [
+            "ADIDAS",
+            "NIKE",
+            "PUMA",
+            "REEBOK"
+          ],
+          "hint_1": "Marcă de îmbrăcăminte și echipament sportiv",
+          "hint_2": "Sloganul: Just Do It",
+          "hint_3": "Logo în formă de virgulă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Nike swoosh logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_003",
+          "raspuns": "MCDONALDS",
+          "variante": [
+            "MCDONALDS",
+            "BURGER KING",
+            "KFC",
+            "WENDYS"
+          ],
+          "hint_1": "Cel mai mare lanț de fast-food din lume",
+          "hint_2": "Arcul galben M",
+          "hint_3": "Big Mac și cartofi prăjiți",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "McDonald's golden arches logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_004",
+          "raspuns": "COCA COLA",
+          "variante": [
+            "PEPSI",
+            "SPRITE",
+            "FANTA",
+            "COCA COLA"
+          ],
+          "hint_1": "Cea mai faimoasă băutură răcoritoare din lume",
+          "hint_2": "Logo roșu cu scriere cursivă albă",
+          "hint_3": "Rivalul lor este Pepsi",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Coca-Cola logo red brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_005",
+          "raspuns": "GOOGLE",
+          "variante": [
+            "GOOGLE",
+            "BING",
+            "YAHOO",
+            "DUCKDUCKGO"
+          ],
+          "hint_1": "Cel mai folosit motor de căutare din lume",
+          "hint_2": "Logo colorat cu litere roșu albastru galben verde",
+          "hint_3": "Android, Gmail, YouTube le dețin",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google logo colorful brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_006",
+          "raspuns": "ADIDAS",
+          "variante": [
+            "NIKE",
+            "ADIDAS",
+            "NEW BALANCE",
+            "UNDER ARMOUR"
+          ],
+          "hint_1": "Marcă germană de sport",
+          "hint_2": "Trei dungi paralele",
+          "hint_3": "Sloganul: Impossible is Nothing",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Adidas three stripes logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_007",
+          "raspuns": "FERRARI",
+          "variante": [
+            "FERRARI",
+            "LAMBORGHINI",
+            "MASERATI",
+            "ALFA ROMEO"
+          ],
+          "hint_1": "Producător italian de mașini sport de lux",
+          "hint_2": "Cal negru cabrat pe fond galben",
+          "hint_3": "Culoarea lor caracteristică este roșu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ferrari prancing horse logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_008",
+          "raspuns": "MERCEDES BENZ",
+          "variante": [
+            "BMW",
+            "AUDI",
+            "MERCEDES BENZ",
+            "VOLKSWAGEN"
+          ],
+          "hint_1": "Producător german de mașini premium",
+          "hint_2": "Stea cu trei colțuri în cerc",
+          "hint_3": "Seria S este modelul lor de vârf",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mercedes-Benz star logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_009",
+          "raspuns": "BMW",
+          "variante": [
+            "MERCEDES BENZ",
+            "BMW",
+            "AUDI",
+            "PORSCHE"
+          ],
+          "hint_1": "Bayerische Motoren Werke",
+          "hint_2": "Logo rotund albastru și alb",
+          "hint_3": "Bavarian Motor Works din Germania",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "BMW roundel logo blue white",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_010",
+          "raspuns": "AMAZON",
+          "variante": [
+            "AMAZON",
+            "EBAY",
+            "ALIBABA",
+            "ETSY"
+          ],
+          "hint_1": "Cel mai mare magazin online din lume",
+          "hint_2": "Săgeata din logo merge de la A la Z",
+          "hint_3": "Jeff Bezos l-a fondat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Amazon logo arrow brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_011",
+          "raspuns": "FACEBOOK",
+          "variante": [
+            "FACEBOOK",
+            "TWITTER",
+            "INSTAGRAM",
+            "TIKTOK"
+          ],
+          "hint_1": "Cea mai mare rețea socială din lume",
+          "hint_2": "Logo albastru cu F",
+          "hint_3": "Mark Zuckerberg l-a creat la Harvard",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Facebook logo blue F brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_012",
+          "raspuns": "INSTAGRAM",
+          "variante": [
+            "SNAPCHAT",
+            "INSTAGRAM",
+            "PINTEREST",
+            "TUMBLR"
+          ],
+          "hint_1": "Rețea socială de poze și video-uri",
+          "hint_2": "Logo gradient violet-portocaliu cameră foto",
+          "hint_3": "Aparține Meta Facebook",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Instagram logo camera gradient",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_013",
+          "raspuns": "YOUTUBE",
+          "variante": [
+            "YOUTUBE",
+            "TWITCH",
+            "VIMEO",
+            "DAILYMOTION"
+          ],
+          "hint_1": "Cea mai mare platformă de video din lume",
+          "hint_2": "Logo roșu cu triunghi alb de play",
+          "hint_3": "Aparține Google",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "YouTube logo red play button",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_014",
+          "raspuns": "NETFLIX",
+          "variante": [
+            "NETFLIX",
+            "HBO",
+            "DISNEY PLUS",
+            "AMAZON PRIME"
+          ],
+          "hint_1": "Platformă de streaming video",
+          "hint_2": "Logo roșu N",
+          "hint_3": "Stranger Things și La Casa de Papel",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Netflix logo red N brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_015",
+          "raspuns": "SPOTIFY",
+          "variante": [
+            "SPOTIFY",
+            "APPLE MUSIC",
+            "DEEZER",
+            "TIDAL"
+          ],
+          "hint_1": "Platformă de streaming muzică",
+          "hint_2": "Logo verde cu undițe de sunet",
+          "hint_3": "Cel mai popular serviciu de muzică online",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Spotify logo green brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_016",
+          "raspuns": "TESLA",
+          "variante": [
+            "TESLA",
+            "RIVIAN",
+            "LUCID",
+            "NIO"
+          ],
+          "hint_1": "Producător american de mașini electrice",
+          "hint_2": "Elon Musk este CEO",
+          "hint_3": "Model S, 3, X, Y sunt modelele lor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tesla logo electric car brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_017",
+          "raspuns": "LAMBORGHINI",
+          "variante": [
+            "FERRARI",
+            "BUGATTI",
+            "LAMBORGHINI",
+            "MCLAREN"
+          ],
+          "hint_1": "Producător italian de supercaruri",
+          "hint_2": "Taur negru pe logo",
+          "hint_3": "Modele: Huracan, Aventador",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini bull logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_018",
+          "raspuns": "PORSCHE",
+          "variante": [
+            "PORSCHE",
+            "FERRARI",
+            "MASERATI",
+            "ASTON MARTIN"
+          ],
+          "hint_1": "Producător german de mașini sport",
+          "hint_2": "Cal negru cabrat și dungi roșu-negru",
+          "hint_3": "911 este modelul lor iconic",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche logo brand horse",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_019",
+          "raspuns": "LOUIS VUITTON",
+          "variante": [
+            "GUCCI",
+            "LOUIS VUITTON",
+            "PRADA",
+            "CHANEL"
+          ],
+          "hint_1": "Casă de modă franceză de lux",
+          "hint_2": "Monogram LV celebru pe genți",
+          "hint_3": "Cel mai valoros brand de lux din lume",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Louis Vuitton LV logo monogram",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_020",
+          "raspuns": "GUCCI",
+          "variante": [
+            "GUCCI",
+            "VERSACE",
+            "DOLCE GABBANA",
+            "FENDI"
+          ],
+          "hint_1": "Casă de modă italiană de lux",
+          "hint_2": "Două G inversate pe logo",
+          "hint_3": "Fondată în Florența 1921",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gucci double G logo fashion",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_021",
+          "raspuns": "CHANEL",
+          "variante": [
+            "CHANEL",
+            "DIOR",
+            "HERMES",
+            "YSL"
+          ],
+          "hint_1": "Casă de modă franceză fondată de Coco",
+          "hint_2": "Parfumul No. 5 este cel mai celebru din lume",
+          "hint_3": "Două C suprapuse pe logo",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Chanel double C logo brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_022",
+          "raspuns": "ROLEX",
+          "variante": [
+            "ROLEX",
+            "OMEGA",
+            "TAG HEUER",
+            "BREITLING"
+          ],
+          "hint_1": "Producător elvețian de ceasuri de lux",
+          "hint_2": "Coroana aurie pe logo",
+          "hint_3": "Submariner și Daytona sunt modelele lor iconice",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Rolex crown logo watch brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_023",
+          "raspuns": "STARBUCKS",
+          "variante": [
+            "STARBUCKS",
+            "COSTA COFFEE",
+            "LAVAZZA",
+            "NESPRESSO"
+          ],
+          "hint_1": "Cel mai mare lanț de cafenele din lume",
+          "hint_2": "Sirenă verde pe logo",
+          "hint_3": "Frappuccino este băutura lor emblematică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Starbucks siren logo green coffee",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_024",
+          "raspuns": "RED BULL",
+          "variante": [
+            "RED BULL",
+            "MONSTER",
+            "ROCKSTAR",
+            "BURN"
+          ],
+          "hint_1": "Băutură energizantă austriacă",
+          "hint_2": "Doi tauri roșii care se înfruntă",
+          "hint_3": "Red Bull îți dă aripi",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Red Bull energy drink logo bulls",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_025",
+          "raspuns": "PEPSI",
+          "variante": [
+            "COCA COLA",
+            "PEPSI",
+            "MOUNTAIN DEW",
+            "7UP"
+          ],
+          "hint_1": "Al doilea mare producător de băuturi răcoritoare",
+          "hint_2": "Glob roșu albastru și alb pe logo",
+          "hint_3": "Rivalul lui Coca Cola de zeci de ani",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Pepsi logo globe red white blue",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_026",
+          "raspuns": "MICROSOFT",
+          "variante": [
+            "MICROSOFT",
+            "APPLE",
+            "INTEL",
+            "IBM"
+          ],
+          "hint_1": "Companie americană fondată de Bill Gates",
+          "hint_2": "Patru pătrate colorate pe logo",
+          "hint_3": "Windows și Office sunt produsele lor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Microsoft logo four squares colorful",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_027",
+          "raspuns": "SAMSUNG",
+          "variante": [
+            "LG",
+            "SAMSUNG",
+            "SONY",
+            "HUAWEI"
+          ],
+          "hint_1": "Companie sud-coreeană de electronice",
+          "hint_2": "Logo albastru text simplu",
+          "hint_3": "Galaxy este seria lor de telefoane",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Samsung logo blue text brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_028",
+          "raspuns": "SONY",
+          "variante": [
+            "PANASONIC",
+            "PHILIPS",
+            "SONY",
+            "TOSHIBA"
+          ],
+          "hint_1": "Companie japoneză de electronice și divertisment",
+          "hint_2": "Logo simplu alb pe negru",
+          "hint_3": "PlayStation le aparține",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Sony logo brand electronics",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_029",
+          "raspuns": "PLAYSTATION",
+          "variante": [
+            "XBOX",
+            "PLAYSTATION",
+            "NINTENDO",
+            "SEGA"
+          ],
+          "hint_1": "Consolă de jocuri video Sony",
+          "hint_2": "Simboluri triunghi cerc X pătrat",
+          "hint_3": "PS5 este ultima versiune",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "PlayStation logo Sony gaming",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_030",
+          "raspuns": "XBOX",
+          "variante": [
+            "PLAYSTATION",
+            "XBOX",
+            "NINTENDO",
+            "SEGA"
+          ],
+          "hint_1": "Consolă de jocuri Microsoft",
+          "hint_2": "X verde pe logo",
+          "hint_3": "Game Pass serviciul lor de abonament",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Xbox logo green Microsoft gaming",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_031",
+          "raspuns": "TWITTER",
+          "variante": [
+            "TWITTER",
+            "MASTODON",
+            "THREADS",
+            "BLUESKY"
+          ],
+          "hint_1": "Rețea socială de mesaje scurte rebotezată X",
+          "hint_2": "Pasăre albastră pe logo original",
+          "hint_3": "Elon Musk l-a cumpărat în 2022",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Twitter bird logo blue brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_032",
+          "raspuns": "TIKTOK",
+          "variante": [
+            "TIKTOK",
+            "INSTAGRAM",
+            "SNAPCHAT",
+            "YOUTUBE"
+          ],
+          "hint_1": "Platformă de video-uri scurte",
+          "hint_2": "Notă muzicală colorată pe logo",
+          "hint_3": "Aparține companiei ByteDance din China",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "TikTok logo music note brand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_033",
+          "raspuns": "WHATSAPP",
+          "variante": [
+            "WHATSAPP",
+            "TELEGRAM",
+            "SIGNAL",
+            "VIBER"
+          ],
+          "hint_1": "Aplicație de mesagerie gratuită",
+          "hint_2": "Logo verde cu telefon alb",
+          "hint_3": "Aparține Meta Facebook",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "WhatsApp logo green phone brand",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}
