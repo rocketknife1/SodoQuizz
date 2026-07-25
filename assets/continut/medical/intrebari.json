@@ -74,23 +74,6 @@
           "imagine_sursa": "wikipedia"
         },
         {
-          "id": "med_005",
-          "raspuns": "COMPUTER TOMOGRAF",
-          "variante": [
-            "COMPUTER TOMOGRAF",
-            "APARAT RMN",
-            "ECOGRAF",
-            "APARAT DE RADIOGRAFIE"
-          ],
-          "hint_1": "Un inel mare prin care trece patul",
-          "hint_2": "Folosește raze X rotite în jurul corpului",
-          "hint_3": "Prescurtat CT",
-          "dificultate": "usor",
-          "puncte_max": 200,
-          "imagine_cautare": "CT scanner machine",
-          "imagine_sursa": "wikipedia"
-        },
-        {
           "id": "med_006",
           "raspuns": "ECOGRAF",
           "variante": [

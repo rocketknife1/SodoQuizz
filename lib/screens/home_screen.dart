@@ -16,6 +16,7 @@ import 'leaderboard_screen.dart';
 import 'multiplayer_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
+import 'test_images_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -138,6 +139,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(height: 8),
           _buildLogo(),
           const SizedBox(height: 10),
+          _buildDevToolsRow(context),
+          const SizedBox(height: 10),
           // butoanele meniului (stânga, mai înguste, banner-uri compacte) +
           // panoul interactiv de Cultură Generală (dreapta, mai lat) — fără
           // stretch forțat: panoul își ia înălțimea din propriul conținut,
@@ -229,6 +232,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _grantUnlimited(BuildContext context) async {
+    await StorageService.setLives(999);
+    final currentHints = await StorageService.getHints();
+    if (currentHints < 999) await StorageService.addHints(999 - currentHints);
+    if (!context.mounted) return;
+    _refresh();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('999 vieți + 999 hint-uri (test)'), duration: Duration(milliseconds: 1200)),
+    );
+  }
+
   Widget _buildStreakChip(int streak) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -306,6 +320,67 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  /// Rând dedicat, temporar, cu 2 butoane de test — la fel de vizibile ca
+  /// butoanele de meniu (culoare solidă + iconiță), nu mai sunt înghesuite
+  /// langa logo unde abia se vedeau.
+  /// TEST: verifica doar pozele inlocuite manual (vezi
+  /// TestImagesScreen.testQuestionIds), fara sa afecteze scorul real.
+  /// UNLIMITED: umple vieti + hint-uri la 999, pentru testare rapida.
+  Widget _buildDevToolsRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildDevToolButton(
+            icon: Icons.image_search_rounded,
+            label: 'TEST',
+            color: AppColors.blue,
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TestImagesScreen())),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildDevToolButton(
+            icon: Icons.all_inclusive_rounded,
+            label: 'UNLIMITED',
+            color: AppColors.orange,
+            onTap: () => _grantUnlimited(context),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDevToolButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color, color.withAlpha(210)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: color.withAlpha(100), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+          ],
+        ),
       ),
     );
   }
