@@ -856,6 +856,176 @@
           "puncte_max": 400,
           "imagine_cautare": "Andreea Esca",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_051",
+          "raspuns": "CHRIS HEMSWORTH",
+          "variante": [
+            "CHRIS HEMSWORTH",
+            "CHRIS EVANS",
+            "LIAM HEMSWORTH",
+            "JASON MOMOA"
+          ],
+          "hint_1": "Actor australian, joacă zeul nordic al tunetului la Marvel",
+          "hint_2": "Fratele lui Liam Hemsworth",
+          "hint_3": "Îl joacă pe Thor în filmele Avengers",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chris Hemsworth",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_052",
+          "raspuns": "RYAN REYNOLDS",
+          "variante": [
+            "RYAN REYNOLDS",
+            "HUGH JACKMAN",
+            "CHRIS PRATT",
+            "RYAN GOSLING"
+          ],
+          "hint_1": "Actor canadian cunoscut pentru umor autoironic",
+          "hint_2": "Îl joacă pe antieroul Deadpool",
+          "hint_3": "Co-proprietar al clubului de fotbal Wrexham",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ryan Reynolds",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_053",
+          "raspuns": "HUGH JACKMAN",
+          "variante": [
+            "HUGH JACKMAN",
+            "RYAN REYNOLDS",
+            "CHRIS HEMSWORTH",
+            "RUSSELL CROWE"
+          ],
+          "hint_1": "Actor australian, cunoscut pentru rolul Wolverine",
+          "hint_2": "A jucat și în musicalul 'The Greatest Showman'",
+          "hint_3": "A purtat ghearele de metal timp de 17 ani în filme X-Men",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Hugh Jackman",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_054",
+          "raspuns": "JASON MOMOA",
+          "variante": [
+            "JASON MOMOA",
+            "DWAYNE JOHNSON",
+            "VIN DIESEL",
+            "TERRY CREWS"
+          ],
+          "hint_1": "Actor american-hawaiian cu părul lung caracteristic",
+          "hint_2": "Îl joacă pe regele Atlantidei, Aquaman",
+          "hint_3": "A jucat și în 'Game of Thrones' ca Khal Drogo",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Jason Momoa",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_055",
+          "raspuns": "ZAC EFRON",
+          "variante": [
+            "ZAC EFRON",
+            "CHANNING TATUM",
+            "MILES TELLER",
+            "ASHTON KUTCHER"
+          ],
+          "hint_1": "Actor american, a debutat în 'High School Musical'",
+          "hint_2": "A jucat lupte greco-romane în 'The Iron Claw'",
+          "hint_3": "L-a interpretat pe Ted Bundy într-un film biografic",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Zac Efron",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_056",
+          "raspuns": "NICOLE KIDMAN",
+          "variante": [
+            "NICOLE KIDMAN",
+            "CATE BLANCHETT",
+            "CHARLIZE THERON",
+            "MERYL STREEP"
+          ],
+          "hint_1": "Actriță australiană, păr roșcat caracteristic",
+          "hint_2": "Oscar pentru rolul din 'The Hours'",
+          "hint_3": "A fost căsătorită cu Tom Cruise, apoi cu Keith Urban",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nicole Kidman",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_057",
+          "raspuns": "MERYL STREEP",
+          "variante": [
+            "MERYL STREEP",
+            "MERIL STREEP",
+            "JUDI DENCH",
+            "HELEN MIRREN"
+          ],
+          "hint_1": "Actrița cu cele mai multe nominalizări la Oscar din istorie",
+          "hint_2": "A jucat-o pe Miranda Priestly în 'The Devil Wears Prada'",
+          "hint_3": "Considerată una dintre cele mai mari actrițe în viață",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Meryl Streep",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_058",
+          "raspuns": "DENZEL WASHINGTON",
+          "variante": [
+            "DENZEL WASHINGTON",
+            "SAMUEL L JACKSON",
+            "WILL SMITH",
+            "MORGAN FREEMAN"
+          ],
+          "hint_1": "Actor american, două premii Oscar câștigate",
+          "hint_2": "A jucat în 'Training Day' și 'American Gangster'",
+          "hint_3": "Fiul său, John David Washington, e tot actor",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Denzel Washington",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_059",
+          "raspuns": "CHRIS EVANS",
+          "variante": [
+            "CHRIS EVANS",
+            "CHRIS HEMSWORTH",
+            "CHRIS PRATT",
+            "CHRIS PINE"
+          ],
+          "hint_1": "Actor american, joacă un supersoldat cu scut",
+          "hint_2": "Îl joacă pe Captain America în universul Marvel",
+          "hint_3": "A fost desemnat 'Cel mai sexy bărbat în viață' de People",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chris Evans actor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "cel_060",
+          "raspuns": "ROBERT PATTINSON",
+          "variante": [
+            "ROBERT PATTINSON",
+            "TIMOTHEE CHALAMET",
+            "TOM HOLLAND",
+            "HENRY CAVILL"
+          ],
+          "hint_1": "Actor britanic, a debutat în saga 'Twilight'",
+          "hint_2": "Îl joacă pe Batman în filmul din 2022",
+          "hint_3": "L-a jucat pe vampirul Edward Cullen",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Robert Pattinson",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

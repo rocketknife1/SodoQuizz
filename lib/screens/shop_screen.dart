@@ -4,6 +4,7 @@ import '../core/theme.dart';
 import '../data/shop.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/coin_reward_overlay.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -17,6 +18,7 @@ class _ShopScreenState extends State<ShopScreen> {
   int _coins = 0;
   bool _canClaimDaily = false;
   bool _loading = true;
+  final _livesBadgeKey = GlobalKey();
 
   @override
   void initState() {
@@ -40,15 +42,23 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _claimDaily() async {
-    Sfx.rewardPop();
+    final vieti = shopData['vieti'] as Map<String, dynamic>;
+    final amount = vieti['gratuit_zilnic'] as int;
     await StorageService.claimDailyReward();
-    // aceeași pereche de sunete ca la revendicarea unui quest — pop la
-    // colectare, apoi ding-ul de impact puțin mai târziu.
-    Future.delayed(const Duration(milliseconds: 950), Sfx.coinHit);
-    await _loadState();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Ai primit 5 vieți!')),
+    // aceeași animație de zbor (praf magic + traiectorie șerpuită spre
+    // pastila de vieți) ca la recompensele compuse — vezi [collectRewards].
+    Sfx.rewardPop();
+    CoinRewardOverlay.show(
+      context,
+      amount: amount,
+      targetKey: _livesBadgeKey,
+      icon: Icons.favorite_rounded,
+      color: AppColors.life,
+      flightDuration: const Duration(milliseconds: 1000),
+      serpentine: true,
+      onImpact: Sfx.heartHit,
+      onFinished: _loadState,
     );
   }
 
@@ -89,7 +99,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   ),
                   const Spacer(),
                   if (!_loading) ...[
-                    _StatPill(icon: Icons.favorite_rounded, iconColor: const Color(0xFFE24B4A), value: '$_lives'),
+                    _StatPill(key: _livesBadgeKey, icon: Icons.favorite_rounded, iconColor: const Color(0xFFE24B4A), value: '$_lives'),
                     const SizedBox(width: 8),
                     _StatPill(icon: Icons.monetization_on_rounded, iconColor: const Color(0xFFFFD700), value: '$_coins'),
                   ],
@@ -161,7 +171,7 @@ class _StatPill extends StatelessWidget {
   final Color iconColor;
   final String value;
 
-  const _StatPill({required this.icon, required this.iconColor, required this.value});
+  const _StatPill({super.key, required this.icon, required this.iconColor, required this.value});
 
   @override
   Widget build(BuildContext context) {

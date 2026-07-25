@@ -567,6 +567,465 @@
           "puncte_max": 200,
           "imagine_cautare": "WhatsApp logo green phone brand",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_034",
+          "raspuns": "PUMA",
+          "variante": [
+            "PUMA",
+            "NIKE",
+            "ADIDAS",
+            "REEBOK"
+          ],
+          "hint_1": "Brand sportiv german cu sigla unei feline sărind",
+          "hint_2": "Concurent direct al Adidas",
+          "hint_3": "Fondat de fratele fondatorului Adidas",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Puma logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_035",
+          "raspuns": "REEBOK",
+          "variante": [
+            "REEBOK",
+            "PUMA",
+            "NIKE",
+            "UNDER ARMOUR"
+          ],
+          "hint_1": "Brand sportiv britanic",
+          "hint_2": "Logo-ul actual e un delta/triunghi vector",
+          "hint_3": "Deținut de Adidas până în 2021",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Reebok logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_036",
+          "raspuns": "BURGER KING",
+          "variante": [
+            "BURGER KING",
+            "MCDONALDS",
+            "WENDY S",
+            "KFC"
+          ],
+          "hint_1": "Lanț fast-food cu 'Whopper'",
+          "hint_2": "Logo cu chiflă și coroană stilizată",
+          "hint_3": "Sloganul: 'Have it your way'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Burger King logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_037",
+          "raspuns": "KFC",
+          "variante": [
+            "KFC",
+            "POPEYES",
+            "BURGER KING",
+            "SUBWAY"
+          ],
+          "hint_1": "Lanț fast-food specializat în pui prăjit",
+          "hint_2": "Logo cu un bărbat în vârstă cu barbă albă",
+          "hint_3": "Colonel Sanders e fondatorul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "KFC logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_038",
+          "raspuns": "SUBWAY",
+          "variante": [
+            "SUBWAY",
+            "KFC",
+            "BURGER KING",
+            "MCDONALDS"
+          ],
+          "hint_1": "Lanț fast-food specializat în sandvișuri",
+          "hint_2": "Sloganul: 'Eat Fresh'",
+          "hint_3": "Logo verde și galben",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Subway restaurant logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_039",
+          "raspuns": "VISA",
+          "variante": [
+            "VISA",
+            "MASTERCARD",
+            "PAYPAL",
+            "AMERICAN EXPRESS"
+          ],
+          "hint_1": "Companie de carduri de plată",
+          "hint_2": "Logo albastru-alb-auriu",
+          "hint_3": "Una din cele mai folosite rețele de plată din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Visa card logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_040",
+          "raspuns": "MASTERCARD",
+          "variante": [
+            "MASTERCARD",
+            "VISA",
+            "PAYPAL",
+            "MAESTRO"
+          ],
+          "hint_1": "Companie de carduri de plată",
+          "hint_2": "Logo cu două cercuri suprapuse, roșu și galben",
+          "hint_3": "Concurentul principal al Visa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mastercard logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_041",
+          "raspuns": "PAYPAL",
+          "variante": [
+            "PAYPAL",
+            "VISA",
+            "REVOLUT",
+            "MASTERCARD"
+          ],
+          "hint_1": "Serviciu de plăți online",
+          "hint_2": "Logo albastru cu litera P dublă",
+          "hint_3": "Fondat cu ajutorul lui Elon Musk și Peter Thiel",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "PayPal logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_042",
+          "raspuns": "LEGO",
+          "variante": [
+            "LEGO",
+            "PLAYMOBIL",
+            "MEGA BLOKS",
+            "HASBRO"
+          ],
+          "hint_1": "Brand de jucării din cărămizi de plastic colorate",
+          "hint_2": "Compania e din Danemarca",
+          "hint_3": "Are propriile parcuri tematice, Legoland",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lego logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_043",
+          "raspuns": "DISNEY",
+          "variante": [
+            "DISNEY",
+            "PIXAR",
+            "WARNER BROS",
+            "UNIVERSAL"
+          ],
+          "hint_1": "Cel mai mare studio de animație din lume",
+          "hint_2": "Logo cu un castel stilizat",
+          "hint_3": "Fondat de Walt Disney",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Disney logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_044",
+          "raspuns": "IKEA",
+          "variante": [
+            "IKEA",
+            "JYSK",
+            "CONFORAMA",
+            "MOBEXPERT"
+          ],
+          "hint_1": "Retailer suedez de mobilă",
+          "hint_2": "Logo galben-albastru, culorile Suediei",
+          "hint_3": "Cunoscut pentru mobila care se asamblează acasă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "IKEA logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_045",
+          "raspuns": "ZARA",
+          "variante": [
+            "ZARA",
+            "H&M",
+            "MANGO",
+            "BERSHKA"
+          ],
+          "hint_1": "Brand de îmbrăcăminte spaniol",
+          "hint_2": "Parte din grupul Inditex",
+          "hint_3": "Logo cu litere negre înghesuite",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Zara logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_046",
+          "raspuns": "SHELL",
+          "variante": [
+            "SHELL",
+            "BP",
+            "PETROM",
+            "OMV"
+          ],
+          "hint_1": "Companie petrolieră cu logo o scoică galbenă-roșie",
+          "hint_2": "Una dintre cele mai mari companii de energie din lume",
+          "hint_3": "Numele înseamnă 'scoică' în engleză",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Shell logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_047",
+          "raspuns": "VOLKSWAGEN",
+          "variante": [
+            "VOLKSWAGEN",
+            "AUDI",
+            "SKODA",
+            "SEAT"
+          ],
+          "hint_1": "Producător auto german, numele înseamnă 'mașina poporului'",
+          "hint_2": "Logo cu literele V și W suprapuse într-un cerc",
+          "hint_3": "Deține și mărcile Audi, Skoda, Porsche",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Volkswagen logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_048",
+          "raspuns": "AUDI",
+          "variante": [
+            "AUDI",
+            "BMW",
+            "VOLKSWAGEN",
+            "MERCEDES BENZ"
+          ],
+          "hint_1": "Producător auto german cu patru inele suprapuse",
+          "hint_2": "Sloganul: 'Vorsprung durch Technik'",
+          "hint_3": "Parte din grupul Volkswagen",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Audi logo four rings",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_049",
+          "raspuns": "TOYOTA",
+          "variante": [
+            "TOYOTA",
+            "HONDA",
+            "NISSAN",
+            "MAZDA"
+          ],
+          "hint_1": "Cel mai mare producător auto japonez",
+          "hint_2": "Logo cu două elipse suprapuse formând un T",
+          "hint_3": "Produce și modelul Corolla",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Toyota logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_050",
+          "raspuns": "HONDA",
+          "variante": [
+            "HONDA",
+            "TOYOTA",
+            "SUZUKI",
+            "YAMAHA"
+          ],
+          "hint_1": "Producător auto și de motociclete japonez",
+          "hint_2": "Logo cu litera H stilizată",
+          "hint_3": "Produce și modelul Civic",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Honda logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_051",
+          "raspuns": "HARLEY DAVIDSON",
+          "variante": [
+            "HARLEY DAVIDSON",
+            "DUCATI",
+            "YAMAHA",
+            "TRIUMPH"
+          ],
+          "hint_1": "Brand american legendar de motociclete",
+          "hint_2": "Logo cu un scut orange-negru",
+          "hint_3": "Fondat în 1903 în Milwaukee",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Harley Davidson logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_052",
+          "raspuns": "CANON",
+          "variante": [
+            "CANON",
+            "NIKON",
+            "SONY",
+            "FUJIFILM"
+          ],
+          "hint_1": "Producător japonez de aparate foto",
+          "hint_2": "Logo roșu cu litere înclinate",
+          "hint_3": "Concurentul principal al Nikon",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Canon logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_053",
+          "raspuns": "INTEL",
+          "variante": [
+            "INTEL",
+            "AMD",
+            "NVIDIA",
+            "QUALCOMM"
+          ],
+          "hint_1": "Producător de procesoare, sloganul 'Intel Inside'",
+          "hint_2": "Logo albastru cu litera e coborâtă",
+          "hint_3": "Rival direct AMD pe piața procesoarelor",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Intel logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_054",
+          "raspuns": "DELL",
+          "variante": [
+            "DELL",
+            "HP",
+            "LENOVO",
+            "ACER"
+          ],
+          "hint_1": "Producător american de calculatoare",
+          "hint_2": "Logo albastru cu litera E înclinată",
+          "hint_3": "Fondat de Michael Dell în camera de cămin",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Dell logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_055",
+          "raspuns": "LINKEDIN",
+          "variante": [
+            "LINKEDIN",
+            "INDEED",
+            "GLASSDOOR",
+            "XING"
+          ],
+          "hint_1": "Rețea socială pentru profesioniști",
+          "hint_2": "Logo albastru cu literele 'in'",
+          "hint_3": "Deținută de Microsoft",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "LinkedIn logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_056",
+          "raspuns": "SNAPCHAT",
+          "variante": [
+            "SNAPCHAT",
+            "INSTAGRAM",
+            "BEREAL",
+            "TIKTOK"
+          ],
+          "hint_1": "Aplicație cu mesaje foto care dispar",
+          "hint_2": "Logo cu o fantomă albă pe fundal galben",
+          "hint_3": "Are 'streak-uri' zilnice între prieteni",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Snapchat logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_057",
+          "raspuns": "PINTEREST",
+          "variante": [
+            "PINTEREST",
+            "INSTAGRAM",
+            "TUMBLR",
+            "BEHANCE"
+          ],
+          "hint_1": "Rețea de 'pinuri' cu idei și imagini",
+          "hint_2": "Logo roșu cu litera P",
+          "hint_3": "Populară pentru idei de decorațiuni și rețete",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Pinterest logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_058",
+          "raspuns": "UBER",
+          "variante": [
+            "UBER",
+            "BOLT",
+            "LYFT",
+            "TAXIFY"
+          ],
+          "hint_1": "Aplicație de ride-sharing lansată în San Francisco",
+          "hint_2": "Logo negru cu litere simple",
+          "hint_3": "A revoluționat industria taxiurilor la nivel global",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Uber logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_059",
+          "raspuns": "FEDEX",
+          "variante": [
+            "FEDEX",
+            "DHL",
+            "UPS",
+            "TNT"
+          ],
+          "hint_1": "Companie americană de curierat rapid",
+          "hint_2": "Logo cu o săgeată ascunsă între litera E și X",
+          "hint_3": "Cunoscută pentru livrări 'overnight'",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "FedEx logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_060",
+          "raspuns": "NASA",
+          "variante": [
+            "NASA",
+            "SPACEX",
+            "ESA",
+            "ROSCOSMOS"
+          ],
+          "hint_1": "Agenția spațială a Statelor Unite",
+          "hint_2": "Logo cu 'meatball' albastru și stele",
+          "hint_3": "A trimis primii oameni pe Lună",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "NASA logo",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

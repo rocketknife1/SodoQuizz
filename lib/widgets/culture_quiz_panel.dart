@@ -200,12 +200,12 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.public_rounded, color: AppColors.coin, size: 28),
+          const Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
           const SizedBox(height: 8),
           const Text(
             'Cultură Generală',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 4),
           Container(
@@ -257,7 +257,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           textAlign: TextAlign.center,
           maxLines: 4,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, height: 1.2),
+          style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700, height: 1.25),
         ),
         const SizedBox(height: 10),
         ...List.generate(q.choices.length, (i) {
@@ -280,14 +280,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                 decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), border: Border.all(color: border)),
                 child: Text(
                   opt,
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

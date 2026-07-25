@@ -34,7 +34,7 @@ class GameMode {
 const List<GameMode> gameModes = [
   GameMode(
     id: 'pixelat',
-    title: 'Pixelat',
+    title: 'Cartoon',
     subtitle: 'Desene & filme',
     icon: Icons.blur_on_rounded,
     accentColor: Color(0xFF534AB7),

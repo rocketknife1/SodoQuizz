@@ -856,6 +856,176 @@
           "puncte_max": 400,
           "imagine_cautare": "Rolls-Royce Phantom VIII",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_051",
+          "raspuns": "KOENIGSEGG JESKO",
+          "variante": [
+            "KOENIGSEGG JESKO",
+            "BUGATTI CHIRON",
+            "PAGANI HUAYRA",
+            "MCLAREN P1"
+          ],
+          "hint_1": "Hypercar suedez numit după tatăl fondatorului",
+          "hint_2": "Vizează peste 480 km/h viteză maximă",
+          "hint_3": "Are o cutie de viteze unică, 'Light Speed Transmission'",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Koenigsegg Jesko",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_052",
+          "raspuns": "PAGANI HUAYRA",
+          "variante": [
+            "PAGANI HUAYRA",
+            "PAGANI ZONDA",
+            "KOENIGSEGG AGERA",
+            "LAMBORGHINI REVUELTO"
+          ],
+          "hint_1": "Hypercar italian numit după un zeu al vântului incaș",
+          "hint_2": "Are patru evacuări centrale caracteristice",
+          "hint_3": "Succesorul modelului Zonda",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Pagani Huayra",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_053",
+          "raspuns": "ASTON MARTIN VANTAGE",
+          "variante": [
+            "ASTON MARTIN VANTAGE",
+            "ASTON MARTIN DB11",
+            "JAGUAR F TYPE",
+            "BMW M4"
+          ],
+          "hint_1": "Sport-coupe britanic, alegerea multor variante James Bond",
+          "hint_2": "Grila frontală seamănă cu o gură zâmbitoare",
+          "hint_3": "Model mai accesibil decât DB11 din aceeași gamă",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Aston Martin Vantage",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_054",
+          "raspuns": "MASERATI MC20",
+          "variante": [
+            "MASERATI MC20",
+            "FERRARI 296",
+            "MCLAREN ARTURA",
+            "LOTUS EMIRA"
+          ],
+          "hint_1": "Supercar italian cu portiere tip 'fluture'",
+          "hint_2": "Primul Maserati cu motor propriu V6 după mult timp",
+          "hint_3": "Numele vine de la 'Maserati Corse 2020'",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Maserati MC20",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_055",
+          "raspuns": "BUGATTI DIVO",
+          "variante": [
+            "BUGATTI DIVO",
+            "BUGATTI CHIRON",
+            "BUGATTI VEYRON",
+            "BUGATTI CENTODIECI"
+          ],
+          "hint_1": "Hypercar francez produs în doar 40 de exemplare",
+          "hint_2": "Numit după un pilot francez de curse din anii 1920",
+          "hint_3": "Bazat pe platforma modelului Chiron, dar mai agil",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Bugatti Divo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_056",
+          "raspuns": "FERRARI PORTOFINO",
+          "variante": [
+            "FERRARI PORTOFINO",
+            "FERRARI ROMA",
+            "FERRARI 488",
+            "FERRARI CALIFORNIA"
+          ],
+          "hint_1": "Cabriolet Ferrari cu acoperiș rigid retractabil",
+          "hint_2": "Numit după o stațiune de coastă din Italia",
+          "hint_3": "Poziționat ca cel mai accesibil model Ferrari descoperit",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ferrari Portofino",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_057",
+          "raspuns": "LAMBORGHINI REVUELTO",
+          "variante": [
+            "LAMBORGHINI REVUELTO",
+            "LAMBORGHINI AVENTADOR",
+            "LAMBORGHINI HURACAN",
+            "LAMBORGHINI SIAN"
+          ],
+          "hint_1": "Succesorul hibrid al modelului Aventador",
+          "hint_2": "Primul Lamborghini de serie cu motor hibrid V12",
+          "hint_3": "Numele înseamnă 'amestecat/răsturnat' în spaniolă",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Lamborghini Revuelto",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_058",
+          "raspuns": "PORSCHE 918 SPYDER",
+          "variante": [
+            "PORSCHE 918 SPYDER",
+            "PORSCHE CARRERA GT",
+            "PORSCHE TAYCAN",
+            "MCLAREN P1"
+          ],
+          "hint_1": "Hypercar hibrid Porsche produs între 2013-2015",
+          "hint_2": "Parte din 'sfânta treime' hibridă alături de McLaren P1 și LaFerrari",
+          "hint_3": "Poate atinge 100 km/h în sub 2.5 secunde",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Porsche 918 Spyder",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_059",
+          "raspuns": "MCLAREN 720S",
+          "variante": [
+            "MCLAREN 720S",
+            "MCLAREN P1",
+            "MCLAREN 570S",
+            "MCLAREN ARTURA"
+          ],
+          "hint_1": "Supercar britanic cu faruri caracteristice în formă de 'ochi'",
+          "hint_2": "720 se referă la puterea motorului în cai putere",
+          "hint_3": "Parte din gama 'Super Series' McLaren",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "McLaren 720S",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mas_060",
+          "raspuns": "BMW M4",
+          "variante": [
+            "BMW M4",
+            "BMW M3",
+            "BMW M5",
+            "BMW I8"
+          ],
+          "hint_1": "Coupe sportiv german cu grilă frontală dublă, foarte mare",
+          "hint_2": "Versiunea performanță a modelului Seria 4",
+          "hint_3": "Rival direct al Mercedes-AMG C63 Coupe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "BMW M4",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

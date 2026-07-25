@@ -15,14 +15,14 @@ class _WheelPrize {
 }
 
 const List<_WheelPrize> _prizes = [
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 20),
-  _WheelPrize(icon: Icons.bolt_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 30),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 40),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 22),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 33),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 46),
   _WheelPrize(icon: Icons.favorite_rounded, color: AppColors.life, type: _PrizeType.life, amount: 1),
-  _WheelPrize(icon: Icons.bolt_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 25),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 60),
-  _WheelPrize(icon: Icons.bolt_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 35),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 20),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 28),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 68),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 38),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 30),
 ];
 
 /// Roata norocului a inelului — un premiu (monede/XP/viață) o dată la 24h
@@ -63,9 +63,12 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     if (_spinning || _done) return;
     final resultIndex = Random().nextInt(_prizes.length);
     final segmentAngle = 2 * pi / _prizes.length;
-    // acul e sus (unghi -pi/2 în convenția noastră) — vrem ca centrul
-    // segmentului ales să ajungă exact acolo, după câteva ture întregi.
-    final targetAngle = -pi / 2 - (resultIndex + 0.5) * segmentAngle;
+    // acul e sus (unghi -pi/2 în convenția noastră). Segmentul i e desenat
+    // cu centrul la unghiul local -pi/2 + (i+0.5)*segmentAngle, așa că
+    // rotația care îl aduce sub ac e doar -(i+0.5)*segmentAngle — fără -pi/2
+    // suplimentar (bug-ul vechi scădea -pi/2 de două ori, ceea ce ateriza
+    // segmentul cerut la stânga acului, nu sub el).
+    final targetAngle = -(resultIndex + 0.5) * segmentAngle;
     final extraSpins = 5 + Random().nextInt(3);
     setState(() {
       _spinning = true;

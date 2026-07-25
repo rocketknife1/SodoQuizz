@@ -32,41 +32,41 @@ class SolidMenuButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: big ? 18 : 16),
+        padding: EdgeInsets.symmetric(horizontal: 12, vertical: big ? 12 : 9),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [_lighten(color, 0.08), color],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(color: color.withAlpha(110), blurRadius: 16, offset: const Offset(0, 6)),
+            BoxShadow(color: color.withAlpha(100), blurRadius: 10, offset: const Offset(0, 4)),
           ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(color: Colors.white.withAlpha(50), shape: BoxShape.circle),
-              child: Icon(icon, color: Colors.white, size: big ? 24 : 20),
+              child: Icon(icon, color: Colors.white, size: big ? 18 : 15),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 10),
             Text(
               label,
               style: TextStyle(
                 color: Colors.white,
-                fontSize: big ? 19 : 16,
+                fontSize: big ? 14 : 12,
                 fontWeight: FontWeight.w800,
-                letterSpacing: 0.3,
+                letterSpacing: 0.2,
               ),
             ),
             const Spacer(),
             if (badge != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                 decoration: BoxDecoration(color: Colors.black.withAlpha(70), borderRadius: BorderRadius.circular(20)),
-                child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
               ),
           ],
         ),

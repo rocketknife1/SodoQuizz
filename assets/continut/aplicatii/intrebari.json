@@ -890,6 +890,142 @@
           "puncte_max": 200,
           "imagine_cautare": "NordVPN app logo",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_053",
+          "raspuns": "DUOLINGO",
+          "variante": [
+            "DUOLINGO",
+            "BABBEL",
+            "BUSUU",
+            "MEMRISE"
+          ],
+          "hint_1": "Aplicație pentru învățat limbi străine, cu o bufniță verde",
+          "hint_2": "Îți trimite notificări insistente dacă sari o zi",
+          "hint_3": "Complet gratuită, cu lecții scurte zilnice",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Duolingo app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_054",
+          "raspuns": "DISCORD",
+          "variante": [
+            "DISCORD",
+            "SLACK",
+            "TEAMSPEAK",
+            "TELEGRAM"
+          ],
+          "hint_1": "Aplicație de chat vocal folosită mult de gameri",
+          "hint_2": "Organizată pe 'servere' cu mai multe canale",
+          "hint_3": "Logo-ul e un personaj alb-violet numit Clyde",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Discord app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_055",
+          "raspuns": "SIGNAL",
+          "variante": [
+            "SIGNAL",
+            "TELEGRAM",
+            "WHATSAPP",
+            "THREEMA"
+          ],
+          "hint_1": "Aplicație de mesagerie axată pe confidențialitate",
+          "hint_2": "Recomandată des de experți în securitate",
+          "hint_3": "Logo albastru cu o bulă de chat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Signal app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_056",
+          "raspuns": "PHOTOMATH",
+          "variante": [
+            "PHOTOMATH",
+            "MATHWAY",
+            "WOLFRAM ALPHA",
+            "SOCRATIC"
+          ],
+          "hint_1": "Aplicație care rezolvă probleme de matematică din poză",
+          "hint_2": "Îndreptă camera spre o ecuație și primești pașii de rezolvare",
+          "hint_3": "Foarte populară printre elevi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Photomath app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_057",
+          "raspuns": "GOOGLE CALENDAR",
+          "variante": [
+            "GOOGLE CALENDAR",
+            "OUTLOOK CALENDAR",
+            "APPLE CALENDAR",
+            "ANY.DO"
+          ],
+          "hint_1": "Aplicație Google pentru programări și evenimente",
+          "hint_2": "Icon-ul arată o dată curentă pe fundal alb",
+          "hint_3": "Se sincronizează automat cu Gmail",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Calendar app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_058",
+          "raspuns": "CANVA",
+          "variante": [
+            "CANVA",
+            "PHOTOSHOP",
+            "FIGMA",
+            "CAPCUT"
+          ],
+          "hint_1": "Aplicație simplă de design grafic, cu șabloane gata făcute",
+          "hint_2": "Foarte populară pentru postări pe social media",
+          "hint_3": "Logo cu un C stilizat pe fundal turcoaz-violet",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Canva app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_059",
+          "raspuns": "ADOBE PHOTOSHOP",
+          "variante": [
+            "ADOBE PHOTOSHOP",
+            "ADOBE ILLUSTRATOR",
+            "CANVA",
+            "LIGHTROOM"
+          ],
+          "hint_1": "Cel mai cunoscut program de editare foto profesională",
+          "hint_2": "Logo albastru închis cu literele 'Ps'",
+          "hint_3": "De la compania Adobe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Adobe Photoshop app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "apl_060",
+          "raspuns": "ZOOM",
+          "variante": [
+            "ZOOM",
+            "GOOGLE MEET",
+            "MICROSOFT TEAMS",
+            "SKYPE"
+          ],
+          "hint_1": "Aplicație de videoconferințe devenită populară în pandemie",
+          "hint_2": "Logo albastru cu o cameră video stilizată",
+          "hint_3": "Are 'breakout rooms' pentru sub-grupuri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Zoom app icon",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

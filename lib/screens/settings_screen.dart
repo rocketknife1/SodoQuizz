@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import '../core/music.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import 'home_screen.dart';
@@ -14,15 +15,23 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _noBlur = false;
+  bool _musicEnabled = true;
+  double _musicVolume = 0.5;
   bool _loaded = false;
 
   @override
   void initState() {
     super.initState();
-    StorageService.getNoBlurMode().then((value) {
+    Future.wait([
+      StorageService.getNoBlurMode(),
+      StorageService.getMusicEnabled(),
+      StorageService.getMusicVolume(),
+    ]).then((values) {
       if (!mounted) return;
       setState(() {
-        _noBlur = value;
+        _noBlur = values[0] as bool;
+        _musicEnabled = values[1] as bool;
+        _musicVolume = values[2] as double;
         _loaded = true;
       });
     });
@@ -31,6 +40,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _toggleNoBlur(bool value) async {
     setState(() => _noBlur = value);
     await StorageService.setNoBlurMode(value);
+  }
+
+  Future<void> _toggleMusic(bool value) async {
+    setState(() => _musicEnabled = value);
+    await Music.setEnabled(value);
+  }
+
+  Future<void> _changeMusicVolume(double value) async {
+    setState(() => _musicVolume = value);
+    await Music.setVolume(value);
   }
 
   Future<void> _confirmReset(BuildContext context) async {
@@ -125,6 +144,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 onChanged: _toggleNoBlur,
                               )
                             : const SizedBox(width: 51, height: 31),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(9),
+                              decoration: BoxDecoration(
+                                color: AppColors.play.withAlpha(40),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                _musicEnabled ? Icons.music_note_rounded : Icons.music_off_rounded,
+                                color: AppColors.play,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Muzică de fundal', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                                  SizedBox(height: 2),
+                                  Text('Separată de sunetele de buton', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _loaded
+                                ? CupertinoSwitch(
+                                    value: _musicEnabled,
+                                    activeTrackColor: AppColors.play,
+                                    onChanged: _toggleMusic,
+                                  )
+                                : const SizedBox(width: 51, height: 31),
+                          ],
+                        ),
+                        if (_loaded) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.volume_down_rounded, color: Colors.white38, size: 18),
+                              Expanded(
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor: AppColors.play,
+                                    inactiveTrackColor: Colors.white12,
+                                    thumbColor: AppColors.play,
+                                    overlayColor: AppColors.play.withAlpha(40),
+                                    trackHeight: 3,
+                                  ),
+                                  child: Slider(
+                                    value: _musicVolume,
+                                    onChanged: _musicEnabled ? _changeMusicVolume : null,
+                                  ),
+                                ),
+                              ),
+                              const Icon(Icons.volume_up_rounded, color: Colors.white38, size: 18),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

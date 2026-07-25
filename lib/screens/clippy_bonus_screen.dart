@@ -282,7 +282,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
             children: [
               _miniBadge(_coinBadgeKey, Icons.monetization_on_rounded, AppColors.coin),
               const SizedBox(width: 14),
-              _miniBadge(_xpBadgeKey, Icons.bolt_rounded, AppColors.purple),
+              _miniBadge(_xpBadgeKey, Icons.star_rounded, AppColors.purple),
               const SizedBox(width: 14),
               _miniBadge(_livesBadgeKey, Icons.favorite_rounded, AppColors.life),
             ],

@@ -19,6 +19,7 @@ class QuestsScreen extends StatefulWidget {
 class _QuestsScreenState extends State<QuestsScreen> {
   late Future<_QuestsData> _dataFuture;
   final GlobalKey _coinBadgeKey = GlobalKey();
+  final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
 
   @override
   void initState() {
@@ -42,6 +43,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
   Future<void> _claim(Quest q) async {
     await StorageService.claimQuest(q);
     if (!mounted) return;
+    // bulina roșie de pe tab-ul Quests trebuie să dispară pe loc dacă acesta
+    // era ultimul quest revendicabil, nu doar la reintrarea în tab.
+    _navBarKey.currentState?.refreshDots();
     // reîncărcăm imediat progresul/claimed (bifa apare pe loc), dar balanța
     // de monede afișată rămâne cea veche până lovește animația, ca numărul
     // să se actualizeze exact când "ajunge" moneda, nu instant la apăsare.
@@ -124,7 +128,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
           },
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(current: AppTab.quests),
+      bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.quests),
     );
   }
 }

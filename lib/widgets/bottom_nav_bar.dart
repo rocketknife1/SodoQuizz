@@ -19,10 +19,10 @@ class AppBottomNavBar extends StatefulWidget {
   const AppBottomNavBar({super.key, required this.current});
 
   @override
-  State<AppBottomNavBar> createState() => _AppBottomNavBarState();
+  State<AppBottomNavBar> createState() => AppBottomNavBarState();
 }
 
-class _AppBottomNavBarState extends State<AppBottomNavBar> {
+class AppBottomNavBarState extends State<AppBottomNavBar> {
   bool _questsDot = false;
   bool _profileDot = false;
 
@@ -31,6 +31,12 @@ class _AppBottomNavBarState extends State<AppBottomNavBar> {
     super.initState();
     _loadDots();
   }
+
+  /// Reîncarcă cele două puncte roșii pe loc — apelat de ecranele care
+  /// revendică un quest/o realizare, ca bulina să dispară imediat, fără
+  /// să fie nevoie să ieși și să reintri în tab (vezi [QuestsScreen],
+  /// [ProfileScreen]). Necesită o [GlobalKey] către acest state.
+  Future<void> refreshDots() => _loadDots();
 
   Future<void> _loadDots() async {
     final results = await Future.wait([

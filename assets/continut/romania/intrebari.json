@@ -856,6 +856,176 @@
           "puncte_max": 400,
           "imagine_cautare": "Bicaz Canyon",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_051",
+          "raspuns": "PALATUL CULTURII IASI",
+          "variante": [
+            "PALATUL CULTURII IASI",
+            "PALATUL PARLAMENTULUI",
+            "CASTELUL PELES",
+            "ATENEUL ROMAN"
+          ],
+          "hint_1": "Clădire monumentală neogotică din Iași",
+          "hint_2": "Găzduiește patru muzee în interior",
+          "hint_3": "Are un carillon cu 35 de clopote care cântă la fiecare oră",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Palatul Culturii Iasi",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_052",
+          "raspuns": "BISERICA NEAGRA",
+          "variante": [
+            "BISERICA NEAGRA",
+            "CATEDRALA MITROPOLITANA",
+            "BISERICA SFANTUL NICOLAE",
+            "ATENEUL ROMAN"
+          ],
+          "hint_1": "Cea mai mare biserică gotică din sud-estul Europei",
+          "hint_2": "Se află în Brașov",
+          "hint_3": "Numele vine de la un incendiu din 1689 care i-a înnegrit pereții",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Biserica Neagra Brasov",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_053",
+          "raspuns": "CETATEA RASNOV",
+          "variante": [
+            "CETATEA RASNOV",
+            "CETATEA CORVINILOR",
+            "CETATEA RUPESTRA",
+            "CETATEA DEVA"
+          ],
+          "hint_1": "Cetate țărănească medievală de pe un deal, lângă Brașov",
+          "hint_2": "Are propria fântână săpată direct în stâncă",
+          "hint_3": "Vizibilă de pe autostrada Brașov-Predeal",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cetatea Rasnov",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_054",
+          "raspuns": "PESTERA URSILOR",
+          "variante": [
+            "PESTERA URSILOR",
+            "PESTERA SCARISOARA",
+            "PESTERA MUIERILOR",
+            "PESTERA POLOVRAGI"
+          ],
+          "hint_1": "Peșteră din Munții Apuseni cu multe oase fosile",
+          "hint_2": "Numele vine de la oasele de urs de cavernă găsite acolo",
+          "hint_3": "Se află lângă orașul Chișcău, județul Bihor",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Pestera Ursilor Chiscau",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_055",
+          "raspuns": "PORTILE MARAMURESULUI",
+          "variante": [
+            "PORTILE MARAMURESULUI",
+            "MARTISORUL",
+            "IA ROMANEASCA",
+            "CIMITIRUL VESEL"
+          ],
+          "hint_1": "Porți de lemn sculptate manual, specifice unei regiuni din nord",
+          "hint_2": "Fiecare model spune ceva despre familia care locuiește acolo",
+          "hint_3": "Simbol al satelor tradiționale din Maramureș",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Maramures traditional wooden gate",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_056",
+          "raspuns": "CONSTANTIN BRANCOVEANU",
+          "variante": [
+            "CONSTANTIN BRANCOVEANU",
+            "STEFAN CEL MARE",
+            "MIHAI VITEAZUL",
+            "ALEXANDRU IOAN CUZA"
+          ],
+          "hint_1": "Domnitor al Țării Românești, cunoscut pentru stilul arhitectural care-i poartă numele",
+          "hint_2": "A construit Mănăstirea Hurezi",
+          "hint_3": "A fost executat la Istanbul alături de cei patru fii ai săi",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Constantin Brancoveanu portrait",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_057",
+          "raspuns": "NICOLAE IORGA",
+          "variante": [
+            "NICOLAE IORGA",
+            "MIHAI EMINESCU",
+            "ION CREANGA",
+            "TITU MAIORESCU"
+          ],
+          "hint_1": "Istoric, om politic și academician român",
+          "hint_2": "A fost prim-ministru al României între 1931-1932",
+          "hint_3": "Asasinat de legionari în 1940",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Nicolae Iorga portrait",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_058",
+          "raspuns": "GEORGE COSBUC",
+          "variante": [
+            "GEORGE COSBUC",
+            "MIHAI EMINESCU",
+            "VASILE ALECSANDRI",
+            "OCTAVIAN GOGA"
+          ],
+          "hint_1": "Poet român cunoscut pentru versuri despre viața satului",
+          "hint_2": "A scris poezia 'Nunta Zamfirei'",
+          "hint_3": "Originar din Transilvania, județul Bistrița-Năsăud",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "George Cosbuc portrait",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_059",
+          "raspuns": "ION LUCA CARAGIALE",
+          "variante": [
+            "ION LUCA CARAGIALE",
+            "ION CREANGA",
+            "MIHAIL SADOVEANU",
+            "MARIN PREDA"
+          ],
+          "hint_1": "Dramaturg român, autorul comediei 'O scrisoare pierdută'",
+          "hint_2": "A scris și 'D-ale carnavalului'",
+          "hint_3": "Considerat cel mai mare comediograf român",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ion Luca Caragiale portrait",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "rom_060",
+          "raspuns": "TURNUL CHINDIEI",
+          "variante": [
+            "TURNUL CHINDIEI",
+            "TURNUL SFATULUI",
+            "TURNUL POMPIERILOR",
+            "TURNUL CU CEAS"
+          ],
+          "hint_1": "Turn medieval din Târgoviște",
+          "hint_2": "Parte din fosta Curte Domnească a Țării Românești",
+          "hint_3": "Asociat legendar cu Vlad Țepeș",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Turnul Chindiei Targoviste",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

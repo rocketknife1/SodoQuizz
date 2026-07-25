@@ -856,6 +856,176 @@
           "puncte_max": 200,
           "imagine_cautare": "FIFA World Cup Trophy",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_051",
+          "raspuns": "VINICIUS JR",
+          "variante": [
+            "VINICIUS JR",
+            "RODRYGO",
+            "NEYMAR",
+            "ROONEY"
+          ],
+          "hint_1": "Extremă braziliană la Real Madrid",
+          "hint_2": "Cunoscut pentru dribling și celebrarea specifică de dans",
+          "hint_3": "A câștigat Liga Campionilor cu Real Madrid",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Vinicius Jr footballer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_052",
+          "raspuns": "JUDE BELLINGHAM",
+          "variante": [
+            "JUDE BELLINGHAM",
+            "PHIL FODEN",
+            "JACK GREALISH",
+            "MASON MOUNT"
+          ],
+          "hint_1": "Mijlocaș englez, transferat la Real Madrid la 20 de ani",
+          "hint_2": "Fost jucător la Borussia Dortmund",
+          "hint_3": "Are o celebrare caracteristică cu brațele încrucișate",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jude Bellingham footballer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_053",
+          "raspuns": "ANDRES INIESTA",
+          "variante": [
+            "ANDRES INIESTA",
+            "XAVI HERNANDEZ",
+            "SERGIO BUSQUETS",
+            "CESC FABREGAS"
+          ],
+          "hint_1": "Mijlocaș spaniol legendar al FC Barcelona",
+          "hint_2": "A marcat golul câștigător al Mondialului 2010",
+          "hint_3": "Parte din generația de aur alături de Xavi și Messi",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andres Iniesta footballer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_054",
+          "raspuns": "KAKA",
+          "variante": [
+            "KAKA",
+            "RONALDINHO",
+            "RIVALDO",
+            "ROBINHO"
+          ],
+          "hint_1": "Mijlocaș brazilian, Balonul de Aur în 2007",
+          "hint_2": "A jucat la AC Milan și Real Madrid",
+          "hint_3": "Cunoscut pentru fair-play și credință religioasă puternică",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kaka footballer Brazil",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_055",
+          "raspuns": "PAOLO MALDINI",
+          "variante": [
+            "PAOLO MALDINI",
+            "FRANCO BARESI",
+            "FABIO CANNAVARO",
+            "GIORGIO CHIELLINI"
+          ],
+          "hint_1": "Fundaș italian legendar, a jucat doar la AC Milan",
+          "hint_2": "Considerat unul dintre cei mai buni fundași din istorie",
+          "hint_3": "Fiul său, Daniel Maldini, joacă tot fotbal profesionist",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "imagine_cautare": "Paolo Maldini footballer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_056",
+          "raspuns": "RONALDO NAZARIO",
+          "variante": [
+            "RONALDO NAZARIO",
+            "CRISTIANO RONALDO",
+            "RONALDINHO",
+            "ADRIANO"
+          ],
+          "hint_1": "Atacant brazilian supranumit 'Fenomenul'",
+          "hint_2": "Dublu campion mondial cu Brazilia, 1994 și 2002",
+          "hint_3": "Nu se confundă cu Cristiano - are alt prenume complet",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ronaldo Nazario Brazil footballer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_057",
+          "raspuns": "ARSENAL",
+          "variante": [
+            "ARSENAL",
+            "CHELSEA",
+            "TOTTENHAM",
+            "MANCHESTER CITY"
+          ],
+          "hint_1": "Club londonez supranumit 'The Gunners'",
+          "hint_2": "Stadionul se numește Emirates",
+          "hint_3": "Culorile echipei sunt roșu cu alb",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Arsenal FC logo stadium",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_058",
+          "raspuns": "CHELSEA",
+          "variante": [
+            "CHELSEA",
+            "ARSENAL",
+            "WEST HAM",
+            "FULHAM"
+          ],
+          "hint_1": "Club londonez supranumit 'The Blues'",
+          "hint_2": "Stadionul se numește Stamford Bridge",
+          "hint_3": "A câștigat Liga Campionilor în 2012 și 2021",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chelsea FC logo stadium",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_059",
+          "raspuns": "AC MILAN",
+          "variante": [
+            "AC MILAN",
+            "INTER MILAN",
+            "JUVENTUS",
+            "AS ROMA"
+          ],
+          "hint_1": "Club italian cu tricouri dungate roșu-negru",
+          "hint_2": "Din orașul Milano, rival etern al lui Inter",
+          "hint_3": "Are 7 trofee de Liga Campionilor câștigate",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "AC Milan logo stadium",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "spo_060",
+          "raspuns": "MANCHESTER CITY",
+          "variante": [
+            "MANCHESTER CITY",
+            "MANCHESTER UNITED",
+            "LIVERPOOL",
+            "EVERTON"
+          ],
+          "hint_1": "Club englez cu tricouri albastru deschis",
+          "hint_2": "Stadionul se numește Etihad",
+          "hint_3": "Antrenat de Pep Guardiola, campioană en-titre Premier League de mai multe ori",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Manchester City logo stadium",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

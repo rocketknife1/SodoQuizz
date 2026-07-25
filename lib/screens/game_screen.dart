@@ -36,6 +36,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int lives = 5;
   int streak = 0;
   int hintsUsed = 0;
+  int hintsBalance = 0;
   int currentQuestionReward = 0;
   final Map<String, int> _questionRewards = {};
   bool answered = false;
@@ -61,10 +62,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadQuestions() async {
-    final results = await Future.wait([loadAllQuestions(), StorageService.getLives(), StorageService.getNoBlurMode()]);
+    final results = await Future.wait([loadAllQuestions(), StorageService.getLives(), StorageService.getNoBlurMode(), StorageService.getHints()]);
     final loaded = results[0] as List<Question>;
     final savedLives = results[1] as int;
     final noBlur = results[2] as bool;
+    final savedHints = results[3] as int;
 
     if (await StorageService.recordModePlayedToday(widget.gameModeId)) {
       final newModesToday = await StorageService.getQuestProgress('play_two_modes');
@@ -78,6 +80,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
     setState(() {
       lives = savedLives;
+      hintsBalance = savedHints;
       _noBlur = noBlur;
       questions = loaded.where((q) => q.categoryId == widget.gameModeId).toList()..shuffle(Random());
       qIndex = 0;
@@ -100,30 +103,40 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   int get _hintCost => calculateHintPenalty(currentQuestionReward, currentQ.maxPoints);
 
-  /// Un hint se plătește din scorul acumulat (cel din dreapta sus). Îl poți
-  /// folosi doar dacă ai destule puncte cât costă — deci la începutul jocului,
-  /// cu 0 puncte, nu poți folosi niciunul până nu strângi scor.
+  /// Un hint costă atât puncte din scorul acumulat CÂT ȘI un hint din
+  /// balanța persistată (aceeași resursă afișată pe Home, lângă vieți și
+  /// monede) — trebuie să ai și destule puncte, și cel puțin 1 hint deținut.
   bool get _canAffordHint {
     if (answered || hintsUsed >= maxHintsPerQuestion) return false;
-    return score >= _hintCost;
+    return score >= _hintCost && hintsBalance > 0;
   }
 
   void _addHint() {
     if (answered || hintsUsed >= maxHintsPerQuestion) return;
     final cost = _hintCost;
+    if (hintsBalance <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nu mai ai hint-uri — cumpără din Magazin.'), duration: Duration(milliseconds: 1400)),
+      );
+      return;
+    }
     if (score < cost) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ai nevoie de $cost puncte pentru un hint (ai $score).'), duration: const Duration(milliseconds: 1400)),
       );
       return;
     }
-    setState(() {
-      hintsUsed++;
-      score -= cost; // hint-ul se scade din scorul acumulat
-    });
-    _bumpQuest('use_hints_3', 1);
-    StorageService.incrementHintsUsedTotal().then((_) {
-      if (mounted) _checkAchievements();
+    StorageService.spendHint().then((spent) {
+      if (!mounted || !spent) return;
+      setState(() {
+        hintsUsed++;
+        score -= cost; // hint-ul se scade din scorul acumulat
+        hintsBalance--;
+      });
+      _bumpQuest('use_hints_3', 1);
+      StorageService.incrementHintsUsedTotal().then((_) {
+        if (mounted) _checkAchievements();
+      });
     });
   }
 
@@ -514,7 +527,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             Icon(Icons.tips_and_updates_rounded, color: fg, size: 16),
             const SizedBox(width: 4),
             Text(
-              'Hint (-${calculateHintPenalty(currentQuestionReward, currentQ.maxPoints)} pts)',
+              'Hint (-${calculateHintPenalty(currentQuestionReward, currentQ.maxPoints)} pts) • $hintsBalance',
               style: TextStyle(color: fg, fontSize: 12),
             ),
           ],

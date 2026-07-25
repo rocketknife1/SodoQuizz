@@ -65,7 +65,7 @@ Future<void> collectRewards(
   );
   await stage(
     amount: xp,
-    icon: Icons.bolt_rounded,
+    icon: Icons.star_rounded,
     color: AppColors.purple,
     targetKey: xpBadgeKey,
     applyReward: () => StorageService.addXp(xp),

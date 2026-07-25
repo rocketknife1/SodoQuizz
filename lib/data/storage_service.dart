@@ -15,6 +15,10 @@ class StorageService {
   static const _xpKey = 'xp';
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
+  static const _musicEnabledKey = 'music_enabled';
+  static const _musicVolumeKey = 'music_volume';
+  static const _hintsKey = 'hints_balance';
+  static const _startingHints = 3;
   static const _lastPlayedDateKey = 'last_played_date';
   static const _streakCountKey = 'streak_count';
   static const _streakMilestonesKey = 'streak_milestones_claimed';
@@ -104,6 +108,31 @@ class StorageService {
     final current = prefs.getInt(_coinsKey) ?? 0;
     if (current < amount) return false;
     await prefs.setInt(_coinsKey, current - amount);
+    return true;
+  }
+
+  // ─── Hints (resursă separată, ca vieți/monede — vezi Home + shop) ─────────
+  // Jucătorii noi pornesc cu [_startingHints] gratuit, ca hint-ul din prima
+  // întrebare să nu coste nimic din prima sesiune.
+
+  static Future<int> getHints() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_hintsKey) ?? _startingHints;
+  }
+
+  static Future<void> addHints(int amount) async {
+    if (amount <= 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_hintsKey) ?? _startingHints;
+    await prefs.setInt(_hintsKey, current + amount);
+  }
+
+  /// Consumă 1 hint din balanța persistată — întoarce false dacă nu mai ai.
+  static Future<bool> spendHint() async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_hintsKey) ?? _startingHints;
+    if (current <= 0) return false;
+    await prefs.setInt(_hintsKey, current - 1);
     return true;
   }
 
@@ -251,6 +280,29 @@ class StorageService {
   static Future<void> setNoBlurMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_noBlurKey, value);
+  }
+
+  // ─── Muzică de fundal (separată de volumul efectelor sonore) ──────────────
+
+  static Future<bool> getMusicEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_musicEnabledKey) ?? true;
+  }
+
+  static Future<void> setMusicEnabled(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_musicEnabledKey, value);
+  }
+
+  /// Volum muzică 0.0-1.0, separat de sunetele de UI (vezi [Sfx]).
+  static Future<double> getMusicVolume() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getDouble(_musicVolumeKey) ?? 0.5;
+  }
+
+  static Future<void> setMusicVolume(double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_musicVolumeKey, value.clamp(0.0, 1.0));
   }
 
   // ─── Streak zilnic (zile consecutive jucate) ──────────────────────────────

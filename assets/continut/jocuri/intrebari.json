@@ -8,7 +8,7 @@
       "descriere": "Gamers Cave: 100 întrebări cu jocuri Steam",
       "intrebari": [
         {
-          "id": "poza1",
+          "id": "gam_001",
           "raspuns": "HALO",
           "variante": [
             "HALO",
@@ -25,7 +25,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza2",
+          "id": "gam_002",
           "raspuns": "MARIO",
           "variante": [
             "MARIO",
@@ -42,7 +42,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza3",
+          "id": "gam_003",
           "raspuns": "LARA CROFT",
           "variante": [
             "LARA CROFT",
@@ -59,7 +59,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza4",
+          "id": "gam_004",
           "raspuns": "FORTNITE",
           "variante": [
             "FORTNITE",
@@ -76,7 +76,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza5",
+          "id": "gam_005",
           "raspuns": "OVERWATCH",
           "variante": [
             "OVERWATCH",
@@ -93,7 +93,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza6",
+          "id": "gam_006",
           "raspuns": "MINECRAFT",
           "variante": [
             "MINECRAFT",
@@ -110,7 +110,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza7",
+          "id": "gam_007",
           "raspuns": "CYBERPUNK 2077",
           "variante": [
             "CYBERPUNK 2077",
@@ -127,7 +127,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza8",
+          "id": "gam_008",
           "raspuns": "NINTENDO SWITCH",
           "variante": [
             "NINTENDO SWITCH",
@@ -144,7 +144,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza9",
+          "id": "gam_009",
           "raspuns": "SONIC THE HEDGEHOG",
           "variante": [
             "SONIC THE HEDGEHOG",
@@ -161,7 +161,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza10",
+          "id": "gam_010",
           "raspuns": "ELDEN RING",
           "variante": [
             "ELDEN RING",
@@ -178,7 +178,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza11",
+          "id": "gam_011",
           "raspuns": "VALORANT",
           "variante": [
             "VALORANT",
@@ -195,7 +195,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza12",
+          "id": "gam_012",
           "raspuns": "APEX LEGENDS",
           "variante": [
             "APEX LEGENDS",
@@ -212,7 +212,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza13",
+          "id": "gam_013",
           "raspuns": "FIFA 23",
           "variante": [
             "FIFA 23",
@@ -229,7 +229,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza14",
+          "id": "gam_014",
           "raspuns": "ASSASSIN S CREED",
           "variante": [
             "ASSASSIN S CREED",
@@ -246,7 +246,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza15",
+          "id": "gam_015",
           "raspuns": "THE WITCHER 3",
           "variante": [
             "THE WITCHER 3",
@@ -263,7 +263,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza16",
+          "id": "gam_016",
           "raspuns": "GTA V",
           "variante": [
             "GTA V",
@@ -280,7 +280,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza17",
+          "id": "gam_017",
           "raspuns": "UNCHARTED",
           "variante": [
             "UNCHARTED",
@@ -297,7 +297,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza18",
+          "id": "gam_018",
           "raspuns": "SPIDER-MAN",
           "variante": [
             "SPIDER-MAN",
@@ -314,7 +314,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza19",
+          "id": "gam_019",
           "raspuns": "FINAL FANTASY XIV",
           "variante": [
             "FINAL FANTASY XIV",
@@ -331,7 +331,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza20",
+          "id": "gam_020",
           "raspuns": "CALL OF DUTY",
           "variante": [
             "CALL OF DUTY",
@@ -348,7 +348,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza21",
+          "id": "gam_021",
           "raspuns": "HALO INFINITE",
           "variante": [
             "HALO INFINITE",
@@ -365,7 +365,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza22",
+          "id": "gam_022",
           "raspuns": "ZELDA BREATH OF THE WILD",
           "variante": [
             "ZELDA BREATH OF THE WILD",
@@ -382,7 +382,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza23",
+          "id": "gam_023",
           "raspuns": "METAL GEAR SOLID",
           "variante": [
             "METAL GEAR SOLID",
@@ -399,7 +399,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza24",
+          "id": "gam_024",
           "raspuns": "DEAD SPACE",
           "variante": [
             "DEAD SPACE",
@@ -416,7 +416,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza25",
+          "id": "gam_025",
           "raspuns": "DOOM ETERNAL",
           "variante": [
             "DOOM ETERNAL",
@@ -433,7 +433,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza26",
+          "id": "gam_026",
           "raspuns": "QUAKE",
           "variante": [
             "QUAKE",
@@ -450,7 +450,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza27",
+          "id": "gam_027",
           "raspuns": "DOTA 2",
           "variante": [
             "DOTA 2",
@@ -467,7 +467,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza28",
+          "id": "gam_028",
           "raspuns": "LEAGUE OF LEGENDS",
           "variante": [
             "LEAGUE OF LEGENDS",
@@ -484,7 +484,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza29",
+          "id": "gam_029",
           "raspuns": "BATTLEFIELD 2042",
           "variante": [
             "BATTLEFIELD 2042",
@@ -501,7 +501,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza30",
+          "id": "gam_030",
           "raspuns": "SKYRIM",
           "variante": [
             "SKYRIM",
@@ -518,7 +518,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza31",
+          "id": "gam_031",
           "raspuns": "PUBG",
           "variante": [
             "PUBG",
@@ -535,7 +535,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza32",
+          "id": "gam_032",
           "raspuns": "RUST",
           "variante": [
             "RUST",
@@ -552,7 +552,7 @@
           "imagine_sursa": "placeholder"
         },
         {
-          "id": "poza33",
+          "id": "gam_033",
           "raspuns": "STARCRAFT II",
           "variante": [
             "STARCRAFT II",
@@ -566,6 +566,465 @@
           "dificultate": "usor",
           "puncte_max": 200,
           "imagine_cautare": "poza33",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "RED DEAD REDEMPTION 2",
+          "variante": [
+            "RED DEAD REDEMPTION 2",
+            "GTA V",
+            "THE WITCHER 3",
+            "ASSASSIN S CREED"
+          ],
+          "hint_1": "Western open-world de la Rockstar Games",
+          "hint_2": "Îl controlezi pe Arthur Morgan",
+          "hint_3": "Continuarea unui joc despre John Marston",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_034",
+          "imagine_cautare": "Red Dead Redemption 2 game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "GOD OF WAR",
+          "variante": [
+            "GOD OF WAR",
+            "HERCULES GAME",
+            "HADES",
+            "ASSASSIN S CREED ODYSSEY"
+          ],
+          "hint_1": "Kratos e personajul principal",
+          "hint_2": "Bazat pe mitologia greacă și nordică",
+          "hint_3": "Are un fiu pe nume Atreus în ultimele jocuri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_035",
+          "imagine_cautare": "God Of War game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "HORIZON ZERO DAWN",
+          "variante": [
+            "HORIZON ZERO DAWN",
+            "DEATH STRANDING",
+            "HALO",
+            "GEARS OF WAR"
+          ],
+          "hint_1": "Lume post-apocaliptică cu roboți-animale",
+          "hint_2": "Personajul principal se numește Aloy",
+          "hint_3": "Dezvoltat de Guerrilla Games",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_036",
+          "imagine_cautare": "Horizon Zero Dawn game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "THE LAST OF US",
+          "variante": [
+            "THE LAST OF US",
+            "DAYS GONE",
+            "DEAD SPACE",
+            "RESIDENT EVIL"
+          ],
+          "hint_1": "Joc post-apocaliptic cu infectați tip ciupercă",
+          "hint_2": "Joel și Ellie sunt personajele principale",
+          "hint_3": "Are și un serial TV foarte popular",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_037",
+          "imagine_cautare": "The Last Of Us game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "RESIDENT EVIL",
+          "variante": [
+            "RESIDENT EVIL",
+            "DEAD SPACE",
+            "SILENT HILL",
+            "THE LAST OF US"
+          ],
+          "hint_1": "Serie clasică de survival horror cu zombi",
+          "hint_2": "Umbrella Corporation e mereu vinovată",
+          "hint_3": "Personaje iconice: Leon și Jill",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_038",
+          "imagine_cautare": "Resident Evil game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DARK SOULS",
+          "variante": [
+            "DARK SOULS",
+            "BLOODBORNE",
+            "SEKIRO",
+            "ELDEN RING"
+          ],
+          "hint_1": "Joc RPG foarte greu, de la FromSoftware",
+          "hint_2": "Mesajul 'You Died' apare foarte des",
+          "hint_3": "A dat naștere genului 'soulslike'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_039",
+          "imagine_cautare": "Dark Souls game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "SEKIRO",
+          "variante": [
+            "SEKIRO",
+            "GHOST OF TSUSHIMA",
+            "DARK SOULS",
+            "NIOH"
+          ],
+          "hint_1": "Joc de acțiune cu samurai și un braț protetic",
+          "hint_2": "Subtitlul complet: 'Shadows Die Twice'",
+          "hint_3": "Tot de la FromSoftware, ca Dark Souls",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_040",
+          "imagine_cautare": "Sekiro game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "BLOODBORNE",
+          "variante": [
+            "BLOODBORNE",
+            "DARK SOULS",
+            "BLOODLINES",
+            "VAMPYR"
+          ],
+          "hint_1": "Joc gotic-horror de la FromSoftware",
+          "hint_2": "Acțiunea are loc în orașul Yharnam",
+          "hint_3": "Vânătorii de bestii sunt personajele principale",
+          "dificultate": "greu",
+          "puncte_max": 400,
+          "id": "gam_041",
+          "imagine_cautare": "Bloodborne game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "HOLLOW KNIGHT",
+          "variante": [
+            "HOLLOW KNIGHT",
+            "OLLIE OLLIE",
+            "CUPHEAD",
+            "ORI AND THE BLIND FOREST"
+          ],
+          "hint_1": "Joc metroidvania desenat manual, cu insecte",
+          "hint_2": "Acțiunea are loc în regatul subteran Hallownest",
+          "hint_3": "Personajul principal poartă o mască de cavaler",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_042",
+          "imagine_cautare": "Hollow Knight game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "STARDEW VALLEY",
+          "variante": [
+            "STARDEW VALLEY",
+            "ANIMAL CROSSING",
+            "FARMVILLE",
+            "MY TIME AT PORTIA"
+          ],
+          "hint_1": "Joc de simulare a unei ferme, creat de un singur om",
+          "hint_2": "Moștenești o fermă veche de la bunicul tău",
+          "hint_3": "Ai și o mină de explorat sub sat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_043",
+          "imagine_cautare": "Stardew Valley game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ANIMAL CROSSING",
+          "variante": [
+            "ANIMAL CROSSING",
+            "STARDEW VALLEY",
+            "THE SIMS",
+            "MINECRAFT"
+          ],
+          "hint_1": "Joc Nintendo relaxant, cu animale antropomorfe",
+          "hint_2": "Poți decora o insulă întreagă",
+          "hint_3": "Tom Nook e personajul care te întâmpină",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_044",
+          "imagine_cautare": "Animal Crossing game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "AMONG US",
+          "variante": [
+            "AMONG US",
+            "FALL GUYS",
+            "GOOSE GOOSE DUCK",
+            "GARRY S MOD"
+          ],
+          "hint_1": "Joc social unde trebuie să găsești impostorul",
+          "hint_2": "Personajele sunt niște 'fasole' colorată",
+          "hint_3": "A devenit viral în 2020",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_045",
+          "imagine_cautare": "Among Us game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ROBLOX",
+          "variante": [
+            "ROBLOX",
+            "MINECRAFT",
+            "FORTNITE",
+            "GARRY S MOD"
+          ],
+          "hint_1": "Platformă unde jucătorii creează propriile jocuri",
+          "hint_2": "Personajele sunt din cuburi (blocky)",
+          "hint_3": "Foarte popular printre copii și adolescenți",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_046",
+          "imagine_cautare": "Roblox game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "FALL GUYS",
+          "variante": [
+            "FALL GUYS",
+            "AMONG US",
+            "GANG BEASTS",
+            "ROCKET LEAGUE"
+          ],
+          "hint_1": "Battle royale colorat cu personaje tip jeleu",
+          "hint_2": "Trebuie să treci de obstacole și să nu cazi",
+          "hint_3": "Inspirat de emisiunile japoneze de gen 'Wipeout'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_047",
+          "imagine_cautare": "Fall Guys game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "COUNTER STRIKE",
+          "variante": [
+            "COUNTER STRIKE",
+            "VALORANT",
+            "RAINBOW SIX SIEGE",
+            "OVERWATCH"
+          ],
+          "hint_1": "Shooter tactic clasic, teroriști vs. anti-teroriști",
+          "hint_2": "Extrem de popular la eSports, apărut încă din 2000",
+          "hint_3": "Harta 'Dust II' e legendară",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_048",
+          "imagine_cautare": "Counter Strike game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "TEKKEN",
+          "variante": [
+            "TEKKEN",
+            "STREET FIGHTER",
+            "MORTAL KOMBAT",
+            "SOULCALIBUR"
+          ],
+          "hint_1": "Joc de lupte 3D japonez",
+          "hint_2": "Familia Mishima e centrală în poveste",
+          "hint_3": "Personaj iconic: Kazuya Mishima",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_049",
+          "imagine_cautare": "Tekken game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "STREET FIGHTER",
+          "variante": [
+            "STREET FIGHTER",
+            "TEKKEN",
+            "MORTAL KOMBAT",
+            "KING OF FIGHTERS"
+          ],
+          "hint_1": "Joc clasic de lupte 2D de la Capcom",
+          "hint_2": "Ryu și Ken sunt personaje iconice",
+          "hint_3": "Mișcarea 'Hadouken' e celebră mondial",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_050",
+          "imagine_cautare": "Street Fighter game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "MORTAL KOMBAT",
+          "variante": [
+            "MORTAL KOMBAT",
+            "STREET FIGHTER",
+            "TEKKEN",
+            "INJUSTICE"
+          ],
+          "hint_1": "Joc de lupte cunoscut pentru violență și 'Fatalities'",
+          "hint_2": "Scorpion și Sub-Zero sunt personaje iconice",
+          "hint_3": "Are propriul film și serial animat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_051",
+          "imagine_cautare": "Mortal Kombat game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "PORTAL",
+          "variante": [
+            "PORTAL",
+            "HALF-LIFE",
+            "THE STANLEY PARABLE",
+            "QUAKE"
+          ],
+          "hint_1": "Joc puzzle cu un pistol care creează portaluri",
+          "hint_2": "GLaDOS e inteligența artificială antagonistă",
+          "hint_3": "Promite 'tortul e o minciună'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_052",
+          "imagine_cautare": "Portal game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "HALF-LIFE",
+          "variante": [
+            "HALF-LIFE",
+            "PORTAL",
+            "DOOM ETERNAL",
+            "QUAKE"
+          ],
+          "hint_1": "Shooter legendar cu Gordon Freeman",
+          "hint_2": "Acțiunea începe la complexul Black Mesa",
+          "hint_3": "Are o rangă celebră - 'crowbar-ul'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_053",
+          "imagine_cautare": "Half-Life game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DIABLO IV",
+          "variante": [
+            "DIABLO IV",
+            "PATH OF EXILE",
+            "DARK SOULS",
+            "WORLD OF WARCRAFT"
+          ],
+          "hint_1": "Hack and slash întunecat de la Blizzard",
+          "hint_2": "Lumea se numește Sanctuary",
+          "hint_3": "Al patrulea joc din serie, lansat în 2023",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_054",
+          "imagine_cautare": "Diablo Iv game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "WORLD OF WARCRAFT",
+          "variante": [
+            "WORLD OF WARCRAFT",
+            "FINAL FANTASY XIV",
+            "GUILD WARS 2",
+            "ELDER SCROLLS ONLINE"
+          ],
+          "hint_1": "Cel mai cunoscut MMORPG din istorie",
+          "hint_2": "Lumea se numește Azeroth",
+          "hint_3": "De la Blizzard Entertainment",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_055",
+          "imagine_cautare": "World Of Warcraft game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "HEARTHSTONE",
+          "variante": [
+            "HEARTHSTONE",
+            "MAGIC THE GATHERING",
+            "GWENT",
+            "LEGENDS OF RUNETERRA"
+          ],
+          "hint_1": "Joc de cărți digital bazat pe universul Warcraft",
+          "hint_2": "Creat de Blizzard Entertainment",
+          "hint_3": "Se joacă cu eroi și vrăji, nu cu miniaturi fizice",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_056",
+          "imagine_cautare": "Hearthstone game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CANDY CRUSH",
+          "variante": [
+            "CANDY CRUSH",
+            "BEJEWELED",
+            "TWO DOTS",
+            "FRUIT NINJA"
+          ],
+          "hint_1": "Joc mobil de tip 'match-3' cu dulciuri colorate",
+          "hint_2": "Extrem de popular pe Facebook și telefoane",
+          "hint_3": "Creat de compania King",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_057",
+          "imagine_cautare": "Candy Crush game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CLASH OF CLANS",
+          "variante": [
+            "CLASH OF CLANS",
+            "CLASH ROYALE",
+            "BOOM BEACH",
+            "AGE OF EMPIRES"
+          ],
+          "hint_1": "Joc mobil de strategie cu sate și trupe barbare",
+          "hint_2": "De la Supercell, compania finlandeză",
+          "hint_3": "Ai un 'Town Hall' care se poate upgrada",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_058",
+          "imagine_cautare": "Clash Of Clans game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CLASH ROYALE",
+          "variante": [
+            "CLASH ROYALE",
+            "CLASH OF CLANS",
+            "HEARTHSTONE",
+            "BRAWL STARS"
+          ],
+          "hint_1": "Joc mobil de strategie cu cărți și turnuri",
+          "hint_2": "Bazat pe universul 'Clash of Clans'",
+          "hint_3": "Se joacă unu-la-unu, în timp real",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_059",
+          "imagine_cautare": "Clash Royale game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "POKEMON GO",
+          "variante": [
+            "POKEMON GO",
+            "INGRESS",
+            "HARRY POTTER WIZARDS UNITE",
+            "MONSTER HUNTER NOW"
+          ],
+          "hint_1": "Joc mobil cu realitate augmentată, prinzi creaturi în lumea reală",
+          "hint_2": "Trebuie să mergi fizic pentru a găsi PokeStopuri",
+          "hint_3": "A devenit fenomen mondial în vara 2016",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_060",
+          "imagine_cautare": "Pokemon Go game",
           "imagine_sursa": "placeholder"
         }
       ]

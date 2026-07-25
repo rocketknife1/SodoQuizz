@@ -29,6 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _coinBadgeKey = GlobalKey();
   final GlobalKey _xpBadgeKey = GlobalKey();
   final GlobalKey _livesBadgeKey = GlobalKey();
+  final GlobalKey _hintsBadgeKey = GlobalKey();
 
   @override
   void initState() {
@@ -43,12 +44,14 @@ class _HomeScreenState extends State<HomeScreen> {
       StorageService.getCoins(),
       StorageService.getLives(),
       StorageService.getStreak(),
+      StorageService.getHints(),
     ]);
     return _HomeData(
       xp: results[0],
       coins: results[1],
       lives: results[2],
       streak: results[3],
+      hints: results[4],
     );
   }
 
@@ -91,10 +94,17 @@ class _HomeScreenState extends State<HomeScreen> {
               // layout; ambele au și o funcție reală (roata norocului /
               // bonusul cu întrebări), de-asta reîmprospătează header-ul.
               Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
-              // planetă centrală mare, în spațiul gol de sub butoane (nu se
-              // suprapune cu ele), cu holograme ale categoriilor levitând
-              // în jur — centrată pe toată lățimea ecranului.
-              const Positioned(top: 460, right: 8, child: SpinningPlanet(size: 76)),
+              // planetă centrală, izolată în banda goală din mijlocul
+              // ecranului: centrată pe orizontală (nu lângă Clippy, care
+              // stă lipit de marginea dreaptă) și ancorată de jos, la
+              // distanță clară atât de panoul de Cultură Generală (sus)
+              // cât și de rândul de mascote (jos).
+              const Positioned(
+                bottom: 175,
+                left: 0,
+                right: 0,
+                child: Center(child: SpinningPlanet(size: 76)),
+              ),
               Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
               const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
             ],
@@ -107,16 +117,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContent(BuildContext context, _HomeData? data) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
       child: Column(
         children: [
           LevelHeader(
             xp: data?.xp ?? 0,
             coins: data?.coins ?? 0,
             lives: data?.lives ?? 5,
+            hints: data?.hints ?? 3,
             coinBadgeKey: _coinBadgeKey,
             xpBadgeKey: _xpBadgeKey,
             livesBadgeKey: _livesBadgeKey,
+            hintsBadgeKey: _hintsBadgeKey,
             onCoinsTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ShopScreen()));
@@ -124,76 +136,77 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           if ((data?.streak ?? 0) > 0) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             _buildStreakChip(data!.streak),
           ],
-          const SizedBox(height: 18),
+          const SizedBox(height: 8),
           _buildLogo(),
-          const SizedBox(height: 22),
-          // butoanele meniului (stânga, mai înguste) + panoul
-          // interactiv de Cultură Generală (dreapta) — înălțimile
-          // se egalizează automat prin IntrinsicHeight+stretch.
-          IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SolidMenuButton(
-                        icon: Icons.play_arrow_rounded,
-                        label: 'PLAY',
-                        color: AppColors.play,
-                        big: true,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const CategoriesScreen())),
-                      ),
-                      SolidMenuButton(
-                        icon: Icons.emoji_events_rounded,
-                        label: 'CLASAMENT',
-                        color: AppColors.orange,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const LeaderboardScreen())),
-                      ),
-                      SolidMenuButton(
-                        icon: Icons.groups_rounded,
-                        label: 'MULTIPLAYER',
-                        color: AppColors.teal,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const MultiplayerScreen())),
-                      ),
-                      SolidMenuButton(
-                        icon: Icons.settings_rounded,
-                        label: 'SETĂRI',
-                        color: AppColors.gray,
-                        onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SettingsScreen())),
-                      ),
-                    ],
-                  ),
+          const SizedBox(height: 10),
+          // butoanele meniului (stânga, mai înguste, banner-uri compacte) +
+          // panoul interactiv de Cultură Generală (dreapta, mai lat) — fără
+          // stretch forțat: panoul își ia înălțimea din propriul conținut,
+          // nu e limitat la înălțimea (acum mai mică) a coloanei de butoane.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  children: [
+                    SolidMenuButton(
+                      icon: Icons.play_arrow_rounded,
+                      label: 'PLAY',
+                      color: AppColors.play,
+                      big: true,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const CategoriesScreen())),
+                    ),
+                    const SizedBox(height: 8),
+                    SolidMenuButton(
+                      icon: Icons.emoji_events_rounded,
+                      label: 'CLASAMENT',
+                      color: AppColors.orange,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const LeaderboardScreen())),
+                    ),
+                    const SizedBox(height: 8),
+                    SolidMenuButton(
+                      icon: Icons.groups_rounded,
+                      label: 'MULTIPLAYER',
+                      color: AppColors.teal,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const MultiplayerScreen())),
+                    ),
+                    const SizedBox(height: 8),
+                    SolidMenuButton(
+                      icon: Icons.settings_rounded,
+                      label: 'SETĂRI',
+                      color: AppColors.gray,
+                      onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsScreen())),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 2,
-                  child: CultureQuizPanel(
-                    onRewardsChanged: _refresh,
-                    coinBadgeKey: _coinBadgeKey,
-                    xpBadgeKey: _xpBadgeKey,
-                    livesBadgeKey: _livesBadgeKey,
-                  ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: CultureQuizPanel(
+                  onRewardsChanged: _refresh,
+                  coinBadgeKey: _coinBadgeKey,
+                  xpBadgeKey: _xpBadgeKey,
+                  livesBadgeKey: _livesBadgeKey,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -232,13 +245,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// text cu umbră colorată, ca un "badge" jucăuș, în stilul referinței.
   Widget _buildLogo() {
     return SizedBox(
-      height: 108,
+      height: 88,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            width: 230,
-            height: 100,
+            width: 200,
+            height: 82,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
@@ -255,9 +268,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Icon(
                 Icons.bolt_rounded,
                 color: AppColors.coin,
-                size: 32,
+                size: 26,
                 shadows: [
-                  Shadow(color: AppColors.coin.withAlpha(200), blurRadius: 20)
+                  Shadow(color: AppColors.coin.withAlpha(200), blurRadius: 18)
                 ],
               ),
               const SizedBox(height: 2),
@@ -265,11 +278,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 'GUESS IT!',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 30,
+                  fontSize: 25,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.4,
+                  letterSpacing: 1.2,
                   shadows: [
-                    Shadow(color: Color(0xAA9A5AFB), blurRadius: 24),
+                    Shadow(color: Color(0xAA9A5AFB), blurRadius: 20),
                     Shadow(color: Colors.black87, blurRadius: 8),
                   ],
                 ),
@@ -287,10 +300,12 @@ class _HomeData {
   final int coins;
   final int lives;
   final int streak;
+  final int hints;
   _HomeData({
     required this.xp,
     required this.coins,
     required this.lives,
     required this.streak,
+    required this.hints,
   });
 }

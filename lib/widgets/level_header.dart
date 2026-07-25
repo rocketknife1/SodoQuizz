@@ -9,20 +9,24 @@ class LevelHeader extends StatelessWidget {
   final int xp;
   final int coins;
   final int? lives;
+  final int? hints;
   final VoidCallback? onCoinsTap;
   final Key? coinBadgeKey;
   final Key? xpBadgeKey;
   final Key? livesBadgeKey;
+  final Key? hintsBadgeKey;
 
   const LevelHeader({
     super.key,
     required this.xp,
     required this.coins,
     this.lives,
+    this.hints,
     this.onCoinsTap,
     this.coinBadgeKey,
     this.xpBadgeKey,
     this.livesBadgeKey,
+    this.hintsBadgeKey,
   });
 
   @override
@@ -68,6 +72,26 @@ class LevelHeader extends StatelessWidget {
                 const Icon(Icons.favorite_rounded, color: AppColors.life, size: 16),
                 const SizedBox(width: 6),
                 Text('$lives', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+        ],
+        if (hints != null) ...[
+          Container(
+            key: hintsBadgeKey,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lightbulb_rounded, color: AppColors.hint, size: 16),
+                const SizedBox(width: 6),
+                Text('$hints', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
               ],
             ),
           ),

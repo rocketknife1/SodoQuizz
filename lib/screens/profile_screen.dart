@@ -16,7 +16,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  late final Future<_ProfileData> _dataFuture = _load();
+  late Future<_ProfileData> _dataFuture = _load();
+  final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
 
   Future<_ProfileData> _load() async {
     final results = await Future.wait([
@@ -93,7 +94,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 24),
                 GestureDetector(
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen())),
+                  onTap: () async {
+                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
+                    // la revenire din Realizări, revendicările făcute acolo
+                    // trebuie să dispară pe loc de pe rândul de mai jos și de
+                    // pe bulina din bottom nav, fără să fie nevoie de un tab
+                    // switch pentru a le reîncărca.
+                    if (!mounted) return;
+                    setState(() => _dataFuture = _load());
+                    _navBarKey.currentState?.refreshDots();
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
@@ -133,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           },
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(current: AppTab.profile),
+      bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.profile),
     );
   }
 }

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'core/music.dart';
 import 'core/sfx.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
@@ -6,6 +7,7 @@ import 'screens/loading_screen.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   Sfx.preload();
+  Music.start();
   runApp(const GuessItApp());
 }
 
