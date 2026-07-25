@@ -31,8 +31,60 @@
 
   <title>guess_it</title>
   <link rel="manifest" href="manifest.json">
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #0B1229;
+      overflow: hidden;
+    }
+
+    /* Incadreaza jocul intr-un cadru cu proportii de telefon, centrat -
+       indiferent cat de lata/inalta e fereastra de browser (sau fullscreen),
+       jocul ramane la aspectul unui ecran de telefon, nu se intinde urat
+       pe tot ecranul desktop. */
+    #phone-frame {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0B1229;
+    }
+
+    #flutter-host {
+      position: relative;
+      height: 100%;
+      width: 100%;
+      max-height: 100vh;
+      max-width: min(100vw, calc(100vh * 9 / 19.5));
+      aspect-ratio: 9 / 19.5;
+      overflow: hidden;
+      box-shadow: 0 0 60px rgba(0, 0, 0, 0.55);
+    }
+  </style>
 </head>
 <body>
+  <div id="phone-frame">
+    <div id="flutter-host"></div>
+  </div>
+
+  <script>
+    // Curata orice service worker/cache instalat de un build vechi (deploy-uri
+    // anterioare foloseau service worker si utilizatorii care revin puteau
+    // ramane blocati pe continut vechi cache-uit local pana la un refresh
+    // fortat). Noile build-uri nu mai inregistreaza service worker deloc.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        for (const reg of regs) reg.unregister();
+      });
+    }
+    if (window.caches) {
+      caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
