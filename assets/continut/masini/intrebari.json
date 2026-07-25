@@ -1026,6 +1026,686 @@
           "puncte_max": 200,
           "imagine_cautare": "BMW M4",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FERRARI 296 GTB",
+          "variante": [
+            "FERRARI 296 GTB",
+            "FERRARI 488",
+            "FERRARI F8",
+            "FERRARI ROMA"
+          ],
+          "hint_1": "Supercar Ferrari hibrid, motor V6",
+          "hint_2": "Numele vine de la 2.9 litri și 6 cilindri",
+          "hint_3": "Succesorul lui F8 Tributo",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "id": "mas_061",
+          "imagine_cautare": "Ferrari 296 Gtb",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FERRARI F8 TRIBUTO",
+          "variante": [
+            "FERRARI F8 TRIBUTO",
+            "FERRARI 488",
+            "FERRARI 296 GTB",
+            "FERRARI SF90"
+          ],
+          "hint_1": "Supercar Ferrari, aduce tribut motorului V8 turbo",
+          "hint_2": "Succesorul modelului 488 GTB",
+          "hint_3": "Nume tradus: 'omagiu'",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "id": "mas_062",
+          "imagine_cautare": "Ferrari F8 Tributo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FERRARI SF90 STRADALE",
+          "variante": [
+            "FERRARI SF90 STRADALE",
+            "FERRARI LAFERRARI",
+            "FERRARI 296",
+            "FERRARI ENZO"
+          ],
+          "hint_1": "Primul Ferrari hibrid plug-in de serie",
+          "hint_2": "Numele SF90 vine de la 90 de ani Scuderia Ferrari",
+          "hint_3": "Are 4 motoare (unul termic, 3 electrice)",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "id": "mas_063",
+          "imagine_cautare": "Ferrari Sf90 Stradale",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LAMBORGHINI DIABLO",
+          "variante": [
+            "LAMBORGHINI DIABLO",
+            "LAMBORGHINI COUNTACH",
+            "LAMBORGHINI MURCIELAGO",
+            "LAMBORGHINI AVENTADOR"
+          ],
+          "hint_1": "Supercar Lamborghini din anii '90",
+          "hint_2": "Numele înseamnă 'diavol' în spaniolă",
+          "hint_3": "Predecesorul modelului Murciélago",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "id": "mas_064",
+          "imagine_cautare": "Lamborghini Diablo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LAMBORGHINI COUNTACH",
+          "variante": [
+            "LAMBORGHINI COUNTACH",
+            "LAMBORGHINI DIABLO",
+            "LAMBORGHINI MURCIELAGO",
+            "LAMBORGHINI ESPADA"
+          ],
+          "hint_1": "Model Lamborghini iconic din anii '70-'80, formă de pană",
+          "hint_2": "Portiere pe verticală, tip 'foarfecă'",
+          "hint_3": "Unul dintre cele mai celebre postere de perete ale copilăriei",
+          "id": "mas_065",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Countach",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LAMBORGHINI MURCIELAGO",
+          "variante": [
+            "LAMBORGHINI MURCIELAGO",
+            "LAMBORGHINI DIABLO",
+            "LAMBORGHINI AVENTADOR",
+            "LAMBORGHINI GALLARDO"
+          ],
+          "hint_1": "Supercar Lamborghini din anii 2000",
+          "hint_2": "Numele înseamnă 'liliac' în spaniolă",
+          "hint_3": "Predecesorul modelului Aventador",
+          "id": "mas_066",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Murcielago",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LAMBORGHINI SIAN",
+          "variante": [
+            "LAMBORGHINI SIAN",
+            "LAMBORGHINI AVENTADOR",
+            "LAMBORGHINI REVUELTO",
+            "LAMBORGHINI COUNTACH LPI"
+          ],
+          "hint_1": "Primul Lamborghini hibrid, ediție limitată",
+          "hint_2": "Numele înseamnă 'fulger' în dialect bologez",
+          "hint_3": "Doar 63 de exemplare produse",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "id": "mas_067",
+          "imagine_cautare": "Lamborghini Sian",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BUGATTI BOLIDE",
+          "variante": [
+            "BUGATTI BOLIDE",
+            "BUGATTI DIVO",
+            "BUGATTI CHIRON",
+            "BUGATTI VEYRON"
+          ],
+          "hint_1": "Hypercar Bugatti de circuit, extrem de ușor",
+          "hint_2": "Nu e omologat pentru drumuri publice",
+          "hint_3": "Peste 1800 cai putere",
+          "id": "mas_068",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bugatti Bolide",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BUGATTI CENTODIECI",
+          "variante": [
+            "BUGATTI CENTODIECI",
+            "BUGATTI DIVO",
+            "BUGATTI CHIRON",
+            "BUGATTI EB110"
+          ],
+          "hint_1": "Hypercar Bugatti produs în doar 10 exemplare",
+          "hint_2": "Numele înseamnă '110' în italiană, aniversând un model clasic",
+          "hint_3": "Inspirat de EB110 din anii '90",
+          "dificultate": "greu",
+          "puncte_max": 600,
+          "id": "mas_069",
+          "imagine_cautare": "Bugatti Centodieci",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PORSCHE CARRERA GT",
+          "variante": [
+            "PORSCHE CARRERA GT",
+            "PORSCHE 918 SPYDER",
+            "PORSCHE 911 GT3",
+            "PORSCHE BOXSTER"
+          ],
+          "hint_1": "Supercar Porsche din anii 2000, motor V10",
+          "hint_2": "Considerat unul din cele mai pure supercaruri Porsche",
+          "hint_3": "Producție oprită în 2006",
+          "id": "mas_070",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche Carrera Gt",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PORSCHE 911 GT3",
+          "variante": [
+            "PORSCHE 911 GT3",
+            "PORSCHE 911 TURBO",
+            "PORSCHE CAYMAN",
+            "PORSCHE CARRERA GT"
+          ],
+          "hint_1": "Versiune de pistă a modelului 911, aspirație naturală",
+          "hint_2": "Are o aripă spate mare, fixă",
+          "hint_3": "Foarte apreciat pe circuit, precum Nürburgring",
+          "id": "mas_071",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche 911 Gt3",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PORSCHE MACAN",
+          "variante": [
+            "PORSCHE MACAN",
+            "PORSCHE CAYENNE",
+            "PORSCHE TAYCAN",
+            "AUDI Q5"
+          ],
+          "hint_1": "SUV compact Porsche",
+          "hint_2": "Numele înseamnă 'tigru' în indoneziană",
+          "hint_3": "Mai mic decât Cayenne",
+          "id": "mas_072",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Porsche Macan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MERCEDES MAYBACH S CLASS",
+          "variante": [
+            "MERCEDES MAYBACH S CLASS",
+            "ROLLS ROYCE GHOST",
+            "BENTLEY FLYING SPUR",
+            "AUDI A8"
+          ],
+          "hint_1": "Limuzină de lux extremă bazată pe Clasa S",
+          "hint_2": "Marca Maybach a fost relansată de Mercedes",
+          "hint_3": "Foarte folosită de șefi de stat",
+          "id": "mas_073",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mercedes Maybach S Class",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MERCEDES EQS",
+          "variante": [
+            "MERCEDES EQS",
+            "TESLA MODEL S",
+            "PORSCHE TAYCAN",
+            "BMW I7"
+          ],
+          "hint_1": "Sedan electric de lux Mercedes",
+          "hint_2": "Are un ecran uriaș numit 'Hyperscreen'",
+          "hint_3": "Echivalentul electric al Clasei S",
+          "id": "mas_074",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mercedes Eqs",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BMW X6",
+          "variante": [
+            "BMW X6",
+            "BMW X5",
+            "MERCEDES GLE COUPE",
+            "AUDI Q8"
+          ],
+          "hint_1": "SUV coupe BMW, acoperiș înclinat sportiv",
+          "hint_2": "A creat categoria 'SUV Coupe'",
+          "hint_3": "Rival al Mercedes GLE Coupe",
+          "id": "mas_075",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bmw X6",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BMW M5",
+          "variante": [
+            "BMW M5",
+            "BMW M3",
+            "BMW M8",
+            "AUDI RS7"
+          ],
+          "hint_1": "Sedan sportiv BMW, versiunea M a Seriei 5",
+          "hint_2": "Combină lux și performanță de supercar",
+          "hint_3": "Rival direct Mercedes-AMG E63",
+          "id": "mas_076",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bmw M5",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "AUDI E-TRON GT",
+          "variante": [
+            "AUDI E-TRON GT",
+            "PORSCHE TAYCAN",
+            "TESLA MODEL S",
+            "BMW I4"
+          ],
+          "hint_1": "Sedan electric sportiv Audi",
+          "hint_2": "Împarte platforma cu Porsche Taycan",
+          "hint_3": "Design inspirat din conceptul E-Tron GT Concept",
+          "id": "mas_077",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Audi E-Tron Gt",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "AUDI TT",
+          "variante": [
+            "AUDI TT",
+            "AUDI R8",
+            "PORSCHE CAYMAN",
+            "BMW Z4"
+          ],
+          "hint_1": "Coupe sportiv compact Audi, design rotunjit",
+          "hint_2": "Producția s-a încheiat în 2023",
+          "hint_3": "Numele vine de la cursa Tourist Trophy",
+          "id": "mas_078",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Audi Tt",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "NISSAN 370Z",
+          "variante": [
+            "NISSAN 370Z",
+            "NISSAN GTR",
+            "TOYOTA SUPRA",
+            "MAZDA MX-5"
+          ],
+          "hint_1": "Coupe sportiv Nissan accesibil",
+          "hint_2": "Parte din seria Z, care începe cu 240Z",
+          "hint_3": "Motor V6 aspirație naturală",
+          "id": "mas_079",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nissan 370Z",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MAZDA MX-5",
+          "variante": [
+            "MAZDA MX-5",
+            "TOYOTA MR2",
+            "BMW Z4",
+            "AUDI TT"
+          ],
+          "hint_1": "Roadster mic și ușor, foarte popular la pasionați",
+          "hint_2": "Cel mai vândut roadster din istorie (record Guinness)",
+          "hint_3": "Cunoscut și ca Miata",
+          "id": "mas_080",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mazda Mx-5",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SUBARU IMPREZA WRX STI",
+          "variante": [
+            "SUBARU IMPREZA WRX STI",
+            "MITSUBISHI LANCER EVO",
+            "FORD FOCUS RS",
+            "VOLKSWAGEN GOLF R"
+          ],
+          "hint_1": "Sedan de performanță cu tracțiune integrală",
+          "hint_2": "Foarte popular în rally și în cultura tuning",
+          "hint_3": "Are adesea o priză de aer proeminentă pe capotă",
+          "id": "mas_081",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Subaru Impreza Wrx Sti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MITSUBISHI LANCER EVO",
+          "variante": [
+            "MITSUBISHI LANCER EVO",
+            "SUBARU IMPREZA WRX",
+            "FORD FOCUS RS",
+            "HONDA CIVIC TYPE R"
+          ],
+          "hint_1": "Sedan sportiv japonez, legendar în rally",
+          "hint_2": "Rival etern al lui Subaru WRX STI",
+          "hint_3": "Producția s-a oprit după generația a 10-a",
+          "id": "mas_082",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mitsubishi Lancer Evo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "HONDA CIVIC TYPE R",
+          "variante": [
+            "HONDA CIVIC TYPE R",
+            "VOLKSWAGEN GOLF GTI",
+            "FORD FOCUS RS",
+            "HYUNDAI I30 N"
+          ],
+          "hint_1": "Versiune sportivă a modelului Civic, culoare roșie caracteristică logo-ului",
+          "hint_2": "Deține recorduri de tură pe circuite pentru mașini cu tracțiune față",
+          "hint_3": "Aripă spate foarte mare",
+          "id": "mas_083",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Honda Civic Type R",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "VOLKSWAGEN GOLF GTI",
+          "variante": [
+            "VOLKSWAGEN GOLF GTI",
+            "HONDA CIVIC TYPE R",
+            "FORD FOCUS ST",
+            "SEAT LEON CUPRA"
+          ],
+          "hint_1": "Hot-hatch legendar, a creat categoria în anii '70",
+          "hint_2": "Model compact sportiv Volkswagen",
+          "hint_3": "GTI = Grand Turismo Injection",
+          "id": "mas_084",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Volkswagen Golf Gti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FORD FIESTA ST",
+          "variante": [
+            "FORD FIESTA ST",
+            "VOLKSWAGEN POLO GTI",
+            "RENAULT CLIO RS",
+            "PEUGEOT 208 GTI"
+          ],
+          "hint_1": "Versiune sportivă compactă Ford",
+          "hint_2": "Foarte apreciată pentru maniabilitate în segmentul mic",
+          "hint_3": "Rival al Volkswagen Polo GTI",
+          "id": "mas_085",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ford Fiesta St",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "RENAULT CLIO RS",
+          "variante": [
+            "RENAULT CLIO RS",
+            "FORD FIESTA ST",
+            "PEUGEOT 208 GTI",
+            "VOLKSWAGEN POLO GTI"
+          ],
+          "hint_1": "Versiune sportivă a modelului Clio",
+          "hint_2": "RS vine de la 'RenaultSport'",
+          "hint_3": "Populară în competiții de hot-hatch",
+          "id": "mas_086",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Renault Clio Rs",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MASERATI GRANTURISMO",
+          "variante": [
+            "MASERATI GRANTURISMO",
+            "MASERATI QUATTROPORTE",
+            "MASERATI GHIBLI",
+            "MASERATI MC20"
+          ],
+          "hint_1": "Coupe de lux Maserati, sunet de motor apreciat",
+          "hint_2": "Numele înseamnă 'mare turism' în italiană",
+          "hint_3": "Design elegant, italian clasic",
+          "id": "mas_087",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Maserati Granturismo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MASERATI QUATTROPORTE",
+          "variante": [
+            "MASERATI QUATTROPORTE",
+            "MASERATI GHIBLI",
+            "MASERATI GRANTURISMO",
+            "BENTLEY FLYING SPUR"
+          ],
+          "hint_1": "Sedan de lux Maserati, numele înseamnă '4 uși'",
+          "hint_2": "Cel mai mare model berlină Maserati",
+          "hint_3": "Rival BMW Seria 7 și Mercedes Clasa S",
+          "id": "mas_088",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Maserati Quattroporte",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ASTON MARTIN DBS",
+          "variante": [
+            "ASTON MARTIN DBS",
+            "ASTON MARTIN DB11",
+            "ASTON MARTIN VANTAGE",
+            "ASTON MARTIN VALKYRIE"
+          ],
+          "hint_1": "Grand tourer de lux Aston Martin, foarte puternic",
+          "hint_2": "Numele DB vine de la David Brown, fost proprietar",
+          "hint_3": "Model asociat frecvent cu James Bond",
+          "id": "mas_089",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Aston Martin Dbs",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ASTON MARTIN VALKYRIE",
+          "variante": [
+            "ASTON MARTIN VALKYRIE",
+            "ASTON MARTIN DBS",
+            "MCLAREN P1",
+            "BUGATTI CHIRON"
+          ],
+          "hint_1": "Hypercar extrem, dezvoltat cu echipa de Formula 1 Red Bull",
+          "hint_2": "Motor V12 turat foarte înalt, ca la curse",
+          "hint_3": "Numele vine din mitologia nordică",
+          "id": "mas_090",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Aston Martin Valkyrie",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MCLAREN SENNA",
+          "variante": [
+            "MCLAREN SENNA",
+            "MCLAREN P1",
+            "MCLAREN 720S",
+            "MCLAREN F1"
+          ],
+          "hint_1": "Hypercar McLaren axat exclusiv pe performanță de pistă",
+          "hint_2": "Numit după pilotul de Formula 1 Ayrton Senna",
+          "hint_3": "Design foarte agresiv, aerodinamică extremă",
+          "id": "mas_091",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mclaren Senna",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MCLAREN F1",
+          "variante": [
+            "MCLAREN F1",
+            "MCLAREN P1",
+            "MCLAREN SENNA",
+            "MCLAREN 720S"
+          ],
+          "hint_1": "Supercar legendar din anii '90, scaun central pentru șofer",
+          "hint_2": "A fost cea mai rapidă mașină de serie ani la rând",
+          "hint_3": "Doar 106 exemplare produse",
+          "id": "mas_092",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mclaren F1",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KOENIGSEGG REGERA",
+          "variante": [
+            "KOENIGSEGG REGERA",
+            "KOENIGSEGG AGERA",
+            "KOENIGSEGG JESKO",
+            "KOENIGSEGG GEMERA"
+          ],
+          "hint_1": "Hypercar suedez hibrid, fără cutie de viteze tradițională",
+          "hint_2": "Numele înseamnă 'a domni' în suedeză",
+          "hint_3": "Folosește un sistem de transmisie direct de la motor la roți",
+          "id": "mas_093",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Koenigsegg Regera",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KOENIGSEGG GEMERA",
+          "variante": [
+            "KOENIGSEGG GEMERA",
+            "KOENIGSEGG REGERA",
+            "FERRARI PUROSANGUE",
+            "LAMBORGHINI URUS"
+          ],
+          "hint_1": "Primul Koenigsegg cu 4 locuri",
+          "hint_2": "Numit 'mega-GT', combină lux cu performanță extremă",
+          "hint_3": "Motor de doar 3 cilindri, dar peste 1700 CP",
+          "id": "mas_094",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Koenigsegg Gemera",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FERRARI PUROSANGUE",
+          "variante": [
+            "FERRARI PUROSANGUE",
+            "LAMBORGHINI URUS",
+            "ASTON MARTIN DBX",
+            "MASERATI LEVANTE"
+          ],
+          "hint_1": "Primul SUV din istoria Ferrari",
+          "hint_2": "Numele înseamnă 'sânge pur' în italiană",
+          "hint_3": "Are portiere spate tip 'sinucigașe' (deschidere inversă)",
+          "id": "mas_095",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ferrari Purosangue",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LOTUS EMIRA",
+          "variante": [
+            "LOTUS EMIRA",
+            "PORSCHE CAYMAN",
+            "ALPINE A110",
+            "MAZDA MX-5"
+          ],
+          "hint_1": "Ultimul model Lotus cu motor pe benzină, înainte de era electrică",
+          "hint_2": "Sportcar britanic ușor, filosofia mărcii: 'greutate mică, agilitate mare'",
+          "hint_3": "Rival direct al lui Porsche Cayman",
+          "id": "mas_096",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lamborghini Urus Performante",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ASTON MARTIN DBX",
+          "variante": [
+            "ASTON MARTIN DBX",
+            "BENTLEY BENTAYGA",
+            "LAMBORGHINI URUS",
+            "MASERATI LEVANTE"
+          ],
+          "hint_1": "Primul SUV din istoria Aston Martin",
+          "hint_2": "Produs la o fabrică nouă din Țara Galilor",
+          "hint_3": "Păstrează stilul elegant Aston Martin într-un SUV",
+          "id": "mas_097",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Aston Martin Dbx",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ROLLS ROYCE SPECTRE",
+          "variante": [
+            "ROLLS ROYCE SPECTRE",
+            "ROLLS ROYCE GHOST",
+            "ROLLS ROYCE WRAITH",
+            "BENTLEY CONTINENTAL GT"
+          ],
+          "hint_1": "Primul Rolls-Royce complet electric",
+          "hint_2": "Coupe de lux, lansat în 2023",
+          "hint_3": "Numele înseamnă 'stafie/spectru' în engleză",
+          "id": "mas_098",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Rolls Royce Spectre",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ROLLS ROYCE WRAITH",
+          "variante": [
+            "ROLLS ROYCE WRAITH",
+            "ROLLS ROYCE GHOST",
+            "ROLLS ROYCE SPECTRE",
+            "BENTLEY CONTINENTAL GT"
+          ],
+          "hint_1": "Coupe de lux Rolls-Royce, cel mai rapid model al brandului la lansare",
+          "hint_2": "Numele înseamnă 'nălucă' în engleză",
+          "hint_3": "Bazat pe platforma modelului Ghost",
+          "id": "mas_099",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Rolls Royce Wraith",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BENTLEY CONTINENTAL GT",
+          "variante": [
+            "BENTLEY CONTINENTAL GT",
+            "ROLLS ROYCE WRAITH",
+            "ASTON MARTIN DB11",
+            "MASERATI GRANTURISMO"
+          ],
+          "hint_1": "Grand tourer de lux britanic, foarte elegant",
+          "hint_2": "Unul dintre cele mai vândute modele Bentley",
+          "hint_3": "Disponibil și în variantă cabrio",
+          "id": "mas_100",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bentley Continental Gt",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

@@ -1026,6 +1026,686 @@
           "id": "gam_060",
           "imagine_cautare": "Pokemon Go game",
           "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CIVILIZATION VI",
+          "variante": [
+            "CIVILIZATION VI",
+            "AGE OF EMPIRES",
+            "TOTAL WAR",
+            "STELLARIS"
+          ],
+          "hint_1": "Joc de strategie unde construiești o civilizație din antichitate",
+          "hint_2": "Motto: 'One more turn'",
+          "hint_3": "Seria a fost creată de Sid Meier",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_061",
+          "imagine_cautare": "Civilization Vi game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "AGE OF EMPIRES",
+          "variante": [
+            "AGE OF EMPIRES",
+            "CIVILIZATION VI",
+            "WARCRAFT III",
+            "COMMAND AND CONQUER"
+          ],
+          "hint_1": "Joc clasic de strategie în timp real, cu civilizații istorice",
+          "hint_2": "Trebuie să aduni resurse: lemn, aur, mâncare, piatră",
+          "hint_3": "De la Microsoft/Ensemble Studios",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "gam_062",
+          "imagine_cautare": "Age Of Empires game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "WARCRAFT III",
+          "variante": [
+            "WARCRAFT III",
+            "STARCRAFT II",
+            "AGE OF EMPIRES",
+            "DIABLO IV"
+          ],
+          "hint_1": "Joc de strategie fantasy de la Blizzard, a inspirat DOTA",
+          "hint_2": "Patru facțiuni: Alianța, Horda, Night Elves, Undead",
+          "hint_3": "Predecesorul lumii din World of Warcraft",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_063",
+          "imagine_cautare": "Warcraft Iii game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "OVERCOOKED",
+          "variante": [
+            "OVERCOOKED",
+            "COOKING SIMULATOR",
+            "PLATE UP",
+            "MOVING OUT"
+          ],
+          "hint_1": "Joc cooperativ haotic de gătit sub presiune de timp",
+          "hint_2": "Bucătăriile devin din ce în ce mai ciudate (bărci, vulcani)",
+          "hint_3": "Ideal pentru joc local cu prietenii",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_064",
+          "imagine_cautare": "Overcooked game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "IT TAKES TWO",
+          "variante": [
+            "IT TAKES TWO",
+            "A WAY OUT",
+            "OVERCOOKED",
+            "UNRAVEL"
+          ],
+          "hint_1": "Joc cooperativ obligatoriu pentru 2 jucători, despre un cuplu care divorțează",
+          "hint_2": "Personajele sunt transformate în păpuși",
+          "hint_3": "Câștigător Game of the Year 2021",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_065",
+          "imagine_cautare": "It Takes Two game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "UNCHARTED 4",
+          "variante": [
+            "UNCHARTED 4",
+            "TOMB RAIDER",
+            "INDIANA JONES",
+            "RISE OF THE TOMB RAIDER"
+          ],
+          "hint_1": "Aventură cu comori și explorator, Nathan Drake",
+          "hint_2": "Ultimul joc din serie pentru Nathan Drake",
+          "hint_3": "Exclusivitate PlayStation",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_066",
+          "imagine_cautare": "Uncharted 4 game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "GHOST OF TSUSHIMA",
+          "variante": [
+            "GHOST OF TSUSHIMA",
+            "SEKIRO",
+            "NIOH",
+            "ASSASSIN S CREED SHADOWS"
+          ],
+          "hint_1": "Joc open-world cu samurai, în Japonia feudală",
+          "hint_2": "Personajul principal e Jin Sakai",
+          "hint_3": "Vizual, foarte apreciat pentru câmpurile de flori",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_067",
+          "imagine_cautare": "Ghost Of Tsushima game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DEATH STRANDING",
+          "variante": [
+            "DEATH STRANDING",
+            "HORIZON ZERO DAWN",
+            "METAL GEAR SOLID",
+            "CONTROL"
+          ],
+          "hint_1": "Joc bizar despre livrarea de colete într-o lume post-apocaliptică",
+          "hint_2": "Creat de Hideo Kojima",
+          "hint_3": "Norman Reedus e actorul principal",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_068",
+          "imagine_cautare": "Death Stranding game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CONTROL",
+          "variante": [
+            "CONTROL",
+            "ALAN WAKE",
+            "DEATH STRANDING",
+            "RESIDENT EVIL"
+          ],
+          "hint_1": "Joc supranatural într-o clădire guvernamentală schimbătoare",
+          "hint_2": "De la studioul finlandez Remedy",
+          "hint_3": "Personajul principal: Jesse Faden",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_069",
+          "imagine_cautare": "Control game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ALAN WAKE",
+          "variante": [
+            "ALAN WAKE",
+            "CONTROL",
+            "SILENT HILL",
+            "UNTIL DAWN"
+          ],
+          "hint_1": "Scriitor luptă cu întunericul într-un orășel din munți",
+          "hint_2": "Lumina e principala armă împotriva răului",
+          "hint_3": "De la același studio ca 'Control'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_070",
+          "imagine_cautare": "Alan Wake game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CUPHEAD",
+          "variante": [
+            "CUPHEAD",
+            "HOLLOW KNIGHT",
+            "OWLBOY",
+            "YOOKA-LAYLEE"
+          ],
+          "hint_1": "Joc desenat manual, stil cartoon anii 1930",
+          "hint_2": "Boss fight-uri extrem de dificile",
+          "hint_3": "Personajul principal are cap de ceașcă",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_071",
+          "imagine_cautare": "Cuphead game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "CELESTE",
+          "variante": [
+            "CELESTE",
+            "HOLLOW KNIGHT",
+            "OWLBOY",
+            "SUPER MEAT BOY"
+          ],
+          "hint_1": "Platformer 2D foarte dificil, despre urcarea unui munte",
+          "hint_2": "Povestea explorează anxietatea și sănătatea mentală",
+          "hint_3": "Personajul principal: Madeline",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_072",
+          "imagine_cautare": "Celeste game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "INSIDE",
+          "variante": [
+            "INSIDE",
+            "LIMBO",
+            "LITTLE NIGHTMARES",
+            "OUTLAST"
+          ],
+          "hint_1": "Joc puzzle-platformer întunecat, băiat fugărit",
+          "hint_2": "De la aceiași creatori ca 'Limbo'",
+          "hint_3": "Foarte puțin dialog, atmosferă apăsătoare",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_073",
+          "imagine_cautare": "Inside game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "LIMBO",
+          "variante": [
+            "LIMBO",
+            "INSIDE",
+            "LITTLE NIGHTMARES",
+            "SOMA"
+          ],
+          "hint_1": "Joc puzzle-platformer alb-negru, atmosferă sumbră",
+          "hint_2": "Băiat caută prin pădure o soră pierdută",
+          "hint_3": "De la studioul danez Playdead",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_074",
+          "imagine_cautare": "Limbo game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "LITTLE NIGHTMARES",
+          "variante": [
+            "LITTLE NIGHTMARES",
+            "LIMBO",
+            "INSIDE",
+            "OUTLAST"
+          ],
+          "hint_1": "Joc horror cu o fetiță mică într-o lume terifiantă de uriași",
+          "hint_2": "Poartă o manta galbenă cu glugă",
+          "hint_3": "Al doilea joc din serie e din perspectiva altui copil",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_075",
+          "imagine_cautare": "Little Nightmares game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "OUTLAST",
+          "variante": [
+            "OUTLAST",
+            "AMNESIA",
+            "PHASMOPHOBIA",
+            "RESIDENT EVIL"
+          ],
+          "hint_1": "Joc horror la persoana întâi, într-un azil abandonat",
+          "hint_2": "Jucătorul filmează cu o cameră de noapte",
+          "hint_3": "Nu ai nicio armă, doar poți fugi și te ascunde",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_076",
+          "imagine_cautare": "Outlast game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "PHASMOPHOBIA",
+          "variante": [
+            "PHASMOPHOBIA",
+            "AMONG US",
+            "OUTLAST",
+            "DEAD BY DAYLIGHT"
+          ],
+          "hint_1": "Joc cooperativ de vânătoare de fantome",
+          "hint_2": "Folosești echipament ca EMF reader și cameră spirit",
+          "hint_3": "Foarte popular printre streameri",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_077",
+          "imagine_cautare": "Phasmophobia game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DEAD BY DAYLIGHT",
+          "variante": [
+            "DEAD BY DAYLIGHT",
+            "FRIDAY THE 13TH",
+            "IDENTITY V",
+            "PHASMOPHOBIA"
+          ],
+          "hint_1": "Joc asimetric: un ucigaș vs 4 supraviețuitori",
+          "hint_2": "Include personaje din filme horror celebre",
+          "hint_3": "Supraviețuitorii repară generatoare pentru a scăpa",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_078",
+          "imagine_cautare": "Dead By Daylight game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "FORZA HORIZON 5",
+          "variante": [
+            "FORZA HORIZON 5",
+            "GRAN TURISMO",
+            "NEED FOR SPEED",
+            "F1 23"
+          ],
+          "hint_1": "Joc de curse open-world, acțiunea în Mexic",
+          "hint_2": "De la Playground Games / Microsoft",
+          "hint_3": "Are festivaluri de mașini fictive",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_079",
+          "imagine_cautare": "Forza Horizon 5 game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "GRAN TURISMO",
+          "variante": [
+            "GRAN TURISMO",
+            "FORZA HORIZON",
+            "NEED FOR SPEED",
+            "ASSETTO CORSA"
+          ],
+          "hint_1": "Simulator de curse exclusiv PlayStation",
+          "hint_2": "Supranumit 'The Real Driving Simulator'",
+          "hint_3": "Are propriul film din 2023",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_080",
+          "imagine_cautare": "Gran Turismo game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "NEED FOR SPEED",
+          "variante": [
+            "NEED FOR SPEED",
+            "FORZA HORIZON",
+            "GRAN TURISMO",
+            "F1 23"
+          ],
+          "hint_1": "Serie clasică de curse arcade, adesea cu poliția pe urme",
+          "hint_2": "Multe titluri: Underground, Most Wanted, Heat",
+          "hint_3": "De la Electronic Arts",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_081",
+          "imagine_cautare": "Need For Speed game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ROCKET LEAGUE",
+          "variante": [
+            "ROCKET LEAGUE",
+            "FIFA 23",
+            "FORTNITE",
+            "FALL GUYS"
+          ],
+          "hint_1": "Fotbal jucat cu mașini rachetă",
+          "hint_2": "Foarte popular la eSports",
+          "hint_3": "De la Psyonix",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_082",
+          "imagine_cautare": "Rocket League game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "BRAWL STARS",
+          "variante": [
+            "BRAWL STARS",
+            "CLASH ROYALE",
+            "FORTNITE",
+            "APEX LEGENDS"
+          ],
+          "hint_1": "Joc mobil de luptă în echipe, de la Supercell",
+          "hint_2": "Meciuri scurte, 3 contra 3",
+          "hint_3": "Personajele se numesc 'Brawlers'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_083",
+          "imagine_cautare": "Brawl Stars game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "GENSHIN IMPACT",
+          "variante": [
+            "GENSHIN IMPACT",
+            "HONKAI STAR RAIL",
+            "ZELDA BREATH OF THE WILD",
+            "FINAL FANTASY XV"
+          ],
+          "hint_1": "Joc gacha open-world cu elemente magice",
+          "hint_2": "Lumea se numește Teyvat",
+          "hint_3": "De la studioul chinez miHoYo",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_084",
+          "imagine_cautare": "Genshin Impact game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "FREE FIRE",
+          "variante": [
+            "FREE FIRE",
+            "PUBG MOBILE",
+            "FORTNITE",
+            "COD MOBILE"
+          ],
+          "hint_1": "Battle royale mobil foarte popular, meciuri scurte",
+          "hint_2": "De la Garena",
+          "hint_3": "Meciuri cu până la 50 jucători",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_085",
+          "imagine_cautare": "Free Fire game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "MINECRAFT DUNGEONS",
+          "variante": [
+            "MINECRAFT DUNGEONS",
+            "MINECRAFT",
+            "TERRARIA",
+            "DIABLO IV"
+          ],
+          "hint_1": "Spin-off hack-and-slash al jocului cu blocuri",
+          "hint_2": "Se poate juca cooperativ până la 4 jucători",
+          "hint_3": "Grafică inspirată de jocul original Minecraft",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_086",
+          "imagine_cautare": "Minecraft Dungeons game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "TERRARIA",
+          "variante": [
+            "TERRARIA",
+            "MINECRAFT",
+            "STARBOUND",
+            "DON T STARVE"
+          ],
+          "hint_1": "Joc 2D de supraviețuire și construcție, 'sandbox'",
+          "hint_2": "Ai de luptat cu boss-uri precum Ochiul lui Cthulhu",
+          "hint_3": "Adesea comparat cu Minecraft, dar în 2D",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_087",
+          "imagine_cautare": "Terraria game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DONT STARVE",
+          "variante": [
+            "DONT STARVE",
+            "TERRARIA",
+            "SUBNAUTICA",
+            "VALHEIM"
+          ],
+          "hint_1": "Joc de supraviețuire cu grafică desenată de mână, întunecată",
+          "hint_2": "Personajul principal: Wilson, un om de știință",
+          "hint_3": "De la Klei Entertainment",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_088",
+          "imagine_cautare": "Dont Starve game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "VALHEIM",
+          "variante": [
+            "VALHEIM",
+            "SUBNAUTICA",
+            "RUST",
+            "ARK"
+          ],
+          "hint_1": "Joc de supraviețuire viking, lume generată procedural",
+          "hint_2": "Lupți cu boss-uri inspirați din mitologia nordică",
+          "hint_3": "A devenit viral pe Steam în 2021",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_089",
+          "imagine_cautare": "Valheim game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "SUBNAUTICA",
+          "variante": [
+            "SUBNAUTICA",
+            "VALHEIM",
+            "RAFT",
+            "ABZU"
+          ],
+          "hint_1": "Joc de supraviețuire subacvatică pe o planetă oceanică",
+          "hint_2": "Trebuie să construiești baze sub apă",
+          "hint_3": "Ai grijă la Reaper Leviathan",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_090",
+          "imagine_cautare": "Subnautica game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ARK SURVIVAL EVOLVED",
+          "variante": [
+            "ARK SURVIVAL EVOLVED",
+            "RUST",
+            "VALHEIM",
+            "CONAN EXILES"
+          ],
+          "hint_1": "Joc de supraviețuire cu dinozauri domesticibili",
+          "hint_2": "Poți călări un T-Rex sau un pterodactil",
+          "hint_3": "Harta principală se numește 'The Island'",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_091",
+          "imagine_cautare": "Ark Survival Evolved game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "FALLOUT 4",
+          "variante": [
+            "FALLOUT 4",
+            "SKYRIM",
+            "FALLOUT NEW VEGAS",
+            "THE OUTER WORLDS"
+          ],
+          "hint_1": "RPG post-apocaliptic, acțiunea în Boston (Commonwealth)",
+          "hint_2": "De la Bethesda, aceiași creatori ca Skyrim",
+          "hint_3": "Personajul principal are un câine, Dogmeat",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_092",
+          "imagine_cautare": "Fallout 4 game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DISCO ELYSIUM",
+          "variante": [
+            "DISCO ELYSIUM",
+            "DEUS EX",
+            "PLANESCAPE TORMENT",
+            "VAMPYR"
+          ],
+          "hint_1": "RPG narativ, fără luptă clasică, cu detectiv amnezic",
+          "hint_2": "Extrem de laudat pentru scenariu și dialoguri",
+          "hint_3": "De la studioul estonian ZA/UM",
+          "dificultate": "greu",
+          "puncte_max": 400,
+          "id": "gam_093",
+          "imagine_cautare": "Disco Elysium game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "STARFIELD",
+          "variante": [
+            "STARFIELD",
+            "MASS EFFECT",
+            "NO MAN S SKY",
+            "ELITE DANGEROUS"
+          ],
+          "hint_1": "RPG spațial de la Bethesda, lansat în 2023",
+          "hint_2": "Explorezi sute de planete",
+          "hint_3": "De la creatorii seriei Fallout și Elder Scrolls",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_094",
+          "imagine_cautare": "Starfield game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "MASS EFFECT",
+          "variante": [
+            "MASS EFFECT",
+            "STARFIELD",
+            "DESTINY",
+            "HALO"
+          ],
+          "hint_1": "RPG spațial cu Comandantul Shepard",
+          "hint_2": "Deciziile tale schimbă povestea din joc în joc",
+          "hint_3": "De la BioWare",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_095",
+          "imagine_cautare": "Mass Effect game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "DESTINY 2",
+          "variante": [
+            "DESTINY 2",
+            "HALO INFINITE",
+            "WARFRAME",
+            "THE DIVISION"
+          ],
+          "hint_1": "Shooter online cu elemente RPG, în spațiu",
+          "hint_2": "Jucătorii sunt 'Gardieni' înviați de o Călăuză",
+          "hint_3": "De la Bungie, creatorii originali ai Halo",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_096",
+          "imagine_cautare": "Destiny 2 game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "WARFRAME",
+          "variante": [
+            "WARFRAME",
+            "DESTINY 2",
+            "MASS EFFECT",
+            "ANTHEM"
+          ],
+          "hint_1": "Shooter gratuit cu războinici spațiali robotici",
+          "hint_2": "Jucătorii poartă costume numite 'Warframes'",
+          "hint_3": "Joc gratuit foarte longeviv",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_097",
+          "imagine_cautare": "Warframe game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "MONSTER HUNTER WORLD",
+          "variante": [
+            "MONSTER HUNTER WORLD",
+            "DARK SOULS",
+            "GOD OF WAR",
+            "HORIZON ZERO DAWN"
+          ],
+          "hint_1": "Vânezi monștri uriași și le folosești părțile pentru echipament",
+          "hint_2": "De la Capcom",
+          "hint_3": "Cooperativ, până la 4 jucători",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_098",
+          "imagine_cautare": "Monster Hunter World game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "ARMORED CORE VI",
+          "variante": [
+            "ARMORED CORE VI",
+            "TITANFALL 2",
+            "MECHWARRIOR",
+            "STEEL BATTALION"
+          ],
+          "hint_1": "Joc cu roboți de luptă pilotați (mechs), de la FromSoftware",
+          "hint_2": "Subtitlul: 'Fires of Rubicon'",
+          "hint_3": "Serie mai veche decât Dark Souls, de la același studio",
+          "dificultate": "greu",
+          "puncte_max": 400,
+          "id": "gam_099",
+          "imagine_cautare": "Armored Core Vi game",
+          "imagine_sursa": "placeholder"
+        },
+        {
+          "raspuns": "BALDURS GATE 3",
+          "variante": [
+            "BALDURS GATE 3",
+            "DIVINITY ORIGINAL SIN",
+            "DRAGON AGE",
+            "PILLARS OF ETERNITY"
+          ],
+          "hint_1": "RPG bazat pe regulile Dungeons & Dragons",
+          "hint_2": "Câștigător Game of the Year 2023",
+          "hint_3": "De la studioul belgian Larian",
+          "dificultate": "mediu",
+          "puncte_max": 300,
+          "id": "gam_100",
+          "imagine_cautare": "Baldurs Gate 3 game",
+          "imagine_sursa": "placeholder"
         }
       ]
     }

@@ -40,6 +40,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_003",
+          "raspuns": "CHEIE TUBULARA",
+          "variante": [
+            "CHEIE TUBULARA",
+            "CHEIE FIXA",
+            "CHEIE FRANCEZA",
+            "CHEIE DINAMOMETRICA"
+          ],
+          "hint_1": "Se pune peste șurub ca un tub",
+          "hint_2": "Se folosește cu o clichetă",
+          "hint_3": "Ajunge și în locuri înguste",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "socket wrench set",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_004",
           "raspuns": "CHEIE DINAMOMETRICA",
           "variante": [
@@ -91,6 +108,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_007",
+          "raspuns": "SUPORT DE SIGURANTA",
+          "variante": [
+            "SUPORT DE SIGURANTA",
+            "CRIC",
+            "CHEIE TUBULARA",
+            "EXTRACTOR DE RULMENTI"
+          ],
+          "hint_1": "Se pune sub mașină după ridicare",
+          "hint_2": "Are formă de X sau piramidă",
+          "hint_3": "Ține mașina ridicată în siguranță",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "jack stand",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_008",
           "raspuns": "CLESTE",
           "variante": [
@@ -105,6 +139,40 @@
           "dificultate": "usor",
           "puncte_max": 200,
           "imagine_cautare": "pliers tool",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_009",
+          "raspuns": "CIOCAN DE CAUCIUC",
+          "variante": [
+            "CIOCAN DE CAUCIUC",
+            "CLESTE",
+            "EXTRACTOR DE RULMENTI",
+            "SURUBELNITA"
+          ],
+          "hint_1": "Capul e din cauciuc, nu metal",
+          "hint_2": "Nu zgârie și nu deformează piesele",
+          "hint_3": "Folosit la lovituri ușoare de aliniere",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "rubber mallet",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_010",
+          "raspuns": "EXTRACTOR DE RULMENTI",
+          "variante": [
+            "EXTRACTOR DE RULMENTI",
+            "CRIC",
+            "CHEIE TUBULARA",
+            "CLESTE"
+          ],
+          "hint_1": "Are brațe care se strâng în jurul piesei",
+          "hint_2": "Scoate rulmenții fără să-i strice",
+          "hint_3": "Folosit la roți și transmisie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "bearing puller tool",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -156,6 +224,40 @@
           "dificultate": "usor",
           "puncte_max": 200,
           "imagine_cautare": "mechanic work light",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_014",
+          "raspuns": "MULTIMETRU AUTO",
+          "variante": [
+            "MULTIMETRU AUTO",
+            "LAMPA DE LUCRU",
+            "RELEU",
+            "SIGURANTA AUTO"
+          ],
+          "hint_1": "Măsoară voltaj și curent",
+          "hint_2": "Are două fire de test (probe)",
+          "hint_3": "Verifică bateria și siguranțele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "automotive multimeter",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_015",
+          "raspuns": "PISTOL DE VOPSIT",
+          "variante": [
+            "PISTOL DE VOPSIT",
+            "COMPRESOR DE AER",
+            "POLIZOR UNGHIULAR",
+            "APARAT DE SUDURA"
+          ],
+          "hint_1": "Pulverizează vopsea sub presiune",
+          "hint_2": "Se conectează la un compresor",
+          "hint_3": "Folosit la caroserie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "spray paint gun",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -261,6 +363,57 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_022",
+          "raspuns": "BIELA",
+          "variante": [
+            "BIELA",
+            "PISTON",
+            "ARBORE COTIT",
+            "ARBORE CU CAME"
+          ],
+          "hint_1": "Leagă pistonul de arborele cotit",
+          "hint_2": "O piesă lungă și subțire de metal",
+          "hint_3": "Transmite forța de la piston mai departe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "connecting rod engine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_023",
+          "raspuns": "ARBORE CU CAME",
+          "variante": [
+            "ARBORE CU CAME",
+            "ARBORE COTIT",
+            "BIELA",
+            "CUREA DE DISTRIBUTIE"
+          ],
+          "hint_1": "Are proeminențe numite came",
+          "hint_2": "Controlează deschiderea supapelor",
+          "hint_3": "Se rotește sincronizat cu arborele cotit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "camshaft part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_024",
+          "raspuns": "GARNITURA DE CHIULASA",
+          "variante": [
+            "GARNITURA DE CHIULASA",
+            "CHIULASA",
+            "BLOC MOTOR",
+            "GALERIE DE ADMISIE"
+          ],
+          "hint_1": "O foaie subțire între bloc și chiulasă",
+          "hint_2": "Etanșează camerele de ardere",
+          "hint_3": "Dacă se arde, motorul pierde compresie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "head gasket",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_025",
           "raspuns": "CUREA DE DISTRIBUTIE",
           "variante": [
@@ -278,6 +431,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_026",
+          "raspuns": "LANT DE DISTRIBUTIE",
+          "variante": [
+            "LANT DE DISTRIBUTIE",
+            "CUREA DE DISTRIBUTIE",
+            "ARBORE CU CAME",
+            "CUREA DE ALTERNATOR"
+          ],
+          "hint_1": "Face aceeași treabă ca o curea, dar din metal",
+          "hint_2": "Durează de obicei toată viața motorului",
+          "hint_3": "Zăngăne dacă se uzează",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "timing chain engine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_027",
           "raspuns": "BUJIE",
           "variante": [
@@ -292,6 +462,23 @@
           "dificultate": "usor",
           "puncte_max": 200,
           "imagine_cautare": "spark plug",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_028",
+          "raspuns": "BUJIE INCANDESCENTA",
+          "variante": [
+            "BUJIE INCANDESCENTA",
+            "BUJIE",
+            "INJECTOR",
+            "RELEU"
+          ],
+          "hint_1": "Încălzește camera de ardere",
+          "hint_2": "Folosită la motoarele diesel",
+          "hint_3": "Se aprinde câteva secunde înainte de pornire",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "glow plug diesel",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -329,6 +516,40 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_031",
+          "raspuns": "POMPA DE BENZINA",
+          "variante": [
+            "POMPA DE BENZINA",
+            "INJECTOR",
+            "FILTRU DE COMBUSTIBIL",
+            "CARBURATOR"
+          ],
+          "hint_1": "Trimite combustibilul din rezervor spre motor",
+          "hint_2": "Poate fi electrică sau mecanică",
+          "hint_3": "Dacă cedează, mașina nu mai pornește",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "fuel pump car",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_032",
+          "raspuns": "POMPA DE ULEI",
+          "variante": [
+            "POMPA DE ULEI",
+            "FILTRU DE ULEI",
+            "POMPA DE APA",
+            "POMPA DE BENZINA"
+          ],
+          "hint_1": "Circulă uleiul prin motor",
+          "hint_2": "Menține presiunea de ungere",
+          "hint_3": "Se rotește antrenată de arborele cotit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "oil pump engine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_033",
           "raspuns": "FILTRU DE ULEI",
           "variante": [
@@ -363,6 +584,40 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_035",
+          "raspuns": "FILTRU DE COMBUSTIBIL",
+          "variante": [
+            "FILTRU DE COMBUSTIBIL",
+            "FILTRU DE ULEI",
+            "FILTRU DE AER",
+            "POMPA DE BENZINA"
+          ],
+          "hint_1": "Reține impuritățile din benzină sau motorină",
+          "hint_2": "Montat pe traseul spre injectoare",
+          "hint_3": "Colmatat, dă probleme de pornire",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "fuel filter car",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_036",
+          "raspuns": "FILTRU DE POLEN",
+          "variante": [
+            "FILTRU DE POLEN",
+            "FILTRU DE AER",
+            "FILTRU DE ULEI",
+            "VENTILATOR RADIATOR"
+          ],
+          "hint_1": "Curăță aerul care intră în habitaclu",
+          "hint_2": "Se schimbă pentru mirosuri și alergii",
+          "hint_3": "Nu are legătură cu motorul, ci cu ventilația",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "cabin air filter",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_037",
           "raspuns": "RADIATOR",
           "variante": [
@@ -394,6 +649,40 @@
           "dificultate": "usor",
           "puncte_max": 200,
           "imagine_cautare": "car thermostat part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_039",
+          "raspuns": "POMPA DE APA",
+          "variante": [
+            "POMPA DE APA",
+            "TERMOSTAT",
+            "RADIATOR",
+            "POMPA DE ULEI"
+          ],
+          "hint_1": "Circulă lichidul de răcire",
+          "hint_2": "Antrenată de curea",
+          "hint_3": "Dacă curge, apare o baltă sub mașină",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "water pump car engine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_040",
+          "raspuns": "VAS DE EXPANSIUNE",
+          "variante": [
+            "VAS DE EXPANSIUNE",
+            "RADIATOR",
+            "TERMOSTAT",
+            "POMPA DE APA"
+          ],
+          "hint_1": "Un recipient de plastic translucid",
+          "hint_2": "Preia surplusul de lichid de răcire",
+          "hint_3": "Are marcaje de nivel minim și maxim",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "coolant reservoir tank",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -499,6 +788,91 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_047",
+          "raspuns": "GALERIE DE EVACUARE",
+          "variante": [
+            "GALERIE DE EVACUARE",
+            "GALERIE DE ADMISIE",
+            "TOBA DE ESAPAMENT",
+            "CATALIZATOR"
+          ],
+          "hint_1": "Colectează gazele arse de la fiecare cilindru",
+          "hint_2": "Devine foarte fierbinte în funcționare",
+          "hint_3": "Se leagă mai departe de eșapament",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "exhaust manifold part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_048",
+          "raspuns": "SENZOR DE OXIGEN",
+          "variante": [
+            "SENZOR DE OXIGEN",
+            "CATALIZATOR",
+            "SENZOR DE TURATIE",
+            "BUJIE"
+          ],
+          "hint_1": "Măsoară cât oxigen rămâne în gazele arse",
+          "hint_2": "Ajută calculatorul să regleze amestecul",
+          "hint_3": "Montat pe traseul de evacuare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "oxygen sensor car",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_049",
+          "raspuns": "SENZOR DE TURATIE",
+          "variante": [
+            "SENZOR DE TURATIE",
+            "SENZOR DE OXIGEN",
+            "ARBORE COTIT",
+            "RELEU"
+          ],
+          "hint_1": "Citește viteza de rotație a motorului",
+          "hint_2": "Fără el, motorul nu pornește",
+          "hint_3": "Montat lângă arborele cotit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "crankshaft position sensor",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_050",
+          "raspuns": "CUREA DE ALTERNATOR",
+          "variante": [
+            "CUREA DE ALTERNATOR",
+            "CUREA DE DISTRIBUTIE",
+            "LANT DE DISTRIBUTIE",
+            "ALTERNATOR"
+          ],
+          "hint_1": "Antrenează alternatorul și alte accesorii",
+          "hint_2": "O curea lată, cu caneluri",
+          "hint_3": "Dacă scârțâie, e semn că trebuie schimbată",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "serpentine belt car",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_051",
+          "raspuns": "VENTILATOR RADIATOR",
+          "variante": [
+            "VENTILATOR RADIATOR",
+            "RADIATOR",
+            "POMPA DE APA",
+            "VAS DE EXPANSIUNE"
+          ],
+          "hint_1": "Trage aer prin radiator",
+          "hint_2": "Pornește automat când motorul se încălzește",
+          "hint_3": "Montat chiar în spatele radiatorului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "radiator cooling fan",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_052",
           "raspuns": "DISC DE FRANA",
           "variante": [
@@ -533,6 +907,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_054",
+          "raspuns": "ETRIER DE FRANA",
+          "variante": [
+            "ETRIER DE FRANA",
+            "DISC DE FRANA",
+            "SERVOFRANA",
+            "TAMBUR DE FRANA"
+          ],
+          "hint_1": "Strânge plăcuțele pe disc",
+          "hint_2": "Conține pistonașe hidraulice",
+          "hint_3": "Montat călare pe discul de frână",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "brake caliper part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_055",
           "raspuns": "TAMBUR DE FRANA",
           "variante": [
@@ -547,6 +938,57 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "brake drum part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_056",
+          "raspuns": "SABOTI DE FRANA",
+          "variante": [
+            "SABOTI DE FRANA",
+            "PLACUTE DE FRANA",
+            "TAMBUR DE FRANA",
+            "DISC DE FRANA"
+          ],
+          "hint_1": "Se lipesc de interiorul tamburului",
+          "hint_2": "Varianta mai veche pentru frâne pe spate",
+          "hint_3": "Se extind spre exterior la apăsarea pedalei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "brake shoes part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_057",
+          "raspuns": "SERVOFRANA",
+          "variante": [
+            "SERVOFRANA",
+            "ETRIER DE FRANA",
+            "FURTUN DE FRANA",
+            "PEDALA DE FRANA"
+          ],
+          "hint_1": "Amplifică forța aplicată pe pedala de frână",
+          "hint_2": "Montat între pedală și cilindrul principal",
+          "hint_3": "Fără el, frâna e foarte grea de apăsat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "brake booster part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_058",
+          "raspuns": "FURTUN DE FRANA",
+          "variante": [
+            "FURTUN DE FRANA",
+            "SERVOFRANA",
+            "ETRIER DE FRANA",
+            "LICHID DE FRANA"
+          ],
+          "hint_1": "Un tub flexibil cu lichid de frână",
+          "hint_2": "Leagă caroseria de etrier",
+          "hint_3": "Dacă plesnește, se pierde presiunea de frânare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "brake hose part",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -584,6 +1026,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_061",
+          "raspuns": "BARA STABILIZATOARE",
+          "variante": [
+            "BARA STABILIZATOARE",
+            "ARC SPIRAL",
+            "BRAT SUSPENSIE",
+            "AMORTIZOR"
+          ],
+          "hint_1": "O bară transversală între roțile de aceeași parte",
+          "hint_2": "Reduce înclinarea mașinii în viraje",
+          "hint_3": "Se leagă de suspensie prin bielete",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "anti-roll bar suspension",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_062",
           "raspuns": "BRAT SUSPENSIE",
           "variante": [
@@ -615,6 +1074,40 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "wheel bearing part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_064",
+          "raspuns": "ARTICULATIE SFERICA",
+          "variante": [
+            "ARTICULATIE SFERICA",
+            "RULMENT ROATA",
+            "BUCSA SUSPENSIE",
+            "BRAT SUSPENSIE"
+          ],
+          "hint_1": "O articulație în formă de sferă",
+          "hint_2": "Leagă brațul de suspensie de fuzetă",
+          "hint_3": "Permite mișcare în mai multe direcții",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "ball joint suspension",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_065",
+          "raspuns": "BUCSA SUSPENSIE",
+          "variante": [
+            "BUCSA SUSPENSIE",
+            "ARTICULATIE SFERICA",
+            "ARC SPIRAL",
+            "BRAT SUSPENSIE"
+          ],
+          "hint_1": "Un inel de cauciuc sau poliuretan",
+          "hint_2": "Reduce vibrațiile transmise caroseriei",
+          "hint_3": "Se montează la capetele brațelor de suspensie",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "suspension bushing part",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -669,6 +1162,40 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_069",
+          "raspuns": "PLACA PRESIUNE",
+          "variante": [
+            "PLACA PRESIUNE",
+            "DISC AMBREIAJ",
+            "RULMENT DE PRESIUNE",
+            "VOLANTA"
+          ],
+          "hint_1": "Apasă discul de ambreiaj pe volantă",
+          "hint_2": "Are arcuri puternice în interior",
+          "hint_3": "Lucrează împreună cu discul de ambreiaj",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "clutch pressure plate",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_070",
+          "raspuns": "RULMENT DE PRESIUNE",
+          "variante": [
+            "RULMENT DE PRESIUNE",
+            "PLACA PRESIUNE",
+            "DISC AMBREIAJ",
+            "RULMENT ROATA"
+          ],
+          "hint_1": "Apasă pe placa de presiune la călcarea ambreiajului",
+          "hint_2": "O piesă mică, dar esențială",
+          "hint_3": "Dacă scârțâie, e semn de defecțiune",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "clutch release bearing",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_071",
           "raspuns": "CARDAN",
           "variante": [
@@ -683,6 +1210,23 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "drive shaft car part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_072",
+          "raspuns": "PLANETARA",
+          "variante": [
+            "PLANETARA",
+            "CARDAN",
+            "DIFERENTIAL",
+            "RULMENT ROATA"
+          ],
+          "hint_1": "Leagă diferențialul de roată",
+          "hint_2": "Are un capăt cu caneluri",
+          "hint_3": "Se rupe rar, dar face zgomot dacă e uzată",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "axle shaft car part",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -734,6 +1278,23 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "car fuse box",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_076",
+          "raspuns": "RELEU",
+          "variante": [
+            "RELEU",
+            "SIGURANTA AUTO",
+            "MULTIMETRU AUTO",
+            "CLAXON"
+          ],
+          "hint_1": "Un comutator electric acționat electric",
+          "hint_2": "Face un clic caracteristic",
+          "hint_3": "Controlează circuite cu curent mare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "automotive relay",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -802,6 +1363,23 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "windshield wiper blade",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_081",
+          "raspuns": "MOTORAS STERGATOR",
+          "variante": [
+            "MOTORAS STERGATOR",
+            "STERGATOR PARBRIZ",
+            "DEMAROR",
+            "VENTILATOR RADIATOR"
+          ],
+          "hint_1": "Acționează brațele ștergătoarelor",
+          "hint_2": "Un motoraș electric ascuns sub capotă",
+          "hint_3": "Fără el, ștergătoarele nu se mișcă deloc",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "wiper motor part",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -941,6 +1519,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_090",
+          "raspuns": "ARIPA",
+          "variante": [
+            "ARIPA",
+            "BARA DE PROTECTIE",
+            "CAPOTA MOTOR",
+            "PORTBAGAJ"
+          ],
+          "hint_1": "Panoul de caroserie de deasupra roții",
+          "hint_2": "Protejează de stropi și noroi",
+          "hint_3": "Montată lateral, lângă far",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "car fender part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_091",
           "raspuns": "ULEI DE MOTOR",
           "variante": [
@@ -955,6 +1550,23 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "motor oil bottle",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_092",
+          "raspuns": "LICHID DE FRANA",
+          "variante": [
+            "LICHID DE FRANA",
+            "ULEI DE MOTOR",
+            "ANTIGEL",
+            "LICHID DE PARBRIZ"
+          ],
+          "hint_1": "Transmite presiunea în sistemul de frânare",
+          "hint_2": "Absoarbe umezeala din aer în timp",
+          "hint_3": "Se schimbă la un interval recomandat de ani",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "brake fluid bottle",
           "imagine_sursa": "wikipedia"
         },
         {
@@ -975,6 +1587,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_094",
+          "raspuns": "LICHID DE PARBRIZ",
+          "variante": [
+            "LICHID DE PARBRIZ",
+            "ANTIGEL",
+            "ULEI DE MOTOR",
+            "LICHID DE FRANA"
+          ],
+          "hint_1": "Se pulverizează pe parbriz",
+          "hint_2": "Ajută ștergătoarele să curețe geamul",
+          "hint_3": "Se toarnă într-un rezervor separat de plastic",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "windshield washer fluid",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_095",
           "raspuns": "JOJA DE ULEI",
           "variante": [
@@ -992,6 +1621,23 @@
           "imagine_sursa": "wikipedia"
         },
         {
+          "id": "mec_096",
+          "raspuns": "BUSON DE ULEI",
+          "variante": [
+            "BUSON DE ULEI",
+            "JOJA DE ULEI",
+            "FILTRU DE ULEI",
+            "VAS DE EXPANSIUNE"
+          ],
+          "hint_1": "Se deșurubează ca să torni ulei nou",
+          "hint_2": "Montat deasupra chiulasei",
+          "hint_3": "Are de obicei un simbol de canistră",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "oil filler cap engine",
+          "imagine_sursa": "wikipedia"
+        },
+        {
           "id": "mec_097",
           "raspuns": "VOLAN",
           "variante": [
@@ -1006,6 +1652,40 @@
           "dificultate": "mediu",
           "puncte_max": 200,
           "imagine_cautare": "car steering wheel",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_098",
+          "raspuns": "COLOANA DE DIRECTIE",
+          "variante": [
+            "COLOANA DE DIRECTIE",
+            "VOLAN",
+            "CASETA DE DIRECTIE",
+            "CARDAN"
+          ],
+          "hint_1": "Leagă volanul de sistemul de direcție",
+          "hint_2": "Se poate regla pe înălțime sau adâncime",
+          "hint_3": "Ascunde adesea mecanisme de siguranță",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "steering column part",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "mec_099",
+          "raspuns": "CASETA DE DIRECTIE",
+          "variante": [
+            "CASETA DE DIRECTIE",
+            "COLOANA DE DIRECTIE",
+            "VOLAN",
+            "BRAT SUSPENSIE"
+          ],
+          "hint_1": "Transformă rotirea volanului în mișcare laterală",
+          "hint_2": "Leagă de roțile din față prin bare",
+          "hint_3": "Poate fi asistată hidraulic sau electric",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "steering rack part",
           "imagine_sursa": "wikipedia"
         },
         {

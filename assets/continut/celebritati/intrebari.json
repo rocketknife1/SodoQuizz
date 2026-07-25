@@ -1026,6 +1026,686 @@
           "puncte_max": 400,
           "imagine_cautare": "Robert Pattinson",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MATT DAMON",
+          "variante": [
+            "MATT DAMON",
+            "BEN AFFLECK",
+            "MARK WAHLBERG",
+            "JAKE GYLLENHAAL"
+          ],
+          "hint_1": "Actor american, prieten apropiat cu Ben Affleck",
+          "hint_2": "L-a jucat pe Jason Bourne",
+          "hint_3": "Oscar pentru scenariul 'Good Will Hunting'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "cel_061",
+          "imagine_cautare": "Matt Damon",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BEN AFFLECK",
+          "variante": [
+            "BEN AFFLECK",
+            "MATT DAMON",
+            "GEORGE CLOONEY",
+            "CASEY AFFLECK"
+          ],
+          "hint_1": "Actor și regizor american, fost Batman",
+          "hint_2": "Prieten din copilărie cu Matt Damon",
+          "hint_3": "A fost căsătorit cu Jennifer Lopez",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "cel_062",
+          "imagine_cautare": "Ben Affleck",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "GEORGE CLOONEY",
+          "variante": [
+            "GEORGE CLOONEY",
+            "BRAD PITT",
+            "MATT DAMON",
+            "BEN AFFLECK"
+          ],
+          "hint_1": "Actor american, fost doctor în serialul 'ER'",
+          "hint_2": "A jucat în trilogia 'Ocean's Eleven'",
+          "hint_3": "Are propriul brand de tequila",
+          "id": "cel_063",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "George Clooney",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SAMUEL L JACKSON",
+          "variante": [
+            "SAMUEL L JACKSON",
+            "DENZEL WASHINGTON",
+            "MORGAN FREEMAN",
+            "WILL SMITH"
+          ],
+          "hint_1": "Actor american cunoscut pentru vocea puternică",
+          "hint_2": "Îl joacă pe Nick Fury în filmele Marvel",
+          "hint_3": "A jucat în 'Pulp Fiction'",
+          "id": "cel_064",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Samuel L Jackson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TOM HOLLAND",
+          "variante": [
+            "TOM HOLLAND",
+            "TIMOTHEE CHALAMET",
+            "ANDREW GARFIELD",
+            "TOBEY MAGUIRE"
+          ],
+          "hint_1": "Actor britanic, cel mai tânăr Spider-Man din filme",
+          "hint_2": "A fost și dansator profesionist înainte de actorie",
+          "hint_3": "Este partenerul actriței Zendaya",
+          "id": "cel_065",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Tom Holland",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TIMOTHEE CHALAMET",
+          "variante": [
+            "TIMOTHEE CHALAMET",
+            "TOM HOLLAND",
+            "AUSTIN BUTLER",
+            "JACOB ELORDI"
+          ],
+          "hint_1": "Actor american-francez, nominalizat la Oscar tânăr",
+          "hint_2": "L-a jucat pe Paul Atreides în 'Dune'",
+          "hint_3": "A interpretat rolul lui Willy Wonka în 2023",
+          "id": "cel_066",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Timothee Chalamet",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANDREW GARFIELD",
+          "variante": [
+            "ANDREW GARFIELD",
+            "TOM HOLLAND",
+            "TOBEY MAGUIRE",
+            "DANIEL RADCLIFFE"
+          ],
+          "hint_1": "Actor britanic-american, al doilea Spider-Man din filme",
+          "hint_2": "A jucat în 'The Social Network'",
+          "hint_3": "A revenit ca Spider-Man în 'No Way Home'",
+          "id": "cel_067",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andrew Garfield",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "DANIEL RADCLIFFE",
+          "variante": [
+            "DANIEL RADCLIFFE",
+            "RUPERT GRINT",
+            "TOM FELTON",
+            "ANDREW GARFIELD"
+          ],
+          "hint_1": "Actor britanic, celebru pentru un rol de vrăjitor",
+          "hint_2": "L-a jucat pe Harry Potter în toate cele 8 filme",
+          "hint_3": "A început actoria la doar 11 ani",
+          "id": "cel_068",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Daniel Radcliffe",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "EMMA STONE",
+          "variante": [
+            "EMMA STONE",
+            "JENNIFER LAWRENCE",
+            "MARGOT ROBBIE",
+            "ANNE HATHAWAY"
+          ],
+          "hint_1": "Actriță americană, păr roșcat caracteristic",
+          "hint_2": "Oscar pentru 'La La Land' și 'Poor Things'",
+          "hint_3": "A jucat-o pe Cruella de Vil în filmul din 2021",
+          "id": "cel_069",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Emma Stone",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MARGOT ROBBIE",
+          "variante": [
+            "MARGOT ROBBIE",
+            "EMMA STONE",
+            "SCARLETT JOHANSSON",
+            "AMBER HEARD"
+          ],
+          "hint_1": "Actriță australiană, a jucat-o pe Harley Quinn",
+          "hint_2": "Rol principal în filmul 'Barbie' din 2023",
+          "hint_3": "A jucat în 'The Wolf of Wall Street'",
+          "id": "cel_070",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Margot Robbie",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANNE HATHAWAY",
+          "variante": [
+            "ANNE HATHAWAY",
+            "EMMA STONE",
+            "MERYL STREEP",
+            "NATALIE PORTMAN"
+          ],
+          "hint_1": "Actriță americană, Oscar pentru 'Les Misérables'",
+          "hint_2": "A jucat în 'The Devil Wears Prada' alături de Meryl Streep",
+          "hint_3": "L-a jucat pe personajul principal din 'Princess Diaries'",
+          "id": "cel_071",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Anne Hathaway",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "NATALIE PORTMAN",
+          "variante": [
+            "NATALIE PORTMAN",
+            "ANNE HATHAWAY",
+            "SCARLETT JOHANSSON",
+            "KEIRA KNIGHTLEY"
+          ],
+          "hint_1": "Actriță americano-israeliană, Oscar pentru 'Black Swan'",
+          "hint_2": "O joacă pe Jane Foster în filmele Thor",
+          "hint_3": "A jucat-o pe Padmé în trilogia Star Wars prequel",
+          "id": "cel_072",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Natalie Portman",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KEIRA KNIGHTLEY",
+          "variante": [
+            "KEIRA KNIGHTLEY",
+            "NATALIE PORTMAN",
+            "EMMA WATSON",
+            "KATE WINSLET"
+          ],
+          "hint_1": "Actriță britanică din 'Pirates of the Caribbean'",
+          "hint_2": "A jucat-o pe Elizabeth Swann",
+          "hint_3": "Rol principal în 'Pride and Prejudice' (2005)",
+          "id": "cel_073",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Keira Knightley",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KATE WINSLET",
+          "variante": [
+            "KATE WINSLET",
+            "KEIRA KNIGHTLEY",
+            "EMMA THOMPSON",
+            "CATE BLANCHETT"
+          ],
+          "hint_1": "Actriță britanică, Oscar pentru 'The Reader'",
+          "hint_2": "A jucat-o pe Rose în 'Titanic'",
+          "hint_3": "A colaborat de mai multe ori cu Leonardo DiCaprio",
+          "id": "cel_074",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kate Winslet",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CATE BLANCHETT",
+          "variante": [
+            "CATE BLANCHETT",
+            "KATE WINSLET",
+            "NICOLE KIDMAN",
+            "TILDA SWINTON"
+          ],
+          "hint_1": "Actriță australiană, dublu câștigătoare de Oscar",
+          "hint_2": "A jucat-o pe Galadriel în 'Lord of the Rings'",
+          "hint_3": "Rol principal în 'Tár'",
+          "id": "cel_075",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cate Blanchett",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "AUSTIN BUTLER",
+          "variante": [
+            "AUSTIN BUTLER",
+            "TIMOTHEE CHALAMET",
+            "JACOB ELORDI",
+            "TOM HOLLAND"
+          ],
+          "hint_1": "Actor american, l-a jucat pe regele rock-ului",
+          "hint_2": "Nominalizat la Oscar pentru 'Elvis'",
+          "hint_3": "A jucat și în 'Dune: Part Two'",
+          "id": "cel_076",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Austin Butler",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PEDRO PASCAL",
+          "variante": [
+            "PEDRO PASCAL",
+            "OSCAR ISAAC",
+            "DIEGO LUNA",
+            "JAVIER BARDEM"
+          ],
+          "hint_1": "Actor chilian-american, foarte popular recent",
+          "hint_2": "L-a jucat pe Joel în serialul 'The Last of Us'",
+          "hint_3": "Rol principal în 'The Mandalorian'",
+          "id": "cel_077",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Pedro Pascal",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "OSCAR ISAAC",
+          "variante": [
+            "OSCAR ISAAC",
+            "PEDRO PASCAL",
+            "DIEGO LUNA",
+            "ANTONIO BANDERAS"
+          ],
+          "hint_1": "Actor guatemalez-american",
+          "hint_2": "A jucat în 'Star Wars: The Force Awakens'",
+          "hint_3": "Rol principal în 'Moon Knight'",
+          "id": "cel_078",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Oscar Isaac",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "IDRIS ELBA",
+          "variante": [
+            "IDRIS ELBA",
+            "WILL SMITH",
+            "DENZEL WASHINGTON",
+            "SAMUEL L JACKSON"
+          ],
+          "hint_1": "Actor britanic, a jucat în 'Luther' și 'Thor'",
+          "hint_2": "A fost considerat candidat pentru rolul James Bond",
+          "hint_3": "Îl joacă pe Heimdall în filmele Thor",
+          "id": "cel_079",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Idris Elba",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CILLIAN MURPHY",
+          "variante": [
+            "CILLIAN MURPHY",
+            "MICHAEL FASSBENDER",
+            "TOM HARDY",
+            "JASON STATHAM"
+          ],
+          "hint_1": "Actor irlandez cu ochi albaștri intenși",
+          "hint_2": "Oscar pentru rolul principal din 'Oppenheimer'",
+          "hint_3": "L-a jucat pe Thomas Shelby în 'Peaky Blinders'",
+          "id": "cel_080",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cillian Murphy",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TOM HARDY",
+          "variante": [
+            "TOM HARDY",
+            "CILLIAN MURPHY",
+            "JASON STATHAM",
+            "MICHAEL FASSBENDER"
+          ],
+          "hint_1": "Actor britanic, l-a jucat pe Bane și Venom",
+          "hint_2": "Rol principal în 'Mad Max: Fury Road'",
+          "hint_3": "Cunoscut pentru voce distinctivă și fizic robust",
+          "id": "cel_081",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Tom Hardy",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "JASON STATHAM",
+          "variante": [
+            "JASON STATHAM",
+            "VIN DIESEL",
+            "DWAYNE JOHNSON",
+            "TOM HARDY"
+          ],
+          "hint_1": "Actor britanic specializat în filme de acțiune",
+          "hint_2": "Rol frecvent în franciza 'Fast and Furious'",
+          "hint_3": "Fost sportiv la sărituri în apă",
+          "id": "cel_082",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jason Statham",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "VIN DIESEL",
+          "variante": [
+            "VIN DIESEL",
+            "DWAYNE JOHNSON",
+            "JASON STATHAM",
+            "THE ROCK"
+          ],
+          "hint_1": "Actor american, vocea principală din 'Fast and Furious'",
+          "hint_2": "A dat și vocea lui Groot din Marvel",
+          "hint_3": "Numele real: Mark Sinclair",
+          "id": "cel_083",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Vin Diesel",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANTONIO BANDERAS",
+          "variante": [
+            "ANTONIO BANDERAS",
+            "JAVIER BARDEM",
+            "PENELOPE CRUZ",
+            "OSCAR ISAAC"
+          ],
+          "hint_1": "Actor spaniol, vocea lui Puss in Boots",
+          "hint_2": "A jucat în 'Desperado' și 'Zorro'",
+          "hint_3": "Nominalizat la Oscar pentru 'Pain and Glory'",
+          "id": "cel_084",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Antonio Banderas",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PENELOPE CRUZ",
+          "variante": [
+            "PENELOPE CRUZ",
+            "SALMA HAYEK",
+            "EVA MENDES",
+            "ANA DE ARMAS"
+          ],
+          "hint_1": "Actriță spaniolă, Oscar pentru 'Vicky Cristina Barcelona'",
+          "hint_2": "Căsătorită cu actorul Javier Bardem",
+          "hint_3": "Colaborare frecventă cu regizorul Pedro Almodóvar",
+          "id": "cel_085",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Penelope Cruz",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SALMA HAYEK",
+          "variante": [
+            "SALMA HAYEK",
+            "PENELOPE CRUZ",
+            "EVA MENDES",
+            "JENNIFER LOPEZ"
+          ],
+          "hint_1": "Actriță mexicano-americană",
+          "hint_2": "A jucat-o pe Frida Kahlo, rol nominalizat la Oscar",
+          "hint_3": "Apare în filmele Marvel 'Eternals'",
+          "id": "cel_086",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Salma Hayek",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANA DE ARMAS",
+          "variante": [
+            "ANA DE ARMAS",
+            "PENELOPE CRUZ",
+            "SALMA HAYEK",
+            "EIZA GONZALEZ"
+          ],
+          "hint_1": "Actriță cubaneză, a jucat-o pe Marilyn Monroe",
+          "hint_2": "Rol în 'Knives Out' și 'Blade Runner 2049'",
+          "hint_3": "Nominalizată la Oscar pentru 'Blonde'",
+          "id": "cel_087",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ana De Armas",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CHARLIZE THERON",
+          "variante": [
+            "CHARLIZE THERON",
+            "NICOLE KIDMAN",
+            "SCARLETT JOHANSSON",
+            "CATE BLANCHETT"
+          ],
+          "hint_1": "Actriță sud-africană, Oscar pentru 'Monster'",
+          "hint_2": "Rol principal în 'Mad Max: Fury Road'",
+          "hint_3": "A jucat-o pe Furiosa în varianta adultă",
+          "id": "cel_088",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Charlize Theron",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SANDRA BULLOCK",
+          "variante": [
+            "SANDRA BULLOCK",
+            "JULIA ROBERTS",
+            "REESE WITHERSPOON",
+            "CAMERON DIAZ"
+          ],
+          "hint_1": "Actriță americană, Oscar pentru 'The Blind Side'",
+          "hint_2": "Rol principal în 'Gravity'",
+          "hint_3": "A jucat în 'Speed' alături de Keanu Reeves",
+          "id": "cel_089",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sandra Bullock",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "JULIA ROBERTS",
+          "variante": [
+            "JULIA ROBERTS",
+            "SANDRA BULLOCK",
+            "MEG RYAN",
+            "CAMERON DIAZ"
+          ],
+          "hint_1": "Actriță americană, zâmbet celebru, Oscar pentru 'Erin Brockovich'",
+          "hint_2": "Rol principal în 'Pretty Woman'",
+          "hint_3": "Una dintre cele mai bine plătite actrițe din istorie",
+          "id": "cel_090",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Julia Roberts",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "REESE WITHERSPOON",
+          "variante": [
+            "REESE WITHERSPOON",
+            "SANDRA BULLOCK",
+            "JULIA ROBERTS",
+            "CAMERON DIAZ"
+          ],
+          "hint_1": "Actriță americană, Oscar pentru 'Walk the Line'",
+          "hint_2": "Rol principal în 'Legally Blonde'",
+          "hint_3": "Producătoare a serialului 'Big Little Lies'",
+          "id": "cel_091",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Reese Witherspoon",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "POST MALONE",
+          "variante": [
+            "POST MALONE",
+            "ED SHEERAN",
+            "JUSTIN BIEBER",
+            "THE WEEKND"
+          ],
+          "hint_1": "Artist american cu multe tatuaje pe față",
+          "hint_2": "Piese celebre: 'Circles', 'Sunflower'",
+          "hint_3": "A colaborat cu Swae Lee la 'Sunflower'",
+          "id": "cel_092",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Post Malone",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TRAVIS SCOTT",
+          "variante": [
+            "TRAVIS SCOTT",
+            "DRAKE",
+            "KANYE WEST",
+            "POST MALONE"
+          ],
+          "hint_1": "Rapper american, fost partener al Kylie Jenner",
+          "hint_2": "A avut o linie de burgeri la McDonald's",
+          "hint_3": "Piesa 'SICKO MODE' e una din cele mai cunoscute",
+          "id": "cel_093",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Travis Scott",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CARDI B",
+          "variante": [
+            "CARDI B",
+            "NICKI MINAJ",
+            "MEGAN THEE STALLION",
+            "DOJA CAT"
+          ],
+          "hint_1": "Rapperiță americană, piesa 'Bodak Yellow' a lansat-o",
+          "hint_2": "Căsătorită cu rapperul Offset",
+          "hint_3": "Piesa 'WAP' a fost un hit global",
+          "id": "cel_094",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cardi B",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "NICKI MINAJ",
+          "variante": [
+            "NICKI MINAJ",
+            "CARDI B",
+            "DOJA CAT",
+            "MEGAN THEE STALLION"
+          ],
+          "hint_1": "Rapperiță americană originară din Trinidad",
+          "hint_2": "Cunoscută pentru peruci colorate și alter-ego-uri",
+          "hint_3": "Piesa 'Super Bass' a devenit virală",
+          "id": "cel_095",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nicki Minaj",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "DOJA CAT",
+          "variante": [
+            "DOJA CAT",
+            "NICKI MINAJ",
+            "CARDI B",
+            "ARIANA GRANDE"
+          ],
+          "hint_1": "Artistă americană, piesa 'Say So' a fost un hit TikTok",
+          "hint_2": "Cunoscută pentru transformări vizuale extreme",
+          "hint_3": "A colaborat cu SZA la 'Kiss Me More'",
+          "id": "cel_096",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Doja Cat",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SZA",
+          "variante": [
+            "SZA",
+            "DOJA CAT",
+            "H.E.R.",
+            "SUMMER WALKER"
+          ],
+          "hint_1": "Cântăreață R&B americană",
+          "hint_2": "Albumul 'SOS' a fost extrem de popular",
+          "hint_3": "Piesa 'Kill Bill' a devenit virală în 2023",
+          "id": "cel_097",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sza",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "OLIVIA RODRIGO",
+          "variante": [
+            "OLIVIA RODRIGO",
+            "BILLIE EILISH",
+            "SABRINA CARPENTER",
+            "GRACIE ABRAMS"
+          ],
+          "hint_1": "Cântăreață americană, a debutat cu 'drivers license'",
+          "hint_2": "A fost actriță Disney înainte de muzică",
+          "hint_3": "Albumul 'SOUR' a avut succes uriaș",
+          "id": "cel_098",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Olivia Rodrigo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SABRINA CARPENTER",
+          "variante": [
+            "SABRINA CARPENTER",
+            "OLIVIA RODRIGO",
+            "ARIANA GRANDE",
+            "CHARLI XCX"
+          ],
+          "hint_1": "Cântăreață americană, piesa 'Espresso' a fost hit global în 2024",
+          "hint_2": "Fostă actriță Disney Channel",
+          "hint_3": "Turneu 'Short n' Sweet' foarte popular",
+          "id": "cel_099",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sabrina Carpenter",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CHARLI XCX",
+          "variante": [
+            "CHARLI XCX",
+            "DOJA CAT",
+            "SABRINA CARPENTER",
+            "CHARLIE PUTH"
+          ],
+          "hint_1": "Cântăreață britanică, albumul 'BRAT' a definit o eră culturală în 2024",
+          "hint_2": "Culoarea verde-lime a devenit asociată cu numele ei",
+          "hint_3": "Piese cunoscute: 'Boom Clap', 'Von Dutch'",
+          "id": "cel_100",
+          "dificultate": "greu",
+          "puncte_max": 400,
+          "imagine_cautare": "Charli XCX",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

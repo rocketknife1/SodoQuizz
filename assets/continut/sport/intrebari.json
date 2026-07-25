@@ -1026,6 +1026,686 @@
           "puncte_max": 200,
           "imagine_cautare": "Manchester City logo stadium",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "HARRY KANE",
+          "variante": [
+            "HARRY KANE",
+            "WAYNE ROONEY",
+            "ALAN SHEARER",
+            "MICHAEL OWEN"
+          ],
+          "hint_1": "Atacant englez, golgheter all-time al naționalei Angliei",
+          "hint_2": "A jucat mulți ani la Tottenham, apoi la Bayern Munchen",
+          "hint_3": "Cunoscut pentru pase de gol lungi, precise",
+          "id": "spo_061",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Harry Kane",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KEVIN DE BRUYNE",
+          "variante": [
+            "KEVIN DE BRUYNE",
+            "EDEN HAZARD",
+            "LUKA MODRIC",
+            "TONI KROOS"
+          ],
+          "hint_1": "Mijlocaș belgian, considerat unul din cei mai buni pasatori din lume",
+          "hint_2": "A jucat mulți ani la Manchester City",
+          "hint_3": "Cunoscut pentru centrări precise cu piciorul stâng",
+          "id": "spo_062",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kevin De Bruyne",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LUKA MODRIC",
+          "variante": [
+            "LUKA MODRIC",
+            "KEVIN DE BRUYNE",
+            "TONI KROOS",
+            "ANDRES INIESTA"
+          ],
+          "hint_1": "Mijlocaș croat, Balonul de Aur în 2018",
+          "hint_2": "Căpitanul naționalei Croației la finala Mondialului 2018",
+          "hint_3": "A jucat mulți ani la Real Madrid",
+          "id": "spo_063",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Luka Modric",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "VIRGIL VAN DIJK",
+          "variante": [
+            "VIRGIL VAN DIJK",
+            "SERGIO RAMOS",
+            "GERARD PIQUE",
+            "RAPHAEL VARANE"
+          ],
+          "hint_1": "Fundaș olandez, căpitanul naționalei Olandei",
+          "hint_2": "A jucat mulți ani la Liverpool",
+          "hint_3": "Unul dintre cei mai scumpi fundași din istorie la transfer",
+          "id": "spo_064",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Virgil Van Dijk",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SERGIO RAMOS",
+          "variante": [
+            "SERGIO RAMOS",
+            "GERARD PIQUE",
+            "VIRGIL VAN DIJK",
+            "RAPHAEL VARANE"
+          ],
+          "hint_1": "Fundaș spaniol, celebru pentru goluri decisive târzii",
+          "hint_2": "Fost căpitan la Real Madrid",
+          "hint_3": "Golul din finala Ligii Campionilor 2014, minutul 93",
+          "id": "spo_065",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sergio Ramos",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "THIERRY HENRY",
+          "variante": [
+            "THIERRY HENRY",
+            "DIDIER DROGBA",
+            "NICOLAS ANELKA",
+            "DAVID TREZEGUET"
+          ],
+          "hint_1": "Atacant francez, golgheterul all-time al lui Arsenal",
+          "hint_2": "Campion mondial cu Franța în 1998",
+          "hint_3": "Cunoscut pentru viteză și eleganță",
+          "id": "spo_066",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Thierry Henry",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "DIDIER DROGBA",
+          "variante": [
+            "DIDIER DROGBA",
+            "THIERRY HENRY",
+            "SAMUEL ETOO",
+            "YAYA TOURE"
+          ],
+          "hint_1": "Atacant ivorian, legendă la Chelsea",
+          "hint_2": "A marcat penalty-ul decisiv în finala Ligii Campionilor 2012",
+          "hint_3": "Golgheterul all-time al naționalei Coastei de Fildeș",
+          "id": "spo_067",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Didier Drogba",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANDREA PIRLO",
+          "variante": [
+            "ANDREA PIRLO",
+            "ANDREA BARZAGLI",
+            "GENNARO GATTUSO",
+            "FRANCESCO TOTTI"
+          ],
+          "hint_1": "Mijlocaș italian, maestru al loviturilor libere",
+          "hint_2": "A jucat la Milan și Juventus",
+          "hint_3": "Campion mondial cu Italia în 2006",
+          "id": "spo_068",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andrea Pirlo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "FRANCESCO TOTTI",
+          "variante": [
+            "FRANCESCO TOTTI",
+            "ALESSANDRO DEL PIERO",
+            "ANDREA PIRLO",
+            "FABIO CANNAVARO"
+          ],
+          "hint_1": "Atacant italian, a jucat toată cariera la un singur club",
+          "hint_2": "Legendă la AS Roma",
+          "hint_3": "Campion mondial cu Italia în 2006",
+          "id": "spo_069",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Francesco Totti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ALESSANDRO DEL PIERO",
+          "variante": [
+            "ALESSANDRO DEL PIERO",
+            "FRANCESCO TOTTI",
+            "FILIPPO INZAGHI",
+            "ROBERTO BAGGIO"
+          ],
+          "hint_1": "Atacant italian, legendă la Juventus",
+          "hint_2": "Cunoscut pentru golul 'Del Piero' din unghi imposibil",
+          "hint_3": "Campion mondial cu Italia în 2006",
+          "id": "spo_070",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Alessandro Del Piero",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ROBERTO BAGGIO",
+          "variante": [
+            "ROBERTO BAGGIO",
+            "ALESSANDRO DEL PIERO",
+            "PAOLO ROSSI",
+            "GIANLUIGI BUFFON"
+          ],
+          "hint_1": "Atacant italian supranumit 'Codino Divino'",
+          "hint_2": "A ratat penalty-ul decisiv în finala Mondialului 1994",
+          "hint_3": "Balonul de Aur în 1993",
+          "id": "spo_071",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Roberto Baggio",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "GIANLUIGI BUFFON",
+          "variante": [
+            "GIANLUIGI BUFFON",
+            "IKER CASILLAS",
+            "MANUEL NEUER",
+            "PETR CECH"
+          ],
+          "hint_1": "Portar italian legendar, carieră foarte lungă",
+          "hint_2": "Campion mondial cu Italia în 2006",
+          "hint_3": "A jucat majoritatea carierei la Juventus",
+          "id": "spo_072",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gianluigi Buffon",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "IKER CASILLAS",
+          "variante": [
+            "IKER CASILLAS",
+            "GIANLUIGI BUFFON",
+            "MANUEL NEUER",
+            "DAVID DE GEA"
+          ],
+          "hint_1": "Portar spaniol legendar, căpitanul Spaniei campioane mondiale 2010",
+          "hint_2": "Legendă la Real Madrid",
+          "hint_3": "Supranumit 'Sfântul' pentru reflexele sale",
+          "id": "spo_073",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Iker Casillas",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANUEL NEUER",
+          "variante": [
+            "MANUEL NEUER",
+            "IKER CASILLAS",
+            "GIANLUIGI BUFFON",
+            "MARC-ANDRE TER STEGEN"
+          ],
+          "hint_1": "Portar german, campion mondial 2014",
+          "hint_2": "Portar la Bayern Munchen, joc modern de 'portar-libero'",
+          "hint_3": "Căpitanul naționalei Germaniei",
+          "id": "spo_074",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manuel Neuer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "XAVI HERNANDEZ",
+          "variante": [
+            "XAVI HERNANDEZ",
+            "ANDRES INIESTA",
+            "SERGIO BUSQUETS",
+            "CESC FABREGAS"
+          ],
+          "hint_1": "Mijlocaș spaniol legendar, simbol al 'tiki-taka'",
+          "hint_2": "A jucat toată cariera la FC Barcelona",
+          "hint_3": "Ulterior a devenit antrenorul Barcelonei",
+          "id": "spo_075",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Xavi Hernandez",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CARLES PUYOL",
+          "variante": [
+            "CARLES PUYOL",
+            "GERARD PIQUE",
+            "SERGIO RAMOS",
+            "VIRGIL VAN DIJK"
+          ],
+          "hint_1": "Fundaș spaniol legendar la Barcelona, păr lung caracteristic",
+          "hint_2": "Campion mondial cu Spania în 2010",
+          "hint_3": "Cunoscut pentru duritate și loialitate față de club",
+          "id": "spo_076",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Carles Puyol",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ROBERTO CARLOS",
+          "variante": [
+            "ROBERTO CARLOS",
+            "CAFU",
+            "MARCELO",
+            "DANI ALVES"
+          ],
+          "hint_1": "Fundaș stânga brazilian, faimos pentru șuturi puternice",
+          "hint_2": "A jucat mulți ani la Real Madrid",
+          "hint_3": "Celebrul gol cu efect din 1997, Franța vs Brazilia",
+          "id": "spo_077",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Roberto Carlos",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CAFU",
+          "variante": [
+            "CAFU",
+            "ROBERTO CARLOS",
+            "DANI ALVES",
+            "MARCELO"
+          ],
+          "hint_1": "Fundaș dreapta brazilian, singurul jucător cu 3 finale de Mondial jucate",
+          "hint_2": "Campion mondial în 1994 și 2002",
+          "hint_3": "Căpitanul Braziliei la Mondialul 2002",
+          "id": "spo_078",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cafu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "GARETH BALE",
+          "variante": [
+            "GARETH BALE",
+            "AARON RAMSEY",
+            "CRISTIANO RONALDO",
+            "LUKA MODRIC"
+          ],
+          "hint_1": "Atacant galez, viteză extraordinară",
+          "hint_2": "A jucat la Real Madrid alături de Cristiano Ronaldo",
+          "hint_3": "Căpitanul naționalei Țării Galilor",
+          "id": "spo_079",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gareth Bale",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "EDEN HAZARD",
+          "variante": [
+            "EDEN HAZARD",
+            "KEVIN DE BRUYNE",
+            "ROMELU LUKAKU",
+            "THIBAUT COURTOIS"
+          ],
+          "hint_1": "Mijlocaș belgian, dribling exceptional",
+          "hint_2": "A jucat la Chelsea înainte de Real Madrid",
+          "hint_3": "Căpitanul naționalei Belgiei",
+          "id": "spo_080",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Eden Hazard",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SADIO MANE",
+          "variante": [
+            "SADIO MANE",
+            "MOHAMED SALAH",
+            "SERGE GNABRY",
+            "RIYAD MAHREZ"
+          ],
+          "hint_1": "Atacant senegalez, viteză și finalizare excelente",
+          "hint_2": "A jucat la Liverpool alături de Salah și Firmino",
+          "hint_3": "A câștigat Cupa Africii pe Națiuni cu Senegal în 2022",
+          "id": "spo_081",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sadio Mane",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KARIM BENZEMA",
+          "variante": [
+            "KARIM BENZEMA",
+            "OLIVIER GIROUD",
+            "ANTOINE GRIEZMANN",
+            "KYLIAN MBAPPE"
+          ],
+          "hint_1": "Atacant francez, Balonul de Aur în 2022",
+          "hint_2": "Golgheterul all-time al lui Real Madrid",
+          "hint_3": "A jucat alături de Cristiano Ronaldo mulți ani",
+          "id": "spo_082",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Karim Benzema",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANTOINE GRIEZMANN",
+          "variante": [
+            "ANTOINE GRIEZMANN",
+            "KARIM BENZEMA",
+            "OLIVIER GIROUD",
+            "KYLIAN MBAPPE"
+          ],
+          "hint_1": "Atacant francez, campion mondial 2018",
+          "hint_2": "A jucat la Atletico Madrid și Barcelona",
+          "hint_3": "Celebrare specifică inspirată de un joc video (Fortnite)",
+          "id": "spo_083",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Antoine Griezmann",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PAUL POGBA",
+          "variante": [
+            "PAUL POGBA",
+            "N GOLO KANTE",
+            "KYLIAN MBAPPE",
+            "BLAISE MATUIDI"
+          ],
+          "hint_1": "Mijlocaș francez, campion mondial 2018",
+          "hint_2": "A jucat la Manchester United și Juventus",
+          "hint_3": "Cunoscut pentru păr colorat și dans după goluri",
+          "id": "spo_084",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Paul Pogba",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "N GOLO KANTE",
+          "variante": [
+            "N GOLO KANTE",
+            "PAUL POGBA",
+            "BLAISE MATUIDI",
+            "YAYA TOURE"
+          ],
+          "hint_1": "Mijlocaș defensiv francez, extrem de harnic",
+          "hint_2": "A câștigat titluri cu Leicester și Chelsea în ani consecutivi",
+          "hint_3": "Campion mondial cu Franța în 2018",
+          "id": "spo_085",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "N Golo Kante",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "VITINHA",
+          "variante": [
+            "VITINHA",
+            "BRUNO FERNANDES",
+            "JOAO FELIX",
+            "BERNARDO SILVA"
+          ],
+          "hint_1": "Mijlocaș portughez la Paris Saint-Germain",
+          "hint_2": "Parte din generația tânără a naționalei Portugaliei",
+          "hint_3": "Cunoscut pentru control excelent al mingii",
+          "id": "spo_086",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Vitinha",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BRUNO FERNANDES",
+          "variante": [
+            "BRUNO FERNANDES",
+            "BERNARDO SILVA",
+            "JOAO FELIX",
+            "JOAO CANCELO"
+          ],
+          "hint_1": "Mijlocaș portughez, căpitanul lui Manchester United",
+          "hint_2": "Cunoscut pentru pase decisive și goluri din afara careului",
+          "hint_3": "Poreclit 'Magnifico'",
+          "id": "spo_087",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Bruno Fernandes",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "JOAO FELIX",
+          "variante": [
+            "JOAO FELIX",
+            "VITINHA",
+            "CRISTIANO RONALDO",
+            "BERNARDO SILVA"
+          ],
+          "hint_1": "Atacant portughez, considerat un mare talent tânăr",
+          "hint_2": "A jucat la Benfica, Atletico Madrid și Chelsea",
+          "hint_3": "Poreclă în presă: 'Joaozinho'",
+          "id": "spo_088",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Joao Felix",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "JANNIK SINNER",
+          "variante": [
+            "JANNIK SINNER",
+            "CARLOS ALCARAZ",
+            "DANIIL MEDVEDEV",
+            "STEFANOS TSITSIPAS"
+          ],
+          "hint_1": "Jucător italian de tenis, nr. 1 mondial din 2024",
+          "hint_2": "Păr roșcat caracteristic",
+          "hint_3": "A câștigat Australian Open în 2024",
+          "id": "spo_089",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Jannik Sinner",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CARLOS ALCARAZ",
+          "variante": [
+            "CARLOS ALCARAZ",
+            "JANNIK SINNER",
+            "DANIIL MEDVEDEV",
+            "STEFANOS TSITSIPAS"
+          ],
+          "hint_1": "Jucător spaniol de tenis, cel mai tânăr nr. 1 ATP din istorie",
+          "hint_2": "A câștigat US Open la doar 19 ani",
+          "hint_3": "Considerat succesorul lui Nadal",
+          "id": "spo_090",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Carlos Alcaraz",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ANDY MURRAY",
+          "variante": [
+            "ANDY MURRAY",
+            "NOVAK DJOKOVIC",
+            "ROGER FEDERER",
+            "RAFAEL NADAL"
+          ],
+          "hint_1": "Jucător britanic de tenis, parte din 'Big Four'",
+          "hint_2": "A câștigat Wimbledon de două ori",
+          "hint_3": "Medalie de aur olimpică de două ori",
+          "id": "spo_091",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Andy Murray",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "NAOMI OSAKA",
+          "variante": [
+            "NAOMI OSAKA",
+            "SERENA WILLIAMS",
+            "IGA SWIATEK",
+            "ARYNA SABALENKA"
+          ],
+          "hint_1": "Jucătoare japoneză de tenis, 4 titluri de Grand Slam",
+          "hint_2": "A învins-o pe Serena Williams în finala US Open 2018",
+          "hint_3": "Una din cele mai bine plătite sportive din lume",
+          "id": "spo_092",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Naomi Osaka",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "IGA SWIATEK",
+          "variante": [
+            "IGA SWIATEK",
+            "NAOMI OSAKA",
+            "ARYNA SABALENKA",
+            "COCO GAUFF"
+          ],
+          "hint_1": "Jucătoare poloneză de tenis, fostă nr. 1 mondial",
+          "hint_2": "Specialistă pe zgură, multiplă campioană la Roland Garros",
+          "hint_3": "Foarte tânără când a ajuns pe primul loc mondial",
+          "id": "spo_093",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Iga Swiatek",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SHAQUILLE O NEAL",
+          "variante": [
+            "SHAQUILLE O NEAL",
+            "LEBRON JAMES",
+            "MICHAEL JORDAN",
+            "KAREEM ABDUL-JABBAR"
+          ],
+          "hint_1": "Fost baschetbalist american, foarte înalt și puternic",
+          "hint_2": "Poreclă: 'Shaq'",
+          "hint_3": "Multiplu campion NBA cu Lakers",
+          "id": "spo_094",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Shaquille O Neal",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "KAREEM ABDUL-JABBAR",
+          "variante": [
+            "KAREEM ABDUL-JABBAR",
+            "SHAQUILLE O NEAL",
+            "MAGIC JOHNSON",
+            "BILL RUSSELL"
+          ],
+          "hint_1": "Fost baschetbalist american, cunoscut pentru șutul 'sky-hook'",
+          "hint_2": "Golgheterul all-time NBA până în 2023",
+          "hint_3": "6 titluri NBA câștigate",
+          "id": "spo_095",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Kareem Abdul-Jabbar",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MAGIC JOHNSON",
+          "variante": [
+            "MAGIC JOHNSON",
+            "LARRY BIRD",
+            "KAREEM ABDUL-JABBAR",
+            "SCOTTIE PIPPEN"
+          ],
+          "hint_1": "Fost baschetbalist american, rivalitate legendară cu Larry Bird",
+          "hint_2": "A jucat toată cariera la LA Lakers",
+          "hint_3": "Zâmbet caracteristic, unul din cei mai buni pasatori din istorie",
+          "id": "spo_096",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Magic Johnson",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "GIANNIS ANTETOKOUNMPO",
+          "variante": [
+            "GIANNIS ANTETOKOUNMPO",
+            "JOEL EMBIID",
+            "LUKA DONCIC",
+            "NIKOLA JOKIC"
+          ],
+          "hint_1": "Baschetbalist grec-nigerian, supranumit 'The Greek Freak'",
+          "hint_2": "A câștigat campionatul NBA cu Milwaukee Bucks în 2021",
+          "hint_3": "De două ori MVP al sezonului regulat",
+          "id": "spo_097",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Giannis Antetokounmpo",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "NIKOLA JOKIC",
+          "variante": [
+            "NIKOLA JOKIC",
+            "GIANNIS ANTETOKOUNMPO",
+            "JOEL EMBIID",
+            "LUKA DONCIC"
+          ],
+          "hint_1": "Baschetbalist sârb, considerat unul din cei mai buni pasatori-pivoți",
+          "hint_2": "A câștigat campionatul NBA cu Denver Nuggets în 2023",
+          "hint_3": "Multiplu MVP al sezonului regulat",
+          "id": "spo_098",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nikola Jokic",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LUKA DONCIC",
+          "variante": [
+            "LUKA DONCIC",
+            "NIKOLA JOKIC",
+            "GIANNIS ANTETOKOUNMPO",
+            "JOEL EMBIID"
+          ],
+          "hint_1": "Baschetbalist sloven, a debutat foarte tânăr în NBA",
+          "hint_2": "A jucat la Dallas Mavericks",
+          "hint_3": "Cunoscut pentru aruncări de la distanță și viziune de joc",
+          "id": "spo_099",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Luka Doncic",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SIMONE BILES",
+          "variante": [
+            "SIMONE BILES",
+            "NADIA COMANECI",
+            "GABBY DOUGLAS",
+            "MCKAYLA MARONEY"
+          ],
+          "hint_1": "Gimnastă americană, cea mai decorată din istoria SUA",
+          "hint_2": "Are mai multe elemente numite după ea în gimnastică",
+          "hint_3": "Multiple medalii olimpice de aur",
+          "id": "spo_100",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Simone Biles",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

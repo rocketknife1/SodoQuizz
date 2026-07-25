@@ -62,7 +62,7 @@ class AppBottomNavBarState extends State<AppBottomNavBar> {
         child: Row(
           children: [
             _NavItem(icon: Icons.home_rounded, label: 'Home', active: widget.current == AppTab.home, onTap: () => _go(context, AppTab.home)),
-            _NavItem(icon: Icons.flag_rounded, label: 'Quests', active: widget.current == AppTab.quests, showDot: _questsDot, onTap: () => _go(context, AppTab.quests)),
+            _NavItem(icon: Icons.flag_rounded, label: 'Quests', active: widget.current == AppTab.quests, showDot: _questsDot, useChest: true, onTap: () => _go(context, AppTab.quests)),
             _NavItem(icon: Icons.storefront_rounded, label: 'Shop', active: widget.current == AppTab.shop, onTap: () => _go(context, AppTab.shop)),
             _NavItem(icon: Icons.person_rounded, label: 'Profile', active: widget.current == AppTab.profile, showDot: _profileDot, onTap: () => _go(context, AppTab.profile)),
           ],
@@ -88,9 +88,17 @@ class _NavItem extends StatelessWidget {
   final String label;
   final bool active;
   final bool showDot;
+  final bool useChest;
   final VoidCallback onTap;
 
-  const _NavItem({required this.icon, required this.label, required this.active, required this.onTap, this.showDot = false});
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+    this.showDot = false,
+    this.useChest = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +115,12 @@ class _NavItem extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   Icon(icon, color: color, size: 22),
-                  if (showDot) const Positioned(right: -5, top: -3, child: NotificationDot()),
+                  if (showDot)
+                    Positioned(
+                      right: -10,
+                      top: -8,
+                      child: useChest ? const ChestBadge() : const NotificationDot(),
+                    ),
                 ],
               ),
               const SizedBox(height: 3),
@@ -116,6 +129,57 @@ class _NavItem extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Cufăr mic care "pulsează" auriu — apare pe tab-ul Quests în locul
+/// punctului roșu simplu de notificare, când ai cel puțin un quest gata de
+/// revendicat. Bulina roșie clasică rămâne pe Profil/Realizări.
+class ChestBadge extends StatefulWidget {
+  const ChestBadge({super.key});
+
+  @override
+  State<ChestBadge> createState() => _ChestBadgeState();
+}
+
+class _ChestBadgeState extends State<ChestBadge> with SingleTickerProviderStateMixin {
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+      ..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, child) {
+        final glow = 0.5 + _pulse.value * 0.5;
+        return Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: const Color(0xFF3A2E0F),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.card, width: 2),
+            boxShadow: [
+              BoxShadow(color: AppColors.coin.withAlpha((120 * glow).round()), blurRadius: 8 + 4 * glow, spreadRadius: 1 * glow),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.card_giftcard_rounded, color: Color.lerp(AppColors.coin, Colors.white, _pulse.value * 0.4), size: 12),
+        );
+      },
     );
   }
 }

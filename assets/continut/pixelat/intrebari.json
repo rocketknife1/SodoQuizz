@@ -1026,6 +1026,686 @@
           "puncte_max": 700,
           "imagine_cautare": "Captain America Marvel character",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_061",
+          "raspuns": "WOLVERINE",
+          "variante": [
+            "WOLVERINE",
+            "DEADPOOL",
+            "CYCLOPS",
+            "MAGNETO"
+          ],
+          "hint_1": "Mutant X-Men cu gheare de adamantiu",
+          "hint_2": "Se vindecă aproape instant din orice rană",
+          "hint_3": "Numele adevărat: James Howlett / Logan",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Wolverine X-Men character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_062",
+          "raspuns": "DEADPOOL",
+          "variante": [
+            "DEADPOOL",
+            "WOLVERINE",
+            "SPIDERMAN",
+            "VENOM"
+          ],
+          "hint_1": "Antierou Marvel foarte gălăgios, costum roșu-negru",
+          "hint_2": "Rupe des 'al patrulea perete'",
+          "hint_3": "Cunoscut și ca 'Mercenarul Gureș'",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Deadpool Marvel character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_063",
+          "raspuns": "VENOM",
+          "variante": [
+            "VENOM",
+            "SPIDERMAN",
+            "CARNAGE",
+            "BLACK PANTHER"
+          ],
+          "hint_1": "Simbiot negru extraterestru",
+          "hint_2": "Se lipește de gazdă, adesea Eddie Brock",
+          "hint_3": "Inamic/uneori aliat al lui Spider-Man",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Venom Marvel character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_064",
+          "raspuns": "BLACK PANTHER",
+          "variante": [
+            "BLACK PANTHER",
+            "VENOM",
+            "FALCON",
+            "WAR MACHINE"
+          ],
+          "hint_1": "Rege și supererou din Wakanda",
+          "hint_2": "Costum negru cu model de panteră",
+          "hint_3": "Numele adevărat: T'Challa",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Black Panther Marvel character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_065",
+          "raspuns": "THE FLASH",
+          "variante": [
+            "THE FLASH",
+            "QUICKSILVER",
+            "SUPERMAN",
+            "GREEN LANTERN"
+          ],
+          "hint_1": "Supererou DC extrem de rapid, costum roșu",
+          "hint_2": "Numele adevărat: Barry Allen",
+          "hint_3": "Membru al Justice League",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "The Flash DC character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_066",
+          "raspuns": "WONDER WOMAN",
+          "variante": [
+            "WONDER WOMAN",
+            "SUPERGIRL",
+            "BLACK WIDOW",
+            "CAPTAIN MARVEL"
+          ],
+          "hint_1": "Prințesă amazoană cu lasoul adevărului",
+          "hint_2": "Vine de pe insula Themyscira",
+          "hint_3": "Numele adevărat: Diana Prince",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Wonder Woman DC character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_067",
+          "raspuns": "JOKER",
+          "variante": [
+            "JOKER",
+            "TWO FACE",
+            "PENGUIN",
+            "RIDDLER"
+          ],
+          "hint_1": "Clovn criminal, marele dușman al lui Batman",
+          "hint_2": "Zâmbet permanent, păr verde",
+          "hint_3": "Din Gotham City",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Joker DC character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_068",
+          "raspuns": "HARLEY QUINN",
+          "variante": [
+            "HARLEY QUINN",
+            "CATWOMAN",
+            "POISON IVY",
+            "WONDER WOMAN"
+          ],
+          "hint_1": "Fostă psihiatră, acum antieroina lui Joker",
+          "hint_2": "Costum roșu cu negru, ciocan mare",
+          "hint_3": "Apare în 'Suicide Squad'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Harley Quinn DC character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_069",
+          "raspuns": "FIONA",
+          "variante": [
+            "FIONA",
+            "ELSA",
+            "RAPUNZEL",
+            "CINDERELLA"
+          ],
+          "hint_1": "Prințesă blestemată să devină ogru noaptea",
+          "hint_2": "Soția lui Shrek",
+          "hint_3": "Personaj din 'Shrek'",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Princess Fiona Shrek character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_070",
+          "raspuns": "DONKEY",
+          "variante": [
+            "DONKEY",
+            "PUSS IN BOOTS",
+            "DRAGON DIN SHREK",
+            "GINGY"
+          ],
+          "hint_1": "Măgar vorbăreț, cel mai bun prieten al lui Shrek",
+          "hint_2": "Personaj din 'Shrek'",
+          "hint_3": "Se căsătorește cu Dragonul",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Donkey Shrek character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_071",
+          "raspuns": "BAYMAX",
+          "variante": [
+            "BAYMAX",
+            "WALL-E",
+            "EVE",
+            "BB-8"
+          ],
+          "hint_1": "Robot gonflabil, alb, asistent medical personal",
+          "hint_2": "Din filmul 'Big Hero 6'",
+          "hint_3": "Prieten cu tânărul inventator Hiro",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Baymax Big Hero 6 character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_072",
+          "raspuns": "MIGUEL",
+          "variante": [
+            "MIGUEL",
+            "HECTOR",
+            "ERNESTO DE LA CRUZ",
+            "DANTE"
+          ],
+          "hint_1": "Băiat care vrea să devină muzician, călătorește în Tărâmul Morților",
+          "hint_2": "Personaj principal din 'Coco'",
+          "hint_3": "Are un cățel numit Dante",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Miguel Coco Pixar character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_073",
+          "raspuns": "MIRABEL",
+          "variante": [
+            "MIRABEL",
+            "ISABELA",
+            "LUISA",
+            "DOLORES"
+          ],
+          "hint_1": "Singura din familia ei fără un dar magic",
+          "hint_2": "Personaj principal din 'Encanto'",
+          "hint_3": "Familia Madrigal locuiește într-o casă vie",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Mirabel Encanto Disney character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_074",
+          "raspuns": "ELASTIGIRL",
+          "variante": [
+            "ELASTIGIRL",
+            "VIOLET PARR",
+            "MIRAGE",
+            "EDNA MODE"
+          ],
+          "hint_1": "Supereroină care se poate întinde ca elasticul",
+          "hint_2": "Soția lui Mr. Incredible",
+          "hint_3": "Personaj din 'The Incredibles'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Elastigirl Incredibles character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_075",
+          "raspuns": "JACK SPARROW",
+          "variante": [
+            "JACK SPARROW",
+            "WILL TURNER",
+            "DAVY JONES",
+            "HECTOR BARBOSSA"
+          ],
+          "hint_1": "Pirat excentric cu împletituri în barbă",
+          "hint_2": "Căpitanul corabiei Black Pearl",
+          "hint_3": "Din 'Pirates of the Caribbean'",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Jack Sparrow character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_076",
+          "raspuns": "YODA",
+          "variante": [
+            "YODA",
+            "OBI-WAN KENOBI",
+            "CHEWBACCA",
+            "R2-D2"
+          ],
+          "hint_1": "Maestru Jedi mic, verde, cu urechi lungi",
+          "hint_2": "Vorbește cu topica inversată",
+          "hint_3": "Din universul 'Star Wars'",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Yoda Star Wars character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_077",
+          "raspuns": "DARTH VADER",
+          "variante": [
+            "DARTH VADER",
+            "YODA",
+            "LUKE SKYWALKER",
+            "EMPEROR PALPATINE"
+          ],
+          "hint_1": "Cavaler negru cu respirație mecanică grea",
+          "hint_2": "Tatăl lui Luke Skywalker",
+          "hint_3": "Fost Jedi, căzut în partea întunecată",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Darth Vader Star Wars character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_078",
+          "raspuns": "SHAGGY",
+          "variante": [
+            "SHAGGY",
+            "SCOOBY DOO",
+            "FRED",
+            "VELMA"
+          ],
+          "hint_1": "Tânăr mereu flămând, prieten cu un câine mare Dane",
+          "hint_2": "Personaj din 'Scooby-Doo'",
+          "hint_3": "Poartă o cămașă verde",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Shaggy Scooby-Doo character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_079",
+          "raspuns": "TWEETY",
+          "variante": [
+            "TWEETY",
+            "DAFFY DUCK",
+            "ROAD RUNNER",
+            "PORKY PIG"
+          ],
+          "hint_1": "Canar galben mic care păcălește mereu o pisică",
+          "hint_2": "Personaj Looney Tunes",
+          "hint_3": "Rivalul lui Sylvester pisica",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Tweety Bird Looney Tunes",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_080",
+          "raspuns": "ROAD RUNNER",
+          "variante": [
+            "ROAD RUNNER",
+            "TWEETY",
+            "WILE E COYOTE",
+            "BUGS BUNNY"
+          ],
+          "hint_1": "Pasăre albastră extrem de rapidă din deșert",
+          "hint_2": "Mereu urmărită de Coiotul Wile E.",
+          "hint_3": "Sunetul caracteristic: 'Meep Meep'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Road Runner Looney Tunes",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_081",
+          "raspuns": "PATRICK STAR",
+          "variante": [
+            "PATRICK STAR",
+            "SPONGEBOB",
+            "SQUIDWARD",
+            "MR KRABS"
+          ],
+          "hint_1": "Stea de mare roz, cel mai bun prieten al unui burete",
+          "hint_2": "Locuiește sub o piatră în Bikini Bottom",
+          "hint_3": "Personaj din 'SpongeBob SquarePants'",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Patrick Star SpongeBob character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_082",
+          "raspuns": "SQUIDWARD",
+          "variante": [
+            "SQUIDWARD",
+            "PATRICK STAR",
+            "SPONGEBOB",
+            "MR KRABS"
+          ],
+          "hint_1": "Caracatiță morocănoasă, vecinul lui SpongeBob",
+          "hint_2": "Cântă la clarinet, deși nu prea bine",
+          "hint_3": "Lucrează la Krusty Krab la casă",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Squidward SpongeBob character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_083",
+          "raspuns": "JERRY",
+          "variante": [
+            "JERRY",
+            "TOM",
+            "SPIKE",
+            "TUFFY"
+          ],
+          "hint_1": "Șoricel maro, mereu îl păcălește pe o pisică",
+          "hint_2": "Personaj din 'Tom and Jerry'",
+          "hint_3": "Rareori vorbește, comedie mai ales fizică",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Jerry Mouse Tom and Jerry",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_084",
+          "raspuns": "RAICHU",
+          "variante": [
+            "RAICHU",
+            "PIKACHU",
+            "JOLTEON",
+            "ZAPDOS"
+          ],
+          "hint_1": "Evoluția lui Pikachu",
+          "hint_2": "Pokemon electric, portocaliu",
+          "hint_3": "Evoluează cu o Piatră Fulger",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Raichu Pokemon character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_085",
+          "raspuns": "CHARIZARD",
+          "variante": [
+            "CHARIZARD",
+            "DRAGONITE",
+            "GYARADOS",
+            "RAYQUAZA"
+          ],
+          "hint_1": "Pokemon dragon-foc, evoluția finală a lui Charmander",
+          "hint_2": "Are aripi mari și poate zbura",
+          "hint_3": "Unul dintre cele mai populare Pokemon",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Charizard Pokemon character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_086",
+          "raspuns": "ASH KETCHUM",
+          "variante": [
+            "ASH KETCHUM",
+            "BROCK",
+            "MISTY",
+            "GARY OAK"
+          ],
+          "hint_1": "Antrenor de Pokemon, personajul principal al serialului",
+          "hint_2": "Vrea să devină Maestru Pokemon",
+          "hint_3": "Îl are pe Pikachu ca partener",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Ash Ketchum Pokemon character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_087",
+          "raspuns": "TANJIRO",
+          "variante": [
+            "TANJIRO",
+            "INOSUKE",
+            "ZENITSU",
+            "GIYU"
+          ],
+          "hint_1": "Vânător de demoni cu eșarfă în carouri",
+          "hint_2": "Sora lui, Nezuko, s-a transformat în demon",
+          "hint_3": "Personaj din 'Demon Slayer'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Tanjiro Demon Slayer anime",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_088",
+          "raspuns": "DEKU",
+          "variante": [
+            "DEKU",
+            "BAKUGO",
+            "ALL MIGHT",
+            "TODOROKI"
+          ],
+          "hint_1": "Elev fără puteri care visează să fie erou",
+          "hint_2": "Moștenește puterea 'One For All'",
+          "hint_3": "Personaj principal din 'My Hero Academia'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Deku My Hero Academia anime",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_089",
+          "raspuns": "TOTORO",
+          "variante": [
+            "TOTORO",
+            "PONYO",
+            "NO-FACE",
+            "CALCIFER"
+          ],
+          "hint_1": "Spirit uriaș de pădure, blănos și gri",
+          "hint_2": "Personaj Studio Ghibli, iconic pentru zâmbetul lui",
+          "hint_3": "Din filmul 'My Neighbor Totoro'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Totoro Studio Ghibli character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_090",
+          "raspuns": "CHIHIRO",
+          "variante": [
+            "CHIHIRO",
+            "PONYO",
+            "KIKI",
+            "SAN"
+          ],
+          "hint_1": "Fetiță prinsă într-o lume a spiritelor cu o baie magică",
+          "hint_2": "Personaj principal din 'Spirited Away'",
+          "hint_3": "Trebuie să-și salveze părinții transformați în porci",
+          "dificultate": "greu",
+          "puncte_max": 1000,
+          "imagine_cautare": "Chihiro Spirited Away character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_091",
+          "raspuns": "MASTER SHIFU",
+          "variante": [
+            "MASTER SHIFU",
+            "PO",
+            "TIGRESS",
+            "MASTER OOGWAY"
+          ],
+          "hint_1": "Maestru mic, roșcat, antrenor al lui Po",
+          "hint_2": "Personaj din 'Kung Fu Panda'",
+          "hint_3": "Specia lui e panda roșu (red panda)",
+          "dificultate": "greu",
+          "puncte_max": 1000,
+          "imagine_cautare": "Master Shifu Kung Fu Panda character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_092",
+          "raspuns": "HICCUP",
+          "variante": [
+            "HICCUP",
+            "TOOTHLESS",
+            "ASTRID",
+            "STOICK"
+          ],
+          "hint_1": "Tânăr viking, prietenul dragonului Toothless",
+          "hint_2": "Personaj principal din 'How to Train Your Dragon'",
+          "hint_3": "Fiul șefului vikingilor, Stoick",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Hiccup How to Train Your Dragon character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_093",
+          "raspuns": "SVEN",
+          "variante": [
+            "SVEN",
+            "OLAF",
+            "BAMBI",
+            "MAXIMUS"
+          ],
+          "hint_1": "Ren fidel, cel mai bun prieten al lui Kristoff",
+          "hint_2": "Nu vorbește, dar Kristoff îi 'traduce' gândurile",
+          "hint_3": "Personaj din 'Frozen'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Sven Frozen reindeer character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_094",
+          "raspuns": "MAUI",
+          "variante": [
+            "MAUI",
+            "MOANA",
+            "TE FITI",
+            "TAMATOA"
+          ],
+          "hint_1": "Semizeu polinezian cu cârlig magic",
+          "hint_2": "Se poate transforma în diverse animale",
+          "hint_3": "Personaj din 'Moana'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Maui Moana Disney character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_095",
+          "raspuns": "JUDY HOPPS",
+          "variante": [
+            "JUDY HOPPS",
+            "NICK WILDE",
+            "FLASH",
+            "CHIEF BOGO"
+          ],
+          "hint_1": "Iepuraș polițistă, prima din oraș",
+          "hint_2": "Personaj principal din 'Zootopia'",
+          "hint_3": "Face echipă cu o vulpe escroacă",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Judy Hopps Zootopia character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_096",
+          "raspuns": "NICK WILDE",
+          "variante": [
+            "NICK WILDE",
+            "JUDY HOPPS",
+            "FLASH",
+            "MR BIG"
+          ],
+          "hint_1": "Vulpe șmecheră, escroc reformat",
+          "hint_2": "Personaj din 'Zootopia'",
+          "hint_3": "Devine partener de poliție cu Judy Hopps",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Nick Wilde Zootopia character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_097",
+          "raspuns": "EVE",
+          "variante": [
+            "EVE",
+            "WALL-E",
+            "M-O",
+            "BAYMAX"
+          ],
+          "hint_1": "Robot alb, oval, cu propulsie plutitoare",
+          "hint_2": "Trimisă să caute urme de viață vegetală pe Pământ",
+          "hint_3": "Personaj din 'WALL-E'",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "EVE robot Wall-E Pixar character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_098",
+          "raspuns": "LINGUINI",
+          "variante": [
+            "LINGUINI",
+            "REMY",
+            "SKINNER",
+            "COLETTE"
+          ],
+          "hint_1": "Tânăr stângaci ajutat în secret de un șobolan bucătar",
+          "hint_2": "Personaj din 'Ratatouille'",
+          "hint_3": "Lucrează la restaurantul lui Gusteau",
+          "dificultate": "greu",
+          "puncte_max": 1000,
+          "imagine_cautare": "Linguini Ratatouille Pixar character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_099",
+          "raspuns": "MERIDA",
+          "variante": [
+            "MERIDA",
+            "ELSA",
+            "MOANA",
+            "MULAN"
+          ],
+          "hint_1": "Prințesă scoțiană cu păr roșu creț, arcaș priceput",
+          "hint_2": "Personaj din 'Brave'",
+          "hint_3": "Își transformă mama într-o ursoaică",
+          "dificultate": "mediu",
+          "puncte_max": 700,
+          "imagine_cautare": "Merida Brave Pixar character",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "daf_100",
+          "raspuns": "BAMBI",
+          "variante": [
+            "BAMBI",
+            "THUMPER",
+            "FLOWER",
+            "FAUNA"
+          ],
+          "hint_1": "Pui de căprioară, personaj clasic Disney",
+          "hint_2": "Prieteni: iepurașul Thumper și sconcsul Flower",
+          "hint_3": "Film Disney din 1942",
+          "dificultate": "usor",
+          "puncte_max": 500,
+          "imagine_cautare": "Bambi Disney character",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

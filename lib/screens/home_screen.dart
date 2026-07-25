@@ -30,6 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _xpBadgeKey = GlobalKey();
   final GlobalKey _livesBadgeKey = GlobalKey();
   final GlobalKey _hintsBadgeKey = GlobalKey();
+  final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
 
   @override
   void initState() {
@@ -70,9 +71,15 @@ class _HomeScreenState extends State<HomeScreen> {
     _refresh();
   }
 
-  void _refresh() => setState(() {
-        _dataFuture = _loadData();
-      });
+  void _refresh() {
+    setState(() {
+      _dataFuture = _loadData();
+    });
+    // bulina/cufărul de pe tab-ul Quests trebuie să reflecte pe loc orice
+    // quest terminat în timpul unei sesiuni de joc, nu doar la reintrarea
+    // manuală pe pagina Quests.
+    _navBarKey.currentState?.refreshDots();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -94,24 +101,13 @@ class _HomeScreenState extends State<HomeScreen> {
               // layout; ambele au și o funcție reală (roata norocului /
               // bonusul cu întrebări), de-asta reîmprospătează header-ul.
               Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
-              // planetă centrală, izolată în banda goală din mijlocul
-              // ecranului: centrată pe orizontală (nu lângă Clippy, care
-              // stă lipit de marginea dreaptă) și ancorată de jos, la
-              // distanță clară atât de panoul de Cultură Generală (sus)
-              // cât și de rândul de mascote (jos).
-              const Positioned(
-                bottom: 175,
-                left: 0,
-                right: 0,
-                child: Center(child: SpinningPlanet(size: 76)),
-              ),
               Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
               const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
             ],
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNavBar(current: AppTab.home),
+      bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.home),
     );
   }
 
@@ -156,12 +152,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     SolidMenuButton(
                       icon: Icons.play_arrow_rounded,
                       label: 'PLAY',
-                      color: AppColors.play,
+                      subtitle: '',
+                      color: AppColors.purple,
                       big: true,
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const CategoriesScreen())),
+                      onTap: () async {
+                        // sesiunea de joc poate termina quest-uri — la
+                        // revenire pe Home, reîmprospătăm inclusiv cufărul.
+                        await Navigator.push(context,
+                            MaterialPageRoute(builder: (_) => const CategoriesScreen()));
+                        _refresh();
+                      },
                     ),
                     const SizedBox(height: 8),
                     SolidMenuButton(
@@ -193,12 +193,28 @@ class _HomeScreenState extends State<HomeScreen> {
                           MaterialPageRoute(
                               builder: (_) => const SettingsScreen())),
                     ),
+                    const SizedBox(height: 14),
+                    // planeta stă direct sub Setări, în coloana de butoane —
+                    // nu mai plutește izolată peste fundal, ca poziția ei să
+                    // rămână corectă indiferent de scroll sau mărimea ecranului.
+                    // Cutia ei animată (planetă + holograme) e mai lată decât
+                    // coloana de butoane, de-aia o lăsăm să "depășească" în
+                    // lateral printr-un OverflowBox, în loc să o comprimăm.
+                    SizedBox(
+                      width: 100,
+                      height: 100,
+                      child: OverflowBox(
+                        maxWidth: 260,
+                        maxHeight: 260,
+                        child: const SpinningPlanet(size: 76),
+                      ),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: CultureQuizPanel(
                   onRewardsChanged: _refresh,
                   coinBadgeKey: _coinBadgeKey,

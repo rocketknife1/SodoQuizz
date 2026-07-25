@@ -179,12 +179,17 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      // înălțime minimă generoasă — panoul trebuie să coboare vizibil sub
+      // butonul Setări, nu doar cât încape strict conținutul din faza
+      // curentă (altfel faza "teaser", mai scurtă, făcea cardul să pară mic).
+      constraints: const BoxConstraints(minHeight: 340),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(16),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white24),
       ),
+      alignment: Alignment.center,
       child: switch (_phase) {
         _Phase.teaser => _buildTeaser(),
         _Phase.playing => _buildPlaying(),
@@ -255,9 +260,10 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         Text(
           q.question,
           textAlign: TextAlign.center,
-          maxLines: 4,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700, height: 1.25),
+          // fără maxLines/ellipsis — panoul nu mai e limitat la înălțimea
+          // butoanelor din stânga, deci întrebările lungi se pot afișa
+          // complet, crescând înălțimea cardului cât e nevoie.
+          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, height: 1.25),
         ),
         const SizedBox(height: 10),
         ...List.generate(q.choices.length, (i) {
@@ -285,9 +291,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
                 child: Text(
                   opt,
                   textAlign: TextAlign.center,
-                  maxLines: 1,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                  style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600),
                 ),
               ),
             ),

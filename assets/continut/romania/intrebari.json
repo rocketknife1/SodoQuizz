@@ -1026,6 +1026,686 @@
           "puncte_max": 400,
           "imagine_cautare": "Turnul Chindiei Targoviste",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BISERICA FORTIFICATA PREJMER",
+          "variante": [
+            "BISERICA FORTIFICATA PREJMER",
+            "BISERICA NEAGRA",
+            "CETATEA RASNOV",
+            "BISERICA FORTIFICATA VISCRI"
+          ],
+          "hint_1": "Cea mai puternic fortificată biserică din Europa de Est",
+          "hint_2": "Se află în județul Brașov",
+          "hint_3": "Face parte din patrimoniul UNESCO",
+          "id": "rom_061",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Biserica Fortificata Prejmer",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BISERICA FORTIFICATA VISCRI",
+          "variante": [
+            "BISERICA FORTIFICATA VISCRI",
+            "BISERICA FORTIFICATA PREJMER",
+            "BISERICA NEAGRA",
+            "CETATEA SIGHISOARA"
+          ],
+          "hint_1": "Sat săsesc din Transilvania, susținut de Prințul Charles",
+          "hint_2": "Are o biserică fortificată emblematică, patrimoniu UNESCO",
+          "hint_3": "Aflat în județul Brașov",
+          "id": "rom_062",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Biserica Fortificata Viscri",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CETATEA SIGHISOARA",
+          "variante": [
+            "CETATEA SIGHISOARA",
+            "CETATEA SIBIULUI",
+            "CETATEA BRASOVULUI",
+            "CETATEA ALBA IULIA"
+          ],
+          "hint_1": "Singura cetate medievală locuită continuu din Europa de Est",
+          "hint_2": "Locul de naștere al lui Vlad Țepeș",
+          "hint_3": "Patrimoniu UNESCO, în județul Mureș",
+          "id": "rom_063",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cetatea Sighisoara",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TURNUL SFATULUI SIBIU",
+          "variante": [
+            "TURNUL SFATULUI SIBIU",
+            "TURNUL CHINDIEI",
+            "TURNUL CU CEAS SIGHISOARA",
+            "TURNUL SFATULUI BRASOV"
+          ],
+          "hint_1": "Turn medieval din centrul istoric al Sibiului",
+          "hint_2": "Oferă panoramă asupra orașului vechi",
+          "hint_3": "Simbol al orașului Sibiu",
+          "id": "rom_064",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Turnul Sfatului Sibiu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PIATA SFATULUI BRASOV",
+          "variante": [
+            "PIATA SFATULUI BRASOV",
+            "PIATA MICA SIBIU",
+            "PIATA MARE SIBIU",
+            "PIATA UNIRII CLUJ"
+          ],
+          "hint_1": "Piața centrală istorică din Brașov",
+          "hint_2": "Înconjurată de clădiri colorate, în stil baroc și gotic",
+          "hint_3": "Aici se află Casa Sfatului",
+          "id": "rom_065",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Piata Sfatului Brasov",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CATEDRALA MITROPOLITANA SIBIU",
+          "variante": [
+            "CATEDRALA MITROPOLITANA SIBIU",
+            "BISERICA NEAGRA",
+            "CATEDRALA ORTODOXA CLUJ",
+            "MANASTIREA CURTEA DE ARGES"
+          ],
+          "hint_1": "Catedrală ortodoxă mare din Sibiu",
+          "hint_2": "Inspirată arhitectural de Hagia Sofia",
+          "hint_3": "Construită la începutul secolului XX",
+          "id": "rom_066",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Catedrala Mitropolitana Sibiu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CATEDRALA MANTUIRII NEAMULUI",
+          "variante": [
+            "CATEDRALA MANTUIRII NEAMULUI",
+            "CATEDRALA MITROPOLITANA SIBIU",
+            "ATENEUL ROMAN",
+            "PALATUL PARLAMENTULUI"
+          ],
+          "hint_1": "Cea mai mare catedrală ortodoxă din lume ca volum",
+          "hint_2": "Se află lângă Palatul Parlamentului, în București",
+          "hint_3": "Cunoscută și ca 'Catedrala Națională'",
+          "id": "rom_067",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Catedrala Mantuirii Neamului",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PALATUL CEC",
+          "variante": [
+            "PALATUL CEC",
+            "PALATUL PARLAMENTULUI",
+            "BANCA NATIONALA A ROMANIEI",
+            "PALATUL COTROCENI"
+          ],
+          "hint_1": "Clădire istorică pe Calea Victoriei, București",
+          "hint_2": "Sediu al unei case de economii fondate în 1864",
+          "hint_3": "Arhitectură eclectică franceză, cu cupolă de sticlă",
+          "id": "rom_068",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Palatul Cec",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PALATUL COTROCENI",
+          "variante": [
+            "PALATUL COTROCENI",
+            "PALATUL PARLAMENTULUI",
+            "PALATUL VICTORIA",
+            "PALATUL CEC"
+          ],
+          "hint_1": "Reședința oficială a Președintelui României",
+          "hint_2": "Are și o mănăstire istorică în incintă",
+          "hint_3": "Se află în București",
+          "id": "rom_069",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Palatul Cotroceni",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MUZEUL NATIONAL DE ARTA AL ROMANIEI",
+          "variante": [
+            "MUZEUL NATIONAL DE ARTA AL ROMANIEI",
+            "MUZEUL SATULUI",
+            "MUZEUL NATIONAL DE ISTORIE",
+            "MUZEUL ANTIPA"
+          ],
+          "hint_1": "Găzduit în fostul Palat Regal din București",
+          "hint_2": "Adăpostește Galeria Națională și colecții europene",
+          "hint_3": "Se află în Piața Revoluției",
+          "id": "rom_070",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Muzeul National De Arta Al Romaniei",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MUZEUL NATIONAL DE ISTORIE",
+          "variante": [
+            "MUZEUL NATIONAL DE ISTORIE",
+            "MUZEUL NATIONAL DE ARTA",
+            "MUZEUL SATULUI",
+            "MUZEUL ANTIPA"
+          ],
+          "hint_1": "Muzeu din București cu Tezaurul Național",
+          "hint_2": "Aici se află replica Coloanei lui Traian",
+          "hint_3": "Situat pe Calea Victoriei",
+          "id": "rom_071",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Muzeul National De Istorie",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MUZEUL ANTIPA",
+          "variante": [
+            "MUZEUL ANTIPA",
+            "MUZEUL SATULUI",
+            "MUZEUL NATIONAL DE ISTORIE",
+            "GRADINA ZOOLOGICA BUCURESTI"
+          ],
+          "hint_1": "Muzeu de istorie naturală din București",
+          "hint_2": "Numit după naturalistul Grigore Antipa",
+          "hint_3": "Are un schelet de dinozaur expus",
+          "id": "rom_072",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Muzeul Antipa",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "ARENELE ROMANE",
+          "variante": [
+            "ARENELE ROMANE",
+            "SALA PALATULUI",
+            "ATENEUL ROMAN",
+            "OPERA NATIONALA BUCURESTI"
+          ],
+          "hint_1": "Amfiteatru în aer liber din Parcul Herăstrău",
+          "hint_2": "Găzduiește concerte și festivaluri de vară",
+          "hint_3": "Situat în București",
+          "id": "rom_073",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Arenele Romane",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "SALA PALATULUI",
+          "variante": [
+            "SALA PALATULUI",
+            "ARENELE ROMANE",
+            "ATENEUL ROMAN",
+            "OPERA NATIONALA BUCURESTI"
+          ],
+          "hint_1": "Mare sală de spectacole din București, construită în epoca comunistă",
+          "hint_2": "Găzduiește concerte mari și evenimente naționale",
+          "hint_3": "Aproape de Palatul Cotroceni",
+          "id": "rom_074",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Sala Palatului",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "OPERA NATIONALA BUCURESTI",
+          "variante": [
+            "OPERA NATIONALA BUCURESTI",
+            "ATENEUL ROMAN",
+            "TEATRUL NATIONAL BUCURESTI",
+            "SALA PALATULUI"
+          ],
+          "hint_1": "Instituție de operă și balet din capitală",
+          "hint_2": "Clădire construită în anii 1950",
+          "hint_3": "Găzduiește spectacole de operă clasică",
+          "id": "rom_075",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Opera Nationala Bucuresti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "TEATRUL NATIONAL BUCURESTI",
+          "variante": [
+            "TEATRUL NATIONAL BUCURESTI",
+            "OPERA NATIONALA BUCURESTI",
+            "ATENEUL ROMAN",
+            "TEATRUL NATIONAL CLUJ"
+          ],
+          "hint_1": "Cel mai important teatru din România, poartă numele lui Ion Luca Caragiale",
+          "hint_2": "Clădire modernă în centrul Bucureștiului",
+          "hint_3": "Fondat în 1852",
+          "id": "rom_076",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Teatrul National Bucuresti",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "GRADINA BOTANICA CLUJ",
+          "variante": [
+            "GRADINA BOTANICA CLUJ",
+            "GRADINA BOTANICA BUCURESTI",
+            "PARCUL HERASTRAU",
+            "GRADINA ZOOLOGICA BUCURESTI"
+          ],
+          "hint_1": "Una dintre cele mai mari grădini botanice din România",
+          "hint_2": "Are o seră japoneză celebră",
+          "hint_3": "Aparține Universității Babeș-Bolyai din Cluj",
+          "id": "rom_077",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gradina Botanica Cluj",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PARCUL NATIONAL RETEZAT",
+          "variante": [
+            "PARCUL NATIONAL RETEZAT",
+            "PARCUL NATIONAL PIATRA CRAIULUI",
+            "PARCUL NATIONAL BUCEGI",
+            "PARCUL NATIONAL CEAHLAU"
+          ],
+          "hint_1": "Primul parc național din România, înființat în 1935",
+          "hint_2": "Are peste 80 de lacuri glaciare",
+          "hint_3": "Se află în Munții Retezat",
+          "id": "rom_078",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Parcul National Retezat",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MUNTELE CEAHLAU",
+          "variante": [
+            "MUNTELE CEAHLAU",
+            "MUNTELE RETEZAT",
+            "MUNTELE BUCEGI",
+            "MUNTELE PIATRA CRAIULUI"
+          ],
+          "hint_1": "Munte legendar din Moldova, supranumit 'Muntele Sfânt'",
+          "hint_2": "Are vârfurile Toaca și Ocolașul Mare",
+          "hint_3": "Se află în județul Neamț",
+          "id": "rom_079",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Muntele Ceahlau",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CHEILE NEREI",
+          "variante": [
+            "CHEILE NEREI",
+            "CHEILE BICAZULUI",
+            "CHEILE TURZII",
+            "CHEILE VALISOAREI"
+          ],
+          "hint_1": "Canion spectaculos în Munții Aninei, Banat",
+          "hint_2": "Parte a unui parc național cu peisaje asemănătoare tropicelor",
+          "hint_3": "Se află în județul Caraș-Severin",
+          "id": "rom_080",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cheile Nerei",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CHEILE TURZII",
+          "variante": [
+            "CHEILE TURZII",
+            "CHEILE BICAZULUI",
+            "CHEILE NEREI",
+            "CHEILE RASNOAVEI"
+          ],
+          "hint_1": "Canion popular pentru drumeții și cățărare, lângă Turda",
+          "hint_2": "Se află în județul Cluj",
+          "hint_3": "Are o floră și faună protejată, inclusiv capre negre",
+          "id": "rom_081",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Cheile Turzii",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LACUL ROSU",
+          "variante": [
+            "LACUL ROSU",
+            "LACUL SFANTA ANA",
+            "LACUL BALEA",
+            "LACUL VIDRARU"
+          ],
+          "hint_1": "Lac de baraj natural, format după o alunecare de teren",
+          "hint_2": "Are trunchiuri de copaci ieșind din apă",
+          "hint_3": "Se află lângă Cheile Bicazului",
+          "id": "rom_082",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lacul Rosu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "LACUL VIDRARU",
+          "variante": [
+            "LACUL VIDRARU",
+            "LACUL BALEA",
+            "LACUL ROSU",
+            "LACUL BICAZ"
+          ],
+          "hint_1": "Lac de acumulare mare, cu un baraj înalt de 166 metri",
+          "hint_2": "Se află pe Transfăgărășan",
+          "hint_3": "Lângă el se află statuia lui Prometeu",
+          "id": "rom_083",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lacul Vidraru",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BARAJUL VIDRARU",
+          "variante": [
+            "BARAJUL VIDRARU",
+            "BARAJUL BICAZ",
+            "BARAJUL PORTILE DE FIER",
+            "BARAJUL PALTINU"
+          ],
+          "hint_1": "Unul dintre cele mai înalte baraje din România",
+          "hint_2": "Construit pe râul Argeș, în anii 1960",
+          "hint_3": "Vizibil de pe drumul Transfăgărășan",
+          "id": "rom_084",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Barajul Vidraru",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PODUL VECHI DIN CERNAVODA",
+          "variante": [
+            "PODUL VECHI DIN CERNAVODA",
+            "PODUL PRIETENIEI",
+            "PODUL DE LA FETESTI",
+            "PODUL DECEBAL"
+          ],
+          "hint_1": "Pod istoric peste Dunăre, proiectat de Anghel Saligny",
+          "hint_2": "Inaugurat în 1895, considerat o performanță tehnică a epocii",
+          "hint_3": "Leagă Dobrogea de restul țării",
+          "id": "rom_085",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Podul Vechi Din Cernavoda",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "STATUIA LUI DECEBAL",
+          "variante": [
+            "STATUIA LUI DECEBAL",
+            "STATUIA LUI STEFAN CEL MARE",
+            "STATUIA LUI MIHAI VITEAZUL CLUJ",
+            "STATUIA LUPOAICEI"
+          ],
+          "hint_1": "Cel mai înalt basorelief sculptat în stâncă din Europa",
+          "hint_2": "Sculptat pe malul Dunării, lângă Orșova",
+          "hint_3": "Reprezintă chipul ultimului rege dac",
+          "id": "rom_086",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Statuia Lui Decebal De La Orsova",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "STATUIA LUPOAICEI",
+          "variante": [
+            "STATUIA LUPOAICEI",
+            "STATUIA LUI DECEBAL",
+            "STATUIA LIBERTATII IASI",
+            "STATUIA AVIATORILOR"
+          ],
+          "hint_1": "Simbol al originii romane a României, o lupoaică alăptând gemeni",
+          "hint_2": "Copii ale acestei statui se află în multe orașe românești",
+          "hint_3": "Original la Roma, replici la Cluj, Timișoara, Chișinău etc.",
+          "id": "rom_087",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Statuia Lupoaicei",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANASTIREA PUTNA",
+          "variante": [
+            "MANASTIREA PUTNA",
+            "MANASTIREA VORONET",
+            "MANASTIREA SUCEVITA",
+            "MANASTIREA MOLDOVITA"
+          ],
+          "hint_1": "Mănăstire ctitorită de Ștefan cel Mare, locul unde e înmormântat",
+          "hint_2": "Supranumită 'Ierusalimul neamului românesc'",
+          "hint_3": "Se află în județul Suceava",
+          "id": "rom_088",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manastirea Putna",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANASTIREA SUCEVITA",
+          "variante": [
+            "MANASTIREA SUCEVITA",
+            "MANASTIREA VORONET",
+            "MANASTIREA MOLDOVITA",
+            "MANASTIREA PUTNA"
+          ],
+          "hint_1": "Cea mai mare dintre mănăstirile pictate din Bucovina",
+          "hint_2": "Cunoscută pentru fresca 'Scara Virtuților'",
+          "hint_3": "Patrimoniu UNESCO",
+          "id": "rom_089",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manastirea Sucevita",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANASTIREA MOLDOVITA",
+          "variante": [
+            "MANASTIREA MOLDOVITA",
+            "MANASTIREA VORONET",
+            "MANASTIREA SUCEVITA",
+            "MANASTIREA HUMORULUI"
+          ],
+          "hint_1": "Mănăstire pictată din Bucovina, ctitorită de Petru Rareș",
+          "hint_2": "Cunoscută pentru fresca 'Asediul Constantinopolului'",
+          "hint_3": "Patrimoniu UNESCO",
+          "id": "rom_090",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manastirea Moldovita",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANASTIREA HOREZU",
+          "variante": [
+            "MANASTIREA HOREZU",
+            "MANASTIREA CURTEA DE ARGES",
+            "MANASTIREA COZIA",
+            "MANASTIREA TISMANA"
+          ],
+          "hint_1": "Mănăstire din Oltenia, ctitorită de Constantin Brâncoveanu",
+          "hint_2": "Considerată capodopera stilului brâncovenesc",
+          "hint_3": "Patrimoniu UNESCO, județul Vâlcea",
+          "id": "rom_091",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manastirea Horezu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "MANASTIREA COZIA",
+          "variante": [
+            "MANASTIREA COZIA",
+            "MANASTIREA HOREZU",
+            "MANASTIREA TISMANA",
+            "MANASTIREA CURTEA DE ARGES"
+          ],
+          "hint_1": "Una dintre cele mai vechi mănăstiri din Țara Românească",
+          "hint_2": "Ctitorită de Mircea cel Bătrân",
+          "hint_3": "Se află pe malul Oltului, în județul Vâlcea",
+          "id": "rom_092",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Manastirea Cozia",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CERAMICA DE HOREZU",
+          "variante": [
+            "CERAMICA DE HOREZU",
+            "IA ROMANEASCA",
+            "MARTISOR",
+            "CERAMICA DE CORUND"
+          ],
+          "hint_1": "Meșteșug tradițional de olărit din Oltenia, patrimoniu UNESCO",
+          "hint_2": "Motive specifice: 'cocoșul de Horezu'",
+          "hint_3": "Ceramică smălțuită, foarte colorată",
+          "id": "rom_093",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ceramica De Horezu",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CALUSUL",
+          "variante": [
+            "CALUSUL",
+            "HORA",
+            "SARBA",
+            "BRAUL"
+          ],
+          "hint_1": "Dans popular ritualic din sudul României, patrimoniu UNESCO",
+          "hint_2": "Jucat tradițional de bărbați, cu bastoane și clopoței",
+          "hint_3": "Are rădăcini în tradiții precreștine",
+          "id": "rom_094",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Calusul",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "PALINCA",
+          "variante": [
+            "PALINCA",
+            "TUICA",
+            "VINUL DE COTNARI",
+            "VODCA"
+          ],
+          "hint_1": "Rachiu tare tradițional din Transilvania și Maramureș",
+          "hint_2": "Are indicație geografică protejată în Uniunea Europeană",
+          "hint_3": "Se distilează de obicei de două ori, spre deosebire de țuică",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "id": "rom_095",
+          "imagine_cautare": "Palinca",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "VINUL DE COTNARI",
+          "variante": [
+            "VINUL DE COTNARI",
+            "VINUL DE MURFATLAR",
+            "VINUL DE DEALU MARE",
+            "TUICA"
+          ],
+          "hint_1": "Vin dulce, alb, foarte vechi, din nordul Moldovei",
+          "hint_2": "Podgoria e atestată din secolul XV",
+          "hint_3": "Unul dintre cele mai vechi centre viticole din România",
+          "id": "rom_096",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Vinul De Cotnari",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "BALMOS",
+          "variante": [
+            "BALMOS",
+            "MAMALIGA",
+            "BULZ",
+            "SARMALE"
+          ],
+          "hint_1": "Mâncare tradițională ciobănească din smântână și mălai",
+          "hint_2": "Preparat mai ales la stână, în cazan pe foc",
+          "hint_3": "Specific zonelor de munte din România",
+          "id": "rom_097",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Balmos",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CIORBA RADAUTEANA",
+          "variante": [
+            "CIORBA RADAUTEANA",
+            "CIORBA DE BURTA",
+            "CIORBA DE PERISOARE",
+            "CIORBA DE FASOLE"
+          ],
+          "hint_1": "Ciorbă cremoasă cu carne de pui, din Bucovina",
+          "hint_2": "Se drege cu smântână și gălbenuș de ou",
+          "hint_3": "Numele vine de la orașul Rădăuți",
+          "id": "rom_098",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ciorba Radauteana",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "CIORBA DE BURTA",
+          "variante": [
+            "CIORBA DE BURTA",
+            "CIORBA RADAUTEANA",
+            "CIORBA DE PERISOARE",
+            "CIORBA DE LEGUME"
+          ],
+          "hint_1": "Ciorbă tradițională cu mansuc de vită, drept cu smântână și usturoi",
+          "hint_2": "Foarte populară ca 'leac' de mahmureală",
+          "hint_3": "Se servește adesea cu ardei iute și smântână",
+          "id": "rom_099",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Ciorba De Burta",
+          "imagine_sursa": "wikipedia"
+        },
+        {
+          "raspuns": "COVRIGII DE COVASNA",
+          "variante": [
+            "COVRIGII DE COVASNA",
+            "COVRIGI BUCURESTI",
+            "PRETZEL",
+            "LANGOS"
+          ],
+          "hint_1": "Covrigi tradiționali dintr-un oraș din Carpații de Curbură",
+          "hint_2": "Rețetă specifică, cunoscută la nivel național",
+          "hint_3": "Orașul e cunoscut și pentru apele minerale",
+          "id": "rom_100",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Covrigii De Covasna",
+          "imagine_sursa": "wikipedia"
         }
       ]
     }

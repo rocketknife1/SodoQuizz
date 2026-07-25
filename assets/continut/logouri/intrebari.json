@@ -1026,6 +1026,686 @@
           "puncte_max": 200,
           "imagine_cautare": "NASA logo",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_061",
+          "raspuns": "CHEVROLET",
+          "variante": [
+            "CHEVROLET",
+            "FORD",
+            "DODGE",
+            "JEEP"
+          ],
+          "hint_1": "Brand auto american cu sigla o cruce aurie (bowtie)",
+          "hint_2": "Parte din General Motors",
+          "hint_3": "Produce modelul Corvette",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chevrolet logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_062",
+          "raspuns": "JEEP",
+          "variante": [
+            "JEEP",
+            "LAND ROVER",
+            "FORD",
+            "TOYOTA"
+          ],
+          "hint_1": "Brand american specializat în off-road",
+          "hint_2": "Logo cu grila cu 7 fante caracteristică",
+          "hint_3": "Model iconic: Wrangler",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Jeep logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_063",
+          "raspuns": "LAND ROVER",
+          "variante": [
+            "LAND ROVER",
+            "JEEP",
+            "RANGE ROVER",
+            "TOYOTA"
+          ],
+          "hint_1": "Brand britanic de off-road",
+          "hint_2": "Logo verde oval",
+          "hint_3": "Deține și marca Range Rover",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Land Rover logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_064",
+          "raspuns": "PEUGEOT",
+          "variante": [
+            "PEUGEOT",
+            "CITROEN",
+            "RENAULT",
+            "FIAT"
+          ],
+          "hint_1": "Brand auto francez cu sigla un leu",
+          "hint_2": "Unul dintre cei mai vechi producători auto din lume",
+          "hint_3": "Model popular: 208",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Peugeot logo lion",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_065",
+          "raspuns": "RENAULT",
+          "variante": [
+            "RENAULT",
+            "PEUGEOT",
+            "CITROEN",
+            "DACIA"
+          ],
+          "hint_1": "Brand auto francez, deține și Dacia",
+          "hint_2": "Logo cu un romb galben",
+          "hint_3": "Fondat în 1899",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Renault logo diamond",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_066",
+          "raspuns": "DACIA",
+          "variante": [
+            "DACIA",
+            "RENAULT",
+            "SKODA",
+            "LADA"
+          ],
+          "hint_1": "Producător auto românesc, deținut de Renault",
+          "hint_2": "Model popular: Duster",
+          "hint_3": "Uzina principală e la Mioveni",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Dacia logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_067",
+          "raspuns": "FIAT",
+          "variante": [
+            "FIAT",
+            "ALFA ROMEO",
+            "LANCIA",
+            "FERRARI"
+          ],
+          "hint_1": "Brand auto italian, model iconic 500",
+          "hint_2": "Acronim pentru Fabbrica Italiana Automobili Torino",
+          "hint_3": "Deține și Alfa Romeo, Ferrari, Maserati",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Fiat logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_068",
+          "raspuns": "SKODA",
+          "variante": [
+            "SKODA",
+            "VOLKSWAGEN",
+            "SEAT",
+            "AUDI"
+          ],
+          "hint_1": "Brand auto ceh, logo cu o săgeată aripată",
+          "hint_2": "Parte din grupul Volkswagen",
+          "hint_3": "Model popular: Octavia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Skoda logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_069",
+          "raspuns": "HYUNDAI",
+          "variante": [
+            "HYUNDAI",
+            "KIA",
+            "SUZUKI",
+            "MAZDA"
+          ],
+          "hint_1": "Brand auto sud-coreean",
+          "hint_2": "Logo cu litera H înclinată într-un oval",
+          "hint_3": "Model popular: Tucson",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Hyundai logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_070",
+          "raspuns": "KIA",
+          "variante": [
+            "KIA",
+            "HYUNDAI",
+            "SUZUKI",
+            "MITSUBISHI"
+          ],
+          "hint_1": "Brand auto sud-coreean, cel mai vechi din țara sa",
+          "hint_2": "Logo actual: semnătură stilizată",
+          "hint_3": "Model popular: Sportage",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Kia logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_071",
+          "raspuns": "MAZDA",
+          "variante": [
+            "MAZDA",
+            "SUBARU",
+            "MITSUBISHI",
+            "NISSAN"
+          ],
+          "hint_1": "Brand auto japonez cu logo un V stilizat în aripi",
+          "hint_2": "Model iconic: MX-5 Miata",
+          "hint_3": "Sediul e în Hiroshima",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Mazda logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_072",
+          "raspuns": "SUBARU",
+          "variante": [
+            "SUBARU",
+            "MITSUBISHI",
+            "MAZDA",
+            "SUZUKI"
+          ],
+          "hint_1": "Brand auto japonez cu 6 stele în logo",
+          "hint_2": "Cunoscut pentru tracțiune integrală",
+          "hint_3": "Numele înseamnă 'Pleiade' în japoneză",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Subaru logo stars",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_073",
+          "raspuns": "ADOBE",
+          "variante": [
+            "ADOBE",
+            "CANVA",
+            "FIGMA",
+            "CORELDRAW"
+          ],
+          "hint_1": "Companie de software creativ (Photoshop, Illustrator)",
+          "hint_2": "Logo roșu cu litera A stilizată",
+          "hint_3": "Are și formatul PDF",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Adobe logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_074",
+          "raspuns": "HP",
+          "variante": [
+            "HP",
+            "DELL",
+            "LENOVO",
+            "ACER"
+          ],
+          "hint_1": "Companie americană de calculatoare și imprimante",
+          "hint_2": "Numele complet: Hewlett-Packard",
+          "hint_3": "Logo albastru circular cu literele hp",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "HP Hewlett Packard logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_075",
+          "raspuns": "LENOVO",
+          "variante": [
+            "LENOVO",
+            "ASUS",
+            "ACER",
+            "DELL"
+          ],
+          "hint_1": "Companie chineză de calculatoare, a preluat divizia PC a IBM",
+          "hint_2": "Produce laptopurile ThinkPad",
+          "hint_3": "Logo roșu cu litere albe",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lenovo logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_076",
+          "raspuns": "ASUS",
+          "variante": [
+            "ASUS",
+            "ACER",
+            "MSI",
+            "LENOVO"
+          ],
+          "hint_1": "Companie taiwaneză de electronice",
+          "hint_2": "Produce laptopuri gaming ROG",
+          "hint_3": "Logo cu litere gri-albastre",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Asus logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_077",
+          "raspuns": "NVIDIA",
+          "variante": [
+            "NVIDIA",
+            "AMD",
+            "INTEL",
+            "QUALCOMM"
+          ],
+          "hint_1": "Companie de plăci video, logo ochi verde",
+          "hint_2": "Domină piața de inteligență artificială/GPU-uri",
+          "hint_3": "Produce seria RTX",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nvidia logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_078",
+          "raspuns": "AMD",
+          "variante": [
+            "AMD",
+            "INTEL",
+            "NVIDIA",
+            "ARM"
+          ],
+          "hint_1": "Producător de procesoare și plăci video",
+          "hint_2": "Logo verde cu săgeată prin literele AMD",
+          "hint_3": "Rival direct Intel/Nvidia",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "AMD logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_079",
+          "raspuns": "TWITCH",
+          "variante": [
+            "TWITCH",
+            "YOUTUBE",
+            "KICK",
+            "DISCORD"
+          ],
+          "hint_1": "Platformă de streaming live, mai ales gaming",
+          "hint_2": "Logo violet cu o siluetă stilizată",
+          "hint_3": "Deținută de Amazon",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Twitch logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_080",
+          "raspuns": "REDDIT",
+          "variante": [
+            "REDDIT",
+            "TUMBLR",
+            "PINTEREST",
+            "QUORA"
+          ],
+          "hint_1": "Forum uriaș organizat pe 'subreddit-uri'",
+          "hint_2": "Mascota e un extraterestru portocaliu, Snoo",
+          "hint_3": "Sloganul: 'The Front Page of the Internet'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Reddit logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_081",
+          "raspuns": "EBAY",
+          "variante": [
+            "EBAY",
+            "AMAZON",
+            "ETSY",
+            "ALIEXPRESS"
+          ],
+          "hint_1": "Platformă de licitații și vânzări online",
+          "hint_2": "Logo colorat cu 4 culori diferite pe litere",
+          "hint_3": "Fondată în 1995 de Pierre Omidyar",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "eBay logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_082",
+          "raspuns": "ASICS",
+          "variante": [
+            "ASICS",
+            "NEW BALANCE",
+            "REEBOK",
+            "PUMA"
+          ],
+          "hint_1": "Brand japonez de încălțăminte sport",
+          "hint_2": "Numele e un acronim latin: 'Anima Sana In Corpore Sano'",
+          "hint_3": "Foarte popular la alergători pentru amortizare",
+          "dificultate": "greu",
+          "puncte_max": 400,
+          "imagine_cautare": "Asics logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_083",
+          "raspuns": "UNDER ARMOUR",
+          "variante": [
+            "UNDER ARMOUR",
+            "NIKE",
+            "PUMA",
+            "REEBOK"
+          ],
+          "hint_1": "Brand sportiv american, logo cu literele U și A suprapuse",
+          "hint_2": "Fondat de Kevin Plank",
+          "hint_3": "Cunoscut pentru echipament de compresie",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Under Armour logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_084",
+          "raspuns": "NEW BALANCE",
+          "variante": [
+            "NEW BALANCE",
+            "ASICS",
+            "PUMA",
+            "REEBOK"
+          ],
+          "hint_1": "Brand american de încălțăminte sport, logo litera N",
+          "hint_2": "Cunoscut pentru pantofi de alergare",
+          "hint_3": "Sediul e în Boston",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "New Balance logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_085",
+          "raspuns": "H&M",
+          "variante": [
+            "H&M",
+            "ZARA",
+            "MANGO",
+            "BERSHKA"
+          ],
+          "hint_1": "Brand suedez de îmbrăcăminte fast-fashion",
+          "hint_2": "Numele vine de la 'Hennes & Mauritz'",
+          "hint_3": "Logo roșu simplu cu litere albe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "H&M logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_086",
+          "raspuns": "CALVIN KLEIN",
+          "variante": [
+            "CALVIN KLEIN",
+            "TOMMY HILFIGER",
+            "RALPH LAUREN",
+            "HUGO BOSS"
+          ],
+          "hint_1": "Brand american de modă, cunoscut pentru lenjerie",
+          "hint_2": "Logo simplu, litere cK",
+          "hint_3": "Fondat de designerul cu același nume",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Calvin Klein logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_087",
+          "raspuns": "HUGO BOSS",
+          "variante": [
+            "HUGO BOSS",
+            "ARMANI",
+            "VERSACE",
+            "PRADA"
+          ],
+          "hint_1": "Brand german de modă premium",
+          "hint_2": "Logo simplu, negru pe alb",
+          "hint_3": "Sponsor frecvent în Formula 1",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Hugo Boss logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_088",
+          "raspuns": "VERSACE",
+          "variante": [
+            "VERSACE",
+            "GUCCI",
+            "PRADA",
+            "ARMANI"
+          ],
+          "hint_1": "Brand italian de lux, logo cu un cap de Meduză",
+          "hint_2": "Fondat de Gianni Versace",
+          "hint_3": "Cunoscut pentru print-uri extravagante",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Versace logo Medusa",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_089",
+          "raspuns": "PRADA",
+          "variante": [
+            "PRADA",
+            "GUCCI",
+            "VERSACE",
+            "FENDI"
+          ],
+          "hint_1": "Casă de modă italiană de lux",
+          "hint_2": "Logo simplu, triunghi cu litere",
+          "hint_3": "Fondată la Milano în 1913",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Prada logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_090",
+          "raspuns": "ARMANI",
+          "variante": [
+            "ARMANI",
+            "VERSACE",
+            "PRADA",
+            "DOLCE GABBANA"
+          ],
+          "hint_1": "Casă de modă italiană, logo cu un vultur",
+          "hint_2": "Fondată de Giorgio Armani",
+          "hint_3": "Cunoscută pentru costume elegante",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Armani logo eagle",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_091",
+          "raspuns": "HEINEKEN",
+          "variante": [
+            "HEINEKEN",
+            "BUDWEISER",
+            "CARLSBERG",
+            "GUINNESS"
+          ],
+          "hint_1": "Brand olandez de bere, logo verde cu stea roșie",
+          "hint_2": "Unul dintre cele mai exportate beri din lume",
+          "hint_3": "Sponsor oficial Liga Campionilor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Heineken logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_092",
+          "raspuns": "GUINNESS",
+          "variante": [
+            "GUINNESS",
+            "HEINEKEN",
+            "CARLSBERG",
+            "BUDWEISER"
+          ],
+          "hint_1": "Bere neagră irlandeză celebră",
+          "hint_2": "Logo cu o harpă aurie",
+          "hint_3": "Fondată la Dublin în 1759",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Guinness logo harp",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_093",
+          "raspuns": "COLGATE",
+          "variante": [
+            "COLGATE",
+            "ORAL-B",
+            "SENSODYNE",
+            "AQUAFRESH"
+          ],
+          "hint_1": "Brand de pastă de dinți, logo roșu cu o dungă",
+          "hint_2": "Una dintre cele mai vechi mărci de igienă orală",
+          "hint_3": "Companie americană",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Colgate logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_094",
+          "raspuns": "GILLETTE",
+          "variante": [
+            "GILLETTE",
+            "PHILIPS",
+            "BRAUN",
+            "BIC"
+          ],
+          "hint_1": "Brand de aparate de ras, sloganul 'The Best a Man Can Get'",
+          "hint_2": "Logo albastru-roșu simplu",
+          "hint_3": "Parte din Procter & Gamble",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Gillette logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_095",
+          "raspuns": "NUTELLA",
+          "variante": [
+            "NUTELLA",
+            "NUTELLO",
+            "KINDER",
+            "MILKA"
+          ],
+          "hint_1": "Cremă de cacao cu alune, logo roșu cu litere albe",
+          "hint_2": "Produsă de compania italiană Ferrero",
+          "hint_3": "Are propria zi internațională, 5 februarie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Nutella logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_096",
+          "raspuns": "MILKA",
+          "variante": [
+            "MILKA",
+            "NUTELLA",
+            "LINDT",
+            "TOBLERONE"
+          ],
+          "hint_1": "Brand de ciocolată, culoare mov caracteristică",
+          "hint_2": "Logo cu o vacă violet",
+          "hint_3": "Companie deținută de Mondelez",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Milka logo cow",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_097",
+          "raspuns": "LINDT",
+          "variante": [
+            "LINDT",
+            "MILKA",
+            "GODIVA",
+            "TOBLERONE"
+          ],
+          "hint_1": "Brand de ciocolată premium elvețian",
+          "hint_2": "Logo auriu cu o siluetă de urs",
+          "hint_3": "Cunoscut pentru bomboanele Lindor",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Lindt logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_098",
+          "raspuns": "DANONE",
+          "variante": [
+            "DANONE",
+            "NESTLE",
+            "MULLER",
+            "ACTIVIA"
+          ],
+          "hint_1": "Companie franceză de lactate, logo o stea albastră",
+          "hint_2": "Produce Activia și Actimel",
+          "hint_3": "Fondată la Barcelona, cu nume spaniol",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Danone logo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_099",
+          "raspuns": "NESTLE",
+          "variante": [
+            "NESTLE",
+            "DANONE",
+            "MONDELEZ",
+            "UNILEVER"
+          ],
+          "hint_1": "Cel mai mare producător alimentar din lume",
+          "hint_2": "Logo cu un cuib și păsări",
+          "hint_3": "Companie elvețiană",
+          "dificultate": "mediu",
+          "puncte_max": 400,
+          "imagine_cautare": "Nestle logo nest",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "lgf_100",
+          "raspuns": "LAYS",
+          "variante": [
+            "LAYS",
+            "PRINGLES",
+            "DORITOS",
+            "CHEETOS"
+          ],
+          "hint_1": "Brand de chipsuri, logo cu un cerc roșu-galben",
+          "hint_2": "Deținut de PepsiCo",
+          "hint_3": "Sloganul: 'Betcha Can't Eat Just One'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lays logo",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

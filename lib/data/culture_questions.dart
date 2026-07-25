@@ -1,6 +1,6 @@
 /// Întrebare de cultură generală — text simplu, fără imagine, 4 variante.
 /// Folosită doar de [CultureQuizPanel] de pe Home, nu de GameScreen.
-/// Pool curatoriat de 60 de întrebări; fiecare lot (beta, nelimitat) alege
+/// Pool de 100 de întrebări; fiecare lot (beta, nelimitat) alege
 /// [cultureQuizQuestionCount] aleatorii din el.
 class CultureQuestion {
   final String question;
@@ -317,5 +317,205 @@ const List<CultureQuestion> cultureQuestions = [
     question: 'Care a fost primul telefon mobil comercial din lume?',
     choices: ['Nokia 3310', 'Motorola DynaTAC', 'iPhone', 'Samsung Galaxy'],
     answer: 'Motorola DynaTAC',
+  ),
+  CultureQuestion(
+    question: 'Câte continente are Pământul?',
+    choices: ['5', '6', '7', '8'],
+    answer: '7',
+  ),
+  CultureQuestion(
+    question: 'Câte zile are un an bisect?',
+    choices: ['365', '364', '366', '367'],
+    answer: '366',
+  ),
+  CultureQuestion(
+    question: 'Câte minute are o oră și jumătate?',
+    choices: ['80', '90', '100', '120'],
+    answer: '90',
+  ),
+  CultureQuestion(
+    question: 'Ce gaz este esențial pentru respirația omului?',
+    choices: ['Azot', 'Oxigen', 'Hidrogen', 'Heliu'],
+    answer: 'Oxigen',
+  ),
+  CultureQuestion(
+    question: 'În ce țară se află Turnul Eiffel?',
+    choices: ['Italia', 'Belgia', 'Franța', 'Elveția'],
+    answer: 'Franța',
+  ),
+  CultureQuestion(
+    question: 'Care este moneda oficială a României?',
+    choices: ['Euro', 'Leul', 'Forintul', 'Leva'],
+    answer: 'Leul',
+  ),
+  CultureQuestion(
+    question: 'Câte culori are curcubeul?',
+    choices: ['5', '6', '7', '9'],
+    answer: '7',
+  ),
+  CultureQuestion(
+    question: 'Ce gaz predomină în atmosfera Pământului?',
+    choices: ['Oxigenul', 'Dioxidul de carbon', 'Azotul', 'Argonul'],
+    answer: 'Azotul',
+  ),
+  CultureQuestion(
+    question: 'Ce râu trece prin București?',
+    choices: ['Dâmbovița', 'Argeșul', 'Oltul', 'Mureșul'],
+    answer: 'Dâmbovița',
+  ),
+  CultureQuestion(
+    question: 'Câte zile are februarie într-un an obișnuit (nebisect)?',
+    choices: ['27', '28', '29', '30'],
+    answer: '28',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare deșert cald din lume?',
+    choices: ['Gobi', 'Sahara', 'Kalahari', 'Atacama'],
+    answer: 'Sahara',
+  ),
+  CultureQuestion(
+    question: 'Câte picioare are un păianjen?',
+    choices: ['6', '8', '10', '12'],
+    answer: '8',
+  ),
+  CultureQuestion(
+    question: 'Ce substanță are formula chimică H2O?',
+    choices: ['Sarea', 'Apa', 'Zahărul', 'Oțetul'],
+    answer: 'Apa',
+  ),
+  CultureQuestion(
+    question: 'În ce oraș se află Colosseumul?',
+    choices: ['Atena', 'Roma', 'Istanbul', 'Cairo'],
+    answer: 'Roma',
+  ),
+  CultureQuestion(
+    question: 'Ce animal este supranumit "regele junglei"?',
+    choices: ['Tigrul', 'Leul', 'Elefantul', 'Gorila'],
+    answer: 'Leul',
+  ),
+  CultureQuestion(
+    question: 'Câte luni ale anului au 31 de zile?',
+    choices: ['5', '6', '7', '8'],
+    answer: '7',
+  ),
+  CultureQuestion(
+    question: 'Ce organ pompează sângele în corpul uman?',
+    choices: ['Plămânii', 'Ficatul', 'Inima', 'Rinichii'],
+    answer: 'Inima',
+  ),
+  CultureQuestion(
+    question: 'În ce an a căzut regimul comunist în România?',
+    choices: ['1987', '1989', '1991', '1993'],
+    answer: '1989',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește cea mai mică unitate a unui element chimic?',
+    choices: ['Molecula', 'Atomul', 'Celula', 'Electronul'],
+    answer: 'Atomul',
+  ),
+  CultureQuestion(
+    question: 'Câte corzi are o vioară?',
+    choices: ['3', '4', '5', '6'],
+    answer: '4',
+  ),
+  CultureQuestion(
+    question: 'Din ce cereală se face în mod tradițional pâinea?',
+    choices: ['Porumb', 'Orez', 'Grâu', 'Ovăz'],
+    answer: 'Grâu',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Chinei?',
+    choices: ['Shanghai', 'Hong Kong', 'Beijing', 'Guangzhou'],
+    answer: 'Beijing',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Canadei?',
+    choices: ['Toronto', 'Vancouver', 'Montreal', 'Ottawa'],
+    answer: 'Ottawa',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Australiei?',
+    choices: ['Sydney', 'Melbourne', 'Canberra', 'Perth'],
+    answer: 'Canberra',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Greciei?',
+    choices: ['Salonic', 'Atena', 'Corint', 'Sparta'],
+    answer: 'Atena',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Portugaliei?',
+    choices: ['Porto', 'Lisabona', 'Faro', 'Braga'],
+    answer: 'Lisabona',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Turciei?',
+    choices: ['Istanbul', 'Izmir', 'Ankara', 'Antalya'],
+    answer: 'Ankara',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Olandei?',
+    choices: ['Rotterdam', 'Haga', 'Amsterdam', 'Utrecht'],
+    answer: 'Amsterdam',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Austriei?',
+    choices: ['Salzburg', 'Graz', 'Viena', 'Innsbruck'],
+    answer: 'Viena',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Ungariei?',
+    choices: ['Debrecen', 'Budapesta', 'Szeged', 'Pécs'],
+    answer: 'Budapesta',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Poloniei?',
+    choices: ['Cracovia', 'Varșovia', 'Gdansk', 'Wroclaw'],
+    answer: 'Varșovia',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Braziliei?',
+    choices: ['Rio de Janeiro', 'São Paulo', 'Brasília', 'Salvador'],
+    answer: 'Brasília',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Indiei?',
+    choices: ['Mumbai', 'New Delhi', 'Bangalore', 'Calcutta'],
+    answer: 'New Delhi',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mic continent?',
+    choices: ['Europa', 'Australia (Oceania)', 'Antarctica', 'America de Sud'],
+    answer: 'Australia (Oceania)',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai populat oraș din lume?',
+    choices: ['New York', 'Tokyo', 'Shanghai', 'Delhi'],
+    answer: 'Tokyo',
+  ),
+  CultureQuestion(
+    question: 'Pe ce continent se află Egiptul?',
+    choices: ['Asia', 'Africa', 'Europa', 'America de Sud'],
+    answer: 'Africa',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare lac de pe glob?',
+    choices: ['Lacul Superior', 'Marea Caspică', 'Lacul Victoria', 'Lacul Baikal'],
+    answer: 'Marea Caspică',
+  ),
+  CultureQuestion(
+    question: 'Câte oceane există pe Pământ?',
+    choices: ['3', '4', '5', '6'],
+    answer: '5',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai lungă catenă muntoasă din lume?',
+    choices: ['Himalaya', 'Alpii', 'Anzii', 'Munții Stâncoși'],
+    answer: 'Anzii',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai mică planetă din Sistemul Solar?',
+    choices: ['Marte', 'Venus', 'Mercur', 'Pluto'],
+    answer: 'Mercur',
   ),
 ];

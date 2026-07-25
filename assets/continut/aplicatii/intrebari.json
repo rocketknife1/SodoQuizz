@@ -1026,6 +1026,686 @@
           "puncte_max": 200,
           "imagine_cautare": "Zoom app icon",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "SPOTIFY",
+          "variante": [
+            "SPOTIFY",
+            "APPLE MUSIC",
+            "DEEZER",
+            "TIDAL"
+          ],
+          "hint_1": "Cea mai populară aplicație de streaming muzical",
+          "hint_2": "Logo verde cu unde de sunet",
+          "hint_3": "Are 'Wrapped' la final de an",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "id": "apl_061",
+          "imagine_cautare": "Spotify app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "TIDAL",
+          "variante": [
+            "TIDAL",
+            "SPOTIFY",
+            "DEEZER",
+            "AMAZON MUSIC"
+          ],
+          "hint_1": "Aplicație de streaming muzical, audio de calitate superioară",
+          "hint_2": "A fost deținută parțial de Jay-Z",
+          "hint_3": "Concurent Spotify",
+          "id": "apl_062",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Tidal app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "AMAZON MUSIC",
+          "variante": [
+            "AMAZON MUSIC",
+            "SPOTIFY",
+            "APPLE MUSIC",
+            "YOUTUBE MUSIC"
+          ],
+          "hint_1": "Serviciu de streaming muzical al Amazon",
+          "hint_2": "Inclus adesea în abonamentul Prime",
+          "hint_3": "Logo cu săgeata caracteristică Amazon",
+          "id": "apl_063",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Amazon Music app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "YOUTUBE MUSIC",
+          "variante": [
+            "YOUTUBE MUSIC",
+            "SPOTIFY",
+            "SOUNDCLOUD",
+            "TIDAL"
+          ],
+          "hint_1": "Aplicație de muzică a Google/YouTube",
+          "hint_2": "Logo roșu cu o notă muzicală",
+          "hint_3": "Are și clipuri video pentru majoritatea melodiilor",
+          "id": "apl_064",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Youtube Music app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "POCKET FM",
+          "variante": [
+            "POCKET FM",
+            "SPOTIFY",
+            "AUDIBLE",
+            "STORYTEL"
+          ],
+          "hint_1": "Aplicație de audiobook-uri și seriale audio",
+          "hint_2": "Multe povești în format episodic",
+          "hint_3": "Populară pentru drame audio",
+          "id": "apl_065",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Pocket Fm app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "AUDIBLE",
+          "variante": [
+            "AUDIBLE",
+            "SPOTIFY",
+            "STORYTEL",
+            "KINDLE"
+          ],
+          "hint_1": "Aplicație de cărți audio, deținută de Amazon",
+          "hint_2": "Îți dă un credit lunar pentru o carte audio",
+          "hint_3": "Logo galben-negru",
+          "id": "apl_066",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Audible app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "KINDLE",
+          "variante": [
+            "KINDLE",
+            "AUDIBLE",
+            "GOOGLE BOOKS",
+            "APPLE BOOKS"
+          ],
+          "hint_1": "Aplicație de citit cărți electronice, de la Amazon",
+          "hint_2": "Are și dispozitive dedicate cu același nume",
+          "hint_3": "Logo cu un K stilizat",
+          "id": "apl_067",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Kindle app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GOOGLE KEEP",
+          "variante": [
+            "GOOGLE KEEP",
+            "NOTION",
+            "EVERNOTE",
+            "APPLE NOTES"
+          ],
+          "hint_1": "Aplicație simplă de notițe rapide de la Google",
+          "hint_2": "Notele arată ca niște 'post-it' colorate",
+          "hint_3": "Se sincronizează cu contul Google",
+          "id": "apl_068",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Keep app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "APPLE NOTES",
+          "variante": [
+            "APPLE NOTES",
+            "GOOGLE KEEP",
+            "NOTION",
+            "EVERNOTE"
+          ],
+          "hint_1": "Aplicație nativă de notițe pe iPhone",
+          "hint_2": "Icon galben cu o foaie și un pix",
+          "hint_3": "Vine preinstalată pe toate device-urile Apple",
+          "id": "apl_069",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Apple Notes app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "MICROSOFT WORD",
+          "variante": [
+            "MICROSOFT WORD",
+            "GOOGLE DOCS",
+            "PAGES",
+            "NOTION"
+          ],
+          "hint_1": "Cel mai folosit procesor de text din lume",
+          "hint_2": "Icon albastru cu litera W",
+          "hint_3": "Parte din pachetul Microsoft Office",
+          "id": "apl_070",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Microsoft Word app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "MICROSOFT EXCEL",
+          "variante": [
+            "MICROSOFT EXCEL",
+            "GOOGLE SHEETS",
+            "NUMBERS",
+            "AIRTABLE"
+          ],
+          "hint_1": "Program de calcul tabelar, foarte folosit în birouri",
+          "hint_2": "Icon verde cu litera X",
+          "hint_3": "Parte din pachetul Microsoft Office",
+          "id": "apl_071",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Microsoft Excel app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "MICROSOFT POWERPOINT",
+          "variante": [
+            "MICROSOFT POWERPOINT",
+            "GOOGLE SLIDES",
+            "KEYNOTE",
+            "CANVA"
+          ],
+          "hint_1": "Program pentru prezentări cu slide-uri",
+          "hint_2": "Icon portocaliu cu litera P",
+          "hint_3": "Parte din pachetul Microsoft Office",
+          "id": "apl_072",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Microsoft Powerpoint app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GOOGLE DOCS",
+          "variante": [
+            "GOOGLE DOCS",
+            "MICROSOFT WORD",
+            "NOTION",
+            "PAGES"
+          ],
+          "hint_1": "Procesor de text online, gratuit, de la Google",
+          "hint_2": "Salvează automat în Google Drive",
+          "hint_3": "Permite editare colaborativă în timp real",
+          "id": "apl_073",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Docs app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GOOGLE SHEETS",
+          "variante": [
+            "GOOGLE SHEETS",
+            "MICROSOFT EXCEL",
+            "NUMBERS",
+            "AIRTABLE"
+          ],
+          "hint_1": "Foaie de calcul online gratuită de la Google",
+          "hint_2": "Se poate edita simultan de mai mulți utilizatori",
+          "hint_3": "Parte din Google Workspace",
+          "id": "apl_074",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Google Sheets app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "SLACK",
+          "variante": [
+            "SLACK",
+            "DISCORD",
+            "MICROSOFT TEAMS",
+            "TRELLO"
+          ],
+          "hint_1": "Aplicație de comunicare pentru echipe/companii",
+          "hint_2": "Organizată pe canale, ca #general",
+          "hint_3": "Logo colorat, formă de hashtag",
+          "id": "apl_075",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Slack app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "ASANA",
+          "variante": [
+            "ASANA",
+            "TRELLO",
+            "NOTION",
+            "MONDAY"
+          ],
+          "hint_1": "Aplicație de management de proiecte și task-uri",
+          "hint_2": "Logo cu 3 cercuri colorate",
+          "hint_3": "Populară în echipe de lucru la distanță",
+          "id": "apl_076",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Asana app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "MONDAY",
+          "variante": [
+            "MONDAY",
+            "ASANA",
+            "TRELLO",
+            "CLICKUP"
+          ],
+          "hint_1": "Platformă de management de proiect, foarte colorată",
+          "hint_2": "Numele vine de la ziua de luni",
+          "hint_3": "Folosită mult pentru organizarea echipelor",
+          "id": "apl_077",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Monday app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "CLICKUP",
+          "variante": [
+            "CLICKUP",
+            "ASANA",
+            "TRELLO",
+            "MONDAY"
+          ],
+          "hint_1": "Aplicație 'totul-în-unul' pentru productivitate",
+          "hint_2": "Logo roz-mov cu o săgeată în sus",
+          "hint_3": "Combină task-uri, documente și chat",
+          "id": "apl_078",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Clickup app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "WISE",
+          "variante": [
+            "WISE",
+            "REVOLUT",
+            "N26",
+            "PAYPAL"
+          ],
+          "hint_1": "Aplicație pentru transferuri bancare internaționale ieftine",
+          "hint_2": "Fost numită TransferWise",
+          "hint_3": "Logo verde-albastru",
+          "id": "apl_079",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Wise app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "PAYSERA",
+          "variante": [
+            "PAYSERA",
+            "REVOLUT",
+            "WISE",
+            "N26"
+          ],
+          "hint_1": "Aplicație de plăți și card virtual din Lituania",
+          "hint_2": "Populară și în România pentru conturi multi-valută",
+          "hint_3": "Oferă și card fizic",
+          "id": "apl_080",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Paysera app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "COINBASE",
+          "variante": [
+            "COINBASE",
+            "BINANCE",
+            "KRAKEN",
+            "CRYPTO.COM"
+          ],
+          "hint_1": "Aplicație pentru cumpărat/vândut criptomonede",
+          "hint_2": "Una din cele mai mari platforme din SUA",
+          "hint_3": "Listă la bursă în 2021",
+          "id": "apl_081",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Coinbase app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "CRYPTO.COM",
+          "variante": [
+            "CRYPTO.COM",
+            "BINANCE",
+            "COINBASE",
+            "KRAKEN"
+          ],
+          "hint_1": "Aplicație de criptomonede cu un card vizibil albastru",
+          "hint_2": "Sponsorizează o arenă în Los Angeles",
+          "hint_3": "Reclame celebre cu Matt Damon",
+          "id": "apl_082",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Crypto.Com app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GLOVO",
+          "variante": [
+            "GLOVO",
+            "WOLT",
+            "BOLT FOOD",
+            "UBER EATS"
+          ],
+          "hint_1": "Aplicație de livrare rapidă, logo galben cu literă G",
+          "hint_2": "Livrează mâncare, dar și cumpărături din magazine",
+          "hint_3": "Companie spaniolă",
+          "id": "apl_083",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Glovo app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "UBER EATS",
+          "variante": [
+            "UBER EATS",
+            "GLOVO",
+            "WOLT",
+            "BOLT FOOD"
+          ],
+          "hint_1": "Aplicație de livrare mâncare a companiei Uber",
+          "hint_2": "Logo verde-negru simplu",
+          "hint_3": "Extensie a serviciului de ride-sharing Uber",
+          "id": "apl_084",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Uber Eats app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "BOOKING.COM",
+          "variante": [
+            "BOOKING.COM",
+            "AIRBNB",
+            "EXPEDIA",
+            "TRIVAGO"
+          ],
+          "hint_1": "Aplicație pentru rezervat hoteluri și cazări",
+          "hint_2": "Logo albastru cu litera b",
+          "hint_3": "Companie olandeză",
+          "id": "apl_085",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Booking.Com app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "AIRBNB",
+          "variante": [
+            "AIRBNB",
+            "BOOKING.COM",
+            "EXPEDIA",
+            "VRBO"
+          ],
+          "hint_1": "Aplicație pentru închiriat locuințe de la particulari",
+          "hint_2": "Logo roz numit 'Bélo'",
+          "hint_3": "A revoluționat industria cazării turistice",
+          "id": "apl_086",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Airbnb app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "SKYSCANNER",
+          "variante": [
+            "SKYSCANNER",
+            "GOOGLE FLIGHTS",
+            "KAYAK",
+            "EXPEDIA"
+          ],
+          "hint_1": "Aplicație pentru comparat prețuri la bilete de avion",
+          "hint_2": "Logo albastru cu un avion stilizat",
+          "hint_3": "Companie scoțiană",
+          "id": "apl_087",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Skyscanner app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "TRIPADVISOR",
+          "variante": [
+            "TRIPADVISOR",
+            "YELP",
+            "BOOKING.COM",
+            "GOOGLE MAPS"
+          ],
+          "hint_1": "Aplicație cu recenzii pentru restaurante și atracții turistice",
+          "hint_2": "Logo cu un cerc verde, ca un ochi",
+          "hint_3": "Foarte folosită înainte de vacanțe",
+          "id": "apl_088",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Tripadvisor app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GOODREADS",
+          "variante": [
+            "GOODREADS",
+            "KINDLE",
+            "STORYTEL",
+            "LIBBY"
+          ],
+          "hint_1": "Rețea socială pentru cititori, ține evidența cărților citite",
+          "hint_2": "Deținută de Amazon",
+          "hint_3": "Logo maro cu o literă g",
+          "id": "apl_089",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Goodreads app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "CRONOMETER",
+          "variante": [
+            "CRONOMETER",
+            "MYFITNESSPAL",
+            "LOSE IT",
+            "YAZIO"
+          ],
+          "hint_1": "Aplicație de urmărit nutriția, foarte detaliată pe micronutrienți",
+          "hint_2": "Populară printre sportivi de performanță",
+          "hint_3": "Alternativă la MyFitnessPal",
+          "dificultate": "greu",
+          "puncte_max": 200,
+          "id": "apl_090",
+          "imagine_cautare": "Cronometer app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "FITBIT",
+          "variante": [
+            "FITBIT",
+            "STRAVA",
+            "GARMIN CONNECT",
+            "APPLE HEALTH"
+          ],
+          "hint_1": "Aplicație asociată brățărilor fitness cu același nume",
+          "hint_2": "Urmărește pașii, somnul și ritmul cardiac",
+          "hint_3": "Deținută acum de Google",
+          "id": "apl_091",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Fitbit app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GARMIN CONNECT",
+          "variante": [
+            "GARMIN CONNECT",
+            "STRAVA",
+            "FITBIT",
+            "POLAR FLOW"
+          ],
+          "hint_1": "Aplicație pentru ceasurile sport Garmin",
+          "hint_2": "Foarte folosită de alergători și triatloniști",
+          "hint_3": "Sincronizează date de antrenament detaliate",
+          "id": "apl_092",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Garmin Connect app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "NIKE TRAINING CLUB",
+          "variante": [
+            "NIKE TRAINING CLUB",
+            "ADIDAS TRAINING",
+            "FREELETICS",
+            "FITBIT"
+          ],
+          "hint_1": "Aplicație gratuită de antrenamente de la un brand sportiv",
+          "hint_2": "Antrenamente ghidate video, fără abonament la sală",
+          "hint_3": "De la Nike",
+          "id": "apl_093",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Nike Training Club app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "INSIGHT TIMER",
+          "variante": [
+            "INSIGHT TIMER",
+            "CALM",
+            "HEADSPACE",
+            "BALANCE"
+          ],
+          "hint_1": "Aplicație de meditație cu mii de sesiuni gratuite",
+          "hint_2": "Are un cronometru pentru meditație liberă cu clopoței",
+          "hint_3": "Una dintre cele mai mari biblioteci de meditații gratuite",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "id": "apl_094",
+          "imagine_cautare": "Insight Timer app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "SYGIC",
+          "variante": [
+            "SYGIC",
+            "WAZE",
+            "HERE WEGO",
+            "TOMTOM GO"
+          ],
+          "hint_1": "Aplicație de navigație GPS cu hărți offline",
+          "hint_2": "Companie slovacă",
+          "hint_3": "Populară pentru șoferi profesioniști, funcționează fără internet",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "id": "apl_095",
+          "imagine_cautare": "Sygic app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "CITYMAPPER",
+          "variante": [
+            "CITYMAPPER",
+            "GOOGLE MAPS",
+            "MOOVIT",
+            "WAZE"
+          ],
+          "hint_1": "Aplicație de transport public în orașe mari",
+          "hint_2": "Foarte populară la Londra, unde a fost creată",
+          "hint_3": "Arată toate opțiunile: metrou, bus, bicicletă",
+          "id": "apl_096",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Citymapper app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "MOOVIT",
+          "variante": [
+            "MOOVIT",
+            "CITYMAPPER",
+            "GOOGLE MAPS",
+            "UBER"
+          ],
+          "hint_1": "Aplicație de planificare a călătoriilor cu transport public",
+          "hint_2": "Companie israeliană, folosită în multe orașe din România",
+          "hint_3": "Arată în timp real când vine următorul autobuz sau tramvai",
+          "id": "apl_097",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Moovit app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "1PASSWORD",
+          "variante": [
+            "1PASSWORD",
+            "LASTPASS",
+            "BITWARDEN",
+            "DASHLANE"
+          ],
+          "hint_1": "Aplicație pentru gestionat parole în siguranță",
+          "hint_2": "Un singur cont master deblochează toate parolele salvate",
+          "hint_3": "Logo negru cu cifra 1",
+          "id": "apl_098",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "1Password app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "LASTPASS",
+          "variante": [
+            "LASTPASS",
+            "1PASSWORD",
+            "BITWARDEN",
+            "DASHLANE"
+          ],
+          "hint_1": "Manager de parole popular, extensie de browser",
+          "hint_2": "A avut o breșă de securitate cunoscută în 2022",
+          "hint_3": "Logo cu literă asterisc stilizată",
+          "id": "apl_099",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Lastpass app icon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "raspuns": "GOOGLE AUTHENTICATOR",
+          "variante": [
+            "GOOGLE AUTHENTICATOR",
+            "MICROSOFT AUTHENTICATOR",
+            "AUTHY",
+            "DUO"
+          ],
+          "hint_1": "Aplicație care generează coduri de securitate cu 2 factori",
+          "hint_2": "Codul se schimbă la fiecare 30 de secunde",
+          "hint_3": "Multe conturi online o cer pentru login sigur",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "id": "apl_100",
+          "imagine_cautare": "Google Authenticator app icon",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }
