@@ -5,7 +5,7 @@ masini (Masini de Lux), celebritati, sport (Fotbal & Sport), romania.
 cu mecanica/medical: 4 variante, 3 hinturi, dificultate, imagine_cautare
 (termen EN pentru Wikipedia — folosit de tools/fetch_question_images.py).
 
-Rulare: python tools/generate_premium_questions.py
+Rulare: python tools/questions/generate_premium_questions.py
 """
 import json
 import os

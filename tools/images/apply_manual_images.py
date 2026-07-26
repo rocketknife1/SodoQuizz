@@ -1,8 +1,8 @@
 """Aplica pozele aduse manual de user (folder "poze intrebari/") peste
-intrebarile marcate cu "facut" in baza_de_date_intrebari.xlsx, si sterge
-intrebarea marcata cu "eliminata".
+intrebarile marcate cu "facut" in tools/images/baza_de_date_intrebari.xlsx,
+si sterge intrebarea marcata cu "eliminata".
 
-Ruleaza o singura data, manual: python tools/apply_manual_images.py
+Ruleaza o singura data, manual: python tools/images/apply_manual_images.py
 """
 import json
 import os

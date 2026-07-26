@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/achievements.dart';
+import '../core/audio.dart';
 import '../core/progression.dart';
-import '../core/sfx.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/coin_reward_overlay.dart';

@@ -7,7 +7,7 @@ import '../data/questions.dart';
 import '../data/storage_service.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
-import '../widgets/googly_eyes.dart';
+import '../widgets/mascots/googly_eyes.dart';
 
 const int clippyBonusQuestionCount = 3;
 const double clippyRewardMultiplier = 1.25;

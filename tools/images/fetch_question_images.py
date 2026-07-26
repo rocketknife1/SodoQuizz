@@ -10,7 +10,7 @@ Strategie per gamemode:
 Imaginile sunt normalizate la 800x600 (4:3) pentru încadrare bună pe telefon:
 foto = crop central; logo/wordmark = letterbox pe fundal alb.
 
-Rulare:  python tools/fetch_question_images.py
+Rulare:  python tools/images/fetch_question_images.py
 Reia de unde a rămas (sare peste fișierele deja descărcate).
 """
 import io

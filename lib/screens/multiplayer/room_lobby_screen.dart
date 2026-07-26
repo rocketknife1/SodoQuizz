@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
-import '../data/multiplayer_service.dart';
-import '../data/storage_service.dart';
-import '../models/multiplayer_models.dart';
-import '../widgets/avatar.dart';
+import '../../core/theme.dart';
+import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
+import '../../models/multiplayer_models.dart';
+import '../../widgets/avatar.dart';
 import 'multiplayer_match_screen.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, chat live, și

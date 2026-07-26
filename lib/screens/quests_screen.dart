@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../core/quests.dart';
-import '../core/sfx.dart';
+import '../core/audio.dart';
+import '../core/progression.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';

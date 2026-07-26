@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../data/storage_service.dart';
 import '../widgets/coin_reward_overlay.dart';
-import 'sfx.dart';
+import 'audio.dart';
 import 'theme.dart';
 
 /// Aplică o recompensă compusă (monede + XP + vieți) în 3 etape separate și

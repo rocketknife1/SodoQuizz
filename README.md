@@ -34,15 +34,20 @@ assets/continut/
 ## Structura codului (`lib/`)
 
 - `main.dart` — punctul de intrare.
-- `core/` — regulile jocului: `gamemodes.dart` (lista celor 4 moduri, o
-  singură sursă de adevăr) și `game_helpers.dart` (scor, hint-uri, blur).
-- `data/` — încărcarea întrebărilor din assets și stocarea locală
-  (vieți, monede, progres, highscore) prin `shared_preferences`.
-- `models/` — modelul `Question`.
-- `screens/` — `home`, `loading`, `game`, `shop` (shop e dezactivat
-  momentan din meniu, cod gata pentru mai târziu).
-- `widgets/` — componente reutilizate în ecranul de joc (imagine cu
-  blur, banner de rezultat, butonul de mai departe).
+- `core/` — regulile jocului: `gamemodes.dart` (lista gamemodurilor),
+  `game_helpers.dart` (scor, hint-uri, blur), `progression.dart`
+  (nivel/XP, quest-uri zilnice, realizări), `audio.dart` (muzică de fundal
+  + efecte sonore).
+- `data/` — încărcarea întrebărilor din assets, stocarea locală
+  (vieți, monede, progres, highscore) prin `shared_preferences`, plus
+  autentificare/cloud-save și multiplayer (Firebase).
+- `models/` — `Question` și modelele de multiplayer.
+- `screens/` — un fișier per ecran; `multiplayer/` grupează cele 6
+  ecrane ale fluxului de multiplayer (create/join room, matchmaking,
+  meci, rezultate, clasament).
+- `widgets/` — componente reutilizate; `mascots/` grupează cele trei
+  mascote decorative de pe Home și micul "dispecer" de evenimente comun
+  lor (`mascot_sync.dart`).
 
 ## Verificare locală
 

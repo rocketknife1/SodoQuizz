@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import '../core/music.dart';
+import '../core/audio.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import 'home_screen.dart';

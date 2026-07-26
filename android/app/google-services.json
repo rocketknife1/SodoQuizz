@@ -7,6 +7,35 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:112195368669:android:6961c0c5b1946b12750d34",
+        "android_client_info": {
+          "package_name": "com.dragosssx.guessit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "112195368669-p8qe6f5doeraqj3qc61f1l1tmcdu1le2.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMMbkoqPBzas0siDzH6c-GoBOWYJm-CUs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "112195368669-p8qe6f5doeraqj3qc61f1l1tmcdu1le2.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:112195368669:android:7a22a626a0d35bbc750d34",
         "android_client_info": {
           "package_name": "com.example.guess_it"

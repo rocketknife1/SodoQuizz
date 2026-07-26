@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../core/mascot_sync.dart';
-import '../core/sfx.dart';
-import '../core/theme.dart';
-import '../data/storage_service.dart';
+import '../../core/audio.dart';
+import '../../core/theme.dart';
+import '../../data/storage_service.dart';
+import '../wheel_spin_dialog.dart';
 import 'googly_eyes.dart';
 import 'mascot_props.dart';
-import 'wheel_spin_dialog.dart';
+import 'mascot_sync.dart';
 
 /// Opt gesturi unice: șase idle "de personalitate" (declanșate local,
 /// aleatoriu, peste legănarea continuă de fundal) și două comune,

@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
-import '../core/quests.dart';
+import '../core/progression.dart';
 import '../core/reward_collector.dart';
-import '../core/sfx.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';

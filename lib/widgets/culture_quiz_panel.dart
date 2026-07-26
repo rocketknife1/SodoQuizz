@@ -47,6 +47,7 @@ class CultureQuizPanel extends StatefulWidget {
 
 class _CultureQuizPanelState extends State<CultureQuizPanel> {
   _Phase _phase = _Phase.teaser;
+  CultureCategory _category = cultureCategories.first;
   List<CultureQuestion> _questions = const [];
   int qIndex = 0;
   int correctCount = 0;
@@ -66,8 +67,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   }
 
   void _start() {
-    // sesiune nouă = alt set aleatoriu de întrebări din pool
-    _questions = (List.of(cultureQuestions)..shuffle(Random()))
+    // sesiune nouă = alt set aleatoriu de întrebări din pool-ul categoriei
+    // curente (România/Belgia/...).
+    _questions = (List.of(_category.questions)..shuffle(Random()))
         .take(cultureQuizQuestionCount)
         .toList();
     setState(() {
@@ -199,49 +201,105 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   }
 
   Widget _buildTeaser() {
-    return GestureDetector(
-      onTap: _start,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
-          const SizedBox(height: 8),
-          const Text(
-            'Cultură Generală',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const _MiniPlanet(size: 34),
+        const SizedBox(height: 8),
+        const Text(
+          'Cultură Generală',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: AppColors.purple.withAlpha(60),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.purple),
           ),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.purple.withAlpha(60),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.purple),
-            ),
-            child: const Text('BETA', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Nelimitat • ${cultureSecondsPerQuestion}s/întrebare',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white60, fontSize: 10),
-          ),
-          Text(
-            'Recompensă la fiecare $cultureQuizQuestionCount întrebări',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white38, fontSize: 8.5),
-          ),
-          const SizedBox(height: 10),
-          Container(
+          child: const Text('BETA', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '${_category.flag} ${_category.title}',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Nelimitat • ${cultureSecondsPerQuestion}s/întrebare',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white60, fontSize: 10),
+        ),
+        Text(
+          'Recompensă la fiecare $cultureQuizQuestionCount întrebări',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white38, fontSize: 8.5),
+        ),
+        const SizedBox(height: 10),
+        GestureDetector(
+          onTap: _start,
+          child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(color: AppColors.coin, borderRadius: BorderRadius.circular(20)),
             child: const Text('START', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800)),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: _openCategoryPicker,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppColors.coin, width: 1.5),
+            ),
+            child: const Text('CATEGORII', style: TextStyle(color: AppColors.coin, fontSize: 11, fontWeight: FontWeight.w800)),
+          ),
+        ),
+      ],
     );
+  }
+
+  /// Foaie glisantă cu toate categoriile de cultură generală disponibile
+  /// (câte o "țară" cu pool propriu de întrebări) — alegerea rămâne
+  /// activă pentru sesiunile următoare de START, până la o nouă selecție.
+  Future<void> _openCategoryPicker() async {
+    final picked = await showModalBottomSheet<CultureCategory>(
+      context: context,
+      backgroundColor: const Color(0xFF1A1830),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: Text('Alege categoria', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                ),
+                for (final c in cultureCategories)
+                  ListTile(
+                    leading: Text(c.flag, style: const TextStyle(fontSize: 22)),
+                    title: Text(c.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    trailing: c.id == _category.id ? const Icon(Icons.check_circle_rounded, color: AppColors.coin) : null,
+                    onTap: () => Navigator.pop(context, c),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (picked != null && picked.id != _category.id) {
+      setState(() => _category = picked);
+    }
   }
 
   Widget _buildPlaying() {
@@ -339,4 +397,69 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     );
   }
 
+}
+
+/// Mică "planetă" sferică (gradient radial + inel subțire înclinat), în
+/// nuanțele galbenului de monede — înlocuiește vechea iconiță plată
+/// [Icons.public_rounded], care nu sugera un glob văzut din spațiu.
+class _MiniPlanet extends StatelessWidget {
+  final double size;
+  const _MiniPlanet({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size * 1.5,
+      height: size * 1.5,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Transform.rotate(
+            angle: -0.32,
+            child: CustomPaint(
+              size: Size(size * 1.5, size * 1.5),
+              painter: _MiniRingPainter(),
+            ),
+          ),
+          Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                center: const Alignment(-0.35, -0.35),
+                radius: 0.95,
+                colors: [
+                  Color.lerp(AppColors.coin, Colors.white, 0.35)!,
+                  AppColors.coin,
+                  const Color(0xFFB8781A),
+                ],
+                stops: const [0.0, 0.55, 1.0],
+              ),
+              boxShadow: [BoxShadow(color: AppColors.coin.withAlpha(140), blurRadius: 12, spreadRadius: 1)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniRingPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..color = AppColors.coin.withAlpha(160);
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.scale(1.0, 0.38);
+    canvas.drawCircle(Offset.zero, size.width / 2 - 1, paint);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

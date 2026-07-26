@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import '../core/sfx.dart';
+import '../core/audio.dart';
 
 class NextButton extends StatelessWidget {
   final VoidCallback onTap;

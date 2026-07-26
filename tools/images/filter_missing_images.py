@@ -2,7 +2,7 @@
 in folderul poze/ (id.png lipsa) — pastreaza doar intrebarile cu imagine reala.
 Se aplica peste toate gamemodurile, inclusiv cele premium.
 
-Rulare: python tools/filter_missing_images.py
+Rulare: python tools/images/filter_missing_images.py
 """
 import json
 import os

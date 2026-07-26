@@ -1,7 +1,5 @@
 /// Întrebare de cultură generală — text simplu, fără imagine, 4 variante.
 /// Folosită doar de [CultureQuizPanel] de pe Home, nu de GameScreen.
-/// Pool de 100 de întrebări; fiecare lot (beta, nelimitat) alege
-/// [cultureQuizQuestionCount] aleatorii din el.
 class CultureQuestion {
   final String question;
   final List<String> choices;
@@ -14,10 +12,28 @@ class CultureQuestion {
   });
 }
 
-const int cultureQuizQuestionCount = 10;
-const int cultureSecondsPerQuestion = 35;
+/// O categorie de cultură generală (țară) — fiecare are propriul pool de
+/// [cultureQuizQuestionCount] întrebări din care [CultureQuizPanel] alege
+/// aleatoriu un lot. Adaugă o intrare nouă aici ca să apară automat în
+/// selectorul "Categorii" de pe Home.
+class CultureCategory {
+  final String id;
+  final String title;
+  final String flag;
+  final List<CultureQuestion> questions;
 
-const List<CultureQuestion> cultureQuestions = [
+  const CultureCategory({
+    required this.id,
+    required this.title,
+    required this.flag,
+    required this.questions,
+  });
+}
+
+const int cultureQuizQuestionCount = 10;
+const int cultureSecondsPerQuestion = 8;
+
+const List<CultureQuestion> _cultureQuestionsRomania = [
   CultureQuestion(
     question: 'Care este satelitul natural al Pământului?',
     choices: ['Luna', 'Marte', 'Venus', 'Titan'],
@@ -518,4 +534,1019 @@ const List<CultureQuestion> cultureQuestions = [
     choices: ['Marte', 'Venus', 'Mercur', 'Pluto'],
     answer: 'Mercur',
   ),
+];
+
+const List<CultureQuestion> _cultureQuestionsBelgia = [
+  CultureQuestion(
+    question: 'Care este capitala Belgiei?',
+    choices: ['Anvers', 'Bruxelles', 'Gent', 'Bruges'],
+    answer: 'Bruxelles',
+  ),
+  CultureQuestion(
+    question: 'Cine este creatorul personajului de benzi desenate Tintin?',
+    choices: ['Hergé', 'René Goscinny', 'Albert Uderzo', 'Peyo'],
+    answer: 'Hergé',
+  ),
+  CultureQuestion(
+    question: 'În ce an a avut loc bătălia de la Waterloo, în Belgia?',
+    choices: ['1805', '1812', '1815', '1821'],
+    answer: '1815',
+  ),
+  CultureQuestion(
+    question: 'Cine a pictat "Coborârea de pe cruce", aflată la catedrala din Antwerpen?',
+    choices: ['Rembrandt', 'Peter Paul Rubens', 'Jan van Eyck', 'Pieter Bruegel'],
+    answer: 'Peter Paul Rubens',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește statuia unui băiețel, simbolul orașului Bruxelles?',
+    choices: ['Manneken Pis', 'Little Julien', 'Piccolo', 'Le Gamin'],
+    answer: 'Manneken Pis',
+  ),
+  CultureQuestion(
+    question: 'Cine este considerat cel mai mare ciclist belgian din istorie, supranumit "Canibalul"?',
+    choices: ['Eddy Merckx', 'Tom Boonen', 'Philippe Gilbert', 'Remco Evenepoel'],
+    answer: 'Eddy Merckx',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai înalt punct din Belgia?',
+    choices: ['Signal de Botrange', 'Mont Rigi', 'Baraque Michel', 'Mont Saint-Aubert'],
+    answer: 'Signal de Botrange',
+  ),
+  CultureQuestion(
+    question: 'Cu care dintre următoarele țări NU se învecinează Belgia?',
+    choices: ['Franța', 'Germania', 'Elveția', 'Olanda'],
+    answer: 'Elveția',
+  ),
+  CultureQuestion(
+    question: 'Cine a pictat tabloul "Fiul omului" (bărbat cu pălărie melon și un măr în fața feței)?',
+    choices: ['Salvador Dalí', 'René Magritte', 'Paul Delvaux', 'James Ensor'],
+    answer: 'René Magritte',
+  ),
+  CultureQuestion(
+    question: 'Care sunt cele trei regiuni oficiale ale Belgiei?',
+    choices: ['Flandra, Valonia și Bruxelles-Capitală', 'Nord, Sud și Est', 'Anvers, Gent și Bruges', 'Flandra, Ardeni și Bruxelles'],
+    answer: 'Flandra, Valonia și Bruxelles-Capitală',
+  ),
+  CultureQuestion(
+    question: 'Ce fel de mâncare este, contestat, o invenție belgiană, deși numele îi indică altă origine?',
+    choices: ['Cartofii prăjiți (frites)', 'Crema brulée', 'Quiche-ul', 'Ratatouille'],
+    answer: 'Cartofii prăjiți (frites)',
+  ),
+  CultureQuestion(
+    question: 'Care era moneda oficială a Belgiei înainte de trecerea la euro?',
+    choices: ['Francul belgian', 'Guldenul', 'Coroana', 'Marca'],
+    answer: 'Francul belgian',
+  ),
+  CultureQuestion(
+    question: 'Ce râu important trece prin Bruxelles?',
+    choices: ['Meusa (Meuse)', 'Escaut (Scheldt)', 'Senne', 'Rin'],
+    answer: 'Senne',
+  ),
+  CultureQuestion(
+    question: 'Ce structură celebră din Bruxelles reprezintă un atom de fier mărit de 165 miliarde de ori, construită pentru Expoziția Universală din 1958?',
+    choices: ['Atomium', 'Turnul Belgian', 'Cristalul', 'Sfera Europei'],
+    answer: 'Atomium',
+  ),
+  CultureQuestion(
+    question: 'Cine este regele actual al belgienilor?',
+    choices: ['Albert al II-lea', 'Filip', 'Leopold al III-lea', 'Baudouin'],
+    answer: 'Filip',
+  ),
+  CultureQuestion(
+    question: 'Ce sport este cel mai popular în Belgia, cu echipa națională supranumită "Diavolii Roșii"?',
+    choices: ['Baschetul', 'Fotbalul', 'Rugby-ul', 'Hocheiul'],
+    answer: 'Fotbalul',
+  ),
+  CultureQuestion(
+    question: 'Cine este creatorul benzii desenate "Lucky Luke"?',
+    choices: ['Morris', 'Hergé', 'Peyo', 'André Franquin'],
+    answer: 'Morris',
+  ),
+  CultureQuestion(
+    question: 'Orașul Bruges, cunoscut pentru canale și dantelărie, se află în ce regiune a Belgiei?',
+    choices: ['Flandra', 'Valonia', 'Bruxelles-Capitală', 'Ardeni'],
+    answer: 'Flandra',
+  ),
+  CultureQuestion(
+    question: 'Ce tip de bere, produsă tradițional de călugări, este o specialitate a Belgiei?',
+    choices: ['Berea trapistă', 'Berea de orz', 'Berea neagră irlandeză', 'Berea de grâu germană'],
+    answer: 'Berea trapistă',
+  ),
+  CultureQuestion(
+    question: 'În ce an a obținut Belgia independența?',
+    choices: ['1815', '1830', '1848', '1918'],
+    answer: '1830',
+  ),
+  CultureQuestion(
+    question: 'Care este limba oficială predominantă în regiunea Flandra?',
+    choices: ['Franceza', 'Neerlandeza (olandeza)', 'Germana', 'Italiana'],
+    answer: 'Neerlandeza (olandeza)',
+  ),
+  CultureQuestion(
+    question: 'Care este limba oficială predominantă în regiunea Valonia?',
+    choices: ['Neerlandeza', 'Franceza', 'Germana', 'Spaniola'],
+    answer: 'Franceza',
+  ),
+  CultureQuestion(
+    question: 'Ce alianță militară internațională își are sediul principal la Bruxelles?',
+    choices: ['ONU', 'NATO', 'UNESCO', 'OMS'],
+    answer: 'NATO',
+  ),
+  CultureQuestion(
+    question: 'Cine este pictorul flamand cunoscut pentru scenele de iarnă, precum "Vânătorii în zăpadă"?',
+    choices: ['Peter Paul Rubens', 'Pieter Bruegel cel Bătrân', 'Jan van Eyck', 'René Magritte'],
+    answer: 'Pieter Bruegel cel Bătrân',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește piața centrală istorică a Bruxelles-ului, declarată patrimoniu UNESCO?',
+    choices: ['Grote Markt', 'Grand-Place', 'Place Royale', 'Sablon'],
+    answer: 'Grand-Place',
+  ),
+  CultureQuestion(
+    question: 'Ce inventator belgian este creditat cu inventarea saxofonului?',
+    choices: ['Adolphe Sax', 'Léon Theremin', 'Antoine Courtois', 'Charles Wheatstone'],
+    answer: 'Adolphe Sax',
+  ),
+  CultureQuestion(
+    question: 'Ce cântăreț și compozitor belgian celebru a scris "Ne me quitte pas"?',
+    choices: ['Charles Aznavour', 'Jacques Brel', 'Serge Gainsbourg', 'Édith Piaf'],
+    answer: 'Jacques Brel',
+  ),
+  CultureQuestion(
+    question: 'Ce oraș belgian este supranumit "Veneția Nordului" datorită canalelor sale?',
+    choices: ['Gent', 'Anvers', 'Bruges', 'Namur'],
+    answer: 'Bruges',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare port al Belgiei și al doilea cel mai mare din Europa?',
+    choices: ['Portul Bruxelles', 'Portul Anvers', 'Portul Gent', 'Portul Ostend'],
+    answer: 'Portul Anvers',
+  ),
+  CultureQuestion(
+    question: 'Orașul Anvers este cunoscut internațional pentru comerțul cu ce piatră prețioasă?',
+    choices: ['Rubine', 'Diamante', 'Smaralde', 'Safire'],
+    answer: 'Diamante',
+  ),
+  CultureQuestion(
+    question: 'Kevin De Bruyne și Eden Hazard sunt fotbaliști celebri din ce țară?',
+    choices: ['Olanda', 'Franța', 'Belgia', 'Germania'],
+    answer: 'Belgia',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost primul rege al belgienilor, după independența din 1830?',
+    choices: ['Leopold I', 'Leopold al II-lea', 'Albert I', 'Baudouin'],
+    answer: 'Leopold I',
+  ),
+  CultureQuestion(
+    question: 'Ce cursă ciclistă clasică de o zi, cunoscută drept "De Ronde", se desfășoară în Flandra?',
+    choices: ['Milano–Sanremo', 'Turul Flandrei', 'Paris–Roubaix', 'Liège–Bastogne–Liège'],
+    answer: 'Turul Flandrei',
+  ),
+  CultureQuestion(
+    question: 'Ce tip de dantelă tradițională este faimoasă în orașul Bruges?',
+    choices: ['Dantela de Calais', 'Dantela de Bruges', 'Dantela de Chantilly', 'Dantela venețiană'],
+    answer: 'Dantela de Bruges',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai veche universitate din Belgia, fondată în 1425?',
+    choices: ['Universitatea din Gent', 'KU Leuven', 'Universitatea Liberă din Bruxelles', 'Universitatea din Liège'],
+    answer: 'KU Leuven',
+  ),
+  CultureQuestion(
+    question: 'Ce tip de vafe (gofre) belgiene este mai dens și mai dulce, originar din orașul Liège?',
+    choices: ['Vafele de Bruxelles', 'Vafele de Liège', 'Vafele de Gent', 'Vafele de Namur'],
+    answer: 'Vafele de Liège',
+  ),
+  CultureQuestion(
+    question: 'Ce competiție ciclistă clasică, una dintre cele mai vechi din lume, se desfășoară în jurul orașului Liège?',
+    choices: ['Liège–Bastogne–Liège', 'Milano–Sanremo', 'Amstel Gold Race', 'Gent–Wevelgem'],
+    answer: 'Liège–Bastogne–Liège',
+  ),
+  CultureQuestion(
+    question: 'Ce planetă are cele mai vizibile inele din Sistemul Solar?',
+    choices: ['Saturn', 'Jupiter', 'Uranus', 'Neptun'],
+    answer: 'Saturn',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește stația spațială permanent locuită, aflată pe orbita Pământului?',
+    choices: ['Stația Spațială Internațională', 'Mir', 'Skylab', 'Tiangong'],
+    answer: 'Stația Spațială Internațională',
+  ),
+  CultureQuestion(
+    question: 'Ce agenție spațială americană a coordonat misiunile Apollo?',
+    choices: ['ESA', 'NASA', 'Roscosmos', 'JAXA'],
+    answer: 'NASA',
+  ),
+  CultureQuestion(
+    question: 'În ce constelație se află Steaua Polară?',
+    choices: ['Ursa Mare', 'Ursa Mică', 'Orion', 'Casiopeea'],
+    answer: 'Ursa Mică',
+  ),
+  CultureQuestion(
+    question: 'Cum se numea prima navă spațială cu echipaj uman, lansată în 1961?',
+    choices: ['Vostok 1', 'Apollo 11', 'Soyuz 1', 'Sputnik 1'],
+    answer: 'Vostok 1',
+  ),
+  CultureQuestion(
+    question: 'Ce planetă are cea mai mare lună din Sistemul Solar (Ganymede)?',
+    choices: ['Saturn', 'Jupiter', 'Uranus', 'Neptun'],
+    answer: 'Jupiter',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mic os din corpul uman?',
+    choices: ['Scărița', 'Rotula', 'Falanga', 'Clavicula'],
+    answer: 'Scărița',
+  ),
+  CultureQuestion(
+    question: 'Ce vitamină este cunoscută și ca acid ascorbic?',
+    choices: ['Vitamina A', 'Vitamina C', 'Vitamina D', 'Vitamina K'],
+    answer: 'Vitamina C',
+  ),
+  CultureQuestion(
+    question: 'Câte camere are inima umană?',
+    choices: ['2', '3', '4', '5'],
+    answer: '4',
+  ),
+  CultureQuestion(
+    question: 'Ce parte a creierului controlează echilibrul și coordonarea mișcărilor?',
+    choices: ['Cerebelul', 'Hipotalamusul', 'Talamusul', 'Bulbul rahidian'],
+    answer: 'Cerebelul',
+  ),
+  CultureQuestion(
+    question: 'Ce celule ale sistemului imunitar luptă împotriva infecțiilor?',
+    choices: ['Globulele roșii', 'Globulele albe', 'Trombocitele', 'Neuronii'],
+    answer: 'Globulele albe',
+  ),
+  CultureQuestion(
+    question: 'Câți litri de sânge are, în medie, un adult?',
+    choices: ['2-3 litri', '5-6 litri', '8-9 litri', '10-12 litri'],
+    answer: '5-6 litri',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Elveției?',
+    choices: ['Zurich', 'Geneva', 'Berna', 'Basel'],
+    answer: 'Berna',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Suediei?',
+    choices: ['Göteborg', 'Malmö', 'Stockholm', 'Uppsala'],
+    answer: 'Stockholm',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Norvegiei?',
+    choices: ['Bergen', 'Oslo', 'Trondheim', 'Stavanger'],
+    answer: 'Oslo',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Finlandei?',
+    choices: ['Turku', 'Tampere', 'Helsinki', 'Oulu'],
+    answer: 'Helsinki',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Danemarcei?',
+    choices: ['Aarhus', 'Odense', 'Copenhaga', 'Aalborg'],
+    answer: 'Copenhaga',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Irlandei?',
+    choices: ['Cork', 'Galway', 'Dublin', 'Limerick'],
+    answer: 'Dublin',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Cehiei?',
+    choices: ['Brno', 'Praga', 'Ostrava', 'Plzeň'],
+    answer: 'Praga',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Ucrainei?',
+    choices: ['Harkov', 'Odesa', 'Kiev', 'Lviv'],
+    answer: 'Kiev',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Mexicului?',
+    choices: ['Guadalajara', 'Monterrey', 'Ciudad de Mexico', 'Cancún'],
+    answer: 'Ciudad de Mexico',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Argentinei?',
+    choices: ['Córdoba', 'Rosario', 'Buenos Aires', 'Mendoza'],
+    answer: 'Buenos Aires',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Coreei de Sud?',
+    choices: ['Busan', 'Seul', 'Incheon', 'Daegu'],
+    answer: 'Seul',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Thailandei?',
+    choices: ['Chiang Mai', 'Phuket', 'Bangkok', 'Pattaya'],
+    answer: 'Bangkok',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Noii Zeelande?',
+    choices: ['Auckland', 'Wellington', 'Christchurch', 'Hamilton'],
+    answer: 'Wellington',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai lung fluviu din Europa?',
+    choices: ['Dunărea', 'Volga', 'Rinul', 'Ronul'],
+    answer: 'Volga',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai mare insulă din lume?',
+    choices: ['Madagascar', 'Groenlanda', 'Borneo', 'Noua Guinee'],
+    answer: 'Groenlanda',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai populat continent?',
+    choices: ['Africa', 'Asia', 'Europa', 'America de Nord'],
+    answer: 'Asia',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mic ocean de pe Glob?',
+    choices: ['Oceanul Indian', 'Oceanul Atlantic', 'Oceanul Arctic', 'Oceanul Pacific'],
+    answer: 'Oceanul Arctic',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai mare peninsulă din lume?',
+    choices: ['Peninsula Arabică', 'Peninsula Scandinavă', 'Peninsula Iberică', 'Peninsula Balcanică'],
+    answer: 'Peninsula Arabică',
+  ),
+  CultureQuestion(
+    question: 'Pe ce continent se află cea mai mare parte a teritoriului Rusiei?',
+    choices: ['Europa', 'Asia', 'Ambele în mod egal', 'Nici una'],
+    answer: 'Asia',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost primul președinte al Statelor Unite ale Americii?',
+    choices: ['Thomas Jefferson', 'Abraham Lincoln', 'George Washington', 'John Adams'],
+    answer: 'George Washington',
+  ),
+  CultureQuestion(
+    question: 'În ce an a căzut Zidul Berlinului?',
+    choices: ['1987', '1989', '1991', '1993'],
+    answer: '1989',
+  ),
+  CultureQuestion(
+    question: 'Cine a condus expediția care a realizat primul înconjur al globului, finalizat în 1522?',
+    choices: ['Vasco da Gama', 'Fernando Magellan', 'Cristofor Columb', 'James Cook'],
+    answer: 'Fernando Magellan',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost liderul roman ucis în anul 44 î.Hr., într-un celebru complot?',
+    choices: ['Augustus', 'Iulius Cezar', 'Nero', 'Marc Antoniu'],
+    answer: 'Iulius Cezar',
+  ),
+  CultureQuestion(
+    question: 'Ce civilizație antică a construit piramidele de la Giza?',
+    choices: ['Grecii antici', 'Egiptenii antici', 'Romanii antici', 'Babilonienii'],
+    answer: 'Egiptenii antici',
+  ),
+  CultureQuestion(
+    question: 'În ce secol a început Renașterea europeană?',
+    choices: ['Secolul XII', 'Secolul XIV', 'Secolul XVII', 'Secolul XIX'],
+    answer: 'Secolul XIV',
+  ),
+  CultureQuestion(
+    question: 'Ce tratat a pus capăt oficial Primului Război Mondial?',
+    choices: ['Tratatul de la Versailles', 'Tratatul de la Yalta', 'Tratatul de la Paris', 'Tratatul de la Viena'],
+    answer: 'Tratatul de la Versailles',
+  ),
+  CultureQuestion(
+    question: 'Cine a sculptat statuia "David", expusă la Florența?',
+    choices: ['Donatello', 'Michelangelo', 'Bernini', 'Rodin'],
+    answer: 'Michelangelo',
+  ),
+  CultureQuestion(
+    question: 'Ce muzeu celebru din Paris găzduiește Mona Lisa?',
+    choices: ['Muzeul d\'Orsay', 'Luvru', 'Centrul Pompidou', 'Petit Palais'],
+    answer: 'Luvru',
+  ),
+  CultureQuestion(
+    question: 'Cine a compus opera "Flautul fermecat"?',
+    choices: ['Ludwig van Beethoven', 'Wolfgang Amadeus Mozart', 'Johann Strauss', 'Giuseppe Verdi'],
+    answer: 'Wolfgang Amadeus Mozart',
+  ),
+  CultureQuestion(
+    question: 'Ce scriitor britanic a creat personajul detectiv Sherlock Holmes?',
+    choices: ['Agatha Christie', 'Arthur Conan Doyle', 'Charles Dickens', 'Oscar Wilde'],
+    answer: 'Arthur Conan Doyle',
+  ),
+  CultureQuestion(
+    question: 'Cine a scris romanul "Război și pace"?',
+    choices: ['Fiodor Dostoievski', 'Lev Tolstoi', 'Anton Cehov', 'Nikolai Gogol'],
+    answer: 'Lev Tolstoi',
+  ),
+  CultureQuestion(
+    question: 'Cine a scris "Micul Prinț"?',
+    choices: ['Victor Hugo', 'Antoine de Saint-Exupéry', 'Albert Camus', 'Jules Verne'],
+    answer: 'Antoine de Saint-Exupéry',
+  ),
+  CultureQuestion(
+    question: 'Cine este creditat cu inventarea World Wide Web?',
+    choices: ['Bill Gates', 'Tim Berners-Lee', 'Steve Jobs', 'Larry Page'],
+    answer: 'Tim Berners-Lee',
+  ),
+  CultureQuestion(
+    question: 'Ce companie a dezvoltat sistemul de operare Android?',
+    choices: ['Apple', 'Microsoft', 'Google', 'Samsung'],
+    answer: 'Google',
+  ),
+  CultureQuestion(
+    question: 'Ce companie a creat consola de jocuri PlayStation?',
+    choices: ['Nintendo', 'Microsoft', 'Sony', 'Sega'],
+    answer: 'Sony',
+  ),
+  CultureQuestion(
+    question: 'În ce an a fost lansat primul iPhone?',
+    choices: ['2005', '2007', '2009', '2011'],
+    answer: '2007',
+  ),
+  CultureQuestion(
+    question: 'Ce metal este cel mai bun conductor electric la temperatura camerei?',
+    choices: ['Cuprul', 'Aurul', 'Argintul', 'Aluminiul'],
+    answer: 'Argintul',
+  ),
+  CultureQuestion(
+    question: 'Ce limbaj de programare a fost creat special pentru site-uri web interactive, în 1995?',
+    choices: ['Python', 'Java', 'JavaScript', 'C++'],
+    answer: 'JavaScript',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare pește din lume?',
+    choices: ['Rechinul alb', 'Rechinul balenă', 'Tonul albastru', 'Manta'],
+    answer: 'Rechinul balenă',
+  ),
+  CultureQuestion(
+    question: 'Ce animal este singurul mamifer capabil de zbor propulsat, nu doar planat?',
+    choices: ['Veverița zburătoare', 'Liliacul', 'Lemurul zburător', 'Pterozaurul'],
+    answer: 'Liliacul',
+  ),
+  CultureQuestion(
+    question: 'Câte inimi are o caracatiță?',
+    choices: ['1', '2', '3', '4'],
+    answer: '3',
+  ),
+  CultureQuestion(
+    question: 'Ce animal își schimbă culoarea pielii pentru a se camufla?',
+    choices: ['Iguana', 'Cameleonul', 'Salamandra', 'Broasca'],
+    answer: 'Cameleonul',
+  ),
+  CultureQuestion(
+    question: 'Care este cea mai mare reptilă din lume?',
+    choices: ['Varanul de Komodo', 'Crocodilul de apă sărată', 'Anaconda', 'Broasca țestoasă Galapagos'],
+    answer: 'Crocodilul de apă sărată',
+  ),
+  CultureQuestion(
+    question: 'Ce mamifer marin este cunoscut ca fiind unul dintre cele mai inteligente animale?',
+    choices: ['Foca', 'Delfinul', 'Balena', 'Vidra de mare'],
+    answer: 'Delfinul',
+  ),
+  CultureQuestion(
+    question: 'În ce oraș s-au desfășurat primele Jocuri Olimpice moderne, în 1896?',
+    choices: ['Roma', 'Paris', 'Atena', 'Londra'],
+    answer: 'Atena',
+  ),
+  CultureQuestion(
+    question: 'Câți jucători are o echipă de baschet pe teren, în același timp?',
+    choices: ['4', '5', '6', '7'],
+    answer: '5',
+  ),
+  CultureQuestion(
+    question: 'Câți jucători are o echipă de volei pe teren, în același timp?',
+    choices: ['5', '6', '7', '8'],
+    answer: '6',
+  ),
+  CultureQuestion(
+    question: 'La ce sport excelează gimnasta Simone Biles?',
+    choices: ['Înot', 'Atletism', 'Gimnastică', 'Scrimă'],
+    answer: 'Gimnastică',
+  ),
+  CultureQuestion(
+    question: 'Câte seturi trebuie câștigate, de regulă, pentru a câștiga un meci de tenis masculin la Grand Slam?',
+    choices: ['2 din 3', '3 din 5', '4 din 7', '1 din 1'],
+    answer: '3 din 5',
+  ),
+  CultureQuestion(
+    question: 'Ce sărbătoare creștină celebrează nașterea lui Iisus?',
+    choices: ['Paștele', 'Rusaliile', 'Crăciunul', 'Boboteaza'],
+    answer: 'Crăciunul',
+  ),
+  CultureQuestion(
+    question: 'Câte zerouri are un milion, scris cu cifre?',
+    choices: ['4', '5', '6', '7'],
+    answer: '6',
+  ),
+];
+
+const List<CultureQuestion> _cultureQuestionsMaghiara = [
+  CultureQuestion(
+    question: 'Cum se numește orașul rezultat din unirea orașelor Buda, Pest și Óbuda, în 1873?',
+    choices: ['Budapesta', 'Debrecen', 'Szeged', 'Pécs'],
+    answer: 'Budapesta',
+  ),
+  CultureQuestion(
+    question: 'Ce pod istoric celebru unește Buda și Pesta peste Dunăre?',
+    choices: ['Podul cu Lanțuri', 'Podul Elisabeta', 'Podul Libertății', 'Podul Margareta'],
+    answer: 'Podul cu Lanțuri',
+  ),
+  CultureQuestion(
+    question: 'Ce clădire impresionantă de pe malul Dunării, din Budapesta, este sediul Parlamentului Ungariei?',
+    choices: ['Parlamentul Ungariei', 'Castelul Buda', 'Bazilica Sfântul Ștefan', 'Opera Maghiară'],
+    answer: 'Parlamentul Ungariei',
+  ),
+  CultureQuestion(
+    question: 'Ce lac din vestul Ungariei este cel mai mare lac de apă dulce din Europa Centrală, supranumit "Marea Maghiară"?',
+    choices: ['Lacul Balaton', 'Lacul Velence', 'Lacul Tisza', 'Lacul Fertő'],
+    answer: 'Lacul Balaton',
+  ),
+  CultureQuestion(
+    question: 'Ce fluviu major traversează Budapesta, împărțind orașul în Buda și Pesta?',
+    choices: ['Tisa', 'Dunărea', 'Rinul', 'Drava'],
+    answer: 'Dunărea',
+  ),
+  CultureQuestion(
+    question: 'Ce fel de tocană tradițională maghiară, cu carne și boia, a devenit cunoscută în toată lumea?',
+    choices: ['Gulașul', 'Paprikașul', 'Lecsó', 'Töltött káposzta'],
+    answer: 'Gulașul',
+  ),
+  CultureQuestion(
+    question: 'Ce condiment roșu, esențial în bucătăria maghiară, este considerat simbolul culinar al Ungariei?',
+    choices: ['Boiaua (paprika)', 'Cardamomul', 'Șofranul', 'Turmericul'],
+    answer: 'Boiaua (paprika)',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost primul rege al Ungariei, încoronat în anul 1000, mai târziu declarat sfânt?',
+    choices: ['Ștefan I', 'Matia Corvin', 'Andrei II', 'Béla IV'],
+    answer: 'Ștefan I',
+  ),
+  CultureQuestion(
+    question: 'Ce rege maghiar din secolul al XV-lea, supranumit "cel Drept", a fost cunoscut pentru curtea sa renascentistă?',
+    choices: ['Matia Corvin', 'Ștefan I', 'Ludovic cel Mare', 'Sigismund de Luxemburg'],
+    answer: 'Matia Corvin',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește limba oficială a Ungariei, care aparține familiei de limbi fino-ugrice?',
+    choices: ['Maghiara', 'Slovaca', 'Croata', 'Slovena'],
+    answer: 'Maghiara',
+  ),
+  CultureQuestion(
+    question: 'Ce compozitor maghiar celebru a compus "Rapsodiile Ungare"?',
+    choices: ['Franz Liszt', 'Béla Bartók', 'Zoltán Kodály', 'Johannes Brahms'],
+    answer: 'Franz Liszt',
+  ),
+  CultureQuestion(
+    question: 'Ce compozitor și etnomuzicolog maghiar a colecționat cântece populare și a compus "Concertul pentru orchestră"?',
+    choices: ['Béla Bartók', 'Franz Liszt', 'Zoltán Kodály', 'Ferenc Erkel'],
+    answer: 'Béla Bartók',
+  ),
+  CultureQuestion(
+    question: 'Ce oraș din sud-estul Ungariei, cunoscut pentru salam și boia, este supranumit "Orașul Soarelui"?',
+    choices: ['Szeged', 'Debrecen', 'Pécs', 'Győr'],
+    answer: 'Szeged',
+  ),
+  CultureQuestion(
+    question: 'Cum se numesc celebrele băi termale istorice din Budapesta, printre cele mai mari complexe balneare din Europa?',
+    choices: ['Băile Széchenyi', 'Băile Gellért', 'Termele Caracalla', 'Băile Turcești'],
+    answer: 'Băile Széchenyi',
+  ),
+  CultureQuestion(
+    question: 'La ce sport acvatic de echipă este Ungaria una dintre cele mai titrate națiuni din istoria Jocurilor Olimpice?',
+    choices: ['Înot', 'Polo pe apă', 'Canotaj', 'Scrimă'],
+    answer: 'Polo pe apă',
+  ),
+  CultureQuestion(
+    question: 'Cine este inginerul maghiar creditat cu inventarea Cubului Rubik, în 1974?',
+    choices: ['Ernő Rubik', 'László Bíró', 'Erik Weisz', 'Tivadar Puskás'],
+    answer: 'Ernő Rubik',
+  ),
+  CultureQuestion(
+    question: 'Ce jurnalist maghiar este creditat cu inventarea stiloului cu bilă modern (pixul)?',
+    choices: ['László Bíró', 'Ernő Rubik', 'Tivadar Puskás', 'Ottó Bláthy'],
+    answer: 'László Bíró',
+  ),
+  CultureQuestion(
+    question: 'Ce matematician și fizician maghiar-american este considerat unul dintre fondatorii informaticii moderne?',
+    choices: ['John von Neumann', 'Alan Turing', 'Alonzo Church', 'Claude Shannon'],
+    answer: 'John von Neumann',
+  ),
+  CultureQuestion(
+    question: 'În ce an a avut loc Revoluția anticomunistă din Ungaria, înăbușită de trupele sovietice?',
+    choices: ['1953', '1956', '1968', '1989'],
+    answer: '1956',
+  ),
+  CultureQuestion(
+    question: 'Ce tratat din 1920, semnat după Primul Război Mondial, a dus la pierderea a două treimi din teritoriul istoric al Ungariei?',
+    choices: ['Tratatul de la Trianon', 'Tratatul de la Versailles', 'Tratatul de la Saint-Germain', 'Tratatul de la Neuilly'],
+    answer: 'Tratatul de la Trianon',
+  ),
+  CultureQuestion(
+    question: 'Care este moneda oficială a Ungariei, țară care nu a adoptat euro?',
+    choices: ['Forintul', 'Coroana', 'Leul', 'Zlotul'],
+    answer: 'Forintul',
+  ),
+  CultureQuestion(
+    question: 'Sub conducerea cui s-au stabilit triburile maghiare în Bazinul Carpatic, la finalul secolului al IX-lea?',
+    choices: ['Árpád', 'Attila', 'Ștefan I', 'Béla IV'],
+    answer: 'Árpád',
+  ),
+  CultureQuestion(
+    question: 'Ce oraș, al doilea ca populație din Ungaria, este renumit pentru universitate și pentru Marea Biserică Reformată?',
+    choices: ['Debrecen', 'Pécs', 'Győr', 'Miskolc'],
+    answer: 'Debrecen',
+  ),
+  CultureQuestion(
+    question: 'Ce tort celebru, cu straturi glazurate cu caramel, a fost creat de cofetarul József Dobos în 1885?',
+    choices: ['Tortul Dobos', 'Tortul Sacher', 'Tortul Esterházy', 'Tortul Linzer'],
+    answer: 'Tortul Dobos',
+  ),
+  CultureQuestion(
+    question: 'Ce festival muzical de vară, desfășurat pe o insulă din Budapesta, este unul dintre cele mai mari din Europa?',
+    choices: ['Sziget Festival', 'Tomorrowland', 'Glastonbury', 'Exit Festival'],
+    answer: 'Sziget Festival',
+  ),
+  CultureQuestion(
+    question: 'Ferenc Puskás este considerat una dintre cele mai mari legende din istoria...?',
+    choices: ['fotbalului maghiar', 'șahului maghiar', 'boxului maghiar', 'atletismului maghiar'],
+    answer: 'fotbalului maghiar',
+  ),
+  CultureQuestion(
+    question: 'Cine a scris poemul "Nemzeti dal" ("Cântecul Național"), simbol al Revoluției din 1848?',
+    choices: ['Sándor Petőfi', 'Endre Ady', 'Attila József', 'Mihály Vörösmarty'],
+    answer: 'Sándor Petőfi',
+  ),
+  CultureQuestion(
+    question: 'Versurile imnului național al Ungariei, "Himnusz", au fost scrise de cine?',
+    choices: ['Ferenc Kölcsey', 'Sándor Petőfi', 'János Arany', 'Mihály Vörösmarty'],
+    answer: 'Ferenc Kölcsey',
+  ),
+  CultureQuestion(
+    question: 'Ce compromis din 1867 a transformat Imperiul Austriac în dubla monarhie Austro-Ungară?',
+    choices: ['Compromisul Austro-Ungar', 'Tratatul de la Trianon', 'Congresul de la Viena', 'Pacea de la Westfalia'],
+    answer: 'Compromisul Austro-Ungar',
+  ),
+  CultureQuestion(
+    question: 'Ce castel medieval domină Buda, oferind o panoramă asupra Dunării și a Parlamentului?',
+    choices: ['Castelul Buda', 'Cetatea Eger', 'Castelul Vajdahunyad', 'Cetatea Visegrád'],
+    answer: 'Castelul Buda',
+  ),
+  CultureQuestion(
+    question: 'Ce instrument tradițional cu coarde, ciocănit cu baghete, este folosit în muzica populară maghiară?',
+    choices: ['Țambalul', 'Cimpoiul', 'Naiul', 'Vioara'],
+    answer: 'Țambalul',
+  ),
+  CultureQuestion(
+    question: 'Ce oraș istoric din nordul Ungariei este renumit pentru fortăreața sa și pentru vinul roșu "Egri Bikavér" (Sângele Taurului)?',
+    choices: ['Eger', 'Tokaj', 'Sopron', 'Kecskemét'],
+    answer: 'Eger',
+  ),
+  CultureQuestion(
+    question: 'Ce regiune din nord-estul Ungariei este renumită pentru vinurile albe dulci, printre cele mai vechi vinuri denumite de origine din lume?',
+    choices: ['Tokaj', 'Eger', 'Villány', 'Balaton'],
+    answer: 'Tokaj',
+  ),
+  CultureQuestion(
+    question: 'Ce planetă este cunoscută pentru vânturile sale extrem de puternice și pentru culoarea albastră intensă?',
+    choices: ['Neptun', 'Uranus', 'Saturn', 'Jupiter'],
+    answer: 'Neptun',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește fenomenul prin care Luna acoperă complet Soarele, văzut de pe Pământ?',
+    choices: ['Eclipsă totală de Soare', 'Eclipsă de Lună', 'Solstițiu', 'Echinocțiu'],
+    answer: 'Eclipsă totală de Soare',
+  ),
+  CultureQuestion(
+    question: 'Ce telescop spațial, lansat în 1990, a revoluționat astronomia cu imagini de înaltă rezoluție?',
+    choices: ['Telescopul Hubble', 'Telescopul James Webb', 'Telescopul Kepler', 'Telescopul Spitzer'],
+    answer: 'Telescopul Hubble',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost primul câine trimis în spațiu, la bordul satelitului Sputnik 2, în 1957?',
+    choices: ['Laika', 'Belka', 'Strelka', 'Ham'],
+    answer: 'Laika',
+  ),
+  CultureQuestion(
+    question: 'Ce planetă din Sistemul Solar are o zi mai lungă decât anul ei?',
+    choices: ['Venus', 'Mercur', 'Marte', 'Uranus'],
+    answer: 'Venus',
+  ),
+  CultureQuestion(
+    question: 'Cum se numește ultima planetă vizitată de misiunea Voyager 2, înainte de a ieși din Sistemul Solar?',
+    choices: ['Neptun', 'Uranus', 'Pluto', 'Saturn'],
+    answer: 'Neptun',
+  ),
+  CultureQuestion(
+    question: 'Ce organ este responsabil pentru filtrarea sângelui și producerea urinei?',
+    choices: ['Rinichii', 'Ficatul', 'Plămânii', 'Splina'],
+    answer: 'Rinichii',
+  ),
+  CultureQuestion(
+    question: 'Câte perechi de coaste are, de obicei, un adult?',
+    choices: ['10', '11', '12', '13'],
+    answer: '12',
+  ),
+  CultureQuestion(
+    question: 'Ce simț este controlat de nervul optic?',
+    choices: ['Vederea', 'Auzul', 'Mirosul', 'Gustul'],
+    answer: 'Vederea',
+  ),
+  CultureQuestion(
+    question: 'Ce vitamină este produsă cu ajutorul ficatului și este esențială pentru coagularea sângelui?',
+    choices: ['Vitamina A', 'Vitamina K', 'Vitamina E', 'Vitamina B6'],
+    answer: 'Vitamina K',
+  ),
+  CultureQuestion(
+    question: 'Câte oase are, la naștere, un bebeluș uman — mai multe decât un adult?',
+    choices: ['Aproximativ 206', 'Aproximativ 250', 'Aproximativ 300', 'Aproximativ 350'],
+    answer: 'Aproximativ 300',
+  ),
+  CultureQuestion(
+    question: 'Ce parte a ochiului controlează cantitatea de lumină care intră?',
+    choices: ['Irisul (pupila)', 'Retina', 'Corneea', 'Cristalinul'],
+    answer: 'Irisul (pupila)',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Croației?',
+    choices: ['Zagreb', 'Split', 'Dubrovnik', 'Rijeka'],
+    answer: 'Zagreb',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Serbiei?',
+    choices: ['Belgrad', 'Novi Sad', 'Niš', 'Subotica'],
+    answer: 'Belgrad',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Bulgariei?',
+    choices: ['Sofia', 'Plovdiv', 'Varna', 'Burgas'],
+    answer: 'Sofia',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Slovaciei?',
+    choices: ['Bratislava', 'Košice', 'Nitra', 'Žilina'],
+    answer: 'Bratislava',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Sloveniei?',
+    choices: ['Ljubljana', 'Maribor', 'Celje', 'Koper'],
+    answer: 'Ljubljana',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Islandei?',
+    choices: ['Reykjavik', 'Akureyri', 'Selfoss', 'Kópavogur'],
+    answer: 'Reykjavik',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Letoniei?',
+    choices: ['Riga', 'Daugavpils', 'Liepāja', 'Jūrmala'],
+    answer: 'Riga',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Lituaniei?',
+    choices: ['Vilnius', 'Kaunas', 'Klaipėda', 'Šiauliai'],
+    answer: 'Vilnius',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Estoniei?',
+    choices: ['Tallinn', 'Tartu', 'Narva', 'Pärnu'],
+    answer: 'Tallinn',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala statului Peru?',
+    choices: ['Lima', 'Cusco', 'Arequipa', 'Trujillo'],
+    answer: 'Lima',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala statului Chile?',
+    choices: ['Santiago', 'Valparaíso', 'Concepción', 'Antofagasta'],
+    answer: 'Santiago',
+  ),
+  CultureQuestion(
+    question: 'Care este capitala Indoneziei?',
+    choices: ['Jakarta', 'Bali', 'Surabaya', 'Bandung'],
+    answer: 'Jakarta',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai adânc lac din lume?',
+    choices: ['Lacul Baikal', 'Lacul Tanganyika', 'Lacul Superior', 'Marea Caspică'],
+    answer: 'Lacul Baikal',
+  ),
+  CultureQuestion(
+    question: 'Ce strat al atmosferei conține stratul de ozon care ne protejează de radiațiile UV?',
+    choices: ['Troposfera', 'Stratosfera', 'Mezosfera', 'Termosfera'],
+    answer: 'Stratosfera',
+  ),
+  CultureQuestion(
+    question: 'Ce ocean separă America de Europa și Africa?',
+    choices: ['Oceanul Atlantic', 'Oceanul Pacific', 'Oceanul Indian', 'Oceanul Arctic'],
+    answer: 'Oceanul Atlantic',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare arhipelag din lume, ca număr de insule?',
+    choices: ['Indonezia', 'Filipine', 'Japonia', 'Insulele Maldive'],
+    answer: 'Indonezia',
+  ),
+  CultureQuestion(
+    question: 'Ce munți separă Europa de Asia, considerați o frontieră naturală?',
+    choices: ['Munții Ural', 'Munții Caucaz', 'Alpii', 'Carpații'],
+    answer: 'Munții Ural',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost prima femeie care a câștigat un Premiu Nobel?',
+    choices: ['Marie Curie', 'Rosalind Franklin', 'Ada Lovelace', 'Florence Nightingale'],
+    answer: 'Marie Curie',
+  ),
+  CultureQuestion(
+    question: 'Ce imperiu antic, condus de Alexandru Macedon, s-a extins din Grecia până în India?',
+    choices: ['Imperiul Roman', 'Imperiul Macedonean', 'Imperiul Persan', 'Imperiul Otoman'],
+    answer: 'Imperiul Macedonean',
+  ),
+  CultureQuestion(
+    question: 'În ce an a început Revoluția Franceză?',
+    choices: ['1776', '1789', '1799', '1804'],
+    answer: '1789',
+  ),
+  CultureQuestion(
+    question: 'Cine a fost liderul care a condus Uniunea Sovietică în timpul Celui de-al Doilea Război Mondial?',
+    choices: ['Vladimir Lenin', 'Iosif Stalin', 'Nikita Hrusciov', 'Leonid Brejnev'],
+    answer: 'Iosif Stalin',
+  ),
+  CultureQuestion(
+    question: 'Ce structură antică din China, vizibilă parțial din spațiu, a fost construită pentru apărare?',
+    choices: ['Marele Zid Chinezesc', 'Marele Canal', 'Marea Piramidă', 'Marele Baraj'],
+    answer: 'Marele Zid Chinezesc',
+  ),
+  CultureQuestion(
+    question: 'Ce explorator norvegian a fost primul om care a ajuns la Polul Sud, în 1911?',
+    choices: ['Roald Amundsen', 'Robert Scott', 'Ernest Shackleton', 'Richard Byrd'],
+    answer: 'Roald Amundsen',
+  ),
+  CultureQuestion(
+    question: 'Cine a compus baletul "Lacul Lebedelor"?',
+    choices: ['Piotr Ilici Ceaikovski', 'Serghei Prokofiev', 'Igor Stravinski', 'Nikolai Rimski-Korsakov'],
+    answer: 'Piotr Ilici Ceaikovski',
+  ),
+  CultureQuestion(
+    question: 'Ce arhitect spaniol este creatorul catedralei nefinalizate Sagrada Família din Barcelona?',
+    choices: ['Antoni Gaudí', 'Pablo Picasso', 'Salvador Dalí', 'Joan Miró'],
+    answer: 'Antoni Gaudí',
+  ),
+  CultureQuestion(
+    question: 'Cine a scris romanul "1984"?',
+    choices: ['George Orwell', 'Aldous Huxley', 'Ray Bradbury', 'H.G. Wells'],
+    answer: 'George Orwell',
+  ),
+  CultureQuestion(
+    question: 'Cine a pictat "Persistența memoriei" (tabloul cu ceasurile moi)?',
+    choices: ['Salvador Dalí', 'René Magritte', 'Max Ernst', 'Joan Miró'],
+    answer: 'Salvador Dalí',
+  ),
+  CultureQuestion(
+    question: 'Cine a scris piesa de teatru "Hamlet"?',
+    choices: ['William Shakespeare', 'Christopher Marlowe', 'Ben Jonson', 'Oscar Wilde'],
+    answer: 'William Shakespeare',
+  ),
+  CultureQuestion(
+    question: 'Ce muzeu din Madrid găzduiește opere de Velázquez și Goya?',
+    choices: ['Muzeul Prado', 'Muzeul Reina Sofía', 'Luvru', 'Muzeul Van Gogh'],
+    answer: 'Muzeul Prado',
+  ),
+  CultureQuestion(
+    question: 'Ce companie a lansat, în 1977, consola de jocuri video Atari 2600?',
+    choices: ['Atari', 'Nintendo', 'Sega', 'Sony'],
+    answer: 'Atari',
+  ),
+  CultureQuestion(
+    question: 'Ce rețea socială a fost fondată de Mark Zuckerberg în 2004?',
+    choices: ['Facebook', 'Twitter', 'Instagram', 'LinkedIn'],
+    answer: 'Facebook',
+  ),
+  CultureQuestion(
+    question: 'Ce companie deține cel mai folosit motor de căutare din lume, Google Search?',
+    choices: ['Google', 'Yahoo', 'Microsoft', 'Amazon'],
+    answer: 'Google',
+  ),
+  CultureQuestion(
+    question: 'Ce înseamnă termenul "hardware" în informatică?',
+    choices: ['Componentele fizice ale unui calculator', 'Programele instalate', 'Sistemul de operare', 'Conexiunea la internet'],
+    answer: 'Componentele fizice ale unui calculator',
+  ),
+  CultureQuestion(
+    question: 'Ce tip de memorie a calculatorului își pierde datele când se închide alimentarea?',
+    choices: ['RAM', 'Hard Disk', 'SSD', 'ROM'],
+    answer: 'RAM',
+  ),
+  CultureQuestion(
+    question: 'Care este cel mai mare animal terestru din lume?',
+    choices: ['Elefantul african', 'Girafa', 'Rinocerul', 'Hipopotamul'],
+    answer: 'Elefantul african',
+  ),
+  CultureQuestion(
+    question: 'Ce insectă produce miere și trăiește în colonii organizate în jurul unei regine?',
+    choices: ['Albina', 'Furnica', 'Viespea', 'Fluturele'],
+    answer: 'Albina',
+  ),
+  CultureQuestion(
+    question: 'Care dintre următoarele animale NU poate sări?',
+    choices: ['Elefantul', 'Cangurul', 'Broasca', 'Iepurele'],
+    answer: 'Elefantul',
+  ),
+  CultureQuestion(
+    question: 'Ce animal are cel mai lung gât dintre toate mamiferele?',
+    choices: ['Girafa', 'Cămila', 'Struțul', 'Calul'],
+    answer: 'Girafa',
+  ),
+  CultureQuestion(
+    question: 'Câte picioare are un crab, în total?',
+    choices: ['6', '8', '10', '12'],
+    answer: '10',
+  ),
+  CultureQuestion(
+    question: 'Ce pasăre este cunoscută ca fiind cea mai rapidă din lume, în picaj?',
+    choices: ['Șoimul călător', 'Vulturul auriu', 'Albatrosul', 'Colibrii'],
+    answer: 'Șoimul călător',
+  ),
+  CultureQuestion(
+    question: 'La ce sport este folosit termenul "eagle" (vultur) pentru un scor cu 2 sub par pe o gaură?',
+    choices: ['Golf', 'Tenis', 'Baschet', 'Popice'],
+    answer: 'Golf',
+  ),
+  CultureQuestion(
+    question: 'Câte seturi are, de regulă, un meci de tenis feminin la Grand Slam?',
+    choices: ['2 din 3', '3 din 5', '4 din 7', '1 din 1'],
+    answer: '2 din 3',
+  ),
+  CultureQuestion(
+    question: 'Ce țară a găzduit Campionatul Mondial de Fotbal din 2014?',
+    choices: ['Brazilia', 'Germania', 'Africa de Sud', 'Rusia'],
+    answer: 'Brazilia',
+  ),
+  CultureQuestion(
+    question: 'Câte runde durează, de regulă, un meci profesionist de box la nivel de campionat mondial?',
+    choices: ['8', '10', '12', '15'],
+    answer: '12',
+  ),
+  CultureQuestion(
+    question: 'Ce sărbătoare se celebrează pe 1 ianuarie în majoritatea lumii?',
+    choices: ['Anul Nou', 'Crăciunul', 'Paștele', 'Ziua Recoltei'],
+    answer: 'Anul Nou',
+  ),
+  CultureQuestion(
+    question: 'Câte litere are alfabetul latin de bază, folosit în limba engleză?',
+    choices: ['24', '25', '26', '27'],
+    answer: '26',
+  ),
+  CultureQuestion(
+    question: 'Ce unitate de măsură este folosită pentru a exprima greutatea, în sistemul metric?',
+    choices: ['Kilogramul', 'Litrul', 'Metrul', 'Newtonul'],
+    answer: 'Kilogramul',
+  ),
+  CultureQuestion(
+    question: 'Câte zile durează, în medie, un ciclu lunar (de la Lună nouă la Lună nouă)?',
+    choices: ['Aproximativ 21 zile', 'Aproximativ 25 zile', 'Aproximativ 29,5 zile', 'Aproximativ 35 zile'],
+    answer: 'Aproximativ 29,5 zile',
+  ),
+  CultureQuestion(
+    question: 'Ce material este folosit tradițional pentru medaliile de locul 1 la Jocurile Olimpice?',
+    choices: ['Aurul (aliaj placat)', 'Platina', 'Titanul', 'Bronzul'],
+    answer: 'Aurul (aliaj placat)',
+  ),
+  CultureQuestion(
+    question: 'Câte coarde are, de obicei, o chitară clasică?',
+    choices: ['4', '5', '6', '7'],
+    answer: '6',
+  ),
+  CultureQuestion(
+    question: 'Ce parte a plantei absoarbe apa și substanțele nutritive din sol?',
+    choices: ['Rădăcina', 'Tulpina', 'Floarea', 'Fructul'],
+    answer: 'Rădăcina',
+  ),
+  CultureQuestion(
+    question: 'Ce gaz folosesc plantele pentru fotosinteză, eliberând oxigen?',
+    choices: ['Dioxidul de carbon', 'Azotul', 'Hidrogenul', 'Metanul'],
+    answer: 'Dioxidul de carbon',
+  ),
+  CultureQuestion(
+    question: 'Câte zile are, în total, luna aprilie?',
+    choices: ['28', '29', '30', '31'],
+    answer: '30',
+  ),
+  CultureQuestion(
+    question: 'Ce fenomen optic colorat apare pe cer după ploaie, când lumina soarelui se refractă prin picăturile de apă?',
+    choices: ['Curcubeul', 'Aurora boreală', 'Halo-ul lunar', 'Mirajul'],
+    answer: 'Curcubeul',
+  ),
+  CultureQuestion(
+    question: 'Ce oraș din vestul Ungariei, aproape de frontiera cu Austria, este renumit pentru arhitectura sa barocă bine conservată?',
+    choices: ['Sopron', 'Győr', 'Veszprém', 'Kecskemét'],
+    answer: 'Sopron',
+  ),
+];
+
+/// Categoriile disponibile pentru panoul de pe Home — fiecare cu propriul
+/// pool de [cultureQuizQuestionCount] întrebări. Prima din listă e selectată
+/// implicit când deschizi Home.
+const List<CultureCategory> cultureCategories = [
+  CultureCategory(id: 'romania', title: 'România', flag: '🇷🇴', questions: _cultureQuestionsRomania),
+  CultureCategory(id: 'belgia', title: 'Belgia', flag: '🇧🇪', questions: _cultureQuestionsBelgia),
+  CultureCategory(id: 'maghiara', title: 'Ungaria', flag: '🇭🇺', questions: _cultureQuestionsMaghiara),
 ];

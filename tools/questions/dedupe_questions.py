@@ -2,7 +2,7 @@
 
 Păstrează prima apariție (în ordinea pixel -> choice -> cave -> medical,
 și în ordinea din fișier) și șterge restul. Rulare:
-    python tools/dedupe_questions.py
+    python tools/questions/dedupe_questions.py
 """
 import json
 import io

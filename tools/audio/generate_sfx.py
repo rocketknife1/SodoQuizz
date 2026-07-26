@@ -2,7 +2,7 @@
 deci fara griji de licenta) pentru: butonul Next, aparitia recompensei de
 quest si impactul monedelor in balanta.
 
-Rulare: python tools/generate_sfx.py
+Rulare: python tools/audio/generate_sfx.py
 """
 import math
 import random

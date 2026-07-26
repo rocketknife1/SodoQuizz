@@ -1,7 +1,6 @@
 ﻿import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'core/music.dart';
-import 'core/sfx.dart';
+import 'core/audio.dart';
 import 'data/cloud_sync_service.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';

@@ -50,8 +50,3 @@ flutter:
     - assets/continut/romania/poze/
     - assets/sfx/
     - assets/music/
-
-  fonts:
-    - family: EdoSZ
-      fonts:
-        - asset: fonts/edosz/edosz.ttf

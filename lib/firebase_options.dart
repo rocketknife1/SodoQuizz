@@ -27,7 +27,7 @@ class DefaultFirebaseOptions {
 
   static const android = FirebaseOptions(
     apiKey: 'AIzaSyDMMbkoqPBzas0siDzH6c-GoBOWYJm-CUs',
-    appId: '1:112195368669:android:7a22a626a0d35bbc750d34',
+    appId: '1:112195368669:android:6961c0c5b1946b12750d34',
     messagingSenderId: '112195368669',
     projectId: 'sodoquizz',
     storageBucket: 'sodoquizz.firebasestorage.app',

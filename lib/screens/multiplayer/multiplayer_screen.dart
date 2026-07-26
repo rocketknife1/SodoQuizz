@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
-import '../data/multiplayer_service.dart';
-import '../data/storage_service.dart';
-import '../widgets/avatar.dart';
-import '../widgets/solid_menu_button.dart';
+import '../../core/theme.dart';
+import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
+import '../../widgets/avatar.dart';
+import '../../widgets/solid_menu_button.dart';
 import 'matchmaking_screen.dart';
 import 'room_lobby_screen.dart';
 

@@ -1,7 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import '../core/achievements.dart';
 import '../core/progression.dart';
-import '../core/quests.dart';
 
 /// Gestionează datele salvate local (vieți, monede, progres, highscore,
 /// XP/nivel, quest-uri, provocarea zilnică).

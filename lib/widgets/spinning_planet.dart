@@ -1,7 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/audio.dart';
 import '../core/gamemodes.dart';
-import '../core/sfx.dart';
 import '../screens/unlimited_quiz_screen.dart';
 
 /// Planetă centrală, cu funcție reală (spre deosebire de vechiul element

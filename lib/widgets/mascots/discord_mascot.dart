@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../core/mascot_sync.dart';
-import '../core/sfx.dart';
-import '../core/theme.dart';
+import '../../core/audio.dart';
+import '../../core/theme.dart';
 import 'googly_eyes.dart';
 import 'mascot_props.dart';
+import 'mascot_sync.dart';
 
 const _discordInviteUrl = 'https://discord.gg/5d5b65ffM';
 const _discordBlurple = Color(0xFF5865F2);

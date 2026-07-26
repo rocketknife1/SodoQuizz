@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
-import '../data/multiplayer_service.dart';
-import '../models/multiplayer_models.dart';
-import '../widgets/avatar.dart';
-import 'home_screen.dart';
-import 'loading_screen.dart';
+import '../../core/theme.dart';
+import '../../data/multiplayer_service.dart';
+import '../../models/multiplayer_models.dart';
+import '../../widgets/avatar.dart';
+import '../home_screen.dart';
+import '../loading_screen.dart';
 
 /// Clasamentul final al celor 5 jucători (reali + ficțivi) — stil
 /// consecvent cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).

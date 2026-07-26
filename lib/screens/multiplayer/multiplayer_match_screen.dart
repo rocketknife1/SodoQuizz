@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../core/theme.dart';
-import '../data/multiplayer_service.dart';
-import '../data/questions.dart';
-import '../models/multiplayer_models.dart';
-import '../models/question.dart';
-import '../widgets/avatar.dart';
-import '../widgets/blur_image.dart';
-import '../widgets/next_button.dart';
+import '../../core/theme.dart';
+import '../../data/multiplayer_service.dart';
+import '../../data/questions.dart';
+import '../../models/multiplayer_models.dart';
+import '../../models/question.dart';
+import '../../widgets/avatar.dart';
+import '../../widgets/blur_image.dart';
+import '../../widgets/next_button.dart';
 import 'multiplayer_results_screen.dart';
 
 /// Meciul live de 5 jucători (privat sau matchmaking public — identic din

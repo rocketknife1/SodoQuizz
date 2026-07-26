@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../core/gamemodes.dart';
-import '../core/theme.dart';
-import '../data/storage_service.dart';
-import '../widgets/level_header.dart';
+import '../../core/gamemodes.dart';
+import '../../core/theme.dart';
+import '../../data/storage_service.dart';
+import '../../widgets/level_header.dart';
 
 /// Clasament personal: recordul tău la fiecare gamemod + scorul maxim
 /// general. Aplicația nu are server/cont, deci nu există clasament
