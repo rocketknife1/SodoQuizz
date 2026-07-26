@@ -21,8 +21,11 @@ Future<void> collectRewards(
   required GlobalKey coinBadgeKey,
   required GlobalKey xpBadgeKey,
   required GlobalKey livesBadgeKey,
+  int hints = 0,
+  GlobalKey? hintsBadgeKey,
   VoidCallback? onEachImpact,
 }) async {
+  assert(hints <= 0 || hintsBadgeKey != null, 'hintsBadgeKey e obligatoriu daca hints > 0');
   Future<void> stage({
     required int amount,
     required IconData icon,
@@ -80,4 +83,15 @@ Future<void> collectRewards(
     applyReward: () => StorageService.addLivesUncapped(lives),
     impactSound: Sfx.heartHit,
   );
+  if (hints > 0) {
+    await stage(
+      amount: hints,
+      icon: Icons.tips_and_updates_rounded,
+      color: AppColors.hint,
+      targetKey: hintsBadgeKey!,
+      applyReward: () => StorageService.addHints(hints),
+      // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
+      impactSound: Sfx.xpHit,
+    );
+  }
 }

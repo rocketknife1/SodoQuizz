@@ -28,6 +28,7 @@ class StorageService {
   static const _modesEverPlayedKey = 'modes_ever_played';
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
+  static const _displayNameKey = 'display_name';
   static const _maxLives = 5;
   static const ringSpinCooldownHours = 24;
 
@@ -545,5 +546,54 @@ class StorageService {
       if (progressFor(a) >= a.target && !await isAchievementClaimed(a.id)) return true;
     }
     return false;
+  }
+
+  // ─── Nume afișat (multiplayer) ─────────────────────────────────────────────
+  // Jocul n-are cont/profil — doar un nume local, generat o singură dată,
+  // folosit ca sa te recunoasca ceilalti jucatori intr-o camera/meci.
+
+  static Future<String> getDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_displayNameKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final generated = 'Jucator${100 + DateTime.now().millisecondsSinceEpoch % 900}';
+    await prefs.setString(_displayNameKey, generated);
+    return generated;
+  }
+
+  static Future<void> setDisplayName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_displayNameKey, name);
+  }
+
+  // ─── Sincronizare cloud (cont Google) ──────────────────────────────────────
+  // Generic, nu camp-cu-camp: orice cheie noua adaugata in viitor (achievement
+  // nou, quest nou etc.) se sincronizeaza automat, fara alt cod aici.
+
+  static Future<Map<String, dynamic>> exportAll() async {
+    final prefs = await SharedPreferences.getInstance();
+    final map = <String, dynamic>{};
+    for (final key in prefs.getKeys()) {
+      map[key] = prefs.get(key);
+    }
+    return map;
+  }
+
+  static Future<void> importAll(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    for (final entry in data.entries) {
+      final value = entry.value;
+      if (value is String) {
+        await prefs.setString(entry.key, value);
+      } else if (value is int) {
+        await prefs.setInt(entry.key, value);
+      } else if (value is double) {
+        await prefs.setDouble(entry.key, value);
+      } else if (value is bool) {
+        await prefs.setBool(entry.key, value);
+      } else if (value is List) {
+        await prefs.setStringList(entry.key, value.cast<String>());
+      }
+    }
   }
 }

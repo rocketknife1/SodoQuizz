@@ -4,7 +4,9 @@ import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/quests.dart';
+import '../core/reward_collector.dart';
 import '../core/sfx.dart';
+import '../core/theme.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
 import '../models/question.dart';
@@ -289,10 +291,111 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showGameOver() => _showEndDialog(
-        title: 'Game Over! 💀',
-        message: 'Scor final: $score puncte\nSeria: $streak',
-      );
+  /// Game Over (0 vieți) e singurul caz cu opțiune de continuare: un buton
+  /// auriu "Reclamă" (simulată — fără SDK real) acordă +2 vieți/+5 hint-uri
+  /// prin [collectRewards] (fără plafon de folosiri în acest MVP — decizie
+  /// simplă, ajustabilă ulterior) și reia jocul chiar de unde a rămas
+  /// (întrebarea era deja dezvăluită, cu butonul "Următoarea" gata de tap).
+  /// Dacă nu vrea reclama, "Acasă" se comportă ca înainte.
+  void _showGameOver() {
+    StorageService.updateHighScore(score);
+    StorageService.updateModeHighScore(widget.gameModeId, score);
+    var watchingAd = false;
+    var adWatched = false;
+    final adLivesKey = GlobalKey();
+    final adHintsKey = GlobalKey();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (dialogContext, setDialogState) => AlertDialog(
+          backgroundColor: const Color(0xFF1a1a2e),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Game Over! 💀', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Scor final: $score puncte\nSeria: $streak', style: const TextStyle(color: Colors.white70)),
+              if (adWatched) ...[
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _adMiniBadge(adLivesKey, Icons.favorite_rounded, AppColors.life),
+                    const SizedBox(width: 14),
+                    _adMiniBadge(adHintsKey, Icons.tips_and_updates_rounded, AppColors.hint),
+                  ],
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            if (!adWatched)
+              ElevatedButton(
+                onPressed: watchingAd
+                    ? null
+                    : () async {
+                        setDialogState(() => watchingAd = true);
+                        // simuleaza vizionarea unei reclame - fara SDK real.
+                        await Future.delayed(const Duration(milliseconds: 900));
+                        if (!dialogContext.mounted) return;
+                        setDialogState(() {
+                          watchingAd = false;
+                          adWatched = true;
+                        });
+                        await collectRewards(
+                          dialogContext,
+                          coins: 0,
+                          xp: 0,
+                          lives: 2,
+                          hints: 5,
+                          coinBadgeKey: GlobalKey(),
+                          xpBadgeKey: GlobalKey(),
+                          livesBadgeKey: adLivesKey,
+                          hintsBadgeKey: adHintsKey,
+                        );
+                        if (!dialogContext.mounted) return;
+                        Navigator.of(dialogContext).pop();
+                        if (!mounted) return;
+                        _continueAfterAd();
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.coin,
+                  disabledBackgroundColor: Colors.white24,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: Text(
+                  watchingAd ? 'Se încarcă reclama...' : 'Reclamă  •  +2 ❤ +5 💡',
+                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF534AB7)),
+              onPressed: watchingAd ? null : _goHome,
+              child: const Text('Acasă', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _adMiniBadge(GlobalKey key, IconData icon, Color color) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(color: Colors.white.withAlpha(15), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white24)),
+      child: Icon(icon, color: color, size: 20),
+    );
+  }
+
+  void _continueAfterAd() {
+    setState(() {
+      lives = 2;
+      hintsBalance += 5;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
+import '../data/multiplayer_service.dart';
+import '../data/storage_service.dart';
 import '../widgets/avatar.dart';
+import '../widgets/solid_menu_button.dart';
+import 'matchmaking_screen.dart';
+import 'room_lobby_screen.dart';
 
-/// Ecranul de Multiplayer: contul tău + buton Connect. Momentan doar
-/// caută jucători la infinit (nu există backend încă) — pregătit ca loc
-/// unde se conectează matchmaking-ul real pe viitor.
+/// Ecranul de intrare în Multiplayer: Create Room (cameră privată cu cod),
+/// Join Online (matchmaking public) sau Join with code (intri într-o cameră
+/// a unui prieten). Fiecare acțiune reală trece prin
+/// [MultiplayerService.ensureInitialized] — dacă Firebase nu e încă
+/// configurat (vezi lib/firebase_options.dart), arătăm un mesaj prietenos în
+/// loc să lăsăm aplicația să crape.
 class MultiplayerScreen extends StatefulWidget {
   const MultiplayerScreen({super.key});
 
@@ -12,23 +20,106 @@ class MultiplayerScreen extends StatefulWidget {
   State<MultiplayerScreen> createState() => _MultiplayerScreenState();
 }
 
-class _MultiplayerScreenState extends State<MultiplayerScreen> with SingleTickerProviderStateMixin {
-  bool _connecting = false;
-  late final AnimationController _bounceController;
+class _MultiplayerScreenState extends State<MultiplayerScreen> {
+  String _displayName = '';
+  bool _busy = false;
 
   @override
   void initState() {
     super.initState();
-    _bounceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..repeat(reverse: true);
+    StorageService.getDisplayName().then((n) {
+      if (mounted) setState(() => _displayName = n);
+    });
   }
 
-  @override
-  void dispose() {
-    _bounceController.dispose();
-    super.dispose();
+  void _showUnavailable(Object error) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error is MultiplayerUnavailableException ? error.message : 'Multiplayer indisponibil momentan.')),
+    );
+  }
+
+  Future<void> _editName() async {
+    final controller = TextEditingController(text: _displayName);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        title: const Text('Numele tău', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          maxLength: 16,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: const Text('Salvează')),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty || !mounted) return;
+    await StorageService.setDisplayName(result);
+    if (mounted) setState(() => _displayName = result);
+  }
+
+  Future<void> _createRoom() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final info = await MultiplayerService.instance.createRoom(displayName: _displayName);
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true)));
+    } catch (e) {
+      _showUnavailable(e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _joinOnline() async {
+    if (_busy) return;
+    try {
+      await MultiplayerService.instance.ensureInitialized();
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchmakingScreen()));
+    } catch (e) {
+      _showUnavailable(e);
+    }
+  }
+
+  Future<void> _joinWithCode() async {
+    if (_busy) return;
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        title: const Text('Cod cameră', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          textCapitalization: TextCapitalization.characters,
+          maxLength: 5,
+          style: const TextStyle(color: Colors.white, letterSpacing: 3, fontSize: 18),
+          decoration: const InputDecoration(hintText: '7K4PX', hintStyle: TextStyle(color: Colors.white24), counterStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: const Text('Intră')),
+        ],
+      ),
+    );
+    if (code == null || code.isEmpty || !mounted) return;
+    setState(() => _busy = true);
+    try {
+      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: _displayName);
+      if (!mounted) return;
+      await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)));
+    } catch (e) {
+      _showUnavailable(e);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -55,72 +146,61 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with SingleTicker
               ),
               Expanded(
                 child: Center(
-                  child: _connecting ? _buildWaiting() : _buildConnect(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 28),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Avatar(size: 100),
+                        const SizedBox(height: 10),
+                        GestureDetector(
+                          onTap: _editName,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(_displayName.isEmpty ? '...' : _displayName,
+                                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                              const SizedBox(width: 6),
+                              const Icon(Icons.edit_rounded, color: Colors.white54, size: 16),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        SolidMenuButton(
+                          icon: Icons.meeting_room_rounded,
+                          label: 'CREATE ROOM',
+                          color: AppColors.blue,
+                          big: true,
+                          onTap: _createRoom,
+                        ),
+                        const SizedBox(height: 12),
+                        SolidMenuButton(
+                          icon: Icons.public_rounded,
+                          label: 'JOIN ONLINE',
+                          color: AppColors.play,
+                          big: true,
+                          onTap: _joinOnline,
+                        ),
+                        const SizedBox(height: 12),
+                        SolidMenuButton(
+                          icon: Icons.keyboard_rounded,
+                          label: 'JOIN WITH CODE',
+                          color: AppColors.gray,
+                          onTap: _joinWithCode,
+                        ),
+                        if (_busy) ...[
+                          const SizedBox(height: 20),
+                          const CircularProgressIndicator(color: AppColors.blue),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildConnect() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Avatar(size: 110),
-        const SizedBox(height: 24),
-        GestureDetector(
-          onTap: () => setState(() => _connecting = true),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-            decoration: BoxDecoration(
-              color: AppColors.blue,
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: AppColors.blue.withAlpha(110), blurRadius: 16, offset: const Offset(0, 6))],
-            ),
-            child: const Text(
-              'CONNECT',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 1),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWaiting() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const SizedBox(
-          width: 72,
-          height: 72,
-          child: CircularProgressIndicator(strokeWidth: 5, color: AppColors.blue),
-        ),
-        const SizedBox(height: 28),
-        AnimatedBuilder(
-          animation: _bounceController,
-          builder: (context, child) {
-            final offsetY = -10 * Curves.easeInOut.transform(_bounceController.value);
-            return Transform.translate(offset: Offset(0, offsetY), child: child);
-          },
-          child: const Text(
-            'Waiting for players...',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-              shadows: [
-                Shadow(color: AppColors.blue, blurRadius: 22),
-                Shadow(color: AppColors.blue, blurRadius: 10),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

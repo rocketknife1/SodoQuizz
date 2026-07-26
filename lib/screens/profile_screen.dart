@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
+import '../data/auth_service.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
 import '../widgets/avatar.dart';
@@ -138,6 +140,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                _buildAccountRow(),
               ],
             );
           },
@@ -145,6 +149,114 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.profile),
     );
+  }
+
+  /// Rând reactiv (StreamBuilder) — arată "Guest" sau numele/emailul
+  /// contului Google logat. La tap, deschide sheet-ul cu acțiunea
+  /// disponibilă (login sau logout) — prea puțin conținut ca să merite un
+  /// ecran separat, spre deosebire de Realizări/Setări.
+  Widget _buildAccountRow() {
+    return StreamBuilder<User?>(
+      stream: AuthService.instance.authStateChanges(),
+      initialData: AuthService.instance.currentUser,
+      builder: (context, snap) {
+        final user = snap.data;
+        return GestureDetector(
+          onTap: () => _showAccountSheet(user),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+            child: Row(
+              children: [
+                Icon(Icons.account_circle_rounded, color: user != null ? AppColors.play : Colors.white70, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Cont', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(user?.displayName ?? user?.email ?? 'Guest', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showAccountSheet(User? user) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: user == null
+                ? [
+                    const Text('Guest', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Progresul e salvat doar pe acest telefon. Conectează-te cu Google ca să nu-l pierzi la reinstalare.',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          _signIn();
+                        },
+                        icon: const Icon(Icons.login_rounded),
+                        label: const Text('Conectează-te cu Google'),
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                      ),
+                    ),
+                  ]
+                : [
+                    Text(user.displayName ?? 'Cont Google', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    if (user.email != null) ...[
+                      const SizedBox(height: 4),
+                      Text(user.email!, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                    ],
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(sheetContext);
+                          AuthService.instance.signOut();
+                        },
+                        icon: const Icon(Icons.logout_rounded),
+                        label: const Text('Deconectare'),
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, padding: const EdgeInsets.symmetric(vertical: 14)),
+                      ),
+                    ),
+                  ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _signIn() async {
+    try {
+      await AuthService.instance.signInWithGoogle();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e is AccountUnavailableException ? e.message : 'Contul e indisponibil momentan.')),
+      );
+    }
   }
 }
 
