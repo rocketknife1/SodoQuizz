@@ -78,7 +78,14 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final info = await MultiplayerService.instance.createRoom(displayName: _displayName, photoUrl: _photoUrl);
+      // identitate proaspătă, nu starea din câmp — dacă userul apasă chiar
+      // la deschiderea ecranului, `_photoUrl`/`_displayName` pot fi încă
+      // valorile inițiale goale (fetch-ul din initState nu a apucat să
+      // răspundă), iar camera ar rămâne PERMANENT fără poza reală în
+      // Firestore (scrisă o singură dată, la creare — vezi bug-ul cu poza
+      // de Google lipsă la un jucător logat).
+      final identity = await AuthService.instance.multiplayerIdentity();
+      final info = await MultiplayerService.instance.createRoom(displayName: identity.name, photoUrl: identity.photoUrl);
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true)));
     } catch (e) {
@@ -123,7 +130,9 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (code == null || code.isEmpty || !mounted) return;
     setState(() => _busy = true);
     try {
-      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: _displayName, photoUrl: _photoUrl);
+      // identitate proaspătă — vezi comentariul din [_createRoom].
+      final identity = await AuthService.instance.multiplayerIdentity();
+      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: identity.name, photoUrl: identity.photoUrl);
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)));
     } catch (e) {
