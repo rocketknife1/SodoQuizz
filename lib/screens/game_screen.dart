@@ -8,6 +8,7 @@ import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
+import '../data/shop.dart';
 import '../data/storage_service.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
@@ -46,6 +47,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool _noBlur = false;
   bool _unlimitedLives = false;
   int _sessionAnswered = 0;
+  int _totalInCategory = 0;
   late final AnimationController _shakeController;
 
   GameMode get mode => gameModeById(widget.gameModeId);
@@ -79,6 +81,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final savedHints = results[3] as int;
     final unlimitedLives = results[4] as bool;
 
+    // sortare deterministă (nu shuffle) ca "primele N" să fie mereu ACELEAȘI
+    // întrebări între sesiuni — altfel deblocarea treptată n-ar avea sens
+    // (ai vedea alt set de N întrebări de fiecare dată).
+    final forMode = loaded.where((q) => q.categoryId == widget.gameModeId).toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    final unlockedCount = await StorageService.getUnlockedQuestionCount(widget.gameModeId, forMode.length);
+
     if (await StorageService.recordModePlayedToday(widget.gameModeId)) {
       final newModesToday = await StorageService.getQuestProgress('play_two_modes');
       if (newModesToday < 2) {
@@ -95,7 +104,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       _noBlur = noBlur;
       _unlimitedLives = unlimitedLives;
       _sessionAnswered = 0;
-      questions = loaded.where((q) => q.categoryId == widget.gameModeId).toList()..shuffle(Random());
+      _totalInCategory = forMode.length;
+      questions = forMode.take(unlockedCount).toList()..shuffle(Random());
       qIndex = 0;
       _questionRewards.clear();
       for (final q in questions) {
@@ -312,18 +322,19 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   // Fără opțiune de "Reîncepe" — nu are sens ca la Game Over (0 vieți) să
   // poți reporni instant cu viețile refăcute; singura ieșire e Acasă.
-  void _showEndDialog({required String title, required String message}) {
+  void _showEndDialog({required String title, required String message, List<Widget> extraActions = const []}) {
     StorageService.updateHighScore(score);
     StorageService.updateModeHighScore(widget.gameModeId, score);
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(title, style: const TextStyle(color: Colors.white)),
         content: Text(message, style: const TextStyle(color: Colors.white70)),
         actions: [
+          ...extraActions,
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF534AB7)),
             onPressed: _goHome,
@@ -334,10 +345,44 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _showFinishedDialog() {
+  /// Dacă mai sunt întrebări dincolo de lotul curent deblocat, arată și un
+  /// buton de deblocare (Gems) — vezi StorageService.unlockNextQuestionBatch.
+  /// La succes, dialogul se închide și ecranul se reîncarcă direct cu noul
+  /// lot, ca jucătorul să poată continua pe loc, fără să mai treacă prin
+  /// Acasă și să reintre în categorie.
+  Future<void> _showFinishedDialog() async {
+    final locked = _totalInCategory - questions.length;
+    List<Widget> extraActions = const [];
+    if (locked > 0) {
+      final tier = await StorageService.getUnlockedTier(widget.gameModeId);
+      final price = questionUnlockGemsPrice(tier + 1);
+      final batch = min(questionUnlockBatch, locked);
+      if (!mounted) return;
+      extraActions = [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
+          onPressed: () async {
+            final ok = await StorageService.unlockNextQuestionBatch(widget.gameModeId);
+            if (!mounted) return;
+            if (ok) {
+              Navigator.pop(context);
+              Sfx.rewardPop();
+              _loadQuestions();
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nu ai destule gems.'), duration: Duration(milliseconds: 1400)),
+              );
+            }
+          },
+          child: Text('Deblochează +$batch  •  💎 $price', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+        ),
+      ];
+    }
     _showEndDialog(
       title: 'Ai terminat toate întrebările! 🎉',
-      message: 'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score',
+      message: 'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score'
+          '${locked > 0 ? '\n\n$locked întrebări mai sunt de deblocat în această categorie.' : ''}',
+      extraActions: extraActions,
     );
   }
 

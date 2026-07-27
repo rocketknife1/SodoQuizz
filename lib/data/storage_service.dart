@@ -537,6 +537,33 @@ class StorageService {
     return true;
   }
 
+  // ─── Deblocare treptată a întrebărilor per categorie (vezi shop.dart) ─────
+
+  static Future<int> getUnlockedTier(String gameModeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('question_unlock_tier_$gameModeId') ?? 0;
+  }
+
+  /// Câte întrebări sunt efectiv jucabile acum într-o categorie cu
+  /// [totalInCategory] întrebări în total — plafonat la total (nu are sens
+  /// să "deblochezi" peste câte există efectiv).
+  static Future<int> getUnlockedQuestionCount(String gameModeId, int totalInCategory) async {
+    final tier = await getUnlockedTier(gameModeId);
+    final unlocked = initialUnlockedQuestions + tier * questionUnlockBatch;
+    return unlocked < totalInCategory ? unlocked : totalInCategory;
+  }
+
+  /// Cumpără următorul lot de întrebări pentru o categorie, cu Gems —
+  /// întoarce false dacă nu ai destule gems.
+  static Future<bool> unlockNextQuestionBatch(String gameModeId) async {
+    final tier = await getUnlockedTier(gameModeId);
+    final price = questionUnlockGemsPrice(tier + 1);
+    if (!await spendGems(price)) return false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('question_unlock_tier_$gameModeId', tier + 1);
+    return true;
+  }
+
   // ─── Modul "fără blur" (accesibilitate / preview) ─────────────────────────
 
   static Future<bool> getNoBlurMode() async {
