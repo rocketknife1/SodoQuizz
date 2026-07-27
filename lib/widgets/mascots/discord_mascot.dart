@@ -50,6 +50,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
   late final AnimationController _idle;
   late final AnimationController _excite;
   late final AnimationController _gesture;
+  late final AnimationController _speech;
   late final AnimationController _bubbleCycle;
   bool _excited = false;
   _Gesture? _currentGesture;
@@ -64,6 +65,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
     _idle = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
     _bubbleCycle = AnimationController(
       vsync: this,
       duration: const Duration(seconds: _bubbleVisibleSeconds + _bubbleHiddenSeconds),
@@ -74,13 +76,13 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
   }
 
   void _onSyncEvent(MascotEvent event) {
-    if (!mounted || _gesture.isAnimating) return;
+    if (!mounted || _gesture.isAnimating || _speech.isAnimating) return;
     if (event.type == MascotEventType.checkClock) {
       _gestureTimer?.cancel();
       _playGesture(_Gesture.checkClock);
     } else if (event.type == MascotEventType.greet && event.target == MascotId.martian) {
       _gestureTimer?.cancel();
-      _playGesture(_Gesture.askHow, message: event.message);
+      _playSpeech(event.message!);
     }
   }
 
@@ -110,6 +112,25 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
     });
   }
 
+  /// La fel ca [_playGesture], dar pentru replici ("askHow") — controller
+  /// separat de [_gesture], cu durată calculată din lungimea mesajului
+  /// (vezi [greetDisplayDuration]), ca textul să apuce să fie citit.
+  void _playSpeech(String message) {
+    _speech.duration = greetDisplayDuration(message);
+    setState(() {
+      _currentGesture = _Gesture.askHow;
+      _speechText = message;
+    });
+    _speech.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _currentGesture = null;
+        _speechText = null;
+      });
+      _scheduleGesture();
+    });
+  }
+
   @override
   void dispose() {
     _gestureTimer?.cancel();
@@ -117,6 +138,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
     _idle.dispose();
     _excite.dispose();
     _gesture.dispose();
+    _speech.dispose();
     _bubbleCycle.dispose();
     super.dispose();
   }
@@ -140,7 +162,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
         width: 92,
         height: 118,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_idle, _excite, _gesture, _bubbleCycle]),
+          animation: Listenable.merge([_idle, _excite, _gesture, _speech, _bubbleCycle]),
           builder: (context, _) {
             final t = _idle.value * 2 * pi;
             final bob = sin(t) * 3;
@@ -157,7 +179,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
             var extraAntennaWag = 0.0;
             var extraSpin = 0.0;
             if (_currentGesture != null) {
-              final g = _gesture.value;
+              final g = _currentGesture == _Gesture.askHow ? _speech.value : _gesture.value;
               switch (_currentGesture!) {
                 case _Gesture.hop:
                   gestureDy = -sin(g * pi * 2).abs() * 16;
@@ -184,7 +206,9 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
                   gestureDy = sin(g * pi) * 4;
                   break;
                 case _Gesture.askHow:
-                  gestureDy = -sin(g * pi * 3) * 5 * (1 - g * 0.6);
+                  // legănare blândă continuă cât timp vorbește — pe toată
+                  // durata mai lungă a replicii, nu doar o singură bâțâială.
+                  gestureDy = -sin(g * pi * 10) * 4 * (1 - g * 0.35);
                   break;
               }
             }
@@ -225,7 +249,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
                             ),
                           )
                         : (_currentGesture == _Gesture.askHow && _speechText != null
-                            ? MascotBubble(text: _speechText!, color: AppColors.purple, t: _gesture.value)
+                            ? MascotBubble(text: _speechText!, color: AppColors.purple, t: _speech.value)
                             : const SizedBox.shrink()),
                   ),
                 ),

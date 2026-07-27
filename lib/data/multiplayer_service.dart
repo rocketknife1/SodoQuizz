@@ -72,7 +72,15 @@ class MultiplayerService {
     final me = currentPlayerId;
     final code = _randomCode();
     final ref = _db.collection('matches').doc();
-    final info = MatchInfo(id: ref.id, mode: MatchMode.private, code: code, status: MatchStatus.lobby, hostId: me);
+    final info = MatchInfo(
+      id: ref.id,
+      mode: MatchMode.private,
+      code: code,
+      status: MatchStatus.lobby,
+      hostId: me,
+      hostName: displayName,
+      hostPhotoUrl: photoUrl,
+    );
     await ref.set(info.toMap());
     await ref.collection('players').doc(me).set(
           MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0, isHost: true).toMap(),
@@ -93,7 +101,25 @@ class MultiplayerService {
     if (query.docs.isEmpty) {
       throw const MultiplayerUnavailableException('Cod invalid sau camera a pornit deja.');
     }
-    final doc = query.docs.first;
+    return _joinRoomDoc(query.docs.first, displayName: displayName, photoUrl: photoUrl);
+  }
+
+  /// La fel ca [joinRoomByCode], dar pentru o cameră aleasă direct din
+  /// lista de camere deschise (vezi [watchOpenRooms]) — fără cod, doar id.
+  Future<MatchInfo> joinRoomById({required String matchId, required String displayName, String? photoUrl}) async {
+    await ensureInitialized();
+    final doc = await _db.collection('matches').doc(matchId).get();
+    if (!doc.exists || doc.data()?['status'] != MatchStatus.lobby.name) {
+      throw const MultiplayerUnavailableException('Camera nu mai e disponibilă.');
+    }
+    return _joinRoomDoc(doc, displayName: displayName, photoUrl: photoUrl);
+  }
+
+  Future<MatchInfo> _joinRoomDoc(
+    DocumentSnapshot<Map<String, dynamic>> doc, {
+    required String displayName,
+    String? photoUrl,
+  }) async {
     final players = await doc.reference.collection('players').get();
     if (players.docs.length >= matchPlayerCount) {
       throw const MultiplayerUnavailableException('Camera e plină.');
@@ -103,6 +129,43 @@ class MultiplayerService {
           MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0).toMap(),
         );
     return MatchInfo.fromDoc(doc);
+  }
+
+  /// O cameră abandonată (host ieșit brusc din tab, fără să treacă prin
+  /// [leaveMatch] — ex. închidere directă de fereastră, fără Cloud
+  /// Functions/TTL care s-o curețe din Firestore) tot rămâne "lobby" la
+  /// nesfârșit. Fără curățare server-side, o ascundem din listă după acest
+  /// prag ca vechile camere de test să nu rămână vizibile permanent.
+  static const _openRoomFreshness = Duration(minutes: 15);
+
+  /// Camerele private aflate încă în lobby, deschise oricui vrea să intre
+  /// direct din ecranul Join Online (fără cod) — vezi discuția din
+  /// RoomLobbyScreen/MultiplayerScreen: o cameră creată cu Create Room
+  /// trebuie să fie găsibilă și așa, nu doar prin cod. Exclude propria
+  /// cameră (n-are sens să te alături propriei camere din listă), camerele
+  /// fără hostName (create înainte ca acest câmp să existe) și cele mai
+  /// vechi de [_openRoomFreshness] — probabil abandonate. Sortată
+  /// client-side (nu server-side) ca să nu fie nevoie de un index compus în
+  /// Firestore doar pentru o listă mică, decorativă.
+  Stream<List<MatchInfo>> watchOpenRooms() {
+    final me = currentPlayerId;
+    return _db
+        .collection('matches')
+        .where('mode', isEqualTo: MatchMode.private.name)
+        .where('status', isEqualTo: MatchStatus.lobby.name)
+        .snapshots()
+        .map((s) {
+      final cutoff = DateTime.now().subtract(_openRoomFreshness);
+      final rooms = s.docs.map(MatchInfo.fromDoc).where((m) {
+        if (m.hostId == me) return false;
+        if (m.hostName == null || m.hostName!.isEmpty) return false;
+        final createdAt = m.createdAt?.toDate();
+        if (createdAt == null || createdAt.isBefore(cutoff)) return false;
+        return true;
+      }).toList();
+      rooms.sort((a, b) => (b.createdAt ?? Timestamp(0, 0)).compareTo(a.createdAt ?? Timestamp(0, 0)));
+      return rooms;
+    });
   }
 
   Future<void> startMatch(String matchId) => _db.collection('matches').doc(matchId).update({'status': MatchStatus.playing.name});

@@ -51,6 +51,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   late final AnimationController _idle;
   late final AnimationController _excite;
   late final AnimationController _gesture;
+  late final AnimationController _speech;
   bool _excited = false;
   bool _questionReady = false;
   _Gesture? _currentGesture;
@@ -68,6 +69,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     _idle = AnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
+    _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
     _scheduleGesture();
     _refreshReady();
     MascotSync.ensureStarted();
@@ -75,13 +77,13 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   }
 
   void _onSyncEvent(MascotEvent event) {
-    if (!mounted || _gesture.isAnimating) return;
+    if (!mounted || _gesture.isAnimating || _speech.isAnimating) return;
     if (event.type == MascotEventType.checkClock) {
       _gestureTimer?.cancel();
       _playGesture(_Gesture.checkClock);
     } else if (event.type == MascotEventType.greet && event.target == MascotId.clippy) {
       _gestureTimer?.cancel();
-      _playGesture(_Gesture.askHow, message: event.message);
+      _playSpeech(event.message!);
     }
   }
 
@@ -130,6 +132,26 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     });
   }
 
+  /// La fel ca [_playGesture], dar pentru replici ("askHow") — folosește un
+  /// controller separat de [_gesture], cu o durată calculată din lungimea
+  /// mesajului (vezi [greetDisplayDuration]), ca textul să apuce să fie
+  /// citit în loc să dispară odată cu scurtul gest de bâțâială al corpului.
+  void _playSpeech(String message) {
+    _speech.duration = greetDisplayDuration(message);
+    setState(() {
+      _currentGesture = _Gesture.askHow;
+      _speechText = message;
+    });
+    _speech.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _currentGesture = null;
+        _speechText = null;
+      });
+      _scheduleGesture();
+    });
+  }
+
   @override
   void dispose() {
     _readyPollTimer?.cancel();
@@ -138,6 +160,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     _idle.dispose();
     _excite.dispose();
     _gesture.dispose();
+    _speech.dispose();
     super.dispose();
   }
 
@@ -176,7 +199,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
         width: 116,
         height: 116,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_idle, _excite, _gesture]),
+          animation: Listenable.merge([_idle, _excite, _gesture, _speech]),
           builder: (context, _) {
             final t = _idle.value * 2 * pi;
             final bob = sin(t) * 4;
@@ -188,7 +211,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
             var gestureAngle = 0.0;
             var gestureScaleY = 1.0;
             if (_currentGesture != null) {
-              final g = _gesture.value;
+              final g = _currentGesture == _Gesture.askHow ? _speech.value : _gesture.value;
               switch (_currentGesture!) {
                 case _Gesture.stretch:
                   gestureScaleY = 1 + sin(g * pi) * 0.32;
@@ -209,8 +232,9 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
                   gestureDy = sin(g * pi) * 4;
                   break;
                 case _Gesture.askHow:
-                  // legănare blândă, ca și cum ar vorbi.
-                  gestureDy = -sin(g * pi * 3) * 5 * (1 - g * 0.6);
+                  // legănare blândă continuă cât timp vorbește — pe toată
+                  // durata mai lungă a replicii, nu doar o singură bâțâială.
+                  gestureDy = -sin(g * pi * 10) * 4 * (1 - g * 0.35);
                   break;
                 case _Gesture.peek:
                   // se apleacă într-o parte, ca și cum s-ar uita după colț,
@@ -235,7 +259,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
                 if (_currentGesture == _Gesture.checkClock)
                   Positioned(bottom: 4, right: 18, child: ClockProp(t: _gesture.value)),
                 if (_currentGesture == _Gesture.askHow && _speechText != null)
-                  Positioned(top: -14, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _gesture.value)),
+                  Positioned(top: -14, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _speech.value)),
                 // TOT ce ține de corpul agrafei (icon, ochi, notificare)
                 // trece prin ACELEAȘI transformări (bob/wobble/gesturi) —
                 // astfel notificarea rămâne "lipită" de ea, nu statică.

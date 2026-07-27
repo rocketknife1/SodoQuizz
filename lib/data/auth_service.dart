@@ -35,12 +35,33 @@ class AuthService {
 
   bool _googleInitialized = false;
 
-  Stream<User?> authStateChanges() => FirebaseAuth.instance.authStateChanges().map(_realUserOrNull);
+  /// Firebase poate fi neconfigurat pentru platforma curentă (ex. web, unde
+  /// firebase_options.dart încă are valori placeholder — vezi comentariul
+  /// de acolo) — orice acces la FirebaseAuth.instance aruncă sincron în
+  /// acel caz ("auth/invalid-api-key"/"no-app"). Fără try/catch aici,
+  /// excepția pica direct în build()-ul lui MyAvatar (folosit în
+  /// LevelHeader, deci pe Home/Quests/Profile), iar Flutter înlocuia tot
+  /// ecranul cu un ErrorWidget gri, needecodabil, în build-urile de release.
+  Stream<User?> authStateChanges() {
+    try {
+      return FirebaseAuth.instance.authStateChanges().map(_realUserOrNull);
+    } catch (e) {
+      debugPrint('AuthService.authStateChanges a esuat: $e');
+      return Stream.value(null);
+    }
+  }
 
-  /// `null` dacă nimeni nu e logat SAU dacă userul curent e doar anonim
-  /// (identitatea creată de multiplayer pentru Guest) — Guest nu numără ca
-  /// "logat" aici.
-  User? get currentUser => _realUserOrNull(FirebaseAuth.instance.currentUser);
+  /// `null` dacă nimeni nu e logat, dacă userul curent e doar anonim
+  /// (identitatea creată de multiplayer pentru Guest — nu numără ca
+  /// "logat" aici), sau dacă Firebase nu e disponibil pe platforma curentă.
+  User? get currentUser {
+    try {
+      return _realUserOrNull(FirebaseAuth.instance.currentUser);
+    } catch (e) {
+      debugPrint('AuthService.currentUser a esuat: $e');
+      return null;
+    }
+  }
 
   User? _realUserOrNull(User? u) => (u != null && !u.isAnonymous) ? u : null;
 
@@ -87,7 +108,17 @@ class AuthService {
   Future<void> signInWithGoogle() async {
     try {
       if (!_googleInitialized) {
-        await GoogleSignIn.instance.initialize(serverClientId: googleSignInServerClientId);
+        // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
+        // porneasca fluxul din browser - si NU accepta deloc serverClientId
+        // acolo (assertion: "serverClientId is not supported on Web").
+        // Android e invers: are nevoie de serverClientId (ca sa verifice
+        // id-token-ul), nu de clientId (vine din google-services.json). In
+        // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
+        // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
+        await GoogleSignIn.instance.initialize(
+          clientId: kIsWeb ? googleSignInServerClientId : null,
+          serverClientId: kIsWeb ? null : googleSignInServerClientId,
+        );
         _googleInitialized = true;
       }
       final account = await GoogleSignIn.instance.authenticate();

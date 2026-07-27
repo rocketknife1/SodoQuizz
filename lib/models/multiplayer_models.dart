@@ -16,6 +16,9 @@ class MatchInfo {
   final String? code;
   final MatchStatus status;
   final String hostId;
+  final String? hostName;
+  final String? hostPhotoUrl;
+  final Timestamp? createdAt;
 
   const MatchInfo({
     required this.id,
@@ -23,6 +26,9 @@ class MatchInfo {
     required this.status,
     required this.hostId,
     this.code,
+    this.hostName,
+    this.hostPhotoUrl,
+    this.createdAt,
   });
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -36,6 +42,9 @@ class MatchInfo {
         orElse: () => MatchStatus.lobby,
       ),
       hostId: data['hostId'] as String? ?? '',
+      hostName: data['hostName'] as String?,
+      hostPhotoUrl: data['hostPhotoUrl'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
     );
   }
 
@@ -44,6 +53,8 @@ class MatchInfo {
         'code': code,
         'status': status.name,
         'hostId': hostId,
+        'hostName': hostName,
+        'hostPhotoUrl': hostPhotoUrl,
         'createdAt': FieldValue.serverTimestamp(),
       };
 }

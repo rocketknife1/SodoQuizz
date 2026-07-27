@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../models/multiplayer_models.dart';
+import '../../widgets/avatar.dart';
 import '../../widgets/network_scan_animation.dart';
 import 'multiplayer_match_screen.dart';
+import 'room_lobby_screen.dart';
 
 /// Matchmaking public: te bagă în coada de așteptare și încearcă periodic să
 /// te cupleze cu un adversar real (1 vs 1) — fără completare cu jucători
@@ -23,6 +26,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   StreamSubscription<String?>? _queueSub;
   bool _matched = false;
   bool _left = false;
+  bool _joiningRoom = false;
+  ({String name, String? photoUrl})? _identity;
 
   @override
   void initState() {
@@ -33,6 +38,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
 
   Future<void> _start() async {
     final identity = await AuthService.instance.multiplayerIdentity();
+    _identity = identity;
     await MultiplayerService.instance.joinMatchmakingQueue(displayName: identity.name, photoUrl: identity.photoUrl);
     if (!mounted) return;
 
@@ -57,6 +63,58 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
       context,
       MaterialPageRoute(builder: (_) => MultiplayerMatchScreen(matchId: matchId)),
     );
+  }
+
+  /// Alternativa la matchmaking-ul automat: userul alege direct o cameră
+  /// deschisă din listă (vezi [MultiplayerService.watchOpenRooms]). Oprim
+  /// coada de matchmaking înainte să intrăm, ca să nu rămânem cuplați
+  /// automat cu altcineva chiar când tocmai am ales o cameră anume.
+  Future<void> _joinRoom(MatchInfo room) async {
+    if (_matched || _left || _joiningRoom) return;
+    setState(() => _joiningRoom = true);
+    _formTimer?.cancel();
+    await _queueSub?.cancel();
+    try {
+      await MultiplayerService.instance.leaveQueue();
+    } catch (e) {
+      debugPrint('MatchmakingScreen._joinRoom: leaveQueue a esuat: $e');
+    }
+    try {
+      final identity = _identity ?? await AuthService.instance.multiplayerIdentity();
+      final info = await MultiplayerService.instance.joinRoomById(
+        matchId: room.id,
+        displayName: identity.name,
+        photoUrl: identity.photoUrl,
+      );
+      if (!mounted) return;
+      _matched = true;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _joiningRoom = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e is MultiplayerUnavailableException ? e.message : 'Camera nu mai e disponibilă.')),
+      );
+      // matchmaking-ul automat continuă în fundal, ca userul să nu rămână
+      // blocat fără nicio șansă de meci după o încercare eșuată — trebuie
+      // re-adăugat în coadă, pentru că am ieșit din ea mai sus.
+      final identity = _identity ?? await AuthService.instance.multiplayerIdentity();
+      try {
+        await MultiplayerService.instance.joinMatchmakingQueue(displayName: identity.name, photoUrl: identity.photoUrl);
+      } catch (e) {
+        debugPrint('MatchmakingScreen._joinRoom: re-joinMatchmakingQueue a esuat: $e');
+      }
+      if (!mounted) return;
+      _queueSub = MultiplayerService.instance.watchOwnQueueEntry().listen((matchId) {
+        if (matchId != null) _onMatched(matchId);
+      });
+      _formTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
+        MultiplayerService.instance.attemptFormMatch();
+      });
+    }
   }
 
   Future<void> _leave() async {
@@ -133,12 +191,69 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
                             ),
                           ),
                         ),
+                        const SizedBox(height: 16),
+                        _buildOpenRooms(),
                       ],
                     ),
                   ),
                 ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Camere private aflate în lobby, deschise oricui — alternativă mică, sub
+  /// animație, la a aștepta cuplarea automată sau la a primi un cod de la un
+  /// prieten. Doar o bandă orizontală compactă, ca să nu domine ecranul.
+  Widget _buildOpenRooms() {
+    return StreamBuilder<List<MatchInfo>>(
+      stream: MultiplayerService.instance.watchOpenRooms(),
+      builder: (context, snap) {
+        final rooms = snap.data ?? const <MatchInfo>[];
+        if (rooms.isEmpty) return const SizedBox.shrink();
+        return SizedBox(
+          height: 64,
+          width: 260,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: rooms.length,
+            itemBuilder: (context, i) => _buildRoomChip(rooms[i]),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRoomChip(MatchInfo room) {
+    return Opacity(
+      opacity: _joiningRoom ? 0.5 : 1,
+      child: GestureDetector(
+        onTap: _joiningRoom ? null : () => _joinRoom(room),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Avatar(
+                size: 40,
+                label: (room.hostName?.isNotEmpty ?? false) ? room.hostName![0].toUpperCase() : '?',
+                accentColor: pickAvatarColor(room.hostId),
+                photoUrl: room.hostPhotoUrl,
+              ),
+              const SizedBox(height: 2),
+              SizedBox(
+                width: 56,
+                child: Text(
+                  room.hostName?.isNotEmpty == true ? room.hostName! : '?',
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.white70, fontSize: 10),
+                ),
+              ),
+            ],
           ),
         ),
       ),

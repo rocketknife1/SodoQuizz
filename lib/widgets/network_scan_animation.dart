@@ -8,7 +8,9 @@ import '../core/theme.dart';
 /// vie în căutarea unui adversar. Pur decorativă, nu reflectă rețeaua reală.
 class NetworkScanAnimation extends StatefulWidget {
   final double size;
-  const NetworkScanAnimation({super.key, this.size = 220});
+  final double? width;
+  final double? height;
+  const NetworkScanAnimation({super.key, this.size = 220, this.width, this.height});
 
   @override
   State<NetworkScanAnimation> createState() => _NetworkScanAnimationState();
@@ -59,8 +61,8 @@ class _NetworkScanAnimationState extends State<NetworkScanAnimation> with Single
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: widget.size,
-      height: widget.size,
+      width: widget.width ?? widget.size,
+      height: widget.height ?? widget.size,
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) => CustomPaint(

@@ -42,6 +42,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   late final AnimationController _idle;
   late final AnimationController _excite;
   late final AnimationController _gesture;
+  late final AnimationController _speech;
   bool _excited = false;
   bool _ready = false;
   bool _checked = false;
@@ -57,6 +58,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
     _idle = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 850));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
+    _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
     _refreshReady();
     _scheduleGesture();
     MascotSync.ensureStarted();
@@ -64,13 +66,13 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   }
 
   void _onSyncEvent(MascotEvent event) {
-    if (!mounted || _gesture.isAnimating) return;
+    if (!mounted || _gesture.isAnimating || _speech.isAnimating) return;
     if (event.type == MascotEventType.checkClock) {
       _gestureTimer?.cancel();
       _playGesture(_RingGesture.checkClock);
     } else if (event.type == MascotEventType.greet && event.target == MascotId.ring) {
       _gestureTimer?.cancel();
-      _playGesture(_RingGesture.askHow, message: event.message);
+      _playSpeech(event.message!);
     }
   }
 
@@ -100,6 +102,25 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
     });
   }
 
+  /// La fel ca [_playGesture], dar pentru replici ("askHow") — controller
+  /// separat de [_gesture], cu durată calculată din lungimea mesajului
+  /// (vezi [greetDisplayDuration]), ca textul să apuce să fie citit.
+  void _playSpeech(String message) {
+    _speech.duration = greetDisplayDuration(message);
+    setState(() {
+      _currentGesture = _RingGesture.askHow;
+      _speechText = message;
+    });
+    _speech.forward(from: 0).whenComplete(() {
+      if (!mounted) return;
+      setState(() {
+        _currentGesture = null;
+        _speechText = null;
+      });
+      _scheduleGesture();
+    });
+  }
+
   Future<void> _refreshReady() async {
     final ready = await StorageService.canSpinRing();
     if (!mounted) return;
@@ -116,6 +137,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
     _idle.dispose();
     _excite.dispose();
     _gesture.dispose();
+    _speech.dispose();
     super.dispose();
   }
 
@@ -157,7 +179,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
         width: 78,
         height: 78,
         child: AnimatedBuilder(
-          animation: Listenable.merge([_idle, _excite, _gesture]),
+          animation: Listenable.merge([_idle, _excite, _gesture, _speech]),
           builder: (context, _) {
             final pulse = (sin(_idle.value * 2 * pi) + 1) / 2;
             final tilt = sin(_idle.value * 2 * pi * 0.5) * 0.07;
@@ -173,7 +195,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
             var extraSpin = 0.0;
             var flash = 0.0;
             if (_currentGesture != null) {
-              final g = _gesture.value;
+              final g = _currentGesture == _RingGesture.askHow ? _speech.value : _gesture.value;
               switch (_currentGesture!) {
                 case _RingGesture.spinBurst:
                   // un tur rapid suplimentar, peste rotația continuă a rama.
@@ -202,7 +224,9 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
                   gestureDy = sin(g * pi) * 3;
                   break;
                 case _RingGesture.askHow:
-                  gestureDy = -sin(g * pi * 3) * 4 * (1 - g * 0.6);
+                  // legănare blândă continuă cât timp vorbește — pe toată
+                  // durata mai lungă a replicii, nu doar o singură bâțâială.
+                  gestureDy = -sin(g * pi * 10) * 3.5 * (1 - g * 0.35);
                   break;
               }
             }
@@ -234,7 +258,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
                 if (_currentGesture == _RingGesture.checkClock)
                   Positioned(bottom: -4, right: 4, child: ClockProp(t: _gesture.value)),
                 if (_currentGesture == _RingGesture.askHow && _speechText != null)
-                  Positioned(top: -26, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _gesture.value)),
+                  Positioned(top: -26, child: MascotBubble(text: _speechText!, color: AppColors.purple, t: _speech.value)),
                 Transform.translate(
                   offset: Offset(gestureDx, gestureDy),
                   child: Transform.rotate(

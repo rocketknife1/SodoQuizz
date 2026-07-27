@@ -1,7 +1,7 @@
-// Valorile Android sunt cele reale, din proiectul Firebase "sodoquizz"
-// (extrase din android/app/google-services.json). Web si iOS raman
-// placeholder pana se adauga acele platforme in Firebase Console - daca
-// e nevoie, repeta pasii din Project settings -> Your apps pentru ele.
+// Valorile Android si Web sunt cele reale, din proiectul Firebase
+// "sodoquizz" (Android extras din android/app/google-services.json, Web
+// din Project settings -> Your apps -> SodoQuizz Web). iOS ramane
+// placeholder pana se adauga acea platforma in Firebase Console.
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 
@@ -19,10 +19,13 @@ class DefaultFirebaseOptions {
   }
 
   static const web = FirebaseOptions(
-    apiKey: '',
-    appId: '',
-    messagingSenderId: '',
-    projectId: '',
+    apiKey: 'AIzaSyAG1yZlVrHq1bFFT-HTJbvSjJC0sGUPnfU',
+    appId: '1:112195368669:web:42c506db4ab76f92750d34',
+    messagingSenderId: '112195368669',
+    projectId: 'sodoquizz',
+    authDomain: 'sodoquizz.firebaseapp.com',
+    storageBucket: 'sodoquizz.firebasestorage.app',
+    measurementId: 'G-2PW25LL1VG',
   );
 
   static const android = FirebaseOptions(

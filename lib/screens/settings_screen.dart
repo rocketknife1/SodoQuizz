@@ -5,6 +5,7 @@ import '../core/theme.dart';
 import '../data/storage_service.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
+import 'test_images_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -81,6 +82,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         builder: (_) => LoadingScreen(nextBuilder: (_) => const HomeScreen(), duration: const Duration(milliseconds: 900)),
       ),
       (route) => false,
+    );
+  }
+
+  Future<void> _grantUnlimited(BuildContext context) async {
+    await StorageService.setLives(999);
+    final currentHints = await StorageService.getHints();
+    if (currentHints < 999) await StorageService.addHints(999 - currentHints);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('999 vieți + 999 hint-uri (test)'), duration: Duration(milliseconds: 1200)),
     );
   }
 
@@ -243,11 +254,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildDevToolButton(
+                          icon: Icons.image_search_rounded,
+                          label: 'TEST',
+                          color: AppColors.blue,
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TestImagesScreen())),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildDevToolButton(
+                          icon: Icons.all_inclusive_rounded,
+                          label: 'UNLIMITED',
+                          color: AppColors.orange,
+                          onTap: () => _grantUnlimited(context),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                   const Text('Guess It — v1.0.0', style: TextStyle(color: Colors.white38, fontSize: 12)),
                 ],
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Butoane de test — la fel de vizibile ca butoanele de meniu (culoare
+  /// solidă + iconiță), nu chip-uri mici de colț.
+  /// TEST: verifica doar pozele inlocuite manual (vezi
+  /// TestImagesScreen.testQuestionIds), fara sa afecteze scorul real.
+  /// UNLIMITED: umple vieti + hint-uri la 999, pentru testare rapida.
+  Widget _buildDevToolButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [color, color.withAlpha(210)],
+          ),
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [BoxShadow(color: color.withAlpha(100), blurRadius: 10, offset: const Offset(0, 4))],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white, size: 16),
+            const SizedBox(width: 6),
+            Text(label, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
           ],
         ),
       ),

@@ -4,6 +4,7 @@ import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/network_scan_animation.dart';
 import 'multiplayer_match_screen.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, chat live, și
@@ -79,33 +80,52 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.bgGradient),
           child: SafeArea(
-            child: StreamBuilder<MatchInfo>(
-              stream: MultiplayerService.instance.watchMatch(widget.matchId),
-              builder: (context, matchSnap) {
-                final info = matchSnap.data;
-                if (info != null) _maybeNavigateToMatch(info);
-                return Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-                      child: Row(
-                        children: [
-                          IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
-                          const SizedBox(width: 4),
-                          const Text('Cameră privată', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        ],
+            child: Stack(
+              children: [
+                // fundal decorativ, ca lobby-ul să nu pară "mort" cât se
+                // așteaptă — aceeași poziționare/dimensiune ca în Join
+                // Online (centrată, 220), nu întinsă pe tot ecranul;
+                // needecodabilă la atingere (IgnorePointer) și estompată,
+                // ca să nu se suprapună vizual peste jucători/chat.
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: Center(
+                      child: Opacity(
+                        opacity: 0.28,
+                        child: const NetworkScanAnimation(size: 220),
                       ),
                     ),
-                    _buildCodeBanner(info?.code),
-                    const SizedBox(height: 8),
-                    _buildPlayers(),
-                    Expanded(child: _buildChat()),
-                    _buildChatInput(),
-                    if (widget.isHost) _buildStartButton(),
-                    const SizedBox(height: 8),
-                  ],
-                );
-              },
+                  ),
+                ),
+                StreamBuilder<MatchInfo>(
+                  stream: MultiplayerService.instance.watchMatch(widget.matchId),
+                  builder: (context, matchSnap) {
+                    final info = matchSnap.data;
+                    if (info != null) _maybeNavigateToMatch(info);
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+                          child: Row(
+                            children: [
+                              IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
+                              const SizedBox(width: 4),
+                              const Text('Cameră privată', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                        _buildCodeBanner(info?.code),
+                        const SizedBox(height: 8),
+                        _buildPlayers(),
+                        Expanded(child: _buildChat()),
+                        _buildChatInput(),
+                        if (widget.isHost) _buildStartButton(),
+                        const SizedBox(height: 8),
+                      ],
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ),
