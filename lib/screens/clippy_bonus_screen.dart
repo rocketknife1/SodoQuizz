@@ -10,7 +10,11 @@ import '../widgets/blur_image.dart';
 import '../widgets/mascots/googly_eyes.dart';
 
 const int clippyBonusQuestionCount = 3;
-const double clippyRewardMultiplier = 1.25;
+// Sub 1.0× intenționat: Clippy nu are risc de inimă (spre deosebire de
+// GameScreen), deci nu poate plăti mai bine decât modul cu risc real —
+// vezi reproiectarea economiei. Bonusul rămâne totuși valoros prin viața
+// gratuită la un răspuns perfect (clippyPerfectBonusLives).
+const double clippyRewardMultiplier = 0.85;
 
 enum _ClippyPhase { intro, loading, playing, finished }
 
@@ -196,10 +200,10 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
                   style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  'Răspunsurile corecte aduc ×${clippyRewardMultiplier.toStringAsFixed(2)} recompensă!',
+                const Text(
+                  'Fără risc — un răspuns greșit nu pierde nimic!',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
+                  style: TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ],
             ),

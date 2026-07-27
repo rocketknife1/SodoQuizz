@@ -49,6 +49,8 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   _RingGesture? _currentGesture;
   String? _speechText;
   Timer? _gestureTimer;
+  Timer? _countdownTicker;
+  Duration? _remaining;
   StreamSubscription<MascotEvent>? _syncSub;
   final _random = Random();
 
@@ -121,6 +123,9 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
     });
   }
 
+  /// Verifică disponibilitatea și pornește/oprește numărătoarea inversă
+  /// afișată permanent sub mascotă (vezi [_buildLabel]) — nu mai depinde de
+  /// un tap ca să afle cât a mai rămas, se vede tot timpul.
   Future<void> _refreshReady() async {
     final ready = await StorageService.canSpinRing();
     if (!mounted) return;
@@ -128,11 +133,39 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
       _ready = ready;
       _checked = true;
     });
+    _countdownTicker?.cancel();
+    if (ready) {
+      setState(() => _remaining = null);
+      return;
+    }
+    final remaining = await StorageService.ringSpinTimeRemaining();
+    if (!mounted) return;
+    setState(() => _remaining = remaining);
+    _startCountdown();
+  }
+
+  /// Decrementează local, din secundă în secundă, fără să mai interogheze
+  /// storage-ul la fiecare tick — la zero, reverifică o dată (flip la ready).
+  void _startCountdown() {
+    _countdownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final next = (_remaining ?? Duration.zero) - const Duration(seconds: 1);
+      if (next <= Duration.zero) {
+        timer.cancel();
+        _refreshReady();
+        return;
+      }
+      setState(() => _remaining = next);
+    });
   }
 
   @override
   void dispose() {
     _gestureTimer?.cancel();
+    _countdownTicker?.cancel();
     _syncSub?.cancel();
     _idle.dispose();
     _excite.dispose();
@@ -155,30 +188,59 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
       return;
     }
 
+    // fără mai vreun mesaj (snackbar) — timpul rămas se vede deja permanent
+    // sub mascotă (vezi [_buildLabel]), tap-ul doar mai declanșează reacția.
     Sfx.tileSelect();
     setState(() => _excited = true);
     _excite.forward(from: 0).whenComplete(() {
       if (mounted) setState(() => _excited = false);
     });
-    if (_checked) {
-      final remaining = await StorageService.ringSpinTimeRemaining();
-      if (!mounted) return;
-      final h = remaining.inHours;
-      final m = remaining.inMinutes % 60;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Roata norocului revine în ${h}h ${m}min')),
-      );
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _onTap,
-      child: SizedBox(
-        width: 78,
-        height: 78,
-        child: AnimatedBuilder(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildRing(),
+          const SizedBox(height: 3),
+          _buildLabel(),
+        ],
+      ),
+    );
+  }
+
+  /// Eticheta permanentă de sub mascotă — numele + numărătoarea inversă cât
+  /// timp roata nu e disponibilă, sau doar numele (fără timer) când e gata.
+  /// Înlocuiește vechiul snackbar (feedback tranzitoriu) cu unul mereu vizibil.
+  Widget _buildLabel() {
+    const labelStyle = TextStyle(color: Colors.white54, fontSize: 7.5, fontWeight: FontWeight.w700, letterSpacing: 0.3);
+    if (_ready) {
+      return const Text('ROATA NOROCULUI', style: TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
+    }
+    if (!_checked) {
+      return const Text('ROATA NOROCULUI', style: labelStyle);
+    }
+    final r = _remaining ?? Duration.zero;
+    final h = r.inHours.toString().padLeft(2, '0');
+    final m = (r.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (r.inSeconds % 60).toString().padLeft(2, '0');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('ROATA NOROCULUI', style: labelStyle),
+        Text('$h:$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800)),
+      ],
+    );
+  }
+
+  Widget _buildRing() {
+    return SizedBox(
+      width: 78,
+      height: 78,
+      child: AnimatedBuilder(
           animation: Listenable.merge([_idle, _excite, _gesture, _speech]),
           builder: (context, _) {
             final pulse = (sin(_idle.value * 2 * pi) + 1) / 2;
@@ -295,10 +357,10 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
             );
           },
         ),
-      ),
-    );
+      );
   }
 }
+
 
 class _RingPainter extends CustomPainter {
   final double rimAngle;

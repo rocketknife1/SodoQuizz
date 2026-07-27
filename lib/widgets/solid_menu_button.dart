@@ -16,6 +16,9 @@ class SolidMenuButton extends StatelessWidget {
   final VoidCallback onTap;
   final String? badge;
   final bool big;
+  /// Colțuri teșite (nu rotunjite) — accentul "HUD sci-fi" pentru butonul
+  /// principal de acțiune (PLAY), nu pentru meniul secundar.
+  final bool angular;
 
   const SolidMenuButton({
     super.key,
@@ -26,6 +29,7 @@ class SolidMenuButton extends StatelessWidget {
     this.subtitle,
     this.badge,
     this.big = false,
+    this.angular = false,
   });
 
   static Color _lighten(Color c, double dl) {
@@ -97,18 +101,33 @@ class SolidMenuButton extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [_lighten(color, 0.02), color, _lighten(color, -0.12)],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _lighten(color, 0.22).withAlpha(150)),
-          boxShadow: [
-            BoxShadow(color: color.withAlpha(90), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
-        ),
+        decoration: angular
+            ? ShapeDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_lighten(color, 0.02), color, _lighten(color, -0.12)],
+                ),
+                shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: BorderSide(color: _lighten(color, 0.22).withAlpha(150)),
+                ),
+                shadows: [
+                  BoxShadow(color: color.withAlpha(90), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              )
+            : BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [_lighten(color, 0.02), color, _lighten(color, -0.12)],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _lighten(color, 0.22).withAlpha(150)),
+                boxShadow: [
+                  BoxShadow(color: color.withAlpha(90), blurRadius: 10, offset: const Offset(0, 4)),
+                ],
+              ),
         child: Row(
           children: [
             Container(

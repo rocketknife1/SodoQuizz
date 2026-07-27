@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
@@ -5,16 +6,32 @@ import 'avatar.dart';
 
 /// Header cu avatar + nivel + bară de progres XP (stânga) și pastilă de
 /// monede (dreapta) — folosit în capul fiecărui ecran principal.
-class LevelHeader extends StatelessWidget {
+///
+/// Când [pendingLevelRewards] > 0, BARA ÎNSĂȘI (nu vreo iconiță alăturată)
+/// devine punctul de tap — plină, strălucitoare, cu o linie de energie care
+/// îi traversează lungimea — un tap colectează, dintr-o singură mișcare,
+/// toate recompensele de nivel încă nerevendicate (vezi
+/// StorageService.claimAllPendingLevelRewards). Fără [onClaimLevelRewards],
+/// bara rămâne doar informativă, ca înainte.
+class LevelHeader extends StatefulWidget {
   final int xp;
   final int coins;
   final int? lives;
   final int? hints;
+  final int? gems;
+  final int pendingLevelRewards;
+  /// Premiul rar de la Roata norocului (vezi WheelSpinDialog) — cât timp e
+  /// activ, pastila de vieți arată infinit + numărătoare inversă în loc de
+  /// cifră (vezi [_livesPill]).
+  final bool livesUnlimited;
+  final String? livesUnlimitedLabel;
   final VoidCallback? onCoinsTap;
+  final VoidCallback? onClaimLevelRewards;
   final Key? coinBadgeKey;
   final Key? xpBadgeKey;
   final Key? livesBadgeKey;
   final Key? hintsBadgeKey;
+  final Key? gemsBadgeKey;
 
   const LevelHeader({
     super.key,
@@ -22,106 +39,278 @@ class LevelHeader extends StatelessWidget {
     required this.coins,
     this.lives,
     this.hints,
+    this.gems,
+    this.pendingLevelRewards = 0,
+    this.livesUnlimited = false,
+    this.livesUnlimitedLabel,
     this.onCoinsTap,
+    this.onClaimLevelRewards,
     this.coinBadgeKey,
     this.xpBadgeKey,
     this.livesBadgeKey,
     this.hintsBadgeKey,
+    this.gemsBadgeKey,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final level = levelForXp(xp);
-    final progress = levelProgress(xp);
+  State<LevelHeader> createState() => _LevelHeaderState();
+}
 
-    return Row(
-      children: [
-        const MyAvatar(size: 44),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            key: xpBadgeKey,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Nivel $level', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              ClipRRect(
+class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin {
+  late final AnimationController _pulse;
+  late final AnimationController _wave;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
+    _wave = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _pulse.dispose();
+    _wave.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final level = levelForXp(widget.xp);
+    final claimable = widget.pendingLevelRewards > 0 && widget.onClaimLevelRewards != null;
+    // Cât timp mai e ceva necolectat, bara arată plină (nivelul e deja
+    // "terminat", doar aștepți să-l revendici) — progresul real spre
+    // nivelul următor se vede din nou abia după ce colectezi tot.
+    final progress = claimable ? 1.0 : levelProgress(widget.xp);
+    final barHeight = claimable ? 10.0 : 6.0;
+
+    Widget barCore = ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: LinearProgressIndicator(
+        value: progress,
+        minHeight: barHeight,
+        backgroundColor: Colors.white12,
+        valueColor: AlwaysStoppedAnimation(claimable ? AppColors.coin : AppColors.purple),
+      ),
+    );
+
+    Widget bar = SizedBox(height: barHeight, child: barCore);
+
+    if (claimable) {
+      // toată bara strălucește/pulsează, traversată de o linie de energie —
+      // bara ÎNSĂȘI e indiciul, fără iconițe alăturate.
+      bar = AnimatedBuilder(
+        animation: Listenable.merge([_pulse, _wave]),
+        builder: (context, child) {
+          final glow = 0.4 + _pulse.value * 0.6;
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(7),
+              boxShadow: [
+                BoxShadow(color: AppColors.coin.withAlpha((190 * glow).round()), blurRadius: 8 + 10 * glow, spreadRadius: 1 + 2 * glow),
+              ],
+            ),
+            child: SizedBox(
+              height: barHeight,
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: Colors.white12,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.purple),
+                child: Stack(
+                  children: [
+                    barCore,
+                    Positioned.fill(child: CustomPaint(painter: _EnergyWavePainter(phase: _wave.value))),
+                  ],
                 ),
               ),
-            ],
+            ),
+          );
+        },
+      );
+    }
+
+    Widget xpColumn = Padding(
+      // hitbox mult mai mare decât conținutul vizual — ușor de apăsat.
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        key: widget.xpBadgeKey,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Level $level',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
           ),
+          const SizedBox(height: 5),
+          bar,
+          if (!claimable) ...[
+            const SizedBox(height: 3),
+            Text(
+              '${xpIntoCurrentLevel(widget.xp)} / ${xpForLevel(level)} XP',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: const TextStyle(color: Colors.white38, fontSize: 9.5, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    if (claimable) {
+      xpColumn = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onClaimLevelRewards,
+        child: xpColumn,
+      );
+    }
+
+    // Rândul de pastile (vieți/hints/gems/coins) e SUB rândul de nivel, nu
+    // pe același rând — vieți/hints nu mai au plafon, deci pot ajunge la 2-3
+    // cifre; pe un singur rând, asta storcea lățimea barei de XP până la
+    // trunchiere ("L..."). Pe rânduri separate, bara are mereu toată
+    // lățimea ecranului, indiferent cât de mari devin cifrele pastilelor.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            const MyAvatar(size: 44),
+            const SizedBox(width: 10),
+            Expanded(child: xpColumn),
+          ],
         ),
-        if (lives != null) ...[
-          Container(
-            key: livesBadgeKey,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            if (widget.lives != null) ...[
+              _livesPill(),
+              const SizedBox(width: 10),
+            ],
+            if (widget.hints != null) ...[
+              _pill(key: widget.hintsBadgeKey, icon: Icons.lightbulb_rounded, color: AppColors.hint, value: widget.hints!),
+              const SizedBox(width: 10),
+            ],
+            if (widget.gems != null) ...[
+              _pill(key: widget.gemsBadgeKey, icon: Icons.diamond_rounded, color: const Color(0xFF5EC8F2), value: widget.gems!),
+              const SizedBox(width: 10),
+            ],
+            _pill(
+              key: widget.coinBadgeKey,
+              icon: Icons.monetization_on_rounded,
+              color: AppColors.coin,
+              value: widget.coins,
+              onTap: widget.onCoinsTap,
+              trailingIcon: widget.onCoinsTap != null ? Icons.add_circle_rounded : null,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.favorite_rounded, color: AppColors.life, size: 16),
-                const SizedBox(width: 6),
-                Text('$lives', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-        ],
-        if (hints != null) ...[
-          Container(
-            key: hintsBadgeKey,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.lightbulb_rounded, color: AppColors.hint, size: 16),
-                const SizedBox(width: 6),
-                Text('$hints', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-        ],
-        GestureDetector(
-          key: coinBadgeKey,
-          onTap: onCoinsTap,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(15),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white24),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.monetization_on_rounded, color: AppColors.coin, size: 16),
-                const SizedBox(width: 6),
-                Text('$coins', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
-                if (onCoinsTap != null) ...[
-                  const SizedBox(width: 4),
-                  const Icon(Icons.add_circle_rounded, color: AppColors.play, size: 16),
-                ],
-              ],
-            ),
-          ),
+          ],
         ),
       ],
     );
   }
+
+  Widget _livesPill() {
+    if (!widget.livesUnlimited) {
+      return _pill(key: widget.livesBadgeKey, icon: Icons.favorite_rounded, color: AppColors.life, value: widget.lives!);
+    }
+    return Container(
+      key: widget.livesBadgeKey,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.all_inclusive_rounded, color: AppColors.life, size: 16),
+          if (widget.livesUnlimitedLabel != null) ...[
+            const SizedBox(width: 6),
+            Text(widget.livesUnlimitedLabel!, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _pill({
+    Key? key,
+    required IconData icon,
+    required Color color,
+    required int value,
+    VoidCallback? onTap,
+    IconData? trailingIcon,
+  }) {
+    final pill = Container(
+      key: onTap == null ? key : null,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Text('$value', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+          if (trailingIcon != null) ...[
+            const SizedBox(width: 4),
+            Icon(trailingIcon, color: AppColors.play, size: 16),
+          ],
+        ],
+      ),
+    );
+    if (onTap == null) return pill;
+    return GestureDetector(key: key, onTap: onTap, child: pill);
+  }
+}
+
+/// Linie de "energie" (traiectorie sinusoidală, fază animată continuu) care
+/// traversează bara plină cât timp e claimable — un glow alb dedesubt și un
+/// fir colorat deasupra, ca un curent electric care circulă prin bară.
+class _EnergyWavePainter extends CustomPainter {
+  final double phase;
+  const _EnergyWavePainter({required this.phase});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    final midY = size.height / 2;
+    final amp = size.height * 0.34;
+    final waveLength = size.height * 9;
+
+    final path = Path();
+    for (double x = 0; x <= size.width; x += 3) {
+      final y = midY + sin((x / waveLength) * 2 * pi + phase * 2 * pi) * amp;
+      if (x == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = Colors.white.withAlpha(150)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.4
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.2),
+    );
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = AppColors.coin.withAlpha(235)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _EnergyWavePainter oldDelegate) => oldDelegate.phase != phase;
 }

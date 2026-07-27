@@ -62,10 +62,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 const Center(child: MyAvatar(size: 88)),
                 const SizedBox(height: 14),
-                Center(child: Text('Nivel $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
+                Center(child: Text('Level $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
                 const SizedBox(height: 4),
                 Center(
-                  child: Text('${xpIntoCurrentLevel(data.xp)} / $xpPerLevel XP către nivelul ${level + 1}',
+                  child: Text('${xpIntoCurrentLevel(data.xp)} / ${xpForLevel(level)} XP către nivelul ${level + 1}',
                       style: const TextStyle(color: Colors.white54, fontSize: 12)),
                 ),
                 const SizedBox(height: 10),

@@ -14,7 +14,10 @@ const _martianGreen = Color(0xFF3BC17A);
 
 // cât timp e vizibil balonul "Visit us!" din ciclul lui, și de câte ori mai
 // mult stă ascuns — cerut explicit: câteva secunde vizibil, dublu ascuns.
-const _bubbleVisibleSeconds = 3;
+// Peste durata maximă a replicilor "askHow" ale celorlalte mascote (vezi
+// greetDisplayDuration, 3.0-5.5s), ca balonul de Discord să rămână vizibil
+// clar mai mult decât mesajele lor.
+const _bubbleVisibleSeconds = 6;
 const _bubbleHiddenSeconds = _bubbleVisibleSeconds * 2;
 
 /// Opt gesturi unice: șase idle "de personalitate" (declanșate local,

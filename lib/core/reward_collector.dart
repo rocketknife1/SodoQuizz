@@ -23,9 +23,12 @@ Future<void> collectRewards(
   required GlobalKey livesBadgeKey,
   int hints = 0,
   GlobalKey? hintsBadgeKey,
+  int gems = 0,
+  GlobalKey? gemsBadgeKey,
   VoidCallback? onEachImpact,
 }) async {
   assert(hints <= 0 || hintsBadgeKey != null, 'hintsBadgeKey e obligatoriu daca hints > 0');
+  assert(gems <= 0 || gemsBadgeKey != null, 'gemsBadgeKey e obligatoriu daca gems > 0');
   Future<void> stage({
     required int amount,
     required IconData icon,
@@ -92,6 +95,17 @@ Future<void> collectRewards(
       applyReward: () => StorageService.addHints(hints),
       // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
       impactSound: Sfx.xpHit,
+    );
+  }
+  if (gems > 0) {
+    await stage(
+      amount: gems,
+      icon: Icons.diamond_rounded,
+      color: const Color(0xFF5EC8F2),
+      targetKey: gemsBadgeKey!,
+      applyReward: () => StorageService.addGems(gems),
+      // nu exista un sunet dedicat de gems — refolosim coinHit (vezi Sfx).
+      impactSound: Sfx.coinHit,
     );
   }
 }

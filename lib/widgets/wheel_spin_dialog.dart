@@ -4,30 +4,67 @@ import '../core/audio.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
-enum _PrizeType { coins, xp, life }
-
+/// Un premiu de la Roata norocului — model flexibil (nu un singur
+/// tip+cantitate) ca să poată reprezenta și pachete combinate (ex. XP+viață).
+/// Toate câmpurile de recompensă sunt opționale (0 = nu se acordă); orice
+/// combinație nenulă e posibilă. [weight] controlează șansa relativă de a
+/// pica pe acest premiu — segmentele de pe roată rămân vizual egale ca
+/// mărime (toate mereu vizibile), raritatea vine din probabilitate, nu din
+/// mărimea feliei.
 class _WheelPrize {
   final IconData icon;
   final Color color;
-  final _PrizeType type;
-  final int amount;
-  const _WheelPrize({required this.icon, required this.color, required this.type, required this.amount});
+  /// Textul scurt desenat pe roată, sub icon (ex. "25", "1", "24h").
+  final String wheelLabel;
+  final int weight;
+  final int coins;
+  final int xp;
+  final int hints;
+  final int gems;
+  final int lives;
+  /// Premiul-jackpot: vieți nelimitate pentru această durată (altfel null).
+  final Duration? unlimitedLives;
+
+  const _WheelPrize({
+    required this.icon,
+    required this.color,
+    required this.wheelLabel,
+    required this.weight,
+    this.coins = 0,
+    this.xp = 0,
+    this.hints = 0,
+    this.gems = 0,
+    this.lives = 0,
+    this.unlimitedLives,
+  });
 }
 
+const _gemColor = Color(0xFF5EC8F2);
+const _jackpotColor = Color(0xFFFFD700);
+
+/// 11 premii — orice resursă (monede, XP, hints, viață, gems) sau pachet
+/// combinat (mai rar) poate ieși la o rotire, plus premiul special ultra-rar:
+/// vieți nelimitate 24h. Greutățile sunt relative, nu procente — vezi
+/// [_WheelSpinDialogState._pickWeightedIndex].
 const List<_WheelPrize> _prizes = [
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 22),
-  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 33),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 46),
-  _WheelPrize(icon: Icons.favorite_rounded, color: AppColors.life, type: _PrizeType.life, amount: 1),
-  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 28),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 68),
-  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, type: _PrizeType.xp, amount: 38),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, type: _PrizeType.coins, amount: 30),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '25', weight: 20, coins: 25),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '30', weight: 20, xp: 30),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '60', weight: 14, coins: 60),
+  _WheelPrize(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, wheelLabel: '1', weight: 16, hints: 1),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '70', weight: 14, xp: 70),
+  _WheelPrize(icon: Icons.favorite_rounded, color: AppColors.life, wheelLabel: '1', weight: 10, lives: 1),
+  _WheelPrize(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, wheelLabel: '2', weight: 8, hints: 2),
+  _WheelPrize(icon: Icons.diamond_rounded, color: _gemColor, wheelLabel: '3', weight: 6, gems: 3),
+  // pachete combinate — mai rare (weight mic) decât o resursă singură.
+  _WheelPrize(icon: Icons.card_giftcard_rounded, color: Color(0xFFB388FF), wheelLabel: 'XP+❤', weight: 4, xp: 40, lives: 1),
+  _WheelPrize(icon: Icons.redeem_rounded, color: _gemColor, wheelLabel: '💎+', weight: 3, gems: 5, coins: 40),
+  // jackpot — ultra-rar (weight 1 din 116 total ≈ 0.9%).
+  _WheelPrize(icon: Icons.all_inclusive_rounded, color: _jackpotColor, wheelLabel: '24h', weight: 1, unlimitedLives: Duration(hours: 24)),
 ];
 
-/// Roata norocului a inelului — un premiu (monede/XP/viață) o dată la 24h
-/// reale (vezi [StorageService.canSpinRing]). Se deschide ca dialog peste
-/// Home; recompensa se aplică imediat la finalul rotației, iar butonul de
+/// Roata norocului a inelului — un premiu o dată la 24h reale (vezi
+/// [StorageService.canSpinRing]). Se deschide ca dialog peste Home;
+/// recompensa se aplică imediat la finalul rotației, iar butonul de
 /// închidere reîmprospătează header-ul.
 class WheelSpinDialog extends StatefulWidget {
   const WheelSpinDialog({super.key});
@@ -59,9 +96,22 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     super.dispose();
   }
 
+  /// Tragere ponderată (nu uniformă) — indexul ales alimentează aceeași
+  /// logică de unghi-țintă de mai jos, deci nu schimbă nimic din animația
+  /// roții, doar CE index e ales.
+  int _pickWeightedIndex() {
+    final total = _prizes.fold<int>(0, (sum, p) => sum + p.weight);
+    var roll = Random().nextDouble() * total;
+    for (var i = 0; i < _prizes.length; i++) {
+      roll -= _prizes[i].weight;
+      if (roll <= 0) return i;
+    }
+    return _prizes.length - 1;
+  }
+
   Future<void> _doSpin() async {
     if (_spinning || _done) return;
-    final resultIndex = Random().nextInt(_prizes.length);
+    final resultIndex = _pickWeightedIndex();
     final segmentAngle = 2 * pi / _prizes.length;
     // acul e sus (unghi -pi/2 în convenția noastră). Segmentul i e desenat
     // cu centrul la unghiul local -pi/2 + (i+0.5)*segmentAngle, așa că
@@ -78,16 +128,13 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     await _spin.forward(from: 0);
 
     final prize = _prizes[resultIndex];
-    switch (prize.type) {
-      case _PrizeType.coins:
-        await StorageService.addCoins(prize.amount);
-        break;
-      case _PrizeType.xp:
-        await StorageService.addXp(prize.amount);
-        break;
-      case _PrizeType.life:
-        await StorageService.addLivesUncapped(prize.amount);
-        break;
+    if (prize.coins > 0) await StorageService.addCoins(prize.coins);
+    if (prize.xp > 0) await StorageService.addXp(prize.xp);
+    if (prize.hints > 0) await StorageService.addHints(prize.hints);
+    if (prize.gems > 0) await StorageService.addGems(prize.gems);
+    if (prize.lives > 0) await StorageService.addLivesUncapped(prize.lives);
+    if (prize.unlimitedLives != null) {
+      await StorageService.activateUnlimitedLives(prize.unlimitedLives!);
     }
     await StorageService.recordRingSpin();
     Sfx.rewardPop();
@@ -154,16 +201,12 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
             ),
             const SizedBox(height: 22),
             if (_done && _result != null) ...[
-              const Text('Ai câștigat!', style: TextStyle(color: Colors.white70, fontSize: 13)),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(_result!.icon, color: _result!.color, size: 26),
-                  const SizedBox(width: 8),
-                  Text('+${_result!.amount}', style: TextStyle(color: _result!.color, fontSize: 24, fontWeight: FontWeight.w900)),
-                ],
+              Text(
+                _result!.unlimitedLives != null ? 'JACKPOT! 🎉' : 'Ai câștigat!',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
+              const SizedBox(height: 8),
+              _buildResultRows(_result!),
               const SizedBox(height: 18),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -189,6 +232,42 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       ),
     );
   }
+
+  /// Listează TOATE resursele câștigate — nu doar una — ca pachetele
+  /// combinate (ex. XP+viață) să arate ambele rânduri, nu doar primul.
+  Widget _buildResultRows(_WheelPrize prize) {
+    if (prize.unlimitedLives != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
+          SizedBox(width: 10),
+          Text('Vieți nelimitate\n24 de ore!', textAlign: TextAlign.center, style: TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
+        ],
+      );
+    }
+    final rows = <Widget>[];
+    void addRow(IconData icon, Color color, String text) {
+      rows.add(Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(width: 8),
+            Text(text, style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900)),
+          ],
+        ),
+      ));
+    }
+
+    if (prize.coins > 0) addRow(Icons.monetization_on_rounded, AppColors.coin, '+${prize.coins}');
+    if (prize.xp > 0) addRow(Icons.star_rounded, AppColors.purple, '+${prize.xp}');
+    if (prize.hints > 0) addRow(Icons.tips_and_updates_rounded, AppColors.hint, '+${prize.hints}');
+    if (prize.gems > 0) addRow(Icons.diamond_rounded, _gemColor, '+${prize.gems}');
+    if (prize.lives > 0) addRow(Icons.favorite_rounded, AppColors.life, '+${prize.lives}');
+    return Column(mainAxisSize: MainAxisSize.min, children: rows);
+  }
 }
 
 class _WheelPainter extends CustomPainter {
@@ -210,10 +289,10 @@ class _WheelPainter extends CustomPainter {
       canvas.drawLine(center, center + Offset(cos(startAngle), sin(startAngle)) * radius, line);
 
       final midAngle = startAngle + segmentAngle / 2;
-      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.66;
-      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 22, Colors.white);
-      final labelPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.9;
-      _paintText(canvas, '${prize.amount}', null, null, labelPos, 12, Colors.white, bold: true);
+      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.64;
+      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 20, Colors.white);
+      final labelPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.89;
+      _paintText(canvas, prize.wheelLabel, null, null, labelPos, 11, Colors.white, bold: true);
     }
 
     canvas.drawCircle(center, radius, Paint()

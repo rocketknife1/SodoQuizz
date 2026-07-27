@@ -16,8 +16,12 @@ class ShopScreen extends StatefulWidget {
 class _ShopScreenState extends State<ShopScreen> {
   int _lives = 5;
   int _coins = 0;
+  int _gems = 0;
   bool _canClaimDaily = false;
+  int _heartsBoughtToday = 0;
+  int _hintPacksBoughtToday = 0;
   bool _loading = true;
+  bool _busy = false;
   final _livesBadgeKey = GlobalKey();
 
   @override
@@ -30,28 +34,30 @@ class _ShopScreenState extends State<ShopScreen> {
     final results = await Future.wait([
       StorageService.getLives(),
       StorageService.getCoins(),
+      StorageService.getGems(),
       StorageService.canClaimDailyReward(),
+      StorageService.getHeartsBoughtToday(),
+      StorageService.getHintPacksBoughtToday(),
     ]);
     if (!mounted) return;
     setState(() {
       _lives = results[0] as int;
       _coins = results[1] as int;
-      _canClaimDaily = results[2] as bool;
+      _gems = results[2] as int;
+      _canClaimDaily = results[3] as bool;
+      _heartsBoughtToday = results[4] as int;
+      _hintPacksBoughtToday = results[5] as int;
       _loading = false;
     });
   }
 
   Future<void> _claimDaily() async {
-    final vieti = shopData['vieti'] as Map<String, dynamic>;
-    final amount = vieti['gratuit_zilnic'] as int;
-    await StorageService.claimDailyReward();
+    final granted = await StorageService.claimDailyReward();
     if (!mounted) return;
-    // aceeași animație de zbor (praf magic + traiectorie șerpuită spre
-    // pastila de vieți) ca la recompensele compuse — vezi [collectRewards].
     Sfx.rewardPop();
     CoinRewardOverlay.show(
       context,
-      amount: amount,
+      amount: granted,
       targetKey: _livesBadgeKey,
       icon: Icons.favorite_rounded,
       color: AppColors.life,
@@ -62,18 +68,58 @@ class _ShopScreenState extends State<ShopScreen> {
     );
   }
 
-  void _comingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Plățile în magazin vor fi disponibile într-o versiune viitoare.')),
-    );
+  Future<void> _buyHeart() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final ok = await StorageService.buyHeartWithCoins();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) {
+      Sfx.coinHit();
+      await _loadState();
+    } else {
+      _toast(_heartsBoughtToday >= heartCoinPrices.length
+          ? 'Ai atins plafonul zilnic de achiziții.'
+          : 'Nu ai destule monede.');
+    }
+  }
+
+  Future<void> _buyHeartWithGems() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final ok = await StorageService.buyHeartRefillWithGems();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) {
+      Sfx.heartHit();
+      await _loadState();
+    } else {
+      _toast(_lives >= 5 ? 'Ești deja plin.' : 'Nu ai destule gems.');
+    }
+  }
+
+  Future<void> _buyHintPack(HintPack pack) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final ok = await StorageService.buyHintPackWithCoins(pack);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (ok) {
+      Sfx.coinHit();
+      await _loadState();
+    } else {
+      _toast(_hintPacksBoughtToday >= hintPackDailyLimit
+          ? 'Ai atins plafonul zilnic de pachete.'
+          : 'Nu ai destule monede.');
+    }
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final vieti = shopData['vieti'] as Map<String, dynamic>;
-    final vietiPachete = vieti['pachete'] as List<dynamic>;
-    final hints = shopData['hints_cumparate'] as Map<String, dynamic>;
-
     return Scaffold(
       backgroundColor: AppColors.bg,
       bottomNavigationBar: const AppBottomNavBar(current: AppTab.shop),
@@ -102,6 +148,8 @@ class _ShopScreenState extends State<ShopScreen> {
                     _StatPill(key: _livesBadgeKey, icon: Icons.favorite_rounded, iconColor: const Color(0xFFE24B4A), value: '$_lives'),
                     const SizedBox(width: 8),
                     _StatPill(icon: Icons.monetization_on_rounded, iconColor: const Color(0xFFFFD700), value: '$_coins'),
+                    const SizedBox(width: 8),
+                    _StatPill(icon: Icons.diamond_rounded, iconColor: const Color(0xFF5EC8F2), value: '$_gems'),
                   ],
                 ],
               ),
@@ -117,26 +165,43 @@ class _ShopScreenState extends State<ShopScreen> {
                         children: [
                           _ShopSectionCard(
                             title: 'Vieți',
-                            subtitle: 'Joacă fără limite',
+                            subtitle: 'Joacă fără să te oprești',
                             icon: Icons.favorite_rounded,
                             color: AppColors.purple,
                             children: [
                               _ShopItem(
                                 title: 'Recompensă zilnică',
-                                subtitle: '+${vieti['gratuit_zilnic']} vieți',
+                                subtitle: '+$freeDailyLivesTarget vieți',
                                 priceLabel: _canClaimDaily ? 'GRATUIT' : 'Revino mâine',
                                 free: true,
                                 disabled: !_canClaimDaily,
                                 owned: !_canClaimDaily,
                                 onTap: _canClaimDaily ? _claimDaily : null,
                               ),
-                              for (final p in vietiPachete)
-                                _ShopItem(
-                                  title: p['nume'] as String,
-                                  subtitle: 'Joacă non-stop, fără să pierzi vieți',
-                                  priceLabel: '${p['pret_ron']} RON',
-                                  onTap: _comingSoon,
-                                ),
+                              _ShopItem(
+                                title: '+1 viață',
+                                subtitle: _heartsBoughtToday >= heartCoinPrices.length
+                                    ? 'Plafon zilnic atins ($_heartsBoughtToday/${heartCoinPrices.length})'
+                                    : 'Achiziția ${_heartsBoughtToday + 1}/${heartCoinPrices.length} de azi — prețul crește cu fiecare',
+                                priceLabel: _heartsBoughtToday >= heartCoinPrices.length
+                                    ? '—'
+                                    : '${heartCoinPrices[_heartsBoughtToday]}',
+                                priceIcon: Icons.monetization_on_rounded,
+                                priceIconColor: AppColors.coin,
+                                disabled: _busy ||
+                                    _heartsBoughtToday >= heartCoinPrices.length ||
+                                    _coins < heartCoinPrices[_heartsBoughtToday.clamp(0, heartCoinPrices.length - 1)],
+                                onTap: _buyHeart,
+                              ),
+                              _ShopItem(
+                                title: 'Completare instantă',
+                                subtitle: 'Umple viețile la $freeDailyLivesTarget, indiferent de plafon',
+                                priceLabel: '$heartRefillGemsPrice',
+                                priceIcon: Icons.diamond_rounded,
+                                priceIconColor: const Color(0xFF5EC8F2),
+                                disabled: _busy || _lives >= 5 || _gems < heartRefillGemsPrice,
+                                onTap: _buyHeartWithGems,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
@@ -146,12 +211,21 @@ class _ShopScreenState extends State<ShopScreen> {
                             icon: Icons.lightbulb_rounded,
                             color: const Color(0xFFFFD54F),
                             children: [
-                              for (final entry in hints.entries)
+                              for (final pack in hintCoinPacks)
                                 _ShopItem(
-                                  title: entry.value['nume'] as String,
-                                  subtitle: '${entry.value['cantitate']} hints',
-                                  priceLabel: '${entry.value['pret_ron']} RON',
-                                  onTap: _comingSoon,
+                                  title: '${pack.amount} hints',
+                                  subtitle: _hintPacksBoughtToday >= hintPackDailyLimit
+                                      ? 'Plafon zilnic atins ($_hintPacksBoughtToday/$hintPackDailyLimit pachete)'
+                                      : 'Pachet ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit de azi',
+                                  priceLabel: _hintPacksBoughtToday >= hintPackDailyLimit
+                                      ? '—'
+                                      : '${pack.priceCoins}',
+                                  priceIcon: Icons.monetization_on_rounded,
+                                  priceIconColor: AppColors.coin,
+                                  disabled: _busy ||
+                                      _hintPacksBoughtToday >= hintPackDailyLimit ||
+                                      _coins < pack.priceCoins,
+                                  onTap: () => _buyHintPack(pack),
                                 ),
                             ],
                           ),
@@ -256,6 +330,10 @@ class _ShopItem extends StatelessWidget {
   final String title;
   final String subtitle;
   final String priceLabel;
+  // Aceeași iconiță (Icon widget) ca în pastilele din LevelHeader/Shop —
+  // NU un emoji în text, ca să arate identic peste tot în aplicație.
+  final IconData? priceIcon;
+  final Color? priceIconColor;
   final bool free;
   final bool owned;
   final bool disabled;
@@ -265,6 +343,8 @@ class _ShopItem extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.priceLabel,
+    this.priceIcon,
+    this.priceIconColor,
     this.free = false,
     this.owned = false,
     this.disabled = false,
@@ -310,10 +390,16 @@ class _ShopItem extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: Text(
-              priceLabel,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-            ),
+            child: priceIcon == null
+                ? Text(priceLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(priceLabel, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 4),
+                      Icon(priceIcon, color: priceIconColor, size: 14),
+                    ],
+                  ),
           ),
         ],
       ),

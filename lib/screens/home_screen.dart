@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -30,6 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _xpBadgeKey = GlobalKey();
   final GlobalKey _livesBadgeKey = GlobalKey();
   final GlobalKey _hintsBadgeKey = GlobalKey();
+  final GlobalKey _gemsBadgeKey = GlobalKey();
   final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
 
   @override
@@ -46,14 +48,59 @@ class _HomeScreenState extends State<HomeScreen> {
       StorageService.getLives(),
       StorageService.getStreak(),
       StorageService.getHints(),
+      StorageService.getPendingLevelRewardsCount(),
+      StorageService.getGems(),
     ]);
+    final livesUnlimited = await StorageService.hasUnlimitedLives();
+    final livesUnlimitedRemaining = livesUnlimited ? await StorageService.unlimitedLivesRemaining() : Duration.zero;
     return _HomeData(
       xp: results[0],
       coins: results[1],
       lives: results[2],
       streak: results[3],
       hints: results[4],
+      pendingLevelRewards: results[5],
+      gems: results[6],
+      livesUnlimited: livesUnlimited,
+      livesUnlimitedRemaining: livesUnlimitedRemaining,
     );
+  }
+
+  /// "HH:MM:SS" — același format folosit de numărătoarea inversă a RingMascot.
+  static String _formatCountdown(Duration d) {
+    final h = d.inHours.toString().padLeft(2, '0');
+    final m = (d.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (d.inSeconds % 60).toString().padLeft(2, '0');
+    return '$h:$m:$s';
+  }
+
+  /// Colectează, dintr-o singură mișcare, toate recompensele de nivel încă
+  /// nerevendicate (poate fi mai multe deodată dacă jucătorul nu a mai
+  /// intrat de o vreme — nimic nu se pierde niciodată, vezi StorageService)
+  /// — fiecare resursă zboară spre pastila ei, exact ca la colectarea unui
+  /// quest (vezi [collectRewards]).
+  Future<void> _claimLevelRewards() async {
+    final reward = await StorageService.claimAllPendingLevelRewards();
+    if (!mounted || reward.isEmpty) {
+      _refresh();
+      return;
+    }
+    await collectRewards(
+      context,
+      coins: reward.coins,
+      xp: 0,
+      lives: reward.hearts,
+      hints: reward.hints,
+      gems: reward.gems,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: _xpBadgeKey,
+      livesBadgeKey: _livesBadgeKey,
+      hintsBadgeKey: _hintsBadgeKey,
+      gemsBadgeKey: _gemsBadgeKey,
+      onEachImpact: _refresh,
+    );
+    if (!mounted) return;
+    _refresh();
   }
 
   /// Verifică dacă streak-ul a trecut de un prag nou (3/7/14... zile) —
@@ -121,15 +168,21 @@ class _HomeScreenState extends State<HomeScreen> {
             coins: data?.coins ?? 0,
             lives: data?.lives ?? 5,
             hints: data?.hints ?? 3,
+            gems: data?.gems ?? 0,
+            pendingLevelRewards: data?.pendingLevelRewards ?? 0,
+            livesUnlimited: data?.livesUnlimited ?? false,
+            livesUnlimitedLabel: (data?.livesUnlimited ?? false) ? _formatCountdown(data!.livesUnlimitedRemaining) : null,
             coinBadgeKey: _coinBadgeKey,
             xpBadgeKey: _xpBadgeKey,
             livesBadgeKey: _livesBadgeKey,
             hintsBadgeKey: _hintsBadgeKey,
+            gemsBadgeKey: _gemsBadgeKey,
             onCoinsTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ShopScreen()));
               _refresh();
             },
+            onClaimLevelRewards: _claimLevelRewards,
           ),
           if ((data?.streak ?? 0) > 0) ...[
             const SizedBox(height: 6),
@@ -155,6 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       subtitle: '',
                       color: AppColors.purple,
                       big: true,
+                      angular: true,
                       onTap: () async {
                         // sesiunea de joc poate termina quest-uri — la
                         // revenire pe Home, reîmprospătăm inclusiv cufărul.
@@ -318,11 +372,19 @@ class _HomeData {
   final int lives;
   final int streak;
   final int hints;
+  final int pendingLevelRewards;
+  final int gems;
+  final bool livesUnlimited;
+  final Duration livesUnlimitedRemaining;
   _HomeData({
     required this.xp,
     required this.coins,
     required this.lives,
     required this.streak,
     required this.hints,
+    required this.pendingLevelRewards,
+    required this.gems,
+    required this.livesUnlimited,
+    required this.livesUnlimitedRemaining,
   });
 }

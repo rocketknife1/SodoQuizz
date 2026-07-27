@@ -31,6 +31,23 @@ int calculateAwardedPoints(int questionReward, int hintsUsed, int maxPoints) {
   return (questionReward - penalty * hintsUsed).clamp(0, questionReward);
 }
 
+/// Unlimited Quiz nu are risc de inimă (spre deosebire de GameScreen) — ca
+/// să nu fie niciodată mai eficient decât modul cu risc, plătește sub
+/// baseline: 0,6× sub plafonul zilnic de răspunsuri corecte, 0,2× peste.
+/// Vezi reproiectarea economiei.
+const double unlimitedQuizFullRate = 0.6;
+const double unlimitedQuizReducedRate = 0.2;
+const int unlimitedQuizFullRateDailyCap = 40;
+
+/// Cultură Generală ("Daily Challenge"): primele [cultureFullRateDailyBatchCap]
+/// loturi din zi (adică primele [cultureFullRateDailyCorrectCap] întrebări
+/// corecte) plătesc rata normală; peste, rata scade mult — altfel numele
+/// "Daily Challenge" nu reflectă realitatea (rula nelimitat).
+const int cultureFullRateDailyCorrectCap = 30;
+const int cultureFullRateDailyBatchCap = 3;
+const int cultureReducedCoinsPerCorrect = 5;
+const int cultureReducedXpPerCorrect = 10;
+
 int calculateSessionQuestionReward(int maxPoints, Random random) {
   final minimumReward = (maxPoints * 0.7).round().clamp(100, maxPoints);
   final maximumReward = maxPoints;

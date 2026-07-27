@@ -4,10 +4,13 @@ import '../../core/theme.dart';
 import '../../data/storage_service.dart';
 import '../../widgets/level_header.dart';
 
-/// Clasament personal: recordul tău la fiecare gamemod + scorul maxim
-/// general. Aplicația nu are server/cont, deci nu există clasament
-/// multiplayer real — arătăm cinstit doar recordurile tale locale,
-/// nu inventăm alți jucători falși.
+/// Clasament personal: total de puncte pe ciclul curent (sumă pe toate
+/// categoriile), care se resetează automat la fiecare
+/// [StorageService.leaderboardPeriodHours] ore — punctele dinaintea unui
+/// reset nu se combină niciodată cu cele de după, nici măcar în aceeași
+/// categorie (vezi [StorageService.addLeaderboardPoints]). Aplicația nu are
+/// server/cont, deci nu există clasament multiplayer real — arătăm cinstit
+/// doar progresul tău local, nu inventăm alți jucători falși.
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
 
@@ -22,12 +25,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     final xp = await StorageService.getXp();
     final coins = await StorageService.getCoins();
     final lives = await StorageService.getLives();
-    final overall = await StorageService.getHighScore();
-    final perMode = <String, int>{};
-    for (final m in gameModes.where((m) => !m.locked)) {
-      perMode[m.id] = await StorageService.getModeHighScore(m.id);
-    }
-    return _LeaderboardData(xp: xp, coins: coins, lives: lives, overall: overall, perMode: perMode);
+    final points = await StorageService.getAllLeaderboardPoints();
+    final periodRemaining = await StorageService.leaderboardPeriodRemaining();
+    return _LeaderboardData(xp: xp, coins: coins, lives: lives, points: points, periodRemaining: periodRemaining);
+  }
+
+  static String _formatPeriod(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes % 60;
+    return '${h}h ${m}m';
   }
 
   @override
@@ -72,20 +78,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             children: [
                               const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 36),
                               const SizedBox(width: 14),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('Recordul tău general', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                                  Text('${data.overall} puncte', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-                                ],
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text('Puncte în acest ciclu', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                                    Text('${data.total} puncte', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Se resetează în ${_formatPeriod(data.periodRemaining)}',
+                                      style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: 18),
-                        const Text('Recorduri pe gamemod', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                        const Text('Puncte pe categorie (ciclul curent)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
-                        for (final m in gameModes.where((m) => !m.locked)) _ModeScoreRow(color: m.accentColor, icon: m.icon, title: m.title, score: data.perMode[m.id] ?? 0),
+                        for (final m in gameModes.where((m) => !m.locked))
+                          _ModeScoreRow(color: m.accentColor, icon: m.icon, title: m.title, score: data.points[m.id] ?? 0),
                         const SizedBox(height: 20),
                       ],
                     ),
@@ -103,9 +117,11 @@ class _LeaderboardData {
   final int xp;
   final int coins;
   final int lives;
-  final int overall;
-  final Map<String, int> perMode;
-  _LeaderboardData({required this.xp, required this.coins, required this.lives, required this.overall, required this.perMode});
+  final Map<String, int> points;
+  final Duration periodRemaining;
+  _LeaderboardData({required this.xp, required this.coins, required this.lives, required this.points, required this.periodRemaining});
+
+  int get total => points.values.fold(0, (sum, v) => sum + v);
 }
 
 class _ModeScoreRow extends StatelessWidget {

@@ -1,5 +1,14 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/progression.dart';
+import 'shop.dart';
+
+/// Ce s-a acordat efectiv la o vizionare de reclamă recompensată — vezi
+/// [StorageService.claimRewardedAdReward].
+class AdRewardResult {
+  final int hints;
+  final int hearts;
+  const AdRewardResult({required this.hints, required this.hearts});
+}
 
 /// Gestionează datele salvate local (vieți, monede, progres, highscore,
 /// XP/nivel, quest-uri, provocarea zilnică).
@@ -27,8 +36,27 @@ class StorageService {
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
+  static const _gemsKey = 'gems';
+  static const _lastClaimedRewardLevelKey = 'last_claimed_reward_level';
+  static const _xpCurveMigratedKey = 'xp_curve_migrated_v2';
   static const _maxLives = 5;
   static const ringSpinCooldownHours = 24;
+  static const _unlimitedLivesUntilKey = 'unlimited_lives_until';
+  static const _cultureQuizPlayTimestampsKey = 'culture_quiz_play_timestamps';
+  static const cultureQuizPlayLimit = 3;
+  static const cultureQuizWindowMinutes = 15;
+  static const _leaderboardPeriodStartKey = 'leaderboard_period_start';
+  static const _leaderboardModesKey = 'leaderboard_modes_with_points';
+  static const leaderboardPeriodHours = 48;
+
+  /// Plafon de stoc pentru hint-uri — peste acest prag, sursele suplimentare
+  /// nu se mai adaugă (vezi reproiectarea economiei: hint-urile trebuie
+  /// folosite, nu doar strânse la nesfârșit).
+  static const _hintsCap = 20;
+
+  /// Câte vizionări de reclamă recompensată sunt permise pe zi calendaristică
+  /// — reclama devine un supliment, nu principala sursă de hints/vieți.
+  static const _adRewardCap = 4;
 
   /// Praguri (în zile consecutive) la care se acordă un bonus automat.
   static const List<int> streakMilestones = [3, 7, 14, 30, 60, 100];
@@ -56,9 +84,10 @@ class StorageService {
     }
   }
 
-  /// Adaugă vieți peste plafonul standard de 5 — folosit doar de recompensa
-  /// de colectare din Cultură Generală, unde inimile câștigate se pot
-  /// acumula peste maximul obișnuit (regenerarea pasivă tot se oprește la 5).
+  /// Adaugă vieți peste plafonul standard de 5 — folosit de recompensele de
+  /// colectare (Cultură Generală, Level Up, achievements) unde inimile
+  /// câștigate se pot acumula peste maximul obișnuit (regenerarea pasivă tot
+  /// se oprește la 5). Fără plafon superior — la cerere explicită.
   static Future<void> addLivesUncapped(int amount) async {
     if (amount <= 0) return;
     final current = await getLives();
@@ -89,6 +118,31 @@ class StorageService {
     }
   }
 
+  // ─── Vieți nelimitate (premiu rar de la Roata norocului, 24h) ─────────────
+  // Cât timp e activ, un răspuns greșit nu mai scade nicio viață (vezi
+  // GameScreen._resolveAnswer) — nu doar un plafon foarte mare, chiar
+  // nelimitat, la cererea explicită a jucătorului.
+
+  static Future<void> activateUnlimitedLives(Duration duration) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_unlimitedLivesUntilKey, DateTime.now().add(duration).millisecondsSinceEpoch);
+  }
+
+  static Future<bool> hasUnlimitedLives() async {
+    final prefs = await SharedPreferences.getInstance();
+    final until = prefs.getInt(_unlimitedLivesUntilKey);
+    return until != null && DateTime.now().millisecondsSinceEpoch < until;
+  }
+
+  /// Timpul rămas până expiră bonusul (zero dacă nu e activ).
+  static Future<Duration> unlimitedLivesRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    final until = prefs.getInt(_unlimitedLivesUntilKey);
+    if (until == null) return Duration.zero;
+    final remaining = until - DateTime.now().millisecondsSinceEpoch;
+    return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
+  }
+
   // ─── Monede ──────────────────────────────────────────────────────────────
 
   static Future<int> getCoins() async {
@@ -110,6 +164,29 @@ class StorageService {
     return true;
   }
 
+  // ─── Gems (monedă premium — rară, din achievements/nivel, cheltuită în
+  // secțiunea Premium a Shop-ului) ────────────────────────────────────────
+
+  static Future<int> getGems() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_gemsKey) ?? 0;
+  }
+
+  static Future<void> addGems(int amount) async {
+    if (amount <= 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_gemsKey) ?? 0;
+    await prefs.setInt(_gemsKey, current + amount);
+  }
+
+  static Future<bool> spendGems(int amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_gemsKey) ?? 0;
+    if (current < amount) return false;
+    await prefs.setInt(_gemsKey, current - amount);
+    return true;
+  }
+
   // ─── Hints (resursă separată, ca vieți/monede — vezi Home + shop) ─────────
   // Jucătorii noi pornesc cu [_startingHints] gratuit, ca hint-ul din prima
   // întrebare să nu coste nimic din prima sesiune.
@@ -119,11 +196,13 @@ class StorageService {
     return prefs.getInt(_hintsKey) ?? _startingHints;
   }
 
+  /// Plafonat la [_hintsCap] — hint-urile trebuie folosite, nu doar strânse.
   static Future<void> addHints(int amount) async {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
-    await prefs.setInt(_hintsKey, current + amount);
+    final updated = (current + amount).clamp(0, _hintsCap);
+    await prefs.setInt(_hintsKey, updated);
   }
 
   /// Consumă 1 hint din balanța persistată — întoarce false dacă nu mai ai.
@@ -139,14 +218,83 @@ class StorageService {
 
   static Future<int> getXp() async {
     final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
     return prefs.getInt(_xpKey) ?? 0;
   }
 
   static Future<void> addXp(int amount) async {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
     final current = prefs.getInt(_xpKey) ?? 0;
     await prefs.setInt(_xpKey, current + amount);
+  }
+
+  /// Curba de XP/nivel s-a schimbat (de la liniar 1000/nivel, la o curbă
+  /// pătratică — vezi [levelForXp]). Rulează o singură dată: dacă XP-ul deja
+  /// salvat ar corespunde unui nivel mai mic sub noua curbă decât nivelul pe
+  /// care jucătorul îl avea deja sub cea veche, XP-ul e ridicat exact până la
+  /// pragul noii curbe pentru acel nivel — nivelul afișat nu scade niciodată
+  /// din cauza migrării. lastClaimedRewardLevel pornește de la nivelul curent
+  /// (nu retroactiv), ca să nu apară dintr-o dată zeci de reward-uri
+  /// "necolectate" pentru niveluri deja trecute înainte de acest update.
+  static Future<void> _migrateXpCurveIfNeeded(SharedPreferences prefs) async {
+    if (prefs.getBool(_xpCurveMigratedKey) ?? false) return;
+    final xp = prefs.getInt(_xpKey) ?? 0;
+    const oldXpPerLevel = 1000;
+    final oldLevel = (xp ~/ oldXpPerLevel) + 1;
+    final newFloor = cumulativeXpForLevel(oldLevel);
+    final migratedXp = xp < newFloor ? newFloor : xp;
+    if (migratedXp != xp) {
+      await prefs.setInt(_xpKey, migratedXp);
+    }
+    await prefs.setInt(_lastClaimedRewardLevelKey, levelForXp(migratedXp));
+    await prefs.setBool(_xpCurveMigratedKey, true);
+  }
+
+  // ─── Reward-uri de Level Up ─────────────────────────────────────────────
+  // Fiecare nivel are un reward dedicat (vezi [levelReward]) — nu se acordă
+  // automat, ci se colectează manual (bara de XP din LevelHeader). Nimic nu
+  // se pierde dacă treci mai multe niveluri fără să colectezi: se ține minte
+  // doar ultimul nivel revendicat, restul se calculează la cerere.
+
+  static Future<int> getLastClaimedRewardLevel() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
+    return prefs.getInt(_lastClaimedRewardLevelKey) ?? levelForXp(prefs.getInt(_xpKey) ?? 0);
+  }
+
+  static Future<int> getPendingLevelRewardsCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
+    final currentLevel = levelForXp(prefs.getInt(_xpKey) ?? 0);
+    final lastClaimed = prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel;
+    return (currentLevel - lastClaimed).clamp(0, 1000000);
+  }
+
+  /// Calculează suma recompenselor TUTUROR nivelurilor trecute și încă
+  /// nerevendicate (poate fi mai multe deodată dacă jucătorul nu a mai
+  /// intrat de o vreme) și marchează-le drept revendicate — dar NU scrie
+  /// efectiv coins/hints/hearts/gems în balanțe (asta rămâne în grija
+  /// apelantului, prin [collectRewards], ca să nu se acorde de două ori —
+  /// aceeași convenție ca la [claimRewardedAdReward]).
+  static Future<LevelReward> claimAllPendingLevelRewards() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
+    final currentLevel = levelForXp(prefs.getInt(_xpKey) ?? 0);
+    final lastClaimed = prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel;
+    if (currentLevel <= lastClaimed) return const LevelReward();
+
+    var coins = 0, hints = 0, hearts = 0, gems = 0;
+    for (var level = lastClaimed + 1; level <= currentLevel; level++) {
+      final r = levelReward(level);
+      coins += r.coins;
+      hints += r.hints;
+      hearts += r.hearts;
+      gems += r.gems;
+    }
+    await prefs.setInt(_lastClaimedRewardLevelKey, currentLevel);
+    return LevelReward(coins: coins, hints: hints, hearts: hearts, gems: gems);
   }
 
   // ─── Progres întrebări ────────────────────────────────────────────────────
@@ -184,13 +332,15 @@ class StorageService {
     return last != _dateKey(DateTime.now());
   }
 
-  /// Adaugă [_maxLives] vieți, o dată pe zi calendaristică — aditiv, nu
-  /// resetează la plafon, ca să se însumeze corect cu orice bonus deja
-  /// acumulat (ex: din Cultură Generală, vezi [addLivesUncapped]).
-  static Future<void> claimDailyReward() async {
+  /// Adaugă [_maxLives] vieți, o dată pe zi calendaristică — aditiv, peste
+  /// orice ai deja acumulat (regenerare pasivă, bonusuri etc.), la cerere
+  /// explicită — fără plafon. Întoarce câte vieți s-au acordat (mereu
+  /// [_maxLives]).
+  static Future<int> claimDailyReward() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_dailyClaimKey, _dateKey(DateTime.now()));
     await addLivesUncapped(_maxLives);
+    return _maxLives;
   }
 
   // ─── Wheel-spin la inel (roată cu premii, o dată la 24h reale) ─────────────
@@ -268,6 +418,124 @@ class StorageService {
   }
 
   static String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
+
+  // ─── Rate-limit Cultură Generală (max [cultureQuizPlayLimit] sesiuni la
+  // fiecare [cultureQuizWindowMinutes] minute) ────────────────────────────────
+  // Fereastră glisantă, nu contor zilnic: ținem doar timestamp-urile ultimelor
+  // sesiuni pornite, aruncăm ce a ieșit din fereastră la fiecare verificare —
+  // separat de plafonul zilnic de mai jos (acela controlează plata, ăsta
+  // controlează accesul).
+
+  static List<int> _recentCultureQuizTimestamps(SharedPreferences prefs) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final windowMs = const Duration(minutes: cultureQuizWindowMinutes).inMilliseconds;
+    final all = prefs.getStringList(_cultureQuizPlayTimestampsKey)?.map(int.parse).toList() ?? [];
+    return all.where((t) => now - t < windowMs).toList();
+  }
+
+  static Future<bool> canPlayCultureQuiz() async {
+    final prefs = await SharedPreferences.getInstance();
+    return _recentCultureQuizTimestamps(prefs).length < cultureQuizPlayLimit;
+  }
+
+  /// Timpul rămas până se eliberează primul slot (zero dacă poți juca deja).
+  static Future<Duration> cultureQuizCooldownRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    final recent = _recentCultureQuizTimestamps(prefs);
+    if (recent.length < cultureQuizPlayLimit) return Duration.zero;
+    final oldest = recent.reduce((a, b) => a < b ? a : b);
+    final windowMs = const Duration(minutes: cultureQuizWindowMinutes).inMilliseconds;
+    final remaining = (oldest + windowMs) - DateTime.now().millisecondsSinceEpoch;
+    return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
+  }
+
+  /// Înregistrează pornirea unei sesiuni noi — apelat chiar la start, nu la
+  /// final, ca sesiunea curentă să conteze imediat în fereastră.
+  static Future<void> recordCultureQuizPlay() async {
+    final prefs = await SharedPreferences.getInstance();
+    final recent = _recentCultureQuizTimestamps(prefs)..add(DateTime.now().millisecondsSinceEpoch);
+    await prefs.setStringList(_cultureQuizPlayTimestampsKey, recent.map((e) => e.toString()).toList());
+  }
+
+  // ─── Contoare zilnice generice (plafoane anti-farm) ────────────────────────
+  // Aceleași chei, scoped pe zi calendaristică, ca la quest-uri — folosite
+  // pentru plafonul reclamei recompensate și pentru diminishing returns pe
+  // modurile fără risc (Unlimited Quiz, Cultură Generală), vezi reproiectarea
+  // economiei: niciun mod nu trebuie să poată fi "farmat" la nesfârșit.
+
+  static String _dailyCounterKey(String name) => 'daily_${name}_${_dateKey(DateTime.now())}';
+
+  static Future<int> getDailyCounter(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_dailyCounterKey(name)) ?? 0;
+  }
+
+  static Future<int> incrementDailyCounter(String name, [int amount = 1]) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _dailyCounterKey(name);
+    final updated = (prefs.getInt(key) ?? 0) + amount;
+    await prefs.setInt(key, updated);
+    return updated;
+  }
+
+  // ─── Reclamă recompensată (Game Over) ──────────────────────────────────────
+  // Singurul loc din joc unde apare — e un buton de "continuă" după 0 vieți,
+  // deci trebuie să acorde mereu cel puțin o viață (altfel "continuă" n-ar
+  // avea sens). Plafonată la [_adRewardCap]/zi și redusă față de +2 vieți/+5
+  // hints necapat, cât acorda înainte de reproiectare.
+
+  static Future<bool> canClaimRewardedAdReward() async {
+    return (await getDailyCounter('ad_reward')) < _adRewardCap;
+  }
+
+  /// Doar înregistrează vizionarea de azi și întoarce cât acordă — NU scrie
+  /// direct în balanțe, ca să nu se dubleze cu [collectRewards] (apelantul
+  /// e cel care aplică efectiv reward-ul, cu animația lui proprie).
+  static Future<AdRewardResult> claimRewardedAdReward() async {
+    await incrementDailyCounter('ad_reward');
+    return const AdRewardResult(hints: 2, hearts: 1);
+  }
+
+  // ─── Cumpărături din Shop (Coins / Gems) ────────────────────────────────────
+  // Shop-ul e principalul currency sink al economiei — vezi reproiectarea:
+  // înainte, niciun articol nu se putea cumpăra efectiv cu Coins.
+
+  static Future<int> getHeartsBoughtToday() => getDailyCounter('hearts_bought');
+  static Future<int> getHintPacksBoughtToday() => getDailyCounter('hint_packs_bought');
+
+  /// Cumpără o inimă bonus cu Coins, la prețul progresiv al achiziției de
+  /// azi (crește cu fiecare cumpărare, se resetează a doua zi) — întoarce
+  /// false dacă s-a atins plafonul zilnic sau nu sunt destule monede.
+  static Future<bool> buyHeartWithCoins() async {
+    final boughtToday = await getDailyCounter('hearts_bought');
+    if (boughtToday >= heartCoinPrices.length) return false;
+    if (!await spendCoins(heartCoinPrices[boughtToday])) return false;
+    await incrementDailyCounter('hearts_bought');
+    await addLivesUncapped(1);
+    return true;
+  }
+
+  /// Umple instant viețile la maximul standard, cu Gems — fără plafon
+  /// zilnic (Gems fiind deja o resursă rară, nu are nevoie de un al doilea
+  /// gate). Întoarce false dacă ești deja plin sau nu ai destule gems.
+  static Future<bool> buyHeartRefillWithGems() async {
+    final current = await getLives();
+    if (current >= _maxLives) return false;
+    if (!await spendGems(heartRefillGemsPrice)) return false;
+    await setLives(_maxLives);
+    return true;
+  }
+
+  /// Cumpără un pachet de hints cu Coins — plafonul zilnic e pe NUMĂRUL de
+  /// pachete cumpărate, indiferent de mărimea fiecăruia.
+  static Future<bool> buyHintPackWithCoins(HintPack pack) async {
+    final boughtToday = await getDailyCounter('hint_packs_bought');
+    if (boughtToday >= hintPackDailyLimit) return false;
+    if (!await spendCoins(pack.priceCoins)) return false;
+    await incrementDailyCounter('hint_packs_bought');
+    await addHints(pack.amount);
+    return true;
+  }
 
   // ─── Modul "fără blur" (accesibilitate / preview) ─────────────────────────
 
@@ -423,7 +691,9 @@ class StorageService {
     }
   }
 
-  /// Recordul personal pentru un gamemod anume (folosit în Clasament).
+  /// Recordul all-time (per sesiune) pentru un gamemod anume — nu mai e
+  /// folosit de Clasament (vezi mai jos, total cumulativ pe cicluri de 48h),
+  /// păstrat totuși ca istoric brut, eventual util în Profil.
   static Future<int> getModeHighScore(String gameModeId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('high_score_$gameModeId') ?? 0;
@@ -436,6 +706,71 @@ class StorageService {
     if (score > current) {
       await prefs.setInt(key, score);
     }
+  }
+
+  // ─── Clasament — total cumulativ pe cicluri de 48h ─────────────────────────
+  // Diferit de High Score de mai sus (maximul unei singure sesiuni, ținut
+  // pentru totdeauna): aici punctele se ADUNĂ pe măsură ce răspunzi corect,
+  // pe toată durata unui ciclu de [leaderboardPeriodHours] — la reset,
+  // punctele vechi dispar complet, nu se combină niciodată cu cele noi,
+  // nici măcar în aceeași categorie. Nu importăm gamemodes.dart aici (la
+  // fel ca getModeHighScore, gameModeId e tratat ca string opac) — ținem
+  // separat lista modurilor cu puncte în ciclul curent, ca reset-ul să știe
+  // exact ce chei să șteargă, fără să depindă de lista completă de moduri.
+
+  static Future<void> _ensureLeaderboardPeriod(SharedPreferences prefs) async {
+    final start = prefs.getInt(_leaderboardPeriodStartKey);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (start == null) {
+      await prefs.setInt(_leaderboardPeriodStartKey, now);
+      return;
+    }
+    final elapsed = now - start;
+    if (elapsed < const Duration(hours: leaderboardPeriodHours).inMilliseconds) return;
+    final modes = prefs.getStringList(_leaderboardModesKey) ?? [];
+    for (final id in modes) {
+      await prefs.remove('leaderboard_pts_$id');
+    }
+    await prefs.setStringList(_leaderboardModesKey, []);
+    await prefs.setInt(_leaderboardPeriodStartKey, now);
+  }
+
+  static Future<void> addLeaderboardPoints(String gameModeId, int points) async {
+    if (points <= 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    await _ensureLeaderboardPeriod(prefs);
+    final key = 'leaderboard_pts_$gameModeId';
+    final current = prefs.getInt(key) ?? 0;
+    await prefs.setInt(key, current + points);
+    final modes = prefs.getStringList(_leaderboardModesKey)?.toSet() ?? <String>{};
+    if (modes.add(gameModeId)) {
+      await prefs.setStringList(_leaderboardModesKey, modes.toList());
+    }
+  }
+
+  static Future<int> getLeaderboardPoints(String gameModeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await _ensureLeaderboardPeriod(prefs);
+    return prefs.getInt('leaderboard_pts_$gameModeId') ?? 0;
+  }
+
+  /// Punctele din ciclul curent pentru toate modurile care au primit măcar
+  /// un punct — modurile fără puncte încă pur și simplu lipsesc din hartă.
+  static Future<Map<String, int>> getAllLeaderboardPoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _ensureLeaderboardPeriod(prefs);
+    final modes = prefs.getStringList(_leaderboardModesKey) ?? [];
+    return {for (final id in modes) id: prefs.getInt('leaderboard_pts_$id') ?? 0};
+  }
+
+  /// Timpul rămas până la resetul ciclului curent.
+  static Future<Duration> leaderboardPeriodRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _ensureLeaderboardPeriod(prefs);
+    final start = prefs.getInt(_leaderboardPeriodStartKey)!;
+    final elapsed = DateTime.now().millisecondsSinceEpoch - start;
+    final remaining = const Duration(hours: leaderboardPeriodHours).inMilliseconds - elapsed;
+    return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
   }
 
   // ─── Contoare permanente (folosite de Achievements) ───────────────────────
@@ -485,6 +820,7 @@ class StorageService {
     await prefs.setBool('achievement_claimed_${achievement.id}', true);
     await addCoins(achievement.coinReward);
     await addXp(achievement.xpReward);
+    if (achievement.gemReward > 0) await addGems(achievement.gemReward);
   }
 
   static const _achievementsDoneKnownKey = 'achievements_done_known';

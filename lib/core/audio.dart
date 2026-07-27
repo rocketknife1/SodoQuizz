@@ -2,6 +2,32 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import '../data/storage_service.dart';
 
+/// Contextul audio global (Android/iOS), comun pentru [Music] și [Sfx] —
+/// setat o singură dată, idempotent, indiferent care din cele două pornește
+/// primul. IMPORTANT: usage=media + content=music + focus=gain pun sunetul
+/// jocului pe stream-ul Media standard (ca YouTube/Spotify) — cu vechea
+/// configurație (assistanceSonification/sonification/none) sunetul ateriza
+/// pe alt stream Android, de-aia butoanele fizice de volum nu îl atingeau
+/// și trebuia reglat manual din altă categorie de volum din telefon.
+Future<void>? _globalAudioContextFuture;
+Future<void> _ensureGlobalAudioContext() {
+  return _globalAudioContextFuture ??= () async {
+    try {
+      await AudioPlayer.global.setAudioContext(AudioContext(
+        android: const AudioContextAndroid(
+          stayAwake: false,
+          contentType: AndroidContentType.music,
+          usageType: AndroidUsageType.media,
+          audioFocus: AndroidAudioFocus.gain,
+        ),
+        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
+      ));
+    } catch (e) {
+      debugPrint('Audio: setAudioContext a eșuat: $e');
+    }
+  }();
+}
+
 /// Muzică de fundal — o singură piesă în buclă, complet separată de [Sfx]
 /// (player propriu, volum propriu persistat). Pornește automat la lansarea
 /// aplicației (vezi main.dart) și respectă preferința "Music Off" +
@@ -18,6 +44,7 @@ class Music {
   }
 
   static Future<void> _init() async {
+    await _ensureGlobalAudioContext();
     _enabled = await StorageService.getMusicEnabled();
     _volume = await StorageService.getMusicVolume();
     try {
@@ -103,22 +130,9 @@ class Sfx {
   /// Samsung), fără un AudioContext explicit sesiunea audio nu se
   /// inițializează corect pe stream-ul media și playerii rămân muți deși
   /// nu aruncă nicio eroare Dart — de-asta îl setăm explicit, global,
-  /// înainte de orice altceva.
+  /// înainte de orice altceva (vezi [_ensureGlobalAudioContext]).
   static Future<void> _init() async {
-    try {
-      await AudioPlayer.global.setAudioContext(AudioContext(
-        android: const AudioContextAndroid(
-          isSpeakerphoneOn: true,
-          stayAwake: false,
-          contentType: AndroidContentType.sonification,
-          usageType: AndroidUsageType.assistanceSonification,
-          audioFocus: AndroidAudioFocus.none,
-        ),
-        iOS: AudioContextIOS(category: AVAudioSessionCategory.ambient),
-      ));
-    } catch (e) {
-      debugPrint('Sfx: setAudioContext a eșuat: $e');
-    }
+    await _ensureGlobalAudioContext();
     await Future.wait([
       _prepare(_next, 'next_tap.wav'),
       _prepare(_reward, 'reward_pop.wav'),

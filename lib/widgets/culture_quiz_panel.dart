@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/game_helpers.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/culture_questions.dart';
 import '../data/storage_service.dart';
 import 'countdown_ring.dart';
 
-enum _Phase { teaser, playing, justFinished }
+enum _Phase { teaser, cooldown, playing, justFinished }
 
 /// Panou compact, integrat direct în Home (nu navighează spre alt ecran):
 /// un mini-quiz de cultură generală (BETA), fără imagine, cronometrat
@@ -59,14 +60,67 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   int _livesEarned = 0;
   bool _collecting = false;
   Timer? _questionTimer;
+  Duration? _cooldownRemaining;
+  Timer? _cooldownTicker;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAvailability();
+  }
 
   @override
   void dispose() {
     _questionTimer?.cancel();
+    _cooldownTicker?.cancel();
     super.dispose();
   }
 
-  void _start() {
+  Future<void> _checkAvailability() async {
+    final canPlay = await StorageService.canPlayCultureQuiz();
+    if (!mounted || canPlay) return;
+    await _enterCooldown();
+  }
+
+  /// Arată numărătoarea inversă până la următoarea sesiune disponibilă —
+  /// același tipar de ticker local (1s, fără interogare repetată a
+  /// storage-ului) ca la RingMascot._startCountdown.
+  Future<void> _enterCooldown() async {
+    final remaining = await StorageService.cultureQuizCooldownRemaining();
+    if (!mounted) return;
+    setState(() {
+      _phase = _Phase.cooldown;
+      _cooldownRemaining = remaining;
+    });
+    _cooldownTicker?.cancel();
+    _cooldownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final next = (_cooldownRemaining ?? Duration.zero) - const Duration(seconds: 1);
+      if (next <= Duration.zero) {
+        timer.cancel();
+        setState(() {
+          _phase = _Phase.teaser;
+          _cooldownRemaining = null;
+        });
+        return;
+      }
+      setState(() => _cooldownRemaining = next);
+    });
+  }
+
+  /// Pornește un lot nou — dar doar dacă mai e loc în fereastra de
+  /// [StorageService.cultureQuizPlayLimit] sesiuni / [StorageService.cultureQuizWindowMinutes]
+  /// minute; altfel arată cooldown-ul în loc să pornească.
+  Future<void> _start() async {
+    if (!await StorageService.canPlayCultureQuiz()) {
+      await _enterCooldown();
+      return;
+    }
+    await StorageService.recordCultureQuizPlay();
+    if (!mounted) return;
     // sesiune nouă = alt set aleatoriu de întrebări din pool-ul categoriei
     // curente (România/Belgia/...).
     _questions = (List.of(_category.questions)..shuffle(Random()))
@@ -122,8 +176,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       correctCount++;
       const coinsPerCorrect = 20;
       const xpPerCorrect = 40;
-      _coinsEarned += coinsPerCorrect;
-      _xpEarned += xpPerCorrect;
+      // fără risc aici (nu se pierd vieți) — după plafonul zilnic de
+      // răspunsuri corecte, rata scade mult; altfel "Daily Challenge" ar
+      // putea rula la nesfârșit la rată integrală. Vezi game_helpers.dart.
+      final correctToday = await StorageService.getDailyCounter('culture_correct');
+      final fullRate = correctToday < cultureFullRateDailyCorrectCap;
+      _coinsEarned += fullRate ? coinsPerCorrect : cultureReducedCoinsPerCorrect;
+      _xpEarned += fullRate ? xpPerCorrect : cultureReducedXpPerCorrect;
+      await StorageService.incrementDailyCounter('culture_correct');
       // bonus de viață la fiecare 3 răspunsuri corecte — doar acumulat aici,
       // fără plafon (se acordă efectiv, peste maximul de 5, la colectare).
       if (correctCount % 3 == 0) _livesEarned++;
@@ -147,11 +207,19 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     // pe COLECTEAZĂ.
     await StorageService.markDailyChallengeDone();
     await StorageService.addQuestProgress('daily_challenge_done', 1);
+    // bonusul de finalizare a lotului există doar pentru primele loturi ale
+    // zilei — dincolo de plafon, lotul tot contează (contorul de mai sus),
+    // dar fără bonusul suplimentar de completare.
+    final batchesToday = await StorageService.getDailyCounter('culture_batches');
+    final withinDailyBatchCap = batchesToday < cultureFullRateDailyBatchCap;
+    await StorageService.incrementDailyCounter('culture_batches');
     if (!mounted) return;
     setState(() {
       _phase = _Phase.justFinished;
-      _coinsEarned += completionCoins;
-      _xpEarned += completionXp;
+      if (withinDailyBatchCap) {
+        _coinsEarned += completionCoins;
+        _xpEarned += completionXp;
+      }
     });
   }
 
@@ -172,9 +240,10 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     );
 
     if (!mounted) return;
-    // continuă automat cu un set nou de întrebări — nelimitat, până
-    // părăsești Home, nu doar câte un lot de 10 urmat de "START" manual.
-    _start();
+    // continuă automat cu un set nou de întrebări — dar doar cât mai ai
+    // sesiuni disponibile în fereastra curentă (vezi [_start]); altfel
+    // trece în cooldown, în loc de "START" manual.
+    await _start();
   }
 
   @override
@@ -194,9 +263,39 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       alignment: Alignment.center,
       child: switch (_phase) {
         _Phase.teaser => _buildTeaser(),
+        _Phase.cooldown => _buildCooldown(),
         _Phase.playing => _buildPlaying(),
         _Phase.justFinished => _buildFinished(),
       },
+    );
+  }
+
+  Widget _buildCooldown() {
+    final r = _cooldownRemaining ?? Duration.zero;
+    final m = r.inMinutes.toString().padLeft(2, '0');
+    final s = (r.inSeconds % 60).toString().padLeft(2, '0');
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.hourglass_bottom_rounded, color: Colors.white38, size: 32),
+        const SizedBox(height: 10),
+        const Text(
+          'Cultură Generală',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Ai jucat de ${StorageService.cultureQuizPlayLimit} ori în ultimele ${StorageService.cultureQuizWindowMinutes} minute',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white54, fontSize: 11),
+        ),
+        const SizedBox(height: 12),
+        Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        const Text('până la următoarea sesiune', style: TextStyle(color: Colors.white38, fontSize: 10)),
+      ],
     );
   }
 
@@ -243,8 +342,12 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         GestureDetector(
           onTap: _start,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(color: AppColors.coin, borderRadius: BorderRadius.circular(20)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: ShapeDecoration(
+              color: AppColors.coin,
+              shape: const BeveledRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(14))),
+              shadows: [BoxShadow(color: AppColors.coin.withAlpha(110), blurRadius: 8, offset: const Offset(0, 3))],
+            ),
             child: const Text('START', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800)),
           ),
         ),
@@ -328,7 +431,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           final opt = q.choices[i];
           var bg = Colors.white.withAlpha(18);
           var border = Colors.white24;
-          if (answered) {
+          // la timeout fără tap, selectedAnswer rămâne null — nu se
+          // dezvăluie răspunsul corect, doar trece mai departe în tăcere.
+          if (answered && selectedAnswer != null) {
             if (opt == q.answer) {
               bg = const Color(0xFF1D9E75).withAlpha(110);
               border = const Color(0xFF1D9E75);

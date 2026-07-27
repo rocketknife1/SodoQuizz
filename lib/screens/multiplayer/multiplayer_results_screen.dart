@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
@@ -18,10 +19,28 @@ class MultiplayerResultsScreen extends StatefulWidget {
 
 class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   late final Future<List<MatchPlayer>> _future = _load();
+  int _coinsEarned = 0;
+  int _xpEarned = 0;
 
+  /// Multiplayer înainte nu acorda NICIO recompensă economică — un meci
+  /// real, cu adversar live și fără reluări, merită o primă peste modul
+  /// solo fără risc (1,25× la coins/XP din scor) plus un bonus fix de
+  /// victorie/participare, ca să existe mereu un motiv economic să joci
+  /// contra altcuiva, nu doar contra listei de întrebări. Vezi reproiectarea
+  /// economiei — comparația dintre gamemoduri.
   Future<List<MatchPlayer>> _load() async {
     final players = await MultiplayerService.instance.watchPlayers(widget.matchId).first;
     final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
+    final me = MultiplayerService.instance.currentPlayerId;
+    final myIndex = sorted.indexWhere((p) => p.id == me);
+    if (myIndex != -1) {
+      final myScore = sorted[myIndex].score;
+      final won = myIndex == 0 && (sorted.length < 2 || sorted[1].score < myScore);
+      _coinsEarned = myScore ~/ 8 + (won ? 60 : 15);
+      _xpEarned = (myScore * 1.1).round() + (won ? 120 : 30);
+      await StorageService.addCoins(_coinsEarned);
+      await StorageService.addXp(_xpEarned);
+    }
     await MultiplayerService.instance.leaveMatch(widget.matchId);
     return sorted;
   }
@@ -58,6 +77,10 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 56),
                   const SizedBox(height: 8),
                   const Text('Clasament final', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  if (_coinsEarned > 0 || _xpEarned > 0) ...[
+                    const SizedBox(height: 6),
+                    Text('+$_coinsEarned monede  •  +$_xpEarned XP', style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
                   const SizedBox(height: 20),
                   Expanded(
                     child: ListView.builder(

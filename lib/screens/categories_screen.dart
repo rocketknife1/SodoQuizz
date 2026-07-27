@@ -4,18 +4,9 @@ import '../core/gamemodes.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
-import '../widgets/planet_tile.dart';
+import '../widgets/category_card.dart';
 import '../widgets/space_background.dart';
 import 'loading_screen.dart';
-
-/// Rangul de "măiestrie" pe categorie, calculat din procentul de întrebări
-/// răspunse corect vreodată (vezi [StorageService.getAnsweredIds]).
-String _rankLabel(double pct) {
-  if (pct >= 1.0) return 'Maestru';
-  if (pct >= 0.67) return 'Expert';
-  if (pct >= 0.34) return 'Priceput';
-  return 'Novice';
-}
 
 class _ModeStats {
   final int total;
@@ -62,64 +53,79 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       backgroundColor: AppColors.bg,
       body: SpaceBackground(
         child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
-                    ),
-                    const SizedBox(width: 4),
-                    const Text('Alege o planetă', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              Expanded(
-                child: FutureBuilder<Map<String, _ModeStats>>(
-                  future: _statsFuture,
-                  builder: (context, snapshot) {
-                    return GridView.count(
-                      padding: const EdgeInsets.all(20),
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 14,
-                      mainAxisSpacing: 18,
-                      childAspectRatio: 0.8,
+          child: FutureBuilder<Map<String, _ModeStats>>(
+            future: _statsFuture,
+            builder: (context, snapshot) {
+              final stats = snapshot.data;
+              final totalAnswered = stats?.values.fold<int>(0, (sum, s) => sum + s.answered) ?? 0;
+              final totalQuestions = stats?.values.fold<int>(0, (sum, s) => sum + s.total) ?? 0;
+
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 20, 6),
+                    child: Row(
                       children: [
-                        for (final mode in gameModes)
-                          PlanetTile(
-                            icon: mode.icon,
-                            title: mode.title,
-                            subtitle: mode.locked
-                                ? mode.subtitle
-                                : '${mode.subtitle} • ${snapshot.data?[mode.id]?.total ?? 0} întrebări',
-                            color: mode.accentColor,
-                            locked: mode.locked,
-                            progress: mode.locked ? null : snapshot.data?[mode.id]?.pct,
-                            rankLabel: (mode.locked || snapshot.data?[mode.id] == null)
-                                ? null
-                                : _rankLabel(snapshot.data![mode.id]!.pct),
-                            onTap: mode.locked
-                                ? () => ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Va urma în următorul update! 🚀')),
-                                    )
-                                : () {
-                                    Sfx.tileSelect();
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => LoadingScreen(gameModeId: mode.id)),
-                                    );
-                                  },
-                          ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                        ),
+                        const SizedBox(width: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ShaderMask(
+                              shaderCallback: (r) => const LinearGradient(colors: [Colors.white, Color(0xFFC9B8FF)])
+                                  .createShader(r),
+                              child: const Text(
+                                'Alege o categorie',
+                                style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                            if (totalQuestions > 0)
+                              Text(
+                                '$totalAnswered/$totalQuestions întrebări cucerite',
+                                style: const TextStyle(color: Colors.white54, fontSize: 11.5, fontWeight: FontWeight.w600),
+                              ),
+                          ],
+                        ),
                       ],
-                    );
-                  },
-                ),
-              ),
-            ],
+                    ),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
+                      itemCount: gameModes.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, i) {
+                        final mode = gameModes[i];
+                        final s = stats?[mode.id];
+                        return CategoryCard(
+                          index: i + 1,
+                          icon: mode.icon,
+                          title: mode.title,
+                          color: mode.accentColor,
+                          locked: mode.locked,
+                          totalQuestions: s?.total ?? 0,
+                          answered: s?.answered ?? 0,
+                          onTap: mode.locked
+                              ? () => ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Va urma în următorul update! 🚀')),
+                                  )
+                              : () {
+                                  Sfx.tileSelect();
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => LoadingScreen(gameModeId: mode.id)),
+                                  );
+                                },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

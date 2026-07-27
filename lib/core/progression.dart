@@ -1,15 +1,94 @@
 import 'package:flutter/material.dart';
 
-/// Formula de nivel/XP: 1000 XP pe nivel, simplu și previzibil.
-/// XP-ul câștigat la o întrebare corectă = punctele obținute la acea
-/// întrebare (vezi calculateAwardedPoints din game_helpers.dart).
-const int xpPerLevel = 1000;
+/// Formula de nivel/XP: curbă pătratică, nu liniară — primele niveluri sunt
+/// rapide (motivante pentru un jucător nou), apoi progresia încetinește
+/// plăcut, fără să devină vreodată imposibilă (vezi documentul de
+/// reproiectare a economiei). XP-ul câștigat la o întrebare corectă =
+/// punctele obținute la acea întrebare (vezi calculateAwardedPoints din
+/// game_helpers.dart).
+///
+/// XP necesar ca să treci de la nivelul [level] la [level] + 1.
+int xpForLevel(int level) => 250 + 60 * level * level;
 
-int levelForXp(int xp) => (xp ~/ xpPerLevel) + 1;
+int levelForXp(int xp) {
+  var level = 1;
+  var remaining = xp;
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
+    level++;
+  }
+  return level;
+}
 
-int xpIntoCurrentLevel(int xp) => xp % xpPerLevel;
+int xpIntoCurrentLevel(int xp) {
+  var level = 1;
+  var remaining = xp;
+  while (remaining >= xpForLevel(level)) {
+    remaining -= xpForLevel(level);
+    level++;
+  }
+  return remaining;
+}
 
-double levelProgress(int xp) => xpIntoCurrentLevel(xp) / xpPerLevel;
+double levelProgress(int xp) => xpIntoCurrentLevel(xp) / xpForLevel(levelForXp(xp));
+
+/// XP total necesar ca să AJUNGI la [level] (pornind de la 0) — folosit la
+/// migrarea de pe curba veche și la calculul reward-urilor de Level Up.
+int cumulativeXpForLevel(int level) {
+  var total = 0;
+  for (var l = 1; l < level; l++) {
+    total += xpForLevel(l);
+  }
+  return total;
+}
+
+/// Recompensa acordată la finalizarea unui nivel — colectată manual din
+/// bara de XP (vezi StorageService.claimAllPendingLevelRewards), nu
+/// acordată automat. Nivelul 1 (start) nu are reward — primul e la nivelul 2.
+class LevelReward {
+  final int coins;
+  final int hints;
+  final int hearts;
+  final int gems;
+  const LevelReward({this.coins = 0, this.hints = 0, this.hearts = 0, this.gems = 0});
+
+  bool get isEmpty => coins == 0 && hints == 0 && hearts == 0 && gems == 0;
+}
+
+/// Compoziție variată, nu doar monede: hints la fiecare 3 niveluri, o viață
+/// bonus la fiecare 4, gems la fiecare 10 (plus un bonus în plus la
+/// multipli de 25) — ca fiecare colectare să pară o mică surpriză, nu doar
+/// un număr care crește.
+LevelReward levelReward(int level) {
+  if (level <= 1) return const LevelReward();
+  final coins = 60 + 25 * level;
+  final hints = level % 3 == 0 ? 2 : 0;
+  final hearts = level % 4 == 0 ? 1 : 0;
+  var gems = level % 10 == 0 ? 10 : 0;
+  if (level % 25 == 0) gems += 25;
+  return LevelReward(coins: coins, hints: hints, hearts: hearts, gems: gems);
+}
+
+/// Recompensa acordată la fiecare 10 întrebări răspunse într-o sesiune de
+/// joc dintr-o categorie (vezi GameScreen) — [milestone] = 1 la a 10-a
+/// întrebare, 2 la a 20-a etc. Viața (mereu +1) nu e în model, se acordă
+/// separat de apelant. Progresivă (crește cu fiecare milestone din aceeași
+/// sesiune) — gems abia de la milestone 3 (30 de întrebări), ca semn că ai
+/// "ajuns departe", nu de la primul prag.
+class GameModeMilestoneReward {
+  final int coins;
+  final int xp;
+  final int gems;
+  const GameModeMilestoneReward({required this.coins, required this.xp, required this.gems});
+}
+
+GameModeMilestoneReward gameModeMilestoneReward(int milestone) {
+  return GameModeMilestoneReward(
+    coins: 30 * milestone,
+    xp: 80 * milestone,
+    gems: milestone >= 3 ? (milestone - 2) * 3 : 0,
+  );
+}
 
 /// Un quest zilnic: progresul se ține în [StorageService], definiția
 /// (țintă, recompensă) e statică aici — o singură listă de editat.
@@ -110,6 +189,7 @@ class Achievement {
   final int target;
   final int coinReward;
   final int xpReward;
+  final int gemReward;
   final IconData icon;
 
   const Achievement({
@@ -119,13 +199,14 @@ class Achievement {
     required this.target,
     required this.coinReward,
     required this.xpReward,
+    this.gemReward = 0,
     required this.icon,
   });
 }
 
 /// Numărul de gamemoduri deblocate (folosit de "all_modes" mai jos) — ține-l
 /// sincronizat manual cu numărul de intrări `locked: false` din gamemodes.dart.
-const int unlockedGameModeCount = 10;
+const int unlockedGameModeCount = 14;
 
 const List<Achievement> achievements = [
   Achievement(
@@ -153,6 +234,7 @@ const List<Achievement> achievements = [
     target: 400,
     coinReward: 200,
     xpReward: 400,
+    gemReward: 20,
     icon: Icons.workspace_premium_rounded,
   ),
   Achievement(
@@ -198,6 +280,7 @@ const List<Achievement> achievements = [
     target: 25,
     coinReward: 80,
     xpReward: 140,
+    gemReward: 10,
     icon: Icons.flag_rounded,
   ),
   Achievement(

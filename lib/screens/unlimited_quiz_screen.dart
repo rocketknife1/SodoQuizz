@@ -66,12 +66,18 @@ class _UnlimitedQuizScreenState extends State<UnlimitedQuizScreen> with SingleTi
 
     if (correct) {
       final reward = calculateSessionQuestionReward(_current.maxPoints, Random());
-      final pts = calculateAwardedPoints(reward, 0, _current.maxPoints);
+      final basePts = calculateAwardedPoints(reward, 0, _current.maxPoints);
+      // fără risc de inimă aici — plătește sub baseline-ul lui GameScreen,
+      // cu o rată și mai mică peste plafonul zilnic (vezi game_helpers.dart).
+      final correctToday = await StorageService.getDailyCounter('unlimited_correct');
+      final rate = correctToday < unlimitedQuizFullRateDailyCap ? unlimitedQuizFullRate : unlimitedQuizReducedRate;
+      final pts = (basePts * rate).round();
       final coinsEarned = pts ~/ 10;
       setState(() => score += pts);
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(pts);
       await StorageService.addAnsweredId(_current.id);
+      await StorageService.incrementDailyCounter('unlimited_correct');
     } else {
       _shakeController.forward(from: 0);
     }

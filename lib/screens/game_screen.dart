@@ -44,6 +44,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool answered = false;
   String? selectedAnswer;
   bool _noBlur = false;
+  bool _unlimitedLives = false;
+  int _sessionAnswered = 0;
   late final AnimationController _shakeController;
 
   GameMode get mode => gameModeById(widget.gameModeId);
@@ -64,11 +66,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _loadQuestions() async {
-    final results = await Future.wait([loadAllQuestions(), StorageService.getLives(), StorageService.getNoBlurMode(), StorageService.getHints()]);
+    final results = await Future.wait([
+      loadAllQuestions(),
+      StorageService.getLives(),
+      StorageService.getNoBlurMode(),
+      StorageService.getHints(),
+      StorageService.hasUnlimitedLives(),
+    ]);
     final loaded = results[0] as List<Question>;
     final savedLives = results[1] as int;
     final noBlur = results[2] as bool;
     final savedHints = results[3] as int;
+    final unlimitedLives = results[4] as bool;
 
     if (await StorageService.recordModePlayedToday(widget.gameModeId)) {
       final newModesToday = await StorageService.getQuestProgress('play_two_modes');
@@ -84,6 +93,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       lives = savedLives;
       hintsBalance = savedHints;
       _noBlur = noBlur;
+      _unlimitedLives = unlimitedLives;
+      _sessionAnswered = 0;
       questions = loaded.where((q) => q.categoryId == widget.gameModeId).toList()..shuffle(Random());
       qIndex = 0;
       _questionRewards.clear();
@@ -155,22 +166,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // (vezi [_addHint]).
     final pts = correct ? currentQuestionReward : 0;
     final coinsEarned = correct ? pts ~/ 10 : 0;
+    // verificat live (nu cache-uit la intrarea în ecran) — dacă bonusul de
+    // 24h expiră la mijlocul sesiunii, următorul răspuns greșit trebuie deja
+    // să scadă viața din nou.
+    final unlimited = correct ? _unlimitedLives : await StorageService.hasUnlimitedLives();
 
     setState(() {
       answered = true;
+      _unlimitedLives = unlimited;
       if (correct) {
         score += pts;
         streak++;
       } else {
         // doar plafon inferior — dacă viețile sunt peste 5 (bonus din
-        // Cultură Generală), scăderea nu trebuie să le retează înapoi la 5.
-        lives = lives > 0 ? lives - 1 : 0;
+        // Cultură Generală / milestone-uri de sesiune), scăderea nu trebuie
+        // să le reteze înapoi la 5. Cât timp vieți nelimitate e activ, nu
+        // scade deloc.
+        if (!unlimited) lives = lives > 0 ? lives - 1 : 0;
         streak = 0;
         _shakeController.forward(from: 0);
       }
     });
 
-    if (lives <= 0) {
+    if (lives <= 0 && !unlimited) {
       Future.delayed(const Duration(seconds: 1), _showGameOver);
     }
 
@@ -179,10 +197,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // să se termine, chiar dacă utilizatorul iese brusc din joc imediat
     // după acest tap (buton Acasă / back).
     await _bumpQuest('answer_10', 1);
+    _sessionAnswered++;
     if (correct) {
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(pts);
       await StorageService.addAnsweredId(currentQ.id);
+      await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
       await _bumpQuest('correct_5', 1);
       await _bumpQuest('earn_60_coins', coinsEarned);
       if (hintsUsed == 0) await _bumpQuest('no_hint_3', 1);
@@ -195,6 +215,36 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     } else {
       await StorageService.setLives(lives);
     }
+    await _checkSessionMilestone();
+  }
+
+  /// La fiecare 10 întrebări răspunse în sesiunea curentă (corect sau
+  /// greșit — la fel ca quest-ul "answer_10" de mai sus), acordă un bonus
+  /// progresiv (vezi [gameModeMilestoneReward]): monede + XP care cresc cu
+  /// fiecare prag, +1 viață mereu, și gems abia de la al treilea prag (30 de
+  /// întrebări — semn că ai "ajuns departe"). Arătat printr-un banner, la fel
+  /// ca la quest/achievement — GameScreen n-are pastile-țintă spre care să
+  /// zboare o animație de recompensă ca pe Home.
+  Future<void> _checkSessionMilestone() async {
+    if (_sessionAnswered % 10 != 0) return;
+    final milestone = _sessionAnswered ~/ 10;
+    final reward = gameModeMilestoneReward(milestone);
+    await StorageService.addCoins(reward.coins);
+    await StorageService.addXp(reward.xp);
+    if (reward.gems > 0) await StorageService.addGems(reward.gems);
+    await StorageService.addLivesUncapped(1);
+    if (!mounted) return;
+    setState(() => lives += 1);
+    Sfx.rewardPop();
+    InAppNotification.show(
+      context,
+      title: 'Bonus la $_sessionAnswered întrebări! 🎁',
+      message: '+${reward.coins} monede, +${reward.xp} XP, +1 ❤️'
+          '${reward.gems > 0 ? ', +${reward.gems} 💎' : ''}',
+      icon: Icons.military_tech_rounded,
+      color: AppColors.coin,
+      onTap: () {},
+    );
   }
 
   /// Adaugă progres la un quest zilnic; dacă tocmai a atins ținta (și nu
@@ -292,14 +342,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   /// Game Over (0 vieți) e singurul caz cu opțiune de continuare: un buton
-  /// auriu "Reclamă" (simulată — fără SDK real) acordă +2 vieți/+5 hint-uri
-  /// prin [collectRewards] (fără plafon de folosiri în acest MVP — decizie
-  /// simplă, ajustabilă ulterior) și reia jocul chiar de unde a rămas
-  /// (întrebarea era deja dezvăluită, cu butonul "Următoarea" gata de tap).
-  /// Dacă nu vrea reclama, "Acasă" se comportă ca înainte.
-  void _showGameOver() {
+  /// auriu "Reclamă" (simulată — fără SDK real) acordă vieți+hint-uri prin
+  /// [collectRewards] și reia jocul chiar de unde a rămas (întrebarea era
+  /// deja dezvăluită, cu butonul "Următoarea" gata de tap). Plafonat la
+  /// câteva vizionări/zi (vezi StorageService.canClaimRewardedAdReward) —
+  /// reclama e un supliment, nu principala sursă de resurse. Dacă plafonul
+  /// e atins sau nu vrea reclama, "Acasă" se comportă ca înainte.
+  void _showGameOver() async {
     StorageService.updateHighScore(score);
     StorageService.updateModeHighScore(widget.gameModeId, score);
+    final canWatchAd = await StorageService.canClaimRewardedAdReward();
+    if (!mounted) return;
     var watchingAd = false;
     var adWatched = false;
     final adLivesKey = GlobalKey();
@@ -327,11 +380,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     _adMiniBadge(adHintsKey, Icons.tips_and_updates_rounded, AppColors.hint),
                   ],
                 ),
+              ] else if (!canWatchAd) ...[
+                const SizedBox(height: 12),
+                const Text('Ai atins plafonul zilnic de reclame.', style: TextStyle(color: Colors.white38, fontSize: 12)),
               ],
             ],
           ),
           actions: [
-            if (!adWatched)
+            if (canWatchAd && !adWatched)
               ElevatedButton(
                 onPressed: watchingAd
                     ? null
@@ -339,6 +395,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         setDialogState(() => watchingAd = true);
                         // simuleaza vizionarea unei reclame - fara SDK real.
                         await Future.delayed(const Duration(milliseconds: 900));
+                        final reward = await StorageService.claimRewardedAdReward();
                         if (!dialogContext.mounted) return;
                         setDialogState(() {
                           watchingAd = false;
@@ -348,8 +405,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           dialogContext,
                           coins: 0,
                           xp: 0,
-                          lives: 2,
-                          hints: 5,
+                          lives: reward.hearts,
+                          hints: reward.hints,
                           coinBadgeKey: GlobalKey(),
                           xpBadgeKey: GlobalKey(),
                           livesBadgeKey: adLivesKey,
@@ -358,7 +415,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         if (!dialogContext.mounted) return;
                         Navigator.of(dialogContext).pop();
                         if (!mounted) return;
-                        _continueAfterAd();
+                        _continueAfterAd(reward);
                       },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coin,
@@ -366,7 +423,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                  watchingAd ? 'Se încarcă reclama...' : 'Reclamă  •  +2 ❤ +5 💡',
+                  watchingAd ? 'Se încarcă reclama...' : 'Reclamă  •  +1 ❤ +2 💡',
                   style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -390,10 +447,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
-  void _continueAfterAd() {
+  void _continueAfterAd(AdRewardResult reward) {
     setState(() {
-      lives = 2;
-      hintsBalance += 5;
+      lives = reward.hearts;
+      hintsBalance += reward.hints;
     });
   }
 
@@ -494,6 +551,41 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Rândul fix de 5 inimioare nu poate arăta vieți peste 5 (bonus de la
+  /// milestone-uri de sesiune sau Cultură Generală) — peste acel prag,
+  /// devine o singură inimă + cifră; cât timp vieți nelimitate e activ,
+  /// devine simbolul de infinit, ca bonusul să fie efectiv vizibil.
+  Widget _buildHeartsDisplay() {
+    if (_unlimitedLives) {
+      return const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.all_inclusive_rounded, color: Color(0xFFE24B4A), size: 20),
+        ],
+      );
+    }
+    if (lives > 5) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.favorite_rounded, color: Color(0xFFE24B4A), size: 20),
+          const SizedBox(width: 4),
+          Text('×$lives', style: const TextStyle(color: Color(0xFFE24B4A), fontWeight: FontWeight.w800, fontSize: 14)),
+        ],
+      );
+    }
+    return Row(
+      children: List.generate(
+        5,
+        (i) => Icon(
+          i < lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+          color: i < lives ? const Color(0xFFE24B4A) : Colors.white24,
+          size: 20,
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
@@ -508,16 +600,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 onPressed: _goHome,
               ),
               const SizedBox(width: 8),
-              Row(
-                children: List.generate(
-                  5,
-                  (i) => Icon(
-                    i < lives ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                    color: i < lives ? const Color(0xFFE24B4A) : Colors.white24,
-                    size: 20,
-                  ),
-                ),
-              ),
+              _buildHeartsDisplay(),
               const Spacer(),
               if (streak > 1)
                 Container(
