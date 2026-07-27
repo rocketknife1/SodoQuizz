@@ -1,0 +1,1133 @@
+{
+  "categorii": {
+    "monumente": {
+      "mod": "4_variante",
+      "culoare_tema": "#B8860B",
+      "descriere": "Monumente și minuni ale lumii",
+      "intrebari": [
+        {
+          "id": "mon_001",
+          "raspuns": "TURNUL EIFFEL",
+          "variante": [
+            "TURNUL EIFFEL",
+            "ARCUL DE TRIUMF",
+            "NOTRE-DAME",
+            "TURNUL LONDREI"
+          ],
+          "hint_1": "Construit pentru Expoziția Universală din 1889",
+          "hint_2": "Din fier, aproape 330 de metri înălțime",
+          "hint_3": "Simbolul orașului Paris",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Eiffel Tower Paris",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_002",
+          "raspuns": "MARELE ZID CHINEZESC",
+          "variante": [
+            "MARELE ZID CHINEZESC",
+            "TEMPLUL BOROBUDUR",
+            "FORTUL ROSU",
+            "ANGKOR WAT"
+          ],
+          "hint_1": "Se întinde pe mii de kilometri",
+          "hint_2": "Construit de-a lungul secolelor pentru apărare",
+          "hint_3": "Vizibil parțial din spațiu, potrivit unei legende populare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Great Wall of China",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_003",
+          "raspuns": "TAJ MAHAL",
+          "variante": [
+            "TAJ MAHAL",
+            "FORTUL ROSU",
+            "TEMPLUL AURIU",
+            "PALATUL VERSAILLES"
+          ],
+          "hint_1": "Construit de un împărat mogul în memoria soției sale",
+          "hint_2": "Din marmură albă",
+          "hint_3": "Aflat în orașul Agra, India",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Taj Mahal India",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_004",
+          "raspuns": "COLOSSEUMUL",
+          "variante": [
+            "COLOSSEUMUL",
+            "ACROPOLE",
+            "PARTENON",
+            "PODUL RIALTO"
+          ],
+          "hint_1": "Cel mai mare amfiteatru antic construit vreodată",
+          "hint_2": "Aici aveau loc luptele de gladiatori",
+          "hint_3": "Aflat în centrul Romei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Colosseum Rome",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_005",
+          "raspuns": "STATUIA LIBERTATII",
+          "variante": [
+            "STATUIA LIBERTATII",
+            "CRISTO REDENTOR",
+            "EMPIRE STATE BUILDING",
+            "SEMNUL HOLLYWOOD"
+          ],
+          "hint_1": "Un cadou al Franței pentru Statele Unite",
+          "hint_2": "Ține o torță ridicată în mână",
+          "hint_3": "Aflată pe o insulă din portul New York",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Statue of Liberty New York",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_006",
+          "raspuns": "BIG BEN",
+          "variante": [
+            "BIG BEN",
+            "TOWER BRIDGE",
+            "TURNUL LONDREI",
+            "PALATUL BUCKINGHAM"
+          ],
+          "hint_1": "Numele oficial al clopotului, nu al turnului",
+          "hint_2": "Parte a Palatului Westminster",
+          "hint_3": "Simbolul Londrei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Big Ben London",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_007",
+          "raspuns": "PODUL GOLDEN GATE",
+          "variante": [
+            "PODUL GOLDEN GATE",
+            "TURNUL CN",
+            "EMPIRE STATE BUILDING",
+            "ALCATRAZ"
+          ],
+          "hint_1": "Vopsit într-o culoare portocalie specială",
+          "hint_2": "Leagă San Francisco de comitatul Marin",
+          "hint_3": "Unul dintre cele mai fotografiate poduri din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Golden Gate Bridge San Francisco",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_008",
+          "raspuns": "OPERA DIN SYDNEY",
+          "variante": [
+            "OPERA DIN SYDNEY",
+            "TURNUL CN",
+            "ULURU",
+            "MAREA BARIERA DE CORALI"
+          ],
+          "hint_1": "Acoperișul seamănă cu niște pânze de corabie",
+          "hint_2": "Aflată pe malul portului din Sydney",
+          "hint_3": "Una dintre clădirile secolului XX cele mai ușor recognoscibile",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Sydney Opera House",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_009",
+          "raspuns": "TURNUL DIN PISA",
+          "variante": [
+            "TURNUL DIN PISA",
+            "COLOSSEUMUL",
+            "FANTANA DI TREVI",
+            "PODUL RIALTO"
+          ],
+          "hint_1": "Celebru pentru înclinarea sa neintenționată",
+          "hint_2": "Construit ca turn clopotniță",
+          "hint_3": "Aflat în orașul Pisa, Italia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Leaning Tower of Pisa",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_010",
+          "raspuns": "MACHU PICCHU",
+          "variante": [
+            "MACHU PICCHU",
+            "CHICHEN ITZA",
+            "STATUILE MOAI",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "O cetate incașă construită în munți",
+          "hint_2": "Aflată la mare altitudine, în Anzi",
+          "hint_3": "Redescoperită pentru lumea occidentală în 1911",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Machu Picchu Peru",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_011",
+          "raspuns": "PIRAMIDELE DIN GIZA",
+          "variante": [
+            "PIRAMIDELE DIN GIZA",
+            "SFINXUL",
+            "ABU SIMBEL",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "Singura minune antică a lumii încă în picioare",
+          "hint_2": "Construite ca morminte pentru faraoni",
+          "hint_3": "Aflate lângă orașul Cairo",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Pyramids of Giza",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_012",
+          "raspuns": "SFINXUL",
+          "variante": [
+            "SFINXUL",
+            "PIRAMIDELE DIN GIZA",
+            "ABU SIMBEL",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "Are corp de leu și cap de om",
+          "hint_2": "Sculptat direct din stâncă",
+          "hint_3": "Stă chiar lângă piramidele din Giza",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Great Sphinx of Giza",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_013",
+          "raspuns": "PETRA",
+          "variante": [
+            "PETRA",
+            "CHICHEN ITZA",
+            "ABU SIMBEL",
+            "ANGKOR WAT"
+          ],
+          "hint_1": "Un oraș antic sculptat direct în stâncă roz",
+          "hint_2": "Ascuns între munți, în Iordania",
+          "hint_3": "Faimos datorită clădirii numite 'Vistieria'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Petra Jordan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_014",
+          "raspuns": "STONEHENGE",
+          "variante": [
+            "STONEHENGE",
+            "CASTELUL EDINBURGH",
+            "TURNUL LONDREI",
+            "TOWER BRIDGE"
+          ],
+          "hint_1": "Un cerc din pietre uriașe, ridicate în preistorie",
+          "hint_2": "Scopul exact rămâne un mister",
+          "hint_3": "Aflat în sudul Angliei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Stonehenge England",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_015",
+          "raspuns": "CATEDRALA SFANTUL VASILE",
+          "variante": [
+            "CATEDRALA SFANTUL VASILE",
+            "KREMLIN",
+            "CATEDRALA DIN KOLN",
+            "BAZILICA SFANTUL PETRU"
+          ],
+          "hint_1": "Cunoscută pentru cupolele colorate, în formă de ceapă",
+          "hint_2": "Aflată în Piața Roșie din Moscova",
+          "hint_3": "Construită la ordinul lui Ivan cel Groaznic",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Saint Basil's Cathedral Moscow",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_016",
+          "raspuns": "NOTRE-DAME",
+          "variante": [
+            "NOTRE-DAME",
+            "SAGRADA FAMILIA",
+            "CATEDRALA DIN KOLN",
+            "TURNUL EIFFEL"
+          ],
+          "hint_1": "O catedrală gotică aflată pe o insulă din Sena",
+          "hint_2": "Cunoscută datorită romanului lui Victor Hugo",
+          "hint_3": "A suferit un incendiu major în 2019",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Notre-Dame de Paris",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_017",
+          "raspuns": "SAGRADA FAMILIA",
+          "variante": [
+            "SAGRADA FAMILIA",
+            "NOTRE-DAME",
+            "CATEDRALA DIN KOLN",
+            "TURNUL DIN PISA"
+          ],
+          "hint_1": "O basilică proiectată de arhitectul Antoni Gaudí",
+          "hint_2": "Încă neterminată, deși construcția a început în 1882",
+          "hint_3": "Aflată în Barcelona, Spania",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Sagrada Familia Barcelona",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_018",
+          "raspuns": "MONT SAINT-MICHEL",
+          "variante": [
+            "MONT SAINT-MICHEL",
+            "CASTELUL NEUSCHWANSTEIN",
+            "CASTELUL EDINBURGH",
+            "PODUL RIALTO"
+          ],
+          "hint_1": "O insulă-mănăstire aflată pe coasta Franței",
+          "hint_2": "Înconjurată de apă doar la maree mare",
+          "hint_3": "Silueta ei seamănă cu un castel din povești",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mont Saint-Michel",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_019",
+          "raspuns": "CASTELUL NEUSCHWANSTEIN",
+          "variante": [
+            "CASTELUL NEUSCHWANSTEIN",
+            "MONT SAINT-MICHEL",
+            "CASTELUL EDINBURGH",
+            "CATEDRALA DIN KOLN"
+          ],
+          "hint_1": "A inspirat castelul din siglele Disney",
+          "hint_2": "Construit de regele Ludovic al II-lea al Bavariei",
+          "hint_3": "Aflat pe un deal din sudul Germaniei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Neuschwanstein Castle",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_020",
+          "raspuns": "CRISTO REDENTOR",
+          "variante": [
+            "CRISTO REDENTOR",
+            "STATUIA LIBERTATII",
+            "STATUILE MOAI",
+            "MAREA BARIERA DE CORALI"
+          ],
+          "hint_1": "O statuie uriașă cu brațele deschise",
+          "hint_2": "Privește orașul Rio de Janeiro de pe un munte",
+          "hint_3": "Una dintre noile șapte minuni ale lumii moderne",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Christ the Redeemer statue Rio",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_021",
+          "raspuns": "CHICHEN ITZA",
+          "variante": [
+            "CHICHEN ITZA",
+            "MACHU PICCHU",
+            "PETRA",
+            "TEMPLUL BOROBUDUR"
+          ],
+          "hint_1": "O piramidă maya în trepte, în Mexic",
+          "hint_2": "În zilele de echinocțiu apare umbra unui șarpe pe trepte",
+          "hint_3": "Una dintre noile șapte minuni ale lumii moderne",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chichen Itza Mexico",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_022",
+          "raspuns": "ANGKOR WAT",
+          "variante": [
+            "ANGKOR WAT",
+            "TEMPLUL BOROBUDUR",
+            "MARELE ZID CHINEZESC",
+            "TEMPLUL AURIU"
+          ],
+          "hint_1": "Cel mai mare complex religios din lume",
+          "hint_2": "Construit inițial ca templu hindus, apoi budist",
+          "hint_3": "Aflat în Cambodgia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Angkor Wat Cambodia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_023",
+          "raspuns": "BURJ KHALIFA",
+          "variante": [
+            "BURJ KHALIFA",
+            "TURNUL TOKYO",
+            "EMPIRE STATE BUILDING",
+            "TURNUL CN"
+          ],
+          "hint_1": "Cea mai înaltă clădire din lume",
+          "hint_2": "Aflată în Dubai, Emiratele Arabe Unite",
+          "hint_3": "Are peste 160 de etaje",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Burj Khalifa Dubai",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_024",
+          "raspuns": "TURNUL TOKYO",
+          "variante": [
+            "TURNUL TOKYO",
+            "BURJ KHALIFA",
+            "TURNUL EIFFEL",
+            "TURNUL CN"
+          ],
+          "hint_1": "Vopsit alb-portocaliu, inspirat de Turnul Eiffel",
+          "hint_2": "Folosit și ca turn de comunicații",
+          "hint_3": "Aflat în capitala Japoniei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tokyo Tower",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_025",
+          "raspuns": "POARTA BRANDENBURG",
+          "variante": [
+            "POARTA BRANDENBURG",
+            "ARCUL DE TRIUMF",
+            "CATEDRALA DIN KOLN",
+            "CASA ALBA"
+          ],
+          "hint_1": "Simbolul reunificării Germaniei",
+          "hint_2": "Are o statuie cu un car tras de cai deasupra",
+          "hint_3": "Aflată în centrul Berlinului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Brandenburg Gate Berlin",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_026",
+          "raspuns": "ARCUL DE TRIUMF",
+          "variante": [
+            "ARCUL DE TRIUMF",
+            "POARTA BRANDENBURG",
+            "TURNUL EIFFEL",
+            "NOTRE-DAME"
+          ],
+          "hint_1": "Comandat de Napoleon în cinstea armatei sale",
+          "hint_2": "Aflat pe Champs-Élysées, în Paris",
+          "hint_3": "Sub el arde o flacără veșnică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Arc de Triomphe Paris",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_027",
+          "raspuns": "TURNUL LONDREI",
+          "variante": [
+            "TURNUL LONDREI",
+            "TOWER BRIDGE",
+            "BIG BEN",
+            "PALATUL BUCKINGHAM"
+          ],
+          "hint_1": "O fortăreață veche, folosită și ca închisoare",
+          "hint_2": "Aici sunt păzite bijuteriile coroanei britanice",
+          "hint_3": "Aflat pe malul Tamisei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tower of London",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_028",
+          "raspuns": "PALATUL BUCKINGHAM",
+          "variante": [
+            "PALATUL BUCKINGHAM",
+            "TURNUL LONDREI",
+            "BIG BEN",
+            "CASTELUL EDINBURGH"
+          ],
+          "hint_1": "Reședința oficială a monarhului britanic la Londra",
+          "hint_2": "Are loc schimbarea gărzii în fața lui",
+          "hint_3": "Are peste 700 de camere",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Buckingham Palace",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_029",
+          "raspuns": "EMPIRE STATE BUILDING",
+          "variante": [
+            "EMPIRE STATE BUILDING",
+            "BURJ KHALIFA",
+            "STATUIA LIBERTATII",
+            "SEMNUL HOLLYWOOD"
+          ],
+          "hint_1": "Un zgârie-nori celebru din New York",
+          "hint_2": "A fost cea mai înaltă clădire din lume mulți ani",
+          "hint_3": "A apărut în filmul King Kong",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Empire State Building New York",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_030",
+          "raspuns": "SEMNUL HOLLYWOOD",
+          "variante": [
+            "SEMNUL HOLLYWOOD",
+            "EMPIRE STATE BUILDING",
+            "ALCATRAZ",
+            "PODUL GOLDEN GATE"
+          ],
+          "hint_1": "Nouă litere albe uriașe pe un deal",
+          "hint_2": "Simbolul industriei filmului american",
+          "hint_3": "Aflat deasupra orașului Los Angeles",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Hollywood Sign Los Angeles",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_031",
+          "raspuns": "ALCATRAZ",
+          "variante": [
+            "ALCATRAZ",
+            "PODUL GOLDEN GATE",
+            "SEMNUL HOLLYWOOD",
+            "TURNUL CN"
+          ],
+          "hint_1": "O fostă închisoare de maximă siguranță, pe o insulă",
+          "hint_2": "Aflată în golful San Francisco",
+          "hint_3": "Considerată aproape imposibil de evadat",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Alcatraz Island prison",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_032",
+          "raspuns": "MUNTELE RUSHMORE",
+          "variante": [
+            "MUNTELE RUSHMORE",
+            "STATUILE MOAI",
+            "CRISTO REDENTOR",
+            "STATUIA LIBERTATII"
+          ],
+          "hint_1": "Patru chipuri de președinți americani sculptate în stâncă",
+          "hint_2": "Aflat în statul Dakota de Sud",
+          "hint_3": "Fiecare cap are aproximativ 18 metri înălțime",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mount Rushmore",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_033",
+          "raspuns": "CASCADA NIAGARA",
+          "variante": [
+            "CASCADA NIAGARA",
+            "MARELE CANION",
+            "ULURU",
+            "MAREA BARIERA DE CORALI"
+          ],
+          "hint_1": "Un grup de cascade uriașe, la granița SUA-Canada",
+          "hint_2": "Faimoasă pentru puterea și volumul apei",
+          "hint_3": "Vizitată de milioane de turiști anual",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Niagara Falls",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_034",
+          "raspuns": "MARELE CANION",
+          "variante": [
+            "MARELE CANION",
+            "CASCADA NIAGARA",
+            "ULURU",
+            "MAREA BARIERA DE CORALI"
+          ],
+          "hint_1": "Săpat de-a lungul a milioane de ani de râul Colorado",
+          "hint_2": "Unul dintre cele mai vizitate parcuri naturale din SUA",
+          "hint_3": "Adânc de peste un kilometru în unele locuri",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Grand Canyon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_035",
+          "raspuns": "ULURU",
+          "variante": [
+            "ULURU",
+            "MARELE CANION",
+            "CASCADA NIAGARA",
+            "MAREA BARIERA DE CORALI"
+          ],
+          "hint_1": "O formațiune uriașă de rocă roșie, în inima Australiei",
+          "hint_2": "Loc sacru pentru aborigenii australieni",
+          "hint_3": "Își schimbă culoarea în funcție de lumina soarelui",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Uluru Ayers Rock Australia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_036",
+          "raspuns": "MAREA BARIERA DE CORALI",
+          "variante": [
+            "MAREA BARIERA DE CORALI",
+            "ULURU",
+            "MARELE CANION",
+            "CASCADA NIAGARA"
+          ],
+          "hint_1": "Cel mai mare sistem de recifuri de corali din lume",
+          "hint_2": "Vizibil chiar și din spațiu",
+          "hint_3": "Aflată pe coasta de nord-est a Australiei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Great Barrier Reef",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_037",
+          "raspuns": "TURNUL CN",
+          "variante": [
+            "TURNUL CN",
+            "BURJ KHALIFA",
+            "TURNUL TOKYO",
+            "EMPIRE STATE BUILDING"
+          ],
+          "hint_1": "Un turn de comunicații foarte înalt, în Canada",
+          "hint_2": "A fost multă vreme cea mai înaltă structură de sine stătătoare din lume",
+          "hint_3": "Are o podea de sticlă la înălțime",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "CN Tower Toronto",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_038",
+          "raspuns": "CASA ALBA",
+          "variante": [
+            "CASA ALBA",
+            "PALATUL BUCKINGHAM",
+            "PALATUL VERSAILLES",
+            "POARTA BRANDENBURG"
+          ],
+          "hint_1": "Reședința oficială a președintelui SUA",
+          "hint_2": "Aflată în Washington D.C.",
+          "hint_3": "Vopsită complet în alb",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "White House Washington",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_039",
+          "raspuns": "PALATUL VERSAILLES",
+          "variante": [
+            "PALATUL VERSAILLES",
+            "CASA ALBA",
+            "TAJ MAHAL",
+            "PALATUL BUCKINGHAM"
+          ],
+          "hint_1": "Fostă reședință a regilor Franței",
+          "hint_2": "Celebru pentru Galeria Oglinzilor",
+          "hint_3": "Aflat lângă Paris",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Palace of Versailles",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_040",
+          "raspuns": "KREMLIN",
+          "variante": [
+            "KREMLIN",
+            "CATEDRALA SFANTUL VASILE",
+            "CATEDRALA DIN KOLN",
+            "PALATUL VERSAILLES"
+          ],
+          "hint_1": "O fortăreață care găzduiește guvernul rus",
+          "hint_2": "Aflat chiar lângă Piața Roșie",
+          "hint_3": "Are ziduri roșii și mai multe turnuri",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Moscow Kremlin",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_041",
+          "raspuns": "ACROPOLE",
+          "variante": [
+            "ACROPOLE",
+            "PARTENON",
+            "COLOSSEUMUL",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "O citadelă antică ridicată pe un deal stâncos",
+          "hint_2": "Aici se află templul Partenon",
+          "hint_3": "Simbolul Atenei și al Greciei antice",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Acropolis of Athens",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_042",
+          "raspuns": "TEMPLUL BOROBUDUR",
+          "variante": [
+            "TEMPLUL BOROBUDUR",
+            "ANGKOR WAT",
+            "TEMPLUL AURIU",
+            "MARELE ZID CHINEZESC"
+          ],
+          "hint_1": "Cel mai mare templu budist din lume",
+          "hint_2": "Aflat pe insula Java, Indonezia",
+          "hint_3": "Construit sub formă de mai multe platforme suprapuse",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Borobudur temple Indonesia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_043",
+          "raspuns": "TEMPLUL AURIU",
+          "variante": [
+            "TEMPLUL AURIU",
+            "TAJ MAHAL",
+            "FORTUL ROSU",
+            "TEMPLUL BOROBUDUR"
+          ],
+          "hint_1": "Cel mai sacru templu al sikhilor",
+          "hint_2": "Acoperit cu foiță de aur adevărat",
+          "hint_3": "Aflat în orașul Amritsar, India",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Golden Temple Amritsar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_044",
+          "raspuns": "FORTUL ROSU",
+          "variante": [
+            "FORTUL ROSU",
+            "TAJ MAHAL",
+            "TEMPLUL AURIU",
+            "PALATUL VERSAILLES"
+          ],
+          "hint_1": "O fortăreață construită din gresie roșie",
+          "hint_2": "Aflată în Delhi, India",
+          "hint_3": "De aici se ține discursul anual de Ziua Independenței Indiei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Red Fort Delhi",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_045",
+          "raspuns": "TOWER BRIDGE",
+          "variante": [
+            "TOWER BRIDGE",
+            "TURNUL LONDREI",
+            "BIG BEN",
+            "PODUL GOLDEN GATE"
+          ],
+          "hint_1": "Un pod basculant, cu două turnuri",
+          "hint_2": "Adesea confundat cu Turnul Londrei, aflat chiar lângă el",
+          "hint_3": "Se deschide pentru a lăsa vasele mari să treacă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Tower Bridge London",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_046",
+          "raspuns": "ATOMIUM",
+          "variante": [
+            "ATOMIUM",
+            "TURNUL EIFFEL",
+            "PODUL RIALTO",
+            "CATEDRALA DIN KOLN"
+          ],
+          "hint_1": "Reprezintă un atom de fier mărit de miliarde de ori",
+          "hint_2": "Construit pentru Expoziția Universală din 1958",
+          "hint_3": "Aflat în Bruxelles, Belgia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Atomium Brussels",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_047",
+          "raspuns": "BUDDHA URIAS DE LA LESHAN",
+          "variante": [
+            "BUDDHA URIAS DE LA LESHAN",
+            "TEMPLUL AURIU",
+            "TEMPLUL BOROBUDUR",
+            "ANGKOR WAT"
+          ],
+          "hint_1": "Cea mai mare statuie de Buddha sculptată în stâncă din lume",
+          "hint_2": "Sculptată pe malul unui râu, în China",
+          "hint_3": "Are peste 70 de metri înălțime",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Leshan Giant Buddha",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_048",
+          "raspuns": "ZIDUL PLANGERII",
+          "variante": [
+            "ZIDUL PLANGERII",
+            "CUPOLA STANCII",
+            "BAZILICA SFANTUL PETRU",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "Un loc sfânt pentru credința iudaică",
+          "hint_2": "Rămășiță a vechiului Templu din Ierusalim",
+          "hint_3": "Oamenii lasă bilețele cu rugăciuni printre pietre",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Western Wall Jerusalem",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_049",
+          "raspuns": "BAZILICA SFANTUL PETRU",
+          "variante": [
+            "BAZILICA SFANTUL PETRU",
+            "CATEDRALA SFANTUL VASILE",
+            "NOTRE-DAME",
+            "CATEDRALA DIN KOLN"
+          ],
+          "hint_1": "Cea mai mare biserică din lume",
+          "hint_2": "Aflată în Cetatea Vaticanului, la Roma",
+          "hint_3": "Are o cupolă proiectată de Michelangelo",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "St Peter's Basilica Vatican",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_050",
+          "raspuns": "FANTANA DI TREVI",
+          "variante": [
+            "FANTANA DI TREVI",
+            "PODUL RIALTO",
+            "COLOSSEUMUL",
+            "TURNUL DIN PISA"
+          ],
+          "hint_1": "Tradiția spune că arunci o monedă și te vei întoarce la Roma",
+          "hint_2": "Cea mai mare fântână baroc din oraș",
+          "hint_3": "Aflată în centrul istoric al Romei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Trevi Fountain Rome",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_051",
+          "raspuns": "PODUL RIALTO",
+          "variante": [
+            "PODUL RIALTO",
+            "FANTANA DI TREVI",
+            "TURNUL DIN PISA",
+            "TOWER BRIDGE"
+          ],
+          "hint_1": "Cel mai vechi pod peste Marele Canal din Veneția",
+          "hint_2": "Are prăvălii construite chiar pe el",
+          "hint_3": "Simbolul orașului Veneția",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Rialto Bridge Venice",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_052",
+          "raspuns": "CASTELUL EDINBURGH",
+          "variante": [
+            "CASTELUL EDINBURGH",
+            "MONT SAINT-MICHEL",
+            "CASTELUL NEUSCHWANSTEIN",
+            "STONEHENGE"
+          ],
+          "hint_1": "O fortăreață ridicată pe o stâncă vulcanică stinsă",
+          "hint_2": "Domină orizontul capitalei Scoției",
+          "hint_3": "Aici se păstrează bijuteriile coroanei scoțiene",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Edinburgh Castle",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_053",
+          "raspuns": "STATUILE MOAI",
+          "variante": [
+            "STATUILE MOAI",
+            "MUNTELE RUSHMORE",
+            "CRISTO REDENTOR",
+            "ULURU"
+          ],
+          "hint_1": "Capete și torsuri uriașe, sculptate în piatră",
+          "hint_2": "Aflate pe Insula Paștelui, în Pacific",
+          "hint_3": "Ridicate de civilizația Rapa Nui, cu multe secole în urmă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Moai statues Easter Island",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_054",
+          "raspuns": "TEMPLUL KARNAK",
+          "variante": [
+            "TEMPLUL KARNAK",
+            "ABU SIMBEL",
+            "PIRAMIDELE DIN GIZA",
+            "SFINXUL"
+          ],
+          "hint_1": "Cel mai mare complex de temple din Egiptul antic",
+          "hint_2": "Aflat lângă orașul Luxor",
+          "hint_3": "Are o sală cu zeci de coloane uriașe",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Karnak Temple Egypt",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_055",
+          "raspuns": "ABU SIMBEL",
+          "variante": [
+            "ABU SIMBEL",
+            "TEMPLUL KARNAK",
+            "PIRAMIDELE DIN GIZA",
+            "SFINXUL"
+          ],
+          "hint_1": "Două temple uriașe sculptate în stâncă, în sudul Egiptului",
+          "hint_2": "Construite de faraonul Ramses al II-lea",
+          "hint_3": "Au fost mutate bucată cu bucată pentru a nu fi inundate",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Abu Simbel temple",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_056",
+          "raspuns": "CATEDRALA DIN KOLN",
+          "variante": [
+            "CATEDRALA DIN KOLN",
+            "NOTRE-DAME",
+            "SAGRADA FAMILIA",
+            "BAZILICA SFANTUL PETRU"
+          ],
+          "hint_1": "O catedrală gotică uriașă, în Germania",
+          "hint_2": "A rămas aproape neatinsă în bombardamentele din al Doilea Război Mondial",
+          "hint_3": "Are două turnuri gemene, foarte înalte",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cologne Cathedral",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_057",
+          "raspuns": "PODUL CHARLES",
+          "variante": [
+            "PODUL CHARLES",
+            "TOWER BRIDGE",
+            "PODUL RIALTO",
+            "PODUL GOLDEN GATE"
+          ],
+          "hint_1": "Un pod istoric pietonal, decorat cu statui de sfinți",
+          "hint_2": "Traversează râul Vltava",
+          "hint_3": "Aflat în Praga, Cehia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Charles Bridge Prague",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_058",
+          "raspuns": "CASTELUL PRAGA",
+          "variante": [
+            "CASTELUL PRAGA",
+            "CASTELUL NEUSCHWANSTEIN",
+            "CASTELUL EDINBURGH",
+            "MONT SAINT-MICHEL"
+          ],
+          "hint_1": "Cel mai mare complex de castel antic din lume",
+          "hint_2": "Domină orizontul capitalei cehe",
+          "hint_3": "Reședință istorică a regilor Boemiei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Prague Castle",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_059",
+          "raspuns": "HAGIA SOFIA",
+          "variante": [
+            "HAGIA SOFIA",
+            "ALBASTRA MOSCHEE",
+            "TEMPLUL AURIU",
+            "TEMPLUL BOROBUDUR"
+          ],
+          "hint_1": "A fost pe rând biserică, moschee și muzeu",
+          "hint_2": "Cunoscută pentru cupola sa uriașă",
+          "hint_3": "Aflată în Istanbul, Turcia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Hagia Sophia Istanbul",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_060",
+          "raspuns": "PIATA SAN MARCO",
+          "variante": [
+            "PIATA SAN MARCO",
+            "PODUL RIALTO",
+            "FANTANA DI TREVI",
+            "TURNUL DIN PISA"
+          ],
+          "hint_1": "Cea mai cunoscută piață publică din Veneția",
+          "hint_2": "Deseori inundată de 'acqua alta'",
+          "hint_3": "Aici se află Bazilica San Marco",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "St Mark's Square Venice",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_061",
+          "raspuns": "SPACE NEEDLE",
+          "variante": [
+            "SPACE NEEDLE",
+            "TURNUL CN",
+            "TURNUL TOKYO",
+            "BURJ KHALIFA"
+          ],
+          "hint_1": "Un turn de observație construit pentru o expoziție universală din 1962",
+          "hint_2": "Simbolul orașului Seattle",
+          "hint_3": "Are formă futuristă, ca o farfurie zburătoare pe un stâlp",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Space Needle Seattle",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_062",
+          "raspuns": "CRISTO REI",
+          "variante": [
+            "CRISTO REI",
+            "CRISTO REDENTOR",
+            "STATUIA LIBERTATII",
+            "STATUILE MOAI"
+          ],
+          "hint_1": "O statuie a lui Isus cu brațele deschise, în Portugalia",
+          "hint_2": "Inspirată direct de statuia din Rio de Janeiro",
+          "hint_3": "Privește orașul Lisabona peste råu",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cristo Rei Lisbon statue",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_063",
+          "raspuns": "PODUL BROOKLYN",
+          "variante": [
+            "PODUL BROOKLYN",
+            "PODUL GOLDEN GATE",
+            "TOWER BRIDGE",
+            "EMPIRE STATE BUILDING"
+          ],
+          "hint_1": "Unul dintre cele mai vechi poduri suspendate din SUA",
+          "hint_2": "Leagă Manhattan de Brooklyn",
+          "hint_3": "Are turnuri din piatră, în stil gotic",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Brooklyn Bridge New York",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_064",
+          "raspuns": "TEMPLELE DIN BAGAN",
+          "variante": [
+            "TEMPLELE DIN BAGAN",
+            "ANGKOR WAT",
+            "TEMPLUL BOROBUDUR",
+            "TEMPLUL AURIU"
+          ],
+          "hint_1": "Mii de temple și pagode antice, răspândite pe o câmpie",
+          "hint_2": "Aflate în Myanmar (fosta Birmanie)",
+          "hint_3": "Multe au peste 800 de ani vechime",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bagan temples Myanmar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_065",
+          "raspuns": "MARELE PALAT REGAL",
+          "variante": [
+            "MARELE PALAT REGAL",
+            "TEMPLUL AURIU",
+            "TEMPLELE DIN BAGAN",
+            "ANGKOR WAT"
+          ],
+          "hint_1": "Fosta reședință oficială a regilor Thailandei",
+          "hint_2": "Complex somptuos, cu acoperișuri aurii",
+          "hint_3": "Aflat în Bangkok",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Grand Palace Bangkok",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_066",
+          "raspuns": "MASADA",
+          "variante": [
+            "MASADA",
+            "ZIDUL PLANGERII",
+            "PETRA",
+            "CUPOLA STANCII"
+          ],
+          "hint_1": "O fortăreață antică ridicată pe un platou stâncos izolat",
+          "hint_2": "Loc al unui asediu roman celebru din istoria evreiască",
+          "hint_3": "Aflată lângă Marea Moartă, în Israel",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Masada fortress Israel",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}

@@ -6,12 +6,11 @@ import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
 
-/// Clasamentul final al celor 5 jucători (reali + ficțivi) — stil
-/// consecvent cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).
+/// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
+/// cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).
 class MultiplayerResultsScreen extends StatefulWidget {
   final String matchId;
-  final Map<String, int> botScores;
-  const MultiplayerResultsScreen({super.key, required this.matchId, required this.botScores});
+  const MultiplayerResultsScreen({super.key, required this.matchId});
 
   @override
   State<MultiplayerResultsScreen> createState() => _MultiplayerResultsScreenState();
@@ -22,15 +21,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
 
   Future<List<MatchPlayer>> _load() async {
     final players = await MultiplayerService.instance.watchPlayers(widget.matchId).first;
-    final withFinalScores = players.map((p) {
-      if (p.isBot && widget.botScores.containsKey(p.id)) {
-        return MatchPlayer(id: p.id, name: p.name, avatarSeed: p.avatarSeed, score: widget.botScores[p.id]!, isBot: true, isHost: p.isHost);
-      }
-      return p;
-    }).toList()
-      ..sort((a, b) => b.score.compareTo(a.score));
+    final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
     await MultiplayerService.instance.leaveMatch(widget.matchId);
-    return withFinalScores;
+    return sorted;
   }
 
   void _goHome() {
@@ -87,7 +80,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                 width: 28,
                                 child: Text('#${i + 1}', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800)),
                               ),
-                              Avatar(size: 40, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed)),
+                              Avatar(size: 40, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Text(p.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),

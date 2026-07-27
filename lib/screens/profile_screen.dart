@@ -60,7 +60,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
               children: [
-                const Center(child: Avatar(size: 88)),
+                const Center(child: MyAvatar(size: 88)),
                 const SizedBox(height: 14),
                 Center(child: Text('Nivel $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
                 const SizedBox(height: 4),

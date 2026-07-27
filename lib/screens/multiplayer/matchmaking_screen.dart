@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
-import '../../data/storage_service.dart';
+import '../../widgets/network_scan_animation.dart';
 import 'multiplayer_match_screen.dart';
 
 /// Matchmaking public: te bagă în coada de așteptare și încearcă periodic să
-/// formeze un meci de 5. Decizie simplă (menționată explicit, ajustabilă
-/// ulterior): sub 5 jucători reali după 10s, restul locurilor se
-/// completează cu jucători ficțivi — vezi
+/// te cupleze cu un adversar real (1 vs 1) — fără completare cu jucători
+/// ficțivi, se așteaptă cât e nevoie până apare cineva real în coadă. Vezi
 /// [MultiplayerService.attemptFormMatch].
 class MatchmakingScreen extends StatefulWidget {
   const MatchmakingScreen({super.key});
@@ -18,12 +18,9 @@ class MatchmakingScreen extends StatefulWidget {
 }
 
 class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTickerProviderStateMixin {
-  static const _timeoutBeforeBots = Duration(seconds: 10);
-
   late final AnimationController _bounceController;
   Timer? _formTimer;
   StreamSubscription<String?>? _queueSub;
-  DateTime? _joinedAt;
   bool _matched = false;
   bool _left = false;
 
@@ -35,18 +32,16 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   }
 
   Future<void> _start() async {
-    final name = await StorageService.getDisplayName();
-    await MultiplayerService.instance.joinMatchmakingQueue(displayName: name);
+    final identity = await AuthService.instance.multiplayerIdentity();
+    await MultiplayerService.instance.joinMatchmakingQueue(displayName: identity.name, photoUrl: identity.photoUrl);
     if (!mounted) return;
-    _joinedAt = DateTime.now();
 
     _queueSub = MultiplayerService.instance.watchOwnQueueEntry().listen((matchId) {
       if (matchId != null) _onMatched(matchId);
     });
 
     _formTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
-      final elapsed = DateTime.now().difference(_joinedAt!);
-      MultiplayerService.instance.attemptFormMatch(allowBotFill: elapsed >= _timeoutBeforeBots);
+      MultiplayerService.instance.attemptFormMatch();
     });
   }
 
@@ -55,6 +50,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     _matched = true;
     _formTimer?.cancel();
     _queueSub?.cancel();
+    // intrarea din coadă nu mai are treabă odată ce am fost cuplați -
+    // altfel ar rămâne orfană în matchmaking_queue la nesfârșit.
+    MultiplayerService.instance.leaveQueue();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (_) => MultiplayerMatchScreen(matchId: matchId)),
@@ -66,8 +64,13 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     _left = true;
     _formTimer?.cancel();
     await _queueSub?.cancel();
-    await MultiplayerService.instance.leaveQueue();
-    if (mounted) Navigator.pop(context);
+    try {
+      await MultiplayerService.instance.leaveQueue();
+    } catch (e) {
+      debugPrint('MatchmakingScreen._leave: leaveQueue a esuat: $e');
+    } finally {
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   @override
@@ -108,8 +111,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(width: 72, height: 72, child: CircularProgressIndicator(strokeWidth: 5, color: AppColors.blue)),
-                        const SizedBox(height: 28),
+                        const NetworkScanAnimation(size: 220),
+                        const SizedBox(height: 12),
                         AnimatedBuilder(
                           animation: _bounceController,
                           builder: (context, child) {

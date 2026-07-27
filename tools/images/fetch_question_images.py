@@ -41,6 +41,10 @@ SOURCES = [
     ("assets/continut/celebritati/intrebari.json", "assets/continut/celebritati/poze", "custom"),
     ("assets/continut/sport/intrebari.json", "assets/continut/sport/poze", "custom"),
     ("assets/continut/romania/intrebari.json", "assets/continut/romania/poze", "custom"),
+    ("assets/continut/steaguri/intrebari.json", "assets/continut/steaguri/poze", "custom"),
+    ("assets/continut/animale/intrebari.json", "assets/continut/animale/poze", "custom"),
+    ("assets/continut/monumente/intrebari.json", "assets/continut/monumente/poze", "custom"),
+    ("assets/continut/instrumente/intrebari.json", "assets/continut/instrumente/poze", "custom"),
 ]
 
 # Cooldown adaptiv intre intrebari: pornim lent ca sa nu atingem limita

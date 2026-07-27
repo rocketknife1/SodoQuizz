@@ -1,0 +1,1507 @@
+{
+  "categorii": {
+    "steaguri": {
+      "mod": "4_variante",
+      "culoare_tema": "#1FA2B8",
+      "descriere": "Steaguri și țări",
+      "intrebari": [
+        {
+          "id": "stg_001",
+          "raspuns": "FRANTA",
+          "variante": [
+            "FRANTA",
+            "ITALIA",
+            "OLANDA",
+            "BELGIA"
+          ],
+          "hint_1": "Trei culori verticale: albastru, alb, roșu",
+          "hint_2": "Se numește Le Tricolore",
+          "hint_3": "Capitala e Paris",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of France",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_002",
+          "raspuns": "ITALIA",
+          "variante": [
+            "ITALIA",
+            "FRANTA",
+            "MEXIC",
+            "UNGARIA"
+          ],
+          "hint_1": "Trei culori verticale: verde, alb, roșu",
+          "hint_2": "Foarte asemănător cu steagul Mexicului",
+          "hint_3": "Capitala e Roma",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Italy",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_003",
+          "raspuns": "GERMANIA",
+          "variante": [
+            "GERMANIA",
+            "BELGIA",
+            "AUSTRIA",
+            "OLANDA"
+          ],
+          "hint_1": "Trei benzi orizontale: negru, roșu, galben",
+          "hint_2": "Capitala e Berlin",
+          "hint_3": "Cea mai mare economie din Europa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Germany",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_004",
+          "raspuns": "SPANIA",
+          "variante": [
+            "SPANIA",
+            "PORTUGALIA",
+            "ITALIA",
+            "MEXIC"
+          ],
+          "hint_1": "Are o stemă pe partea stângă",
+          "hint_2": "Benzi orizontale roșu-galben-roșu",
+          "hint_3": "Capitala e Madrid",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Spain",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_005",
+          "raspuns": "REGATUL UNIT",
+          "variante": [
+            "REGATUL UNIT",
+            "AUSTRALIA",
+            "NOUA ZEELANDA",
+            "STATELE UNITE ALE AMERICII"
+          ],
+          "hint_1": "Se numește Union Jack",
+          "hint_2": "Combină crucile Angliei, Scoției și Irlandei",
+          "hint_3": "Capitala e Londra",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the United Kingdom",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_006",
+          "raspuns": "STATELE UNITE ALE AMERICII",
+          "variante": [
+            "STATELE UNITE ALE AMERICII",
+            "REGATUL UNIT",
+            "LIBERIA",
+            "MALAEZIA"
+          ],
+          "hint_1": "Are 50 de stele și 13 dungi",
+          "hint_2": "Se numește Stars and Stripes",
+          "hint_3": "Capitala e Washington D.C.",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the United States",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_007",
+          "raspuns": "CANADA",
+          "variante": [
+            "CANADA",
+            "STATELE UNITE ALE AMERICII",
+            "AUSTRIA",
+            "ELVETIA"
+          ],
+          "hint_1": "Are o frunză roșie în centru",
+          "hint_2": "Frunza e de arțar",
+          "hint_3": "Capitala e Ottawa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Canada",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_008",
+          "raspuns": "BRAZILIA",
+          "variante": [
+            "BRAZILIA",
+            "ARGENTINA",
+            "MEXIC",
+            "PORTUGALIA"
+          ],
+          "hint_1": "Verde cu un romb galben și un glob albastru",
+          "hint_2": "Pe glob scrie 'Ordem e Progresso'",
+          "hint_3": "Cea mai mare țară din America de Sud",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Brazil",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_009",
+          "raspuns": "ARGENTINA",
+          "variante": [
+            "ARGENTINA",
+            "URUGUAY",
+            "BRAZILIA",
+            "CHILE"
+          ],
+          "hint_1": "Dungi orizontale albastru-alb-albastru",
+          "hint_2": "Are un soare auriu în mijloc",
+          "hint_3": "Capitala e Buenos Aires",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Argentina",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_010",
+          "raspuns": "MEXIC",
+          "variante": [
+            "MEXIC",
+            "ITALIA",
+            "BRAZILIA",
+            "SPANIA"
+          ],
+          "hint_1": "Verde-alb-roșu cu o stemă în mijloc",
+          "hint_2": "Stema arată un vultur pe un cactus",
+          "hint_3": "Capitala e Ciudad de Mexico",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Mexico",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_011",
+          "raspuns": "JAPONIA",
+          "variante": [
+            "JAPONIA",
+            "COREEA DE SUD",
+            "BANGLADESH",
+            "CHINA"
+          ],
+          "hint_1": "Un cerc roșu pe fundal alb",
+          "hint_2": "Se numește Hinomaru",
+          "hint_3": "Supranumită 'Țara Soarelui Răsare'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Japan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_012",
+          "raspuns": "CHINA",
+          "variante": [
+            "CHINA",
+            "VIETNAM",
+            "JAPONIA",
+            "COREEA DE SUD"
+          ],
+          "hint_1": "Roșu cu cinci stele galbene",
+          "hint_2": "O stea mare și patru mai mici",
+          "hint_3": "Cea mai populată țară din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of China",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_013",
+          "raspuns": "COREEA DE SUD",
+          "variante": [
+            "COREEA DE SUD",
+            "JAPONIA",
+            "CHINA",
+            "MONGOLIA"
+          ],
+          "hint_1": "Are un simbol Yin-Yang în centru",
+          "hint_2": "Patru trigrame în colțuri",
+          "hint_3": "Capitala e Seul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of South Korea",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_014",
+          "raspuns": "INDIA",
+          "variante": [
+            "INDIA",
+            "NEPAL",
+            "BANGLADESH",
+            "SRI LANKA"
+          ],
+          "hint_1": "Portocaliu, alb, verde cu o roată albastră",
+          "hint_2": "Roata se numește Ashoka Chakra",
+          "hint_3": "A doua cea mai populată țară din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of India",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_015",
+          "raspuns": "AUSTRALIA",
+          "variante": [
+            "AUSTRALIA",
+            "NOUA ZEELANDA",
+            "REGATUL UNIT",
+            "STATELE UNITE ALE AMERICII"
+          ],
+          "hint_1": "Are Union Jack în colț și stele albe",
+          "hint_2": "Stelele formează Crucea Sudului",
+          "hint_3": "E și continent, și țară",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Australia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_016",
+          "raspuns": "RUSIA",
+          "variante": [
+            "RUSIA",
+            "SLOVACIA",
+            "SERBIA",
+            "OLANDA"
+          ],
+          "hint_1": "Trei benzi orizontale: alb, albastru, roșu",
+          "hint_2": "Cea mai mare țară din lume ca suprafață",
+          "hint_3": "Capitala e Moscova",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Russia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_017",
+          "raspuns": "UCRAINA",
+          "variante": [
+            "UCRAINA",
+            "SUEDIA",
+            "ROMANIA",
+            "RUSIA"
+          ],
+          "hint_1": "Două benzi orizontale: albastru și galben",
+          "hint_2": "Albastrul reprezintă cerul, galbenul câmpurile de grâu",
+          "hint_3": "Capitala e Kiev",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Ukraine",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_018",
+          "raspuns": "POLONIA",
+          "variante": [
+            "POLONIA",
+            "INDONEZIA",
+            "MONACO",
+            "UCRAINA"
+          ],
+          "hint_1": "Două benzi orizontale: alb sus, roșu jos",
+          "hint_2": "Capitala e Varșovia",
+          "hint_3": "Vecină cu Germania la vest",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Poland",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_019",
+          "raspuns": "OLANDA",
+          "variante": [
+            "OLANDA",
+            "LUXEMBURG",
+            "FRANTA",
+            "RUSIA"
+          ],
+          "hint_1": "Trei benzi orizontale: roșu, alb, albastru",
+          "hint_2": "Cunoscută și ca Țările de Jos",
+          "hint_3": "Capitala e Amsterdam",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the Netherlands",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_020",
+          "raspuns": "BELGIA",
+          "variante": [
+            "BELGIA",
+            "GERMANIA",
+            "ROMANIA",
+            "CIAD"
+          ],
+          "hint_1": "Trei benzi verticale: negru, galben, roșu",
+          "hint_2": "Capitala e Bruxelles",
+          "hint_3": "Cunoscută pentru ciocolată și vafe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Belgium",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_021",
+          "raspuns": "ELVETIA",
+          "variante": [
+            "ELVETIA",
+            "AUSTRIA",
+            "DANEMARCA",
+            "CANADA"
+          ],
+          "hint_1": "O cruce albă pe fundal roșu",
+          "hint_2": "Unul din doar două steaguri pătrate din lume",
+          "hint_3": "Capitala e Berna",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Switzerland",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_022",
+          "raspuns": "AUSTRIA",
+          "variante": [
+            "AUSTRIA",
+            "LETONIA",
+            "ELVETIA",
+            "POLONIA"
+          ],
+          "hint_1": "Trei benzi orizontale: roșu, alb, roșu",
+          "hint_2": "Capitala e Viena",
+          "hint_3": "Patria lui Mozart",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Austria",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_023",
+          "raspuns": "SUEDIA",
+          "variante": [
+            "SUEDIA",
+            "NORVEGIA",
+            "FINLANDA",
+            "ISLANDA"
+          ],
+          "hint_1": "Fundal albastru cu o cruce galbenă",
+          "hint_2": "Capitala e Stockholm",
+          "hint_3": "Cunoscută pentru mobilierul IKEA",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Sweden",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_024",
+          "raspuns": "NORVEGIA",
+          "variante": [
+            "NORVEGIA",
+            "ISLANDA",
+            "SUEDIA",
+            "DANEMARCA"
+          ],
+          "hint_1": "Cruce albastră cu contur alb pe fundal roșu",
+          "hint_2": "Capitala e Oslo",
+          "hint_3": "Cunoscută pentru fiorduri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Norway",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_025",
+          "raspuns": "FINLANDA",
+          "variante": [
+            "FINLANDA",
+            "SUEDIA",
+            "GRECIA",
+            "ISRAEL"
+          ],
+          "hint_1": "Fundal alb cu o cruce albastră",
+          "hint_2": "Capitala e Helsinki",
+          "hint_3": "Supranumită 'Țara celor o mie de lacuri'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Finland",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_026",
+          "raspuns": "DANEMARCA",
+          "variante": [
+            "DANEMARCA",
+            "NORVEGIA",
+            "ELVETIA",
+            "AUSTRIA"
+          ],
+          "hint_1": "Fundal roșu cu o cruce albă",
+          "hint_2": "Cel mai vechi steag național încă folosit",
+          "hint_3": "Capitala e Copenhaga",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Denmark",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_027",
+          "raspuns": "ISLANDA",
+          "variante": [
+            "ISLANDA",
+            "NORVEGIA",
+            "DANEMARCA",
+            "FINLANDA"
+          ],
+          "hint_1": "Cruce albastră cu alb pe fundal roșu",
+          "hint_2": "Capitala e Reykjavik",
+          "hint_3": "Țară cu vulcani și gheizere",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Iceland",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_028",
+          "raspuns": "IRLANDA",
+          "variante": [
+            "IRLANDA",
+            "ITALIA",
+            "COASTA DE FILDES",
+            "NIGERIA"
+          ],
+          "hint_1": "Trei benzi verticale: verde, alb, portocaliu",
+          "hint_2": "Capitala e Dublin",
+          "hint_3": "Supranumită 'Insula Smarald'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Ireland",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_029",
+          "raspuns": "PORTUGALIA",
+          "variante": [
+            "PORTUGALIA",
+            "SPANIA",
+            "MOZAMBIC",
+            "ANGOLA"
+          ],
+          "hint_1": "Verde și roșu cu o stemă complexă",
+          "hint_2": "Capitala e Lisabona",
+          "hint_3": "Vecină cu Spania pe Peninsula Iberică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Portugal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_030",
+          "raspuns": "GRECIA",
+          "variante": [
+            "GRECIA",
+            "FINLANDA",
+            "URUGUAY",
+            "ISRAEL"
+          ],
+          "hint_1": "Dungi albastre-albe cu o cruce în colț",
+          "hint_2": "Capitala e Atena",
+          "hint_3": "Locul unde au apărut Jocurile Olimpice",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Greece",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_031",
+          "raspuns": "TURCIA",
+          "variante": [
+            "TURCIA",
+            "TUNISIA",
+            "PAKISTAN",
+            "ALGERIA"
+          ],
+          "hint_1": "Roșu cu o semilună și o stea albă",
+          "hint_2": "Capitala e Ankara, dar Istanbul e cel mai mare oraș",
+          "hint_3": "Se întinde pe două continente",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Turkey",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_032",
+          "raspuns": "EGIPT",
+          "variante": [
+            "EGIPT",
+            "IRAK",
+            "SIRIA",
+            "YEMEN"
+          ],
+          "hint_1": "Trei benzi orizontale cu un vultur auriu în mijloc",
+          "hint_2": "Capitala e Cairo",
+          "hint_3": "Țara piramidelor și a Nilului",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Egypt",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_033",
+          "raspuns": "AFRICA DE SUD",
+          "variante": [
+            "AFRICA DE SUD",
+            "KENYA",
+            "NIGERIA",
+            "ETIOPIA"
+          ],
+          "hint_1": "Șase culori, formă de Y",
+          "hint_2": "Unul dintre cele mai colorate steaguri din lume",
+          "hint_3": "Capitala administrativă e Pretoria",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of South Africa",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_034",
+          "raspuns": "NIGERIA",
+          "variante": [
+            "NIGERIA",
+            "IRLANDA",
+            "ITALIA",
+            "MALI"
+          ],
+          "hint_1": "Trei benzi verticale: verde, alb, verde",
+          "hint_2": "Cea mai populată țară din Africa",
+          "hint_3": "Capitala e Abuja",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Nigeria",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_035",
+          "raspuns": "KENYA",
+          "variante": [
+            "KENYA",
+            "ETIOPIA",
+            "TANZANIA",
+            "AFRICA DE SUD"
+          ],
+          "hint_1": "Negru, roșu, verde cu un scut masai în centru",
+          "hint_2": "Capitala e Nairobi",
+          "hint_3": "Celebră pentru safariuri",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Kenya",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_036",
+          "raspuns": "MAROC",
+          "variante": [
+            "MAROC",
+            "TUNISIA",
+            "ALGERIA",
+            "ARABIA SAUDITA"
+          ],
+          "hint_1": "Roșu cu o stea verde cu cinci colțuri",
+          "hint_2": "Capitala e Rabat",
+          "hint_3": "Țară din nordul Africii, aproape de Spania",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Morocco",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_037",
+          "raspuns": "ARABIA SAUDITA",
+          "variante": [
+            "ARABIA SAUDITA",
+            "EMIRATELE ARABE UNITE",
+            "IRAN",
+            "QATAR"
+          ],
+          "hint_1": "Verde cu text arab și o sabie",
+          "hint_2": "Aici se află orașul sfânt Mecca",
+          "hint_3": "Cel mai mare exportator de petrol din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Saudi Arabia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_038",
+          "raspuns": "EMIRATELE ARABE UNITE",
+          "variante": [
+            "EMIRATELE ARABE UNITE",
+            "ARABIA SAUDITA",
+            "QATAR",
+            "KUWEIT"
+          ],
+          "hint_1": "Roșu, verde, alb, negru",
+          "hint_2": "Aici se află Dubai și Burj Khalifa",
+          "hint_3": "Formată din șapte emirate",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the United Arab Emirates",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_039",
+          "raspuns": "ISRAEL",
+          "variante": [
+            "ISRAEL",
+            "GRECIA",
+            "ARGENTINA",
+            "UNGARIA"
+          ],
+          "hint_1": "Steaua lui David albastră pe fundal alb",
+          "hint_2": "Capitala declarată e Ierusalim",
+          "hint_3": "Vecin cu Egiptul și Iordania",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Israel",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_040",
+          "raspuns": "IRAN",
+          "variante": [
+            "IRAN",
+            "ARABIA SAUDITA",
+            "IRAK",
+            "TURCIA"
+          ],
+          "hint_1": "Verde, alb, roșu cu o emblemă în mijloc",
+          "hint_2": "Capitala e Teheran",
+          "hint_3": "Cunoscut și sub numele istoric de Persia",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Iran",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_041",
+          "raspuns": "PAKISTAN",
+          "variante": [
+            "PAKISTAN",
+            "TURCIA",
+            "MAURITANIA",
+            "ALGERIA"
+          ],
+          "hint_1": "Verde cu o semilună și o stea, dungă albă lateral",
+          "hint_2": "Capitala e Islamabad",
+          "hint_3": "Vecin cu India și Afganistan",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Pakistan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_042",
+          "raspuns": "INDONEZIA",
+          "variante": [
+            "INDONEZIA",
+            "MONACO",
+            "POLONIA",
+            "SINGAPORE"
+          ],
+          "hint_1": "Două benzi orizontale: roșu sus, alb jos",
+          "hint_2": "Cea mai mare țară formată din insule",
+          "hint_3": "Capitala e Jakarta",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Indonesia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_043",
+          "raspuns": "THAILANDA",
+          "variante": [
+            "THAILANDA",
+            "COSTA RICA",
+            "CHILE",
+            "LUXEMBURG"
+          ],
+          "hint_1": "Cinci benzi orizontale: roșu, alb, albastru, alb, roșu",
+          "hint_2": "Singura țară din Asia de Sud-Est niciodată colonizată",
+          "hint_3": "Capitala e Bangkok",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Thailand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_044",
+          "raspuns": "VIETNAM",
+          "variante": [
+            "VIETNAM",
+            "CHINA",
+            "MAROC",
+            "MOZAMBIC"
+          ],
+          "hint_1": "Roșu cu o stea galbenă mare în centru",
+          "hint_2": "Capitala e Hanoi",
+          "hint_3": "Cunoscut pentru orezării și Golful Ha Long",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Vietnam",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_045",
+          "raspuns": "FILIPINE",
+          "variante": [
+            "FILIPINE",
+            "CUBA",
+            "MALAEZIA",
+            "INDONEZIA"
+          ],
+          "hint_1": "Albastru, roșu și un triunghi alb cu soare",
+          "hint_2": "Un arhipelag format din mii de insule",
+          "hint_3": "Capitala e Manila",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the Philippines",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_046",
+          "raspuns": "MALAEZIA",
+          "variante": [
+            "MALAEZIA",
+            "STATELE UNITE ALE AMERICII",
+            "SINGAPORE",
+            "FILIPINE"
+          ],
+          "hint_1": "Dungi roșu-alb cu o lună și stea pe albastru",
+          "hint_2": "Seamănă cu steagul SUA la prima vedere",
+          "hint_3": "Capitala e Kuala Lumpur",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Malaysia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_047",
+          "raspuns": "SINGAPORE",
+          "variante": [
+            "SINGAPORE",
+            "INDONEZIA",
+            "MALAEZIA",
+            "VIETNAM"
+          ],
+          "hint_1": "Roșu și alb cu o semilună și cinci stele",
+          "hint_2": "Un oraș-stat foarte mic și bogat",
+          "hint_3": "Are unul dintre cele mai aglomerate porturi din lume",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Singapore",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_048",
+          "raspuns": "NOUA ZEELANDA",
+          "variante": [
+            "NOUA ZEELANDA",
+            "AUSTRALIA",
+            "REGATUL UNIT",
+            "FIJI"
+          ],
+          "hint_1": "Are Union Jack și Crucea Sudului roșie",
+          "hint_2": "Foarte asemănător cu steagul Australiei",
+          "hint_3": "Capitala e Wellington",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of New Zealand",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_049",
+          "raspuns": "COLUMBIA",
+          "variante": [
+            "COLUMBIA",
+            "ECUADOR",
+            "VENEZUELA",
+            "BRAZILIA"
+          ],
+          "hint_1": "Trei benzi orizontale: galben, albastru, roșu",
+          "hint_2": "Galbenul ocupă jumătate din steag",
+          "hint_3": "Capitala e Bogotá",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Colombia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_050",
+          "raspuns": "CHILE",
+          "variante": [
+            "CHILE",
+            "PERU",
+            "ARGENTINA",
+            "URUGUAY"
+          ],
+          "hint_1": "Are o stea albă pe fundal albastru, deasupra alb-roșu",
+          "hint_2": "O țară foarte lungă și îngustă",
+          "hint_3": "Capitala e Santiago",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Chile",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_051",
+          "raspuns": "PERU",
+          "variante": [
+            "PERU",
+            "CANADA",
+            "AUSTRIA",
+            "LETONIA"
+          ],
+          "hint_1": "Trei benzi verticale: roșu, alb, roșu",
+          "hint_2": "Aici se află Machu Picchu",
+          "hint_3": "Capitala e Lima",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Peru",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_052",
+          "raspuns": "CUBA",
+          "variante": [
+            "CUBA",
+            "PUERTO RICO",
+            "FILIPINE",
+            "CHILE"
+          ],
+          "hint_1": "Are o stea albă într-un triunghi roșu",
+          "hint_2": "Cea mai mare insulă din Caraibe",
+          "hint_3": "Capitala e Havana",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Cuba",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_053",
+          "raspuns": "JAMAICA",
+          "variante": [
+            "JAMAICA",
+            "ETIOPIA",
+            "GHANA",
+            "SENEGAL"
+          ],
+          "hint_1": "O cruce diagonală galbenă pe verde și negru",
+          "hint_2": "Singurul steag național fără roșu, alb sau albastru",
+          "hint_3": "Patria reggae-ului și a lui Bob Marley",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Jamaica",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_054",
+          "raspuns": "CROATIA",
+          "variante": [
+            "CROATIA",
+            "SERBIA",
+            "SLOVENIA",
+            "UNGARIA"
+          ],
+          "hint_1": "Roșu-alb-albastru cu o stemă în carouri",
+          "hint_2": "Stema are model de tablă de șah",
+          "hint_3": "Capitala e Zagreb",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Croatia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_055",
+          "raspuns": "SERBIA",
+          "variante": [
+            "SERBIA",
+            "RUSIA",
+            "SLOVACIA",
+            "CROATIA"
+          ],
+          "hint_1": "Roșu, albastru, alb cu o stemă",
+          "hint_2": "Capitala e Belgrad",
+          "hint_3": "Fostă parte din Iugoslavia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Serbia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_056",
+          "raspuns": "BULGARIA",
+          "variante": [
+            "BULGARIA",
+            "UNGARIA",
+            "SIERRA LEONE",
+            "MADAGASCAR"
+          ],
+          "hint_1": "Trei benzi orizontale: alb, verde, roșu",
+          "hint_2": "Vecină la sud cu România",
+          "hint_3": "Capitala e Sofia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Bulgaria",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_057",
+          "raspuns": "UNGARIA",
+          "variante": [
+            "UNGARIA",
+            "BULGARIA",
+            "ITALIA",
+            "IRLANDA"
+          ],
+          "hint_1": "Trei benzi orizontale: roșu, alb, verde",
+          "hint_2": "Vecină la vest cu România",
+          "hint_3": "Capitala e Budapesta",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Hungary",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_058",
+          "raspuns": "CEHIA",
+          "variante": [
+            "CEHIA",
+            "POLONIA",
+            "SLOVACIA",
+            "AUSTRIA"
+          ],
+          "hint_1": "Alb-roșu cu un triunghi albastru lateral",
+          "hint_2": "Capitala e Praga",
+          "hint_3": "Fostă parte din Cehoslovacia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the Czech Republic",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_059",
+          "raspuns": "SLOVACIA",
+          "variante": [
+            "SLOVACIA",
+            "RUSIA",
+            "SLOVENIA",
+            "SERBIA"
+          ],
+          "hint_1": "Alb, albastru, roșu cu o stemă",
+          "hint_2": "Capitala e Bratislava",
+          "hint_3": "S-a separat pașnic de Cehia în 1993",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Slovakia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_060",
+          "raspuns": "GEORGIA",
+          "variante": [
+            "GEORGIA",
+            "ARMENIA",
+            "AZERBAIDJAN",
+            "ELVETIA"
+          ],
+          "hint_1": "Alb cu o cruce roșie mare și patru cruci mici",
+          "hint_2": "Capitala e Tbilisi",
+          "hint_3": "Țară din Caucaz, între Europa și Asia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Georgia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_061",
+          "raspuns": "KAZAHSTAN",
+          "variante": [
+            "KAZAHSTAN",
+            "MONGOLIA",
+            "UZBEKISTAN",
+            "RUSIA"
+          ],
+          "hint_1": "Albastru cu un soare auriu și un vultur",
+          "hint_2": "Cea mai mare țară din lume fără ieșire la ocean",
+          "hint_3": "Capitala e Astana",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Kazakhstan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_062",
+          "raspuns": "MONGOLIA",
+          "variante": [
+            "MONGOLIA",
+            "KAZAHSTAN",
+            "COREEA DE NORD",
+            "CHINA"
+          ],
+          "hint_1": "Roșu-albastru-roșu cu un simbol auriu Soyombo",
+          "hint_2": "Patria lui Genghis Han",
+          "hint_3": "Una dintre cele mai slab populate țări din lume",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Mongolia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_063",
+          "raspuns": "NEPAL",
+          "variante": [
+            "NEPAL",
+            "BHUTAN",
+            "INDIA",
+            "TIBET"
+          ],
+          "hint_1": "Singurul steag național care nu e dreptunghiular",
+          "hint_2": "Format din două triunghiuri suprapuse",
+          "hint_3": "Aici se află Muntele Everest",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Nepal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_064",
+          "raspuns": "BHUTAN",
+          "variante": [
+            "BHUTAN",
+            "NEPAL",
+            "MONGOLIA",
+            "LAOS"
+          ],
+          "hint_1": "Un dragon alb pe diagonală galben-portocaliu",
+          "hint_2": "Supranumită 'Țara Dragonului Tunet'",
+          "hint_3": "Măsoară fericirea națională, nu doar economia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Bhutan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_065",
+          "raspuns": "ETIOPIA",
+          "variante": [
+            "ETIOPIA",
+            "GHANA",
+            "MALI",
+            "SENEGAL"
+          ],
+          "hint_1": "Verde, galben, roșu cu o stea albastră",
+          "hint_2": "Una dintre puținele țări africane niciodată colonizate",
+          "hint_3": "Se crede locul de origine al cafelei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Ethiopia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_066",
+          "raspuns": "VENEZUELA",
+          "variante": [
+            "VENEZUELA",
+            "COLUMBIA",
+            "ECUADOR",
+            "BRAZILIA"
+          ],
+          "hint_1": "Galben, albastru, roșu cu opt stele albe",
+          "hint_2": "Capitala e Caracas",
+          "hint_3": "Are cele mai mari rezerve de petrol dovedite din lume",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Venezuela",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_067",
+          "raspuns": "URUGUAY",
+          "variante": [
+            "URUGUAY",
+            "ARGENTINA",
+            "PARAGUAY",
+            "CHILE"
+          ],
+          "hint_1": "Nouă dungi orizontale și un 'Soare al lui Mai' în colț",
+          "hint_2": "Capitala e Montevideo",
+          "hint_3": "Una dintre cele mai mici țări din America de Sud",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Uruguay",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_068",
+          "raspuns": "ECUADOR",
+          "variante": [
+            "ECUADOR",
+            "COLUMBIA",
+            "VENEZUELA",
+            "PERU"
+          ],
+          "hint_1": "Galben, albastru, roșu, cu o stemă complexă în mijloc",
+          "hint_2": "Numele înseamnă 'ecuator' în spaniolă",
+          "hint_3": "Aici se află Insulele Galapagos",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Ecuador",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_069",
+          "raspuns": "COSTA RICA",
+          "variante": [
+            "COSTA RICA",
+            "THAILANDA",
+            "PANAMA",
+            "CUBA"
+          ],
+          "hint_1": "Cinci benzi: albastru, alb, roșu gros, alb, albastru",
+          "hint_2": "Nu are armată din 1949",
+          "hint_3": "Capitala e San José",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Costa Rica",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_070",
+          "raspuns": "PANAMA",
+          "variante": [
+            "PANAMA",
+            "COSTA RICA",
+            "VENEZUELA",
+            "CUBA"
+          ],
+          "hint_1": "Patru pătrate: alb cu stea albastră, roșu, albastru, alb cu stea roșie",
+          "hint_2": "Aici se află celebrul canal care leagă cele două oceane",
+          "hint_3": "Capitala e Panama City",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Panama",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_071",
+          "raspuns": "LITUANIA",
+          "variante": [
+            "LITUANIA",
+            "LETONIA",
+            "ESTONIA",
+            "BULGARIA"
+          ],
+          "hint_1": "Trei benzi orizontale: galben, verde, roșu",
+          "hint_2": "Capitala e Vilnius",
+          "hint_3": "Cea mai sudică dintre țările baltice",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Lithuania",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_072",
+          "raspuns": "LETONIA",
+          "variante": [
+            "LETONIA",
+            "LITUANIA",
+            "ESTONIA",
+            "AUSTRIA"
+          ],
+          "hint_1": "Roșu-grena cu o dungă albă îngustă la mijloc",
+          "hint_2": "Capitala e Riga",
+          "hint_3": "Una dintre cele trei țări baltice",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Latvia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_073",
+          "raspuns": "ESTONIA",
+          "variante": [
+            "ESTONIA",
+            "LETONIA",
+            "LITUANIA",
+            "FINLANDA"
+          ],
+          "hint_1": "Trei benzi orizontale: albastru, negru, alb",
+          "hint_2": "Capitala e Tallinn",
+          "hint_3": "Cea mai nordică dintre țările baltice",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Estonia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_074",
+          "raspuns": "SLOVENIA",
+          "variante": [
+            "SLOVENIA",
+            "CROATIA",
+            "SLOVACIA",
+            "SERBIA"
+          ],
+          "hint_1": "Alb, albastru, roșu cu o stemă cu munte și stele",
+          "hint_2": "Capitala e Ljubljana",
+          "hint_3": "Fostă parte din Iugoslavia, ca și Croația",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Slovenia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_075",
+          "raspuns": "ALBANIA",
+          "variante": [
+            "ALBANIA",
+            "MUNTENEGRU",
+            "MACEDONIA DE NORD",
+            "SERBIA"
+          ],
+          "hint_1": "Roșu cu un vultur bicefal negru în mijloc",
+          "hint_2": "Capitala e Tirana",
+          "hint_3": "Vecină cu Grecia și Muntenegru",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Albania",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_076",
+          "raspuns": "MOLDOVA",
+          "variante": [
+            "MOLDOVA",
+            "ROMANIA",
+            "UCRAINA",
+            "BULGARIA"
+          ],
+          "hint_1": "Albastru, galben, roșu cu o stemă cu cap de bour",
+          "hint_2": "Capitala e Chișinău",
+          "hint_3": "Vecină la est cu România",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Moldova",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_077",
+          "raspuns": "ARMENIA",
+          "variante": [
+            "ARMENIA",
+            "GEORGIA",
+            "AZERBAIDJAN",
+            "IRAN"
+          ],
+          "hint_1": "Trei benzi orizontale: roșu, albastru, portocaliu",
+          "hint_2": "Capitala e Erevan",
+          "hint_3": "Prima țară din lume care a adoptat creștinismul ca religie de stat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Armenia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_078",
+          "raspuns": "AZERBAIDJAN",
+          "variante": [
+            "AZERBAIDJAN",
+            "ARMENIA",
+            "GEORGIA",
+            "TURCIA"
+          ],
+          "hint_1": "Albastru, roșu, verde cu o semilună și o stea",
+          "hint_2": "Capitala e Baku",
+          "hint_3": "Țară bogată în petrol, la Marea Caspică",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Azerbaijan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_079",
+          "raspuns": "SRI LANKA",
+          "variante": [
+            "SRI LANKA",
+            "INDIA",
+            "BANGLADESH",
+            "NEPAL"
+          ],
+          "hint_1": "Un leu cu sabie pe fundal grena, cu dungi verzi și portocalii",
+          "hint_2": "O insulă aflată sub India",
+          "hint_3": "Cunoscută pentru ceai și scorțișoară",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Sri Lanka",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_080",
+          "raspuns": "LIBAN",
+          "variante": [
+            "LIBAN",
+            "SIRIA",
+            "IORDANIA",
+            "ISRAEL"
+          ],
+          "hint_1": "Roșu-alb-roșu cu un cedru verde în mijloc",
+          "hint_2": "Cedrul e simbolul național",
+          "hint_3": "Capitala e Beirut",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Lebanon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_081",
+          "raspuns": "IORDANIA",
+          "variante": [
+            "IORDANIA",
+            "LIBAN",
+            "SIRIA",
+            "EGIPT"
+          ],
+          "hint_1": "Negru, alb, verde cu un triunghi roșu și o stea",
+          "hint_2": "Capitala e Amman",
+          "hint_3": "Vecină cu Israel, Siria, Irak și Arabia Saudită",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Jordan",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_082",
+          "raspuns": "TUNISIA",
+          "variante": [
+            "TUNISIA",
+            "MAROC",
+            "ALGERIA",
+            "TURCIA"
+          ],
+          "hint_1": "Roșu cu un disc alb, semilună și stea",
+          "hint_2": "Capitala e Tunis",
+          "hint_3": "Aici a început 'Primăvara Arabă' în 2010-2011",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Tunisia",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_083",
+          "raspuns": "GHANA",
+          "variante": [
+            "GHANA",
+            "JAMAICA",
+            "ETIOPIA",
+            "SENEGAL"
+          ],
+          "hint_1": "Roșu, galben, verde cu o stea neagră în mijloc",
+          "hint_2": "Prima țară din Africa subsahariană care și-a câștigat independența",
+          "hint_3": "Capitala e Accra",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Ghana",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_084",
+          "raspuns": "MADAGASCAR",
+          "variante": [
+            "MADAGASCAR",
+            "KENYA",
+            "GHANA",
+            "MOZAMBIC"
+          ],
+          "hint_1": "Alb vertical lângă două benzi orizontale roșu-verde",
+          "hint_2": "A patra cea mai mare insulă din lume",
+          "hint_3": "Cunoscută pentru lemuri, specii unice pe Pământ",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Madagascar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_085",
+          "raspuns": "CIPRU",
+          "variante": [
+            "CIPRU",
+            "MALTA",
+            "GRECIA",
+            "LIBAN"
+          ],
+          "hint_1": "Alb cu harta insulei în auriu și două ramuri de măslin",
+          "hint_2": "Singurul steag național cu harta propriei țări pe el",
+          "hint_3": "Insulă împărțită între greci și turci",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Cyprus",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_086",
+          "raspuns": "MALTA",
+          "variante": [
+            "MALTA",
+            "CIPRU",
+            "MONACO",
+            "SAN MARINO"
+          ],
+          "hint_1": "Alb-roșu cu Crucea Sfântului Gheorghe în colț",
+          "hint_2": "Una dintre cele mai mici țări din Uniunea Europeană",
+          "hint_3": "Capitala e Valletta",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Malta",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_087",
+          "raspuns": "LUXEMBURG",
+          "variante": [
+            "LUXEMBURG",
+            "OLANDA",
+            "BELGIA",
+            "MONACO"
+          ],
+          "hint_1": "Roșu, alb, albastru deschis, orizontal",
+          "hint_2": "Aproape identic cu steagul Olandei",
+          "hint_3": "Unul dintre cele mai bogate state din lume, per capita",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Luxembourg",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_088",
+          "raspuns": "VATICAN",
+          "variante": [
+            "VATICAN",
+            "ITALIA",
+            "SAN MARINO",
+            "MALTA"
+          ],
+          "hint_1": "Galben și alb, cu o stemă papală",
+          "hint_2": "Cel mai mic stat independent din lume",
+          "hint_3": "Aflat complet în interiorul orașului Roma",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Vatican City",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}

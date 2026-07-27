@@ -48,15 +48,16 @@ class MatchInfo {
       };
 }
 
-/// Un jucător dintr-un meci — real (identificat prin auth anonim Firebase)
-/// sau ficțiv (`isBot`), completat local când matchmaking-ul nu adună 5
-/// oameni reali la timp.
+/// Un jucător dintr-un meci — întotdeauna real, identificat prin auth
+/// Firebase (Google sau anonim/Guest). [photoUrl] vine din contul Google
+/// (vezi AuthService.multiplayerIdentity) — null pentru Guest, caz în care
+/// se arată cercul colorat cu inițiala (vezi [pickAvatarColor]).
 class MatchPlayer {
   final String id;
   final String name;
   final String avatarSeed;
+  final String? photoUrl;
   final int score;
-  final bool isBot;
   final bool isHost;
 
   const MatchPlayer({
@@ -64,7 +65,7 @@ class MatchPlayer {
     required this.name,
     required this.avatarSeed,
     required this.score,
-    this.isBot = false,
+    this.photoUrl,
     this.isHost = false,
   });
 
@@ -74,8 +75,8 @@ class MatchPlayer {
       id: doc.id,
       name: data['name'] as String? ?? '?',
       avatarSeed: data['avatarSeed'] as String? ?? doc.id,
+      photoUrl: data['photoUrl'] as String?,
       score: data['score'] as int? ?? 0,
-      isBot: data['isBot'] as bool? ?? false,
       isHost: data['isHost'] as bool? ?? false,
     );
   }
@@ -83,8 +84,8 @@ class MatchPlayer {
   Map<String, dynamic> toMap() => {
         'name': name,
         'avatarSeed': avatarSeed,
+        'photoUrl': photoUrl,
         'score': score,
-        'isBot': isBot,
         'isHost': isHost,
         'joinedAt': FieldValue.serverTimestamp(),
       };
@@ -136,10 +137,3 @@ Color pickAvatarColor(String seed) {
   ];
   return palette[seed.hashCode.abs() % palette.length];
 }
-
-/// Nume ficțive pentru jucătorii-bot care completează matchmaking-ul public
-/// când nu se adună 5 oameni reali la timp.
-const List<String> botNamePool = [
-  'Alex', 'Maria', 'Andrei', 'Ioana', 'Cristi', 'Elena', 'Bogdan', 'Diana',
-  'Radu', 'Ana', 'Vlad', 'Larisa', 'Mihai', 'Sorana', 'George',
-];

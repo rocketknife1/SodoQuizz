@@ -11,14 +11,16 @@ import '../../widgets/blur_image.dart';
 import '../../widgets/next_button.dart';
 import 'multiplayer_results_screen.dart';
 
-/// Meciul live de 5 jucători (privat sau matchmaking public — identic din
-/// acest punct încolo). Fără alegere de categorie — toate întrebările din
-/// toate categoriile (999 acum, oricâte vor mai fi adăugate) formează un
-/// singur pool comun. Întrebările NU se sincronizează prin Firestore:
-/// fiecare client încarcă local exact același pool prin `loadAllQuestions()`
-/// și îl amestecă determinist cu `Random(matchId.hashCode)`, ca toți să vadă
-/// exact aceeași ordine — doar scorul se scrie live (vezi planul de
-/// arhitectură). Boții își simulează scorul 100% local, pe fiecare client.
+/// Meciul live 1 vs 1 (matchmaking public) sau cu prietenii (cameră privată
+/// — identic din acest punct încolo). Fără alegere de categorie — toate
+/// întrebările din toate categoriile (999 acum, oricâte vor mai fi
+/// adăugate) formează un singur pool comun. Întrebările NU se sincronizează
+/// prin Firestore: fiecare client încarcă local exact același pool prin
+/// `loadAllQuestions()` și îl amestecă determinist cu `Random(matchId.hashCode)`,
+/// ca toți să vadă exact aceeași ordine — doar scorul se scrie live (vezi
+/// planul de arhitectură). Toți jucătorii sunt reali; dacă cineva iese din
+/// meci (buton înapoi), [MultiplayerService.leaveMatch] îi șterge rândul din
+/// Firestore, ca să nu rămână orfan.
 class MultiplayerMatchScreen extends StatefulWidget {
   final String matchId;
   const MultiplayerMatchScreen({super.key, required this.matchId});
@@ -34,8 +36,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   int _myScore = 0;
   bool _answered = false;
   String? _selectedAnswer;
-  Timer? _botTimer;
-  final Map<String, int> _botScores = {};
+  bool _left = false;
 
   Question get _current => _questions[_qIndex];
 
@@ -43,7 +44,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   void initState() {
     super.initState();
     _load();
-    _botTimer = Timer.periodic(const Duration(milliseconds: 2500), (_) => _simulateBots());
   }
 
   Future<void> _load() async {
@@ -55,24 +55,21 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     });
   }
 
-  void _simulateBots() {
-    // simulare simpla, locala: fiecare bot are ~55% sansa sa "raspunda
-    // corect" la fiecare tick si primeste un scor plauzibil - nu trebuie sa
-    // fie inteligenti, doar sa nu strice experienta (decizie explicita, MVP).
-    final rnd = Random();
-    setState(() {
-      for (final id in _botScores.keys.toList()) {
-        if (rnd.nextDouble() < 0.55) {
-          _botScores[id] = (_botScores[id] ?? 0) + 200 + rnd.nextInt(500);
-        }
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _botTimer?.cancel();
-    super.dispose();
+  /// Ieșire manuală din meci (buton înapoi) — nu se apelează și la
+  /// navigarea normală spre rezultate, acolo se ocupă
+  /// [MultiplayerResultsScreen] de curățare la final. Ieșirea din ecran NU
+  /// depinde de succesul curățării din Firestore — dacă aia eșuează (rețea,
+  /// reguli etc.), userul tot trebuie să poată pleca, nu să rămână blocat.
+  Future<void> _leave() async {
+    if (_left) return;
+    _left = true;
+    try {
+      await MultiplayerService.instance.leaveMatch(widget.matchId);
+    } catch (e) {
+      debugPrint('MultiplayerMatchScreen._leave: leaveMatch a esuat: $e');
+    } finally {
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   void _selectAnswer(String opt) {
@@ -88,9 +85,10 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
 
   void _next() {
     if (_qIndex + 1 >= _questions.length) {
+      _left = true; // rezultatele preiau curatenia finala, nu mai trecem si prin leaveMatch aici
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId, botScores: Map.of(_botScores))),
+        MaterialPageRoute(builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId)),
       );
       return;
     }
@@ -124,30 +122,36 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     final q = _current;
     final opts = [...q.choices]..shuffle(Random(q.id.hashCode + _qIndex));
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: LinearGradient(colors: [q.color.withAlpha(200), const Color(0xFF0F172A)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildPlayersRow(),
-              const SizedBox(height: 4),
-              Text('Întrebarea ${_qIndex + 1} din ${_questions.length}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: Column(
-                    children: [
-                      BlurImage(color: q.color, answer: q.answer, revealed: _answered, hintsUsed: 0, imageAssetPath: q.imageAssetPath),
-                      const SizedBox(height: 10),
-                      if (_answered) NextButton(onTap: _next),
-                      const SizedBox(height: 10),
-                      _buildOptionsGrid(q, opts),
-                    ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave();
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(gradient: LinearGradient(colors: [q.color.withAlpha(200), const Color(0xFF0F172A)], begin: Alignment.topLeft, end: Alignment.bottomRight)),
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildPlayersRow(),
+                const SizedBox(height: 4),
+                Text('Întrebarea ${_qIndex + 1} din ${_questions.length}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Column(
+                      children: [
+                        BlurImage(color: q.color, answer: q.answer, revealed: _answered, hintsUsed: 0, imageAssetPath: q.imageAssetPath),
+                        const SizedBox(height: 10),
+                        if (_answered) NextButton(onTap: _next),
+                        const SizedBox(height: 10),
+                        _buildOptionsGrid(q, opts),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -161,21 +165,18 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
         stream: MultiplayerService.instance.watchPlayers(widget.matchId),
         builder: (context, snap) {
           final players = snap.data ?? const <MatchPlayer>[];
-          for (final p in players) {
-            if (p.isBot) _botScores.putIfAbsent(p.id, () => 0);
-          }
           final me = MultiplayerService.instance.currentPlayerId;
           return ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: players.map((p) {
-              final score = p.id == me ? _myScore : (p.isBot ? (_botScores[p.id] ?? 0) : p.score);
+              final score = p.id == me ? _myScore : p.score;
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed)),
+                    Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl),
                     const SizedBox(height: 2),
                     Text('$score', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800)),
                   ],

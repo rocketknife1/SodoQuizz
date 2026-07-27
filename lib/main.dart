@@ -1,5 +1,6 @@
 ﻿import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'core/ads_service.dart';
 import 'core/audio.dart';
 import 'data/cloud_sync_service.dart';
 import 'firebase_options.dart';
@@ -20,6 +21,9 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase.initializeApp a esuat: $e');
   }
+  // pregatire SDK reclame (ID-uri de test deocamdata) - vezi ads_service.dart;
+  // nu blocheaza pornirea si nu e inca folosit de butonul din GameScreen.
+  AdsService.instance.init();
   runApp(const GuessItApp());
 }
 
@@ -57,7 +61,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Guess It!',
+      title: 'Sodo Quizz',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(

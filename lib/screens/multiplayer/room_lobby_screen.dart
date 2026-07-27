@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
-import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import 'multiplayer_match_screen.dart';
@@ -29,8 +29,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
   @override
   void initState() {
     super.initState();
-    StorageService.getDisplayName().then((n) {
-      if (mounted) setState(() => _displayName = n);
+    AuthService.instance.multiplayerIdentity().then((identity) {
+      if (mounted) setState(() => _displayName = identity.name);
     });
   }
 
@@ -41,11 +41,18 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
     super.dispose();
   }
 
+  /// Ieșirea din ecran NU depinde de succesul curățării din Firestore —
+  /// dacă aia eșuează, userul tot trebuie să poată pleca, nu să rămână blocat.
   Future<void> _leave() async {
     if (_leaving) return;
     _leaving = true;
-    await MultiplayerService.instance.leaveMatch(widget.matchId);
-    if (mounted) Navigator.pop(context);
+    try {
+      await MultiplayerService.instance.leaveMatch(widget.matchId);
+    } catch (e) {
+      debugPrint('RoomLobbyScreen._leave: leaveMatch a esuat: $e');
+    } finally {
+      if (mounted) Navigator.pop(context);
+    }
   }
 
   void _maybeNavigateToMatch(MatchInfo info) {
@@ -148,6 +155,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                             size: 56,
                             label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
                             accentColor: pickAvatarColor(p.avatarSeed),
+                            photoUrl: p.photoUrl,
                           ),
                           const SizedBox(height: 4),
                           Text(p.isHost ? '${p.name} 👑' : p.name,
@@ -238,17 +246,42 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
     await MultiplayerService.instance.sendChatMessage(matchId: widget.matchId, senderName: _displayName, text: text);
   }
 
+  /// Hostul nu poate porni meciul singur — trebuie cel puțin un prieten
+  /// intrat în cameră, altfel butonul e dezactivat cu un mesaj explicativ.
   Widget _buildStartButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          onPressed: () => MultiplayerService.instance.startMatch(widget.matchId),
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.play, padding: const EdgeInsets.symmetric(vertical: 14)),
-          child: const Text('START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
-        ),
-      ),
+    return StreamBuilder<List<MatchPlayer>>(
+      stream: MultiplayerService.instance.watchPlayers(widget.matchId),
+      builder: (context, snap) {
+        final canStart = (snap.data?.length ?? 0) >= 2;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              if (!canStart)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'Așteaptă cel puțin un prieten să intre în cameră...',
+                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: canStart ? () => MultiplayerService.instance.startMatch(widget.matchId) : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.play,
+                    disabledBackgroundColor: Colors.white24,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

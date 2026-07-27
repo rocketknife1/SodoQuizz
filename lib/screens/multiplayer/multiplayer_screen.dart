@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
+import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/storage_service.dart';
 import '../../widgets/avatar.dart';
@@ -22,13 +23,22 @@ class MultiplayerScreen extends StatefulWidget {
 
 class _MultiplayerScreenState extends State<MultiplayerScreen> {
   String _displayName = '';
+  String? _photoUrl;
   bool _busy = false;
+
+  /// Numele/poza sunt legate live de contul Google (dacă e logat) — nu se
+  /// mai pot edita manual în acest caz, vezi [_editName].
+  bool get _isGoogleLinked => _photoUrl != null;
 
   @override
   void initState() {
     super.initState();
-    StorageService.getDisplayName().then((n) {
-      if (mounted) setState(() => _displayName = n);
+    AuthService.instance.multiplayerIdentity().then((identity) {
+      if (!mounted) return;
+      setState(() {
+        _displayName = identity.name;
+        _photoUrl = identity.photoUrl;
+      });
     });
   }
 
@@ -40,6 +50,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
   }
 
   Future<void> _editName() async {
+    if (_isGoogleLinked) return; // numele vine din contul Google, nu e editabil aici
     final controller = TextEditingController(text: _displayName);
     final result = await showDialog<String>(
       context: context,
@@ -67,7 +78,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (_busy) return;
     setState(() => _busy = true);
     try {
-      final info = await MultiplayerService.instance.createRoom(displayName: _displayName);
+      final info = await MultiplayerService.instance.createRoom(displayName: _displayName, photoUrl: _photoUrl);
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true)));
     } catch (e) {
@@ -112,7 +123,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (code == null || code.isEmpty || !mounted) return;
     setState(() => _busy = true);
     try {
-      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: _displayName);
+      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: _displayName, photoUrl: _photoUrl);
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)));
     } catch (e) {
@@ -151,7 +162,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Avatar(size: 100),
+                        Avatar(size: 100, photoUrl: _photoUrl),
                         const SizedBox(height: 10),
                         GestureDetector(
                           onTap: _editName,
@@ -160,8 +171,10 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
                             children: [
                               Text(_displayName.isEmpty ? '...' : _displayName,
                                   style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                              const SizedBox(width: 6),
-                              const Icon(Icons.edit_rounded, color: Colors.white54, size: 16),
+                              if (!_isGoogleLinked) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.edit_rounded, color: Colors.white54, size: 16),
+                              ],
                             ],
                           ),
                         ),

@@ -1,0 +1,1422 @@
+{
+  "categorii": {
+    "animale": {
+      "mod": "4_variante",
+      "culoare_tema": "#27AE60",
+      "descriere": "Animale din toată lumea",
+      "intrebari": [
+        {
+          "id": "ani_001",
+          "raspuns": "LEUL",
+          "variante": [
+            "LEUL",
+            "TIGRUL",
+            "LEOPARDUL",
+            "PUMA"
+          ],
+          "hint_1": "Supranumit 'Regele junglei'",
+          "hint_2": "Doar masculul are coamă",
+          "hint_3": "Trăiește în grupuri numite haite (mândrii)",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Lion animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_002",
+          "raspuns": "TIGRUL",
+          "variante": [
+            "TIGRUL",
+            "LEUL",
+            "LEOPARDUL",
+            "GHEPARDUL"
+          ],
+          "hint_1": "Cea mai mare felină sălbatică din lume",
+          "hint_2": "Are dungi unice, ca amprentele",
+          "hint_3": "Trăiește solitar, spre deosebire de leu",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tiger animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_003",
+          "raspuns": "ELEFANTUL AFRICAN",
+          "variante": [
+            "ELEFANTUL AFRICAN",
+            "RINOCERUL",
+            "HIPOPOTAMUL",
+            "GIRAFA"
+          ],
+          "hint_1": "Cel mai mare animal terestru",
+          "hint_2": "Are urechi mari, în formă de Africa",
+          "hint_3": "Colții sunt de fapt dinți uriași",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "African elephant",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_004",
+          "raspuns": "GIRAFA",
+          "variante": [
+            "GIRAFA",
+            "CAMILA",
+            "ELANUL",
+            "ZEBRA"
+          ],
+          "hint_1": "Are cel mai lung gât dintre mamifere",
+          "hint_2": "Modelul blănii e unic la fiecare individ",
+          "hint_3": "Trăiește în savana africană",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Giraffe animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_005",
+          "raspuns": "ZEBRA",
+          "variante": [
+            "ZEBRA",
+            "GIRAFA",
+            "GAZELA",
+            "GNU"
+          ],
+          "hint_1": "Are dungi albe și negre unice fiecărui individ",
+          "hint_2": "Rudă apropiată cu calul",
+          "hint_3": "Trăiește în turme mari, în Africa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Zebra animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_006",
+          "raspuns": "RINOCERUL",
+          "variante": [
+            "RINOCERUL",
+            "HIPOPOTAMUL",
+            "ELEFANTUL AFRICAN",
+            "BIVOLUL AFRICAN"
+          ],
+          "hint_1": "Are unul sau două coarne pe bot",
+          "hint_2": "Coarnele sunt din keratină, ca unghiile",
+          "hint_3": "Piele foarte groasă, ca o armură",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Rhinoceros animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_007",
+          "raspuns": "HIPOPOTAMUL",
+          "variante": [
+            "HIPOPOTAMUL",
+            "RINOCERUL",
+            "MORSA",
+            "CROCODILUL DE NIL"
+          ],
+          "hint_1": "Petrece cea mai mare parte a zilei în apă",
+          "hint_2": "Unul dintre cele mai periculoase animale din Africa",
+          "hint_3": "Numele înseamnă 'calul de râu'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Hippopotamus animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_008",
+          "raspuns": "GORILA",
+          "variante": [
+            "GORILA",
+            "CIMPANZEUL",
+            "URSUL PANDA",
+            "LENESUL DE COPAC"
+          ],
+          "hint_1": "Cea mai mare maimuță din lume",
+          "hint_2": "Masculii adulți se numesc 'spate argintiu'",
+          "hint_3": "Trăiește în pădurile tropicale din Africa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Gorilla animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_009",
+          "raspuns": "CIMPANZEUL",
+          "variante": [
+            "CIMPANZEUL",
+            "GORILA",
+            "URSUL LENES",
+            "LEMUR"
+          ],
+          "hint_1": "Cea mai apropiată rudă a omului",
+          "hint_2": "Folosește unelte simple, ca bețe",
+          "hint_3": "Trăiește în grupuri sociale complexe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chimpanzee animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_010",
+          "raspuns": "URSUL PANDA",
+          "variante": [
+            "URSUL PANDA",
+            "URSUL POLAR",
+            "URSUL BRUN",
+            "URSUL LENES"
+          ],
+          "hint_1": "Alb-negru, mănâncă mai ales bambus",
+          "hint_2": "Simbolul conservării speciilor pe cale de dispariție",
+          "hint_3": "Trăiește în munții din China",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Giant panda animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_011",
+          "raspuns": "URSUL POLAR",
+          "variante": [
+            "URSUL POLAR",
+            "URSUL PANDA",
+            "URSUL BRUN",
+            "MORSA"
+          ],
+          "hint_1": "Cel mai mare carnivor terestru",
+          "hint_2": "Blana pare albă, dar pielea de dedesubt e neagră",
+          "hint_3": "Vânează foci pe gheața Arcticii",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Polar bear animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_012",
+          "raspuns": "URSUL BRUN",
+          "variante": [
+            "URSUL BRUN",
+            "URSUL POLAR",
+            "URSUL PANDA",
+            "LUPUL"
+          ],
+          "hint_1": "Poate cântări peste 300 de kilograme",
+          "hint_2": "Hibernează iarna în bârlog",
+          "hint_3": "Trăiește și în munții din România",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Brown bear animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_013",
+          "raspuns": "LUPUL",
+          "variante": [
+            "LUPUL",
+            "VULPEA",
+            "RASUL",
+            "HIENA"
+          ],
+          "hint_1": "Trăiește și vânează în haită",
+          "hint_2": "Strămoșul sălbatic al câinelui domestic",
+          "hint_3": "Comunică prin urlete",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Gray wolf animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_014",
+          "raspuns": "VULPEA",
+          "variante": [
+            "VULPEA",
+            "LUPUL",
+            "RASUL",
+            "CASTORUL"
+          ],
+          "hint_1": "Are blană roșcată și coadă stufoasă",
+          "hint_2": "Foarte adaptabilă, trăiește și la oraș",
+          "hint_3": "Cunoscută pentru viclenie în povești",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Red fox animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_015",
+          "raspuns": "CANGURUL",
+          "variante": [
+            "CANGURUL",
+            "KOALA",
+            "WOMBAT",
+            "CASOARUL"
+          ],
+          "hint_1": "Sare pe picioarele din spate, puternice",
+          "hint_2": "Puii cresc într-un marsupiu",
+          "hint_3": "Simbol al Australiei",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Kangaroo animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_016",
+          "raspuns": "KOALA",
+          "variante": [
+            "KOALA",
+            "CANGURUL",
+            "URSUL PANDA",
+            "LENESUL DE COPAC"
+          ],
+          "hint_1": "Se hrănește aproape exclusiv cu frunze de eucalipt",
+          "hint_2": "Doarme până la 20 de ore pe zi",
+          "hint_3": "Un marsupiu, nu un urs, deși pare așa",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Koala animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_017",
+          "raspuns": "STRUTUL",
+          "variante": [
+            "STRUTUL",
+            "CASOARUL",
+            "PELICANUL",
+            "PAUNUL"
+          ],
+          "hint_1": "Cea mai mare pasăre din lume",
+          "hint_2": "Nu poate zbura, dar aleargă foarte repede",
+          "hint_3": "Ouăle lui sunt cele mai mari dintre toate păsările",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ostrich bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_018",
+          "raspuns": "FLAMINGO",
+          "variante": [
+            "FLAMINGO",
+            "PELICANUL",
+            "TUCANUL",
+            "PAUNUL"
+          ],
+          "hint_1": "Culoarea roz vine din hrana pe bază de alge și crustacee",
+          "hint_2": "Stă adesea într-un picior",
+          "hint_3": "Trăiește în stoluri mari, în lagune",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flamingo bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_019",
+          "raspuns": "PINGUINUL",
+          "variante": [
+            "PINGUINUL",
+            "FOCA",
+            "MORSA",
+            "PELICANUL"
+          ],
+          "hint_1": "Pasăre care nu zboară, dar înoată excelent",
+          "hint_2": "Trăiește în Antarctica, la temperaturi extreme",
+          "hint_3": "Masculul clocește oul pe picioare, sub un pliu de piele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Emperor penguin",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_020",
+          "raspuns": "BALENA ALBASTRA",
+          "variante": [
+            "BALENA ALBASTRA",
+            "DELFINUL",
+            "MANTA",
+            "RECHINUL ALB"
+          ],
+          "hint_1": "Cel mai mare animal care a trăit vreodată pe Pământ",
+          "hint_2": "Inima ei cântărește cât o mașină mică",
+          "hint_3": "Se hrănește cu krill, creaturi minuscule",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Blue whale animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_021",
+          "raspuns": "DELFINUL",
+          "variante": [
+            "DELFINUL",
+            "BALENA ALBASTRA",
+            "FOCA",
+            "MANTA"
+          ],
+          "hint_1": "Foarte inteligent, comunică prin sunete",
+          "hint_2": "Trăiește în grupuri numite școli",
+          "hint_3": "Vine des la suprafață să respire aer",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Dolphin animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_022",
+          "raspuns": "RECHINUL ALB",
+          "variante": [
+            "RECHINUL ALB",
+            "RECHINUL CIOCAN",
+            "MANTA",
+            "BALENA ALBASTRA"
+          ],
+          "hint_1": "Cel mai mare pește prădător din ocean",
+          "hint_2": "Are simțul mirosului extrem de fin",
+          "hint_3": "Făcut celebru de filmul 'Fălci'",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Great white shark",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_023",
+          "raspuns": "CARACATITA",
+          "variante": [
+            "CARACATITA",
+            "MEDUZA",
+            "STEAUA DE MARE",
+            "CALUTUL DE MARE"
+          ],
+          "hint_1": "Are opt tentacule și trei inimi",
+          "hint_2": "Poate să-și schimbe culoarea instant",
+          "hint_3": "Una dintre cele mai inteligente nevertebrate",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Octopus animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_024",
+          "raspuns": "MEDUZA",
+          "variante": [
+            "MEDUZA",
+            "CARACATITA",
+            "STEAUA DE MARE",
+            "MANTA"
+          ],
+          "hint_1": "Corp gelatinos, aproape transparent",
+          "hint_2": "Unele specii au înțepătură dureroasă",
+          "hint_3": "Nu are creier, inimă sau oase",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Jellyfish animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_025",
+          "raspuns": "TESTOASA URIASA",
+          "variante": [
+            "TESTOASA URIASA",
+            "CROCODILUL DE NIL",
+            "IGUANA",
+            "VARANUL DE KOMODO"
+          ],
+          "hint_1": "Poate trăi peste 100 de ani",
+          "hint_2": "Printre cele mai longevive animale din lume",
+          "hint_3": "Trăiește pe insulele Galapagos",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Galapagos giant tortoise",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_026",
+          "raspuns": "CROCODILUL DE NIL",
+          "variante": [
+            "CROCODILUL DE NIL",
+            "ALIGATORUL AMERICAN",
+            "VARANUL DE KOMODO",
+            "TESTOASA URIASA"
+          ],
+          "hint_1": "Unul dintre cei mai mari prădători de apă dulce",
+          "hint_2": "Stă la pândă aproape nemișcat înainte de atac",
+          "hint_3": "Trăiește în râurile și lacurile Africii",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Nile crocodile",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_027",
+          "raspuns": "ALIGATORUL AMERICAN",
+          "variante": [
+            "ALIGATORUL AMERICAN",
+            "CROCODILUL DE NIL",
+            "IGUANA",
+            "VARANUL DE KOMODO"
+          ],
+          "hint_1": "Botul mai lat decât al crocodilului",
+          "hint_2": "Trăiește în mlaștinile din sud-estul SUA",
+          "hint_3": "Poate rămâne nemișcat ore întregi",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "American alligator",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_028",
+          "raspuns": "COBRA REGALA",
+          "variante": [
+            "COBRA REGALA",
+            "PITONUL",
+            "IGUANA",
+            "VARANUL DE KOMODO"
+          ],
+          "hint_1": "Cel mai lung șarpe veninos din lume",
+          "hint_2": "Își poate ridica o treime din corp",
+          "hint_3": "Gâtul se lățește când se simte amenințată",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "King cobra snake",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_029",
+          "raspuns": "PITONUL",
+          "variante": [
+            "PITONUL",
+            "COBRA REGALA",
+            "IGUANA",
+            "CAMELEONUL"
+          ],
+          "hint_1": "Ucide prin sufocare, nu prin venin",
+          "hint_2": "Unele specii pot depăși 6 metri lungime",
+          "hint_3": "Își înghite prada întreagă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Python snake",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_030",
+          "raspuns": "IGUANA",
+          "variante": [
+            "IGUANA",
+            "CAMELEONUL",
+            "VARANUL DE KOMODO",
+            "COBRA REGALA"
+          ],
+          "hint_1": "Are un rând de țepi de-a lungul spatelui",
+          "hint_2": "Foarte bună la cățărat și înot",
+          "hint_3": "Trăiește mai ales în America Centrală și de Sud",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Iguana animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_031",
+          "raspuns": "CAMELEONUL",
+          "variante": [
+            "CAMELEONUL",
+            "IGUANA",
+            "VARANUL DE KOMODO",
+            "PITONUL"
+          ],
+          "hint_1": "Își schimbă culoarea pielii",
+          "hint_2": "Ochii se pot mișca independent unul de altul",
+          "hint_3": "Limba lui e mai lungă decât propriul corp",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Chameleon animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_032",
+          "raspuns": "VARANUL DE KOMODO",
+          "variante": [
+            "VARANUL DE KOMODO",
+            "CROCODILUL DE NIL",
+            "IGUANA",
+            "TESTOASA URIASA"
+          ],
+          "hint_1": "Cea mai mare șopârlă din lume",
+          "hint_2": "Trăiește doar pe câteva insule din Indonezia",
+          "hint_3": "Are salivă cu bacterii periculoase pentru pradă",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Komodo dragon",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_033",
+          "raspuns": "VULTURUL PLESUV",
+          "variante": [
+            "VULTURUL PLESUV",
+            "BUFNITA",
+            "SOIMUL CALATOR",
+            "PELICANUL"
+          ],
+          "hint_1": "Simbolul național al Statelor Unite",
+          "hint_2": "Capul alb apare abia la maturitate",
+          "hint_3": "Are vedere de câteva ori mai bună decât omul",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bald eagle bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_034",
+          "raspuns": "BUFNITA",
+          "variante": [
+            "BUFNITA",
+            "VULTURUL PLESUV",
+            "PELICANUL",
+            "TUCANUL"
+          ],
+          "hint_1": "Vânează mai ales noaptea",
+          "hint_2": "Poate roti capul aproape complet",
+          "hint_3": "Zboară aproape fără zgomot",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Owl bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_035",
+          "raspuns": "PAPAGALUL ARA",
+          "variante": [
+            "PAPAGALUL ARA",
+            "TUCANUL",
+            "COLIBRI",
+            "PAUNUL"
+          ],
+          "hint_1": "Are pene extrem de colorate",
+          "hint_2": "Poate imita sunete și cuvinte",
+          "hint_3": "Trăiește în pădurile tropicale din America de Sud",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Macaw parrot",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_036",
+          "raspuns": "COLIBRI",
+          "variante": [
+            "COLIBRI",
+            "PAPAGALUL ARA",
+            "TUCANUL",
+            "FLAMINGO"
+          ],
+          "hint_1": "Cea mai mică pasăre din lume",
+          "hint_2": "Aripile bat de zeci de ori pe secundă",
+          "hint_3": "Singura pasăre care poate zbura cu spatele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Hummingbird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_037",
+          "raspuns": "LENESUL DE COPAC",
+          "variante": [
+            "LENESUL DE COPAC",
+            "URSUL LENES",
+            "KOALA",
+            "FURNICARUL"
+          ],
+          "hint_1": "Unul dintre cele mai lente animale din lume",
+          "hint_2": "Petrece aproape toată viața agățat în copaci",
+          "hint_3": "Coboară la sol doar o dată pe săptămână",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Sloth animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_038",
+          "raspuns": "FURNICARUL",
+          "variante": [
+            "FURNICARUL",
+            "ARMADILLO",
+            "LENESUL DE COPAC",
+            "URSUL LENES"
+          ],
+          "hint_1": "Se hrănește cu furnici și termite, folosind limba lungă",
+          "hint_2": "Nu are dinți deloc",
+          "hint_3": "Are gheare puternice pentru săpat mușuroaie",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Anteater animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_039",
+          "raspuns": "ARMADILLO",
+          "variante": [
+            "ARMADILLO",
+            "FURNICARUL",
+            "LENESUL DE COPAC",
+            "ARICIUL"
+          ],
+          "hint_1": "Corpul acoperit cu o carapace osoasă",
+          "hint_2": "Unele specii se pot rula într-o minge",
+          "hint_3": "Trăiește mai ales în America de Sud",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Armadillo animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_040",
+          "raspuns": "LAMA",
+          "variante": [
+            "LAMA",
+            "CAMILA",
+            "ELANUL",
+            "RENUL"
+          ],
+          "hint_1": "Rudă a cămilei, dar fără cocoașă",
+          "hint_2": "Folosită ca animal de povară în Anzi",
+          "hint_3": "Poate scuipa când e supărată",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Llama animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_041",
+          "raspuns": "BIZONUL AMERICAN",
+          "variante": [
+            "BIZONUL AMERICAN",
+            "BIVOLUL AFRICAN",
+            "ELANUL",
+            "RENUL"
+          ],
+          "hint_1": "Cel mai mare mamifer terestru din America de Nord",
+          "hint_2": "Aproape a dispărut în secolul XIX",
+          "hint_3": "Simbol al preriilor din Vestul Sălbatic",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "American bison",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_042",
+          "raspuns": "ELANUL",
+          "variante": [
+            "ELANUL",
+            "RENUL",
+            "BIZONUL AMERICAN",
+            "CAMILA"
+          ],
+          "hint_1": "Cel mai mare cerb din lume",
+          "hint_2": "Masculii au coarne late, ca niște palme",
+          "hint_3": "Trăiește în pădurile din nordul Europei și Americii",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Moose animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_043",
+          "raspuns": "RENUL",
+          "variante": [
+            "RENUL",
+            "ELANUL",
+            "LAMA",
+            "BIZONUL AMERICAN"
+          ],
+          "hint_1": "Singurul cerb la care ambele sexe au coarne",
+          "hint_2": "Trăiește în regiunile arctice",
+          "hint_3": "Asociat cu sania lui Moș Crăciun",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Reindeer animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_044",
+          "raspuns": "RASUL",
+          "variante": [
+            "RASUL",
+            "PUMA",
+            "LEOPARDUL",
+            "VULPEA"
+          ],
+          "hint_1": "Are smocuri de păr în vârful urechilor",
+          "hint_2": "Coada scurtă, tăiată parcă",
+          "hint_3": "Trăiește și în pădurile din Carpați",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Lynx animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_045",
+          "raspuns": "PUMA",
+          "variante": [
+            "PUMA",
+            "JAGUARUL",
+            "LEOPARDUL",
+            "RASUL"
+          ],
+          "hint_1": "Cunoscută și ca 'leul de munte'",
+          "hint_2": "Nu poate mârâi, doar torcei ca o pisică mare",
+          "hint_3": "Trăiește pe un teritoriu foarte întins, din Canada până în Chile",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cougar animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_046",
+          "raspuns": "JAGUARUL",
+          "variante": [
+            "JAGUARUL",
+            "LEOPARDUL",
+            "PUMA",
+            "GHEPARDUL"
+          ],
+          "hint_1": "Cea mai mare felină din America",
+          "hint_2": "Are cea mai puternică mușcătură dintre feline",
+          "hint_3": "Modelul blănii seamănă cu al leopardului, dar cu pete mai mari",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Jaguar animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_047",
+          "raspuns": "LEOPARDUL",
+          "variante": [
+            "LEOPARDUL",
+            "JAGUARUL",
+            "GHEPARDUL",
+            "TIGRUL"
+          ],
+          "hint_1": "Foarte bun cățărător, își duce prada în copaci",
+          "hint_2": "Modelul blănii se numește 'rozetă'",
+          "hint_3": "Trăiește atât în Africa, cât și în Asia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Leopard animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_048",
+          "raspuns": "GHEPARDUL",
+          "variante": [
+            "GHEPARDUL",
+            "LEOPARDUL",
+            "PUMA",
+            "RASUL"
+          ],
+          "hint_1": "Cel mai rapid animal terestru din lume",
+          "hint_2": "Are 'urme de lacrimi' negre sub ochi",
+          "hint_3": "Vânează prin sprint scurt, nu prin anduranță",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cheetah animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_049",
+          "raspuns": "HIENA",
+          "variante": [
+            "HIENA",
+            "LUPUL",
+            "GAZELA",
+            "GNU"
+          ],
+          "hint_1": "Are un răget care seamănă cu un râs",
+          "hint_2": "Trăiește în clanuri conduse de femele",
+          "hint_3": "Adesea confundată cu un prădător doar de resturi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Spotted hyena",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_050",
+          "raspuns": "GAZELA",
+          "variante": [
+            "GAZELA",
+            "GNU",
+            "ZEBRA",
+            "BIVOLUL AFRICAN"
+          ],
+          "hint_1": "Foarte rapidă, cu sărituri înalte de alertă",
+          "hint_2": "Prada de bază a leilor și gheparzilor în savană",
+          "hint_3": "Trăiește în turme mari, în Africa și Asia",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Gazelle animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_051",
+          "raspuns": "GNU",
+          "variante": [
+            "GNU",
+            "GAZELA",
+            "BIVOLUL AFRICAN",
+            "ZEBRA"
+          ],
+          "hint_1": "Participă la cea mai mare migrație de mamifere din lume",
+          "hint_2": "Are cap masiv și coarne curbate",
+          "hint_3": "Trăiește în turme uriașe în Africa de Est",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Wildebeest animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_052",
+          "raspuns": "BIVOLUL AFRICAN",
+          "variante": [
+            "BIVOLUL AFRICAN",
+            "GNU",
+            "RINOCERUL",
+            "HIPOPOTAMUL"
+          ],
+          "hint_1": "Unul dintre 'cei cinci mari' din safariurile africane",
+          "hint_2": "Foarte periculos când e rănit sau încolțit",
+          "hint_3": "Trăiește în turme mari, cu coarne masive",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "African buffalo",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_053",
+          "raspuns": "CAMILA",
+          "variante": [
+            "CAMILA",
+            "LAMA",
+            "GIRAFA",
+            "ELANUL"
+          ],
+          "hint_1": "Depozitează grăsime în cocoașă, nu apă",
+          "hint_2": "Poate merge zile întregi fără să bea",
+          "hint_3": "Adaptată perfect vieții în deșert",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Camel animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_054",
+          "raspuns": "URSUL LENES",
+          "variante": [
+            "URSUL LENES",
+            "URSUL PANDA",
+            "GORILA",
+            "LENESUL DE COPAC"
+          ],
+          "hint_1": "Se hrănește mai ales cu termite și fructe",
+          "hint_2": "Blană lungă, zbârlită",
+          "hint_3": "Trăiește în India și Sri Lanka",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Sloth bear animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_055",
+          "raspuns": "CASTORUL",
+          "variante": [
+            "CASTORUL",
+            "VIDRA",
+            "VULPEA",
+            "ARICIUL"
+          ],
+          "hint_1": "Construiește baraje din lemn pe râuri",
+          "hint_2": "Are dinți din față care cresc continuu",
+          "hint_3": "Coada lată, plată, folosită ca vâslă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Beaver animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_056",
+          "raspuns": "VIDRA",
+          "variante": [
+            "VIDRA",
+            "CASTORUL",
+            "FOCA",
+            "MORSA"
+          ],
+          "hint_1": "Foarte jucăușă, se dă pe tobogane de noroi",
+          "hint_2": "Unele specii sparg scoici folosind pietre",
+          "hint_3": "Blană extrem de deasă, care o ține uscată în apă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Otter animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_057",
+          "raspuns": "VEVERITA",
+          "variante": [
+            "VEVERITA",
+            "ARICIUL",
+            "CASTORUL",
+            "LILIACUL"
+          ],
+          "hint_1": "Îngroapă alune și ghinde pentru iarnă",
+          "hint_2": "Coadă mare, stufoasă",
+          "hint_3": "Foarte des întâlnită în parcuri și păduri",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Squirrel animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_058",
+          "raspuns": "ARICIUL",
+          "variante": [
+            "ARICIUL",
+            "ARMADILLO",
+            "VEVERITA",
+            "CASTORUL"
+          ],
+          "hint_1": "Corpul acoperit cu țepi",
+          "hint_2": "Se face ghem când se simte amenințat",
+          "hint_3": "Activ mai ales noaptea",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Hedgehog animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_059",
+          "raspuns": "LILIACUL",
+          "variante": [
+            "LILIACUL",
+            "VEVERITA",
+            "BUFNITA",
+            "COLIBRI"
+          ],
+          "hint_1": "Singurul mamifer capabil de zbor propulsat",
+          "hint_2": "Multe specii se orientează prin ecolocație",
+          "hint_3": "Activ noaptea, doarme atârnat cu capul în jos",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bat animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_060",
+          "raspuns": "RECHINUL CIOCAN",
+          "variante": [
+            "RECHINUL CIOCAN",
+            "RECHINUL ALB",
+            "MANTA",
+            "DELFINUL"
+          ],
+          "hint_1": "Capul lățit, în formă de ciocan",
+          "hint_2": "Forma capului îi dă vedere aproape completă în jur",
+          "hint_3": "Trăiește în ape calde, tropicale",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Hammerhead shark",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_061",
+          "raspuns": "CALUTUL DE MARE",
+          "variante": [
+            "CALUTUL DE MARE",
+            "STEAUA DE MARE",
+            "PESTELE CLOWN",
+            "MANTA"
+          ],
+          "hint_1": "Masculul e cel care poartă puii, nu femela",
+          "hint_2": "Înoată vertical, foarte încet",
+          "hint_3": "Capul seamănă cu cel al unui cal mic",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Seahorse animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_062",
+          "raspuns": "STEAUA DE MARE",
+          "variante": [
+            "STEAUA DE MARE",
+            "CALUTUL DE MARE",
+            "MEDUZA",
+            "CARACATITA"
+          ],
+          "hint_1": "De obicei are cinci brațe",
+          "hint_2": "Își poate regenera un braț pierdut",
+          "hint_3": "Nu are creier sau sânge, ca majoritatea animalelor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Starfish animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_063",
+          "raspuns": "PESTELE CLOWN",
+          "variante": [
+            "PESTELE CLOWN",
+            "CALUTUL DE MARE",
+            "MANTA",
+            "STEAUA DE MARE"
+          ],
+          "hint_1": "Trăiește în siguranță printre tentaculele anemonelor",
+          "hint_2": "Devenit celebru prin filmul 'Nemo'",
+          "hint_3": "Are dungi portocalii și albe",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Clownfish animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_064",
+          "raspuns": "MANTA",
+          "variante": [
+            "MANTA",
+            "RECHINUL CIOCAN",
+            "PESTELE CLOWN",
+            "BALENA ALBASTRA"
+          ],
+          "hint_1": "Un pește uriaș, plat, care 'zboară' prin apă",
+          "hint_2": "Se hrănește filtrând plancton",
+          "hint_3": "Aripioarele laterale seamănă cu niște aripi",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Manta ray animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_065",
+          "raspuns": "FOCA",
+          "variante": [
+            "FOCA",
+            "MORSA",
+            "PINGUINUL",
+            "VIDRA"
+          ],
+          "hint_1": "Înoată excelent, dar se mișcă stângaci pe uscat",
+          "hint_2": "Are un strat gros de grăsime pentru izolare termică",
+          "hint_3": "Se hrănește mai ales cu pește",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Seal animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_066",
+          "raspuns": "MORSA",
+          "variante": [
+            "MORSA",
+            "FOCA",
+            "URSUL POLAR",
+            "HIPOPOTAMUL"
+          ],
+          "hint_1": "Are colți lungi, vizibili chiar și cu gura închisă",
+          "hint_2": "Trăiește în regiunile arctice",
+          "hint_3": "Piele groasă, cu riduri",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Walrus animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_067",
+          "raspuns": "TUCANUL",
+          "variante": [
+            "TUCANUL",
+            "PAPAGALUL ARA",
+            "FLAMINGO",
+            "PAUNUL"
+          ],
+          "hint_1": "Are un cioc uriaș, colorat, dar foarte ușor",
+          "hint_2": "Trăiește în pădurile tropicale din America de Sud",
+          "hint_3": "Ciocul îl ajută să ajungă la fructe pe crengi subțiri",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Toucan bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_068",
+          "raspuns": "PAUNUL",
+          "variante": [
+            "PAUNUL",
+            "FLAMINGO",
+            "TUCANUL",
+            "PAPAGALUL ARA"
+          ],
+          "hint_1": "Masculul își desface coada într-un evantai colorat",
+          "hint_2": "Penele au 'ochi' iridescenți",
+          "hint_3": "Folosește coada pentru a atrage femelele",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Peacock bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_069",
+          "raspuns": "VULTURUL DE AUR",
+          "variante": [
+            "VULTURUL DE AUR",
+            "VULTURUL PLESUV",
+            "SOIMUL CALATOR",
+            "BUFNITA"
+          ],
+          "hint_1": "Unul dintre cei mai mari și puternici răpitori din emisfera nordică",
+          "hint_2": "Vânează iepuri și chiar căprioare tinere",
+          "hint_3": "Trăiește și în munții din România",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Golden eagle bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_070",
+          "raspuns": "MARMOTA",
+          "variante": [
+            "MARMOTA",
+            "VEVERITA",
+            "BURSUCUL",
+            "ARICIUL"
+          ],
+          "hint_1": "Trăiește în văgăuni săpate la altitudine mare",
+          "hint_2": "Hibernează în grup, mai multe luni pe an",
+          "hint_3": "Scoate un fluierat ascuțit când simte pericol",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Marmot animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_071",
+          "raspuns": "BURSUCUL",
+          "variante": [
+            "BURSUCUL",
+            "MARMOTA",
+            "VIDRA",
+            "DIHORUL"
+          ],
+          "hint_1": "Sapă vizuini complexe, cu multe camere și tuneluri",
+          "hint_2": "Are dungi albe și negre pe cap",
+          "hint_3": "Activ mai ales noaptea",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Badger animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_072",
+          "raspuns": "DIHORUL",
+          "variante": [
+            "DIHORUL",
+            "BURSUCUL",
+            "VULPEA",
+            "VIDRA"
+          ],
+          "hint_1": "Rudă sălbatică a nurcii domestice (dihor de casă)",
+          "hint_2": "Eliberează un miros puternic când se apără",
+          "hint_3": "Vânează șoareci și șobolani",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Polecat animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_073",
+          "raspuns": "SURICATA",
+          "variante": [
+            "SURICATA",
+            "MARMOTA",
+            "DIHORUL",
+            "ARICIUL"
+          ],
+          "hint_1": "Stă în picioare, dreaptă, ca o santinelă",
+          "hint_2": "Trăiește în grupuri mari, în deșertul Kalahari",
+          "hint_3": "Membrii grupului se schimbă la 'pază'",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Meerkat animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_074",
+          "raspuns": "ORCA",
+          "variante": [
+            "ORCA",
+            "DELFINUL",
+            "BALENA ALBASTRA",
+            "RECHINUL ALB"
+          ],
+          "hint_1": "Numită și 'balena ucigașă', deși e de fapt un delfin uriaș",
+          "hint_2": "Neagră cu alb, foarte ușor de recunoscut",
+          "hint_3": "Vânează în grupuri organizate, ca lupii",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Orca killer whale animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_075",
+          "raspuns": "RECHINUL BALENA",
+          "variante": [
+            "RECHINUL BALENA",
+            "BALENA ALBASTRA",
+            "MANTA",
+            "RECHINUL ALB"
+          ],
+          "hint_1": "Cel mai mare pește din lume",
+          "hint_2": "Cu toate că e uriaș, se hrănește doar cu plancton",
+          "hint_3": "Are pielea acoperită cu model de puncte",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Whale shark animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_076",
+          "raspuns": "BROASCA TESTOASA DE MARE",
+          "variante": [
+            "BROASCA TESTOASA DE MARE",
+            "TESTOASA URIASA",
+            "MANTA",
+            "FOCA"
+          ],
+          "hint_1": "Înoată mii de kilometri pentru a se întoarce la plaja natală",
+          "hint_2": "Femelele ies pe uscat doar ca să depună ouă",
+          "hint_3": "Are picioarele transformate în înotătoare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Sea turtle animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_077",
+          "raspuns": "ZIMBRUL EUROPEAN",
+          "variante": [
+            "ZIMBRUL EUROPEAN",
+            "BIZONUL AMERICAN",
+            "BIVOLUL AFRICAN",
+            "ELANUL"
+          ],
+          "hint_1": "Cel mai greu mamifer terestru din Europa",
+          "hint_2": "A fost readus în sălbăticie după ce a dispărut aproape complet",
+          "hint_3": "Trăiește și în pădurile din România",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "European bison animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_078",
+          "raspuns": "CAPRA NEAGRA",
+          "variante": [
+            "CAPRA NEAGRA",
+            "RASUL",
+            "URSUL BRUN",
+            "MARMOTA"
+          ],
+          "hint_1": "Trăiește pe stânci abrupte, la altitudine mare",
+          "hint_2": "Sare cu ușurință între stânci greu accesibile",
+          "hint_3": "Simbol al munților din România (Carpați)",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Chamois animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_079",
+          "raspuns": "VULPEA POLARA",
+          "variante": [
+            "VULPEA POLARA",
+            "URSUL POLAR",
+            "VULPEA",
+            "RENUL"
+          ],
+          "hint_1": "Blana devine albă iarna și cenușie-maro vara",
+          "hint_2": "Trăiește în tundra din jurul Polului Nord",
+          "hint_3": "Suportă temperaturi extrem de scăzute",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Arctic fox animal",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_080",
+          "raspuns": "ALBATROSUL",
+          "variante": [
+            "ALBATROSUL",
+            "CONDORUL",
+            "PELICANUL",
+            "VULTURUL DE AUR"
+          ],
+          "hint_1": "Are cea mai mare anvergură a aripilor dintre toate păsările",
+          "hint_2": "Poate pluti deasupra oceanului zile întregi fără să bată din aripi",
+          "hint_3": "Se întoarce pe uscat doar ca să se reproducă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Albatross bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_081",
+          "raspuns": "CONDORUL",
+          "variante": [
+            "CONDORUL",
+            "ALBATROSUL",
+            "VULTURUL PLESUV",
+            "VULTURUL HARPIA"
+          ],
+          "hint_1": "Una dintre cele mai mari păsări zburătoare din lume",
+          "hint_2": "Trăiește în munții Anzi",
+          "hint_3": "Se hrănește mai ales cu animale moarte (necrofag)",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Andean condor bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_082",
+          "raspuns": "VULTURUL HARPIA",
+          "variante": [
+            "VULTURUL HARPIA",
+            "VULTURUL DE AUR",
+            "CONDORUL",
+            "VULTURUL PLESUV"
+          ],
+          "hint_1": "Una dintre cele mai puternice păsări răpitoare din lume",
+          "hint_2": "Vânează maimuțe și lenești direct din copaci",
+          "hint_3": "Trăiește în pădurile tropicale din America de Sud",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Harpy eagle bird",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ani_083",
+          "raspuns": "IEPURELE",
+          "variante": [
+            "IEPURELE",
+            "VEVERITA",
+            "ARICIUL",
+            "VULPEA"
+          ],
+          "hint_1": "Are picioare din spate lungi și puternice, pentru sărituri rapide",
+          "hint_2": "Diferit de iepurele de casă, puii lui se nasc cu blană",
+          "hint_3": "Foarte rapid, folosește viteza ca apărare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Hare animal",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}

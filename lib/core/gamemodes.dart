@@ -102,6 +102,34 @@ const List<GameMode> gameModes = [
     icon: Icons.flag_rounded,
     accentColor: Color(0xFF2C3E90),
   ),
+  GameMode(
+    id: 'steaguri',
+    title: 'Steaguri',
+    subtitle: 'Țări din toată lumea',
+    icon: Icons.language_rounded,
+    accentColor: Color(0xFF1FA2B8),
+  ),
+  GameMode(
+    id: 'animale',
+    title: 'Animale',
+    subtitle: 'Fauna din toată lumea',
+    icon: Icons.pets_rounded,
+    accentColor: Color(0xFF27AE60),
+  ),
+  GameMode(
+    id: 'monumente',
+    title: 'Monumente',
+    subtitle: 'Minuni ale lumii',
+    icon: Icons.account_balance_rounded,
+    accentColor: Color(0xFFB8860B),
+  ),
+  GameMode(
+    id: 'instrumente',
+    title: 'Instrumente',
+    subtitle: 'Muzică din toată lumea',
+    icon: Icons.music_note_rounded,
+    accentColor: Color(0xFFD63384),
+  ),
 ];
 
 GameMode gameModeById(String id) => gameModes.firstWhere((m) => m.id == id);

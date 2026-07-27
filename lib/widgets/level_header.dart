@@ -36,7 +36,7 @@ class LevelHeader extends StatelessWidget {
 
     return Row(
       children: [
-        const Avatar(size: 44),
+        const MyAvatar(size: 44),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

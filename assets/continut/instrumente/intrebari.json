@@ -1,0 +1,1048 @@
+{
+  "categorii": {
+    "instrumente": {
+      "mod": "4_variante",
+      "culoare_tema": "#D63384",
+      "descriere": "Instrumente muzicale",
+      "intrebari": [
+        {
+          "id": "ins_001",
+          "raspuns": "PIANUL",
+          "variante": [
+            "PIANUL",
+            "PIANINA",
+            "ORGA",
+            "SINTETIZATORUL"
+          ],
+          "hint_1": "Are 88 de clape, albe și negre",
+          "hint_2": "Sunetul e produs de ciocănele care lovesc corzi",
+          "hint_3": "Instrument folosit atât solo, cât și în orchestră",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Grand piano instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_002",
+          "raspuns": "VIOARA",
+          "variante": [
+            "VIOARA",
+            "VIOLA",
+            "VIOLONCELUL",
+            "CONTRABASUL"
+          ],
+          "hint_1": "Cel mai mic și mai acut instrument din familia corzilor cu arcuș",
+          "hint_2": "Se cântă cu un arcuș din păr de cal",
+          "hint_3": "Are patru corzi",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Violin instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_003",
+          "raspuns": "VIOLONCELUL",
+          "variante": [
+            "VIOLONCELUL",
+            "CONTRABASUL",
+            "VIOARA",
+            "VIOLA"
+          ],
+          "hint_1": "Se cântă așezat, ținut între genunchi",
+          "hint_2": "Mai mare decât vioara, sunet mai grav",
+          "hint_3": "Are un picioruș metalic ce se sprijină pe podea",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Cello instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_004",
+          "raspuns": "CONTRABASUL",
+          "variante": [
+            "CONTRABASUL",
+            "VIOLONCELUL",
+            "VIOARA",
+            "HARPA"
+          ],
+          "hint_1": "Cel mai mare și mai grav instrument cu corzi din orchestră",
+          "hint_2": "Se cântă în picioare sau pe un scaun înalt",
+          "hint_3": "Folosit și în muzica clasică, și în jazz",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Double bass instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_005",
+          "raspuns": "VIOLA",
+          "variante": [
+            "VIOLA",
+            "VIOARA",
+            "VIOLONCELUL",
+            "MANDOLINA"
+          ],
+          "hint_1": "Puțin mai mare decât vioara, sunet mai cald",
+          "hint_2": "Adesea confundată cu vioara la prima vedere",
+          "hint_3": "Nu are coarda cea mai acută a viorii",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Viola instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_006",
+          "raspuns": "CHITARA ACUSTICA",
+          "variante": [
+            "CHITARA ACUSTICA",
+            "CHITARA ELECTRICA",
+            "CHITARA BAS",
+            "UKULELE"
+          ],
+          "hint_1": "Are o gaură de rezonanță în corpul de lemn",
+          "hint_2": "Nu are nevoie de amplificator electric",
+          "hint_3": "Cel mai popular instrument pentru acompaniat cântece",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Acoustic guitar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_007",
+          "raspuns": "CHITARA ELECTRICA",
+          "variante": [
+            "CHITARA ELECTRICA",
+            "CHITARA ACUSTICA",
+            "CHITARA BAS",
+            "BANJO"
+          ],
+          "hint_1": "Sunetul e captat de senzori numiți pickup-uri",
+          "hint_2": "Se conectează la un amplificator",
+          "hint_3": "Instrumentul central al muzicii rock",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Electric guitar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_008",
+          "raspuns": "CHITARA BAS",
+          "variante": [
+            "CHITARA BAS",
+            "CHITARA ELECTRICA",
+            "CONTRABASUL",
+            "CHITARA ACUSTICA"
+          ],
+          "hint_1": "Are corzi mai groase, sunet grav",
+          "hint_2": "De obicei doar patru corzi",
+          "hint_3": "Susține ritmul împreună cu tobele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bass guitar",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_009",
+          "raspuns": "UKULELE",
+          "variante": [
+            "UKULELE",
+            "CHITARA ACUSTICA",
+            "BANJO",
+            "MANDOLINA"
+          ],
+          "hint_1": "Un instrument mic, cu patru corzi",
+          "hint_2": "Originar din Hawaii",
+          "hint_3": "Sunet vesel, foarte popular pentru începători",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Ukulele instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_010",
+          "raspuns": "BANJO",
+          "variante": [
+            "BANJO",
+            "UKULELE",
+            "MANDOLINA",
+            "CHITARA ACUSTICA"
+          ],
+          "hint_1": "Are o membrană întinsă, ca a unei tobe, sub corzi",
+          "hint_2": "Sunet caracteristic muzicii country și bluegrass",
+          "hint_3": "Originar din tradițiile africane aduse în America",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Banjo instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_011",
+          "raspuns": "MANDOLINA",
+          "variante": [
+            "MANDOLINA",
+            "BANJO",
+            "UKULELE",
+            "VIOARA"
+          ],
+          "hint_1": "Are corzi grupate în perechi",
+          "hint_2": "Corp rotunjit, ca o pară tăiată",
+          "hint_3": "Foarte folosită în muzica italiană tradițională",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Mandolin instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_012",
+          "raspuns": "HARPA",
+          "variante": [
+            "HARPA",
+            "CHITARA ACUSTICA",
+            "CONTRABASUL",
+            "PIANUL"
+          ],
+          "hint_1": "Are zeci de corzi de lungimi diferite",
+          "hint_2": "Se cântă ciupind corzile cu degetele de la ambele mâini",
+          "hint_3": "Unul dintre cele mai vechi instrumente cu corzi din lume",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Concert harp instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_013",
+          "raspuns": "FLAUTUL TRAVERSIER",
+          "variante": [
+            "FLAUTUL TRAVERSIER",
+            "CLARINETUL",
+            "OBOIUL",
+            "NAIUL"
+          ],
+          "hint_1": "Se ține orizontal și se suflă lateral într-o gaură",
+          "hint_2": "Din familia instrumentelor de suflat din lemn, deși azi e din metal",
+          "hint_3": "Are un sunet clar, ascuțit",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Flute instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_014",
+          "raspuns": "CLARINETUL",
+          "variante": [
+            "CLARINETUL",
+            "OBOIUL",
+            "SAXOFONUL",
+            "FAGOTUL"
+          ],
+          "hint_1": "Are o singură ancie (lamelă) care vibrează",
+          "hint_2": "Corp cilindric, negru, cu clape metalice",
+          "hint_3": "Foarte folosit în jazz și muzică clasică",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Clarinet instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_015",
+          "raspuns": "OBOIUL",
+          "variante": [
+            "OBOIUL",
+            "CLARINETUL",
+            "FAGOTUL",
+            "SAXOFONUL"
+          ],
+          "hint_1": "Are o ancie dublă la capăt",
+          "hint_2": "Sunet pătrunzător, adesea dă tonul orchestrei",
+          "hint_3": "Corp conic, din lemn",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Oboe instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_016",
+          "raspuns": "FAGOTUL",
+          "variante": [
+            "FAGOTUL",
+            "OBOIUL",
+            "TUBA",
+            "CORNUL FRANCEZ"
+          ],
+          "hint_1": "Un instrument de suflat lung, îndoit ca un U",
+          "hint_2": "Sunet grav, din familia lemnelor cu ancie dublă",
+          "hint_3": "Unul dintre cele mai mari instrumente de suflat din orchestră",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bassoon instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_017",
+          "raspuns": "SAXOFONUL",
+          "variante": [
+            "SAXOFONUL",
+            "CLARINETUL",
+            "TROMPETA",
+            "TROMBONUL"
+          ],
+          "hint_1": "Făcut din alamă, dar cu ancie ca instrumentele de lemn",
+          "hint_2": "Strâns legat de muzica jazz",
+          "hint_3": "Inventat în secolul XIX de Adolphe Sax",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Saxophone instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_018",
+          "raspuns": "TROMPETA",
+          "variante": [
+            "TROMPETA",
+            "TROMBONUL",
+            "CORNUL FRANCEZ",
+            "TUBA"
+          ],
+          "hint_1": "Cel mai acut instrument de alamă",
+          "hint_2": "Are trei pistoane pentru schimbarea notelor",
+          "hint_3": "Foarte folosită în jazz și fanfare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Trumpet instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_019",
+          "raspuns": "TROMBONUL",
+          "variante": [
+            "TROMBONUL",
+            "TROMPETA",
+            "TUBA",
+            "CORNUL FRANCEZ"
+          ],
+          "hint_1": "Schimbă notele printr-un culisou care alunecă",
+          "hint_2": "Nu are pistoane ca trompeta",
+          "hint_3": "Sunet puternic, folosit des în fanfare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Trombone instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_020",
+          "raspuns": "CORNUL FRANCEZ",
+          "variante": [
+            "CORNUL FRANCEZ",
+            "TROMBONUL",
+            "TUBA",
+            "TROMPETA"
+          ],
+          "hint_1": "Tubul foarte lung, încolăcit în spirală",
+          "hint_2": "Mâna dreaptă se ține adesea în interiorul pâlniei",
+          "hint_3": "Sunet cald, folosit des în muzica de film",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "French horn instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_021",
+          "raspuns": "TUBA",
+          "variante": [
+            "TUBA",
+            "CORNUL FRANCEZ",
+            "TROMBONUL",
+            "FAGOTUL"
+          ],
+          "hint_1": "Cel mai mare și mai grav instrument de alamă",
+          "hint_2": "Se ține de obicei înfășurată în jurul corpului",
+          "hint_3": "Formează baza secțiunii de alămuri din orchestră",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tuba instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_022",
+          "raspuns": "TOBA MARE",
+          "variante": [
+            "TOBA MARE",
+            "TOBA MICA",
+            "SETUL DE TOBE",
+            "TIMPANUL"
+          ],
+          "hint_1": "Cea mai mare tobă, cu sunet grav și profund",
+          "hint_2": "Se lovește adesea cu un baros special",
+          "hint_3": "Marchează ritmul de bază în fanfare și orchestre",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Bass drum instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_023",
+          "raspuns": "TOBA MICA",
+          "variante": [
+            "TOBA MICA",
+            "TOBA MARE",
+            "SETUL DE TOBE",
+            "TAMBURINA"
+          ],
+          "hint_1": "Are corzi metalice întinse pe partea de jos",
+          "hint_2": "Sunet ascuțit, sec, caracteristic",
+          "hint_3": "Piesă centrală a unui set de tobe",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Snare drum instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_024",
+          "raspuns": "SETUL DE TOBE",
+          "variante": [
+            "SETUL DE TOBE",
+            "TOBA MARE",
+            "TOBA MICA",
+            "CHIMBALELE"
+          ],
+          "hint_1": "O combinație de tobe și talere cântate de o singură persoană",
+          "hint_2": "Central în muzica rock, pop și jazz",
+          "hint_3": "Include de obicei toba mare, toba mică și talerele",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Drum kit instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_025",
+          "raspuns": "CHIMBALELE",
+          "variante": [
+            "CHIMBALELE",
+            "TOBA MICA",
+            "GONGUL",
+            "SETUL DE TOBE"
+          ],
+          "hint_1": "Două discuri metalice lovite unul de altul",
+          "hint_2": "Produc un sunet metalic, strălucitor",
+          "hint_3": "Fac parte dintr-un set de tobe sau dintr-o orchestră",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Cymbals instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_026",
+          "raspuns": "XILOFONUL",
+          "variante": [
+            "XILOFONUL",
+            "MARIMBA",
+            "VIBRAFONUL",
+            "TAMBALUL"
+          ],
+          "hint_1": "Are bare de lemn lovite cu ciocănele",
+          "hint_2": "Fiecare bară produce o notă diferită",
+          "hint_3": "Sunet clar, ascuțit, plăcut copiilor",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Xylophone instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_027",
+          "raspuns": "MARIMBA",
+          "variante": [
+            "MARIMBA",
+            "XILOFONUL",
+            "VIBRAFONUL",
+            "TAMBALUL"
+          ],
+          "hint_1": "Similară xilofonului, dar cu sunet mai cald și mai grav",
+          "hint_2": "Barele sunt din lemn, cu rezonatoare dedesubt",
+          "hint_3": "Originară din Africa și America Centrală",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Marimba instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_028",
+          "raspuns": "VIBRAFONUL",
+          "variante": [
+            "VIBRAFONUL",
+            "XILOFONUL",
+            "MARIMBA",
+            "CHIMBALELE"
+          ],
+          "hint_1": "Are bare metalice, nu de lemn",
+          "hint_2": "Un motor electric îi dă efectul de vibrație",
+          "hint_3": "Foarte folosit în jazz",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Vibraphone instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_029",
+          "raspuns": "TAMBURINA",
+          "variante": [
+            "TAMBURINA",
+            "MARACASELE",
+            "CASTANIETELE",
+            "TOBA MICA"
+          ],
+          "hint_1": "Un cerc cu zurgălăi metalici pe margine",
+          "hint_2": "Se scutură sau se lovește cu palma",
+          "hint_3": "Adesea folosită pentru a marca ritmul în cântece populare",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Tambourine instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_030",
+          "raspuns": "MARACASELE",
+          "variante": [
+            "MARACASELE",
+            "TAMBURINA",
+            "CASTANIETELE",
+            "CONGAS"
+          ],
+          "hint_1": "Vin de obicei în pereche, câte una în fiecare mână",
+          "hint_2": "Umplute cu semințe sau bile mici care zornăie",
+          "hint_3": "Instrument tradițional din America Latină",
+          "dificultate": "usor",
+          "puncte_max": 200,
+          "imagine_cautare": "Maracas instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_031",
+          "raspuns": "CONGAS",
+          "variante": [
+            "CONGAS",
+            "BONGO",
+            "DJEMBE",
+            "TOBA MARE"
+          ],
+          "hint_1": "Tobe înalte, cilindrice, cântate cu palmele",
+          "hint_2": "Originare din Cuba",
+          "hint_3": "De obicei se cântă în pereche sau grup de trei",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Conga drum instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_032",
+          "raspuns": "BONGO",
+          "variante": [
+            "BONGO",
+            "CONGAS",
+            "DJEMBE",
+            "TAMBURINA"
+          ],
+          "hint_1": "Două tobe mici, unite între ele",
+          "hint_2": "Se cântă cu degetele și palmele, așezate între genunchi",
+          "hint_3": "Foarte folosite în muzica latino",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bongo drums instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_033",
+          "raspuns": "DJEMBE",
+          "variante": [
+            "DJEMBE",
+            "CONGAS",
+            "BONGO",
+            "TOBA MARE"
+          ],
+          "hint_1": "O tobă în formă de cupă, originară din Africa de Vest",
+          "hint_2": "Se cântă cu mâinile goale",
+          "hint_3": "Corpul e sculptat dintr-o singură bucată de lemn",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Djembe drum instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_034",
+          "raspuns": "ACORDEONUL",
+          "variante": [
+            "ACORDEONUL",
+            "ORGA",
+            "MUZICUTA",
+            "CIMPOIUL"
+          ],
+          "hint_1": "Are o burduf care se întinde și se strânge",
+          "hint_2": "Combină clape sau butoane cu foale de aer",
+          "hint_3": "Foarte folosit în muzica populară și de petrecere",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Accordion instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_035",
+          "raspuns": "ORGA",
+          "variante": [
+            "ORGA",
+            "ACORDEONUL",
+            "PIANUL",
+            "PIANINA"
+          ],
+          "hint_1": "Poate avea mii de țevi de diferite mărimi",
+          "hint_2": "Aerul e împins prin țevi pentru a produce sunetul",
+          "hint_3": "Instrument tradițional al bisericilor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Pipe organ instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_036",
+          "raspuns": "PIANINA",
+          "variante": [
+            "PIANINA",
+            "PIANUL",
+            "ORGA",
+            "SINTETIZATORUL"
+          ],
+          "hint_1": "Versiune verticală a pianului, ocupă mai puțin loc",
+          "hint_2": "Corzile sunt așezate vertical, nu orizontal",
+          "hint_3": "Foarte des întâlnită în casele oamenilor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Upright piano instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_037",
+          "raspuns": "SINTETIZATORUL",
+          "variante": [
+            "SINTETIZATORUL",
+            "PIANINA",
+            "ORGA",
+            "PIANUL"
+          ],
+          "hint_1": "Generează sunete electronic, nu mecanic",
+          "hint_2": "Poate imita alte instrumente sau crea sunete noi",
+          "hint_3": "Esențial în muzica electronică modernă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Synthesizer keyboard instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_038",
+          "raspuns": "CIMPOIUL",
+          "variante": [
+            "CIMPOIUL",
+            "ACORDEONUL",
+            "DIDGERIDOO",
+            "CORNUL ALPIN"
+          ],
+          "hint_1": "Aer stocat într-un burduf din piele, apoi împins prin țevi",
+          "hint_2": "Puternic asociat cu tradiția scoțiană",
+          "hint_3": "Sunetul e continuu, fără pauze pentru respirat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bagpipes instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_039",
+          "raspuns": "TAMBALUL",
+          "variante": [
+            "TAMBALUL",
+            "XILOFONUL",
+            "MARIMBA",
+            "HARPA"
+          ],
+          "hint_1": "Corzi întinse pe o cutie de rezonanță, lovite cu ciocănele",
+          "hint_2": "Foarte prezent în muzica populară din România și Ungaria",
+          "hint_3": "Se cântă așezat, cu instrumentul în față",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cimbalom instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_040",
+          "raspuns": "SITARUL",
+          "variante": [
+            "SITARUL",
+            "MANDOLINA",
+            "BANJO",
+            "COBZA"
+          ],
+          "hint_1": "Instrument cu coarde, originar din India",
+          "hint_2": "Are un gât lung și un corp mare, rotunjit",
+          "hint_3": "Sunet vibrant, cu corzi de rezonanță suplimentare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Sitar instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_041",
+          "raspuns": "DIDGERIDOO",
+          "variante": [
+            "DIDGERIDOO",
+            "CORNUL ALPIN",
+            "CIMPOIUL",
+            "TUBA"
+          ],
+          "hint_1": "Un tub lung de lemn, din tradiția aborigenă australiană",
+          "hint_2": "Se cântă cu tehnica respirației circulare",
+          "hint_3": "Produce un sunet continuu, vibrant, grav",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Didgeridoo instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_042",
+          "raspuns": "KALIMBA",
+          "variante": [
+            "KALIMBA",
+            "XILOFONUL",
+            "MARIMBA",
+            "TAMBALUL"
+          ],
+          "hint_1": "Lamele metalice ciupite cu degetele mari",
+          "hint_2": "Numit și 'pianul degetelor mari'",
+          "hint_3": "Originar din Africa",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Kalimba instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_043",
+          "raspuns": "CASTANIETELE",
+          "variante": [
+            "CASTANIETELE",
+            "MARACASELE",
+            "TAMBURINA",
+            "CHIMBALELE"
+          ],
+          "hint_1": "Două scoici mici, lovite una de alta",
+          "hint_2": "Strâns legate de dansul flamenco",
+          "hint_3": "Se țin în palmă și se lovesc cu degetele",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Castanets instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_044",
+          "raspuns": "TRIUNGHIUL",
+          "variante": [
+            "TRIUNGHIUL",
+            "CHIMBALELE",
+            "GONGUL",
+            "TAMBURINA"
+          ],
+          "hint_1": "O bară metalică îndoită în formă de triunghi",
+          "hint_2": "Se lovește cu o baghetă metalică subțire",
+          "hint_3": "Unul dintre cele mai simple instrumente de percuție",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Triangle musical instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_045",
+          "raspuns": "MUZICUTA",
+          "variante": [
+            "MUZICUTA",
+            "ACORDEONUL",
+            "CIMPOIUL",
+            "NAIUL"
+          ],
+          "hint_1": "Mică, se ține în palmă și se suflă în ea",
+          "hint_2": "Foarte folosită în muzica blues și country",
+          "hint_3": "Are camere mici cu lamele metalice în interior",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Harmonica instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_046",
+          "raspuns": "CORNUL ALPIN",
+          "variante": [
+            "CORNUL ALPIN",
+            "DIDGERIDOO",
+            "TUBA",
+            "CORNUL FRANCEZ"
+          ],
+          "hint_1": "Foarte lung, din lemn, fără găuri sau clape",
+          "hint_2": "Tradițional în zonele muntoase din Elveția",
+          "hint_3": "Notele se schimbă doar prin poziția buzelor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Alphorn instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_047",
+          "raspuns": "BALALAICA",
+          "variante": [
+            "BALALAICA",
+            "MANDOLINA",
+            "SITARUL",
+            "COBZA"
+          ],
+          "hint_1": "Are corp triunghiular și de obicei trei corzi",
+          "hint_2": "Instrument tradițional rusesc",
+          "hint_3": "Vine în mai multe mărimi, de la mic la contrabas",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Balalaika instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_048",
+          "raspuns": "FLUIERUL",
+          "variante": [
+            "FLUIERUL",
+            "NAIUL",
+            "FLAUTUL TRAVERSIER",
+            "CORNUL ALPIN"
+          ],
+          "hint_1": "Un tub simplu, cu găuri, cântat din tradiția populară",
+          "hint_2": "Asociat cu ciobanii din zonele de munte",
+          "hint_3": "Unul dintre cele mai vechi instrumente de suflat",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Tin whistle instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_049",
+          "raspuns": "NAIUL",
+          "variante": [
+            "NAIUL",
+            "FLUIERUL",
+            "FLAUTUL TRAVERSIER",
+            "CORNUL ALPIN"
+          ],
+          "hint_1": "Format din mai multe țevi de lungimi diferite, legate între ele",
+          "hint_2": "Fiecare țeavă produce o notă diferită",
+          "hint_3": "Instrument tradițional în muzica populară românească",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Pan flute instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_050",
+          "raspuns": "GONGUL",
+          "variante": [
+            "GONGUL",
+            "CHIMBALELE",
+            "TRIUNGHIUL",
+            "TOBA MARE"
+          ],
+          "hint_1": "Un disc metalic mare, suspendat, lovit cu un ciocan moale",
+          "hint_2": "Sunetul vibrează și se stinge lent",
+          "hint_3": "Originar din Asia, folosit și în ceremonii",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Gong instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_051",
+          "raspuns": "COBZA",
+          "variante": [
+            "COBZA",
+            "MANDOLINA",
+            "BALALAICA",
+            "SITARUL"
+          ],
+          "hint_1": "Instrument tradițional românesc cu coarde, fără taste",
+          "hint_2": "Corp în formă de pară, ca o lăută",
+          "hint_3": "Folosit des în muzica lăutărească",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Cobza instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_052",
+          "raspuns": "CHARANGO",
+          "variante": [
+            "CHARANGO",
+            "UKULELE",
+            "MANDOLINA",
+            "BANJO"
+          ],
+          "hint_1": "Un instrument mic cu corzi, din America de Sud",
+          "hint_2": "Corpul era tradițional făcut din carapace de armadillo",
+          "hint_3": "Sunet ascuțit, folosit în muzica andină",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Charango instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_053",
+          "raspuns": "BANDONEON",
+          "variante": [
+            "BANDONEON",
+            "ACORDEONUL",
+            "ORGA",
+            "MUZICUTA"
+          ],
+          "hint_1": "O variantă de acordeon, esențială în muzica de tango",
+          "hint_2": "Se ține în poală și se întinde ca un burduf",
+          "hint_3": "Strâns asociat cu tango-ul argentinian",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bandoneon instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_054",
+          "raspuns": "ERHU",
+          "variante": [
+            "ERHU",
+            "VIOARA",
+            "SITARUL",
+            "COBZA"
+          ],
+          "hint_1": "Are doar două corzi, cântate cu un arcuș",
+          "hint_2": "Instrument tradițional chinezesc",
+          "hint_3": "Sunet asemănător vocii umane, foarte expresiv",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Erhu Chinese instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_055",
+          "raspuns": "KOTO",
+          "variante": [
+            "KOTO",
+            "HARPA",
+            "SITARUL",
+            "TAMBALUL"
+          ],
+          "hint_1": "Un instrument lung, cu corzi întinse peste piese mobile",
+          "hint_2": "Instrument tradițional japonez",
+          "hint_3": "Se cântă așezat pe podea, ciupind corzile",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Koto Japanese instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_056",
+          "raspuns": "VIELEA CU ROATA",
+          "variante": [
+            "VIELEA CU ROATA",
+            "CIMPOIUL",
+            "ACORDEONUL",
+            "VIOARA"
+          ],
+          "hint_1": "O roată învârtită cu o manivelă freacă niște corzi",
+          "hint_2": "Instrument medieval european, cu sunet continuu",
+          "hint_3": "Are și taste pentru schimbarea notelor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Hurdy-gurdy instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_057",
+          "raspuns": "GOARNA",
+          "variante": [
+            "GOARNA",
+            "TROMPETA",
+            "CORNUL FRANCEZ",
+            "CORNUL ALPIN"
+          ],
+          "hint_1": "Un instrument de alamă simplu, fără pistoane sau clape",
+          "hint_2": "Folosit tradițional în armată, pentru semnale",
+          "hint_3": "Notele se schimbă doar prin poziția buzelor",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Bugle instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_058",
+          "raspuns": "PICCOLO",
+          "variante": [
+            "PICCOLO",
+            "FLAUTUL TRAVERSIER",
+            "CLARINETUL",
+            "NAIUL"
+          ],
+          "hint_1": "Cel mai mic și mai acut instrument din familia flautelor",
+          "hint_2": "Jumătate din mărimea unui flaut obișnuit",
+          "hint_3": "Foarte folosit în fanfare militare",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Piccolo flute instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_059",
+          "raspuns": "CORNUL ENGLEZESC",
+          "variante": [
+            "CORNUL ENGLEZESC",
+            "OBOIUL",
+            "FAGOTUL",
+            "CLARINETUL"
+          ],
+          "hint_1": "Mai mare decât oboiul, sunet mai grav și mai cald",
+          "hint_2": "Are o formă de pară în capătul pâlniei",
+          "hint_3": "Face parte din familia instrumentelor cu ancie dublă",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "English horn instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_060",
+          "raspuns": "SOUSAFONUL",
+          "variante": [
+            "SOUSAFONUL",
+            "TUBA",
+            "CORNUL FRANCEZ",
+            "TROMBONUL"
+          ],
+          "hint_1": "O tubă mare, curbată să se poarte în jurul corpului",
+          "hint_2": "Folosită mai ales în fanfare care merg în marș",
+          "hint_3": "Pâlnia uriașă e orientată înainte, deasupra capului",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Sousaphone instrument",
+          "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_061",
+          "raspuns": "TOBA DE OTEL",
+          "variante": [
+            "TOBA DE OTEL",
+            "CONGAS",
+            "GONGUL",
+            "XILOFONUL"
+          ],
+          "hint_1": "Făcută dintr-un butoi metalic gol, cu zone marcate ce dau note diferite",
+          "hint_2": "Originară din Trinidad și Tobago",
+          "hint_3": "Sunet metalic, vesel, asociat cu muzica din Caraibe",
+          "dificultate": "mediu",
+          "puncte_max": 200,
+          "imagine_cautare": "Steel drum instrument",
+          "imagine_sursa": "wikimedia"
+        }
+      ]
+    }
+  }
+}

@@ -15,7 +15,12 @@ class MultiplayerUnavailableException implements Exception {
   String toString() => message;
 }
 
+/// Capacitatea maximă a unei camere private (Create Room / Join with Code).
 const int matchPlayerCount = 5;
+
+/// Câți jucători reali formează un meci prin matchmaking public (Join
+/// Online) — 1 vs 1, fără completare cu boți: se așteaptă un adversar real.
+const int matchmakingOpponentCount = 2;
 const _codeChars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // fara 0/O/1/I - usor de dictat
 
 /// Toată logica de rețea (Firestore + Auth anonim) pentru multiplayer —
@@ -62,7 +67,7 @@ class MultiplayerService {
 
   // ─── Camera privată ─────────────────────────────────────────────────────
 
-  Future<MatchInfo> createRoom({required String displayName}) async {
+  Future<MatchInfo> createRoom({required String displayName, String? photoUrl}) async {
     await ensureInitialized();
     final me = currentPlayerId;
     final code = _randomCode();
@@ -70,14 +75,14 @@ class MultiplayerService {
     final info = MatchInfo(id: ref.id, mode: MatchMode.private, code: code, status: MatchStatus.lobby, hostId: me);
     await ref.set(info.toMap());
     await ref.collection('players').doc(me).set(
-          MatchPlayer(id: me, name: displayName, avatarSeed: me, score: 0, isHost: true).toMap(),
+          MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0, isHost: true).toMap(),
         );
     return info;
   }
 
   /// Caută o cameră după cod și te alătură ca jucător — aruncă dacă nu
   /// există, dacă meciul a pornit deja, sau dacă e plină.
-  Future<MatchInfo> joinRoomByCode({required String code, required String displayName}) async {
+  Future<MatchInfo> joinRoomByCode({required String code, required String displayName, String? photoUrl}) async {
     await ensureInitialized();
     final query = await _db
         .collection('matches')
@@ -95,7 +100,7 @@ class MultiplayerService {
     }
     final me = currentPlayerId;
     await doc.reference.collection('players').doc(me).set(
-          MatchPlayer(id: me, name: displayName, avatarSeed: me, score: 0).toMap(),
+          MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0).toMap(),
         );
     return MatchInfo.fromDoc(doc);
   }
@@ -122,7 +127,11 @@ class MultiplayerService {
 
   /// Părăsește meciul — dacă hostul pleacă în timp ce meciul e încă în
   /// lobby, ștergem camera întreagă (players + chat) ca să nu rămână
-  /// listeners orfani pentru ceilalți; altfel doar propriul jucător e scos.
+  /// listeners orfani pentru ceilalți; altfel propriul jucător e scos, iar
+  /// dacă era ultimul rămas, ștergem și noi camera întreagă (players + chat
+  /// + documentul meciului) — altfel meciurile terminate s-ar acumula la
+  /// nesfârșit în Firestore, fără niciun cleanup automat (nu avem Cloud
+  /// Functions/TTL configurate).
   Future<void> leaveMatch(String matchId) async {
     final me = currentPlayerId;
     final matchRef = _db.collection('matches').doc(matchId);
@@ -130,20 +139,28 @@ class MultiplayerService {
     if (!matchDoc.exists) return;
     final info = MatchInfo.fromDoc(matchDoc);
     if (info.hostId == me && info.status == MatchStatus.lobby) {
-      final players = await matchRef.collection('players').get();
-      final chat = await matchRef.collection('chat').get();
-      final batch = _db.batch();
-      for (final d in players.docs) {
-        batch.delete(d.reference);
-      }
-      for (final d in chat.docs) {
-        batch.delete(d.reference);
-      }
-      batch.delete(matchRef);
-      await batch.commit();
-    } else {
-      await matchRef.collection('players').doc(me).delete();
+      await _deleteMatch(matchRef);
+      return;
     }
+    await matchRef.collection('players').doc(me).delete();
+    final remaining = await matchRef.collection('players').limit(1).get();
+    if (remaining.docs.isEmpty) {
+      await _deleteMatch(matchRef);
+    }
+  }
+
+  Future<void> _deleteMatch(DocumentReference<Map<String, dynamic>> matchRef) async {
+    final players = await matchRef.collection('players').get();
+    final chat = await matchRef.collection('chat').get();
+    final batch = _db.batch();
+    for (final d in players.docs) {
+      batch.delete(d.reference);
+    }
+    for (final d in chat.docs) {
+      batch.delete(d.reference);
+    }
+    batch.delete(matchRef);
+    await batch.commit();
   }
 
   // ─── Meci (comun ambelor fluxuri) ───────────────────────────────────────
@@ -162,12 +179,13 @@ class MultiplayerService {
 
   // ─── Matchmaking public ─────────────────────────────────────────────────
 
-  Future<void> joinMatchmakingQueue({required String displayName}) async {
+  Future<void> joinMatchmakingQueue({required String displayName, String? photoUrl}) async {
     await ensureInitialized();
     final me = currentPlayerId;
     await _db.collection('matchmaking_queue').doc(me).set({
       'name': displayName,
       'avatarSeed': me,
+      'photoUrl': photoUrl,
       'matchId': null,
       'joinedAt': FieldValue.serverTimestamp(),
     });
@@ -187,16 +205,15 @@ class MultiplayerService {
 
   /// Doar clientul cel mai "vechi" din coadă (primul intrat) încearcă să
   /// formeze un meci — reduce coliziunile, deși tranzacția de mai jos e
-  /// oricum sigură chiar dacă doi clienți ar încerca simultan.
-  ///
-  /// [allowBotFill] trebuie dat `true` doar după ce a trecut timeout-ul de
-  /// așteptare (vezi matchmaking_screen.dart) — până atunci se așteaptă
-  /// jucători reali.
-  Future<String?> attemptFormMatch({required bool allowBotFill}) async {
+  /// oricum sigură chiar dacă doi clienți ar încerca simultan. Formează
+  /// meciul DOAR când există [matchmakingOpponentCount] jucători reali în
+  /// coadă — fără completare cu boți, se așteaptă cât e nevoie de un
+  /// adversar real.
+  Future<String?> attemptFormMatch() async {
     final me = currentPlayerId;
-    final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(matchPlayerCount).get();
+    final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(matchmakingOpponentCount).get();
     if (queueSnap.docs.isEmpty || queueSnap.docs.first.id != me) return null;
-    if (queueSnap.docs.length < matchPlayerCount && !allowBotFill) return null;
+    if (queueSnap.docs.length < matchmakingOpponentCount) return null;
 
     final candidates = queueSnap.docs;
     final matchRef = _db.collection('matches').doc();
@@ -223,24 +240,12 @@ class MultiplayerService {
               id: c.id,
               name: data['name'] as String? ?? '?',
               avatarSeed: data['avatarSeed'] as String? ?? c.id,
+              photoUrl: data['photoUrl'] as String?,
               score: 0,
               isHost: c.id == me,
             ).toMap(),
           );
           tx.update(c.reference, {'matchId': matchRef.id});
-        }
-
-        final missing = matchPlayerCount - candidates.length;
-        if (missing > 0) {
-          final rnd = Random();
-          final pool = List<String>.from(botNamePool)..shuffle(rnd);
-          for (var i = 0; i < missing; i++) {
-            final botId = 'bot_${matchRef.id}_$i';
-            tx.set(
-              matchRef.collection('players').doc(botId),
-              MatchPlayer(id: botId, name: pool[i % pool.length], avatarSeed: botId, score: 0, isBot: true).toMap(),
-            );
-          }
         }
       });
       return matchRef.id;

@@ -24,6 +24,10 @@ service cloud.firestore {
       match /chat/{messageId} {
         allow read: if request.auth != null;
         allow create: if request.auth != null && request.resource.data.senderId == request.auth.uid;
+        // necesar la curatarea meciului cand ultimul jucator pleaca (vezi
+        // MultiplayerService._deleteMatch) - fara asta, stergerea esua cu
+        // permission-denied si userul ramanea blocat, fara sa poata iesi.
+        allow delete: if request.auth != null;
       }
     }
 

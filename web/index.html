@@ -20,6 +20,13 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="description" content="A new Flutter project.">
 
+  <!-- Esential pentru randare corecta pe mobil - fara acest tag, browserul
+       poate alege o latime "virtuala" implicita (de obicei ~980px) si scala
+       diferit in functie de motor/versiune, ceea ce facea ca acelasi site sa
+       arate la dimensiuni diferite pe telefoane diferite (chiar acelasi
+       model). viewport-fit=cover ajuta si la notch-ul de pe iPhone. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -58,8 +65,13 @@
       position: relative;
       height: 100%;
       width: 100%;
+      /* 100vh ca fallback pentru browsere vechi; 100dvh (dynamic viewport
+         height) e mai corect pe mobil, unde bara de adresa a browserului
+         apare/dispare si schimba inaltimea reala vizibila. */
       max-height: 100vh;
+      max-height: 100dvh;
       max-width: min(100vw, calc(100vh * 9 / 19.5));
+      max-width: min(100vw, calc(100dvh * 9 / 19.5));
       aspect-ratio: 9 / 19.5;
       overflow: hidden;
       box-shadow: 0 0 60px rgba(0, 0, 0, 0.55);

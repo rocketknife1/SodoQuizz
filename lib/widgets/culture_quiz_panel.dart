@@ -205,7 +205,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const _MiniPlanet(size: 34),
+        const Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
         const SizedBox(height: 8),
         const Text(
           'Cultură Generală',
@@ -397,69 +397,4 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     );
   }
 
-}
-
-/// Mică "planetă" sferică (gradient radial + inel subțire înclinat), în
-/// nuanțele galbenului de monede — înlocuiește vechea iconiță plată
-/// [Icons.public_rounded], care nu sugera un glob văzut din spațiu.
-class _MiniPlanet extends StatelessWidget {
-  final double size;
-  const _MiniPlanet({required this.size});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size * 1.5,
-      height: size * 1.5,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Transform.rotate(
-            angle: -0.32,
-            child: CustomPaint(
-              size: Size(size * 1.5, size * 1.5),
-              painter: _MiniRingPainter(),
-            ),
-          ),
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                center: const Alignment(-0.35, -0.35),
-                radius: 0.95,
-                colors: [
-                  Color.lerp(AppColors.coin, Colors.white, 0.35)!,
-                  AppColors.coin,
-                  const Color(0xFFB8781A),
-                ],
-                stops: const [0.0, 0.55, 1.0],
-              ),
-              boxShadow: [BoxShadow(color: AppColors.coin.withAlpha(140), blurRadius: 12, spreadRadius: 1)],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniRingPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..color = AppColors.coin.withAlpha(160);
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    canvas.scale(1.0, 0.38);
-    canvas.drawCircle(Offset.zero, size.width / 2 - 1, paint);
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

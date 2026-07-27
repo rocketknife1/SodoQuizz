@@ -84,11 +84,24 @@ class BlurImage extends StatelessWidget {
     );
   }
 
+  /// Arătat când imaginea lipsește (categorii noi, unde nu toate întrebările
+  /// au încă o poză reală atașată) — un placeholder clar, nu doar o iconiță
+  /// generică fără context.
   Widget _fallback() {
     return Container(
       color: color.withAlpha(80),
       alignment: Alignment.center,
-      child: Icon(Icons.image_rounded, color: color, size: 64),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.image_rounded, color: color, size: 56),
+          const SizedBox(height: 8),
+          Text(
+            'Va urma',
+            style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+          ),
+        ],
+      ),
     );
   }
 }
