@@ -62,6 +62,18 @@ class MascotSync {
     _greetTimer ??= _scheduleGreet();
   }
 
+  /// Doar pentru teste widget: MascotSync e un dispecer global, pornit o
+  /// singură dată și menit să ruleze la nesfârșit (fiecare timer se
+  /// reprogramează singur) - `flutter test` marchează orice timer încă
+  /// pending la finalul testului ca eroare, așa că testele care montează o
+  /// mascotă trebuie să oprească explicit dispecerul înainte să se termine.
+  static void resetForTest() {
+    _clockTimer?.cancel();
+    _clockTimer = null;
+    _greetTimer?.cancel();
+    _greetTimer = null;
+  }
+
   static Timer _scheduleClock() {
     return Timer(Duration(seconds: 40 + _random.nextInt(35)), () {
       _controller.add(const MascotEvent(MascotEventType.checkClock));

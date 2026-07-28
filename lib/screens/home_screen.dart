@@ -6,7 +6,6 @@ import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
-import '../widgets/intro_tutorial_dialog.dart';
 import '../widgets/level_header.dart';
 import '../widgets/mascots/discord_mascot.dart';
 import '../widgets/mascots/paperclip_mascot.dart';
@@ -41,9 +40,12 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _dataFuture = _loadData();
     _checkStreakMilestones();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) IntroTutorialDialog.maybeShow(context);
-    });
+    // Dezactivat temporar - popup-ul cerea prea multe apasari (o pagina pe
+    // rand) la prima intrare. Codul (IntroTutorialDialog) ramane neatins,
+    // doar apelul e oprit.
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (mounted) IntroTutorialDialog.maybeShow(context);
+    // });
   }
 
   Future<_HomeData> _loadData() async {
