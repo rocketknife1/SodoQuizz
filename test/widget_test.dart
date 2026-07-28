@@ -14,7 +14,6 @@ void main() {
   testWidgets('Guess It app loads home screen', (WidgetTester tester) async {
     await tester.pumpWidget(const GuessItApp());
     await tester.pump(const Duration(milliseconds: 1500));
-    await tester.pumpAndSettle();
 
     expect(find.text('GUESS IT!'), findsAtLeastNWidgets(1));
     expect(find.text('PLAY'), findsOneWidget);

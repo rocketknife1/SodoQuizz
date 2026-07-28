@@ -266,6 +266,7 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
                       angle: sway + gestureAngle + extraSpin,
                       child: Transform(
                         alignment: Alignment.center,
+                        // ignore: deprecated_member_use
                         transform: Matrix4.identity()..scale(gestureScaleX, gestureScaleY),
                         child: Transform.scale(
                           scale: 1 + exciteScale,

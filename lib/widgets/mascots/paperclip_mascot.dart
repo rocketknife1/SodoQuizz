@@ -269,6 +269,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
                     angle: wobble + gestureAngle,
                     child: Transform(
                       alignment: Alignment.center,
+                      // ignore: deprecated_member_use
                       transform: Matrix4.identity()..scale(1.0, gestureScaleY),
                       child: Transform.scale(
                         scale: 1 + exciteScale,

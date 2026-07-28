@@ -329,6 +329,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
                     angle: tilt + gestureAngle,
                     child: Transform(
                       alignment: Alignment.center,
+                      // ignore: deprecated_member_use
                       transform: Matrix4.identity()..scale(gestureScaleX, gestureScaleY),
                       child: Transform.scale(
                         scale: 1 + exciteScale,
