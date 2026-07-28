@@ -103,12 +103,16 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
               children: [
                 // aură pulsantă — semnalează vizual că planeta e "activă",
                 // apăsabilă (nu doar decor), la fel ca indicatorul de pe inel.
-                Opacity(
-                  opacity: 0.18 + auraT * 0.22,
-                  child: Container(
-                    width: widget.size * 1.15 + auraT * 26,
-                    height: widget.size * 1.15 + auraT * 26,
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFFFFC542)),
+                // Alfa amestecată direct în culoare (nu Opacity() peste
+                // Container) — animația asta rulează continuu cât ecranul e
+                // deschis, deci orice strat offscreen suplimentar per-frame
+                // se simte constant, nu doar tranzitoriu.
+                Container(
+                  width: widget.size * 1.15 + auraT * 26,
+                  height: widget.size * 1.15 + auraT * 26,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: const Color(0xFFFFC542).withAlpha(((0.18 + auraT * 0.22) * 255).round()),
                   ),
                 ),
                 // holograme "din spate" (adâncime negativă pe elipsă) —
@@ -195,10 +199,7 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
     final widget = Positioned(
       left: center + pos.dx - 13 * scale,
       top: center + pos.dy - 13 * scale,
-      child: Opacity(
-        opacity: opacity,
-        child: Transform.scale(scale: scale, child: _HologramDot(mode: mode)),
-      ),
+      child: Transform.scale(scale: scale, child: _HologramDot(mode: mode, opacity: opacity)),
     );
     return (widget: widget, isBack: depth < 0);
   }
@@ -221,10 +222,7 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
     return Positioned(
       left: center + pos.dx - 13 * scale,
       top: center + pos.dy - 13 * scale,
-      child: Opacity(
-        opacity: opacity,
-        child: Transform.scale(scale: scale, child: _HologramDot(mode: mode)),
-      ),
+      child: Transform.scale(scale: scale, child: _HologramDot(mode: mode, opacity: opacity)),
     );
   }
 }
@@ -233,7 +231,13 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
 /// ca să pară o mică sferă/proiecție, nu un disc 2D.
 class _HologramDot extends StatelessWidget {
   final GameMode mode;
-  const _HologramDot({required this.mode});
+  /// Amestecată direct în alfa fiecărei culori din desen — nu un Opacity()
+  /// extern — pentru că holograma e recreată la fiecare cadru al buclei
+  /// continue de orbitare/derivă (vezi [_SpinningPlanetState]).
+  final double opacity;
+  const _HologramDot({required this.mode, this.opacity = 1});
+
+  int _a(int base) => (base * opacity).round();
 
   @override
   Widget build(BuildContext context) {
@@ -244,13 +248,13 @@ class _HologramDot extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         gradient: RadialGradient(
-          colors: [mode.accentColor.withAlpha(210), mode.accentColor.withAlpha(50)],
+          colors: [mode.accentColor.withAlpha(_a(210)), mode.accentColor.withAlpha(_a(50))],
           center: const Alignment(-0.3, -0.3),
         ),
-        border: Border.all(color: mode.accentColor.withAlpha(200)),
-        boxShadow: [BoxShadow(color: mode.accentColor.withAlpha(140), blurRadius: 10)],
+        border: Border.all(color: mode.accentColor.withAlpha(_a(200))),
+        boxShadow: [BoxShadow(color: mode.accentColor.withAlpha(_a(140)), blurRadius: 10)],
       ),
-      child: Icon(mode.icon, color: Colors.white, size: 14),
+      child: Icon(mode.icon, color: Colors.white.withAlpha(_a(255)), size: 14),
     );
   }
 }

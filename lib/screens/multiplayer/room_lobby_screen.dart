@@ -5,6 +5,7 @@ import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/network_scan_animation.dart';
+import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, chat live, și
@@ -59,11 +60,16 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
   void _maybeNavigateToMatch(MatchInfo info) {
     if (_navigated || info.status != MatchStatus.playing) return;
     _navigated = true;
+    final gameMode = info.gameMode;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => MultiplayerMatchScreen(matchId: widget.matchId)),
+        MaterialPageRoute(
+          builder: (_) => gameMode == MatchGameMode.higherLower
+              ? MultiplayerHigherLowerScreen(matchId: widget.matchId)
+              : MultiplayerMatchScreen(matchId: widget.matchId),
+        ),
       );
     });
   }
@@ -115,6 +121,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                           ),
                         ),
                         _buildCodeBanner(info?.code),
+                        if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
                         const SizedBox(height: 8),
                         _buildPlayers(),
                         Expanded(child: _buildChat()),
@@ -150,6 +157,26 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
             code ?? '-----',
             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 4),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGameModeBanner() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withAlpha(35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.danger.withAlpha(140)),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text('🍞', style: TextStyle(fontSize: 16)),
+          SizedBox(width: 8),
+          Text('Mod: Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
     );

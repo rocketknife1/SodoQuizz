@@ -1687,6 +1687,21 @@
           "puncte_max": 200,
           "imagine_cautare": "epinephrine auto-injector EpiPen",
           "imagine_sursa": "wikipedia"
+        },
+        {
+          "id": "med_101",
+          "raspuns": "APARAT DE ANESTEZIE",
+          "variante": [
+            "APARAT DE ANESTEZIE",
+            "VENTILATOR MEDICAL",
+            "DEFIBRILATOR",
+            "MONITOR FUNCTII VITALE"
+          ],
+          "hint_1": "Este folosit de medicul anestezist în sala de operație",
+          "hint_2": "Administrează un amestec controlat de gaze pentru a adormi pacientul",
+          "hint_3": "Este conectat la pacient printr-o mască sau un tub de intubație",
+          "dificultate": "mediu",
+          "puncte_max": 200
         }
       ]
     }

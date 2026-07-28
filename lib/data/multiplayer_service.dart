@@ -23,6 +23,23 @@ const int matchPlayerCount = 5;
 const int matchmakingOpponentCount = 2;
 const _codeChars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // fara 0/O/1/I - usor de dictat
 
+/// Câte răspunsuri greșite duc la eliminare în [MatchGameMode.higherLower].
+const int higherLowerMaxBreads = 5;
+
+/// Cât timp are fiecare rundă înainte ca cei ce n-au votat încă să fie
+/// scorați automat ca greșit — aceeași durată ca la mini-jocul solo
+/// (higher_lower_screen.dart), pentru consecvență.
+const int higherLowerRoundSeconds = 15;
+
+/// Cât timp rămâne vizibil răspunsul corect + câștigătorii rundei înainte
+/// ca runda următoare să înceapă automat.
+const int higherLowerRevealSeconds = 3;
+
+/// Puncte acordate per rundă câștigată — hrănește direct [MatchPlayer.score],
+/// deci recompensele economice din MultiplayerResultsScreen (deja bazate pe
+/// scor) funcționează neschimbate și pentru acest mod.
+const int higherLowerPointsPerWin = 10;
+
 /// Toată logica de rețea (Firestore + Auth anonim) pentru multiplayer —
 /// separată de UI, conform planului. O singură colecție `matches` deservește
 /// atât camerele private (cu `code`) cât și meciurile de matchmaking public
@@ -67,7 +84,11 @@ class MultiplayerService {
 
   // ─── Camera privată ─────────────────────────────────────────────────────
 
-  Future<MatchInfo> createRoom({required String displayName, String? photoUrl}) async {
+  Future<MatchInfo> createRoom({
+    required String displayName,
+    String? photoUrl,
+    MatchGameMode gameMode = MatchGameMode.classic,
+  }) async {
     await ensureInitialized();
     final me = currentPlayerId;
     final code = _randomCode();
@@ -80,6 +101,7 @@ class MultiplayerService {
       hostId: me,
       hostName: displayName,
       hostPhotoUrl: photoUrl,
+      gameMode: gameMode,
     );
     await ref.set(info.toMap());
     await ref.collection('players').doc(me).set(
@@ -168,7 +190,113 @@ class MultiplayerService {
     });
   }
 
-  Future<void> startMatch(String matchId) => _db.collection('matches').doc(matchId).update({'status': MatchStatus.playing.name});
+  /// Pornește meciul — resetează și câmpurile de rundă (necesar în
+  /// [MatchGameMode.higherLower]: cronometrul rundei trebuie să înceapă
+  /// chiar acum, nu la crearea camerei, care poate fi cu mult timp în urmă
+  /// dacă hostul a așteptat în lobby). Resetul e inofensiv pentru
+  /// [MatchGameMode.classic], care nu citește aceste câmpuri.
+  Future<void> startMatch(String matchId) => _db.collection('matches').doc(matchId).update({
+        'status': MatchStatus.playing.name,
+        'roundIndex': 0,
+        'roundPhase': HigherLowerRoundPhase.answering.name,
+        'roundAnswers': <String, String>{},
+        'roundWinnerIds': <String>[],
+        'roundStartedAt': FieldValue.serverTimestamp(),
+      });
+
+  // ─── Higher & Lower multiplayer (rundă sincronizată) ───────────────────
+
+  Future<void> submitHigherLowerGuess({required String matchId, required String guess}) {
+    final me = currentPlayerId;
+    return _db.collection('matches').doc(matchId).update({'roundAnswers.$me': guess});
+  }
+
+  /// Calculează rezultatul rundei curente — poate fi apelată de ORICE
+  /// client (nu doar host): tranzacția verifică dacă runda a fost deja
+  /// rezolvată de altcineva între timp și, dacă da, nu face nimic. Același
+  /// principiu ca [attemptFormMatch] mai jos — evită un singur punct de
+  /// eșec (dacă hostul ar fi singurul care rezolvă runde și ar pleca din
+  /// meci, jocul ar rămâne blocat). Jucătorii care n-au apucat să voteze
+  /// (AFK/deconectați) sunt scorați automat ca greșit, ceea ce dublează și
+  /// drept limită de timp a rundei — vezi [higherLowerRoundSeconds].
+  ///
+  /// [correctGuess] e `null` la EGALITATE de popularitate — dataset-ul
+  /// (higher_lower_data.dart) reutilizează intenționat aceleași valori între
+  /// categorii, deci nu e un caz rar. La fel ca la modul solo
+  /// (higher_lower_screen.dart._choose), egalitatea nu penalizează pe
+  /// nimeni, indiferent ce a votat fiecare.
+  Future<void> resolveHigherLowerRound({
+    required String matchId,
+    required int roundIndex,
+    required String? correctGuess,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != HigherLowerRoundPhase.answering.name) {
+          return; // deja rezolvată de alt client - nimic de facut
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
+        final winnerIds = <String>[];
+        var stillActive = 0;
+        for (final doc in playerDocs) {
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          if (pData['eliminated'] == true) continue; // deja eliminat - spectator, nu joacă runda
+          final correct = correctGuess == null || answers[doc.id] == correctGuess;
+          if (correct) {
+            winnerIds.add(doc.id);
+            tx.update(doc.reference, {'score': (pData['score'] as int? ?? 0) + higherLowerPointsPerWin});
+            stillActive++;
+          } else {
+            final breads = (pData['breads'] as int? ?? 0) + 1;
+            final eliminated = breads >= higherLowerMaxBreads;
+            tx.update(doc.reference, {'breads': breads, 'eliminated': eliminated});
+            if (!eliminated) stillActive++;
+          }
+        }
+        tx.update(matchRef, {
+          'roundPhase': HigherLowerRoundPhase.revealed.name,
+          'roundWinnerIds': winnerIds,
+          if (stillActive <= 1) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveHigherLowerRound a esuat: $e');
+    }
+  }
+
+  /// Trece la runda următoare — apelabilă de orice client la fel ca
+  /// [resolveHigherLowerRound], cu aceeași gardă anti-cursă.
+  Future<void> advanceHigherLowerRound({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final doc = await tx.get(matchRef);
+        final data = doc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != HigherLowerRoundPhase.revealed.name) {
+          return;
+        }
+        tx.update(matchRef, {
+          'roundIndex': roundIndex + 1,
+          'roundPhase': HigherLowerRoundPhase.answering.name,
+          'roundAnswers': <String, String>{},
+          'roundWinnerIds': <String>[],
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.advanceHigherLowerRound a esuat: $e');
+    }
+  }
 
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {
     final me = currentPlayerId;

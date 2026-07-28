@@ -1041,6 +1041,591 @@
           "puncte_max": 200,
           "imagine_cautare": "Steel drum instrument",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "ins_062",
+          "raspuns": "UDUL",
+          "variante": [
+            "UDUL",
+            "CHITARA ACUSTICA",
+            "MANDOLINA",
+            "BANJO"
+          ],
+          "hint_1": "Este un instrument cu coarde ciupite, cu corpul rotunjit ca o pară, fără taste",
+          "hint_2": "E foarte popular în muzica arabă, turcă și persană",
+          "hint_3": "E considerat strămoșul lăutei europene",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_063",
+          "raspuns": "SAZUL",
+          "variante": [
+            "SAZUL",
+            "BOUZOUKIUL",
+            "BALALAICA",
+            "MANDOLINA"
+          ],
+          "hint_1": "Are un gât lung și subțire, cu multe taste",
+          "hint_2": "E instrumentul de bază al muzicii populare turcești",
+          "hint_3": "Se cântă adesea cu degetele sau cu un plectru mic",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_064",
+          "raspuns": "SHAMISENUL",
+          "variante": [
+            "SHAMISENUL",
+            "KOTO",
+            "ERHU",
+            "BANJO"
+          ],
+          "hint_1": "Are doar trei coarde",
+          "hint_2": "Corpul lui e tradițional acoperit cu piele de pisică sau câine",
+          "hint_3": "E folosit adesea în teatrul tradițional japonez kabuki",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_065",
+          "raspuns": "GUZHENGUL",
+          "variante": [
+            "GUZHENGUL",
+            "KOTO",
+            "GAYAGEUMUL",
+            "HARPA"
+          ],
+          "hint_1": "Este o țiteră chinezească lungă, cu coarde întinse peste punți mobile",
+          "hint_2": "Are, în general, între 21 și 25 de coarde",
+          "hint_3": "Se cântă ciupind coardele cu degetele, purtând adesea unghii false",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_066",
+          "raspuns": "TABLA",
+          "variante": [
+            "TABLA",
+            "DJEMBE",
+            "BONGO",
+            "CONGAS"
+          ],
+          "hint_1": "E formată din două tobe mici, diferite ca mărime și sunet",
+          "hint_2": "E instrumentul de percuție esențial în muzica clasică indiană",
+          "hint_3": "Se cântă cu palmele și degetele, nu cu bețe",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_067",
+          "raspuns": "HARMONIUL",
+          "variante": [
+            "HARMONIUL",
+            "ORGA",
+            "ACORDEONUL",
+            "PIANINA"
+          ],
+          "hint_1": "Produce sunet cu ajutorul unor lamele metalice puse în vibrație de aer",
+          "hint_2": "Aerul e pompat, de obicei, cu ajutorul unor pedale acționate de picioare",
+          "hint_3": "E folosit frecvent în muzica clasică indiană și în unele biserici",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_068",
+          "raspuns": "LIRA",
+          "variante": [
+            "LIRA",
+            "HARPA",
+            "COBZA",
+            "CHARANGO"
+          ],
+          "hint_1": "Este unul dintre cele mai vechi instrumente cu coarde din istorie",
+          "hint_2": "Era instrumentul poeților și muzicienilor din Grecia antică",
+          "hint_3": "Se spune că zeul Hermes ar fi inventat-o dintr-o carapace de țestoasă",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_069",
+          "raspuns": "CELESTA",
+          "variante": [
+            "CELESTA",
+            "XILOFONUL",
+            "MARIMBA",
+            "VIBRAFONUL"
+          ],
+          "hint_1": "Arată ca un pian mic, dar sunetul e produs de niște plăcuțe metalice lovite cu ciocănele",
+          "hint_2": "Are un sunet cristalin, aproape ca de clopoței",
+          "hint_3": "Ceaikovski a folosit-o pentru „Dansul Zânei Zahărului” din Spărgătorul de Nuci",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_070",
+          "raspuns": "CLOPOTELE TUBULARE",
+          "variante": [
+            "CLOPOTELE TUBULARE",
+            "GONGUL",
+            "XILOFONUL",
+            "CHIMBALELE"
+          ],
+          "hint_1": "Sunt formate din tuburi metalice lungi, atârnate vertical, lovite cu un ciocan",
+          "hint_2": "Sunt folosite adesea în orchestră pentru a imita sunetul clopotelor de biserică",
+          "hint_3": "Fiecare tub e acordat pentru a produce o notă diferită",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_071",
+          "raspuns": "CAJONUL",
+          "variante": [
+            "CAJONUL",
+            "DJEMBE",
+            "BONGO",
+            "CONGAS"
+          ],
+          "hint_1": "E o cutie de lemn pe care muzicianul stă așezat cât timp cântă",
+          "hint_2": "Sunetul e produs lovind cu palmele fața din față a cutiei",
+          "hint_3": "E originar din Peru, creat inițial de sclavii africani care nu aveau tobe adevărate",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_072",
+          "raspuns": "TIMPANELE",
+          "variante": [
+            "TIMPANELE",
+            "TOBA MARE",
+            "SETUL DE TOBE",
+            "GONGUL"
+          ],
+          "hint_1": "Sunt niște tobe uriașe, în formă de vas, care pot fi acordate la note precise",
+          "hint_2": "Se cântă cu ciocănele speciale, cu vârf moale",
+          "hint_3": "Sunt indispensabile într-o orchestră simfonică",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_073",
+          "raspuns": "CLAVECINUL",
+          "variante": [
+            "CLAVECINUL",
+            "PIANUL",
+            "ORGA",
+            "CLAVICORDUL"
+          ],
+          "hint_1": "Arată ca un pian, dar coardele sunt ciupite, nu lovite",
+          "hint_2": "A fost cel mai important instrument cu clape înainte de inventarea pianului",
+          "hint_3": "A fost folosit foarte des în muzica barocă, de exemplu de Bach",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_074",
+          "raspuns": "CLAVICORDUL",
+          "variante": [
+            "CLAVICORDUL",
+            "CLAVECINUL",
+            "PIANINA",
+            "ORGA"
+          ],
+          "hint_1": "E un instrument cu clape, mai vechi decât pianul, cu sunet foarte delicat",
+          "hint_2": "Sunetul e produs de mici lamele metalice care ating corzile",
+          "hint_3": "Era popular mai ales pentru studiu și practică, fiind foarte silențios",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_075",
+          "raspuns": "FLAUTUL DULCE",
+          "variante": [
+            "FLAUTUL DULCE",
+            "FLAUTUL TRAVERSIER",
+            "NAIUL",
+            "PICCOLO"
+          ],
+          "hint_1": "E adesea primul instrument pe care copiii îl învață la școală",
+          "hint_2": "Se cântă suflând direct printr-un cioc, nu lateral ca alte flaute",
+          "hint_3": "E făcut, de obicei, din plastic sau lemn",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_076",
+          "raspuns": "TARUL",
+          "variante": [
+            "TARUL",
+            "SAZUL",
+            "SITARUL",
+            "UDUL"
+          ],
+          "hint_1": "Numele lui înseamnă „coardă” în persană",
+          "hint_2": "Corpul lui e făcut adesea din lemn de dud, acoperit cu piele",
+          "hint_3": "E instrumentul de bază al muzicii clasice persane și azere",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_077",
+          "raspuns": "BALAFONUL",
+          "variante": [
+            "BALAFONUL",
+            "MARIMBA",
+            "XILOFONUL",
+            "KALIMBA"
+          ],
+          "hint_1": "E un instrument african străvechi, considerat strămoșul marimbei",
+          "hint_2": "Lamele de lemn sunt așezate deasupra unor tigve de dovleac care amplifică sunetul",
+          "hint_3": "E folosit tradițional în muzica din Africa de Vest",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_078",
+          "raspuns": "KORA",
+          "variante": [
+            "KORA",
+            "HARPA",
+            "LIRA",
+            "BALAFONUL"
+          ],
+          "hint_1": "E un fel de harpă-lăută, cu 21 de coarde",
+          "hint_2": "Corpul e făcut, tradițional, dintr-o jumătate de tigvă mare acoperită cu piele",
+          "hint_3": "E cântată tradițional de griot, povestitorii muzicali din Africa de Vest",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_079",
+          "raspuns": "HANDPANUL",
+          "variante": [
+            "HANDPANUL",
+            "GONGUL",
+            "TOBA DE OTEL",
+            "XILOFONUL"
+          ],
+          "hint_1": "Are forma a două jumătăți de disc metalic lipite, ca o farfurie zburătoare",
+          "hint_2": "Se cântă lovind ușor cu degetele și palmele suprafața de metal",
+          "hint_3": "A fost inventat abia în anii 2000, în Elveția",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_080",
+          "raspuns": "THEREMINUL",
+          "variante": [
+            "THEREMINUL",
+            "SINTETIZATORUL",
+            "ORGA",
+            "ACORDEONUL"
+          ],
+          "hint_1": "E singurul instrument muzical cunoscut care se cântă fără să fie atins",
+          "hint_2": "Sunetul se modifică în funcție de distanța mâinilor față de două antene",
+          "hint_3": "A fost inventat de un inginer rus, Lev Termen, la începutul secolului XX",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_081",
+          "raspuns": "MELODICA",
+          "variante": [
+            "MELODICA",
+            "ACORDEONUL",
+            "MUZICUTA",
+            "ORGA"
+          ],
+          "hint_1": "Se suflă printr-un tub, în timp ce degetele apasă niște clape mici, ca la pian",
+          "hint_2": "E ușor de transportat și e folosită des la ore de muzică în școli",
+          "hint_3": "Combină principiul unei claviaturi cu cel al unui instrument de suflat",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_082",
+          "raspuns": "CONCERTINA",
+          "variante": [
+            "CONCERTINA",
+            "ACORDEONUL",
+            "BANDONEON",
+            "HARMONIUL"
+          ],
+          "hint_1": "Seamănă cu un acordeon mic, dar are formă hexagonală sau octogonală",
+          "hint_2": "Butoanele produc aceeași notă, indiferent dacă foalele se trag sau se împing, la unele modele",
+          "hint_3": "A fost foarte populară în muzica marinărească englezească",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_083",
+          "raspuns": "KAZOOUL",
+          "variante": [
+            "KAZOOUL",
+            "MUZICUTA",
+            "FLUIERUL",
+            "TRIUNGHIUL"
+          ],
+          "hint_1": "Nu se cântă suflând o melodie, ci fredonând în el",
+          "hint_2": "O membrană subțire din interior vibrează și produce un sunet bâzâit, distractiv",
+          "hint_3": "E adesea considerat un instrument de jucărie",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_084",
+          "raspuns": "CORNUL BARITON",
+          "variante": [
+            "CORNUL BARITON",
+            "EUFONIUL",
+            "TUBA",
+            "TROMBONUL"
+          ],
+          "hint_1": "E un instrument de alamă cu sunet grav, folosit mai ales în fanfare",
+          "hint_2": "Are trei sau patru pistoane, ca trompeta, dar mult mai mare",
+          "hint_3": "Se aseamănă cu eufoniul, dar are un corp mai subțire",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_085",
+          "raspuns": "EUFONIUL",
+          "variante": [
+            "EUFONIUL",
+            "TUBA",
+            "CORNUL BARITON",
+            "TROMBONUL"
+          ],
+          "hint_1": "Numele lui vine din greacă și înseamnă „sunet frumos”",
+          "hint_2": "E un instrument de alamă cu sunet cald, des folosit în fanfare și formații de suflători",
+          "hint_3": "Are aceeași întindere ca un trombon, dar cu pistoane, nu culisă",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_086",
+          "raspuns": "FLUGELHORNUL",
+          "variante": [
+            "FLUGELHORNUL",
+            "TROMPETA",
+            "CORNUL FRANCEZ",
+            "GOARNA"
+          ],
+          "hint_1": "Seamănă cu o trompetă, dar are un corp mai lat și un sunet mai cald, mai catifelat",
+          "hint_2": "E folosit des în jazz, alături de trompetă",
+          "hint_3": "Provine din cornul folosit de vânătorii europeni pentru a chema câinii",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_087",
+          "raspuns": "REBABUL",
+          "variante": [
+            "REBABUL",
+            "VIOARA",
+            "SITARUL",
+            "ERHU"
+          ],
+          "hint_1": "E un instrument cu coarde, cântat cu arcuș, foarte vechi",
+          "hint_2": "E răspândit din Orientul Mijlociu până în Asia de Sud-Est",
+          "hint_3": "Este considerat de mulți istorici strămoșul viorii europene",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_088",
+          "raspuns": "PIPAUL",
+          "variante": [
+            "PIPAUL",
+            "GUZHENGUL",
+            "SHAMISENUL",
+            "ERHU"
+          ],
+          "hint_1": "E o lăută chinezească în formă de pară, cu patru coarde",
+          "hint_2": "Se cântă ciupind coardele cu unghii speciale atașate degetelor",
+          "hint_3": "E menționat în poezia și pictura chineză de peste 2000 de ani",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_089",
+          "raspuns": "DIZIUL",
+          "variante": [
+            "DIZIUL",
+            "FLAUTUL TRAVERSIER",
+            "NAIUL",
+            "PICCOLO"
+          ],
+          "hint_1": "E un fluier chinezesc din bambus, cântat lateral",
+          "hint_2": "Are o gaură specială acoperită cu o membrană subțire, care dă sunetului o rezonanță vibrantă",
+          "hint_3": "E unul dintre cele mai vechi instrumente de suflat din China",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_090",
+          "raspuns": "DUDUKUL",
+          "variante": [
+            "DUDUKUL",
+            "OBOIUL",
+            "CIMPOIUL",
+            "FLUIERUL"
+          ],
+          "hint_1": "E făcut din lemn de caisă și are un sunet cald, melancolic",
+          "hint_2": "Trestia lui dublă e mult mai lată decât cea a oboiului",
+          "hint_3": "E instrumentul tradițional al Armeniei",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_091",
+          "raspuns": "CAVAQUINHOUL",
+          "variante": [
+            "CAVAQUINHOUL",
+            "UKULELE",
+            "MANDOLINA",
+            "BANJO"
+          ],
+          "hint_1": "E o mică chitară portugheză cu patru coarde",
+          "hint_2": "A stat la baza inventării ukulelelui hawaiian",
+          "hint_3": "E un instrument esențial în samba și choro, muzica braziliană",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_092",
+          "raspuns": "CUATROUL",
+          "variante": [
+            "CUATROUL",
+            "UKULELE",
+            "MANDOLINA",
+            "CHITARA ACUSTICA"
+          ],
+          "hint_1": "Numele lui vine de la cele patru coarde inițiale, deși unele variante au mai multe",
+          "hint_2": "E instrumentul de bază al muzicii tradiționale din Venezuela",
+          "hint_3": "E folosit adesea pentru a acompania cântecele de crăciun, gaitas, în America de Sud",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_093",
+          "raspuns": "BOUZOUKIUL",
+          "variante": [
+            "BOUZOUKIUL",
+            "MANDOLINA",
+            "BALALAICA",
+            "SAZUL"
+          ],
+          "hint_1": "Are un gât lung și un corp în formă de pară",
+          "hint_2": "E instrumentul central al muzicii populare grecești, rebetiko",
+          "hint_3": "A fost adus în Grecia de imigranți din Asia Mică, la începutul secolului XX",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_094",
+          "raspuns": "OCARINAUL",
+          "variante": [
+            "OCARINAUL",
+            "NAIUL",
+            "FLUIERUL",
+            "KAZOOUL"
+          ],
+          "hint_1": "Are o formă rotunjită, ca de ou sau cartof, cu mai multe găuri",
+          "hint_2": "E adesea făcut din lut sau ceramică",
+          "hint_3": "A devenit foarte cunoscut datorită jocurilor video „The Legend of Zelda”",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_095",
+          "raspuns": "ARMONICA DE STICLA",
+          "variante": [
+            "ARMONICA DE STICLA",
+            "XILOFONUL",
+            "CELESTA",
+            "VIBRAFONUL"
+          ],
+          "hint_1": "E formată din boluri de sticlă de mărimi diferite, puse să se rotească",
+          "hint_2": "Sunetul se produce atingând marginea bolurilor umede cu degetele",
+          "hint_3": "A fost inventată de Benjamin Franklin, în 1761",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_096",
+          "raspuns": "DOMRAUL",
+          "variante": [
+            "DOMRAUL",
+            "BALALAICA",
+            "MANDOLINA",
+            "COBZA"
+          ],
+          "hint_1": "Are un corp rotund și un gât lung, cu trei coarde",
+          "hint_2": "E strămoșul balalaicii, un alt instrument popular rusesc",
+          "hint_3": "Se cântă adesea cu un mic plectru numit mediator",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_097",
+          "raspuns": "GAYAGEUMUL",
+          "variante": [
+            "GAYAGEUMUL",
+            "KOTO",
+            "GUZHENGUL",
+            "HARPA"
+          ],
+          "hint_1": "E o țiteră coreeană tradițională, cu 12 coarde de mătase",
+          "hint_2": "Coardele stau pe niște punți mobile, în formă de litera A",
+          "hint_3": "E considerat unul dintre cele mai importante instrumente din muzica tradițională coreeană",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_098",
+          "raspuns": "CLOPOTEII DE VANT",
+          "variante": [
+            "CLOPOTEII DE VANT",
+            "TRIUNGHIUL",
+            "CLOPOTELE TUBULARE",
+            "GONGUL"
+          ],
+          "hint_1": "Sunt formați din mai multe tuburi sau bare care se lovesc între ele atunci când bate vântul",
+          "hint_2": "Nu au o melodie fixă, sunetul lor depinde de intensitatea vântului",
+          "hint_3": "Sunt folosiți adesea și ca decorațiune, agățați la ferestre sau pe verande",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_099",
+          "raspuns": "FLUIERUL IRLANDEZ",
+          "variante": [
+            "FLUIERUL IRLANDEZ",
+            "NAIUL",
+            "FLAUTUL DULCE",
+            "CIMPOIUL"
+          ],
+          "hint_1": "E un fluier metalic simplu, cu șase găuri",
+          "hint_2": "E instrumentul de bază al muzicii tradiționale irlandeze și scoțiene",
+          "hint_3": "A fost folosit celebru în coloana sonoră a filmului „Titanic”",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "ins_100",
+          "raspuns": "GUIROUL",
+          "variante": [
+            "GUIROUL",
+            "MARACASELE",
+            "CONGAS",
+            "BONGO"
+          ],
+          "hint_1": "E un instrument de percuție făcut dintr-o tigvă goală, crestată cu striații",
+          "hint_2": "Se cântă frecând o baghetă de-a lungul crestăturilor",
+          "hint_3": "E des folosit în muzica latino, precum salsa și merengue",
+          "dificultate": "mediu",
+          "puncte_max": 200
         }
       ]
     }

@@ -5,6 +5,7 @@ import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/progression.dart';
+import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
@@ -12,12 +13,12 @@ import '../data/shop.dart';
 import '../data/storage_service.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
+import '../widgets/category_unlock_animation.dart';
 import '../widgets/in_app_notification.dart';
 import '../widgets/next_button.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
-import 'quests_screen.dart';
 
 /// Un singur ecran de joc pentru toate gamemodurile: fiecare întrebare
 /// arată o imagine care se limpezește cu fiecare hint și 4 variante de
@@ -88,11 +89,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       ..sort((a, b) => a.id.compareTo(b.id));
     final unlockedCount = await StorageService.getUnlockedQuestionCount(widget.gameModeId, forMode.length);
 
-    if (await StorageService.recordModePlayedToday(widget.gameModeId)) {
-      final newModesToday = await StorageService.getQuestProgress('play_two_modes');
-      if (newModesToday < 2) {
-        await _bumpQuest('play_two_modes', 1);
-      }
+    if (await StorageService.recordModePlayedToday(widget.gameModeId) && mounted) {
+      await bumpQuestMetric(context, 'modes_played', 1);
     }
     StorageService.recordDailyStreak();
     await StorageService.recordModeEverPlayed(widget.gameModeId);
@@ -156,7 +154,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         score -= cost; // hint-ul se scade din scorul acumulat
         hintsBalance--;
       });
-      _bumpQuest('use_hints_3', 1);
+      bumpQuestMetric(context, 'hints_used', 1);
       StorageService.incrementHintsUsedTotal().then((_) {
         if (mounted) _checkAchievements();
       });
@@ -206,17 +204,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // monedele și viețile să fie deja salvate pe disc înainte ca metoda
     // să se termine, chiar dacă utilizatorul iese brusc din joc imediat
     // după acest tap (buton Acasă / back).
-    await _bumpQuest('answer_10', 1);
+    if (mounted) await bumpQuestMetric(context, 'answer_count', 1);
     _sessionAnswered++;
     if (correct) {
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(pts);
       await StorageService.addAnsweredId(currentQ.id);
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
-      await _bumpQuest('correct_5', 1);
-      await _bumpQuest('earn_60_coins', coinsEarned);
-      if (hintsUsed == 0) await _bumpQuest('no_hint_3', 1);
-      if (streak == 3) await _bumpQuest('streak_3', 1);
+      if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
+      if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
+      if (hintsUsed == 0 && mounted) await bumpQuestMetric(context, 'no_hint_correct', 1);
+      if (streak == 3 && mounted) await bumpQuestMetric(context, 'streak_hit_3', 1);
+      if (streak == 5 && mounted) await bumpQuestMetric(context, 'streak_hit_5', 1);
+      if (streak == 8 && mounted) await bumpQuestMetric(context, 'streak_hit_8', 1);
+      if (streak == 10 && mounted) await bumpQuestMetric(context, 'streak_hit_10', 1);
       // salvăm recordul pe loc, nu doar la finalul sesiunii — altfel un
       // jucător care iese din joc la jumătate (buton Acasă) pierde scorul.
       await StorageService.updateHighScore(score);
@@ -254,27 +255,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       icon: Icons.military_tech_rounded,
       color: AppColors.coin,
       onTap: () {},
-    );
-  }
-
-  /// Adaugă progres la un quest zilnic; dacă tocmai a atins ținta (și nu
-  /// e deja revendicat), arată o notificare in-app spre ecranul de Quests.
-  Future<void> _bumpQuest(String questId, int amount) async {
-    final updated = await StorageService.addQuestProgress(questId, amount);
-    if (!mounted) return;
-    final quest = questById(questId);
-    final justCompleted = updated >= quest.target && (updated - amount) < quest.target;
-    if (!justCompleted) return;
-    final alreadyClaimed = await StorageService.isQuestClaimed(questId);
-    if (alreadyClaimed || !mounted) return;
-    Sfx.tileSelect();
-    InAppNotification.show(
-      context,
-      title: 'Quest completat! 🎯',
-      message: quest.title,
-      icon: quest.icon,
-      color: const Color(0xFF534AB7),
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuestsScreen())),
     );
   }
 
@@ -355,33 +335,46 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     List<Widget> extraActions = const [];
     if (locked > 0) {
       final tier = await StorageService.getUnlockedTier(widget.gameModeId);
-      final price = questionUnlockGemsPrice(tier + 1);
-      final batch = min(questionUnlockBatch, locked);
       if (!mounted) return;
-      extraActions = [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
-          onPressed: () async {
-            final ok = await StorageService.unlockNextQuestionBatch(widget.gameModeId);
-            if (!mounted) return;
-            if (ok) {
-              Navigator.pop(context);
-              Sfx.rewardPop();
-              _loadQuestions();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Nu ai destule gems.'), duration: Duration(milliseconds: 1400)),
-              );
-            }
-          },
-          child: Text('Deblochează +$batch  •  💎 $price', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
-        ),
-      ];
+      if (tier < maxUnlockTier) {
+        final price = questionUnlockGemsPrice(tier + 1);
+        final batch = min(questionUnlockBatch, locked);
+        extraActions = [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
+            onPressed: () async {
+              final ok = await StorageService.unlockNextQuestionBatch(widget.gameModeId);
+              if (!mounted) return;
+              if (ok) {
+                await bumpQuestMetric(context, 'question_batch_unlocked', 1);
+                if (!mounted) return;
+                await bumpQuestMetric(context, 'shop_spend', 1);
+                if (!mounted) return;
+                Navigator.pop(context);
+                await CategoryUnlockAnimation.show(
+                  context,
+                  categoryTitle: mode.title,
+                  unlockedCount: batch,
+                );
+                if (!mounted) return;
+                _loadQuestions();
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Nu ai destule gems.'), duration: Duration(milliseconds: 1400)),
+                );
+              }
+            },
+            child: Text('Upgrade +$batch  •  💎 $price', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+          ),
+        ];
+      }
     }
+    final lockedNote = extraActions.isNotEmpty
+        ? '\n\n$locked întrebări mai sunt de deblocat în această categorie.'
+        : (locked > 0 ? '\n\nAi atins nivelul maxim de upgrade pentru această categorie.' : '');
     _showEndDialog(
       title: 'Ai terminat toate întrebările! 🎉',
-      message: 'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score'
-          '${locked > 0 ? '\n\n$locked întrebări mai sunt de deblocat în această categorie.' : ''}',
+      message: 'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score$lockedNote',
       extraActions: extraActions,
     );
   }

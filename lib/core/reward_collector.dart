@@ -23,6 +23,7 @@ Future<void> collectRewards(
   required GlobalKey livesBadgeKey,
   int hints = 0,
   GlobalKey? hintsBadgeKey,
+  bool hintsUncapped = false,
   int gems = 0,
   GlobalKey? gemsBadgeKey,
   VoidCallback? onEachImpact,
@@ -92,7 +93,7 @@ Future<void> collectRewards(
       icon: Icons.tips_and_updates_rounded,
       color: AppColors.hint,
       targetKey: hintsBadgeKey!,
-      applyReward: () => StorageService.addHints(hints),
+      applyReward: () => hintsUncapped ? StorageService.addHintsUncapped(hints) : StorageService.addHints(hints),
       // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
       impactSound: Sfx.xpHit,
     );

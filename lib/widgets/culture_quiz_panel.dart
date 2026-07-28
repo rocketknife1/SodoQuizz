@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
+import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/culture_questions.dart';
@@ -12,16 +13,20 @@ enum _Phase { teaser, cooldown, playing, justFinished }
 
 /// Panou compact, integrat direct în Home (nu navighează spre alt ecran):
 /// un mini-quiz de cultură generală (BETA), fără imagine, cronometrat
-/// (35s/întrebare). Nelimitat — după ce colectezi recompensa unui lot de
-/// [cultureQuizQuestionCount] întrebări, pornește automat următorul, fără
-/// să mai fie nevoie de un tap manual pe START; se oprește doar dacă
-/// părăsești Home. markDailyChallengeDone se apelează la finalul fiecărui
-/// lot, pentru contorul de quiz-uri terminate și quest-uri.
+/// (35s/întrebare). O fereastră = [StorageService.cultureQuizPlayLimit] runde
+/// de [cultureQuizQuestionCount] întrebări (curent 3) — între runde e o
+/// pauză cu un buton "Pregătit pentru runda X" (nu pornește automat), iar
+/// la finalul rundei finale recompensa se aplică prin tap pe COLECTEAZĂ
+/// (sau automat, după 10s, dacă utilizatorul nu apasă — vezi
+/// [_autoCollectFinalRound]), moment în care pornește și cooldown-ul de
+/// [StorageService.cultureQuizWindowMinutes] minute. markDailyChallengeDone
+/// se apelează la finalul fiecărei runde, pentru contorul de quiz-uri
+/// terminate și quest-uri.
 ///
-/// Recompensele NU se acordă după fiecare răspuns — se acumulează doar local
-/// pe durata sesiunii și se aplică toate deodată la apăsarea butonului
-/// COLECTEAZĂ de pe ecranul final, cu aceeași animație/sunet ca la
-/// revendicarea unui quest (vezi [CoinRewardOverlay] + [Sfx]).
+/// Recompensele NU se acordă după fiecare răspuns — se acumulează local pe
+/// durata TUTUROR celor 3 runde și se aplică o singură dată, la finalul
+/// rundei finale, cu aceeași animație/sunet ca la revendicarea unui quest
+/// (vezi [CoinRewardOverlay] + [Sfx]).
 class CultureQuizPanel extends StatefulWidget {
   /// Apelat după fiecare etapă de colectare (nu în timpul jocului) — Home îl
   /// folosește ca să-și reîmprospăteze header-ul (LevelHeader) exact la
@@ -48,7 +53,6 @@ class CultureQuizPanel extends StatefulWidget {
 
 class _CultureQuizPanelState extends State<CultureQuizPanel> {
   _Phase _phase = _Phase.teaser;
-  CultureCategory _category = cultureCategories.first;
   List<CultureQuestion> _questions = const [];
   int qIndex = 0;
   int correctCount = 0;
@@ -62,6 +66,15 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Timer? _questionTimer;
   Duration? _cooldownRemaining;
   Timer? _cooldownTicker;
+  Timer? _autoRecordTimer;
+  bool _playRecorded = false;
+
+  /// Runda curentă (1-based) din fereastra activă — vezi
+  /// [StorageService.cultureQuizPlaysInWindow]. Cu [StorageService.cultureQuizPlayLimit]
+  /// runde per fereastră, "runda finală" e mereu ultima dintre ele.
+  int _roundNumber = 1;
+  int get _totalRounds => StorageService.cultureQuizPlayLimit;
+  bool get _isFinalRound => _roundNumber >= _totalRounds;
 
   @override
   void initState() {
@@ -73,7 +86,19 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   void dispose() {
     _questionTimer?.cancel();
     _cooldownTicker?.cancel();
+    _autoRecordTimer?.cancel();
     super.dispose();
+  }
+
+  /// Înregistrează sesiunea o singură dată — fie la tap pe COLECTEAZĂ, fie
+  /// automat, oricare vine prima. Fără asta, un utilizator care iese din
+  /// aplicație pe ecranul de recompensă fără să apese butonul ar rămâne cu
+  /// timer-ul de cooldown neîncepput la nesfârșit.
+  Future<void> _recordPlayOnce() async {
+    if (_playRecorded) return;
+    _playRecorded = true;
+    _autoRecordTimer?.cancel();
+    await StorageService.recordCultureQuizPlay();
   }
 
   Future<void> _checkAvailability() async {
@@ -111,29 +136,39 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     });
   }
 
-  /// Pornește un lot nou — dar doar dacă mai e loc în fereastra de
-  /// [StorageService.cultureQuizPlayLimit] sesiuni / [StorageService.cultureQuizWindowMinutes]
-  /// minute; altfel arată cooldown-ul în loc să pornească.
+  /// Pornește o rundă nouă — dar doar dacă mai e loc în fereastra de
+  /// [StorageService.cultureQuizPlayLimit] runde / [StorageService.cultureQuizWindowMinutes]
+  /// minute; altfel arată cooldown-ul în loc să pornească. Runda curentă se
+  /// deduce din câte runde s-au jucat deja în fereastră — robust la restart
+  /// de aplicație în mijlocul ciclului de 3 runde (nu ținem noi contorul).
   Future<void> _start() async {
     if (!await StorageService.canPlayCultureQuiz()) {
       await _enterCooldown();
       return;
     }
-    await StorageService.recordCultureQuizPlay();
+    final playsSoFar = await StorageService.cultureQuizPlaysInWindow();
     if (!mounted) return;
-    // sesiune nouă = alt set aleatoriu de întrebări din pool-ul categoriei
-    // curente (România/Belgia/...).
-    _questions = (List.of(_category.questions)..shuffle(Random()))
+    final round = playsSoFar + 1;
+    // sesiune nouă = alt set aleatoriu din pool-ul global unic de întrebări.
+    _questions = (List.of(cultureQuestions)..shuffle(Random()))
         .take(cultureQuizQuestionCount)
         .toList();
     setState(() {
       _phase = _Phase.playing;
       qIndex = 0;
       correctCount = 0;
-      _coinsEarned = 0;
-      _xpEarned = 0;
-      _livesEarned = 0;
+      _roundNumber = round;
+      // recompensele se acumulează pe TOATE cele 3 runde ale ferestrei —
+      // resetate doar la runda 1, nu la fiecare rundă (vezi _buildFinished:
+      // rundele 1-2 doar continuă, fără să colecteze, colectarea reală se
+      // face o singură dată, la runda finală).
+      if (round == 1) {
+        _coinsEarned = 0;
+        _xpEarned = 0;
+        _livesEarned = 0;
+      }
       _collecting = false;
+      _playRecorded = false;
     });
     _initQuestion();
   }
@@ -184,6 +219,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       _coinsEarned += fullRate ? coinsPerCorrect : cultureReducedCoinsPerCorrect;
       _xpEarned += fullRate ? xpPerCorrect : cultureReducedXpPerCorrect;
       await StorageService.incrementDailyCounter('culture_correct');
+      if (mounted) await bumpQuestMetric(context, 'culture_quiz_correct', 1);
       // bonus de viață la fiecare 3 răspunsuri corecte — doar acumulat aici,
       // fără plafon (se acordă efectiv, peste maximul de 5, la colectare).
       if (correctCount % 3 == 0) _livesEarned++;
@@ -206,7 +242,8 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     // la final indiferent de colectare — doar monede/XP/vieți așteaptă tap-ul
     // pe COLECTEAZĂ.
     await StorageService.markDailyChallengeDone();
-    await StorageService.addQuestProgress('daily_challenge_done', 1);
+    if (mounted) await bumpQuestMetric(context, 'daily_challenge_done', 1);
+    if (mounted) await bumpQuestMetric(context, 'culture_quiz_batches', 1);
     // bonusul de finalizare a lotului există doar pentru primele loturi ale
     // zilei — dincolo de plafon, lotul tot contează (contorul de mai sus),
     // dar fără bonusul suplimentar de completare.
@@ -221,13 +258,41 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         _xpEarned += completionXp;
       }
     });
+    // cooldown-ul de rate-limit pornește doar acum, la finalul lotului — nu
+    // la apăsarea START — dar nu așteptăm nedefinit tap-ul pe COLECTEAZĂ:
+    // dacă utilizatorul iese din aplicație fără să colecteze, sesiunea tot
+    // se înregistrează după 10s, ca să nu rămână blocată la nesfârșit. La
+    // runda finală, cele 10s chiar aplică recompensa și pornesc cooldown-ul
+    // (nu doar consumă slotul din fereastră) — jucătorul nu pierde ce a
+    // câștigat doar fiindcă a ieșit din aplicație fără să apese COLECTEAZĂ.
+    _autoRecordTimer?.cancel();
+    _autoRecordTimer = Timer(const Duration(seconds: 10), _isFinalRound ? _autoCollectFinalRound : _recordPlayOnce);
+  }
+
+  void _autoCollectFinalRound() {
+    if (!mounted || _collecting) return;
+    _collect();
+  }
+
+  /// Rundele 1-2 nu colectează nimic — recompensa rămâne acumulată local
+  /// (vezi [_start]) și doar trece la runda următoare. Tot aici se
+  /// înregistrează slotul din fereastra de rate-limit (nu la 10s auto, ca
+  /// să nu rămână "disponibilă la nesfârșit" dacă utilizatorul stă mult pe
+  /// ecranul de pauză înainte să apese).
+  Future<void> _continueRound() async {
+    await _recordPlayOnce();
+    if (!mounted) return;
+    await _start();
   }
 
   /// Aplică toată recompensa acumulată, în 3 etape separate și în ordine
-  /// fixă (monede → XP → vieți) — vezi [collectRewards].
+  /// fixă (monede → XP → vieți) — vezi [collectRewards]. Apelat doar la
+  /// finalul rundei finale (vezi [_buildFinished]).
   Future<void> _collect() async {
     if (_collecting) return;
     setState(() => _collecting = true);
+    await _recordPlayOnce();
+    if (!mounted) return;
     await collectRewards(
       context,
       coins: _coinsEarned,
@@ -321,20 +386,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           ),
           child: const Text('BETA', style: TextStyle(color: Colors.white, fontSize: 8.5, fontWeight: FontWeight.w800, letterSpacing: 1.2)),
         ),
-        const SizedBox(height: 6),
-        Text(
-          '${_category.flag} ${_category.title}',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w700),
-        ),
         const SizedBox(height: 4),
         Text(
-          'Nelimitat • ${cultureSecondsPerQuestion}s/întrebare',
+          '${StorageService.cultureQuizPlayLimit} runde • ${cultureSecondsPerQuestion}s/întrebare',
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white60, fontSize: 10),
         ),
         Text(
-          'Recompensă la fiecare $cultureQuizQuestionCount întrebări',
+          'Recompensă la finalul rundei ${StorageService.cultureQuizPlayLimit}',
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white38, fontSize: 8.5),
         ),
@@ -351,58 +410,8 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
             child: const Text('START', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800)),
           ),
         ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: _openCategoryPicker,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.coin, width: 1.5),
-            ),
-            child: const Text('CATEGORII', style: TextStyle(color: AppColors.coin, fontSize: 11, fontWeight: FontWeight.w800)),
-          ),
-        ),
       ],
     );
-  }
-
-  /// Foaie glisantă cu toate categoriile de cultură generală disponibile
-  /// (câte o "țară" cu pool propriu de întrebări) — alegerea rămâne
-  /// activă pentru sesiunile următoare de START, până la o nouă selecție.
-  Future<void> _openCategoryPicker() async {
-    final picked = await showModalBottomSheet<CultureCategory>(
-      context: context,
-      backgroundColor: const Color(0xFF1A1830),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Text('Alege categoria', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
-                ),
-                for (final c in cultureCategories)
-                  ListTile(
-                    leading: Text(c.flag, style: const TextStyle(fontSize: 22)),
-                    title: Text(c.title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                    trailing: c.id == _category.id ? const Icon(Icons.check_circle_rounded, color: AppColors.coin) : null,
-                    onTap: () => Navigator.pop(context, c),
-                  ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-    if (picked != null && picked.id != _category.id) {
-      setState(() => _category = picked);
-    }
   }
 
   Widget _buildPlaying() {
@@ -466,16 +475,51 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     );
   }
 
+  /// Pauza dintre runde (rundele 1-2): nu colectează nimic — doar arată un
+  /// rezumat scurt și un buton "Pregătit pentru runda X" care pornește
+  /// direct runda următoare. Recompensa acumulată se arată doar la runda
+  /// finală (vezi [_buildFinished]), ca să nu pară că s-a "pierdut" ceva
+  /// între runde.
   Widget _buildFinished() {
+    if (!_isFinalRound) {
+      final nextLabel = _roundNumber == 1 ? 'Pregătit pentru runda a II-a' : 'Pregătit pentru runda finală';
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
+          const SizedBox(height: 8),
+          Text(
+            'Runda $_roundNumber/$_totalRounds terminată — $correctCount/${_questions.length} corecte',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: _continueRound,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(color: AppColors.coin, borderRadius: BorderRadius.circular(20)),
+              child: Text(
+                nextLabel,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
         const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
         const SizedBox(height: 8),
-        Text(
-          '$correctCount/${_questions.length} corecte',
-          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+        const Text(
+          'Runda finală terminată!',
+          style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(

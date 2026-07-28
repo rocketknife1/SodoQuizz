@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/quest_bump.dart';
+import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/shop.dart';
 import '../data/storage_service.dart';
@@ -17,12 +19,19 @@ class _ShopScreenState extends State<ShopScreen> {
   int _lives = 5;
   int _coins = 0;
   int _gems = 0;
+  int _hints = 0;
   bool _canClaimDaily = false;
   int _heartsBoughtToday = 0;
   int _hintPacksBoughtToday = 0;
+  bool _noAdsOwned = false;
+  bool _starterPackBought = false;
   bool _loading = true;
   bool _busy = false;
   final _livesBadgeKey = GlobalKey();
+  final _coinBadgeKey = GlobalKey();
+  final _gemsBadgeKey = GlobalKey();
+  final _hintsBadgeKey = GlobalKey();
+  final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
 
   @override
   void initState() {
@@ -35,24 +44,33 @@ class _ShopScreenState extends State<ShopScreen> {
       StorageService.getLives(),
       StorageService.getCoins(),
       StorageService.getGems(),
+      StorageService.getHints(),
       StorageService.canClaimDailyReward(),
       StorageService.getHeartsBoughtToday(),
       StorageService.getHintPacksBoughtToday(),
+      StorageService.getNoAdsForever(),
+      StorageService.getStarterPackBought(),
     ]);
     if (!mounted) return;
     setState(() {
       _lives = results[0] as int;
       _coins = results[1] as int;
       _gems = results[2] as int;
-      _canClaimDaily = results[3] as bool;
-      _heartsBoughtToday = results[4] as int;
-      _hintPacksBoughtToday = results[5] as int;
+      _hints = results[3] as int;
+      _canClaimDaily = results[4] as bool;
+      _heartsBoughtToday = results[5] as int;
+      _hintPacksBoughtToday = results[6] as int;
+      _noAdsOwned = results[7] as bool;
+      _starterPackBought = results[8] as bool;
       _loading = false;
     });
   }
 
   Future<void> _claimDaily() async {
     final granted = await StorageService.claimDailyReward();
+    if (!mounted) return;
+    await bumpQuestMetric(context, 'daily_lives_claimed', 1);
+    _navBarKey.currentState?.refreshDots();
     if (!mounted) return;
     Sfx.rewardPop();
     CoinRewardOverlay.show(
@@ -76,6 +94,11 @@ class _ShopScreenState extends State<ShopScreen> {
     setState(() => _busy = false);
     if (ok) {
       Sfx.coinHit();
+      await bumpQuestMetric(context, 'heart_bought', 1);
+      if (!mounted) return;
+      await bumpQuestMetric(context, 'shop_spend', 1);
+      if (!mounted) return;
+      _navBarKey.currentState?.refreshDots();
       await _loadState();
     } else {
       _toast(_heartsBoughtToday >= heartCoinPrices.length
@@ -92,6 +115,9 @@ class _ShopScreenState extends State<ShopScreen> {
     setState(() => _busy = false);
     if (ok) {
       Sfx.heartHit();
+      await bumpQuestMetric(context, 'shop_spend', 1);
+      if (!mounted) return;
+      _navBarKey.currentState?.refreshDots();
       await _loadState();
     } else {
       _toast(_lives >= 5 ? 'Ești deja plin.' : 'Nu ai destule gems.');
@@ -106,12 +132,157 @@ class _ShopScreenState extends State<ShopScreen> {
     setState(() => _busy = false);
     if (ok) {
       Sfx.coinHit();
+      await bumpQuestMetric(context, 'hint_pack_bought', 1);
+      if (!mounted) return;
+      await bumpQuestMetric(context, 'shop_spend', 1);
+      if (!mounted) return;
+      _navBarKey.currentState?.refreshDots();
       await _loadState();
     } else {
       _toast(_hintPacksBoughtToday >= hintPackDailyLimit
           ? 'Ai atins plafonul zilnic de pachete.'
           : 'Nu ai destule monede.');
     }
+  }
+
+  // ─── Bani reali (simulat — vezi shop.dart) ────────────────────────────────
+
+  Future<bool> _confirmPurchase(String itemLabel, double priceUsd) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Cumperi $itemLabel?', style: const TextStyle(color: Colors.white)),
+        content: Text(
+          'Preț: \$${priceUsd.toStringAsFixed(2)}\n\n'
+          'Magazinul de plăți reale nu e conectat încă în acest build — nu se percepe nicio sumă, achiziția e doar simulată pentru testare.',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Cumpără', style: TextStyle(color: AppColors.play, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    return confirmed == true;
+  }
+
+  Future<void> _buyGemPack(GemPack pack) async {
+    if (_busy) return;
+    if (!await _confirmPurchase('${pack.gems} gems', pack.priceUsd)) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    await collectRewards(
+      context,
+      coins: 0,
+      xp: 0,
+      lives: 0,
+      gems: pack.gems,
+      gemsBadgeKey: _gemsBadgeKey,
+      coinBadgeKey: GlobalKey(),
+      xpBadgeKey: GlobalKey(),
+      livesBadgeKey: GlobalKey(),
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    await _loadState();
+  }
+
+  Future<void> _buyLivesPack(LivesPack pack) async {
+    if (_busy) return;
+    if (!await _confirmPurchase('${pack.lives} vieți', pack.priceUsd)) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    await collectRewards(
+      context,
+      coins: 0,
+      xp: 0,
+      lives: pack.lives,
+      livesBadgeKey: _livesBadgeKey,
+      coinBadgeKey: GlobalKey(),
+      xpBadgeKey: GlobalKey(),
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    await _loadState();
+  }
+
+  Future<void> _buyUnlimitedLives24h() async {
+    if (_busy) return;
+    if (!await _confirmPurchase('Vieți nelimitate 24h', unlimitedLives24hPriceUsd)) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    await Future.delayed(const Duration(milliseconds: 900));
+    await StorageService.activateUnlimitedLives(const Duration(hours: 24));
+    if (!mounted) return;
+    setState(() => _busy = false);
+    Sfx.rewardPop();
+    _toast('Vieți nelimitate activate pentru 24h!');
+    await _loadState();
+  }
+
+  Future<void> _buyHintPackReal(HintPackReal pack) async {
+    if (_busy) return;
+    if (!await _confirmPurchase('${pack.hints} hints', pack.priceUsd)) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    await collectRewards(
+      context,
+      coins: 0,
+      xp: 0,
+      lives: 0,
+      hints: pack.hints,
+      hintsUncapped: true,
+      hintsBadgeKey: _hintsBadgeKey,
+      coinBadgeKey: GlobalKey(),
+      xpBadgeKey: GlobalKey(),
+      livesBadgeKey: GlobalKey(),
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    await _loadState();
+  }
+
+  Future<void> _buyBundle(Bundle b) async {
+    if (_busy) return;
+    if (b.oneTimeOnly && _starterPackBought) return;
+    if (b.permanentNoAds && _noAdsOwned) return;
+    if (!await _confirmPurchase(b.title, b.priceUsd)) return;
+    if (!mounted) return;
+    setState(() => _busy = true);
+    await Future.delayed(const Duration(milliseconds: 900));
+    if (b.permanentNoAds) await StorageService.setNoAdsForever();
+    if (b.oneTimeOnly) await StorageService.setStarterPackBought();
+    if (!mounted) return;
+    await collectRewards(
+      context,
+      coins: b.coins,
+      xp: 0,
+      lives: b.hearts,
+      hints: b.hints,
+      hintsUncapped: true,
+      hintsBadgeKey: _hintsBadgeKey,
+      gems: b.gems,
+      gemsBadgeKey: _gemsBadgeKey,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: GlobalKey(),
+      livesBadgeKey: _livesBadgeKey,
+    );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (b.oneTimeOnly) await checkAchievements(context);
+    if (!mounted) return;
+    await _loadState();
   }
 
   void _toast(String message) {
@@ -122,7 +293,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      bottomNavigationBar: const AppBottomNavBar(current: AppTab.shop),
+      bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.shop),
       body: SafeArea(
         child: Column(
           children: [
@@ -144,16 +315,24 @@ class _ShopScreenState extends State<ShopScreen> {
                     ],
                   ),
                   const Spacer(),
-                  if (!_loading) ...[
-                    _StatPill(key: _livesBadgeKey, icon: Icons.favorite_rounded, iconColor: const Color(0xFFE24B4A), value: '$_lives'),
-                    const SizedBox(width: 8),
-                    _StatPill(icon: Icons.monetization_on_rounded, iconColor: const Color(0xFFFFD700), value: '$_coins'),
-                    const SizedBox(width: 8),
-                    _StatPill(icon: Icons.diamond_rounded, iconColor: const Color(0xFF5EC8F2), value: '$_gems'),
-                  ],
                 ],
               ),
             ),
+            if (!_loading)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _StatPill(key: _livesBadgeKey, icon: Icons.favorite_rounded, iconColor: const Color(0xFFE24B4A), value: '$_lives'),
+                    _StatPill(key: _coinBadgeKey, icon: Icons.monetization_on_rounded, iconColor: const Color(0xFFFFD700), value: '$_coins'),
+                    _StatPill(key: _gemsBadgeKey, icon: Icons.diamond_rounded, iconColor: AppColors.gem, value: '$_gems'),
+                    _StatPill(key: _hintsBadgeKey, icon: Icons.tips_and_updates_rounded, iconColor: AppColors.hint, value: '$_hints'),
+                  ],
+                ),
+              ),
             const SizedBox(height: 12),
             Expanded(
               child: _loading
@@ -198,7 +377,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 subtitle: 'Umple viețile la $freeDailyLivesTarget, indiferent de plafon',
                                 priceLabel: '$heartRefillGemsPrice',
                                 priceIcon: Icons.diamond_rounded,
-                                priceIconColor: const Color(0xFF5EC8F2),
+                                priceIconColor: AppColors.gem,
                                 disabled: _busy || _lives >= 5 || _gems < heartRefillGemsPrice,
                                 onTap: _buyHeartWithGems,
                               ),
@@ -226,6 +405,77 @@ class _ShopScreenState extends State<ShopScreen> {
                                       _hintPacksBoughtToday >= hintPackDailyLimit ||
                                       _coins < pack.priceCoins,
                                   onTap: () => _buyHintPack(pack),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _NoAdsHeroCard(
+                            bundle: noAdsBundle,
+                            owned: _noAdsOwned,
+                            busy: _busy,
+                            onTap: () => _buyBundle(noAdsBundle),
+                          ),
+                          const SizedBox(height: 14),
+                          _ShopSectionCard(
+                            title: 'Pachete',
+                            subtitle: 'Mai multe resurse la un preț mai bun — bani reali',
+                            icon: Icons.card_giftcard_rounded,
+                            color: AppColors.teal,
+                            children: [
+                              for (final b in bundles)
+                                _BundleItem(
+                                  bundle: b,
+                                  disabled: _busy || (b.oneTimeOnly && _starterPackBought),
+                                  onTap: () => _buyBundle(b),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _ShopSectionCard(
+                            title: 'Gems',
+                            subtitle: 'Cumpără gems cu bani reali',
+                            icon: Icons.diamond_rounded,
+                            color: AppColors.gem,
+                            children: [
+                              for (final pack in gemPacks)
+                                _ShopItem(
+                                  title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
+                                  subtitle: 'Achiziție cu bani reali',
+                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  disabled: _busy,
+                                  onTap: () => _buyGemPack(pack),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _ShopSectionCard(
+                            title: 'Vieți & Hints (bani reali)',
+                            subtitle: 'Cumpărare directă, fără gems',
+                            icon: Icons.shopping_bag_rounded,
+                            color: AppColors.life,
+                            children: [
+                              for (final pack in livesPacks)
+                                _ShopItem(
+                                  title: '${pack.lives} vieți instant',
+                                  subtitle: 'Achiziție cu bani reali',
+                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  disabled: _busy,
+                                  onTap: () => _buyLivesPack(pack),
+                                ),
+                              _ShopItem(
+                                title: 'Vieți nelimitate 24h',
+                                subtitle: 'Joci fără să pierzi vieți timp de 24h',
+                                priceLabel: '\$${unlimitedLives24hPriceUsd.toStringAsFixed(2)}',
+                                disabled: _busy,
+                                onTap: _buyUnlimitedLives24h,
+                              ),
+                              for (final pack in hintPacksReal)
+                                _ShopItem(
+                                  title: '${pack.hints} hints',
+                                  subtitle: 'Achiziție cu bani reali',
+                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  disabled: _busy,
+                                  onTap: () => _buyHintPackReal(pack),
                                 ),
                             ],
                           ),
@@ -404,5 +654,183 @@ class _ShopItem extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+/// Un pachet cu mai multe resurse deodată — rândul de chip-uri arată tot
+/// conținutul dintr-o privire, spre deosebire de [_ShopItem] (o singură
+/// resursă/preț).
+class _BundleItem extends StatelessWidget {
+  final Bundle bundle;
+  final bool disabled;
+  final VoidCallback? onTap;
+
+  const _BundleItem({required this.bundle, this.disabled = false, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final owned = disabled && bundle.oneTimeOnly;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(child: Text(bundle.title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700))),
+                        if (bundle.oneTimeOnly) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(color: AppColors.play.withAlpha(50), borderRadius: BorderRadius.circular(6)),
+                            child: const Text('O SINGURĂ DATĂ', style: TextStyle(color: AppColors.play, fontSize: 8, fontWeight: FontWeight.w800)),
+                          ),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(bundle.subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: disabled ? null : onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.teal,
+                  disabledBackgroundColor: Colors.white12,
+                  foregroundColor: Colors.white,
+                  disabledForegroundColor: Colors.white38,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(owned ? 'DEȚINUT' : '\$${bundle.priceUsd.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              if (bundle.gems > 0) _chip(Icons.diamond_rounded, AppColors.gem, bundle.gems),
+              if (bundle.coins > 0) _chip(Icons.monetization_on_rounded, AppColors.coin, bundle.coins),
+              if (bundle.hearts > 0) _chip(Icons.favorite_rounded, AppColors.life, bundle.hearts),
+              if (bundle.hints > 0) _chip(Icons.tips_and_updates_rounded, AppColors.hint, bundle.hints),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(IconData icon, Color color, int amount) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, color: color, size: 13),
+      const SizedBox(width: 3),
+      Text('$amount', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+    ]);
+  }
+}
+
+/// Ofertă "hero" — vizual distinctă (accent auriu) de restul shop-ului,
+/// fiindcă e oferta premium principală (achiziție unică, beneficiu
+/// permanent).
+class _NoAdsHeroCard extends StatelessWidget {
+  final Bundle bundle;
+  final bool owned;
+  final bool busy;
+  final VoidCallback? onTap;
+
+  const _NoAdsHeroCard({required this.bundle, required this.owned, required this.busy, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.coin.withAlpha(60), AppColors.coin.withAlpha(15)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.coin.withAlpha(160), width: 1.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.workspace_premium_rounded, color: AppColors.coin, size: 22),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Fără reclame pe veci',
+                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
+            style: TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              _chip(Icons.diamond_rounded, AppColors.gem, bundle.gems),
+              _chip(Icons.monetization_on_rounded, AppColors.coin, bundle.coins),
+              _chip(Icons.favorite_rounded, AppColors.life, bundle.hearts),
+              _chip(Icons.tips_and_updates_rounded, AppColors.hint, bundle.hints),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: owned || busy ? null : onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.coin,
+                disabledBackgroundColor: Colors.white12,
+                foregroundColor: Colors.black,
+                disabledForegroundColor: Colors.white38,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              child: Text(
+                owned ? 'DEȚINUT' : 'Cumpără • \$${bundle.priceUsd.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(IconData icon, Color color, int amount) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Icon(icon, color: color, size: 13),
+      const SizedBox(width: 3),
+      Text('$amount', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+    ]);
   }
 }

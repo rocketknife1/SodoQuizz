@@ -115,23 +115,30 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
     super.dispose();
   }
 
+  static Color _withOpacity(Color c, double factor) => c.withAlpha((c.a * 255 * factor.clamp(0.0, 1.0)).round());
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final center = Offset(size.width / 2, size.height * 0.4);
 
+    // RepaintBoundary izolează animația (până la ~18 iconițe/scântei/simboluri
+    // "+" simultan) de restul arborelui de sub ea, ca ecranul din spate să nu
+    // se re-picteze inutil la fiecare cadru cât zboară recompensa.
     return IgnorePointer(
-      child: Stack(
-        children: [
-          AnimatedBuilder(
-            animation: _flight,
-            builder: (context, _) => _buildFlightPhase(center),
-          ),
-          AnimatedBuilder(
-            animation: _plus,
-            builder: (context, _) => _buildPlusPhase(),
-          ),
-        ],
+      child: RepaintBoundary(
+        child: Stack(
+          children: [
+            AnimatedBuilder(
+              animation: _flight,
+              builder: (context, _) => _buildFlightPhase(center),
+            ),
+            AnimatedBuilder(
+              animation: _plus,
+              builder: (context, _) => _buildPlusPhase(),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -163,9 +170,10 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
     return Positioned(
       left: pos.dx - 4,
       top: pos.dy - 4,
-      child: Opacity(
-        opacity: fade.clamp(0, 1),
-        child: Icon(Icons.auto_awesome_rounded, color: Colors.white.withAlpha(230), size: 8 + burstT * 4),
+      child: Icon(
+        Icons.auto_awesome_rounded,
+        color: _withOpacity(Colors.white.withAlpha(230), fade),
+        size: 8 + burstT * 4,
       ),
     );
   }
@@ -206,17 +214,20 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
     }
 
     final spin = (burstT + flightT) * 6 * pi;
+    final o = opacity.clamp(0.0, 1.0);
 
     return Positioned(
       left: pos.dx - 17,
       top: pos.dy - 17,
-      child: Opacity(
-        opacity: opacity.clamp(0, 1),
-        child: Transform.rotate(
-          angle: spin,
-          child: Transform.scale(
-            scale: scale.clamp(0.0, 1.7),
-            child: Icon(widget.icon, color: widget.color, size: 34, shadows: const [Shadow(color: Colors.black45, blurRadius: 5)]),
+      child: Transform.rotate(
+        angle: spin,
+        child: Transform.scale(
+          scale: scale.clamp(0.0, 1.7),
+          child: Icon(
+            widget.icon,
+            color: _withOpacity(widget.color, o),
+            size: 34,
+            shadows: [Shadow(color: _withOpacity(Colors.black45, o), blurRadius: 5)],
           ),
         ),
       ),
@@ -240,19 +251,17 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
     final rise = -56 * local;
     final opacity = local < 0.15 ? local / 0.15 : (1 - ((local - 0.15) / 0.85)).clamp(0.0, 1.0);
 
+    final o = opacity.clamp(0.0, 1.0);
     return Positioned(
       left: widget.target.dx - 12 + dx,
       top: widget.target.dy - 16 + rise,
-      child: Opacity(
-        opacity: opacity.clamp(0, 1),
-        child: Text(
-          '+',
-          style: TextStyle(
-            color: widget.color,
-            fontSize: 26,
-            fontWeight: FontWeight.w900,
-            shadows: const [Shadow(color: Colors.black54, blurRadius: 4)],
-          ),
+      child: Text(
+        '+',
+        style: TextStyle(
+          color: _withOpacity(widget.color, o),
+          fontSize: 26,
+          fontWeight: FontWeight.w900,
+          shadows: [Shadow(color: _withOpacity(Colors.black54, o), blurRadius: 4)],
         ),
       ),
     );

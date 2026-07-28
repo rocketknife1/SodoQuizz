@@ -1126,6 +1126,516 @@
           "puncte_max": 200,
           "imagine_cautare": "Masada fortress Israel",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "mon_067",
+          "raspuns": "ABATIA WESTMINSTER",
+          "variante": [
+            "ABATIA WESTMINSTER",
+            "CATEDRALA SAINT PAUL",
+            "TURNUL LONDREI",
+            "PALATUL BUCKINGHAM"
+          ],
+          "hint_1": "Aici au loc încoronările regilor și reginelor britanice",
+          "hint_2": "Mulți regi, poeți și oameni de știință celebri sunt înmormântați aici",
+          "hint_3": "Se află în centrul Londrei, lângă Parlament",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_068",
+          "raspuns": "CASTELUL WINDSOR",
+          "variante": [
+            "CASTELUL WINDSOR",
+            "PALATUL BUCKINGHAM",
+            "TURNUL LONDREI",
+            "ABATIA WESTMINSTER"
+          ],
+          "hint_1": "E cel mai vechi și mai mare castel locuit din lume",
+          "hint_2": "A fost reședința de weekend preferată a reginei Elisabeta a II-a",
+          "hint_3": "Se află lângă Londra, în Anglia",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_069",
+          "raspuns": "TURNUL BELEM",
+          "variante": [
+            "TURNUL BELEM",
+            "TURNUL LONDREI",
+            "TURNUL EIFFEL",
+            "CASTELUL EDINBURGH"
+          ],
+          "hint_1": "A fost construit pentru a apăra intrarea în portul unui oraș european",
+          "hint_2": "E ridicat chiar pe malul râului Tejo",
+          "hint_3": "Se află în Lisabona, Portugalia",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_070",
+          "raspuns": "ZIDUL LUI HADRIAN",
+          "variante": [
+            "ZIDUL LUI HADRIAN",
+            "MARELE ZID CHINEZESC",
+            "STONEHENGE",
+            "CASTELUL EDINBURGH"
+          ],
+          "hint_1": "A fost construit de romani pentru a marca granița nordică a imperiului lor",
+          "hint_2": "Străbate nordul Angliei, aproape de granița cu Scoția",
+          "hint_3": "Poartă numele împăratului roman care a ordonat construcția lui",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_071",
+          "raspuns": "CATEDRALA DIN MILANO",
+          "variante": [
+            "CATEDRALA DIN MILANO",
+            "CATEDRALA DIN KOLN",
+            "NOTRE-DAME",
+            "SAGRADA FAMILIA"
+          ],
+          "hint_1": "E una dintre cele mai mari catedrale gotice din lume",
+          "hint_2": "Construcția ei a durat aproape șase secole",
+          "hint_3": "Se află în centrul orașului Milano, Italia",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_072",
+          "raspuns": "FORUL ROMAN",
+          "variante": [
+            "FORUL ROMAN",
+            "COLOSSEUMUL",
+            "PANTEONUL DIN ROMA",
+            "ACROPOLE"
+          ],
+          "hint_1": "A fost centrul vieții publice, politice și comerciale din Roma antică",
+          "hint_2": "Aici se aflau piața, templele și clădirile guvernamentale ale orașului",
+          "hint_3": "Se află în centrul Romei, lângă Colosseum",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_073",
+          "raspuns": "PANTEONUL DIN ROMA",
+          "variante": [
+            "PANTEONUL DIN ROMA",
+            "FORUL ROMAN",
+            "COLOSSEUMUL",
+            "BAZILICA SFANTUL PETRU"
+          ],
+          "hint_1": "Are cea mai mare cupolă din beton nearmat construită vreodată",
+          "hint_2": "A fost inițial un templu dedicat tuturor zeilor romani",
+          "hint_3": "Se află în centrul Romei și este folosit azi ca biserică",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_074",
+          "raspuns": "CASTELUL CHAMBORD",
+          "variante": [
+            "CASTELUL CHAMBORD",
+            "CASTELUL NEUSCHWANSTEIN",
+            "PALATUL VERSAILLES",
+            "MONT SAINT-MICHEL"
+          ],
+          "hint_1": "E cel mai mare castel din Valea Loarei, în Franța",
+          "hint_2": "Are o scară dublă în spirală, atribuită unor idei ale lui Leonardo da Vinci",
+          "hint_3": "A fost construit ca reședință de vânătoare pentru regele Francisc I",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_075",
+          "raspuns": "PALATUL TOPKAPI",
+          "variante": [
+            "PALATUL TOPKAPI",
+            "PALATUL DE IARNA",
+            "PALATUL SCHONBRUNN",
+            "KREMLIN"
+          ],
+          "hint_1": "A fost reședința sultanilor otomani timp de sute de ani",
+          "hint_2": "Adăpostește o vastă colecție de bijuterii și relicve",
+          "hint_3": "Se află în Istanbul, cu vedere spre Bosfor",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_076",
+          "raspuns": "MOSCHEEA ALBASTRA",
+          "variante": [
+            "MOSCHEEA ALBASTRA",
+            "HAGIA SOFIA",
+            "MOSCHEEA SULEYMANIYE",
+            "PALATUL TOPKAPI"
+          ],
+          "hint_1": "E numită așa după plăcile albastre ce îi decorează interiorul",
+          "hint_2": "Are șase minarete, un număr neobișnuit de mare pentru o moschee",
+          "hint_3": "Se află în Istanbul, vizavi de Hagia Sofia",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_077",
+          "raspuns": "PALATUL SCHONBRUNN",
+          "variante": [
+            "PALATUL SCHONBRUNN",
+            "PALATUL VERSAILLES",
+            "PALATUL BUCKINGHAM",
+            "KREMLIN"
+          ],
+          "hint_1": "A fost reședința de vară a familiei imperiale habsburgice",
+          "hint_2": "Are peste 1400 de camere și grădini vaste",
+          "hint_3": "Se află în Viena, Austria",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_078",
+          "raspuns": "PARTENONUL",
+          "variante": [
+            "PARTENONUL",
+            "ACROPOLE",
+            "COLOSSEUMUL",
+            "FORUL ROMAN"
+          ],
+          "hint_1": "E un templu antic dedicat zeiței Atena",
+          "hint_2": "Are coloane dorice din marmură, construite acum peste 2400 de ani",
+          "hint_3": "Se află pe colina Acropole din Atena",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_079",
+          "raspuns": "MARELE BUDDHA DIN KAMAKURA",
+          "variante": [
+            "MARELE BUDDHA DIN KAMAKURA",
+            "BUDDHA URIAS DE LA LESHAN",
+            "TEMPLUL AURIU",
+            "TEMPLUL TODAI-JI"
+          ],
+          "hint_1": "E o statuie uriașă din bronz, aflată în aer liber de secole",
+          "hint_2": "A fost cândva adăpostită într-un templu, distrus de un tsunami",
+          "hint_3": "Se află în orașul Kamakura, Japonia",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_080",
+          "raspuns": "PALATUL DE VARA",
+          "variante": [
+            "PALATUL DE VARA",
+            "ORASUL INTERZIS",
+            "TEMPLUL CERULUI",
+            "MARELE ZID CHINEZESC"
+          ],
+          "hint_1": "Are un lac artificial uriaș, săpat pentru a înălța dealul din apropiere",
+          "hint_2": "A fost reședința de vară a împăraților chinezi",
+          "hint_3": "Se află la periferia orașului Beijing",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_081",
+          "raspuns": "ARMATA DE TERACOTA",
+          "variante": [
+            "ARMATA DE TERACOTA",
+            "MARELE ZID CHINEZESC",
+            "ORASUL INTERZIS",
+            "TEMPLUL CERULUI"
+          ],
+          "hint_1": "Este formată din mii de statui de soldați din lut ars, fiecare cu trăsături diferite",
+          "hint_2": "A fost creată pentru a păzi mormântul primului împărat al Chinei",
+          "hint_3": "A fost descoperită întâmplător de niște fermieri, în 1974",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_082",
+          "raspuns": "TEMPLUL CERULUI",
+          "variante": [
+            "TEMPLUL CERULUI",
+            "PALATUL DE VARA",
+            "ORASUL INTERZIS",
+            "TEMPLUL BOROBUDUR"
+          ],
+          "hint_1": "Împărații chinezi veneau aici să se roage pentru recolte bogate",
+          "hint_2": "Are o structură circulară impresionantă, simbol al orașului Beijing",
+          "hint_3": "Se află în Beijing, China",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_083",
+          "raspuns": "TEMPLUL SHWEDAGON",
+          "variante": [
+            "TEMPLUL SHWEDAGON",
+            "TEMPLUL AURIU",
+            "TEMPLUL BOROBUDUR",
+            "ANGKOR WAT"
+          ],
+          "hint_1": "E acoperit cu foițe reale de aur, adăugate de-a lungul secolelor",
+          "hint_2": "În vârf are diamante și alte pietre prețioase",
+          "hint_3": "E cel mai sacru loc budist din Myanmar",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_084",
+          "raspuns": "PALATUL POTALA",
+          "variante": [
+            "PALATUL POTALA",
+            "TEMPLUL AURIU",
+            "MARELE PALAT REGAL",
+            "ORASUL INTERZIS"
+          ],
+          "hint_1": "A fost reședința tradițională a dalai lamilor",
+          "hint_2": "E construit pe un deal, la o altitudine de peste 3700 de metri",
+          "hint_3": "Se află în Lhasa, Tibet",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_085",
+          "raspuns": "FORTUL AMBER",
+          "variante": [
+            "FORTUL AMBER",
+            "FORTUL ROSU",
+            "TAJ MAHAL",
+            "PALATUL DE VARA"
+          ],
+          "hint_1": "E construit din gresie roșie și marmură albă, pe un deal",
+          "hint_2": "Are o sală numită „a Oglinzilor”, decorată cu mii de bucăți mici de sticlă",
+          "hint_3": "Se află lângă orașul Jaipur, India",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_086",
+          "raspuns": "MOSCHEEA HASSAN II",
+          "variante": [
+            "MOSCHEEA HASSAN II",
+            "MOSCHEEA ALBASTRA",
+            "MOSCHEEA SULEYMANIYE",
+            "PALATUL TOPKAPI"
+          ],
+          "hint_1": "Are unul dintre cele mai înalte minarete religioase din lume",
+          "hint_2": "E construită parțial deasupra apei Oceanului Atlantic",
+          "hint_3": "Se află în Casablanca, Maroc",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_087",
+          "raspuns": "TEMPLUL DIN LUXOR",
+          "variante": [
+            "TEMPLUL DIN LUXOR",
+            "TEMPLUL KARNAK",
+            "ABU SIMBEL",
+            "SFINXUL"
+          ],
+          "hint_1": "Era legat cândva de un alt templu printr-o alee lungă cu statui de sfincși",
+          "hint_2": "A fost dedicat mai ales sărbătoririi festivalului Opet, în Egiptul antic",
+          "hint_3": "Se află pe malul Nilului, în orașul Luxor",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_088",
+          "raspuns": "VALEA REGILOR",
+          "variante": [
+            "VALEA REGILOR",
+            "PIRAMIDELE DIN GIZA",
+            "ABU SIMBEL",
+            "TEMPLUL KARNAK"
+          ],
+          "hint_1": "Aici au fost înmormântați faraoni timp de aproape 500 de ani",
+          "hint_2": "Mormântul lui Tutankhamon a fost descoperit aici, aproape intact",
+          "hint_3": "Se află pe malul de vest al Nilului, lângă Luxor",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_089",
+          "raspuns": "TEOTIHUACAN",
+          "variante": [
+            "TEOTIHUACAN",
+            "CHICHEN ITZA",
+            "MACHU PICCHU",
+            "TIKAL"
+          ],
+          "hint_1": "Are două piramide uriașe, numite ale Soarelui și ale Lunii",
+          "hint_2": "Numele orașului înseamnă, în limba nahuatl, „locul unde s-au născut zeii”",
+          "hint_3": "Se află lângă Ciudad de Mexico",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_090",
+          "raspuns": "LINCOLN MEMORIAL",
+          "variante": [
+            "LINCOLN MEMORIAL",
+            "CASA ALBA",
+            "CAPITOLIUL SUA",
+            "MONUMENTUL WASHINGTON"
+          ],
+          "hint_1": "Adăpostește o statuie uriașă a unui fost președinte american, așezat pe un tron",
+          "hint_2": "Aici a rostit Martin Luther King Jr. celebrul discurs „I Have a Dream”",
+          "hint_3": "Se află la capătul National Mall, în Washington D.C.",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_091",
+          "raspuns": "CAPITOLIUL SUA",
+          "variante": [
+            "CAPITOLIUL SUA",
+            "CASA ALBA",
+            "LINCOLN MEMORIAL",
+            "MONUMENTUL WASHINGTON"
+          ],
+          "hint_1": "Are o cupolă albă impresionantă, vizibilă de pe tot National Mall",
+          "hint_2": "Aici se întrunesc cele două camere ale Congresului american",
+          "hint_3": "Se află în Washington D.C.",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_092",
+          "raspuns": "MONUMENTUL WASHINGTON",
+          "variante": [
+            "MONUMENTUL WASHINGTON",
+            "LINCOLN MEMORIAL",
+            "CAPITOLIUL SUA",
+            "CASA ALBA"
+          ],
+          "hint_1": "E un obelisc înalt, construit în cinstea primului președinte american",
+          "hint_2": "A fost cea mai înaltă structură din lume la finalizarea sa, în 1884",
+          "hint_3": "Se află pe National Mall, în Washington D.C.",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_093",
+          "raspuns": "PODUL VECCHIO",
+          "variante": [
+            "PODUL VECCHIO",
+            "PODUL RIALTO",
+            "PODUL CHARLES",
+            "PODUL BROOKLYN"
+          ],
+          "hint_1": "E cunoscut pentru magazinele de bijuterii construite direct pe el",
+          "hint_2": "A fost singurul pod din oraș nedistrus de naziști în al Doilea Război Mondial",
+          "hint_3": "Traversează râul Arno, în Florența",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_094",
+          "raspuns": "PALATUL DOGILOR",
+          "variante": [
+            "PALATUL DOGILOR",
+            "PALATUL TOPKAPI",
+            "PALATUL DE IARNA",
+            "KREMLIN"
+          ],
+          "hint_1": "A fost reședința conducătorilor unei foste republici maritime",
+          "hint_2": "E legat de o închisoare printr-un pod numit „al Suspinelor”",
+          "hint_3": "Se află în Piața San Marco, Veneția",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_095",
+          "raspuns": "MOSCHEEA SULEYMANIYE",
+          "variante": [
+            "MOSCHEEA SULEYMANIYE",
+            "MOSCHEEA ALBASTRA",
+            "HAGIA SOFIA",
+            "MOSCHEEA HASSAN II"
+          ],
+          "hint_1": "A fost construită de cel mai faimos arhitect otoman, Mimar Sinan",
+          "hint_2": "Poartă numele sultanului sub domnia căruia a fost ridicată",
+          "hint_3": "Se află pe una dintre colinele Istanbulului",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_096",
+          "raspuns": "CATEDRALA SAINT PAUL",
+          "variante": [
+            "CATEDRALA SAINT PAUL",
+            "ABATIA WESTMINSTER",
+            "TURNUL LONDREI",
+            "BIG BEN"
+          ],
+          "hint_1": "Are una dintre cele mai mari cupole din lume",
+          "hint_2": "A supraviețuit bombardamentelor asupra Londrei din al Doilea Război Mondial",
+          "hint_3": "A fost proiectată de arhitectul Christopher Wren",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_097",
+          "raspuns": "CASTELUL HIMEJI",
+          "variante": [
+            "CASTELUL HIMEJI",
+            "CASTELUL EDINBURGH",
+            "TEMPLUL AURIU",
+            "TURNUL TOKYO"
+          ],
+          "hint_1": "E supranumit „Castelul Egretei Albe” datorită culorii sale",
+          "hint_2": "E cel mai bine păstrat castel feudal din Japonia",
+          "hint_3": "Se află în orașul Himeji, Japonia",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_098",
+          "raspuns": "TEMPLUL TODAI-JI",
+          "variante": [
+            "TEMPLUL TODAI-JI",
+            "TEMPLUL AURIU",
+            "MARELE BUDDHA DIN KAMAKURA",
+            "TEMPLUL SHWEDAGON"
+          ],
+          "hint_1": "Adăpostește una dintre cele mai mari statui de bronz ale lui Buddha din lume",
+          "hint_2": "A fost, secole la rând, cea mai mare clădire din lemn din lume",
+          "hint_3": "Se află în orașul Nara, Japonia",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_099",
+          "raspuns": "TURNUL GALATA",
+          "variante": [
+            "TURNUL GALATA",
+            "TURNUL LONDREI",
+            "TURNUL CN",
+            "SPACE NEEDLE"
+          ],
+          "hint_1": "Oferă una dintre cele mai bune panorame asupra Bosforului",
+          "hint_2": "A fost folosit de-a lungul timpului ca punct de veghe împotriva incendiilor",
+          "hint_3": "Se află în cartierul Beyoglu din Istanbul",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "mon_100",
+          "raspuns": "PALATUL DE IARNA",
+          "variante": [
+            "PALATUL DE IARNA",
+            "KREMLIN",
+            "PALATUL TOPKAPI",
+            "PALATUL SCHONBRUNN"
+          ],
+          "hint_1": "A fost reședința oficială a țarilor Rusiei",
+          "hint_2": "Azi găzduiește o parte din vestitul muzeu Ermitaj",
+          "hint_3": "Se află în Sankt Petersburg",
+          "dificultate": "mediu",
+          "puncte_max": 200
         }
       ]
     }

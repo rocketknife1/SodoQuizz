@@ -11,7 +11,8 @@ import '../loading_screen.dart';
 /// cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).
 class MultiplayerResultsScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerResultsScreen({super.key, required this.matchId});
+  final MatchGameMode gameMode;
+  const MultiplayerResultsScreen({super.key, required this.matchId, this.gameMode = MatchGameMode.classic});
 
   @override
   State<MultiplayerResultsScreen> createState() => _MultiplayerResultsScreenState();
@@ -108,6 +109,18 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                               Expanded(
                                 child: Text(p.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
                               ),
+                              if (widget.gameMode == MatchGameMode.higherLower) ...[
+                                if (p.eliminated)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 8),
+                                    child: Text('ELIMINAT', style: TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w800)),
+                                  )
+                                else if (p.breads > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: Text('🍞' * p.breads.clamp(0, 5), style: const TextStyle(fontSize: 12)),
+                                  ),
+                              ],
                               Text('${p.score} pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
                             ],
                           ),

@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
+import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
@@ -108,6 +109,8 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
         if (perfect) _livesEarned = clippyPerfectBonusLives;
         _phase = _ClippyPhase.finished;
       });
+      if (mounted) await bumpQuestMetric(context, 'clippy_done', 1);
+      if (perfect && mounted) await bumpQuestMetric(context, 'clippy_perfect', 1);
     } else {
       setState(() {
         qIndex++;

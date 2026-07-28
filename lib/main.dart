@@ -55,6 +55,9 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
       CloudSyncService.instance.push();
+      Music.pauseForBackground();
+    } else if (state == AppLifecycleState.resumed) {
+      Music.resumeFromBackground();
     }
   }
 

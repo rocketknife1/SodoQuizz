@@ -297,24 +297,26 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
               alignment: Alignment.center,
               clipBehavior: Clip.none,
               children: [
-                Opacity(
-                  opacity: (_ready ? 0.22 + pulse * 0.28 : 0.1 + pulse * 0.1).clamp(0.0, 1.0),
-                  child: Container(
-                    width: 60 + pulse * 14,
-                    height: 60 + pulse * 14,
-                    decoration: BoxDecoration(shape: BoxShape.circle, color: _ready ? const Color(0xFFFFC542) : const Color(0xFF534AB7)),
+                // alfa amestecată direct în culoare — nu Opacity() peste un
+                // Container, ca să nu ceară un strat offscreen nou la fiecare
+                // cadru din bucla continuă de idle (rulează cât timp Home e
+                // deschis, deci orice cost per-frame se simte constant).
+                Container(
+                  width: 60 + pulse * 14,
+                  height: 60 + pulse * 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: (_ready ? const Color(0xFFFFC542) : const Color(0xFF534AB7))
+                        .withAlpha(((_ready ? 0.22 + pulse * 0.28 : 0.1 + pulse * 0.1).clamp(0.0, 1.0) * 255).round()),
                   ),
                 ),
                 if (ripple > 0)
-                  Opacity(
-                    opacity: (1 - ripple).clamp(0.0, 1.0),
-                    child: Container(
-                      width: 48 + ripple * 46,
-                      height: 48 + ripple * 46,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
+                  Container(
+                    width: 48 + ripple * 46,
+                    height: 48 + ripple * 46,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withAlpha(((1 - ripple).clamp(0.0, 1.0) * 255).round()), width: 2),
                     ),
                   ),
                 if (_currentGesture == _RingGesture.checkClock)

@@ -95,6 +95,29 @@ class Music {
 
   static bool get isEnabled => _enabled;
   static double get volume => _volume;
+
+  /// Pune muzica pe pauză când aplicația trece în fundal (Home/Recent Apps) —
+  /// fără să atingă preferința "Music Off" persistată, doar oprește
+  /// redarea efectivă cât timp userul nu se uită la ecran.
+  static Future<void> pauseForBackground() async {
+    if (!_started) return;
+    try {
+      await _player.pause();
+    } catch (e) {
+      debugPrint('Music: nu am putut pune pauză la trecerea în fundal: $e');
+    }
+  }
+
+  /// Reia muzica la revenirea în prim-plan — doar dacă era activată din
+  /// Setări (respectă "Music Off" ca la orice altă pornire).
+  static Future<void> resumeFromBackground() async {
+    if (!_started || !_enabled) return;
+    try {
+      await _player.resume();
+    } catch (e) {
+      debugPrint('Music: nu am putut relua la revenirea în prim-plan: $e');
+    }
+  }
 }
 
 /// Efecte sonore scurte de UI — un player dedicat per sunet, cu sursa

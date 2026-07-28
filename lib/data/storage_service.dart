@@ -1,4 +1,6 @@
+import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/gamemodes.dart';
 import '../core/progression.dart';
 import 'shop.dart';
 
@@ -22,6 +24,7 @@ class StorageService {
   static const _xpKey = 'xp';
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
+  static const _introSeenKey = 'intro_tutorial_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
   static const _hintsKey = 'hints_balance';
@@ -48,6 +51,11 @@ class StorageService {
   static const _leaderboardPeriodStartKey = 'leaderboard_period_start';
   static const _leaderboardModesKey = 'leaderboard_modes_with_points';
   static const leaderboardPeriodHours = 48;
+  static const _starterCategoriesKey = 'starter_unlocked_categories';
+
+  /// Câte categorii sunt deblocate gratuit, random, la prima intrare în joc
+  /// (vezi [getStarterCategories]) — restul pornesc complet blocate (tier 0).
+  static const int starterCategoryCount = 3;
 
   /// Plafon de stoc pentru hint-uri — peste acest prag, sursele suplimentare
   /// nu se mai adaugă (vezi reproiectarea economiei: hint-urile trebuie
@@ -203,6 +211,16 @@ class StorageService {
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
     final updated = (current + amount).clamp(0, _hintsCap);
     await prefs.setInt(_hintsKey, updated);
+  }
+
+  /// Fără plafon — folosit DOAR pentru achiziții cu bani reali (vezi Shop).
+  /// Plafonul [_hintsCap] există ca hint-urile gratuite "să fie folosite, nu
+  /// doar strânse" — regula aia n-ar trebui să trunchieze un pachet plătit.
+  static Future<void> addHintsUncapped(int amount) async {
+    if (amount <= 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final current = prefs.getInt(_hintsKey) ?? _startingHints;
+    await prefs.setInt(_hintsKey, current + amount);
   }
 
   /// Consumă 1 hint din balanța persistată — întoarce false dacă nu mai ai.
@@ -438,6 +456,14 @@ class StorageService {
     return _recentCultureQuizTimestamps(prefs).length < cultureQuizPlayLimit;
   }
 
+  /// Câte runde s-au jucat deja în fereastra curentă — folosit ca număr de
+  /// rundă pentru runda care urmează să pornească (vezi CultureQuizPanel,
+  /// care are 3 runde per fereastră, cât [cultureQuizPlayLimit]).
+  static Future<int> cultureQuizPlaysInWindow() async {
+    final prefs = await SharedPreferences.getInstance();
+    return _recentCultureQuizTimestamps(prefs).length;
+  }
+
   /// Timpul rămas până se eliberează primul slot (zero dacă poți juca deja).
   static Future<Duration> cultureQuizCooldownRemaining() async {
     final prefs = await SharedPreferences.getInstance();
@@ -537,26 +563,78 @@ class StorageService {
     return true;
   }
 
-  // ─── Deblocare treptată a întrebărilor per categorie (vezi shop.dart) ─────
+  // ─── Bani reali (achiziții premium, simulate — vezi shop.dart/shop_screen.dart) ─
+  // Fără SDK real de plăți conectat încă — vezi shop.dart pentru detalii.
 
+  static const _noAdsForeverKey = 'no_ads_forever';
+  static const _starterPackBoughtKey = 'starter_pack_bought';
+
+  static Future<bool> getNoAdsForever() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_noAdsForeverKey) ?? false;
+  }
+
+  static Future<void> setNoAdsForever() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_noAdsForeverKey, true);
+  }
+
+  static Future<bool> getStarterPackBought() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_starterPackBoughtKey) ?? false;
+  }
+
+  static Future<void> setStarterPackBought() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_starterPackBoughtKey, true);
+  }
+
+  // ─── Deblocare treptată a categoriilor + întrebărilor (vezi shop.dart) ────
+
+  /// Cele [starterCategoryCount] categorii deblocate gratuit, random, unic
+  /// per instalare — alese o singură dată (persistate), la prima citire.
+  /// Fiecare user nou are deci alt set (ex. 3 utilizatori diferiți, 3
+  /// combinații diferite de categorii deblocate din start).
+  static Future<List<String>> getStarterCategories() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getStringList(_starterCategoriesKey);
+    if (existing != null) return existing;
+    final ids = gameModes.where((m) => !m.locked).map((m) => m.id).toList()..shuffle(Random());
+    final picked = ids.take(starterCategoryCount).toList();
+    await prefs.setStringList(_starterCategoriesKey, picked);
+    return picked;
+  }
+
+  /// Tier 0 = categorie complet blocată (0 întrebări jucabile) — implicit
+  /// pentru toate categoriile, în afară de cele 3 alese random la instalare
+  /// (vezi [getStarterCategories]), care pornesc direct la tier 1.
   static Future<int> getUnlockedTier(String gameModeId) async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt('question_unlock_tier_$gameModeId') ?? 0;
+    final key = 'question_unlock_tier_$gameModeId';
+    final stored = prefs.getInt(key);
+    if (stored != null) return stored;
+    final starters = await getStarterCategories();
+    return starters.contains(gameModeId) ? 1 : 0;
   }
 
   /// Câte întrebări sunt efectiv jucabile acum într-o categorie cu
   /// [totalInCategory] întrebări în total — plafonat la total (nu are sens
-  /// să "deblochezi" peste câte există efectiv).
+  /// să "deblochezi" peste câte există efectiv). Categoriile cu mai puține
+  /// întrebări decât [initialUnlockedQuestions] rămân mereu complet
+  /// deblocate, fără gating.
   static Future<int> getUnlockedQuestionCount(String gameModeId, int totalInCategory) async {
+    if (totalInCategory <= initialUnlockedQuestions) return totalInCategory;
     final tier = await getUnlockedTier(gameModeId);
-    final unlocked = initialUnlockedQuestions + tier * questionUnlockBatch;
+    final unlocked = tier * questionUnlockBatch;
     return unlocked < totalInCategory ? unlocked : totalInCategory;
   }
 
-  /// Cumpără următorul lot de întrebări pentru o categorie, cu Gems —
-  /// întoarce false dacă nu ai destule gems.
+  /// Cumpără următoarea treaptă pentru o categorie, cu Gems (tier 0→1
+  /// deblochează chiar categoria) — întoarce false dacă nu ai destule gems
+  /// sau ai atins deja [maxUnlockTier].
   static Future<bool> unlockNextQuestionBatch(String gameModeId) async {
     final tier = await getUnlockedTier(gameModeId);
+    if (tier >= maxUnlockTier) return false;
     final price = questionUnlockGemsPrice(tier + 1);
     if (!await spendGems(price)) return false;
     final prefs = await SharedPreferences.getInstance();
@@ -574,6 +652,18 @@ class StorageService {
   static Future<void> setNoBlurMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_noBlurKey, value);
+  }
+
+  // ─── Popup de introducere la prima intrare în joc ─────────────────────────
+
+  static Future<bool> getIntroSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_introSeenKey) ?? false;
+  }
+
+  static Future<void> setIntroSeen(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_introSeenKey, value);
   }
 
   // ─── Muzică de fundal (separată de volumul efectelor sonore) ──────────────
@@ -681,20 +771,23 @@ class StorageService {
     return prefs.getBool(_questClaimedKey(questId)) ?? false;
   }
 
-  /// Marchează quest-ul ca revendicat și acordă recompensa în monede + XP.
-  static Future<void> claimQuest(Quest quest) async {
+  /// Marchează quest-ul ca revendicat — NU scrie efectiv coins/xp/gems/vieți/
+  /// hints în balanțe (aceeași convenție ca la [claimAllPendingLevelRewards]/
+  /// [claimRewardedAdReward]: apelantul aplică recompensa prin
+  /// collectRewards, ca să nu se acorde de două ori). Hrănește și metricul
+  /// quest-ului "meta" care numără câte quest-uri s-au revendicat azi.
+  static Future<void> claimQuest(String questId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_questClaimedKey(quest.id), true);
-    await addCoins(quest.coinReward);
-    await addXp(quest.xpReward);
+    await prefs.setBool(_questClaimedKey(questId), true);
     await prefs.setInt(_questsClaimedTotalKey, (prefs.getInt(_questsClaimedTotalKey) ?? 0) + 1);
+    await addQuestProgress('quests_claimed_today', 1);
   }
 
-  /// True dacă vreun quest zilnic are ținta atinsă și încă nerevendicată —
-  /// folosit pentru punctul roșu de notificare de pe tab-ul Quests.
+  /// True dacă vreun quest activ AZI are ținta atinsă și încă nerevendicată
+  /// — folosit pentru punctul roșu de notificare de pe tab-ul Quests.
   static Future<bool> hasClaimableQuests() async {
-    for (final q in dailyQuests) {
-      final progress = await getQuestProgress(q.id);
+    for (final q in todaysQuests()) {
+      final progress = await getQuestProgress(q.metricKey);
       if (progress >= q.target && !await isQuestClaimed(q.id)) return true;
     }
     return false;
@@ -842,12 +935,13 @@ class StorageService {
     return prefs.getBool('achievement_claimed_$id') ?? false;
   }
 
-  static Future<void> claimAchievement(Achievement achievement) async {
+  /// Marchează realizarea ca revendicată — NU scrie efectiv coins/xp/gems/
+  /// vieți/hints în balanțe (aceeași convenție ca la [claimQuest]: apelantul
+  /// aplică recompensa prin collectRewards, ca să nu se acorde de două ori
+  /// și ca fiecare resursă să aibă animația ei, nu doar monedele).
+  static Future<void> claimAchievement(String achievementId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('achievement_claimed_${achievement.id}', true);
-    await addCoins(achievement.coinReward);
-    await addXp(achievement.xpReward);
-    if (achievement.gemReward > 0) await addGems(achievement.gemReward);
+    await prefs.setBool('achievement_claimed_$achievementId', true);
   }
 
   static const _achievementsDoneKnownKey = 'achievements_done_known';
@@ -863,6 +957,7 @@ class StorageService {
     final hintsUsed = prefs.getInt(_hintsUsedTotalKey) ?? 0;
     final questsClaimed = prefs.getInt(_questsClaimedTotalKey) ?? 0;
     final dailyChallenges = prefs.getInt(_dailyChallengesTotalKey) ?? 0;
+    final starterPackBought = prefs.getBool(_starterPackBoughtKey) ?? false;
     return (Achievement a) => switch (a.id) {
           'correct_50' || 'correct_150' || 'correct_400' => answeredCount,
           'level_5' || 'level_15' => level,
@@ -870,6 +965,7 @@ class StorageService {
           'hints_50' => hintsUsed,
           'quests_25' => questsClaimed,
           'daily_10' => dailyChallenges,
+          'starter_pack_bought' => starterPackBought ? 1 : 0,
           _ => 0,
         };
   }

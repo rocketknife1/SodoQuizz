@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show HapticFeedback;
 import '../core/audio.dart';
+import '../core/quest_bump.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
@@ -41,6 +43,15 @@ class _WheelPrize {
 
 const _gemColor = Color(0xFF5EC8F2);
 const _jackpotColor = Color(0xFFFFD700);
+
+// ─── Tema portocalie a roții ────────────────────────────────────────────────
+// Cadranele roții nu mai iau culoarea fiecărui premiu (curcubeu) — sunt
+// portocalii, alternând două nuanțe, ca roata să citească vizual "un obiect",
+// nu o colecție de resurse; iconițele rămân colorate pe tipul de resursă,
+// pentru lizibilitate, dar pe fundal portocaliu.
+const _wheelOrange = Color(0xFFFF7A1A);
+const _wheelOrangeLight = Color(0xFFFFA94D);
+const _wheelOrangeDeep = Color(0xFFC24A00);
 
 /// 11 premii — orice resursă (monede, XP, hints, viață, gems) sau pachet
 /// combinat (mai rar) poate ieși la o rotire, plus premiul special ultra-rar:
@@ -83,17 +94,37 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
   bool _spinning = false;
   bool _done = false;
   _WheelPrize? _result;
+  int? _lastHapticSegment;
 
   @override
   void initState() {
     super.initState();
-    _spin = AnimationController(vsync: this, duration: const Duration(milliseconds: 3400));
+    // durată mai lungă + curbă cu suspans (vezi _SuspenseWheelCurve) — roata
+    // se învârte "plin" mult timp, fără să dea niciun indiciu, apoi
+    // încetinește vizibil doar spre final.
+    _spin = AnimationController(vsync: this, duration: const Duration(milliseconds: 4600));
+    _spin.addListener(_onSpinTick);
   }
 
   @override
   void dispose() {
+    _spin.removeListener(_onSpinTick);
     _spin.dispose();
     super.dispose();
+  }
+
+  /// Vibrație scurtă la fiecare cadran trecut pe sub ac — întărește senzația
+  /// de suspans (ca un clichet fizic de roată), fără riscul unui sunet
+  /// suprapus la redeclanșare rapidă (vezi Sfx._play).
+  void _onSpinTick() {
+    if (!_spinning) return;
+    final angle = const _SuspenseWheelCurve().transform(_spin.value) * _finalAngle;
+    final segmentAngle = 2 * pi / _prizes.length;
+    final segment = (-angle / segmentAngle).floor();
+    if (segment != _lastHapticSegment) {
+      _lastHapticSegment = segment;
+      HapticFeedback.selectionClick();
+    }
   }
 
   /// Tragere ponderată (nu uniformă) — indexul ales alimentează aceeași
@@ -119,10 +150,14 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     // suplimentar (bug-ul vechi scădea -pi/2 de două ori, ceea ce ateriza
     // segmentul cerut la stânga acului, nu sub el).
     final targetAngle = -(resultIndex + 0.5) * segmentAngle;
-    final extraSpins = 5 + Random().nextInt(3);
+    // mai multe ture decât înainte (7-9, nu 5-7) — combinat cu durata mai
+    // mare, roata se învârte vizibil mai mult timp "plin", fără niciun
+    // indiciu, înainte să înceapă să încetinească spre final.
+    final extraSpins = 7 + Random().nextInt(3);
     setState(() {
       _spinning = true;
       _finalAngle = extraSpins * 2 * pi + targetAngle;
+      _lastHapticSegment = null;
     });
     Sfx.tileSelect();
     await _spin.forward(from: 0);
@@ -137,6 +172,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       await StorageService.activateUnlimitedLives(prize.unlimitedLives!);
     }
     await StorageService.recordRingSpin();
+    if (mounted) await bumpQuestMetric(context, 'wheel_spin', 1);
     Sfx.rewardPop();
     if (!mounted) return;
     setState(() {
@@ -155,7 +191,8 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white12),
+          border: Border.all(color: _wheelOrange.withAlpha(140)),
+          boxShadow: [BoxShadow(color: _wheelOrange.withAlpha(50), blurRadius: 28, spreadRadius: -6)],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -171,10 +208,27 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
                 children: [
+                  // Glow pulsatoriu în spatele roții — mai intens cât timp se
+                  // învârte, ca senzație de "energie/suspans" în plus față de
+                  // rotația în sine.
                   AnimatedBuilder(
                     animation: _spin,
                     builder: (context, _) {
-                      final angle = Curves.easeOutQuint.transform(_spin.value) * _finalAngle;
+                      final pulse = _spinning ? 0.55 + 0.25 * sin(_spin.value * pi * 10) : 0.35;
+                      return Container(
+                        width: 250,
+                        height: 250,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [BoxShadow(color: _wheelOrange.withAlpha((120 * pulse).round()), blurRadius: 40, spreadRadius: 4)],
+                        ),
+                      );
+                    },
+                  ),
+                  AnimatedBuilder(
+                    animation: _spin,
+                    builder: (context, _) {
+                      final angle = const _SuspenseWheelCurve().transform(_spin.value) * _finalAngle;
                       return Transform.rotate(
                         angle: angle,
                         child: CustomPaint(size: const Size(240, 240), painter: _WheelPainter()),
@@ -188,13 +242,13 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                       decoration: BoxDecoration(
                         color: const Color(0xFF1A1A2E),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white24, width: 3),
+                        border: Border.all(color: _wheelOrangeLight, width: 3),
                       ),
                     ),
                   ),
-                  const Positioned(
+                  Positioned(
                     top: -8,
-                    child: Icon(Icons.arrow_drop_down_rounded, color: Colors.white, size: 44, shadows: [Shadow(color: Colors.black54, blurRadius: 4)]),
+                    child: Icon(Icons.arrow_drop_down_rounded, color: _wheelOrangeLight, size: 44, shadows: const [Shadow(color: Colors.black54, blurRadius: 4)]),
                   ),
                 ],
               ),
@@ -217,14 +271,16 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
               ElevatedButton(
                 onPressed: _spinning ? null : _doSpin,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.coin,
+                  backgroundColor: _wheelOrange,
                   disabledBackgroundColor: Colors.white24,
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: _spinning ? 0 : 6,
+                  shadowColor: _wheelOrange,
                 ),
                 child: Text(
                   _spinning ? 'Se învârte...' : 'ÎNVÂRTE',
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
                 ),
               ),
           ],
@@ -280,11 +336,15 @@ class _WheelPainter extends CustomPainter {
     for (var i = 0; i < _prizes.length; i++) {
       final prize = _prizes[i];
       final startAngle = -pi / 2 + i * segmentAngle;
-      final fill = Paint()..color = prize.color.withAlpha(i.isEven ? 215 : 160);
+      // cadranul roții e portocaliu (alternând două nuanțe) — jackpot-ul
+      // (24h) iese în evidență cu o nuanță mai închisă/distinctă, restul
+      // cadranelor doar alternează, culoarea premiului rămâne doar pe icon.
+      final wedgeColor = prize.unlimitedLives != null ? _wheelOrangeDeep : (i.isEven ? _wheelOrange : _wheelOrangeLight);
+      final fill = Paint()..color = wedgeColor;
       canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, segmentAngle, true, fill);
 
       final line = Paint()
-        ..color = Colors.black38
+        ..color = Colors.white.withAlpha(70)
         ..strokeWidth = 2;
       canvas.drawLine(center, center + Offset(cos(startAngle), sin(startAngle)) * radius, line);
 
@@ -298,7 +358,7 @@ class _WheelPainter extends CustomPainter {
     canvas.drawCircle(center, radius, Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 4
-      ..color = Colors.white24);
+      ..color = _wheelOrangeLight);
   }
 
   void _paintText(Canvas canvas, String text, String? fontFamily, String? fontPackage, Offset pos, double size, Color color, {bool bold = false}) {
@@ -320,4 +380,27 @@ class _WheelPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Curbă în două faze, pentru senzația de suspans a unei roți fizice: viteză
+/// mare, aproape constantă, pe primii [_split] din timp (nu se poate ghici
+/// nimic încă — trece prin majoritatea cadranelor), urmată de o decelerare
+/// accentuată ([Curves.easeOutQuint]) pe restul timpului, unde roata
+/// încetinește vizibil și "ezită" tot mai aproape de rezultat.
+class _SuspenseWheelCurve extends Curve {
+  const _SuspenseWheelCurve();
+
+  static const double _split = 0.55;
+  static const double _splitValue = 0.72;
+
+  @override
+  double transform(double t) {
+    if (t <= _split) {
+      final local = (t / _split).clamp(0.0, 1.0);
+      return _splitValue * Curves.easeIn.transform(local);
+    }
+    final local = ((t - _split) / (1 - _split)).clamp(0.0, 1.0);
+    final tail = Curves.easeOutQuint.transform(local);
+    return _splitValue + (1 - _splitValue) * tail;
+  }
 }

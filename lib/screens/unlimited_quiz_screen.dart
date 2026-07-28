@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
+import '../core/quest_bump.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
@@ -78,6 +79,7 @@ class _UnlimitedQuizScreenState extends State<UnlimitedQuizScreen> with SingleTi
       await StorageService.addXp(pts);
       await StorageService.addAnsweredId(_current.id);
       await StorageService.incrementDailyCounter('unlimited_correct');
+      if (mounted) await bumpQuestMetric(context, 'unlimited_quiz_correct', 1);
     } else {
       _shakeController.forward(from: 0);
     }

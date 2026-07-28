@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../core/audio.dart';
 import '../core/progression.dart';
+import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
-import '../widgets/coin_reward_overlay.dart';
 import '../widgets/level_header.dart';
 
 /// Realizări permanente — spre deosebire de Quests (zilnic), progresul aici
@@ -18,6 +17,10 @@ class AchievementsScreen extends StatefulWidget {
 class _AchievementsScreenState extends State<AchievementsScreen> {
   late Future<_AchievementsData> _dataFuture;
   final GlobalKey _coinBadgeKey = GlobalKey();
+  final GlobalKey _xpBadgeKey = GlobalKey();
+  final GlobalKey _livesBadgeKey = GlobalKey();
+  final GlobalKey _hintsBadgeKey = GlobalKey();
+  final GlobalKey _gemsBadgeKey = GlobalKey();
 
   @override
   void initState() {
@@ -30,18 +33,22 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       StorageService.getXp(),
       StorageService.getCoins(),
       StorageService.getLives(),
+      StorageService.getHints(),
+      StorageService.getGems(),
       StorageService.getAnsweredIds(),
       StorageService.getModesEverPlayed(),
       StorageService.getHintsUsedTotal(),
       StorageService.getQuestsClaimedTotal(),
       StorageService.getDailyChallengesTotal(),
+      StorageService.getStarterPackBought(),
     ]);
     final xp = results[0] as int;
-    final answeredCount = (results[3] as Set<String>).length;
-    final modesPlayed = (results[4] as Set<String>).length;
-    final hintsUsed = results[5] as int;
-    final questsClaimed = results[6] as int;
-    final dailyChallenges = results[7] as int;
+    final answeredCount = (results[5] as Set<String>).length;
+    final modesPlayed = (results[6] as Set<String>).length;
+    final hintsUsed = results[7] as int;
+    final questsClaimed = results[8] as int;
+    final dailyChallenges = results[9] as int;
+    final starterPackBought = results[10] as bool;
     final level = levelForXp(xp);
 
     final progress = <String, int>{};
@@ -54,6 +61,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         'hints_50' => hintsUsed,
         'quests_25' => questsClaimed,
         'daily_10' => dailyChallenges,
+        'starter_pack_bought' => starterPackBought ? 1 : 0,
         _ => 0,
       };
       claimed[a.id] = await StorageService.isAchievementClaimed(a.id);
@@ -63,34 +71,50 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       xp: xp,
       coins: results[1] as int,
       lives: results[2] as int,
+      hints: results[3] as int,
+      gems: results[4] as int,
       progress: progress,
       claimed: claimed,
     );
   }
 
   Future<void> _claim(Achievement a) async {
-    await StorageService.claimAchievement(a);
+    await StorageService.claimAchievement(a.id);
     if (!mounted) return;
-    final refreshed = await _load();
+    // vezi quests_screen.dart — Future.value cu date deja cunoscute, NICIODATĂ
+    // un Future încă nerezolvat, ca pastilele de hints/gems să nu dispară
+    // (LevelHeader le ascunde când valoarea e null) chiar când animația le
+    // caută poziția.
+    final current = await _dataFuture;
     if (!mounted) return;
     setState(() {
       _dataFuture = Future.value(_AchievementsData(
-        xp: refreshed.xp,
-        coins: refreshed.coins - a.coinReward,
-        lives: refreshed.lives,
-        progress: refreshed.progress,
-        claimed: refreshed.claimed,
+        xp: current.xp,
+        coins: current.coins,
+        lives: current.lives,
+        hints: current.hints,
+        gems: current.gems,
+        progress: current.progress,
+        claimed: Map<String, bool>.of(current.claimed)..[a.id] = true,
       ));
     });
-    Sfx.rewardPop();
-    CoinRewardOverlay.show(
+    await collectRewards(
       context,
-      amount: a.coinReward,
-      targetKey: _coinBadgeKey,
-      onImpact: () {
-        Sfx.coinHit();
-        if (!mounted) return;
-        setState(() { _dataFuture = Future.value(refreshed); });
+      coins: a.coinReward,
+      xp: a.xpReward,
+      lives: a.heartReward,
+      hints: a.hintReward,
+      hintsBadgeKey: _hintsBadgeKey,
+      gems: a.gemReward,
+      gemsBadgeKey: _gemsBadgeKey,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: _xpBadgeKey,
+      livesBadgeKey: _livesBadgeKey,
+      onEachImpact: () {
+        _load().then((refreshed) {
+          if (!mounted) return;
+          setState(() => _dataFuture = Future.value(refreshed));
+        });
       },
     );
   }
@@ -125,7 +149,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     xp: data?.xp ?? 0,
                     coins: data?.coins ?? 0,
                     lives: data?.lives ?? 5,
+                    hints: data?.hints,
+                    gems: data?.gems,
                     coinBadgeKey: _coinBadgeKey,
+                    xpBadgeKey: _xpBadgeKey,
+                    livesBadgeKey: _livesBadgeKey,
+                    hintsBadgeKey: _hintsBadgeKey,
+                    gemsBadgeKey: _gemsBadgeKey,
                   ),
                 ),
                 const Padding(
@@ -169,9 +199,19 @@ class _AchievementsData {
   final int xp;
   final int coins;
   final int lives;
+  final int hints;
+  final int gems;
   final Map<String, int> progress;
   final Map<String, bool> claimed;
-  _AchievementsData({required this.xp, required this.coins, required this.lives, required this.progress, required this.claimed});
+  _AchievementsData({
+    required this.xp,
+    required this.coins,
+    required this.lives,
+    required this.hints,
+    required this.gems,
+    required this.progress,
+    required this.claimed,
+  });
 }
 
 class _AchievementCard extends StatelessWidget {
@@ -227,9 +267,15 @@ class _AchievementCard extends StatelessWidget {
                     valueColor: AlwaysStoppedAnimation(claimed ? AppColors.success : AppColors.orange),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text('$progress / ${achievement.target}  •  +${achievement.coinReward} monede, +${achievement.xpReward} XP',
-                    style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text('$progress / ${achievement.target}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _RewardChips(achievement: achievement)),
+                  ],
+                ),
               ],
             ),
           ),
@@ -250,6 +296,37 @@ class _AchievementCard extends StatelessWidget {
             const Icon(Icons.lock_clock_rounded, color: Colors.white24, size: 22),
         ],
       ),
+    );
+  }
+}
+
+/// Rândul de recompense al unei realizări — vezi _RewardChips din
+/// quests_screen.dart (același concept, duplicat aici fiindcă layout-ul
+/// cardului diferă ușor și nu merită un widget comun pentru atât de puțin).
+class _RewardChips extends StatelessWidget {
+  final Achievement achievement;
+  const _RewardChips({required this.achievement});
+
+  @override
+  Widget build(BuildContext context) {
+    final chips = <Widget>[
+      if (achievement.xpReward > 0) _chip(Icons.star_rounded, AppColors.purple, achievement.xpReward),
+      if (achievement.coinReward > 0) _chip(Icons.monetization_on_rounded, AppColors.coin, achievement.coinReward),
+      if (achievement.gemReward > 0) _chip(Icons.diamond_rounded, AppColors.gem, achievement.gemReward),
+      if (achievement.heartReward > 0) _chip(Icons.favorite_rounded, AppColors.life, achievement.heartReward),
+      if (achievement.hintReward > 0) _chip(Icons.tips_and_updates_rounded, AppColors.hint, achievement.hintReward),
+    ];
+    return Wrap(alignment: WrapAlignment.end, spacing: 8, runSpacing: 3, children: chips);
+  }
+
+  Widget _chip(IconData icon, Color color, int amount) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 11),
+        const SizedBox(width: 2),
+        Text('$amount', style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700)),
+      ],
     );
   }
 }

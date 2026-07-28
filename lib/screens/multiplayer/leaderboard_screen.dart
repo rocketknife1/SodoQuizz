@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/gamemodes.dart';
 import '../../core/theme.dart';
+import '../../data/higher_lower_data.dart';
 import '../../data/storage_service.dart';
 import '../../widgets/level_header.dart';
 
@@ -98,6 +99,15 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         const SizedBox(height: 18),
                         const Text('Puncte pe categorie (ciclul curent)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
+                        // Higher or Lower nu face parte din gameModes (altă
+                        // mecanică, fără poze/blur) — rândul lui e adăugat
+                        // manual, nu prin bucla de mai jos.
+                        _ModeScoreRow(
+                          color: AppColors.purple,
+                          icon: Icons.swap_vert_rounded,
+                          title: 'Higher or Lower',
+                          score: data.points[higherLowerModeId] ?? 0,
+                        ),
                         for (final m in gameModes.where((m) => !m.locked))
                           _ModeScoreRow(color: m.accentColor, icon: m.icon, title: m.title, score: data.points[m.id] ?? 0),
                         const SizedBox(height: 20),

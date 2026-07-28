@@ -76,23 +76,6 @@
           "imagine_sursa": "wikipedia"
         },
         {
-          "id": "rom_005",
-          "raspuns": "ARCUL DE TRIUMF",
-          "variante": [
-            "ARCUL DE TRIUMF",
-            "ATENEUL ROMAN",
-            "PODUL MINCIUNILOR",
-            "TURNUL CHINDIEI"
-          ],
-          "hint_1": "Monument din nordul Bucureștiului",
-          "hint_2": "Inspirat de cel din Paris",
-          "hint_3": "Parada de 1 Decembrie trece pe sub el",
-          "dificultate": "mediu",
-          "puncte_max": 400,
-          "imagine_cautare": "Arcul de Triumf",
-          "imagine_sursa": "wikipedia"
-        },
-        {
           "id": "rom_006",
           "raspuns": "TRANSFAGARASAN",
           "variante": [

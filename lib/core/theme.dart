@@ -22,6 +22,7 @@ class AppColors {
   static const coin = Color(0xFFFFD700);
   static const life = Color(0xFFE24B4A);
   static const hint = Color(0xFFFFD54F);
+  static const gem = Color(0xFF5EC8F2);
   static const success = Color(0xFF1D9E75);
   static const danger = Color(0xFFE24B4A);
 

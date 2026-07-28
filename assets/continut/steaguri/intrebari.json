@@ -1500,6 +1500,186 @@
           "puncte_max": 200,
           "imagine_cautare": "Flag of Vatican City",
           "imagine_sursa": "wikimedia"
+        },
+        {
+          "id": "stg_089",
+          "raspuns": "PARAGUAY",
+          "variante": [
+            "PARAGUAY",
+            "URUGUAY",
+            "BOLIVIA",
+            "ARGENTINA"
+          ],
+          "hint_1": "Este una dintre cele două țări din America de Sud fără ieșire la mare, alături de Bolivia",
+          "hint_2": "Are frontiere cu Brazilia, Argentina și Bolivia",
+          "hint_3": "Capitala e Asuncion",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_090",
+          "raspuns": "BOLIVIA",
+          "variante": [
+            "BOLIVIA",
+            "PERU",
+            "ECUADOR",
+            "COLUMBIA"
+          ],
+          "hint_1": "Este cealaltă țară din America de Sud fără ieșire la mare",
+          "hint_2": "Are două capitale: Sucre (constituțională) și La Paz (sediul guvernului)",
+          "hint_3": "La Paz e cea mai înaltă capitală de guvern din lume",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_091",
+          "raspuns": "GUATEMALA",
+          "variante": [
+            "GUATEMALA",
+            "HONDURAS",
+            "EL SALVADOR",
+            "MEXIC"
+          ],
+          "hint_1": "Este cea mai populată țară din America Centrală",
+          "hint_2": "Aici se află ruinele antice ale civilizației maya, la Tikal",
+          "hint_3": "Capitala se numește Ciudad de Guatemala",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_092",
+          "raspuns": "REPUBLICA DOMINICANA",
+          "variante": [
+            "REPUBLICA DOMINICANA",
+            "HAITI",
+            "CUBA",
+            "JAMAICA"
+          ],
+          "hint_1": "Împarte o insulă din Caraibe cu Haiti",
+          "hint_2": "Baseball-ul e cel mai popular sport aici",
+          "hint_3": "Capitala e Santo Domingo",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_093",
+          "raspuns": "MYANMAR",
+          "variante": [
+            "MYANMAR",
+            "THAILANDA",
+            "LAOS",
+            "VIETNAM"
+          ],
+          "hint_1": "Fostul ei nume, folosit mult timp internațional, era Birmania",
+          "hint_2": "Este cea mai mare țară din Asia de Sud-Est ca suprafață",
+          "hint_3": "Capitala oficială e Naypyidaw, nu fostul oraș principal Rangoon",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_094",
+          "raspuns": "BANGLADESH",
+          "variante": [
+            "BANGLADESH",
+            "INDIA",
+            "PAKISTAN",
+            "SRI LANKA"
+          ],
+          "hint_1": "Este una dintre cele mai dens populate țări din lume",
+          "hint_2": "Marea majoritate a teritoriului e formată din delta a două fluvii uriașe, Gange și Brahmaputra",
+          "hint_3": "Capitala e Dhaka",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_095",
+          "raspuns": "IRAK",
+          "variante": [
+            "IRAK",
+            "IRAN",
+            "SIRIA",
+            "ARABIA SAUDITA"
+          ],
+          "hint_1": "Pe teritoriul ei se aflau odinioară Babilonul și alte orașe ale Mesopotamiei antice",
+          "hint_2": "Fluviile Tigru și Eufrat traversează această țară",
+          "hint_3": "Capitala e Bagdad",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_096",
+          "raspuns": "QATAR",
+          "variante": [
+            "QATAR",
+            "BAHRAIN",
+            "EMIRATELE ARABE UNITE",
+            "ARABIA SAUDITA"
+          ],
+          "hint_1": "E una dintre cele mai bogate țări din lume, datorită exporturilor de gaz natural",
+          "hint_2": "A găzduit Campionatul Mondial de Fotbal în 2022",
+          "hint_3": "Capitala e Doha",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_097",
+          "raspuns": "ALGERIA",
+          "variante": [
+            "ALGERIA",
+            "MAROC",
+            "TUNISIA",
+            "LIBIA"
+          ],
+          "hint_1": "Este cea mai mare țară ca suprafață de pe continentul african",
+          "hint_2": "Marea parte a teritoriului e acoperită de deșertul Sahara",
+          "hint_3": "Capitala e Alger",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_098",
+          "raspuns": "TANZANIA",
+          "variante": [
+            "TANZANIA",
+            "KENYA",
+            "UGANDA",
+            "ETIOPIA"
+          ],
+          "hint_1": "Aici se află Muntele Kilimanjaro, cel mai înalt vârf din Africa",
+          "hint_2": "Include și arhipelagul Zanzibar, cunoscut pentru mirodenii",
+          "hint_3": "Safariurile din Serengeti sunt una dintre atracțiile turistice principale",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_099",
+          "raspuns": "SENEGAL",
+          "variante": [
+            "SENEGAL",
+            "MALI",
+            "GHANA",
+            "NIGERIA"
+          ],
+          "hint_1": "Este cea mai vestică țară de pe continentul african",
+          "hint_2": "Lupta tradițională senegaleză este un sport național foarte popular",
+          "hint_3": "Capitala e Dakar",
+          "dificultate": "mediu",
+          "puncte_max": 200
+        },
+        {
+          "id": "stg_100",
+          "raspuns": "FIJI",
+          "variante": [
+            "FIJI",
+            "NOUA ZEELANDA",
+            "AUSTRALIA",
+            "PAPUA NOUA GUINEE"
+          ],
+          "hint_1": "Este un arhipelag format din peste 300 de insule în Oceanul Pacific",
+          "hint_2": "Rugby-ul e sportul cu cea mai mare popularitate aici",
+          "hint_3": "Este cunoscută pentru plaje și recife de corali",
+          "dificultate": "usor",
+          "puncte_max": 200
         }
       ]
     }

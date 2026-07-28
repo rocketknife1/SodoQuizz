@@ -117,7 +117,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
                 child: Stack(
                   children: [
                     barCore,
-                    Positioned.fill(child: CustomPaint(painter: _EnergyWavePainter(phase: _wave.value))),
+                    Positioned.fill(child: CustomPaint(painter: _EnergyWavePainter(phase: _wave.value, pulse: _pulse.value))),
                   ],
                 ),
               ),
@@ -271,28 +271,39 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
 }
 
 /// Linie de "energie" (traiectorie sinusoidală, fază animată continuu) care
-/// traversează bara plină cât timp e claimable — un glow alb dedesubt și un
-/// fir colorat deasupra, ca un curent electric care circulă prin bară.
+/// traversează bara plină cât timp e claimable — un glow alb dedesubt, un
+/// fir auriu deasupra (ca un curent electric care circulă prin bară), și
+/// peste tot asta, 2 "vene" albastre, cu fază/lungime de undă diferite (ca
+/// să se încrucișeze cu firul auriu, nu să-l dubleze), a căror opacitate
+/// pulsează în ritm cu [pulse] (aceeași "respirație" ca glow-ul din jurul
+/// barei) — un contrast electric-albastru peste galben, nu doar o linie în
+/// plus.
 class _EnergyWavePainter extends CustomPainter {
   final double phase;
-  const _EnergyWavePainter({required this.phase});
+  final double pulse;
+  const _EnergyWavePainter({required this.phase, required this.pulse});
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (size.width <= 0 || size.height <= 0) return;
+  Path _wavePath(Size size, double waveLength, double amp, double phaseOffset) {
     final midY = size.height / 2;
-    final amp = size.height * 0.34;
-    final waveLength = size.height * 9;
-
     final path = Path();
     for (double x = 0; x <= size.width; x += 3) {
-      final y = midY + sin((x / waveLength) * 2 * pi + phase * 2 * pi) * amp;
+      final y = midY + sin((x / waveLength) * 2 * pi + (phase + phaseOffset) * 2 * pi) * amp;
       if (x == 0) {
         path.moveTo(x, y);
       } else {
         path.lineTo(x, y);
       }
     }
+    return path;
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0 || size.height <= 0) return;
+    final amp = size.height * 0.34;
+    final waveLength = size.height * 9;
+
+    final path = _wavePath(size, waveLength, amp, 0);
 
     canvas.drawPath(
       path,
@@ -309,8 +320,50 @@ class _EnergyWavePainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.1,
     );
+
+    // vene albastre pulsatile — respiră între 0.35 și 1.0 alpha, în ritm cu
+    // [pulse] (0..1), cu o mică defazare între ele ca pulsul să pară
+    // "curgător", nu sincron perfect.
+    final veinGlow1 = 0.35 + ((sin(pulse * pi)).abs()) * 0.65;
+    final veinGlow2 = 0.35 + ((sin(pulse * pi + 0.9)).abs()) * 0.65;
+    const veinBlue = Color(0xFF2F8CFF);
+
+    final vein1 = _wavePath(size, waveLength * 1.15, amp * 1.05, 0.33);
+    canvas.drawPath(
+      vein1,
+      Paint()
+        ..color = veinBlue.withAlpha((90 * veinGlow1).round())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.4
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3.0),
+    );
+    canvas.drawPath(
+      vein1,
+      Paint()
+        ..color = veinBlue.withAlpha((235 * veinGlow1).round())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0,
+    );
+
+    final vein2 = _wavePath(size, waveLength * 0.6, amp * 0.8, 0.68);
+    canvas.drawPath(
+      vein2,
+      Paint()
+        ..color = veinBlue.withAlpha((80 * veinGlow2).round())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.8
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.4),
+    );
+    canvas.drawPath(
+      vein2,
+      Paint()
+        ..color = veinBlue.withAlpha((200 * veinGlow2).round())
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9,
+    );
   }
 
   @override
-  bool shouldRepaint(covariant _EnergyWavePainter oldDelegate) => oldDelegate.phase != phase;
+  bool shouldRepaint(covariant _EnergyWavePainter oldDelegate) =>
+      oldDelegate.phase != phase || oldDelegate.pulse != pulse;
 }

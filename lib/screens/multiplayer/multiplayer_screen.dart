@@ -3,6 +3,7 @@ import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/storage_service.dart';
+import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/solid_menu_button.dart';
 import 'matchmaking_screen.dart';
@@ -76,6 +77,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
 
   Future<void> _createRoom() async {
     if (_busy) return;
+    final gameMode = await _pickGameMode();
+    if (gameMode == null || !mounted) return;
     setState(() => _busy = true);
     try {
       // identitate proaspătă, nu starea din câmp — dacă userul apasă chiar
@@ -85,7 +88,11 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       // Firestore (scrisă o singură dată, la creare — vezi bug-ul cu poza
       // de Google lipsă la un jucător logat).
       final identity = await AuthService.instance.multiplayerIdentity();
-      final info = await MultiplayerService.instance.createRoom(displayName: identity.name, photoUrl: identity.photoUrl);
+      final info = await MultiplayerService.instance.createRoom(
+        displayName: identity.name,
+        photoUrl: identity.photoUrl,
+        gameMode: gameMode,
+      );
       if (!mounted) return;
       await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true)));
     } catch (e) {
@@ -93,6 +100,42 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// Alegerea modului de joc pentru camera nou creată — vezi
+  /// [MatchGameMode]. Dialogul urmează stilul celorlalte din acest ecran
+  /// (fundal 0xFF1a1a2e).
+  Future<MatchGameMode?> _pickGameMode() {
+    return showDialog<MatchGameMode>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        title: const Text('Alege modul de joc', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _GameModeOption(
+              icon: Icons.quiz_rounded,
+              label: 'Clasic',
+              subtitle: 'Fiecare răspunde în ritmul lui',
+              color: AppColors.blue,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.classic),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.compare_arrows_rounded,
+              label: 'Higher & Lower',
+              subtitle: 'Voturi secrete, eliminare progresivă',
+              color: AppColors.danger,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.higherLower),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+        ],
+      ),
+    );
   }
 
   Future<void> _joinOnline() async {
@@ -217,6 +260,61 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
                       ],
                     ),
                   ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// O opțiune din dialogul de alegere a modului de joc — buton lat cu
+/// icon+titlu+subtitlu, colorat pe tema modului (albastru pentru Clasic,
+/// roșu pentru Higher & Lower).
+class _GameModeOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _GameModeOption({
+    required this.icon,
+    required this.label,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withAlpha(30),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: color.withAlpha(140)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(label, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                    Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
+                  ],
                 ),
               ),
             ],

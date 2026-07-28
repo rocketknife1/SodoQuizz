@@ -8,57 +8,6 @@
       "descriere": "Bolizi & branduri auto",
       "intrebari": [
         {
-          "id": "mas_001",
-          "raspuns": "FERRARI",
-          "variante": [
-            "FERRARI",
-            "LAMBORGHINI",
-            "MASERATI",
-            "ALFA ROMEO"
-          ],
-          "hint_1": "Cal cabrat negru pe siglă",
-          "hint_2": "Fondată de Enzo în 1939",
-          "hint_3": "Bolizi roșii din Maranello",
-          "dificultate": "usor",
-          "puncte_max": 200,
-          "imagine_cautare": "Ferrari",
-          "imagine_sursa": "wikipedia"
-        },
-        {
-          "id": "mas_002",
-          "raspuns": "LAMBORGHINI",
-          "variante": [
-            "LAMBORGHINI",
-            "FERRARI",
-            "BUGATTI",
-            "MCLAREN"
-          ],
-          "hint_1": "Taur auriu pe siglă",
-          "hint_2": "Fondatorul făcea tractoare la început",
-          "hint_3": "Aventador și Huracán",
-          "dificultate": "usor",
-          "puncte_max": 200,
-          "imagine_cautare": "Lamborghini",
-          "imagine_sursa": "wikipedia"
-        },
-        {
-          "id": "mas_003",
-          "raspuns": "PORSCHE",
-          "variante": [
-            "PORSCHE",
-            "AUDI",
-            "BMW",
-            "MERCEDES"
-          ],
-          "hint_1": "Siglă cu cal negru, din Stuttgart",
-          "hint_2": "Celebrul model 911",
-          "hint_3": "Marcă germană de mașini sport",
-          "dificultate": "usor",
-          "puncte_max": 200,
-          "imagine_cautare": "Porsche",
-          "imagine_sursa": "wikipedia"
-        },
-        {
           "id": "mas_004",
           "raspuns": "BUGATTI",
           "variante": [

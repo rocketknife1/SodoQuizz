@@ -1028,23 +1028,6 @@
           "imagine_sursa": "wikimedia"
         },
         {
-          "raspuns": "SPOTIFY",
-          "variante": [
-            "SPOTIFY",
-            "APPLE MUSIC",
-            "DEEZER",
-            "TIDAL"
-          ],
-          "hint_1": "Cea mai populară aplicație de streaming muzical",
-          "hint_2": "Logo verde cu unde de sunet",
-          "hint_3": "Are 'Wrapped' la final de an",
-          "dificultate": "usor",
-          "puncte_max": 200,
-          "id": "apl_061",
-          "imagine_cautare": "Spotify app icon",
-          "imagine_sursa": "wikimedia"
-        },
-        {
           "raspuns": "TIDAL",
           "variante": [
             "TIDAL",

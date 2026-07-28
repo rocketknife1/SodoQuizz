@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
+import '../widgets/intro_tutorial_dialog.dart';
 import '../widgets/level_header.dart';
 import '../widgets/mascots/discord_mascot.dart';
 import '../widgets/mascots/paperclip_mascot.dart';
@@ -39,6 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _dataFuture = _loadData();
     _checkStreakMilestones();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) IntroTutorialDialog.maybeShow(context);
+    });
   }
 
   Future<_HomeData> _loadData() async {
@@ -100,6 +105,8 @@ class _HomeScreenState extends State<HomeScreen> {
       onEachImpact: _refresh,
     );
     if (!mounted) return;
+    await bumpQuestMetric(context, 'level_reward_claimed', 1);
+    if (!mounted) return;
     _refresh();
   }
 
@@ -130,31 +137,40 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SpaceBackground(
-        child: SafeArea(
-          child: Stack(
-            children: [
-              FutureBuilder<_HomeData>(
-                future: _dataFuture,
-                builder: (context, snapshot) {
-                  final data = snapshot.data;
+    // HomeScreen e mereu ruta de bază (root) a Navigator-ului — fără acest
+    // PopScope, un back în plus (ex. 4 tap-uri de back în loc de 2, din
+    // greșeală) ar ieși direct din aplicație. Cu canPop: false, back-ul e
+    // pur și simplu absorbit aici: navigarea normală prin ecranele împinse
+    // deasupra (Categorii, Setări, Joc etc.) rămâne neschimbată, dar odată
+    // ajuns pe Home, niciun back suplimentar nu mai poate închide jocul.
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SpaceBackground(
+          child: SafeArea(
+            child: Stack(
+              children: [
+                FutureBuilder<_HomeData>(
+                  future: _dataFuture,
+                  builder: (context, snapshot) {
+                    final data = snapshot.data;
 
-                  return _buildContent(context, data);
-                },
-              ),
-              // mascote plutind peste fundalul gol — nu ocupă spațiu din
-              // layout; ambele au și o funcție reală (roata norocului /
-              // bonusul cu întrebări), de-asta reîmprospătează header-ul.
-              Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
-              Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
-              const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
-            ],
+                    return _buildContent(context, data);
+                  },
+                ),
+                // mascote plutind peste fundalul gol — nu ocupă spațiu din
+                // layout; ambele au și o funcție reală (roata norocului /
+                // bonusul cu întrebări), de-asta reîmprospătează header-ul.
+                Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
+                Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
+                const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
+              ],
+            ),
           ),
         ),
+        bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.home),
       ),
-      bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.home),
     );
   }
 
@@ -163,6 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
       child: Column(
         children: [
+          _buildLogo(),
+          const SizedBox(height: 4),
           LevelHeader(
             xp: data?.xp ?? 0,
             coins: data?.coins ?? 0,
@@ -188,8 +206,6 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 6),
             _buildStreakChip(data!.streak),
           ],
-          const SizedBox(height: 8),
-          _buildLogo(),
           const SizedBox(height: 10),
           // butoanele meniului (stânga, mai înguste, banner-uri compacte) +
           // panoul interactiv de Cultură Generală (dreapta, mai lat) — fără

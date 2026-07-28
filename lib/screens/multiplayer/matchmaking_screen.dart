@@ -215,7 +215,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
         final rooms = snap.data ?? const <MatchInfo>[];
         if (rooms.isEmpty) return const SizedBox.shrink();
         return SizedBox(
-          height: 64,
+          // 64 ajungea exact pentru avatar+nume; pastila roșie "H&L" adaugă
+          // un rând în plus deasupra avatarului, care altfel dă overflow.
+          height: 80,
           width: 260,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -237,6 +239,13 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              if (room.gameMode == MatchGameMode.higherLower)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 2),
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(6)),
+                  child: const Text('H&L', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800)),
+                ),
               Avatar(
                 size: 40,
                 label: (room.hostName?.isNotEmpty ?? false) ? room.hostName![0].toUpperCase() : '?',

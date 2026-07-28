@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/theme.dart';
 
 /// Card orizontal, lat cât ecranul, pentru o categorie (gamemod) — planetă
 /// texturată în stânga (inel înclinat + luciu + suprafață pictată), titlu +
@@ -17,6 +18,17 @@ class CategoryCard extends StatelessWidget {
   final bool locked;
   final VoidCallback onTap;
 
+  /// Textul de sub titlu — calculat de apelant (categories_screen.dart), nu
+  /// aici, fiindcă motivul blocării (conținut inexistent încă vs. blocat cu
+  /// Gems) și starea de progres (jucate/deblocate/total) depind de context
+  /// pe care doar apelantul îl are complet.
+  final String subtitle;
+
+  /// Preț (Gems) pentru următoarea treaptă de upgrade — null dacă nu mai e
+  /// nimic de deblocat (tier maxim atins sau categorie complet deblocată).
+  final int? upgradePrice;
+  final VoidCallback? onUpgrade;
+
   const CategoryCard({
     super.key,
     required this.index,
@@ -26,7 +38,10 @@ class CategoryCard extends StatelessWidget {
     required this.answered,
     required this.color,
     required this.onTap,
+    required this.subtitle,
     this.locked = false,
+    this.upgradePrice,
+    this.onUpgrade,
   });
 
   double get _pct => totalQuestions > 0 ? (answered / totalQuestions).clamp(0.0, 1.0) : 0.0;
@@ -75,11 +90,15 @@ class CategoryCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    locked ? 'Termină mai multe categorii ca s-o deblochezi' : '$answered/$totalQuestions întrebări',
+                    subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600),
                   ),
+                  if (upgradePrice != null && onUpgrade != null) ...[
+                    const SizedBox(height: 6),
+                    _UpgradeChip(price: upgradePrice!, locked: locked, onTap: onUpgrade!),
+                  ],
                 ],
               ),
             ),
@@ -214,7 +233,9 @@ class _Planet extends StatelessWidget {
                         _shade(color, -0.20, 0.10),
                         _shade(color, -0.34, 0.10),
                       ],
-                stops: const [0.0, 0.28, 0.55, 0.8, 1.0],
+                // stops trebuie să aibă mereu aceeași lungime ca [colors] —
+                // varianta locked are doar 3 culori, nu 5 (vezi mai sus).
+                stops: locked ? const [0.0, 0.5, 1.0] : const [0.0, 0.28, 0.55, 0.8, 1.0],
               ),
               border: Border.all(color: locked ? Colors.white24 : _shade(color, -0.32, 0.1), width: 1.3),
               boxShadow: locked
@@ -289,4 +310,47 @@ class _PlanetSurfacePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _PlanetSurfacePainter oldDelegate) => oldDelegate.seed != seed || oldDelegate.base != base;
+}
+
+/// Buton compact "Upgrade" cu preț în Gems — Material+InkWell (nu un simplu
+/// GestureDetector) ca tap-ul lui să nu se propage și către [onTap]-ul
+/// cardului părinte, care e mult mai mare.
+class _UpgradeChip extends StatelessWidget {
+  final int price;
+  final bool locked;
+  final VoidCallback onTap;
+
+  const _UpgradeChip({required this.price, required this.locked, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.gem.withAlpha(45),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.gem.withAlpha(150)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                locked ? 'DEBLOCHEAZĂ' : 'UPGRADE',
+                style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+              ),
+              const SizedBox(width: 5),
+              const Icon(Icons.diamond_rounded, color: AppColors.gem, size: 12),
+              const SizedBox(width: 2),
+              Text('$price', style: const TextStyle(color: AppColors.gem, fontSize: 11, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
