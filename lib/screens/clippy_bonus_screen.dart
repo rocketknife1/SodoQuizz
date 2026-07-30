@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
@@ -48,6 +49,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
   int _livesEarned = 0;
   bool _collecting = false;
   bool _collected = false;
+  Timer? _autoCollectTimer;
 
   final _coinBadgeKey = GlobalKey();
   final _xpBadgeKey = GlobalKey();
@@ -59,6 +61,12 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
     Future.delayed(const Duration(milliseconds: 1900), () {
       if (mounted && _phase == _ClippyPhase.intro) _loadQuestions();
     });
+  }
+
+  @override
+  void dispose() {
+    _autoCollectTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadQuestions() async {
@@ -109,6 +117,14 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
         if (perfect) _livesEarned = clippyPerfectBonusLives;
         _phase = _ClippyPhase.finished;
       });
+      // plasă de siguranță: dacă userul iese din aplicație pe ecranul de
+      // recompensă fără să apese COLECTEAZĂ, recompensa tot se aplică după
+      // 10s — la fel ca la Cultură Generală (vezi _autoCollectFinalRound din
+      // culture_quiz_panel.dart), ca să nu rămână niciodată nerevendicată.
+      _autoCollectTimer?.cancel();
+      _autoCollectTimer = Timer(const Duration(seconds: 10), () {
+        if (mounted && !_collecting && !_collected) _collect();
+      });
       if (mounted) await bumpQuestMetric(context, 'clippy_done', 1);
       if (perfect && mounted) await bumpQuestMetric(context, 'clippy_perfect', 1);
     } else {
@@ -121,7 +137,8 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
   }
 
   Future<void> _collect() async {
-    if (_collecting) return;
+    if (_collecting || _collected) return;
+    _autoCollectTimer?.cancel();
     setState(() => _collecting = true);
     await collectRewards(
       context,

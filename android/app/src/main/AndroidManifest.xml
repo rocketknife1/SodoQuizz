@@ -3,7 +3,8 @@
     <application
         android:label="Sodo Quizz"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -31,12 +32,10 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- AdMob App ID - momentan ID-ul PUBLIC DE TEST al Google (sigur de
-             folosit, nu genereaza incasari reale). Cand exista cont AdMob
-             real, inlocuieste-l cu App ID-ul propriu din consola AdMob. -->
+        <!-- AdMob App ID real, din consola AdMob (app "Sodo Quizz"). -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-7925849908413802~7115439770"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

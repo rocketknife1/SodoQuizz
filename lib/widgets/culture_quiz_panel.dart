@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/ads_service.dart';
 import '../core/game_helpers.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
@@ -68,6 +69,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Timer? _cooldownTicker;
   Timer? _autoRecordTimer;
   bool _playRecorded = false;
+  bool _watchingAd = false;
 
   /// Runda curentă (1-based) din fereastra activă — vezi
   /// [StorageService.cultureQuizPlaysInWindow]. Cu [StorageService.cultureQuizPlayLimit]
@@ -133,6 +135,28 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         return;
       }
       setState(() => _cooldownRemaining = next);
+    });
+  }
+
+  /// Reclamă recompensată (sau simulare dacă nu e încărcată — vezi
+  /// [AdsService.watchOrSimulate]) care sare direct peste cooldown-ul de
+  /// [StorageService.cultureQuizWindowMinutes] minute, în loc să aștepți.
+  Future<void> _skipCooldownWithAd() async {
+    if (_watchingAd) return;
+    setState(() => _watchingAd = true);
+    final earned = await AdsService.instance.watchOrSimulate();
+    if (!mounted) return;
+    if (!earned) {
+      setState(() => _watchingAd = false);
+      return;
+    }
+    await StorageService.skipCultureQuizCooldown();
+    if (!mounted) return;
+    _cooldownTicker?.cancel();
+    setState(() {
+      _watchingAd = false;
+      _phase = _Phase.teaser;
+      _cooldownRemaining = null;
     });
   }
 
@@ -360,6 +384,29 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
         const Text('până la următoarea sesiune', style: TextStyle(color: Colors.white38, fontSize: 10)),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _watchingAd ? null : _skipCooldownWithAd,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: _watchingAd ? Colors.white10 : AppColors.coin.withAlpha(35),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: _watchingAd ? Colors.white24 : AppColors.coin),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.smart_display_rounded, size: 14, color: _watchingAd ? Colors.white38 : AppColors.coin),
+                const SizedBox(width: 6),
+                Text(
+                  _watchingAd ? 'Se încarcă reclama...' : 'Reclamă • Sari peste așteptare',
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _watchingAd ? Colors.white38 : AppColors.coin),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

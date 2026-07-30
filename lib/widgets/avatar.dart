@@ -17,6 +17,19 @@ class Avatar extends StatelessWidget {
   final String? photoUrl;
   const Avatar({super.key, this.size = 44, this.label, this.accentColor, this.photoUrl});
 
+  /// Pozele de Google (`...googleusercontent.com/...=s96-c`) vin implicit la
+  /// o rezoluție mică (96px) — se vede pixelat aici, unde poza e afișată la
+  /// [size] puncte logice, supra-scalată încă 1.18× (vezi overscan) și pe un
+  /// ecran cu densitate mare. Cerem explicit o rezoluție proporțională cu ce
+  /// chiar afișăm, în loc să lăsăm Flutter să întindă thumbnail-ul mic.
+  static String _highResUrl(String url, double logicalSize, double devicePixelRatio) {
+    if (!url.contains('googleusercontent.com')) return url;
+    final target = (logicalSize * devicePixelRatio * 1.2).round().clamp(96, 512);
+    final sizeParam = RegExp(r'=s\d+(-c)?$');
+    if (sizeParam.hasMatch(url)) return url.replaceFirst(sizeParam, '=s$target-c');
+    return '$url=s$target-c';
+  }
+
   @override
   Widget build(BuildContext context) {
     final color = accentColor ?? AppColors.purple;
@@ -32,7 +45,10 @@ class Avatar extends StatelessWidget {
     // colturi vizibile la margini (sus/jos/stanga/dreapta) intre poza si
     // marginea cercului.
     Widget overscan(Widget child) => Transform.scale(scale: 1.18, child: child);
-    Widget photo(String url) => overscan(Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
+    Widget photo(String url) {
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      return overscan(Image.network(_highResUrl(url, size, dpr), fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
+    }
     Widget localPhoto() => overscan(Image.asset(userAvatarAsset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
     return Container(
       width: size,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/ads_service.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
@@ -21,6 +22,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   final GlobalKey _livesBadgeKey = GlobalKey();
   final GlobalKey _hintsBadgeKey = GlobalKey();
   final GlobalKey _gemsBadgeKey = GlobalKey();
+
+  /// True cât timp o colectare e în desfășurare — dezactivează toate
+  /// butoanele "Ridică" între timp, ca să nu pornească două animații
+  /// simultan (vezi quests_screen.dart pentru același tipar).
+  bool _claiming = false;
+
+  /// Vezi [_refreshBalances] — o reîncărcare mai veche care se rezolvă mai
+  /// târziu e ignorată dacă între timp a mai pornit una nouă, altfel balanța
+  /// putea rămâne "înghețată" (bug-ul semnalat de user).
+  int _loadSeq = 0;
 
   @override
   void initState() {
@@ -78,7 +89,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Future<void> _claim(Achievement a) async {
+  /// [multiplier] e 2 când vine din "Revendică x2" (vezi [_claimX2]).
+  Future<void> _claim(Achievement a, {int multiplier = 1}) async {
+    if (_claiming) return;
+    setState(() => _claiming = true);
     await StorageService.claimAchievement(a.id);
     if (!mounted) return;
     // vezi quests_screen.dart — Future.value cu date deja cunoscute, NICIODATĂ
@@ -100,23 +114,41 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     });
     await collectRewards(
       context,
-      coins: a.coinReward,
-      xp: a.xpReward,
-      lives: a.heartReward,
-      hints: a.hintReward,
+      coins: a.coinReward * multiplier,
+      xp: a.xpReward * multiplier,
+      lives: a.heartReward * multiplier,
+      hints: a.hintReward * multiplier,
       hintsBadgeKey: _hintsBadgeKey,
-      gems: a.gemReward,
+      gems: a.gemReward * multiplier,
       gemsBadgeKey: _gemsBadgeKey,
       coinBadgeKey: _coinBadgeKey,
       xpBadgeKey: _xpBadgeKey,
       livesBadgeKey: _livesBadgeKey,
-      onEachImpact: () {
-        _load().then((refreshed) {
-          if (!mounted) return;
-          setState(() => _dataFuture = Future.value(refreshed));
-        });
-      },
+      onEachImpact: _refreshBalances,
     );
+    if (!mounted) return;
+    setState(() => _claiming = false);
+  }
+
+  /// Vezi quests_screen.dart._claimX2 — reclamă recompensată (sau simulare)
+  /// care dublează recompensa realizării.
+  Future<void> _claimX2(Achievement a) async {
+    if (_claiming) return;
+    final earned = await AdsService.instance.watchOrSimulate();
+    if (!mounted || !earned) return;
+    await _claim(a, multiplier: 2);
+  }
+
+  /// Vezi quests_screen.dart._refreshBalances — aplică rezultatul DOAR dacă
+  /// nicio altă reîncărcare n-a mai pornit între timp, altfel un răspuns
+  /// vechi ajuns ultimul ar suprascrie unul mai nou și balanța ar părea
+  /// "înghețată" până la următoarea colectare.
+  void _refreshBalances() {
+    final seq = ++_loadSeq;
+    _load().then((refreshed) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _dataFuture = Future.value(refreshed));
+    });
   }
 
   @override
@@ -181,7 +213,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               progress: progress,
                               done: done,
                               claimed: claimed,
+                              disabled: _claiming,
                               onClaim: () => _claim(a),
+                              onClaimX2: () => _claimX2(a),
                             );
                           },
                         ),
@@ -219,14 +253,18 @@ class _AchievementCard extends StatelessWidget {
   final int progress;
   final bool done;
   final bool claimed;
+  final bool disabled;
   final VoidCallback onClaim;
+  final VoidCallback onClaimX2;
 
   const _AchievementCard({
     required this.achievement,
     required this.progress,
     required this.done,
     required this.claimed,
+    this.disabled = false,
     required this.onClaim,
+    required this.onClaimX2,
   });
 
   @override
@@ -283,14 +321,43 @@ class _AchievementCard extends StatelessWidget {
           if (claimed)
             const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
           else if (done)
-            ElevatedButton(
-              onPressed: onClaim,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.play,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Ridică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: disabled ? null : onClaim,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.play,
+                    disabledBackgroundColor: Colors.white24,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Revendică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: disabled ? null : onClaimX2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: disabled ? Colors.white10 : AppColors.coin.withAlpha(35),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: disabled ? Colors.white24 : AppColors.coin),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.smart_display_rounded, size: 12, color: disabled ? Colors.white38 : AppColors.coin),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Revendică x2',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: disabled ? Colors.white38 : AppColors.coin),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             )
           else
             const Icon(Icons.lock_clock_rounded, color: Colors.white24, size: 22),

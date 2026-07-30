@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
@@ -26,7 +27,13 @@ import 'loading_screen.dart';
 /// medical), doar conținutul (întrebări/poze/culori) diferă.
 class GameScreen extends StatefulWidget {
   final String gameModeId;
-  const GameScreen({super.key, required this.gameModeId});
+
+  /// Taxa plătită la intrare (vezi categories_screen.dart._enterCategory) —
+  /// 0 înseamnă sesiune fără taxă, deci fără recompensă/notificare la
+  /// ieșire (vezi _settleExitReward).
+  final int entryFeePaid;
+  const GameScreen(
+      {super.key, required this.gameModeId, this.entryFeePaid = 0});
 
   @override
   State<GameScreen> createState() => _GameScreenState();
@@ -48,17 +55,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool _noBlur = false;
   bool _unlimitedLives = false;
   int _sessionAnswered = 0;
+  int _sessionCorrect = 0;
   int _totalInCategory = 0;
+  bool _exitRewardSettled = false;
   late final AnimationController _shakeController;
 
   GameMode get mode => gameModeById(widget.gameModeId);
-  Question get currentQ =>
-      questions.isNotEmpty ? questions[qIndex] : throw StateError('No questions');
+  Question get currentQ => questions.isNotEmpty
+      ? questions[qIndex]
+      : throw StateError('No questions');
 
   @override
   void initState() {
     super.initState();
-    _shakeController = AnimationController(vsync: this, duration: const Duration(milliseconds: 400));
+    _shakeController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 400));
     _loadQuestions();
   }
 
@@ -85,11 +96,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // sortare deterministă (nu shuffle) ca "primele N" să fie mereu ACELEAȘI
     // întrebări între sesiuni — altfel deblocarea treptată n-ar avea sens
     // (ai vedea alt set de N întrebări de fiecare dată).
-    final forMode = loaded.where((q) => q.categoryId == widget.gameModeId).toList()
+    final forMode = loaded
+        .where((q) => q.categoryId == widget.gameModeId)
+        .toList()
       ..sort((a, b) => a.id.compareTo(b.id));
-    final unlockedCount = await StorageService.getUnlockedQuestionCount(widget.gameModeId, forMode.length);
+    final unlockedCount = await StorageService.getUnlockedQuestionCount(
+        widget.gameModeId, forMode.length);
 
-    if (await StorageService.recordModePlayedToday(widget.gameModeId) && mounted) {
+    if (await StorageService.recordModePlayedToday(widget.gameModeId) &&
+        mounted) {
       await bumpQuestMetric(context, 'modes_played', 1);
     }
     StorageService.recordDailyStreak();
@@ -102,12 +117,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       _noBlur = noBlur;
       _unlimitedLives = unlimitedLives;
       _sessionAnswered = 0;
+      // NU resetăm _sessionCorrect aici — spre deosebire de _sessionAnswered
+      // (contorul de milestone-uri, care repornește la fiecare reîncărcare,
+      // inclusiv după un upgrade de lot), _sessionCorrect trebuie să
+      // supraviețuiască unui upgrade-continuare în mijlocul aceleiași
+      // sesiuni PLĂTITE — altfel un upgrade la jumătatea sesiunii ar
+      // "șterge" progresul real deja făcut, retrogradând treapta de
+      // recompensă la ieșire (vezi _settleExitReward).
       _totalInCategory = forMode.length;
       questions = forMode.take(unlockedCount).toList()..shuffle(Random());
       qIndex = 0;
       _questionRewards.clear();
       for (final q in questions) {
-        _questionRewards[q.id] = calculateSessionQuestionReward(q.maxPoints, Random());
+        _questionRewards[q.id] =
+            calculateSessionQuestionReward(q.maxPoints, Random());
       }
       _loadingQuestions = false;
       if (questions.isNotEmpty) _initQuestion();
@@ -118,11 +141,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     hintsUsed = 0;
     answered = false;
     selectedAnswer = null;
-    currentQuestionReward =
-        _questionRewards[currentQ.id] ?? calculateSessionQuestionReward(currentQ.maxPoints, Random());
+    currentQuestionReward = _questionRewards[currentQ.id] ??
+        calculateSessionQuestionReward(currentQ.maxPoints, Random());
   }
 
-  int get _hintCost => calculateHintPenalty(currentQuestionReward, currentQ.maxPoints);
+  int get _hintCost =>
+      calculateHintPenalty(currentQuestionReward, currentQ.maxPoints);
 
   /// Un hint costă atât puncte din scorul acumulat CÂT ȘI un hint din
   /// balanța persistată (aceeași resursă afișată pe Home, lângă vieți și
@@ -137,13 +161,18 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final cost = _hintCost;
     if (hintsBalance <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nu mai ai hint-uri — cumpără din Magazin.'), duration: Duration(milliseconds: 1400)),
+        const SnackBar(
+            content: Text('Nu mai ai hint-uri — cumpără din Magazin.'),
+            duration: Duration(milliseconds: 1400)),
       );
       return;
     }
     if (score < cost) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ai nevoie de $cost puncte pentru un hint (ai $score).'), duration: const Duration(milliseconds: 1400)),
+        SnackBar(
+            content:
+                Text('Ai nevoie de $cost puncte pentru un hint (ai $score).'),
+            duration: const Duration(milliseconds: 1400)),
       );
       return;
     }
@@ -177,7 +206,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // verificat live (nu cache-uit la intrarea în ecran) — dacă bonusul de
     // 24h expiră la mijlocul sesiunii, următorul răspuns greșit trebuie deja
     // să scadă viața din nou.
-    final unlimited = correct ? _unlimitedLives : await StorageService.hasUnlimitedLives();
+    final unlimited =
+        correct ? _unlimitedLives : await StorageService.hasUnlimitedLives();
 
     setState(() {
       answered = true;
@@ -206,6 +236,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // după acest tap (buton Acasă / back).
     if (mounted) await bumpQuestMetric(context, 'answer_count', 1);
     _sessionAnswered++;
+    if (correct) _sessionCorrect++;
     if (correct) {
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(pts);
@@ -213,11 +244,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
       if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
       if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
-      if (hintsUsed == 0 && mounted) await bumpQuestMetric(context, 'no_hint_correct', 1);
-      if (streak == 3 && mounted) await bumpQuestMetric(context, 'streak_hit_3', 1);
-      if (streak == 5 && mounted) await bumpQuestMetric(context, 'streak_hit_5', 1);
-      if (streak == 8 && mounted) await bumpQuestMetric(context, 'streak_hit_8', 1);
-      if (streak == 10 && mounted) await bumpQuestMetric(context, 'streak_hit_10', 1);
+      if (hintsUsed == 0 && mounted)
+        await bumpQuestMetric(context, 'no_hint_correct', 1);
+      if (streak == 3 && mounted)
+        await bumpQuestMetric(context, 'streak_hit_3', 1);
+      if (streak == 5 && mounted)
+        await bumpQuestMetric(context, 'streak_hit_5', 1);
+      if (streak == 8 && mounted)
+        await bumpQuestMetric(context, 'streak_hit_8', 1);
+      if (streak == 10 && mounted)
+        await bumpQuestMetric(context, 'streak_hit_10', 1);
       // salvăm recordul pe loc, nu doar la finalul sesiunii — altfel un
       // jucător care iese din joc la jumătate (buton Acasă) pierde scorul.
       await StorageService.updateHighScore(score);
@@ -273,9 +309,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         message: a.title,
         icon: a.icon,
         color: const Color(0xFFFF7A1A),
-        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen())),
+        onTap: () => Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const AchievementsScreen())),
       );
-      if (i < newlyDone.length - 1) await Future.delayed(const Duration(milliseconds: 400));
+      if (i < newlyDone.length - 1)
+        await Future.delayed(const Duration(milliseconds: 400));
     }
   }
 
@@ -293,16 +331,90 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _goHome() => Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => LoadingScreen(nextBuilder: (_) => const HomeScreen(), duration: const Duration(milliseconds: 900)),
+  /// Punctul UNIC de ieșire din GameScreen (săgeata din bara de sus, back-ul
+  /// telefonului — vezi PopScope din build — și butoanele "Acasă" din
+  /// dialoguri) — de-asta recompensa de ieșire se decontează AICI, o
+  /// singură dată, indiferent pe ce ușă ai plecat.
+  Future<void> _goHome() async {
+    await _settleExitReward();
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoadingScreen(
+            nextBuilder: (_) => const HomeScreen(),
+            duration: const Duration(milliseconds: 900)),
+      ),
+    );
+  }
+
+  /// Dacă sesiunea asta a fost plătită (vezi widget.entryFeePaid), acordă
+  /// recompensa în trepte din [categoryExitReward] și arată o notificare
+  /// NESKIPUIBILĂ (fără tap-outside, fără back — trebuie apăsat butonul) cu
+  /// exact ce s-a primit, înainte să se poată pleca mai departe spre Acasă.
+  /// Idempotent — [_exitRewardSettled] garantează o singură decontare chiar
+  /// dacă [_goHome] ar fi apelat de mai multe ori.
+  Future<void> _settleExitReward() async {
+    if (_exitRewardSettled || widget.entryFeePaid <= 0) return;
+    _exitRewardSettled = true;
+    final reward = categoryExitReward(_sessionCorrect);
+    await StorageService.addCoins(reward);
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1a1a2e),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Recompensă la ieșire',
+              style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$_sessionCorrect ${_sessionCorrect == 1 ? 'răspuns corect' : 'răspunsuri corecte'} în sesiunea asta (taxă plătită: $categoryEntryFee monede).',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.monetization_on_rounded,
+                      color: AppColors.coin, size: 28),
+                  const SizedBox(width: 8),
+                  Text('+$reward monede',
+                      style: const TextStyle(
+                          color: AppColors.coin,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900)),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Am înțeles',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
         ),
-      );
+      ),
+    );
+  }
 
   // Fără opțiune de "Reîncepe" — nu are sens ca la Game Over (0 vieți) să
   // poți reporni instant cu viețile refăcute; singura ieșire e Acasă.
-  void _showEndDialog({required String title, required String message, List<Widget> extraActions = const []}) {
+  void _showEndDialog(
+      {required String title,
+      required String message,
+      List<Widget> extraActions = const []}) {
     StorageService.updateHighScore(score);
     StorageService.updateModeHighScore(widget.gameModeId, score);
     showDialog(
@@ -316,8 +428,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         actions: [
           ...extraActions,
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF534AB7)),
-            onPressed: _goHome,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF534AB7)),
+            onPressed: () {
+              // închide ÎNTÂI acest dialog — altfel notificarea de recompensă
+              // din _goHome (vezi _settleExitReward) s-ar deschide peste el.
+              Navigator.pop(dialogContext);
+              _goHome();
+            },
             child: const Text('Acasă', style: TextStyle(color: Colors.white)),
           ),
         ],
@@ -343,7 +461,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
             onPressed: () async {
-              final ok = await StorageService.unlockNextQuestionBatch(widget.gameModeId);
+              final ok = await StorageService.unlockNextQuestionBatch(
+                  widget.gameModeId);
               if (!mounted) return;
               if (ok) {
                 await bumpQuestMetric(context, 'question_batch_unlocked', 1);
@@ -360,28 +479,36 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 _loadQuestions();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Nu ai destule gems.'), duration: Duration(milliseconds: 1400)),
+                  const SnackBar(
+                      content: Text('Nu ai destule gems.'),
+                      duration: Duration(milliseconds: 1400)),
                 );
               }
             },
-            child: Text('Upgrade +$batch  •  💎 $price', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+            child: Text('Upgrade +$batch  •  💎 $price',
+                style: const TextStyle(
+                    color: Colors.black, fontWeight: FontWeight.w800)),
           ),
         ];
       }
     }
     final lockedNote = extraActions.isNotEmpty
         ? '\n\n$locked întrebări mai sunt de deblocat în această categorie.'
-        : (locked > 0 ? '\n\nAi atins nivelul maxim de upgrade pentru această categorie.' : '');
+        : (locked > 0
+            ? '\n\nAi atins nivelul maxim de upgrade pentru această categorie.'
+            : '');
     _showEndDialog(
       title: 'Ai terminat toate întrebările! 🎉',
-      message: 'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score$lockedNote',
+      message:
+          'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score$lockedNote',
       extraActions: extraActions,
     );
   }
 
   /// Game Over (0 vieți) e singurul caz cu opțiune de continuare: un buton
-  /// auriu "Reclamă" (simulată — fără SDK real) acordă vieți+hint-uri prin
-  /// [collectRewards] și reia jocul chiar de unde a rămas (întrebarea era
+  /// auriu "Reclamă" (reclamă recompensată reală prin [AdsService]) acordă
+  /// vieți+hint-uri prin [collectRewards] și reia jocul chiar de unde a rămas
+  /// (întrebarea era
   /// deja dezvăluită, cu butonul "Următoarea" gata de tap). Plafonat la
   /// câteva vizionări/zi (vezi StorageService.canClaimRewardedAdReward) —
   /// reclama e un supliment, nu principala sursă de resurse. Dacă plafonul
@@ -402,25 +529,31 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       builder: (dialogContext) => StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1a1a2e),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Game Over! 💀', style: TextStyle(color: Colors.white)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Game Over! 💀',
+              style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Scor final: $score puncte\nSeria: $streak', style: const TextStyle(color: Colors.white70)),
+              Text('Scor final: $score puncte\nSeria: $streak',
+                  style: const TextStyle(color: Colors.white70)),
               if (adWatched) ...[
                 const SizedBox(height: 16),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _adMiniBadge(adLivesKey, Icons.favorite_rounded, AppColors.life),
+                    _adMiniBadge(
+                        adLivesKey, Icons.favorite_rounded, AppColors.life),
                     const SizedBox(width: 14),
-                    _adMiniBadge(adHintsKey, Icons.tips_and_updates_rounded, AppColors.hint),
+                    _adMiniBadge(adHintsKey, Icons.tips_and_updates_rounded,
+                        AppColors.hint),
                   ],
                 ),
               ] else if (!canWatchAd) ...[
                 const SizedBox(height: 12),
-                const Text('Ai atins plafonul zilnic de reclame.', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                const Text('Ai atins plafonul zilnic de reclame.',
+                    style: TextStyle(color: Colors.white38, fontSize: 12)),
               ],
             ],
           ),
@@ -431,14 +564,33 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     ? null
                     : () async {
                         setDialogState(() => watchingAd = true);
-                        // simuleaza vizionarea unei reclame - fara SDK real.
-                        await Future.delayed(const Duration(milliseconds: 900));
-                        final reward = await StorageService.claimRewardedAdReward();
+                        var earnedReward = false;
+                        final adShown = await AdsService.instance.showRewarded(
+                          onReward: () => earnedReward = true,
+                        );
+                        if (!adShown) {
+                          // reclama nu era incarcata - simuleaza asteptarea in loc sa blocheze recompensa.
+                          await Future.delayed(
+                              const Duration(milliseconds: 900));
+                          earnedReward = true;
+                        }
+                        if (!dialogContext.mounted) return;
+                        if (!earnedReward) {
+                          setDialogState(() => watchingAd = false);
+                          return;
+                        }
+                        final reward =
+                            await StorageService.claimRewardedAdReward();
                         if (!dialogContext.mounted) return;
                         setDialogState(() {
                           watchingAd = false;
                           adWatched = true;
                         });
+                        // asteapta un frame ca badge-urile (ascunse pana acum, sub
+                        // "adWatched") sa fie randate - altfel prima animatie (vieti)
+                        // nu gaseste GlobalKey-ul montat si cade pe fallback dreapta-sus.
+                        await WidgetsBinding.instance.endOfFrame;
+                        if (!dialogContext.mounted) return;
                         await collectRewards(
                           dialogContext,
                           coins: 0,
@@ -458,16 +610,29 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.coin,
                   disabledBackgroundColor: Colors.white24,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                 ),
                 child: Text(
-                  watchingAd ? 'Se încarcă reclama...' : 'Reclamă  •  +1 ❤ +2 💡',
-                  style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800),
+                  watchingAd
+                      ? 'Se încarcă reclama...'
+                      : 'Reclamă  •  +1 ❤ +2 💡',
+                  style: const TextStyle(
+                      color: Colors.black, fontWeight: FontWeight.w800),
                 ),
               ),
             ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF534AB7)),
-              onPressed: watchingAd ? null : _goHome,
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF534AB7)),
+              onPressed: watchingAd
+                  ? null
+                  : () {
+                      // vezi _showEndDialog — închide dialogul curent ÎNTÂI,
+                      // ca notificarea de recompensă din _goHome să nu se
+                      // deschidă peste el.
+                      Navigator.pop(dialogContext);
+                      _goHome();
+                    },
               child: const Text('Acasă', style: TextStyle(color: Colors.white)),
             ),
           ],
@@ -480,7 +645,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return Container(
       key: key,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(color: Colors.white.withAlpha(15), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white24)),
+      decoration: BoxDecoration(
+          color: Colors.white.withAlpha(15),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.white24)),
       child: Icon(icon, color: color, size: 20),
     );
   }
@@ -495,7 +663,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     if (_loadingQuestions) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator(color: Color(0xFF9A5AFB))));
+      return const Scaffold(
+          body: Center(
+              child: CircularProgressIndicator(color: Color(0xFF9A5AFB))));
     }
 
     if (questions.isEmpty) {
@@ -507,9 +677,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               const Icon(Icons.error_outline, size: 64, color: Colors.white24),
               const SizedBox(height: 16),
               const Text('Nicio întrebare disponibilă pentru acest mod.',
-                  style: TextStyle(color: Colors.white70, fontSize: 16), textAlign: TextAlign.center),
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                  textAlign: TextAlign.center),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _goHome, child: const Text('Înapoi la meniu')),
+              ElevatedButton(
+                  onPressed: _goHome, child: const Text('Înapoi la meniu')),
             ],
           ),
         ),
@@ -519,70 +691,86 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final q = currentQ;
     final opts = [...q.choices]..shuffle(Random(q.id.hashCode + qIndex));
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(gradient: buildQuestionGradient(q.id, q.color)),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildTopBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
-                  child: Column(
-                    children: [
-                      // Imaginea (dimensiune fixă 4:3, constantă înainte și
-                      // după răspuns) cu eticheta categoriei prinsă pe
-                      // marginea de sus, ca un tab pe ramă — economisește
-                      // rândul separat de badge de dinainte.
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          AnimatedBuilder(
-                            animation: _shakeController,
-                            builder: (_, child) {
-                              final shake = sin(_shakeController.value * pi * 6) * 8;
-                              return Transform.translate(offset: Offset(shake, 0), child: child);
-                            },
-                            child: BlurImage(
-                              color: q.color,
-                              answer: q.answer,
-                              revealed: answered,
-                              hintsUsed: hintsUsed,
-                              imageAssetPath: q.imageAssetPath,
-                              noBlur: _noBlur,
+    // back-ul telefonului (gest sau buton fizic) trebuie să treacă prin
+    // aceeași ieșire ca săgeata din bara de sus — altfel un jucător care
+    // taxa sesiunii ar putea ieși fără să decontăm recompensa (vezi
+    // _goHome/_settleExitReward).
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _goHome();
+      },
+      child: Scaffold(
+        body: Container(
+          decoration:
+              BoxDecoration(gradient: buildQuestionGradient(q.id, q.color)),
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildTopBar(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+                    child: Column(
+                      children: [
+                        // Imaginea (dimensiune fixă 4:3, constantă înainte și
+                        // după răspuns) cu eticheta categoriei prinsă pe
+                        // marginea de sus, ca un tab pe ramă — economisește
+                        // rândul separat de badge de dinainte.
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            AnimatedBuilder(
+                              animation: _shakeController,
+                              builder: (_, child) {
+                                final shake =
+                                    sin(_shakeController.value * pi * 6) * 8;
+                                return Transform.translate(
+                                    offset: Offset(shake, 0), child: child);
+                              },
+                              child: BlurImage(
+                                color: q.color,
+                                answer: q.answer,
+                                revealed: answered,
+                                hintsUsed: hintsUsed,
+                                imageAssetPath: q.imageAssetPath,
+                                noBlur: _noBlur,
+                              ),
                             ),
-                          ),
-                          Positioned(top: -9, left: 14, child: _buildQuestionBadge(q)),
+                            Positioned(
+                                top: -9,
+                                left: 14,
+                                child: _buildQuestionBadge(q)),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        _buildRevealRow(q),
+                        // După răspuns, butonul de continuare apare CHIAR aici,
+                        // sub rândul "Claritate" — nu la baza ecranului — ca să
+                        // fie vizibil fără scroll. Nu mai afișăm un banner de
+                        // "Corect/Greșit": varianta corectă e deja evidențiată
+                        // pe grila de opțiuni, deci ar fi redundant.
+                        if (answered) ...[
+                          const SizedBox(height: 6),
+                          NextButton(onTap: _nextQuestion),
                         ],
-                      ),
-                      const SizedBox(height: 6),
-                      _buildRevealRow(q),
-                      // După răspuns, butonul de continuare apare CHIAR aici,
-                      // sub rândul "Claritate" — nu la baza ecranului — ca să
-                      // fie vizibil fără scroll. Nu mai afișăm un banner de
-                      // "Corect/Greșit": varianta corectă e deja evidențiată
-                      // pe grila de opțiuni, deci ar fi redundant.
-                      if (answered) ...[
+                        if (hintsUsed > 0 && !answered) ...[
+                          const SizedBox(height: 6),
+                          _buildHintCard(q),
+                        ],
+                        const SizedBox(height: 8),
+                        // În loc de întrebarea generică "Cine / ce este?", un
+                        // indiciu mic (primul hint) despre ce e în poză — gratuit.
+                        _buildClue(q),
                         const SizedBox(height: 6),
-                        NextButton(onTap: _nextQuestion),
-                      ],
-                      if (hintsUsed > 0 && !answered) ...[
+                        _buildOptionsGrid(q, opts),
                         const SizedBox(height: 6),
-                        _buildHintCard(q),
                       ],
-                      const SizedBox(height: 8),
-                      // În loc de întrebarea generică "Cine / ce este?", un
-                      // indiciu mic (primul hint) despre ce e în poză — gratuit.
-                      _buildClue(q),
-                      const SizedBox(height: 6),
-                      _buildOptionsGrid(q, opts),
-                      const SizedBox(height: 6),
-                    ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -606,9 +794,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.favorite_rounded, color: Color(0xFFE24B4A), size: 20),
+          const Icon(Icons.favorite_rounded,
+              color: Color(0xFFE24B4A), size: 20),
           const SizedBox(width: 4),
-          Text('×$lives', style: const TextStyle(color: Color(0xFFE24B4A), fontWeight: FontWeight.w800, fontSize: 14)),
+          Text('×$lives',
+              style: const TextStyle(
+                  color: Color(0xFFE24B4A),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14)),
         ],
       );
     }
@@ -634,7 +827,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
-                icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                icon: const Icon(Icons.arrow_back_ios_rounded,
+                    color: Colors.white70),
                 onPressed: _goHome,
               ),
               const SizedBox(width: 8),
@@ -642,16 +836,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               const Spacer(),
               if (streak > 1)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEF9F27).withAlpha(51),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFEF9F27).withAlpha(128)),
+                    border: Border.all(
+                        color: const Color(0xFFEF9F27).withAlpha(128)),
                   ),
-                  child: Text('🔥 $streak', style: const TextStyle(color: Color(0xFFEF9F27), fontSize: 13)),
+                  child: Text('🔥 $streak',
+                      style: const TextStyle(
+                          color: Color(0xFFEF9F27), fontSize: 13)),
                 ),
               const SizedBox(width: 8),
-              Text('$score pct', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('$score pct',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16)),
             ],
           ),
           const SizedBox(height: 4),
@@ -675,7 +877,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         border: Border.all(color: q.color, width: 1.5),
         boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 6)],
       ),
-      child: Text(q.category, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700)),
+      child: Text(q.category,
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700)),
     );
   }
 
@@ -698,7 +904,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           Expanded(
             child: Text(
               q.hint1,
-              style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -772,7 +981,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: q.color.withAlpha((0.3 * 255).round())),
       ),
-      child: Text(hintText, style: TextStyle(color: q.color, fontSize: 13), textAlign: TextAlign.center),
+      child: Text(hintText,
+          style: TextStyle(color: q.color, fontSize: 13),
+          textAlign: TextAlign.center),
     );
   }
 
@@ -820,14 +1031,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     width: 22,
                     height: 22,
                     alignment: Alignment.center,
-                    decoration: BoxDecoration(color: letterBg, shape: BoxShape.circle),
-                    child: Text(letters[i], style: TextStyle(color: textColor, fontWeight: FontWeight.w800, fontSize: 12)),
+                    decoration:
+                        BoxDecoration(color: letterBg, shape: BoxShape.circle),
+                    child: Text(letters[i],
+                        style: TextStyle(
+                            color: textColor,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12)),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       opt,
-                      style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w600),
+                      style: TextStyle(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],

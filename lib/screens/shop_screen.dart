@@ -27,6 +27,7 @@ class _ShopScreenState extends State<ShopScreen> {
   bool _starterPackBought = false;
   bool _loading = true;
   bool _busy = false;
+  int _loadSeq = 0;
   final _livesBadgeKey = GlobalKey();
   final _coinBadgeKey = GlobalKey();
   final _gemsBadgeKey = GlobalKey();
@@ -63,6 +64,30 @@ class _ShopScreenState extends State<ShopScreen> {
       _noAdsOwned = results[7] as bool;
       _starterPackBought = results[8] as bool;
       _loading = false;
+    });
+  }
+
+  /// Reîncarcă DOAR balanțele (nu întreg _loadState), folosit din
+  /// onEachImpact — o achiziție cu mai multe etape (ex. bundle-ul "Fără
+  /// reclame pe veci": monede+viață+hints+gems) declanșează câte o
+  /// reîncărcare la fiecare impact. Fără gardă de secvență, un răspuns mai
+  /// vechi care se rezolvă mai târziu (SharedPreferences are propriul
+  /// program de microtask-uri) ar putea suprascrie unul mai nou, "înghețând"
+  /// vizual balanța la o valoare veche — exact bug-ul semnalat.
+  Future<void> _refreshBalances() async {
+    final seq = ++_loadSeq;
+    final results = await Future.wait([
+      StorageService.getLives(),
+      StorageService.getCoins(),
+      StorageService.getGems(),
+      StorageService.getHints(),
+    ]);
+    if (!mounted || seq != _loadSeq) return;
+    setState(() {
+      _lives = results[0];
+      _coins = results[1];
+      _gems = results[2];
+      _hints = results[3];
     });
   }
 
@@ -188,6 +213,7 @@ class _ShopScreenState extends State<ShopScreen> {
       coinBadgeKey: GlobalKey(),
       xpBadgeKey: GlobalKey(),
       livesBadgeKey: GlobalKey(),
+      onEachImpact: () { _refreshBalances(); },
     );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -209,6 +235,7 @@ class _ShopScreenState extends State<ShopScreen> {
       livesBadgeKey: _livesBadgeKey,
       coinBadgeKey: GlobalKey(),
       xpBadgeKey: GlobalKey(),
+      onEachImpact: () { _refreshBalances(); },
     );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -247,6 +274,7 @@ class _ShopScreenState extends State<ShopScreen> {
       coinBadgeKey: GlobalKey(),
       xpBadgeKey: GlobalKey(),
       livesBadgeKey: GlobalKey(),
+      onEachImpact: () { _refreshBalances(); },
     );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -277,6 +305,7 @@ class _ShopScreenState extends State<ShopScreen> {
       coinBadgeKey: _coinBadgeKey,
       xpBadgeKey: GlobalKey(),
       livesBadgeKey: _livesBadgeKey,
+      onEachImpact: () { _refreshBalances(); },
     );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -426,6 +455,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _BundleItem(
                                   bundle: b,
                                   disabled: _busy || (b.oneTimeOnly && _starterPackBought),
+                                  owned: b.oneTimeOnly && _starterPackBought,
                                   onTap: () => _buyBundle(b),
                                 ),
                             ],
@@ -663,13 +693,13 @@ class _ShopItem extends StatelessWidget {
 class _BundleItem extends StatelessWidget {
   final Bundle bundle;
   final bool disabled;
+  final bool owned;
   final VoidCallback? onTap;
 
-  const _BundleItem({required this.bundle, this.disabled = false, this.onTap});
+  const _BundleItem({required this.bundle, this.disabled = false, this.owned = false, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final owned = disabled && bundle.oneTimeOnly;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),

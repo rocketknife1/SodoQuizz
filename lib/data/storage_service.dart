@@ -483,6 +483,15 @@ class StorageService {
     await prefs.setStringList(_cultureQuizPlayTimestampsKey, recent.map((e) => e.toString()).toList());
   }
 
+  /// Golește fereastra de sesiuni recente — cooldown-ul se bazează STRICT pe
+  /// aceste timestamp-uri (vezi [_recentCultureQuizTimestamps]), deci a le
+  /// șterge echivalează cu a sări direct peste așteptare. Folosit de butonul
+  /// de reclamă din faza de cooldown (vezi CultureQuizPanel._buildCooldown).
+  static Future<void> skipCultureQuizCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_cultureQuizPlayTimestampsKey, []);
+  }
+
   // ─── Contoare zilnice generice (plafoane anti-farm) ────────────────────────
   // Aceleași chei, scoped pe zi calendaristică, ca la quest-uri — folosite
   // pentru plafonul reclamei recompensate și pentru diminishing returns pe

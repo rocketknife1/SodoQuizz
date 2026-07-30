@@ -158,8 +158,37 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
       children: [
         if (dustFade > 0)
           for (var i = 0; i < _dustAngles.length; i++) _buildDustSpark(i, center, dustBurst, dustFade),
+        _buildAmountLabel(center, t),
         for (var i = 0; i < _iconAngles.length; i++) _buildIcon(i, center, revealT, burstT, flightT),
       ],
+    );
+  }
+
+  /// Arată "+cantitate" chiar deasupra exploziei de praf magic, ÎNAINTE ca
+  /// simbolurile să pornească spre pastilă (vezi feedback-ul jucătorului: fără
+  /// numărul ăsta, nu se știe cât s-a primit decât la impact) — se stinge
+  /// exact când începe faza de zbor, ca să nu se suprapună cu traiectoria.
+  Widget _buildAmountLabel(Offset center, double t) {
+    final fadeIn = Interval(0.0, 0.16, curve: Curves.easeOut).transform(t.clamp(0.0, 1.0));
+    final fadeOut = 1 - Interval(0.28, 0.46).transform(t.clamp(0.0, 1.0));
+    final opacity = (fadeIn * fadeOut).clamp(0.0, 1.0);
+    if (opacity <= 0) return const SizedBox.shrink();
+    final rise = -16 * Interval(0.0, 0.46).transform(t.clamp(0.0, 1.0));
+    return Positioned(
+      left: center.dx - 70,
+      top: center.dy - 56 + rise,
+      width: 140,
+      child: Center(
+        child: Text(
+          '+${widget.amount}',
+          style: TextStyle(
+            color: _withOpacity(widget.color, opacity),
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            shadows: [Shadow(color: _withOpacity(Colors.black54, opacity), blurRadius: 5)],
+          ),
+        ),
+      ),
     );
   }
 

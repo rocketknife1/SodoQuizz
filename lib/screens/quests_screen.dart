@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../core/ads_service.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/collect_all_overlay.dart';
 import '../widgets/level_header.dart';
 
 /// Quest-uri zilnice — toate cele 70, mereu active (vezi [todaysQuests]).
@@ -24,6 +26,19 @@ class _QuestsScreenState extends State<QuestsScreen> {
   final GlobalKey _hintsBadgeKey = GlobalKey();
   final GlobalKey _gemsBadgeKey = GlobalKey();
   final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
+
+  /// True cât timp o colectare (individuală sau "Colectează tot") e în
+  /// desfășurare — dezactivează TOATE butoanele "Ridică" între timp, ca să
+  /// nu pornească două animații de colectare simultan (vezi bug-ul semnalat:
+  /// suprapunerea lor confuza ordinea/afișarea).
+  bool _claiming = false;
+
+  /// Crește la fiecare reîncărcare declanșată din onEachImpact — un răspuns
+  /// mai vechi care se rezolvă mai târziu (SharedPreferences își face
+  /// propriile microtask-uri) e ignorat dacă între timp a mai pornit o
+  /// reîncărcare mai nouă, altfel putea "îngheța" balanța afișată la o
+  /// valoare veche până la următoarea colectare (bug-ul semnalat de user).
+  int _loadSeq = 0;
 
   @override
   void initState() {
@@ -56,7 +71,11 @@ class _QuestsScreenState extends State<QuestsScreen> {
     );
   }
 
-  Future<void> _claim(Quest q) async {
+  /// [multiplier] e 2 când vine din "Revendică x2" (vezi [_claimX2]) — restul
+  /// fluxului (bifă, animație pe etape, refresh) rămâne identic.
+  Future<void> _claim(Quest q, {int multiplier = 1}) async {
+    if (_claiming) return;
+    setState(() => _claiming = true);
     await StorageService.claimQuest(q.id);
     if (!mounted) return;
     _navBarKey.currentState?.refreshDots();
@@ -84,26 +103,100 @@ class _QuestsScreenState extends State<QuestsScreen> {
     });
     await collectRewards(
       context,
-      coins: q.coinReward,
-      xp: q.xpReward,
-      lives: q.heartReward,
-      hints: q.hintReward,
+      coins: q.coinReward * multiplier,
+      xp: q.xpReward * multiplier,
+      lives: q.heartReward * multiplier,
+      hints: q.hintReward * multiplier,
       hintsBadgeKey: _hintsBadgeKey,
-      gems: q.gemReward,
+      gems: q.gemReward * multiplier,
       gemsBadgeKey: _gemsBadgeKey,
       coinBadgeKey: _coinBadgeKey,
       xpBadgeKey: _xpBadgeKey,
       livesBadgeKey: _livesBadgeKey,
-      onEachImpact: () {
-        // balanțele reale se actualizează treptat, o dată cu impactul
-        // fiecărei etape — dar reîncărcarea (_load) e async, deci aplicăm
-        // rezultatul abia când e gata (nu reasignăm direct Future-ul pendinte).
-        _load().then((refreshed) {
-          if (!mounted) return;
-          setState(() => _dataFuture = Future.value(refreshed));
-        });
-      },
+      onEachImpact: _refreshBalances,
     );
+    if (!mounted) return;
+    setState(() => _claiming = false);
+  }
+
+  /// "Revendică x2" — arată o reclamă recompensată (sau simulează dacă nu e
+  /// încărcată, vezi [AdsService.watchOrSimulate], același tipar ca la Game
+  /// Over din game_screen.dart) și, dacă a fost vizionată, revendică quest-ul
+  /// cu recompensa dublată.
+  Future<void> _claimX2(Quest q) async {
+    if (_claiming) return;
+    final earned = await AdsService.instance.watchOrSimulate();
+    if (!mounted || !earned) return;
+    await _claim(q, multiplier: 2);
+  }
+
+  /// Reîncarcă balanța+progresul, dar aplică rezultatul DOAR dacă nicio altă
+  /// reîncărcare n-a mai pornit între timp (vezi [_loadSeq]) — altfel un
+  /// răspuns vechi care ajunge ultimul ar suprascrie unul mai nou și
+  /// balanța ar părea "înghețată" (bug-ul semnalat: se actualizează abia la
+  /// al doilea claim).
+  void _refreshBalances() {
+    final seq = ++_loadSeq;
+    _load().then((refreshed) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() => _dataFuture = Future.value(refreshed));
+    });
+  }
+
+  /// Colectează dintr-o dată TOATE quest-urile terminate și nerevendicate —
+  /// spre deosebire de [_claim] (o singură recompensă, animată în etape
+  /// separate cu [collectRewards]), aici sumăm toate resursele din quest-urile
+  /// eligibile, le scriem O SINGURĂ DATĂ în storage, apoi arătăm UN SINGUR
+  /// rezumat ([CollectAllOverlay]) — la cererea explicită a userului, ca să
+  /// nu "bubuie telefonul" cu animații succesive la multe quest-uri deodată.
+  Future<void> _collectAll() async {
+    if (_claiming) return;
+    final current = await _dataFuture;
+    final claimable = current.quests.where((q) {
+      final p = current.progress[q.id] ?? 0;
+      return p >= q.target && !(current.claimed[q.id] ?? false);
+    }).toList();
+    if (claimable.isEmpty) return;
+    if (!mounted) return;
+    setState(() => _claiming = true);
+
+    var coins = 0, xp = 0, gems = 0, hearts = 0, hints = 0;
+    for (final q in claimable) {
+      xp += q.xpReward;
+      coins += q.coinReward;
+      gems += q.gemReward;
+      hearts += q.heartReward;
+      hints += q.hintReward;
+      await StorageService.claimQuest(q.id);
+    }
+    if (xp > 0) await StorageService.addXp(xp);
+    if (coins > 0) await StorageService.addCoins(coins);
+    if (gems > 0) await StorageService.addGems(gems);
+    if (hearts > 0) await StorageService.addLivesUncapped(hearts);
+    // hints NECAPAT aici ar afișa temporar un total peste plafonul de 20 din
+    // StorageService — de-asta reîncărcăm din storage (deja plafonat) în loc
+    // să adunăm optimist current.hints + hints, altfel pastila arată o
+    // valoare care "sare înapoi" la închiderea dialogului.
+    if (hints > 0) await StorageService.addHints(hints);
+    if (!mounted) return;
+    _navBarKey.currentState?.refreshDots();
+    final refreshed = await _load();
+    if (!mounted) return;
+    setState(() => _dataFuture = Future.value(refreshed));
+
+    // ordinea intrărilor respectă mereu XP → monede → gems → viață → hints
+    // (vezi reward_collector.dart și _RewardChips).
+    final entries = <CollectAllEntry>[
+      if (xp > 0) CollectAllEntry(icon: Icons.star_rounded, color: AppColors.purple, amount: xp),
+      if (coins > 0) CollectAllEntry(icon: Icons.monetization_on_rounded, color: AppColors.coin, amount: coins),
+      if (gems > 0) CollectAllEntry(icon: Icons.diamond_rounded, color: AppColors.gem, amount: gems),
+      if (hearts > 0) CollectAllEntry(icon: Icons.favorite_rounded, color: AppColors.life, amount: hearts),
+      if (hints > 0) CollectAllEntry(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, amount: hints),
+    ];
+    await CollectAllOverlay.show(context, entries: entries, questCount: claimable.length);
+
+    if (!mounted) return;
+    setState(() => _claiming = false);
   }
 
   @override
@@ -132,11 +225,13 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     gemsBadgeKey: _gemsBadgeKey,
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
                     children: [
-                      Text('Quest-uri zilnice', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const Text('Quest-uri zilnice', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      const Spacer(),
+                      if (data != null) _buildCollectAllButton(data),
                     ],
                   ),
                 ),
@@ -158,7 +253,15 @@ class _QuestsScreenState extends State<QuestsScreen> {
                             final progress = (data.progress[q.id] ?? 0).clamp(0, q.target);
                             final done = progress >= q.target;
                             final claimed = data.claimed[q.id] ?? false;
-                            return _QuestCard(quest: q, progress: progress, done: done, claimed: claimed, onClaim: () => _claim(q));
+                            return _QuestCard(
+                              quest: q,
+                              progress: progress,
+                              done: done,
+                              claimed: claimed,
+                              disabled: _claiming,
+                              onClaim: () => _claim(q),
+                              onClaimX2: () => _claimX2(q),
+                            );
                           },
                         ),
                 ),
@@ -168,6 +271,40 @@ class _QuestsScreenState extends State<QuestsScreen> {
         ),
       ),
       bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.quests),
+    );
+  }
+
+  /// Numărul de quest-uri terminate și încă nerevendicate — butonul e vizibil
+  /// doar când sunt cel puțin 2 (la unul singur, "Ridică" de pe cardul lui e
+  /// deja suficient, n-are sens un buton separat pentru un singur element).
+  Widget _buildCollectAllButton(_QuestsData data) {
+    final claimableCount = data.quests.where((q) {
+      final p = data.progress[q.id] ?? 0;
+      return p >= q.target && !(data.claimed[q.id] ?? false);
+    }).length;
+    if (claimableCount < 2) return const SizedBox.shrink();
+    return GestureDetector(
+      onTap: _claiming ? null : _collectAll,
+      child: AnimatedOpacity(
+        opacity: _claiming ? 0.5 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.coin,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [BoxShadow(color: AppColors.coin.withAlpha(110), blurRadius: 8, offset: const Offset(0, 3))],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.auto_awesome_rounded, color: Colors.black, size: 15),
+              const SizedBox(width: 5),
+              Text('Colectează tot ($claimableCount)', style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -198,9 +335,19 @@ class _QuestCard extends StatelessWidget {
   final int progress;
   final bool done;
   final bool claimed;
+  final bool disabled;
   final VoidCallback onClaim;
+  final VoidCallback onClaimX2;
 
-  const _QuestCard({required this.quest, required this.progress, required this.done, required this.claimed, required this.onClaim});
+  const _QuestCard({
+    required this.quest,
+    required this.progress,
+    required this.done,
+    required this.claimed,
+    this.disabled = false,
+    required this.onClaim,
+    required this.onClaimX2,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -254,14 +401,43 @@ class _QuestCard extends StatelessWidget {
           if (claimed)
             const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
           else if (done)
-            ElevatedButton(
-              onPressed: onClaim,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.play,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Ridică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  onPressed: disabled ? null : onClaim,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.play,
+                    disabledBackgroundColor: Colors.white24,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: const Text('Revendică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                ),
+                const SizedBox(height: 6),
+                GestureDetector(
+                  onTap: disabled ? null : onClaimX2,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: disabled ? Colors.white10 : AppColors.coin.withAlpha(35),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: disabled ? Colors.white24 : AppColors.coin),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.smart_display_rounded, size: 12, color: disabled ? Colors.white38 : AppColors.coin),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Revendică x2',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: disabled ? Colors.white38 : AppColors.coin),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             )
           else
             const Icon(Icons.lock_clock_rounded, color: Colors.white24, size: 22),

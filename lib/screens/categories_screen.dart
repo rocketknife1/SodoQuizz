@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/gamemodes.dart';
+import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/theme.dart';
 import '../data/higher_lower_data.dart';
@@ -18,7 +19,11 @@ class _ModeStats {
   final int answered;
   final int unlocked;
   final int tier;
-  const _ModeStats({required this.total, required this.answered, required this.unlocked, required this.tier});
+  const _ModeStats(
+      {required this.total,
+      required this.answered,
+      required this.unlocked,
+      required this.tier});
   double get pct => total > 0 ? answered / total : 0.0;
 }
 
@@ -42,15 +47,26 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   }
 
   Future<Map<String, _ModeStats>> _loadStats() async {
-    final results = await Future.wait([loadAllQuestions(), StorageService.getAnsweredIds()]);
+    final results = await Future.wait(
+        [loadAllQuestions(), StorageService.getAnsweredIds()]);
     final all = results[0] as List;
     final answeredIds = results[1] as Set<String>;
-    final entries = await Future.wait(gameModes.where((m) => !m.locked).map((m) async {
+    final entries =
+        await Future.wait(gameModes.where((m) => !m.locked).map((m) async {
       final total = all.where((q) => q.categoryId == m.id).length;
-      final answered = all.where((q) => q.categoryId == m.id && answeredIds.contains(q.id)).length;
+      final answered = all
+          .where((q) => q.categoryId == m.id && answeredIds.contains(q.id))
+          .length;
       final tier = await StorageService.getUnlockedTier(m.id);
-      final unlocked = await StorageService.getUnlockedQuestionCount(m.id, total);
-      return MapEntry(m.id, _ModeStats(total: total, answered: answered, unlocked: unlocked, tier: tier));
+      final unlocked =
+          await StorageService.getUnlockedQuestionCount(m.id, total);
+      return MapEntry(
+          m.id,
+          _ModeStats(
+              total: total,
+              answered: answered,
+              unlocked: unlocked,
+              tier: tier));
     }));
     return Map.fromEntries(entries);
   }
@@ -63,7 +79,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nu ai destule gems.'), duration: Duration(milliseconds: 1400)),
+        const SnackBar(
+            content: Text('Nu ai destule gems.'),
+            duration: Duration(milliseconds: 1400)),
       );
       return;
     }
@@ -71,7 +89,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (!mounted) return;
     await bumpQuestMetric(context, 'shop_spend', 1);
     if (!mounted) return;
-    final newUnlocked = await StorageService.getUnlockedQuestionCount(mode.id, stats.total);
+    final newUnlocked =
+        await StorageService.getUnlockedQuestionCount(mode.id, stats.total);
     if (!mounted) return;
     await CategoryUnlockAnimation.show(
       context,
@@ -80,6 +99,57 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
     if (!mounted) return;
     setState(() => _statsFuture = _loadStats());
+  }
+
+  /// Taxă de intrare + confirmare — vezi progression.dart pentru formula
+  /// recompensei la ieșire. Dacă nu ai destule monede, butonul de confirmare
+  /// e dezactivat direct în dialog (nu doar un mesaj după ce apeși).
+  Future<void> _enterCategory(GameMode mode) async {
+    final coins = await StorageService.getCoins();
+    if (!mounted) return;
+    final canAfford = coins >= categoryEntryFee;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: Text('Intri în ${mode.title}?',
+            style: const TextStyle(color: Colors.white)),
+        content: Text(
+          'Taxă de intrare: $categoryEntryFee monede.\n\n'
+          'Recompensa la ieșire depinde de câte răspunzi corect în sesiunea '
+          'asta — puțin peste jumătate din taxă dacă ieși devreme, taxa '
+          'întreagă la 4+ corecte, un bonus la 8+.'
+          '${canAfford ? '' : '\n\nNu ai destule monede (ai $coins).'}',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Renunță')),
+          ElevatedButton(
+            onPressed:
+                canAfford ? () => Navigator.pop(dialogContext, true) : null,
+            style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.play,
+                disabledBackgroundColor: Colors.white24),
+            child: Text('Intră  •  💰$categoryEntryFee',
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final spent = await StorageService.spendCoins(categoryEntryFee);
+    if (!mounted || !spent) return;
+    Sfx.tileSelect();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => LoadingScreen(
+              gameModeId: mode.id, entryFeePaid: categoryEntryFee)),
+    );
   }
 
   /// Card special pentru "Higher or Lower" — vizual diferit de
@@ -95,15 +165,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         return GestureDetector(
           onTap: () {
             Sfx.tileSelect();
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
           },
           child: Container(
             padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
             decoration: BoxDecoration(
               color: Colors.white.withAlpha(16),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.purple.withAlpha(150), width: 1.4),
-              boxShadow: [BoxShadow(color: AppColors.purple.withAlpha(65), blurRadius: 16, spreadRadius: -3)],
+              border: Border.all(
+                  color: AppColors.purple.withAlpha(150), width: 1.4),
+              boxShadow: [
+                BoxShadow(
+                    color: AppColors.purple.withAlpha(65),
+                    blurRadius: 16,
+                    spreadRadius: -3)
+              ],
             ),
             child: Row(
               children: [
@@ -114,13 +191,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                     alignment: Alignment.center,
                     children: [
                       Container(
-                        decoration: BoxDecoration(color: Colors.black.withAlpha(70), shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(70),
+                            shape: BoxShape.circle),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,
                         children: const [
-                          Icon(Icons.arrow_upward_rounded, color: AppColors.play, size: 20),
-                          Icon(Icons.arrow_downward_rounded, color: AppColors.danger, size: 20),
+                          Icon(Icons.arrow_upward_rounded,
+                              color: AppColors.play, size: 20),
+                          Icon(Icons.arrow_downward_rounded,
+                              color: AppColors.danger, size: 20),
                         ],
                       ),
                     ],
@@ -135,9 +216,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(color: AppColors.purple, borderRadius: BorderRadius.circular(8)),
-                            child: const Text('NOU', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                                color: AppColors.purple,
+                                borderRadius: BorderRadius.circular(8)),
+                            child: const Text('NOU',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5)),
                           ),
                           const SizedBox(width: 7),
                           const Expanded(
@@ -145,7 +234,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               'Higher or Lower',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white, fontSize: 15.5, fontWeight: FontWeight.w800),
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15.5,
+                                  fontWeight: FontWeight.w800),
                             ),
                           ),
                         ],
@@ -155,7 +247,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         'Ce se caută mai mult? Ai 10 secunde să ghicești.',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -164,9 +259,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 20),
+                    const Icon(Icons.emoji_events_rounded,
+                        color: AppColors.coin, size: 20),
                     const SizedBox(height: 2),
-                    Text('$best', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+                    Text('$best',
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800)),
                   ],
                 ),
               ],
@@ -187,8 +287,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             future: _statsFuture,
             builder: (context, snapshot) {
               final stats = snapshot.data;
-              final totalAnswered = stats?.values.fold<int>(0, (sum, s) => sum + s.answered) ?? 0;
-              final totalQuestions = stats?.values.fold<int>(0, (sum, s) => sum + s.total) ?? 0;
+              final totalAnswered =
+                  stats?.values.fold<int>(0, (sum, s) => sum + s.answered) ?? 0;
+              final totalQuestions =
+                  stats?.values.fold<int>(0, (sum, s) => sum + s.total) ?? 0;
 
               return Column(
                 children: [
@@ -198,24 +300,32 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       children: [
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                          icon: const Icon(Icons.arrow_back_ios_rounded,
+                              color: Colors.white70),
                         ),
                         const SizedBox(width: 4),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             ShaderMask(
-                              shaderCallback: (r) => const LinearGradient(colors: [Colors.white, Color(0xFFC9B8FF)])
+                              shaderCallback: (r) => const LinearGradient(
+                                      colors: [Colors.white, Color(0xFFC9B8FF)])
                                   .createShader(r),
                               child: const Text(
                                 'Alege o categorie',
-                                style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w900),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w900),
                               ),
                             ),
                             if (totalQuestions > 0)
                               Text(
                                 '$totalAnswered/$totalQuestions întrebări cucerite',
-                                style: const TextStyle(color: Colors.white54, fontSize: 11.5, fontWeight: FontWeight.w600),
+                                style: const TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600),
                               ),
                           ],
                         ),
@@ -241,10 +351,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         // conținut inexistent încă (mode.locked) vs. blocată
                         // cu Gems (tier 0) — două motive diferite, ambele
                         // arătate ca "locked" vizual, dar cu text diferit.
-                        final accessLocked = !mode.locked && s != null && tier == 0;
+                        final accessLocked =
+                            !mode.locked && s != null && tier == 0;
                         final visualLocked = mode.locked || accessLocked;
-                        final canUpgrade = !mode.locked && s != null && tier < maxUnlockTier && total > initialUnlockedQuestions;
-                        final upgradePrice = canUpgrade ? questionUnlockGemsPrice(tier + 1) : null;
+                        final canUpgrade = !mode.locked &&
+                            s != null &&
+                            tier < maxUnlockTier &&
+                            total > initialUnlockedQuestions;
+                        final upgradePrice = canUpgrade
+                            ? questionUnlockGemsPrice(tier + 1)
+                            : null;
 
                         final String subtitle;
                         if (mode.locked) {
@@ -252,7 +368,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         } else if (accessLocked) {
                           subtitle = 'Blocată — deblocheaz-o cu Gems mai jos';
                         } else if (unlocked < total) {
-                          subtitle = '${s?.answered ?? 0}/$unlocked jucate (din $total)';
+                          subtitle =
+                              '${s?.answered ?? 0}/$unlocked jucate (din $total)';
                         } else {
                           subtitle = '${s?.answered ?? 0}/$total întrebări';
                         }
@@ -267,22 +384,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           answered: s?.answered ?? 0,
                           subtitle: subtitle,
                           upgradePrice: upgradePrice,
-                          onUpgrade: canUpgrade ? () => _upgrade(mode, s) : null,
+                          onUpgrade:
+                              canUpgrade ? () => _upgrade(mode, s) : null,
                           onTap: mode.locked
-                              ? () => ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Va urma în următorul update! 🚀')),
+                              ? () =>
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Va urma în următorul update! 🚀')),
                                   )
                               : accessLocked
-                                  ? () => ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Deblocheaz-o cu Gems — vezi butonul de pe card.')),
+                                  ? () => ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content: Text(
+                                                'Deblocheaz-o cu Gems — vezi butonul de pe card.')),
                                       )
-                                  : () {
-                                      Sfx.tileSelect();
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(builder: (_) => LoadingScreen(gameModeId: mode.id)),
-                                      );
-                                    },
+                                  : () => _enterCategory(mode),
                         );
                       },
                     ),

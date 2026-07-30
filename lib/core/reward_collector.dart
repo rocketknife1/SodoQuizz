@@ -62,14 +62,10 @@ Future<void> collectRewards(
     await Future.delayed(const Duration(milliseconds: 120));
   }
 
-  await stage(
-    amount: coins,
-    icon: Icons.monetization_on_rounded,
-    color: AppColors.coin,
-    targetKey: coinBadgeKey,
-    applyReward: () => StorageService.addCoins(coins),
-    impactSound: Sfx.coinHit,
-  );
+  // Ordinea de mai jos (XP → monede → gems → viață → hints) trebuie să
+  // rămână identică cu ordinea chip-urilor din _RewardChips
+  // (quests_screen.dart/achievements_screen.dart) — altfel jucătorul vede o
+  // ordine pe card și alta la colectare, ceea ce pare haotic.
   await stage(
     amount: xp,
     icon: Icons.star_rounded,
@@ -78,6 +74,25 @@ Future<void> collectRewards(
     applyReward: () => StorageService.addXp(xp),
     impactSound: Sfx.xpHit,
   );
+  await stage(
+    amount: coins,
+    icon: Icons.monetization_on_rounded,
+    color: AppColors.coin,
+    targetKey: coinBadgeKey,
+    applyReward: () => StorageService.addCoins(coins),
+    impactSound: Sfx.coinHit,
+  );
+  if (gems > 0) {
+    await stage(
+      amount: gems,
+      icon: Icons.diamond_rounded,
+      color: const Color(0xFF5EC8F2),
+      targetKey: gemsBadgeKey!,
+      applyReward: () => StorageService.addGems(gems),
+      // nu exista un sunet dedicat de gems — refolosim coinHit (vezi Sfx).
+      impactSound: Sfx.coinHit,
+    );
+  }
   await stage(
     amount: lives,
     icon: Icons.favorite_rounded,
@@ -96,17 +111,6 @@ Future<void> collectRewards(
       applyReward: () => hintsUncapped ? StorageService.addHintsUncapped(hints) : StorageService.addHints(hints),
       // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
       impactSound: Sfx.xpHit,
-    );
-  }
-  if (gems > 0) {
-    await stage(
-      amount: gems,
-      icon: Icons.diamond_rounded,
-      color: const Color(0xFF5EC8F2),
-      targetKey: gemsBadgeKey!,
-      applyReward: () => StorageService.addGems(gems),
-      // nu exista un sunet dedicat de gems — refolosim coinHit (vezi Sfx).
-      impactSound: Sfx.coinHit,
     );
   }
 }
