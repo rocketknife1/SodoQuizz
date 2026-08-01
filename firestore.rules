@@ -37,6 +37,17 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Profil public (leaderboard global, ligă, statistici) — spre
+    // deosebire de users/{uid} de mai sus, citirea e publică (orice cont
+    // autentificat, inclusiv anonim, trebuie să poată vedea leaderboard-ul
+    // altora), dar scrierea rămâne strict pe propriul doc (vezi
+    // PlayerProfileService — fiecare client își scrie doar propriul
+    // rezultat, fără Cloud Functions în acest proiect).
+    match /player_profiles/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Orice altceva neenumerat explicit mai sus — refuzat implicit.
     match /{document=**} {
       allow read, write: if false;

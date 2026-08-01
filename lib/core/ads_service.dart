@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show VoidCallback, debugPrint, kIsWeb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 /// Ad unit ID real (Rewarded), din consola AdMob (app "Sodo Quizz").
@@ -26,7 +26,7 @@ class AdsService {
   RewardedAd? _rewardedAd;
 
   Future<void> init() async {
-    if (_initialized) return;
+    if (_initialized || kIsWeb) return; // google_mobile_ads nu suporta Flutter Web
     _initialized = true;
     try {
       await MobileAds.instance.updateRequestConfiguration(

@@ -244,16 +244,21 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
       if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
       if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
-      if (hintsUsed == 0 && mounted)
+      if (hintsUsed == 0 && mounted) {
         await bumpQuestMetric(context, 'no_hint_correct', 1);
-      if (streak == 3 && mounted)
+      }
+      if (streak == 3 && mounted) {
         await bumpQuestMetric(context, 'streak_hit_3', 1);
-      if (streak == 5 && mounted)
+      }
+      if (streak == 5 && mounted) {
         await bumpQuestMetric(context, 'streak_hit_5', 1);
-      if (streak == 8 && mounted)
+      }
+      if (streak == 8 && mounted) {
         await bumpQuestMetric(context, 'streak_hit_8', 1);
-      if (streak == 10 && mounted)
+      }
+      if (streak == 10 && mounted) {
         await bumpQuestMetric(context, 'streak_hit_10', 1);
+      }
       // salvăm recordul pe loc, nu doar la finalul sesiunii — altfel un
       // jucător care iese din joc la jumătate (buton Acasă) pierde scorul.
       await StorageService.updateHighScore(score);
@@ -312,8 +317,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         onTap: () => Navigator.push(context,
             MaterialPageRoute(builder: (_) => const AchievementsScreen())),
       );
-      if (i < newlyDone.length - 1)
+      if (i < newlyDone.length - 1) {
         await Future.delayed(const Duration(milliseconds: 400));
+      }
     }
   }
 

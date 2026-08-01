@@ -109,14 +109,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         targetKey: targetKey,
         icon: icon,
         color: color,
-        flightDuration: const Duration(milliseconds: 1000),
+        flightDuration: const Duration(milliseconds: 1350),
         serpentine: true,
         onImpact: () {
           if (!impactCompleter.isCompleted) impactCompleter.complete();
         },
       );
       await impactCompleter.future;
-      await Future.delayed(const Duration(milliseconds: 120));
+      await Future.delayed(const Duration(milliseconds: 280));
     }
 
     await stage(amount: 25, icon: Icons.monetization_on_rounded, color: AppColors.coin, targetKey: _coinPreviewKey);

@@ -8,7 +8,7 @@ import 'googly_eyes.dart';
 import 'mascot_props.dart';
 import 'mascot_sync.dart';
 
-const _discordInviteUrl = 'https://discord.gg/5d5b65ffM';
+const _discordInviteUrl = 'https://discord.gg/ejGRMWJH5';
 const _discordBlurple = Color(0xFF5865F2);
 const _martianGreen = Color(0xFF3BC17A);
 

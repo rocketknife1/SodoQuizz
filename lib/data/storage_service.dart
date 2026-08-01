@@ -52,6 +52,7 @@ class StorageService {
   static const _leaderboardModesKey = 'leaderboard_modes_with_points';
   static const leaderboardPeriodHours = 48;
   static const _starterCategoriesKey = 'starter_unlocked_categories';
+  static const _firstMultiplayerWinKey = 'first_mp_win_date';
 
   /// Câte categorii sunt deblocate gratuit, random, la prima intrare în joc
   /// (vezi [getStarterCategories]) — restul pornesc complet blocate (tier 0).
@@ -359,6 +360,22 @@ class StorageService {
     await prefs.setString(_dailyClaimKey, _dateKey(DateTime.now()));
     await addLivesUncapped(_maxLives);
     return _maxLives;
+  }
+
+  // ─── First Win of the Day (bonus la prima victorie multiplayer a zilei) ───
+  // Mirror exact pe canClaimDailyReward/claimDailyReward de mai sus — doar
+  // marchează ziua, recompensa efectivă (monede/XP) e acordată de apelant
+  // (MultiplayerResultsScreen) prin collectRewards, la fel ca la quest-uri.
+
+  static Future<bool> canClaimFirstWinOfDay() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getString(_firstMultiplayerWinKey);
+    return last != _dateKey(DateTime.now());
+  }
+
+  static Future<void> claimFirstWinOfDay() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_firstMultiplayerWinKey, _dateKey(DateTime.now()));
   }
 
   // ─── Wheel-spin la inel (roată cu premii, o dată la 24h reale) ─────────────

@@ -20,7 +20,7 @@ class CoinRewardOverlay {
     VoidCallback? onFinished,
     IconData icon = Icons.monetization_on_rounded,
     Color color = AppColors.coin,
-    Duration flightDuration = const Duration(milliseconds: 950),
+    Duration flightDuration = const Duration(milliseconds: 1350),
     bool serpentine = false,
   }) {
     final overlay = Overlay.of(context);
@@ -79,7 +79,15 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
   late final AnimationController _plus;
   bool _impactFired = false;
 
-  static const _iconAngles = [0.0, 60.0, 120.0, 180.0, 240.0, 300.0];
+  // decalaje unghiulare ale simbolurilor față de direcția reală spre țintă —
+  // NU o explozie pe 360° (jumătate din simboluri ar porni în direcția
+  // opusă țintei și ar trebui să facă cale-ntoarsă, ceea ce se vedea ca o
+  // împrăștiere haotică, fără traseu coerent). Doar 2 simboluri, fără
+  // rotație și fără umbre blur — pe telefon animația cu 6 simboluri
+  // rotative + umbre nu apuca să se redeseneze intermediar (sărea direct de
+  // la izbucnire la impact, fără traseu vizibil); varianta asta e mult mai
+  // ieftin de pictat, deci chiar apar cadrele intermediare ale zborului.
+  static const _iconAngleOffsets = [-14.0, 14.0];
   static const _dustAngles = [15.0, 55.0, 95.0, 135.0, 175.0, 215.0, 255.0, 295.0, 335.0];
 
   @override
@@ -159,7 +167,7 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
         if (dustFade > 0)
           for (var i = 0; i < _dustAngles.length; i++) _buildDustSpark(i, center, dustBurst, dustFade),
         _buildAmountLabel(center, t),
-        for (var i = 0; i < _iconAngles.length; i++) _buildIcon(i, center, revealT, burstT, flightT),
+        for (var i = 0; i < _iconAngleOffsets.length; i++) _buildIcon(i, center, revealT, burstT, flightT),
       ],
     );
   }
@@ -185,7 +193,6 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
             color: _withOpacity(widget.color, opacity),
             fontSize: 24,
             fontWeight: FontWeight.w900,
-            shadows: [Shadow(color: _withOpacity(Colors.black54, opacity), blurRadius: 5)],
           ),
         ),
       ),
@@ -208,7 +215,9 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
   }
 
   Widget _buildIcon(int i, Offset center, double revealT, double burstT, double flightT) {
-    final angle = _iconAngles[i] * pi / 180;
+    final toTarget = widget.target - center;
+    final targetAngle = atan2(toTarget.dy, toTarget.dx) * 180 / pi;
+    final angle = (targetAngle + _iconAngleOffsets[i]) * pi / 180;
     final scatter = center + Offset(cos(angle), sin(angle)) * 58;
 
     Offset pos;
@@ -242,22 +251,17 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
       if (flightT > 0.88) opacity = ((1 - flightT) / 0.12).clamp(0.0, 1.0);
     }
 
-    final spin = (burstT + flightT) * 6 * pi;
     final o = opacity.clamp(0.0, 1.0);
 
     return Positioned(
       left: pos.dx - 17,
       top: pos.dy - 17,
-      child: Transform.rotate(
-        angle: spin,
-        child: Transform.scale(
-          scale: scale.clamp(0.0, 1.7),
-          child: Icon(
-            widget.icon,
-            color: _withOpacity(widget.color, o),
-            size: 34,
-            shadows: [Shadow(color: _withOpacity(Colors.black45, o), blurRadius: 5)],
-          ),
+      child: Transform.scale(
+        scale: scale.clamp(0.0, 1.7),
+        child: Icon(
+          widget.icon,
+          color: _withOpacity(widget.color, o),
+          size: 34,
         ),
       ),
     );
@@ -290,7 +294,6 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
           color: _withOpacity(widget.color, o),
           fontSize: 26,
           fontWeight: FontWeight.w900,
-          shadows: [Shadow(color: _withOpacity(Colors.black54, o), blurRadius: 4)],
         ),
       ),
     );

@@ -123,7 +123,27 @@ class AuthService {
       }
       final account = await GoogleSignIn.instance.authenticate();
       final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      final anonymous = FirebaseAuth.instance.currentUser;
+      if (anonymous != null && anonymous.isAnonymous) {
+        // LEAGĂ contul Google de identitatea anonimă curentă (păstrează
+        // ACELAȘI uid) în loc de signInWithCredential direct, care ar crea
+        // un uid nou și ar rupe legătura cu tot ce s-a acumulat deja pe
+        // identitatea asta (player_profiles/meciuri — vezi PlayerProfileService)
+        // — jucătorul ar apărea "dublat" în leaderboard, cu istoricul de
+        // Guest orfan sub uid-ul vechi. Eșuează doar dacă acest cont Google
+        // are deja propriul istoric în altă parte (alt telefon/sesiune) —
+        // în acel caz, acela câștigă (standard), iar progresul de Guest de
+        // pe telefonul ăsta rămâne orfan (inevitabil fără Cloud Functions
+        // care să contopească două conturi deja separate).
+        try {
+          await anonymous.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code != 'credential-already-in-use' && e.code != 'email-already-in-use') rethrow;
+          await FirebaseAuth.instance.signInWithCredential(credential);
+        }
+      } else {
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      }
       final photoUrl = account.photoUrl ?? await _fetchGooglePhotoUrl(account);
       // FirebaseAuth seteaza displayName/photoURL doar la crearea contului -
       // le rescriem explicit din contul Google curent, ca sa fie mereu live.

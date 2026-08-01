@@ -1,8 +1,11 @@
-﻿import 'package:firebase_core/firebase_core.dart';
+﻿import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/audio.dart';
 import 'data/cloud_sync_service.dart';
+import 'data/multiplayer_service.dart';
+import 'data/player_profile_service.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
@@ -11,15 +14,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Sfx.preload();
   Music.start();
-  // O singura initializare, la pornire - restul (login Google, identitate
-  // anonima pentru multiplayer) ramane lazy, declansat doar cand userul
-  // chiar foloseste acele functii. Esec aici (ex. platforma neconfigurata
-  // inca in Firebase Console) nu trebuie sa blocheze restul aplicatiei -
-  // single-player merge oricum 100% local.
+  // O singura initializare, la pornire - restul (login Google) ramane lazy,
+  // declansat doar cand userul chiar foloseste acele functii. Esec aici
+  // (ex. platforma neconfigurata inca in Firebase Console) nu trebuie sa
+  // blocheze restul aplicatiei - single-player merge oricum 100% local.
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // identitate (anonima daca nimeni nu e logat cu Google) chiar la pornire,
+    // nu doar lazy cand userul deschide multiplayer - altfel un jucator
+    // 100% solo n-ar avea niciodata un uid si n-ar putea aparea in
+    // leaderboard-ul global (vezi PlayerProfileService).
+    await MultiplayerService.instance.ensureInitialized();
+    unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
   } catch (e) {
-    debugPrint('Firebase.initializeApp a esuat: $e');
+    debugPrint('Firebase.initializeApp/identitate a esuat: $e');
   }
   // pregatire SDK reclame (ID-uri de test deocamdata) - vezi ads_service.dart;
   // nu blocheaza pornirea si nu e inca folosit de butonul din GameScreen.
@@ -58,6 +66,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       Music.pauseForBackground();
     } else if (state == AppLifecycleState.resumed) {
       Music.resumeFromBackground();
+      PlayerProfileService.instance.ensureProfileHeartbeat();
     }
   }
 

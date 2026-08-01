@@ -18,6 +18,20 @@ class MultiplayerUnavailableException implements Exception {
 /// Capacitatea maximă a unei camere private (Create Room / Join with Code).
 const int matchPlayerCount = 5;
 
+/// Timp minim garantat între un tap al jucătorului (create/join room, dat
+/// un răspuns, trimis un mesaj) și finalizarea scrierii în Firestore — nu
+/// pentru UX, ci ca frână simplă de trafic: fără el, fiecare tap ajunge
+/// direct la Firestore în clipa în care e apăsat, ceea ce la mulți useri
+/// simultani înseamnă vârfuri de scriere greu de absorbit. Rulează în
+/// paralel cu cererea reală (`Future.wait`), deci nu se adună la latența
+/// de rețea — doar impune un plafon minim, nu adaugă timp peste una lentă.
+const _writePace = Duration(milliseconds: 350);
+
+Future<T> _paced<T>(Future<T> Function() action) async {
+  final results = await Future.wait([action(), Future<void>.delayed(_writePace)]);
+  return results[0] as T;
+}
+
 /// Câți jucători reali formează un meci prin matchmaking public (Join
 /// Online) — 1 vs 1, fără completare cu boți: se așteaptă un adversar real.
 const int matchmakingOpponentCount = 2;
@@ -103,10 +117,12 @@ class MultiplayerService {
       hostPhotoUrl: photoUrl,
       gameMode: gameMode,
     );
-    await ref.set(info.toMap());
-    await ref.collection('players').doc(me).set(
-          MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0, isHost: true).toMap(),
-        );
+    await _paced(() async {
+      await ref.set(info.toMap());
+      await ref.collection('players').doc(me).set(
+            MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0, isHost: true).toMap(),
+          );
+    });
     return info;
   }
 
@@ -147,9 +163,9 @@ class MultiplayerService {
       throw const MultiplayerUnavailableException('Camera e plină.');
     }
     final me = currentPlayerId;
-    await doc.reference.collection('players').doc(me).set(
+    await _paced(() => doc.reference.collection('players').doc(me).set(
           MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0).toMap(),
-        );
+        ));
     return MatchInfo.fromDoc(doc);
   }
 
@@ -208,7 +224,7 @@ class MultiplayerService {
 
   Future<void> submitHigherLowerGuess({required String matchId, required String guess}) {
     final me = currentPlayerId;
-    return _db.collection('matches').doc(matchId).update({'roundAnswers.$me': guess});
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundAnswers.$me': guess}));
   }
 
   /// Calculează rezultatul rundei curente — poate fi apelată de ORICE
@@ -300,9 +316,9 @@ class MultiplayerService {
 
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {
     final me = currentPlayerId;
-    await _db.collection('matches').doc(matchId).collection('chat').add(
+    await _paced(() => _db.collection('matches').doc(matchId).collection('chat').add(
           ChatMessage(id: '', senderId: me, senderName: senderName, text: text).toMap(),
-        );
+        ));
   }
 
   Stream<List<ChatMessage>> watchChat(String matchId) {
@@ -365,7 +381,7 @@ class MultiplayerService {
   }
 
   Future<void> updateScore({required String matchId, required int score}) {
-    return _db.collection('matches').doc(matchId).collection('players').doc(currentPlayerId).update({'score': score});
+    return _paced(() => _db.collection('matches').doc(matchId).collection('players').doc(currentPlayerId).update({'score': score}));
   }
 
   // ─── Matchmaking public ─────────────────────────────────────────────────

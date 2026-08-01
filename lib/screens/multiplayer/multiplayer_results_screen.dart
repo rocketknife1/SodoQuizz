@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/reward_collector.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
@@ -23,6 +25,18 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   int _coinsEarned = 0;
   int _xpEarned = 0;
 
+  /// Bonusul "Prima victorie a zilei" — vezi StorageService.canClaimFirstWinOfDay.
+  /// Suma efectivă (monede/XP) e adăugată de collectRewards chiar când
+  /// pornește animația (vezi _maybePlayFirstWinAnimation), nu aici — la fel
+  /// ca la orice alt apel collectRewards din aplicație (quests_screen.dart
+  /// etc.), ca reîmprospătarea balanței să fie sincronă cu animația.
+  static const _firstWinBonusCoins = 50;
+  static const _firstWinBonusXp = 100;
+  bool _firstWinBonus = false;
+  bool _firstWinAnimationFired = false;
+  final _coinBadgeKey = GlobalKey();
+  final _xpBadgeKey = GlobalKey();
+
   /// Multiplayer înainte nu acorda NICIO recompensă economică — un meci
   /// real, cu adversar live și fără reluări, merită o primă peste modul
   /// solo fără risc (1,25× la coins/XP din scor) plus un bonus fix de
@@ -36,14 +50,58 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     final myIndex = sorted.indexWhere((p) => p.id == me);
     if (myIndex != -1) {
       final myScore = sorted[myIndex].score;
-      final won = myIndex == 0 && (sorted.length < 2 || sorted[1].score < myScore);
+      // egalitate pentru locul 1 (mai mulți cu același scor maxim) numără
+      // ca remiză, nu ca victorie NICI ca înfrângere, pentru statisticile
+      // de profil (vezi PlayerProfileService.recordMatchResult) — restul
+      // logicii economice de mai jos rămâne neschimbată.
+      final draw = myIndex == 0 && sorted.length >= 2 && sorted[1].score == myScore;
+      final won = myIndex == 0 && !draw;
       _coinsEarned = myScore ~/ 8 + (won ? 60 : 15);
       _xpEarned = (myScore * 1.1).round() + (won ? 120 : 30);
       await StorageService.addCoins(_coinsEarned);
       await StorageService.addXp(_xpEarned);
+      if (won && await StorageService.canClaimFirstWinOfDay()) {
+        await StorageService.claimFirstWinOfDay();
+        _firstWinBonus = true;
+      }
+      await PlayerProfileService.instance.recordMatchResult(
+        gameModeId: widget.gameMode.name,
+        won: won,
+        draw: draw,
+      );
     }
     await MultiplayerService.instance.leaveMatch(widget.matchId);
     return sorted;
+  }
+
+  /// Pornește animația abia după ce pastilele de mai jos (targetKey-urile)
+  /// chiar există în arbore — la fel ca la fluxul de reclamă recompensată
+  /// din game_screen.dart, care așteaptă explicit endOfFrame înainte de
+  /// collectRewards, altfel targetKey.currentContext e încă null și
+  /// animația cade pe fallback-ul din dreapta-sus.
+  Future<void> _maybePlayFirstWinAnimation() async {
+    if (_firstWinAnimationFired || !_firstWinBonus) return;
+    _firstWinAnimationFired = true;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    await collectRewards(
+      context,
+      coins: _firstWinBonusCoins,
+      xp: _firstWinBonusXp,
+      lives: 0,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: _xpBadgeKey,
+      livesBadgeKey: GlobalKey(),
+    );
+  }
+
+  Widget _bonusBadge(GlobalKey key, IconData icon, Color color) {
+    return Container(
+      key: key,
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(color: Colors.white.withAlpha(15), shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
+      child: Icon(icon, color: color, size: 16),
+    );
   }
 
   void _goHome() {
@@ -70,6 +128,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
               if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.blue));
               }
+              if (_firstWinBonus) {
+                WidgetsBinding.instance.addPostFrameCallback((_) => _maybePlayFirstWinAnimation());
+              }
               final me = MultiplayerService.instance.currentPlayerId;
               final players = snap.data!;
               return Column(
@@ -81,6 +142,27 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   if (_coinsEarned > 0 || _xpEarned > 0) ...[
                     const SizedBox(height: 6),
                     Text('+$_coinsEarned monede  •  +$_xpEarned XP', style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
+                  if (_firstWinBonus) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.coin.withAlpha(30),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.coin.withAlpha(120)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text('🎁 Prima victorie a zilei', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 12)),
+                          const SizedBox(width: 10),
+                          _bonusBadge(_coinBadgeKey, Icons.monetization_on_rounded, AppColors.coin),
+                          const SizedBox(width: 6),
+                          _bonusBadge(_xpBadgeKey, Icons.star_rounded, AppColors.purple),
+                        ],
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 20),
                   Expanded(

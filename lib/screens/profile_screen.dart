@@ -1,13 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../core/leagues.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
+import '../data/player_profile_service.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
+import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'achievements_screen.dart';
+import 'multiplayer/leaderboard_screen.dart';
 import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -29,6 +33,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       StorageService.getAnsweredIds(),
       loadAllQuestions(),
       StorageService.hasClaimableAchievements(),
+      PlayerProfileService.instance.getMyProfile(),
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
@@ -39,6 +44,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       answeredCount: answered.length,
       totalQuestions: total,
       claimableAchievements: results[5] as bool,
+      multiplayerProfile: results[6] as PlayerProfile?,
     );
   }
 
@@ -95,6 +101,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   wide: true,
                 ),
                 const SizedBox(height: 24),
+                _buildMultiplayerStats(data.multiplayerProfile),
+                const SizedBox(height: 24),
                 GestureDetector(
                   onTap: () async {
                     await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
@@ -148,6 +156,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
       bottomNavigationBar: AppBottomNavBar(key: _navBarKey, current: AppTab.profile),
+    );
+  }
+
+  /// Statistici multiplayer (winrate/meciuri/streak) + liga curentă — un
+  /// jucător fără niciun meci încă (profil null sau cu matchesPlayed == 0)
+  /// tot arată Bronze/0, nu un mesaj de eroare (vezi leagueForPoints, 0
+  /// puncte pică natural pe Bronze). Tap pe rândul de ligă deschide
+  /// leaderboard-ul global.
+  Widget _buildMultiplayerStats(PlayerProfile? profile) {
+    final p = profile ?? const PlayerProfile(uid: '', name: '', avatarSeed: '');
+    final league = leagueForPoints(p.leaguePoints);
+    final winratePct = (p.winrate * 100).round();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Multiplayer', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(child: _StatTile(icon: Icons.percent_rounded, color: AppColors.play, label: 'Winrate', value: '$winratePct%')),
+            const SizedBox(width: 12),
+            Expanded(child: _StatTile(icon: Icons.sports_esports_rounded, color: AppColors.blue, label: 'Meciuri', value: '${p.matchesPlayed}')),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _StatTile(
+          icon: Icons.local_fire_department_rounded,
+          color: AppColors.orange,
+          label: 'Cel mai lung streak de victorii',
+          value: '${p.longestStreak}',
+          wide: true,
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LeaderboardScreen())),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+            child: Row(
+              children: [
+                Icon(league.icon, color: league.color, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Liga ${league.name}', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text('${p.leaguePoints} puncte de ligă', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -251,6 +317,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _signIn() async {
     try {
       await AuthService.instance.signInWithGoogle();
+      // fara asta, numele public (leaderboard/profil) ar ramane pe cel
+      // generat aleator - vezi AuthService.signInWithGoogle - pana la
+      // urmatoarea pornire/revenire din fundal a aplicatiei (cand rulează
+      // heartbeat-ul din main.dart). Il rulăm explicit acum, imediat, plus
+      // reincarcam datele afisate ca schimbarea sa se vada pe loc.
+      await PlayerProfileService.instance.ensureProfileHeartbeat();
+      if (!mounted) return;
+      setState(() => _dataFuture = _load());
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -267,7 +341,19 @@ class _ProfileData {
   final int answeredCount;
   final int totalQuestions;
   final bool claimableAchievements;
-  _ProfileData({required this.xp, required this.coins, required this.highScore, required this.answeredCount, required this.totalQuestions, required this.claimableAchievements});
+  /// Null dacă profilul public încă nu există (ex. primul heartbeat de la
+  /// pornirea aplicației nu s-a scris încă) — tratat ca "niciun meci încă"
+  /// în UI, nu ca eroare.
+  final PlayerProfile? multiplayerProfile;
+  _ProfileData({
+    required this.xp,
+    required this.coins,
+    required this.highScore,
+    required this.answeredCount,
+    required this.totalQuestions,
+    required this.claimableAchievements,
+    this.multiplayerProfile,
+  });
 }
 
 class _StatTile extends StatelessWidget {

@@ -104,7 +104,7 @@ class _ShopScreenState extends State<ShopScreen> {
       targetKey: _livesBadgeKey,
       icon: Icons.favorite_rounded,
       color: AppColors.life,
-      flightDuration: const Duration(milliseconds: 1000),
+      flightDuration: const Duration(milliseconds: 1350),
       serpentine: true,
       onImpact: Sfx.heartHit,
       onFinished: _loadState,

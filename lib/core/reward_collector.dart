@@ -50,7 +50,7 @@ Future<void> collectRewards(
       targetKey: targetKey,
       icon: icon,
       color: color,
-      flightDuration: const Duration(milliseconds: 1000),
+      flightDuration: const Duration(milliseconds: 1350),
       serpentine: true,
       onImpact: () {
         impactSound();
@@ -59,7 +59,7 @@ Future<void> collectRewards(
       },
     );
     await impactCompleter.future;
-    await Future.delayed(const Duration(milliseconds: 120));
+    await Future.delayed(const Duration(milliseconds: 280));
   }
 
   // Ordinea de mai jos (XP → monede → gems → viață → hints) trebuie să
