@@ -406,13 +406,13 @@ class StorageService {
     await prefs.setInt(_ringSpinTimestampKey, DateTime.now().millisecondsSinceEpoch);
   }
 
-  // ─── Notificarea lui Clippy (bonus cu 3 întrebări, la fiecare ~15s) ────────
+  // ─── Notificarea lui Clippy (bonus cu 3 întrebări, la fiecare 5 minute) ────
   // Persistat (nu doar în memoria widget-ului), ca să supraviețuiască
   // navigării între tab-uri (Home se recreează la fiecare schimbare de tab
   // din bottom nav) — altfel notificarea se pierdea/reseta la revenirea pe
   // Home, deși încă era valabilă.
 
-  static const clippyReadyIntervalSeconds = 15;
+  static const clippyReadyIntervalSeconds = 5 * 60;
 
   static Future<bool> isClippyReady() async {
     final prefs = await SharedPreferences.getInstance();

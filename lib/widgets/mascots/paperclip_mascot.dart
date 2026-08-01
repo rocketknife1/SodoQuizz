@@ -29,11 +29,12 @@ const _localGestures = [
 /// mici orbitând în jur (temă spațială, ca restul aplicației) și un
 /// repertoriu de gesturi idle care se schimbă periodic.
 ///
-/// La fiecare ~15s (fără nicio notificare zgomotoasă) apare o pastilă
-/// discretă, lipită de "fruntea" agrafei (se mișcă odată cu ea) — semn că
-/// are pregătit un set de 3 întrebări aleatorii din toate categoriile, cu
-/// recompensă ×1.25. Tap pe ea în starea asta te duce la [ClippyBonusScreen];
-/// altfel, tap-ul e doar o reacție amuzantă (+ un mesaj cu timpul rămas).
+/// La fiecare 5 minute apare o pastilă discretă, lipită de "fruntea" agrafei
+/// (se mișcă odată cu ea) — semn că are pregătit un set de 3 întrebări
+/// aleatorii din toate categoriile, cu recompensă ×1.25. Tap pe ea în starea
+/// asta te duce la [ClippyBonusScreen]; altfel, tap-ul e doar o reacție
+/// amuzantă — timpul rămas se vede oricum permanent sub mascotă (vezi
+/// [_buildLabel], aceeași convenție ca la RingMascot / Roata norocului).
 ///
 /// Disponibilitatea e persistată (vezi [StorageService.isClippyReady]), nu
 /// ținută doar în memoria widget-ului — altfel se pierdea la orice
@@ -54,10 +55,12 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   late final AnimationController _speech;
   bool _excited = false;
   bool _questionReady = false;
+  bool _checked = false;
   _Gesture? _currentGesture;
   String? _speechText;
-  Timer? _readyPollTimer;
   Timer? _gestureTimer;
+  Timer? _countdownTicker;
+  Duration? _remaining;
   StreamSubscription<MascotEvent>? _syncSub;
   final _random = Random();
 
@@ -87,21 +90,44 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     }
   }
 
-  /// Citește disponibilitatea din storage (sursa de adevăr) și, dacă încă
-  /// nu e gata, programează un timer LOCAL doar ca să reîmprospăteze UI-ul
-  /// exact când expiră — corectitudinea nu depinde de acest timer (dacă se
-  /// pierde odată cu widget-ul, următoarea verificare din storage tot arată
-  /// corect starea).
+  /// Citește disponibilitatea din storage (sursa de adevăr) și pornește/
+  /// oprește numărătoarea inversă afișată permanent sub mascotă (vezi
+  /// [_buildLabel]) — la fel ca [RingMascot], nu mai depinde de un tap ca
+  /// să afle cât a mai rămas, se vede tot timpul.
   Future<void> _refreshReady() async {
-    _readyPollTimer?.cancel();
     final ready = await StorageService.isClippyReady();
     if (!mounted) return;
-    setState(() => _questionReady = ready);
-    if (!ready) {
-      final remaining = await StorageService.clippyReadyRemaining();
-      if (!mounted) return;
-      _readyPollTimer = Timer(remaining, _refreshReady);
+    setState(() {
+      _questionReady = ready;
+      _checked = true;
+    });
+    _countdownTicker?.cancel();
+    if (ready) {
+      setState(() => _remaining = null);
+      return;
     }
+    final remaining = await StorageService.clippyReadyRemaining();
+    if (!mounted) return;
+    setState(() => _remaining = remaining);
+    _startCountdown();
+  }
+
+  /// Decrementează local, din secundă în secundă, fără să mai interogheze
+  /// storage-ul la fiecare tick — la zero, reverifică o dată (flip la ready).
+  void _startCountdown() {
+    _countdownTicker = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      final next = (_remaining ?? Duration.zero) - const Duration(seconds: 1);
+      if (next <= Duration.zero) {
+        timer.cancel();
+        _refreshReady();
+        return;
+      }
+      setState(() => _remaining = next);
+    });
   }
 
   void _scheduleGesture() {
@@ -154,7 +180,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
 
   @override
   void dispose() {
-    _readyPollTimer?.cancel();
+    _countdownTicker?.cancel();
     _gestureTimer?.cancel();
     _syncSub?.cancel();
     _idle.dispose();
@@ -183,22 +209,54 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     _excite.forward(from: 0).whenComplete(() {
       if (mounted) setState(() => _excited = false);
     });
-    final remaining = await StorageService.clippyReadyRemaining();
-    if (!mounted || remaining <= Duration.zero) return;
-    final s = remaining.inSeconds + 1;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Clippy mai are nevoie de ${s}s'), duration: const Duration(milliseconds: 1200)),
-    );
+    // fără mai vreun mesaj (snackbar) — timpul rămas se vede deja permanent
+    // sub mascotă (vezi [_buildLabel]), tap-ul doar mai declanșează reacția
+    // (la fel ca [RingMascot]).
   }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _onTap,
-      child: SizedBox(
-        width: 116,
-        height: 116,
-        child: AnimatedBuilder(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildBody(),
+          const SizedBox(height: 3),
+          _buildLabel(),
+        ],
+      ),
+    );
+  }
+
+  /// Eticheta permanentă de sub mascotă — numele + numărătoarea inversă cât
+  /// timp bonusul nu e disponibil, sau doar numele (fără timer) când e gata.
+  /// Aceeași convenție ca [RingMascot._buildLabel].
+  Widget _buildLabel() {
+    const labelStyle = TextStyle(color: Colors.white54, fontSize: 7.5, fontWeight: FontWeight.w700, letterSpacing: 0.3);
+    if (_questionReady) {
+      return const Text('CLIPPY', style: TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
+    }
+    if (!_checked) {
+      return const Text('CLIPPY', style: labelStyle);
+    }
+    final r = _remaining ?? Duration.zero;
+    final m = r.inMinutes.toString().padLeft(2, '0');
+    final s = (r.inSeconds % 60).toString().padLeft(2, '0');
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text('CLIPPY', style: labelStyle),
+        Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800)),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    return SizedBox(
+      width: 116,
+      height: 116,
+      child: AnimatedBuilder(
           animation: Listenable.merge([_idle, _excite, _gesture, _speech]),
           builder: (context, _) {
             final t = _idle.value * 2 * pi;
@@ -295,8 +353,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
             );
           },
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildPlanet(int i, double t) {

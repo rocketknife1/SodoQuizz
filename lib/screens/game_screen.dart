@@ -48,6 +48,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int streak = 0;
   int hintsUsed = 0;
   int hintsBalance = 0;
+  /// Setat când al 2-lea hint e cumpărat: 2 din cele 3 variante greșite
+  /// dispar, rămânând doar cea corectă + una greșită ("50/50"). Calculat o
+  /// singură dată (nu la fiecare build) ca alegerea variantei greșite rămase
+  /// să nu se schimbe la fiecare re-render.
+  List<String>? _fiftyFiftyOptions;
   int currentQuestionReward = 0;
   final Map<String, int> _questionRewards = {};
   bool answered = false;
@@ -141,9 +146,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     hintsUsed = 0;
     answered = false;
     selectedAnswer = null;
+    _fiftyFiftyOptions = null;
     currentQuestionReward = _questionRewards[currentQ.id] ??
         calculateSessionQuestionReward(currentQ.maxPoints, Random());
   }
+
+  /// Aceeași ordine amestecată, determinist, indiferent câte ori se apelează
+  /// pentru aceeași întrebare (folosită și în build, și la calculul 50/50).
+  List<String> _shuffledOptions(Question q) =>
+      [...q.choices]..shuffle(Random(q.id.hashCode + qIndex));
 
   int get _hintCost =>
       calculateHintPenalty(currentQuestionReward, currentQ.maxPoints);
@@ -182,7 +193,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         hintsUsed++;
         score -= cost; // hint-ul se scade din scorul acumulat
         hintsBalance--;
+        // La al 2-lea hint: elimină 2 din cele 3 variante greșite, rămân
+        // doar cea corectă + una greșită ("50/50").
+        if (hintsUsed == 2 && _fiftyFiftyOptions == null) {
+          final shuffled = _shuffledOptions(currentQ);
+          final wrongKept =
+              shuffled.firstWhere((o) => o != currentQ.answer);
+          _fiftyFiftyOptions = [currentQ.answer, wrongKept]
+            ..shuffle(Random(currentQ.id.hashCode + qIndex));
+        }
       });
+      if (hintsUsed == 2) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('50/50! 2 variante greșite au fost eliminate.'),
+              duration: Duration(milliseconds: 1600)),
+        );
+      }
       bumpQuestMetric(context, 'hints_used', 1);
       StorageService.incrementHintsUsedTotal().then((_) {
         if (mounted) _checkAchievements();
@@ -695,7 +722,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
 
     final q = currentQ;
-    final opts = [...q.choices]..shuffle(Random(q.id.hashCode + qIndex));
+    final opts = _fiftyFiftyOptions ?? _shuffledOptions(q);
 
     // back-ul telefonului (gest sau buton fizic) trebuie să treacă prin
     // aceeași ieșire ca săgeata din bara de sus — altfel un jucător care
