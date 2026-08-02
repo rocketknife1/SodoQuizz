@@ -10,8 +10,16 @@ import '../widgets/next_button.dart';
 /// adusa manual — actualizeaza lista pe masura ce se testeaza poze noi.
 const List<String> testQuestionIds = [
   'lgf_001', 'lgf_002', 'lgf_003', 'lgf_004', 'lgf_005', 'lgf_006', 'lgf_007',
+  'lgf_008', 'lgf_009', 'lgf_010', 'lgf_011', 'lgf_012', 'lgf_013', 'lgf_014',
+  'lgf_015', 'lgf_016', 'lgf_017',
   'med_001', 'med_002', 'med_003', 'med_004', 'med_006', 'med_007', 'med_008',
   'med_009', 'med_010', 'med_011', 'med_012',
+  'gam_001', 'gam_003', 'gam_004', 'gam_005', 'gam_006', 'gam_007', 'gam_009',
+  'gam_010', 'gam_011',
+  'mec_001', 'mec_002', 'mec_003', 'mec_004', 'mec_005', 'mec_006', 'mec_007',
+  'mec_008', 'mec_009', 'mec_010', 'mec_011', 'mec_012', 'mec_013', 'mec_014',
+  'mec_015', 'mec_016', 'mec_017', 'mec_018', 'mec_019', 'mec_020',
+  'apl_001',
 ];
 
 /// Ecran de test intern: acelasi stil vizual ca in joc (blur, hint-uri,

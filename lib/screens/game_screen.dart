@@ -48,11 +48,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   int streak = 0;
   int hintsUsed = 0;
   int hintsBalance = 0;
+
+  /// Averea curentă, ținută local ca să putem afișa și încasa taxa de hint
+  /// (scalată cu averea) fără o citire din storage la fiecare frame — se
+  /// resincronizează la fiecare răspuns corect și la fiecare hint.
+  int coinsBalance = 0;
   /// Setat când al 2-lea hint e cumpărat: 2 din cele 3 variante greșite
   /// dispar, rămânând doar cea corectă + una greșită ("50/50"). Calculat o
   /// singură dată (nu la fiecare build) ca alegerea variantei greșite rămase
   /// să nu se schimbe la fiecare re-render.
   List<String>? _fiftyFiftyOptions;
+  /// Setat când al 3-lea hint e cumpărat: highlight pe una din cele 2
+  /// variante rămase (post 50/50), însoțit de un procent de "șansă" afișat.
+  /// NU garantează răspunsul corect — procentul e generat aleator, iar
+  /// varianta evidențiată e corectă exact cu acea probabilitate (calibrat:
+  /// la 70% arătat, e corectă în ~70% din cazuri, nu mereu). Calculat o
+  /// singură dată, ca la [_fiftyFiftyOptions].
+  String? _hintGuessOption;
+  int? _hintGuessPercent;
   int currentQuestionReward = 0;
   final Map<String, int> _questionRewards = {};
   bool answered = false;
@@ -91,12 +104,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       StorageService.getNoBlurMode(),
       StorageService.getHints(),
       StorageService.hasUnlimitedLives(),
+      StorageService.getCoins(),
     ]);
     final loaded = results[0] as List<Question>;
     final savedLives = results[1] as int;
     final noBlur = results[2] as bool;
     final savedHints = results[3] as int;
     final unlimitedLives = results[4] as bool;
+    final savedCoins = results[5] as int;
 
     // sortare deterministă (nu shuffle) ca "primele N" să fie mereu ACELEAȘI
     // întrebări între sesiuni — altfel deblocarea treptată n-ar avea sens
@@ -119,6 +134,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     setState(() {
       lives = savedLives;
       hintsBalance = savedHints;
+      coinsBalance = savedCoins;
       _noBlur = noBlur;
       _unlimitedLives = unlimitedLives;
       _sessionAnswered = 0;
@@ -147,6 +163,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     answered = false;
     selectedAnswer = null;
     _fiftyFiftyOptions = null;
+    _hintGuessOption = null;
+    _hintGuessPercent = null;
     currentQuestionReward = _questionRewards[currentQ.id] ??
         calculateSessionQuestionReward(currentQ.maxPoints, Random());
   }
@@ -156,15 +174,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   List<String> _shuffledOptions(Question q) =>
       [...q.choices]..shuffle(Random(q.id.hashCode + qIndex));
 
-  int get _hintCost =>
-      calculateHintPenalty(currentQuestionReward, currentQ.maxPoints);
+  /// Taxa în monede a următorului hint — scalată cu averea curentă (vezi
+  /// [hintCoinCost]). Recalculată la fiecare folosire, fiindcă averea se
+  /// schimbă în timpul sesiunii.
+  int get _hintCost => hintCoinCost(coinsBalance);
 
-  /// Un hint costă atât puncte din scorul acumulat CÂT ȘI un hint din
-  /// balanța persistată (aceeași resursă afișată pe Home, lângă vieți și
-  /// monede) — trebuie să ai și destule puncte, și cel puțin 1 hint deținut.
+  /// Un hint costă un hint din stoc PLUS o taxă în monede — spre deosebire de
+  /// varianta veche, unde costa puncte din scorul de sesiune (o resursă pe
+  /// care nu o "ții", deci un cost invizibil). Scorul nu mai e afectat deloc.
   bool get _canAffordHint {
     if (answered || hintsUsed >= maxHintsPerQuestion) return false;
-    return score >= _hintCost && hintsBalance > 0;
+    return hintsBalance > 0;
   }
 
   void _addHint() {
@@ -178,20 +198,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       );
       return;
     }
-    if (score < cost) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Ai nevoie de $cost puncte pentru un hint (ai $score).'),
-            duration: const Duration(milliseconds: 1400)),
-      );
-      return;
-    }
-    StorageService.spendHint().then((spent) {
+    StorageService.spendHint().then((spent) async {
       if (!mounted || !spent) return;
+      // taxa nu poate depăși niciodată averea (vezi hintCoinCost), deci
+      // spendCoins nu are cum să eșueze aici — dar dacă totuși ar eșua,
+      // hint-ul rămâne acordat, nu blocăm jucătorul pentru o monedă.
+      if (cost > 0) await StorageService.spendCoins(cost);
+      if (!mounted) return;
       setState(() {
         hintsUsed++;
-        score -= cost; // hint-ul se scade din scorul acumulat
+        coinsBalance -= cost;
         hintsBalance--;
         // La al 2-lea hint: elimină 2 din cele 3 variante greșite, rămân
         // doar cea corectă + una greșită ("50/50").
@@ -201,6 +217,23 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               shuffled.firstWhere((o) => o != currentQ.answer);
           _fiftyFiftyOptions = [currentQ.answer, wrongKept]
             ..shuffle(Random(currentQ.id.hashCode + qIndex));
+        }
+        // La al 3-lea hint: evidențiază una din cele 2 variante rămase, cu
+        // un procent de șansă afișat — NU e un răspuns garantat. Procentul
+        // e generat aleator (20-80%), apoi decidem, cu exact acea
+        // probabilitate, dacă varianta evidențiată e cea corectă sau cea
+        // greșită rămasă — altfel jucătorul ar putea deduce mereu corect
+        // urmărind highlight-ul, ceea ce ar face 50/50-ul de la hint 2
+        // redundant.
+        if (hintsUsed == 3 && _hintGuessOption == null) {
+          final remaining = _fiftyFiftyOptions ?? _shuffledOptions(currentQ);
+          final wrongRemaining =
+              remaining.firstWhere((o) => o != currentQ.answer);
+          final rng = Random();
+          final pct = 20 + rng.nextInt(61); // 20..80
+          final guessIsRight = rng.nextDouble() * 100 < pct;
+          _hintGuessPercent = pct;
+          _hintGuessOption = guessIsRight ? currentQ.answer : wrongRemaining;
         }
       });
       if (hintsUsed == 2) {
@@ -225,11 +258,20 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _resolveAnswer(bool correct) async {
     if (answered) return;
-    // Recompensa completă la răspuns corect — hint-urile NU o mai reduc,
-    // fiindcă se plătesc separat, din scorul acumulat, chiar la folosire
-    // (vezi [_addHint]).
+    // Punctele (scor de sesiune / record / clasament) rămân neschimbate;
+    // monedele și XP-ul au acum formule proprii, decuplate de puncte (vezi
+    // game_helpers.dart — XP-ul egal cu punctele era motivul pentru care se
+    // ajungea la nivelul 5 în 16 răspunsuri corecte). Multiplicatorul se
+    // aplică pe seria de DUPĂ acest răspuns, deci al 3-lea corect la rând e
+    // deja plătit cu bonus.
     final pts = correct ? currentQuestionReward : 0;
-    final coinsEarned = correct ? pts ~/ 10 : 0;
+    final multiplier = correct ? streakMultiplier(streak + 1) : 1.0;
+    final coinsEarned = correct
+        ? (coinsForCorrectAnswer(currentQ.maxPoints) * multiplier).round()
+        : 0;
+    final xpEarned = correct
+        ? (xpForCorrectAnswer(currentQ.maxPoints) * multiplier).round()
+        : 0;
     // verificat live (nu cache-uit la intrarea în ecran) — dacă bonusul de
     // 24h expiră la mijlocul sesiunii, următorul răspuns greșit trebuie deja
     // să scadă viața din nou.
@@ -266,7 +308,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (correct) _sessionCorrect++;
     if (correct) {
       await StorageService.addCoins(coinsEarned);
-      await StorageService.addXp(pts);
+      await StorageService.addXp(xpEarned);
+      if (mounted) setState(() => coinsBalance += coinsEarned);
       await StorageService.addAnsweredId(currentQ.id);
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
       if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
@@ -308,17 +351,22 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (_sessionAnswered % 10 != 0) return;
     final milestone = _sessionAnswered ~/ 10;
     final reward = gameModeMilestoneReward(milestone);
+    final grantsLife = milestoneGrantsLife(milestone);
     await StorageService.addCoins(reward.coins);
     await StorageService.addXp(reward.xp);
     if (reward.gems > 0) await StorageService.addGems(reward.gems);
-    await StorageService.addLivesUncapped(1);
+    if (grantsLife) await StorageService.addLivesUncapped(1);
     if (!mounted) return;
-    setState(() => lives += 1);
+    setState(() {
+      coinsBalance += reward.coins;
+      if (grantsLife) lives += 1;
+    });
     Sfx.rewardPop();
     InAppNotification.show(
       context,
       title: 'Bonus la $_sessionAnswered întrebări! 🎁',
-      message: '+${reward.coins} monede, +${reward.xp} XP, +1 ❤️'
+      message: '+${reward.coins} monede, +${reward.xp} XP'
+          '${grantsLife ? ', +1 ❤️' : ''}'
           '${reward.gems > 0 ? ', +${reward.gems} 💎' : ''}',
       icon: Icons.military_tech_rounded,
       color: AppColors.coin,
@@ -390,7 +438,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Future<void> _settleExitReward() async {
     if (_exitRewardSettled || widget.entryFeePaid <= 0) return;
     _exitRewardSettled = true;
-    final reward = categoryExitReward(_sessionCorrect);
+    final reward = categoryExitReward(_sessionCorrect, widget.entryFeePaid);
     await StorageService.addCoins(reward);
     if (!mounted) return;
     await showDialog<void>(
@@ -409,8 +457,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$_sessionCorrect ${_sessionCorrect == 1 ? 'răspuns corect' : 'răspunsuri corecte'} în sesiunea asta (taxă plătită: $categoryEntryFee monede).',
+                '$_sessionCorrect ${_sessionCorrect == 1 ? 'răspuns corect' : 'răspunsuri corecte'} în sesiunea asta (taxă plătită: ${widget.entryFeePaid} monede).',
                 style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Praguri: 4 corecte → 60% din taxă · 8 → taxa întreagă · 15 → +30%.',
+                style: TextStyle(color: Colors.white38, fontSize: 11.5),
               ),
               const SizedBox(height: 14),
               Row(
@@ -555,6 +608,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     var adWatched = false;
     final adLivesKey = GlobalKey();
     final adHintsKey = GlobalKey();
+    final adCoinsKey = GlobalKey();
+    const adReward = StorageService.rewardedAdReward;
 
     showDialog(
       context: context,
@@ -581,6 +636,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                     const SizedBox(width: 14),
                     _adMiniBadge(adHintsKey, Icons.tips_and_updates_rounded,
                         AppColors.hint),
+                    const SizedBox(width: 14),
+                    _adMiniBadge(adCoinsKey, Icons.monetization_on_rounded,
+                        AppColors.coin),
                   ],
                 ),
               ] else if (!canWatchAd) ...[
@@ -626,11 +684,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         if (!dialogContext.mounted) return;
                         await collectRewards(
                           dialogContext,
-                          coins: 0,
+                          coins: reward.coins,
                           xp: 0,
                           lives: reward.hearts,
                           hints: reward.hints,
-                          coinBadgeKey: GlobalKey(),
+                          coinBadgeKey: adCoinsKey,
                           xpBadgeKey: GlobalKey(),
                           livesBadgeKey: adLivesKey,
                           hintsBadgeKey: adHintsKey,
@@ -649,7 +707,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 child: Text(
                   watchingAd
                       ? 'Se încarcă reclama...'
-                      : 'Reclamă  •  +1 ❤ +2 💡',
+                      : 'Reclamă  •  +${adReward.hearts} ❤ +${adReward.hints} 💡 +${adReward.coins} 💰',
                   style: const TextStyle(
                       color: Colors.black, fontWeight: FontWeight.w800),
                 ),
@@ -690,6 +748,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     setState(() {
       lives = reward.hearts;
       hintsBalance += reward.hints;
+      coinsBalance += reward.coins;
     });
   }
 
@@ -796,6 +855,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         // indiciu mic (primul hint) despre ce e în poză — gratuit.
                         _buildClue(q),
                         const SizedBox(height: 6),
+                        if (!answered && _hintGuessPercent != null) ...[
+                          _buildConfidenceHint(),
+                          const SizedBox(height: 6),
+                        ],
                         _buildOptionsGrid(q, opts),
                         const SizedBox(height: 6),
                       ],
@@ -850,6 +913,24 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     );
   }
 
+  /// Afișat lângă vieți, ca jucătorul să poată urmări din prima privire câte
+  /// hint-uri mai are, nu doar viețile.
+  Widget _buildHintsDisplay() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.tips_and_updates_rounded,
+            color: AppColors.hint, size: 20),
+        const SizedBox(width: 4),
+        Text('×$hintsBalance',
+            style: const TextStyle(
+                color: AppColors.hint,
+                fontWeight: FontWeight.w800,
+                fontSize: 14)),
+      ],
+    );
+  }
+
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
@@ -866,6 +947,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               ),
               const SizedBox(width: 8),
               _buildHeartsDisplay(),
+              const SizedBox(width: 10),
+              _buildHintsDisplay(),
               const Spacer(),
               if (streak > 1)
                 Container(
@@ -964,12 +1047,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           Row(
             children: [
               _buildHintButton(),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: _nextQuestion,
-                style: TextButton.styleFrom(foregroundColor: Colors.white54),
-                child: const Text('Skip'),
-              ),
+              // Skip e disponibil doar cu modul "poze clare" (fără blur)
+              // activat — altfel ar permite sărirea pozelor fără nicio taxă.
+              if (_noBlur) ...[
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: _nextQuestion,
+                  style: TextButton.styleFrom(foregroundColor: Colors.white54),
+                  child: const Text('Skip'),
+                ),
+              ],
             ],
           ),
       ],
@@ -993,12 +1080,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             Icon(Icons.tips_and_updates_rounded, color: fg, size: 16),
             const SizedBox(width: 4),
             Text(
-              'Hint (-${calculateHintPenalty(currentQuestionReward, currentQ.maxPoints)} pts) • $hintsBalance',
+              'Hint (-$_hintCost 💰) • $hintsBalance',
               style: TextStyle(color: fg, fontSize: 12),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  /// Textul de "șansă" al hint-ului 3 — vezi [_hintGuessOption]: procentul
+  /// e informativ, nu o garanție, deci fraza clarifică asta explicit ca
+  /// jucătorul să nu tragă concluzia greșită că highlight-ul = răspunsul.
+  Widget _buildConfidenceHint() {
+    return Text(
+      'Șansă răspuns corect: $_hintGuessPercent% (nu e o garanție)',
+      style: const TextStyle(
+        color: Color(0xFFFFC107),
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+      ),
+      textAlign: TextAlign.center,
     );
   }
 
@@ -1029,6 +1131,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       children: List.generate(opts.length, (i) {
         final opt = opts[i];
         var btnColor = Colors.white.withAlpha(18);
+        Gradient? btnGradient;
         var borderColor = Colors.white24;
         var textColor = Colors.white;
         var letterBg = Colors.white.withAlpha(30);
@@ -1043,6 +1146,15 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             borderColor = const Color(0xFFE24B4A);
             letterBg = const Color(0xFFE24B4A);
           }
+        } else if (opt == _hintGuessOption) {
+          // Highlight "de șansă" (hint 3) — gradient distinct de
+          // verde/roșu (rezervate răspunsului efectiv), ca să nu pară o
+          // confirmare certă. Vezi procentul afișat în _buildConfidenceHint.
+          btnGradient = const LinearGradient(
+            colors: [Color(0xFFFFB300), Color(0xFF9A5AFB)],
+          );
+          borderColor = const Color(0xFFFFC107);
+          letterBg = const Color(0xFF9A5AFB);
         }
 
         return Padding(
@@ -1054,7 +1166,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: btnColor,
+                color: btnGradient == null ? btnColor : null,
+                gradient: btnGradient,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: borderColor, width: 1.5),
               ),

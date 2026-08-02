@@ -24,6 +24,24 @@ class PlayerProfile {
   final Map<String, int> modeBreakdown;
   final Timestamp? lastActive;
 
+  /// Cod scurt (6 caractere, ex. "7X3K9A"), generat lazy la prima vizită pe
+  /// ecranul de Prieteni (vezi PlayerProfileService.getOrCreateFriendCode) —
+  /// spre deosebire de [uid], e făcut să fie dictat/tastat manual între doi
+  /// jucători. Null dacă acest profil încă nu l-a generat.
+  final String? friendCode;
+
+  /// Momentul creării documentului — scris o singură dată, la primul
+  /// heartbeat (vezi PlayerProfileService.ensureProfileHeartbeat). Null
+  /// pentru profiluri create înainte de acest câmp (fără migrare
+  /// retroactivă) — folosit doar de AdminScreen, tab "Noi azi".
+  final Timestamp? createdAt;
+
+  /// True dacă profilul e legat de un cont Google (vezi AuthService.isSignedIn,
+  /// rescris la fiecare heartbeat) — folosit de AdminScreen ca să știe cui
+  /// îi poate trimite grant-uri de resurse (Guest nu are niciun canal, vezi
+  /// CloudSyncService.consumePendingGrant).
+  final bool hasGoogleAccount;
+
   const PlayerProfile({
     required this.uid,
     required this.name,
@@ -37,6 +55,9 @@ class PlayerProfile {
     this.leaguePoints = 0,
     this.modeBreakdown = const {},
     this.lastActive,
+    this.friendCode,
+    this.createdAt,
+    this.hasGoogleAccount = false,
   });
 
   double get winrate => matchesPlayed == 0 ? 0 : wins / matchesPlayed;
@@ -56,6 +77,39 @@ class PlayerProfile {
       leaguePoints: data['leaguePoints'] as int? ?? 0,
       modeBreakdown: Map<String, int>.from(data['modeBreakdown'] as Map? ?? const {}),
       lastActive: data['lastActive'] as Timestamp?,
+      friendCode: data['friendCode'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
+      hasGoogleAccount: data['hasGoogleAccount'] as bool? ?? false,
+    );
+  }
+}
+
+/// O cerere de prietenie primită — un doc în subcolecția
+/// `player_profiles/{eu}/friend_requests/{fromUid}` (vezi firestore.rules și
+/// PlayerProfileService.fetchIncomingRequests).
+class FriendRequest {
+  final String fromUid;
+  final String fromName;
+  final String fromAvatarSeed;
+  final String? fromPhotoUrl;
+  final Timestamp? createdAt;
+
+  const FriendRequest({
+    required this.fromUid,
+    required this.fromName,
+    required this.fromAvatarSeed,
+    this.fromPhotoUrl,
+    this.createdAt,
+  });
+
+  factory FriendRequest.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? const {};
+    return FriendRequest(
+      fromUid: doc.id,
+      fromName: data['fromName'] as String? ?? '?',
+      fromAvatarSeed: data['fromAvatarSeed'] as String? ?? doc.id,
+      fromPhotoUrl: data['fromPhotoUrl'] as String?,
+      createdAt: data['createdAt'] as Timestamp?,
     );
   }
 }

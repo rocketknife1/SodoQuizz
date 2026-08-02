@@ -84,13 +84,25 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
     final progress = claimable ? 1.0 : levelProgress(widget.xp);
     final barHeight = claimable ? 10.0 : 6.0;
 
-    Widget barCore = ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: LinearProgressIndicator(
-        value: progress,
-        minHeight: barHeight,
-        backgroundColor: Colors.white12,
-        valueColor: AlwaysStoppedAnimation(claimable ? AppColors.coin : AppColors.purple),
+    // Bara nu sare direct la noua valoare — alunecă progresiv spre ea
+    // (TweenAnimationBuilder animează implicit de la valoarea curentă la
+    // noul `end` ori de câte ori [progress] se schimbă). Reîncărcarea
+    // balanței pornește chiar la impactul primei stelute XP (vezi
+    // CoinRewardOverlay.onImpact), deci alunecarea începe exact atunci —
+    // dacă nu mai vine nicio recompensă, bara pur și simplu se oprește la
+    // valoarea deja atinsă.
+    Widget barCore = TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: progress, end: progress),
+      duration: const Duration(milliseconds: 850),
+      curve: Curves.easeOutCubic,
+      builder: (context, animatedProgress, _) => ClipRRect(
+        borderRadius: BorderRadius.circular(6),
+        child: LinearProgressIndicator(
+          value: animatedProgress,
+          minHeight: barHeight,
+          backgroundColor: Colors.white12,
+          valueColor: AlwaysStoppedAnimation(claimable ? AppColors.coin : AppColors.purple),
+        ),
       ),
     );
 
@@ -183,29 +195,36 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
           ],
         ),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            if (widget.lives != null) ...[
-              _livesPill(),
-              const SizedBox(width: 10),
+        // scroll orizontal, nu Row simplu — cu vieți/hints fără plafon,
+        // valorile pot ajunge la 4-5 cifre, iar 4 pastile pe un rând nu mai
+        // încap pe ecran (overflow); scroll-ul le păstrează pe toate
+        // vizibile/citibile în loc să le trunchieze.
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              if (widget.lives != null) ...[
+                _livesPill(),
+                const SizedBox(width: 10),
+              ],
+              if (widget.hints != null) ...[
+                _pill(key: widget.hintsBadgeKey, icon: Icons.lightbulb_rounded, color: AppColors.hint, value: widget.hints!),
+                const SizedBox(width: 10),
+              ],
+              if (widget.gems != null) ...[
+                _pill(key: widget.gemsBadgeKey, icon: Icons.diamond_rounded, color: const Color(0xFF5EC8F2), value: widget.gems!),
+                const SizedBox(width: 10),
+              ],
+              _pill(
+                key: widget.coinBadgeKey,
+                icon: Icons.monetization_on_rounded,
+                color: AppColors.coin,
+                value: widget.coins,
+                onTap: widget.onCoinsTap,
+                trailingIcon: widget.onCoinsTap != null ? Icons.add_circle_rounded : null,
+              ),
             ],
-            if (widget.hints != null) ...[
-              _pill(key: widget.hintsBadgeKey, icon: Icons.lightbulb_rounded, color: AppColors.hint, value: widget.hints!),
-              const SizedBox(width: 10),
-            ],
-            if (widget.gems != null) ...[
-              _pill(key: widget.gemsBadgeKey, icon: Icons.diamond_rounded, color: const Color(0xFF5EC8F2), value: widget.gems!),
-              const SizedBox(width: 10),
-            ],
-            _pill(
-              key: widget.coinBadgeKey,
-              icon: Icons.monetization_on_rounded,
-              color: AppColors.coin,
-              value: widget.coins,
-              onTap: widget.onCoinsTap,
-              trailingIcon: widget.onCoinsTap != null ? Icons.add_circle_rounded : null,
-            ),
-          ],
+          ),
         ),
       ],
     );

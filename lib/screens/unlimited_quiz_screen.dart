@@ -66,17 +66,16 @@ class _UnlimitedQuizScreenState extends State<UnlimitedQuizScreen> with SingleTi
     });
 
     if (correct) {
-      final reward = calculateSessionQuestionReward(_current.maxPoints, Random());
-      final basePts = calculateAwardedPoints(reward, 0, _current.maxPoints);
       // fără risc de inimă aici — plătește sub baseline-ul lui GameScreen,
       // cu o rată și mai mică peste plafonul zilnic (vezi game_helpers.dart).
       final correctToday = await StorageService.getDailyCounter('unlimited_correct');
       final rate = correctToday < unlimitedQuizFullRateDailyCap ? unlimitedQuizFullRate : unlimitedQuizReducedRate;
-      final pts = (basePts * rate).round();
-      final coinsEarned = pts ~/ 10;
+      final pts = (calculateSessionQuestionReward(_current.maxPoints, Random()) * rate).round();
+      final coinsEarned = (coinsForCorrectAnswer(_current.maxPoints) * rate).round();
+      final xpEarned = (xpForCorrectAnswer(_current.maxPoints) * rate).round();
       setState(() => score += pts);
       await StorageService.addCoins(coinsEarned);
-      await StorageService.addXp(pts);
+      await StorageService.addXp(xpEarned);
       await StorageService.addAnsweredId(_current.id);
       await StorageService.incrementDailyCounter('unlimited_correct');
       if (mounted) await bumpQuestMetric(context, 'unlimited_quiz_correct', 1);
@@ -164,7 +163,7 @@ class _UnlimitedQuizScreenState extends State<UnlimitedQuizScreen> with SingleTi
                           ],
                         ),
                         const SizedBox(height: 10),
-                        const Text('Cine / ce este?', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                        _buildClue(q),
                         const SizedBox(height: 8),
                         ...List.generate(opts.length, (i) {
                           final opt = opts[i];
@@ -217,6 +216,34 @@ class _UnlimitedQuizScreenState extends State<UnlimitedQuizScreen> with SingleTi
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Indiciu mic, gratuit — aceeași descriere (hint1) ca la modul clasic,
+  /// afișată în locul vechii etichete generice "Cine / ce este?".
+  Widget _buildClue(Question q) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lightbulb_outline_rounded, color: q.color, size: 16),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              q.hint1,
+              style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w500),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

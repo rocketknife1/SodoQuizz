@@ -12,11 +12,6 @@ import '../widgets/blur_image.dart';
 import '../widgets/mascots/googly_eyes.dart';
 
 const int clippyBonusQuestionCount = 3;
-// Sub 1.0× intenționat: Clippy nu are risc de inimă (spre deosebire de
-// GameScreen), deci nu poate plăti mai bine decât modul cu risc real —
-// vezi reproiectarea economiei. Bonusul rămâne totuși valoros prin viața
-// gratuită la un răspuns perfect (clippyPerfectBonusLives).
-const double clippyRewardMultiplier = 0.85;
 
 enum _ClippyPhase { intro, loading, playing, finished }
 
@@ -25,11 +20,16 @@ const int clippyPerfectBonusLives = 1;
 
 /// Bonusul lui Clippy: 3 întrebări alese complet aleatoriu din TOATE
 /// categoriile deblocate (bazele de date reale, cu poze — nu pool-ul text
-/// separat al Culturii Generale), cu recompensă ×1.25 la răspunsurile
-/// corecte, plus o viață bonus dacă ieși perfect (toate 3 corecte). Fără
-/// pierdere de vieți — un răspuns greșit doar nu aduce recompensă, e un
-/// bonus fără risc. Ecran separat (nu panou pe Home) — declanșat de
-/// [PaperclipMascot] când are o "notificare" activă.
+/// separat al Culturii Generale), plus o viață bonus dacă ieși perfect
+/// (toate 3 corecte). Fără pierdere de vieți — un răspuns greșit doar nu
+/// aduce recompensă, e un bonus fără risc. Ecran separat (nu panou pe Home)
+/// — declanșat de [PaperclipMascot] când are o "notificare" activă.
+///
+/// Regula economică (vezi [clippyRewardMultiplier]): o întrebare de aici
+/// plătește STRICT mai mult decât una din gameplay-ul normal — înainte
+/// plătea 0,85×, adică mai puțin. Rămâne totuși mic în absolut (3 întrebări)
+/// și limitat la [clippyFullRateDailyRounds] runde pe zi la rată plină, ca
+/// să nu poată fi farmat la 12 runde pe oră.
 class ClippyBonusScreen extends StatefulWidget {
   const ClippyBonusScreen({super.key});
 
@@ -97,12 +97,15 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
 
     if (correct) {
       correctCount++;
-      final sessionReward = calculateSessionQuestionReward(_current.maxPoints, Random());
-      final basePts = calculateAwardedPoints(sessionReward, 0, _current.maxPoints);
-      final baseCoins = basePts ~/ 10;
+      final roundsToday = await StorageService.getDailyCounter('clippy_rounds');
+      final rate = roundsToday < clippyFullRateDailyRounds
+          ? clippyRewardMultiplier
+          : clippyReducedMultiplier;
+      if (!mounted) return;
       setState(() {
-        _xpEarned += (basePts * clippyRewardMultiplier).round();
-        _coinsEarned += (baseCoins * clippyRewardMultiplier).round();
+        _xpEarned += (xpForCorrectAnswer(_current.maxPoints) * rate).round();
+        _coinsEarned +=
+            (coinsForCorrectAnswer(_current.maxPoints) * rate).round();
       });
     }
 
@@ -113,8 +116,18 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
       // notificarea se "consumă" abia acum, la finalul efectiv al jocului —
       // dacă jucătorul iese mai devreme (fără să termine), rămâne valabilă.
       await StorageService.resetClippyCooldown();
+      // bonusul de finalizare există doar cât timp ești sub plafonul zilnic
+      // de runde la rată plină — contorul se incrementează abia acum, ca o
+      // rundă abandonată la jumătate să nu consume un slot.
+      final roundsToday = await StorageService.getDailyCounter('clippy_rounds');
+      final withinDailyCap = roundsToday < clippyFullRateDailyRounds;
+      await StorageService.incrementDailyCounter('clippy_rounds');
+      if (!mounted) return;
       setState(() {
         if (perfect) _livesEarned = clippyPerfectBonusLives;
+        if (withinDailyCap && correctCount > 0) {
+          _coinsEarned += clippyCompletionCoins;
+        }
         _phase = _ClippyPhase.finished;
       });
       // plasă de siguranță: dacă userul iese din aplicație pe ecranul de

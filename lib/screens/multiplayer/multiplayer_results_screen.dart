@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../core/betting.dart';
+import '../../core/progression.dart';
+import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
@@ -30,19 +33,29 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// pornește animația (vezi _maybePlayFirstWinAnimation), nu aici — la fel
   /// ca la orice alt apel collectRewards din aplicație (quests_screen.dart
   /// etc.), ca reîmprospătarea balanței să fie sincronă cu animația.
-  static const _firstWinBonusCoins = 50;
-  static const _firstWinBonusXp = 100;
   bool _firstWinBonus = false;
   bool _firstWinAnimationFired = false;
   final _coinBadgeKey = GlobalKey();
   final _xpBadgeKey = GlobalKey();
 
-  /// Multiplayer înainte nu acorda NICIO recompensă economică — un meci
-  /// real, cu adversar live și fără reluări, merită o primă peste modul
-  /// solo fără risc (1,25× la coins/XP din scor) plus un bonus fix de
-  /// victorie/participare, ca să existe mereu un motiv economic să joci
-  /// contra altcuiva, nu doar contra listei de întrebări. Vezi reproiectarea
-  /// economiei — comparația dintre gamemoduri.
+  /// Miza pusă de jucătorul curent și cât s-a întors din ea — folosite în
+  /// antetul ecranului ca rezultatul pariului să fie explicit, nu doar "ai
+  /// primit X monede".
+  int _myBet = 0;
+  int _myRefund = 0;
+  int _pool = 0;
+  int _tableCap = 0;
+
+  /// Monedele nu mai vin "din partea casei": la final se împarte pool-ul de
+  /// pariuri (vezi core/betting.dart) — 80% după miză × performanță × risc,
+  /// 20% strict după clasament. Partea a doua e cea care face ca un jucător
+  /// mic, care rezistă până la capăt la o masă unde cineva a pariat mult și a
+  /// pierdut, să plece cu de câteva ori miza lui. XP-ul rămâne o recompensă
+  /// normală, acordată de joc.
+  ///
+  /// Fiecare client calculează ACELEAȘI plăți din aceleași date publice
+  /// (pariurile și scorurile tuturor, din Firestore) și își creditează doar
+  /// propriul cont — la fel ca la scor, nu există autoritate de server.
   Future<List<MatchPlayer>> _load() async {
     final players = await MultiplayerService.instance.watchPlayers(widget.matchId).first;
     final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
@@ -56,10 +69,19 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       // logicii economice de mai jos rămâne neschimbată.
       final draw = myIndex == 0 && sorted.length >= 2 && sorted[1].score == myScore;
       final won = myIndex == 0 && !draw;
-      _coinsEarned = myScore ~/ 8 + (won ? 60 : 15);
-      _xpEarned = (myScore * 1.1).round() + (won ? 120 : 30);
+
+      final payouts = _settleBets(sorted);
+      _myBet = sorted[myIndex].bet;
+      _myRefund = payouts.refunds[me] ?? 0;
+      _pool = payouts.pool;
+      _tableCap = payouts.tableCap;
+      _coinsEarned = payouts.totalCreditFor(me);
+      _xpEarned = multiplayerXpForScore(myScore, won: won);
       await StorageService.addCoins(_coinsEarned);
       await StorageService.addXp(_xpEarned);
+      if (_myBet > 0 && mounted) {
+        await bumpQuestMetric(context, 'mp_bet_played', 1);
+      }
       if (won && await StorageService.canClaimFirstWinOfDay()) {
         await StorageService.claimFirstWinOfDay();
         _firstWinBonus = true;
@@ -69,9 +91,46 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         won: won,
         draw: draw,
       );
+      // sorted.length = câți jucători reali au ajuns până la finalul acestui
+      // meci — vezi PlayerProfileService.recordCompletedMatch (no-op sub 2).
+      await PlayerProfileService.instance.recordCompletedMatch(
+        matchId: widget.matchId,
+        gameModeId: widget.gameMode.name,
+        playerCount: sorted.length,
+      );
     }
     await MultiplayerService.instance.leaveMatch(widget.matchId);
     return sorted;
+  }
+
+  /// Construiește intrările de pariu din clasamentul final și rulează
+  /// împărțirea pool-ului. [sorted] e deja ordonat descrescător după scor,
+  /// deci poziția din listă e chiar treapta din ladder-ul potului de loc.
+  ///
+  /// Performanța e raportată la cel mai bun scor al mesei în modul Clasic
+  /// (cine a punctat mult ia mai mult chiar dacă n-a ieșit primul) și la
+  /// poziția finală în Higher or Lower, unde scorul e doar un contor de
+  /// runde câștigate și conteaza cât de departe ai ajuns.
+  BetPayouts _settleBets(List<MatchPlayer> sorted) {
+    final topScore = sorted.isEmpty ? 0 : sorted.first.score;
+    final entries = <BetEntry>[];
+    for (var i = 0; i < sorted.length; i++) {
+      final p = sorted[i];
+      final double performance;
+      if (widget.gameMode == MatchGameMode.higherLower || topScore <= 0) {
+        performance = sorted.length > 1 ? (sorted.length - 1 - i) / (sorted.length - 1) : 1.0;
+      } else {
+        performance = p.score / topScore;
+      }
+      entries.add(BetEntry(
+        playerId: p.id,
+        bet: p.bet,
+        betPercent: p.betPercent,
+        performance: performance,
+        place: i + 1,
+      ));
+    }
+    return BetPayouts.compute(entries);
   }
 
   /// Pornește animația abia după ce pastilele de mai jos (targetKey-urile)
@@ -86,8 +145,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     if (!mounted) return;
     await collectRewards(
       context,
-      coins: _firstWinBonusCoins,
-      xp: _firstWinBonusXp,
+      coins: multiplayerFirstWinBonusCoins,
+      xp: multiplayerFirstWinBonusXp,
       lives: 0,
       coinBadgeKey: _coinBadgeKey,
       xpBadgeKey: _xpBadgeKey,
@@ -102,6 +161,15 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       decoration: BoxDecoration(color: Colors.white.withAlpha(15), shape: BoxShape.circle, border: Border.all(color: Colors.white24)),
       child: Icon(icon, color: color, size: 16),
     );
+  }
+
+  /// "Ai pariat X din pool-ul de Y — ai ieșit pe plus/minus cu Z." Textul
+  /// compară cu miza, nu cu zero: 300 de monede primite după un pariu de 500
+  /// nu e un câștig, oricât ar arăta plusul de deasupra a bine.
+  String _betSummary() {
+    final delta = _coinsEarned - _myBet;
+    final sign = delta >= 0 ? '+' : '';
+    return 'Pariu: $_myBet din pool-ul de $_pool  •  $sign$delta';
   }
 
   void _goHome() {
@@ -142,6 +210,26 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   if (_coinsEarned > 0 || _xpEarned > 0) ...[
                     const SizedBox(height: 6),
                     Text('+$_coinsEarned monede  •  +$_xpEarned XP', style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
+                  if (_myBet > 0) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      _betSummary(),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          color: _coinsEarned >= _myBet ? AppColors.play : AppColors.danger,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    if (_myRefund > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Text(
+                          'Masa a limitat pariurile la $_tableCap — ți-am returnat $_myRefund.',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white38, fontSize: 10.5),
+                        ),
+                      ),
                   ],
                   if (_firstWinBonus) ...[
                     const SizedBox(height: 10),

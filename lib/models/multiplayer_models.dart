@@ -119,6 +119,16 @@ class MatchPlayer {
   final int breads;
   final bool eliminated;
 
+  /// Pariul pus la intrarea în meci și procentul din avere pe care l-a
+  /// reprezentat (vezi core/betting.dart). Sunt scrise o singură dată, la
+  /// intrare, și citite de TOȚI clienții la final ca fiecare să calculeze
+  /// exact aceeași împărțire a pool-ului. [betPercent] contează separat de
+  /// [bet]: riscul asumat (procentul din cât ai) e o pârghie proprie în
+  /// formulă, altfel un jucător bogat care pariază 5% ar fi tratat la fel ca
+  /// unul sărac care pariază 80%, doar pentru că suma se nimerește egală.
+  final int bet;
+  final double betPercent;
+
   const MatchPlayer({
     required this.id,
     required this.name,
@@ -128,6 +138,8 @@ class MatchPlayer {
     this.isHost = false,
     this.breads = 0,
     this.eliminated = false,
+    this.bet = 0,
+    this.betPercent = 0,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -141,6 +153,8 @@ class MatchPlayer {
       isHost: data['isHost'] as bool? ?? false,
       breads: data['breads'] as int? ?? 0,
       eliminated: data['eliminated'] as bool? ?? false,
+      bet: data['bet'] as int? ?? 0,
+      betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
     );
   }
 
@@ -150,6 +164,8 @@ class MatchPlayer {
         'photoUrl': photoUrl,
         'score': score,
         'isHost': isHost,
+        'bet': bet,
+        'betPercent': betPercent,
         'joinedAt': FieldValue.serverTimestamp(),
       };
 }

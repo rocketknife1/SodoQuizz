@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/network_scan_animation.dart';
@@ -15,7 +16,13 @@ import 'multiplayer_match_screen.dart';
 class RoomLobbyScreen extends StatefulWidget {
   final String matchId;
   final bool isHost;
-  const RoomLobbyScreen({super.key, required this.matchId, required this.isHost});
+
+  /// Miza plătită ca să ajungi în acest lobby — taxa fixă PLUS pariul (vezi
+  /// pickMatchStake / core/betting.dart). Returnată integral dacă pleci
+  /// înainte ca meciul să apuce să înceapă, vezi [_leave].
+  final int stakePaid;
+
+  const RoomLobbyScreen({super.key, required this.matchId, required this.isHost, this.stakePaid = 0});
 
   @override
   State<RoomLobbyScreen> createState() => _RoomLobbyScreenState();
@@ -53,6 +60,12 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
     } catch (e) {
       debugPrint('RoomLobbyScreen._leave: leaveMatch a esuat: $e');
     } finally {
+      // _navigated rămâne false dacă (din perspectiva acestui client) meciul
+      // nu a apucat să înceapă efectiv - miza n-a "cumparat" nimic, se
+      // returnează integral (taxă + pariu), vezi pickMatchStake.
+      if (!_navigated && widget.stakePaid > 0) {
+        await StorageService.addCoins(widget.stakePaid);
+      }
       if (mounted) Navigator.pop(context);
     }
   }

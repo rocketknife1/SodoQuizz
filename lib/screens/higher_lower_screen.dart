@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/game_helpers.dart';
 import '../core/theme.dart';
 import '../data/higher_lower_data.dart';
 import '../data/storage_service.dart';
@@ -136,8 +137,21 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
     });
   }
 
+  /// Cât s-a câștigat în seria curentă — afișat la Game Over. Modul ăsta nu
+  /// acorda deloc monede/XP înainte (singurul din joc), deși are riscul cel
+  /// mai mare: o singură greșeală termină totul. De-aia plătește progresiv
+  /// cu lungimea seriei (vezi higherLowerCoinsForStep).
+  int _coinsEarned = 0;
+  int _xpEarned = 0;
+
   Future<void> _advance() async {
     _streak++;
+    final coins = higherLowerCoinsForStep(_streak);
+    final xp = higherLowerXpForStep(_streak);
+    _coinsEarned += coins;
+    _xpEarned += xp;
+    await StorageService.addCoins(coins);
+    await StorageService.addXp(xp);
     await StorageService.addLeaderboardPoints(higherLowerModeId, 1);
     if (!mounted) return;
     setState(() {
@@ -171,6 +185,11 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Ai ghicit corect de $_streak ori la rând.', style: const TextStyle(color: Colors.white70)),
+            if (_coinsEarned > 0) ...[
+              const SizedBox(height: 8),
+              Text('+$_coinsEarned monede  •  +$_xpEarned XP',
+                  style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 13)),
+            ],
             const SizedBox(height: 8),
             if (isNewBest)
               const Text('🏆 Record nou!', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800))

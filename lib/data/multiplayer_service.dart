@@ -102,6 +102,8 @@ class MultiplayerService {
     required String displayName,
     String? photoUrl,
     MatchGameMode gameMode = MatchGameMode.classic,
+    int bet = 0,
+    double betPercent = 0,
   }) async {
     await ensureInitialized();
     final me = currentPlayerId;
@@ -120,7 +122,16 @@ class MultiplayerService {
     await _paced(() async {
       await ref.set(info.toMap());
       await ref.collection('players').doc(me).set(
-            MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0, isHost: true).toMap(),
+            MatchPlayer(
+              id: me,
+              name: displayName,
+              avatarSeed: me,
+              photoUrl: photoUrl,
+              score: 0,
+              isHost: true,
+              bet: bet,
+              betPercent: betPercent,
+            ).toMap(),
           );
     });
     return info;
@@ -128,7 +139,13 @@ class MultiplayerService {
 
   /// Caută o cameră după cod și te alătură ca jucător — aruncă dacă nu
   /// există, dacă meciul a pornit deja, sau dacă e plină.
-  Future<MatchInfo> joinRoomByCode({required String code, required String displayName, String? photoUrl}) async {
+  Future<MatchInfo> joinRoomByCode({
+    required String code,
+    required String displayName,
+    String? photoUrl,
+    int bet = 0,
+    double betPercent = 0,
+  }) async {
     await ensureInitialized();
     final query = await _db
         .collection('matches')
@@ -139,24 +156,34 @@ class MultiplayerService {
     if (query.docs.isEmpty) {
       throw const MultiplayerUnavailableException('Cod invalid sau camera a pornit deja.');
     }
-    return _joinRoomDoc(query.docs.first, displayName: displayName, photoUrl: photoUrl);
+    return _joinRoomDoc(query.docs.first,
+        displayName: displayName, photoUrl: photoUrl, bet: bet, betPercent: betPercent);
   }
 
   /// La fel ca [joinRoomByCode], dar pentru o cameră aleasă direct din
   /// lista de camere deschise (vezi [watchOpenRooms]) — fără cod, doar id.
-  Future<MatchInfo> joinRoomById({required String matchId, required String displayName, String? photoUrl}) async {
+  Future<MatchInfo> joinRoomById({
+    required String matchId,
+    required String displayName,
+    String? photoUrl,
+    int bet = 0,
+    double betPercent = 0,
+  }) async {
     await ensureInitialized();
     final doc = await _db.collection('matches').doc(matchId).get();
     if (!doc.exists || doc.data()?['status'] != MatchStatus.lobby.name) {
       throw const MultiplayerUnavailableException('Camera nu mai e disponibilă.');
     }
-    return _joinRoomDoc(doc, displayName: displayName, photoUrl: photoUrl);
+    return _joinRoomDoc(doc,
+        displayName: displayName, photoUrl: photoUrl, bet: bet, betPercent: betPercent);
   }
 
   Future<MatchInfo> _joinRoomDoc(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     required String displayName,
     String? photoUrl,
+    int bet = 0,
+    double betPercent = 0,
   }) async {
     final players = await doc.reference.collection('players').get();
     if (players.docs.length >= matchPlayerCount) {
@@ -164,7 +191,15 @@ class MultiplayerService {
     }
     final me = currentPlayerId;
     await _paced(() => doc.reference.collection('players').doc(me).set(
-          MatchPlayer(id: me, name: displayName, avatarSeed: me, photoUrl: photoUrl, score: 0).toMap(),
+          MatchPlayer(
+            id: me,
+            name: displayName,
+            avatarSeed: me,
+            photoUrl: photoUrl,
+            score: 0,
+            bet: bet,
+            betPercent: betPercent,
+          ).toMap(),
         ));
     return MatchInfo.fromDoc(doc);
   }
@@ -386,7 +421,16 @@ class MultiplayerService {
 
   // ─── Matchmaking public ─────────────────────────────────────────────────
 
-  Future<void> joinMatchmakingQueue({required String displayName, String? photoUrl}) async {
+  /// Pariul intră în coadă odată cu jucătorul: cine formează meciul copiază
+  /// [bet]/[betPercent] din intrarea de coadă direct în documentul de
+  /// jucător al meciului, ca decontarea de la final să aibă aceleași date
+  /// pentru toată lumea (vezi core/betting.dart).
+  Future<void> joinMatchmakingQueue({
+    required String displayName,
+    String? photoUrl,
+    int bet = 0,
+    double betPercent = 0,
+  }) async {
     await ensureInitialized();
     final me = currentPlayerId;
     await _db.collection('matchmaking_queue').doc(me).set({
@@ -394,6 +438,8 @@ class MultiplayerService {
       'avatarSeed': me,
       'photoUrl': photoUrl,
       'matchId': null,
+      'bet': bet,
+      'betPercent': betPercent,
       'joinedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -450,6 +496,8 @@ class MultiplayerService {
               photoUrl: data['photoUrl'] as String?,
               score: 0,
               isHost: c.id == me,
+              bet: data['bet'] as int? ?? 0,
+              betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
             ).toMap(),
           );
           tx.update(c.reference, {'matchId': matchRef.id});

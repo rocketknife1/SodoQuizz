@@ -9,7 +9,9 @@ import 'shop.dart';
 class AdRewardResult {
   final int hints;
   final int hearts;
-  const AdRewardResult({required this.hints, required this.hearts});
+  final int coins;
+  const AdRewardResult(
+      {required this.hints, required this.hearts, this.coins = 0});
 }
 
 /// Gestionează datele salvate local (vieți, monede, progres, highscore,
@@ -25,10 +27,20 @@ class StorageService {
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
   static const _introSeenKey = 'intro_tutorial_seen';
+  static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
   static const _hintsKey = 'hints_balance';
-  static const _startingHints = 3;
+
+  // ─── Zestrea unui jucător nou (vezi reproiectarea economiei v3) ──────────
+  // Înainte: 5 vieți, 3 hints, 0 monede, 0 gems — prea puține vieți și
+  // hint-uri pentru primul playthrough. Monedele de start acoperă taxa de
+  // intrare plus câteva hint-uri în prima sesiune, fără să facă jucătorul
+  // bogat; gems-ul de start (vezi [starterGemGrant]) e exact cât să
+  // deblocheze el însuși o categorie la alegere.
+  static const _startingHints = 9;
+  static const _startingCoins = 173;
+  static const _startingLives = 7;
   static const _lastPlayedDateKey = 'last_played_date';
   static const _streakCountKey = 'streak_count';
   static const _streakMilestonesKey = 'streak_milestones_claimed';
@@ -42,10 +54,12 @@ class StorageService {
   static const _gemsKey = 'gems';
   static const _lastClaimedRewardLevelKey = 'last_claimed_reward_level';
   static const _xpCurveMigratedKey = 'xp_curve_migrated_v2';
-  static const _maxLives = 5;
+  static const _xpCurveV3MigratedKey = 'xp_curve_migrated_v3';
+  static const _maxLives = 6;
   static const ringSpinCooldownHours = 24;
   static const _unlimitedLivesUntilKey = 'unlimited_lives_until';
-  static const _cultureQuizPlayTimestampsKey = 'culture_quiz_play_timestamps';
+  static const _cultureQuizRoundKey = 'culture_quiz_round_in_cycle';
+  static const _cultureQuizNextReadyKey = 'culture_quiz_next_ready_at';
   static const cultureQuizPlayLimit = 3;
   static const cultureQuizWindowMinutes = 15;
   static const _leaderboardPeriodStartKey = 'leaderboard_period_start';
@@ -60,23 +74,48 @@ class StorageService {
 
   /// Plafon de stoc pentru hint-uri — peste acest prag, sursele suplimentare
   /// nu se mai adaugă (vezi reproiectarea economiei: hint-urile trebuie
-  /// folosite, nu doar strânse la nesfârșit).
-  static const _hintsCap = 20;
+  /// folosite, nu doar strânse la nesfârșit). Ridicat de la 20, fiindcă
+  /// folosirea unui hint costă acum și monede (vezi [hintCoinCost]).
+  static const _hintsCap = 26;
 
   /// Câte vizionări de reclamă recompensată sunt permise pe zi calendaristică
   /// — reclama devine un supliment, nu principala sursă de hints/vieți.
   static const _adRewardCap = 4;
 
   /// Praguri (în zile consecutive) la care se acordă un bonus automat.
+  /// Recompensa e mult mai mare decât înainte pe monede (era 5×prag) și mai
+  /// mică pe XP (era 10×prag, pe o scară de ~15× mai inflată) — a intra zilnic
+  /// în joc trebuie să fie una dintre cele mai bune investiții de timp.
   static const List<int> streakMilestones = [3, 7, 14, 30, 60, 100];
-  static const _livesRechargeMinutes = 30; // o viată la 30 min
+
+  static int streakMilestoneCoins(int milestone) => milestone * 27;
+  static int streakMilestoneXp(int milestone) => milestone * 8;
+  static int streakMilestoneGems(int milestone) => (milestone ~/ 7) + 1;
+  static const livesRechargeMinutes = 23; // o viată la 23 min
 
   // ─── Vieți ───────────────────────────────────────────────────────────────
 
   static Future<int> getLives() async {
     final prefs = await SharedPreferences.getInstance();
     await _rechargeLives(prefs);
-    return prefs.getInt(_livesKey) ?? _maxLives;
+    return prefs.getInt(_livesKey) ?? _startingLives;
+  }
+
+  /// Cât mai e până se reîncarcă pasiv următoarea viață — zero dacă ești deja
+  /// la plafon sau dacă nu există încă un timestamp de la care să numeri.
+  /// Folosit de contorul afișat pe Home când rămâi pe 0 vieți (vezi
+  /// LivesCountdownCard).
+  static Future<Duration> livesRechargeRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    await _rechargeLives(prefs);
+    final current = prefs.getInt(_livesKey) ?? _startingLives;
+    if (current >= _maxLives) return Duration.zero;
+    final ts = prefs.getInt(_livesTimestampKey);
+    if (ts == null) return Duration.zero;
+    final elapsed = DateTime.now().millisecondsSinceEpoch - ts;
+    final period = const Duration(minutes: livesRechargeMinutes).inMilliseconds;
+    final remaining = period - (elapsed % period);
+    return Duration(milliseconds: remaining);
   }
 
   /// Plafonul de 5 e doar cel "standard" (regenerare pasivă, reset la
@@ -93,10 +132,10 @@ class StorageService {
     }
   }
 
-  /// Adaugă vieți peste plafonul standard de 5 — folosit de recompensele de
-  /// colectare (Cultură Generală, Level Up, achievements) unde inimile
-  /// câștigate se pot acumula peste maximul obișnuit (regenerarea pasivă tot
-  /// se oprește la 5). Fără plafon superior — la cerere explicită.
+  /// Adaugă vieți peste plafonul standard ([_maxLives]) — folosit de
+  /// recompensele de colectare (Cultură Generală, Level Up, achievements)
+  /// unde inimile câștigate se pot acumula peste maximul obișnuit
+  /// (regenerarea pasivă tot se oprește la plafon). Fără plafon superior.
   static Future<void> addLivesUncapped(int amount) async {
     if (amount <= 0) return;
     final current = await getLives();
@@ -105,7 +144,7 @@ class StorageService {
 
   /// Reîncarcă vieți automat în funcție de timp trecut
   static Future<void> _rechargeLives(SharedPreferences prefs) async {
-    final current = prefs.getInt(_livesKey) ?? _maxLives;
+    final current = prefs.getInt(_livesKey) ?? _startingLives;
     if (current >= _maxLives) return;
 
     final ts = prefs.getInt(_livesTimestampKey);
@@ -113,14 +152,14 @@ class StorageService {
 
     final elapsed = DateTime.now().millisecondsSinceEpoch - ts;
     final minutesPassed = elapsed ~/ 60000;
-    final livesToAdd = minutesPassed ~/ _livesRechargeMinutes;
+    final livesToAdd = minutesPassed ~/ livesRechargeMinutes;
 
     if (livesToAdd > 0) {
       final newLives = (current + livesToAdd).clamp(0, _maxLives);
       await prefs.setInt(_livesKey, newLives);
       if (newLives < _maxLives) {
         // actualizează timestamp-ul cu restul de timp
-        final remainder = minutesPassed % _livesRechargeMinutes;
+        final remainder = minutesPassed % livesRechargeMinutes;
         final newTs = DateTime.now().millisecondsSinceEpoch - (remainder * 60000);
         await prefs.setInt(_livesTimestampKey, newTs);
       }
@@ -156,21 +195,32 @@ class StorageService {
 
   static Future<int> getCoins() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_coinsKey) ?? 0;
+    return prefs.getInt(_coinsKey) ?? _startingCoins;
   }
 
   static Future<void> addCoins(int amount) async {
     final prefs = await SharedPreferences.getInstance();
-    final current = prefs.getInt(_coinsKey) ?? 0;
+    final current = prefs.getInt(_coinsKey) ?? _startingCoins;
     await prefs.setInt(_coinsKey, current + amount);
   }
 
   static Future<bool> spendCoins(int amount) async {
     final prefs = await SharedPreferences.getInstance();
-    final current = prefs.getInt(_coinsKey) ?? 0;
+    final current = prefs.getInt(_coinsKey) ?? _startingCoins;
     if (current < amount) return false;
     await prefs.setInt(_coinsKey, current - amount);
     return true;
+  }
+
+  /// Delta cu semn (pozitiv sau negativ), plafonat doar inferior la 0 — spre
+  /// deosebire de [addCoins]/[spendCoins], care presupun un sens fix.
+  /// Folosit DOAR de CloudSyncService.consumePendingGrant (grant-uri de
+  /// admin), unde cantitatea poate fi și o "luare" de monede.
+  static Future<void> adjustCoins(int delta) async {
+    if (delta == 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final updated = (prefs.getInt(_coinsKey) ?? _startingCoins) + delta;
+    await prefs.setInt(_coinsKey, updated < 0 ? 0 : updated);
   }
 
   // ─── Gems (monedă premium — rară, din achievements/nivel, cheltuită în
@@ -178,22 +228,52 @@ class StorageService {
 
   static Future<int> getGems() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_gemsKey) ?? 0;
+    return prefs.getInt(_gemsKey) ?? starterGemGrant;
   }
 
   static Future<void> addGems(int amount) async {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
-    final current = prefs.getInt(_gemsKey) ?? 0;
+    final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
     await prefs.setInt(_gemsKey, current + amount);
   }
 
   static Future<bool> spendGems(int amount) async {
     final prefs = await SharedPreferences.getInstance();
-    final current = prefs.getInt(_gemsKey) ?? 0;
+    final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
     if (current < amount) return false;
     await prefs.setInt(_gemsKey, current - amount);
     return true;
+  }
+
+  /// Vezi [adjustCoins] — același tipar, pentru gems.
+  static Future<void> adjustGems(int delta) async {
+    if (delta == 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final updated = (prefs.getInt(_gemsKey) ?? starterGemGrant) + delta;
+    await prefs.setInt(_gemsKey, updated < 0 ? 0 : updated);
+  }
+
+  /// Acordă gems dintr-un quest, respectând plafonul zilnic
+  /// [dailyQuestGemCap] — întoarce cât s-a acordat EFECTIV (0 dacă plafonul
+  /// e deja atins), ca apelantul să anime exact suma reală. Restul
+  /// recompensei quest-ului (monede/XP/hints/vieți) nu e afectat.
+  static Future<int> grantQuestGems(int requested) async {
+    if (requested <= 0) return 0;
+    final usedToday = await getDailyCounter('quest_gems');
+    final left = dailyQuestGemCap - usedToday;
+    if (left <= 0) return 0;
+    final granted = requested < left ? requested : left;
+    await incrementDailyCounter('quest_gems', granted);
+    return granted;
+  }
+
+  /// Cât din plafonul zilnic de gems din quest-uri a mai rămas — afișat pe
+  /// ecranul de Quests, ca jucătorul să înțeleagă de ce un card arată 0 💎.
+  static Future<int> questGemsLeftToday() async {
+    final used = await getDailyCounter('quest_gems');
+    final left = dailyQuestGemCap - used;
+    return left > 0 ? left : 0;
   }
 
   // ─── Hints (resursă separată, ca vieți/monede — vezi Home + shop) ─────────
@@ -206,11 +286,22 @@ class StorageService {
   }
 
   /// Plafonat la [_hintsCap] — hint-urile trebuie folosite, nu doar strânse.
+  /// Plafonul se aplică DOAR cât balanța e încă sub el. Dacă jucătorul are
+  /// deja mai mult (grant admin, UNLIMITED de test, achiziție — toate
+  /// necapate, vezi [addHintsUncapped]), un `clamp(0, _hintsCap)` orb ar
+  /// avea DOUĂ efecte greșite: (1) i-ar TĂIA balanța înapoi la cap la
+  /// următorul quest capat (bug real semnalat: 994 -> 20 după un singur
+  /// quest) — și dacă doar am fi ridicat plafonul efectiv la `current`,
+  /// (2) orice recompensă capată ulterioară ar deveni un no-op silențios,
+  /// balanța părând din nou "înghețată" (994 -> 994 la infinit) — exact
+  /// simptomul semnalat, doar la alt prag. De-aia, o dată depășit
+  /// plafonul, recompensele capate se comportă ca cele necapate (se adună
+  /// mereu); doar SUB plafon rămâne cu adevărat plafonat.
   static Future<void> addHints(int amount) async {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
-    final updated = (current + amount).clamp(0, _hintsCap);
+    final updated = current >= _hintsCap ? current + amount : (current + amount).clamp(0, _hintsCap);
     await prefs.setInt(_hintsKey, updated);
   }
 
@@ -222,6 +313,15 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
     await prefs.setInt(_hintsKey, current + amount);
+  }
+
+  /// Vezi [adjustCoins] — același tipar, pentru hint-uri (fără plafonul
+  /// [_hintsCap], la fel ca [addHintsUncapped]).
+  static Future<void> adjustHints(int delta) async {
+    if (delta == 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final updated = (prefs.getInt(_hintsKey) ?? _startingHints) + delta;
+    await prefs.setInt(_hintsKey, updated < 0 ? 0 : updated);
   }
 
   /// Consumă 1 hint din balanța persistată — întoarce false dacă nu mai ai.
@@ -249,6 +349,17 @@ class StorageService {
     await prefs.setInt(_xpKey, current + amount);
   }
 
+  /// Vezi [adjustCoins] — același tipar, pentru XP (deci poate scădea și
+  /// nivelul afișat, spre deosebire de restul jocului unde XP-ul nu scade
+  /// niciodată — acceptabil doar aici, un grant de admin poate fi corectat).
+  static Future<void> adjustXp(int delta) async {
+    if (delta == 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    await _migrateXpCurveIfNeeded(prefs);
+    final updated = (prefs.getInt(_xpKey) ?? 0) + delta;
+    await prefs.setInt(_xpKey, updated < 0 ? 0 : updated);
+  }
+
   /// Curba de XP/nivel s-a schimbat (de la liniar 1000/nivel, la o curbă
   /// pătratică — vezi [levelForXp]). Rulează o singură dată: dacă XP-ul deja
   /// salvat ar corespunde unui nivel mai mic sub noua curbă decât nivelul pe
@@ -258,17 +369,38 @@ class StorageService {
   /// (nu retroactiv), ca să nu apară dintr-o dată zeci de reward-uri
   /// "necolectate" pentru niveluri deja trecute înainte de acest update.
   static Future<void> _migrateXpCurveIfNeeded(SharedPreferences prefs) async {
-    if (prefs.getBool(_xpCurveMigratedKey) ?? false) return;
-    final xp = prefs.getInt(_xpKey) ?? 0;
-    const oldXpPerLevel = 1000;
-    final oldLevel = (xp ~/ oldXpPerLevel) + 1;
-    final newFloor = cumulativeXpForLevel(oldLevel);
-    final migratedXp = xp < newFloor ? newFloor : xp;
-    if (migratedXp != xp) {
-      await prefs.setInt(_xpKey, migratedXp);
+    if (!(prefs.getBool(_xpCurveMigratedKey) ?? false)) {
+      final xp = prefs.getInt(_xpKey) ?? 0;
+      const oldXpPerLevel = 1000;
+      final oldLevel = (xp ~/ oldXpPerLevel) + 1;
+      final newFloor = cumulativeXpForLevel(oldLevel);
+      final migratedXp = xp < newFloor ? newFloor : xp;
+      if (migratedXp != xp) {
+        await prefs.setInt(_xpKey, migratedXp);
+      }
+      await prefs.setInt(_lastClaimedRewardLevelKey, levelForXp(migratedXp));
+      await prefs.setBool(_xpCurveMigratedKey, true);
     }
-    await prefs.setInt(_lastClaimedRewardLevelKey, levelForXp(migratedXp));
-    await prefs.setBool(_xpCurveMigratedKey, true);
+    await _migrateXpRateV3(prefs);
+  }
+
+  /// A doua migrare (economia v3): XP-ul acordat la o întrebare a scăzut de
+  /// ~8,5 ori (era egal cu punctele întrebării, 140-200; acum e 11-37 — vezi
+  /// xpForCorrectAnswer). Un total vechi lăsat neatins ar însemna un nivel
+  /// umflat pe curba nouă, așa că îl aducem la aceeași scară. Nu e o
+  /// pedeapsă: fiecare punct de XP valorează acum de ~15 ori mai mult, deci
+  /// nivelul afișat rămâne aproximativ același.
+  static const double _xpRateV3Divisor = 8.5;
+
+  static Future<void> _migrateXpRateV3(SharedPreferences prefs) async {
+    if (prefs.getBool(_xpCurveV3MigratedKey) ?? false) return;
+    final xp = prefs.getInt(_xpKey) ?? 0;
+    if (xp > 0) {
+      await prefs.setInt(_xpKey, (xp / _xpRateV3Divisor).round());
+    }
+    await prefs.setInt(
+        _lastClaimedRewardLevelKey, levelForXp(prefs.getInt(_xpKey) ?? 0));
+    await prefs.setBool(_xpCurveV3MigratedKey, true);
   }
 
   // ─── Reward-uri de Level Up ─────────────────────────────────────────────
@@ -351,15 +483,14 @@ class StorageService {
     return last != _dateKey(DateTime.now());
   }
 
-  /// Adaugă [_maxLives] vieți, o dată pe zi calendaristică — aditiv, peste
-  /// orice ai deja acumulat (regenerare pasivă, bonusuri etc.), la cerere
-  /// explicită — fără plafon. Întoarce câte vieți s-au acordat (mereu
-  /// [_maxLives]).
+  /// Adaugă [freeDailyLivesTarget] vieți, o dată pe zi calendaristică —
+  /// aditiv, peste orice ai deja acumulat (regenerare pasivă, bonusuri etc.),
+  /// fără plafon. Întoarce câte vieți s-au acordat.
   static Future<int> claimDailyReward() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_dailyClaimKey, _dateKey(DateTime.now()));
-    await addLivesUncapped(_maxLives);
-    return _maxLives;
+    await addLivesUncapped(freeDailyLivesTarget);
+    return freeDailyLivesTarget;
   }
 
   // ─── First Win of the Day (bonus la prima victorie multiplayer a zilei) ───
@@ -454,59 +585,65 @@ class StorageService {
 
   static String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
-  // ─── Rate-limit Cultură Generală (max [cultureQuizPlayLimit] sesiuni la
-  // fiecare [cultureQuizWindowMinutes] minute) ────────────────────────────────
-  // Fereastră glisantă, nu contor zilnic: ținem doar timestamp-urile ultimelor
-  // sesiuni pornite, aruncăm ce a ieșit din fereastră la fiecare verificare —
-  // separat de plafonul zilnic de mai jos (acela controlează plata, ăsta
-  // controlează accesul).
-
-  static List<int> _recentCultureQuizTimestamps(SharedPreferences prefs) {
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final windowMs = const Duration(minutes: cultureQuizWindowMinutes).inMilliseconds;
-    final all = prefs.getStringList(_cultureQuizPlayTimestampsKey)?.map(int.parse).toList() ?? [];
-    return all.where((t) => now - t < windowMs).toList();
-  }
+  // ─── Rate-limit Cultură Generală ([cultureQuizPlayLimit] runde pe ciclu,
+  // apoi [cultureQuizWindowMinutes] minute de cooldown) ───────────────────
+  // Cooldown-ul de [cultureQuizWindowMinutes] pornește o SINGURĂ dată, la
+  // finalul efectiv al ciclului (runda finală colectată — tap pe COLECTEAZĂ
+  // sau auto-colectare, vezi CultureQuizPanel._collect), NU la runda 1 —
+  // altfel numărătoarea afișată jucătorului ar începe deja "consumată" cu
+  // timpul petrecut jucând rundele 1-3, nu de la 15:00 întregi. Runda
+  // curentă (0-3) e ținută separat de cooldown, ca să supraviețuiască unui
+  // restart de aplicație în mijlocul ciclului (vezi cultureQuizPlaysInWindow).
 
   static Future<bool> canPlayCultureQuiz() async {
     final prefs = await SharedPreferences.getInstance();
-    return _recentCultureQuizTimestamps(prefs).length < cultureQuizPlayLimit;
+    final next = prefs.getInt(_cultureQuizNextReadyKey);
+    return next == null || DateTime.now().millisecondsSinceEpoch >= next;
   }
 
-  /// Câte runde s-au jucat deja în fereastra curentă — folosit ca număr de
+  /// Câte runde s-au jucat deja în ciclul curent — folosit ca număr de
   /// rundă pentru runda care urmează să pornească (vezi CultureQuizPanel,
-  /// care are 3 runde per fereastră, cât [cultureQuizPlayLimit]).
+  /// care are [cultureQuizPlayLimit] runde per ciclu).
   static Future<int> cultureQuizPlaysInWindow() async {
     final prefs = await SharedPreferences.getInstance();
-    return _recentCultureQuizTimestamps(prefs).length;
+    return prefs.getInt(_cultureQuizRoundKey) ?? 0;
   }
 
-  /// Timpul rămas până se eliberează primul slot (zero dacă poți juca deja).
+  /// Timpul rămas până la următorul ciclu (zero dacă poți juca deja).
   static Future<Duration> cultureQuizCooldownRemaining() async {
     final prefs = await SharedPreferences.getInstance();
-    final recent = _recentCultureQuizTimestamps(prefs);
-    if (recent.length < cultureQuizPlayLimit) return Duration.zero;
-    final oldest = recent.reduce((a, b) => a < b ? a : b);
-    final windowMs = const Duration(minutes: cultureQuizWindowMinutes).inMilliseconds;
-    final remaining = (oldest + windowMs) - DateTime.now().millisecondsSinceEpoch;
+    final next = prefs.getInt(_cultureQuizNextReadyKey);
+    if (next == null) return Duration.zero;
+    final remaining = next - DateTime.now().millisecondsSinceEpoch;
     return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
   }
 
-  /// Înregistrează pornirea unei sesiuni noi — apelat chiar la start, nu la
-  /// final, ca sesiunea curentă să conteze imediat în fereastră.
+  /// Înregistrează o rundă (1 sau 2) jucată în ciclul curent — NU pornește
+  /// cooldown-ul, doar avansează numărul rundei (vezi [startCultureQuizCooldown]
+  /// pentru runda finală).
   static Future<void> recordCultureQuizPlay() async {
     final prefs = await SharedPreferences.getInstance();
-    final recent = _recentCultureQuizTimestamps(prefs)..add(DateTime.now().millisecondsSinceEpoch);
-    await prefs.setStringList(_cultureQuizPlayTimestampsKey, recent.map((e) => e.toString()).toList());
+    final current = prefs.getInt(_cultureQuizRoundKey) ?? 0;
+    await prefs.setInt(_cultureQuizRoundKey, current + 1);
   }
 
-  /// Golește fereastra de sesiuni recente — cooldown-ul se bazează STRICT pe
-  /// aceste timestamp-uri (vezi [_recentCultureQuizTimestamps]), deci a le
-  /// șterge echivalează cu a sări direct peste așteptare. Folosit de butonul
-  /// de reclamă din faza de cooldown (vezi CultureQuizPanel._buildCooldown).
+  /// Repornește așteptarea pentru următorul ciclu — apelat DOAR când runda
+  /// finală e efectiv colectată (buton sau auto după 10s), ca numărătoarea
+  /// să pornească mereu de la [cultureQuizWindowMinutes] întregi. Resetează
+  /// și runda curentă la 0, pentru ciclul următor.
+  static Future<void> startCultureQuizCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final windowMs = const Duration(minutes: cultureQuizWindowMinutes).inMilliseconds;
+    await prefs.setInt(_cultureQuizNextReadyKey, DateTime.now().millisecondsSinceEpoch + windowMs);
+    await prefs.setInt(_cultureQuizRoundKey, 0);
+  }
+
+  /// Șterge cooldown-ul activ — folosit de butonul de reclamă din faza de
+  /// cooldown (vezi CultureQuizPanel._buildCooldown), ca să sară direct
+  /// peste așteptare.
   static Future<void> skipCultureQuizCooldown() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_cultureQuizPlayTimestampsKey, []);
+    await prefs.remove(_cultureQuizNextReadyKey);
   }
 
   // ─── Contoare zilnice generice (plafoane anti-farm) ────────────────────────
@@ -545,8 +682,13 @@ class StorageService {
   /// e cel care aplică efectiv reward-ul, cu animația lui proprie).
   static Future<AdRewardResult> claimRewardedAdReward() async {
     await incrementDailyCounter('ad_reward');
-    return const AdRewardResult(hints: 2, hearts: 1);
+    return rewardedAdReward;
   }
+
+  /// Aceeași valoare e și afișată pe butonul de reclamă (vezi GameScreen) —
+  /// o singură sursă, ca eticheta să nu poată rămâne în urma recompensei.
+  static const rewardedAdReward =
+      AdRewardResult(hints: 3, hearts: 2, coins: 43);
 
   // ─── Cumpărături din Shop (Coins / Gems) ────────────────────────────────────
   // Shop-ul e principalul currency sink al economiei — vezi reproiectarea:
@@ -579,11 +721,12 @@ class StorageService {
   }
 
   /// Cumpără un pachet de hints cu Coins — plafonul zilnic e pe NUMĂRUL de
-  /// pachete cumpărate, indiferent de mărimea fiecăruia.
+  /// pachete cumpărate, indiferent de mărimea fiecăruia, iar prețul crește cu
+  /// fiecare pachet luat azi (vezi [hintPackPriceToday]).
   static Future<bool> buyHintPackWithCoins(HintPack pack) async {
     final boughtToday = await getDailyCounter('hint_packs_bought');
     if (boughtToday >= hintPackDailyLimit) return false;
-    if (!await spendCoins(pack.priceCoins)) return false;
+    if (!await spendCoins(hintPackPriceToday(pack, boughtToday))) return false;
     await incrementDailyCounter('hint_packs_bought');
     await addHints(pack.amount);
     return true;
@@ -692,6 +835,18 @@ class StorageService {
     await prefs.setBool(_introSeenKey, value);
   }
 
+  // ─── Popup explicativ pentru ecranul de Multiplayer ───────────────────────
+
+  static Future<bool> getMultiplayerInfoSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_multiplayerInfoSeenKey) ?? false;
+  }
+
+  static Future<void> setMultiplayerInfoSeen(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_multiplayerInfoSeenKey, value);
+  }
+
   // ─── Muzică de fundal (separată de volumul efectelor sonore) ──────────────
 
   static Future<bool> getMusicEnabled() async {
@@ -753,8 +908,9 @@ class StorageService {
     if (newlyHit.isNotEmpty) {
       await prefs.setStringList(_streakMilestonesKey, claimed.map((e) => e.toString()).toList());
       for (final milestone in newlyHit) {
-        await addCoins(milestone * 5);
-        await addXp(milestone * 10);
+        await addCoins(streakMilestoneCoins(milestone));
+        await addXp(streakMilestoneXp(milestone));
+        await addGems(streakMilestoneGems(milestone));
       }
     }
     return newlyHit;
@@ -1029,6 +1185,61 @@ class StorageService {
       if (progressFor(a) >= a.target && !await isAchievementClaimed(a.id)) return true;
     }
     return false;
+  }
+
+  /// DEV: aduce progresul TUTUROR quest-urilor zilnice și realizărilor
+  /// permanente la prag (gata de "Revendică"), fără să marcheze nimic ca
+  /// deja revendicat — apelat de butonul "UNLIMITED" din Settings, ca
+  /// animațiile de recompensă să poată fi testate fără să mai fie nevoie să
+  /// joci efectiv pentru fiecare quest în parte.
+  ///
+  /// Quest-urile zilnice împart adesea același metricKey cu ținte diferite
+  /// (ex. "answer_15"/"answer_25" pe "answer_count") — de-aia calculăm mai
+  /// întâi MAXIMUL țintelor per metricKey, nu doar ultimul quest procesat,
+  /// altfel cel cu ținta mai mare ar rămâne sub prag.
+  ///
+  /// Realizările nu au un progres stocat separat — se calculează live din
+  /// contoarele reale (vezi [_achievementProgressResolver]), deci aici doar
+  /// aducem acele contoare la nivelul necesar (niciodată în jos, doar dacă
+  /// sunt deja sub prag).
+  ///
+  /// XP-ul NU se mai atinge (înainte era pus pe 100.000, ceea ce arunca
+  /// jucătorul direct la nivelul 17) — cerut explicit. Consecință acceptată:
+  /// realizările pe nivel (level_5 / level_15) nu se mai pot aduce la prag
+  /// din acest buton, trebuie jucat până acolo.
+  static Future<void> debugUnlockAllQuestsAndAchievements() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final maxTargetByMetric = <String, int>{};
+    for (final q in todaysQuests()) {
+      final current = maxTargetByMetric[q.metricKey] ?? 0;
+      if (q.target > current) maxTargetByMetric[q.metricKey] = q.target;
+    }
+    for (final entry in maxTargetByMetric.entries) {
+      await prefs.setInt(_questProgressKey(entry.key), entry.value);
+    }
+
+    final answered = prefs.getStringList(_answeredKey) ?? [];
+    if (answered.length < 400) {
+      final padded = List<String>.of(answered);
+      for (var i = answered.length; i < 400; i++) {
+        padded.add('debug_answered_$i');
+      }
+      await prefs.setStringList(_answeredKey, padded);
+    }
+    final modes = (prefs.getStringList(_modesEverPlayedKey) ?? []).toSet();
+    modes.addAll(gameModes.map((m) => m.id));
+    await prefs.setStringList(_modesEverPlayedKey, modes.toList());
+    if ((prefs.getInt(_hintsUsedTotalKey) ?? 0) < 50) {
+      await prefs.setInt(_hintsUsedTotalKey, 50);
+    }
+    if ((prefs.getInt(_questsClaimedTotalKey) ?? 0) < 25) {
+      await prefs.setInt(_questsClaimedTotalKey, 25);
+    }
+    if ((prefs.getInt(_dailyChallengesTotalKey) ?? 0) < 10) {
+      await prefs.setInt(_dailyChallengesTotalKey, 10);
+    }
+    await prefs.setBool(_starterPackBoughtKey, true);
   }
 
   // ─── Nume afișat (multiplayer) ─────────────────────────────────────────────

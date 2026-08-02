@@ -57,20 +57,27 @@ const _wheelOrangeDeep = Color(0xFFC24A00);
 /// combinat (mai rar) poate ieși la o rotire, plus premiul special ultra-rar:
 /// vieți nelimitate 24h. Greutățile sunt relative, nu procente — vezi
 /// [_WheelSpinDialogState._pickWeightedIndex].
+///
+/// Valorile sunt de ~10× mai mari decât în economia veche (unde roata,
+/// deși are cel mai lung cooldown din joc — 24h —, era paradoxal cea mai
+/// mică sursă de reward: 25-70 monede). Acum e cel mai mare reward dintr-o
+/// singură acțiune: media unei rotiri e ~247 monede + ~15 gems + vieți/hints
+/// (≈490 echivalent-monede), iar chiar și cel mai slab segment (268 monede)
+/// bate orice altceva se poate face cu un singur tap.
 const List<_WheelPrize> _prizes = [
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '25', weight: 20, coins: 25),
-  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '30', weight: 20, xp: 30),
-  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '60', weight: 14, coins: 60),
-  _WheelPrize(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, wheelLabel: '1', weight: 16, hints: 1),
-  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '70', weight: 14, xp: 70),
-  _WheelPrize(icon: Icons.favorite_rounded, color: AppColors.life, wheelLabel: '1', weight: 10, lives: 1),
-  _WheelPrize(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, wheelLabel: '2', weight: 8, hints: 2),
-  _WheelPrize(icon: Icons.diamond_rounded, color: _gemColor, wheelLabel: '3', weight: 6, gems: 3),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '268', weight: 18, coins: 268),
+  _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '431', weight: 14, xp: 431),
+  _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '517', weight: 13, coins: 517),
+  _WheelPrize(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, wheelLabel: '7', weight: 11, hints: 7),
+  _WheelPrize(icon: Icons.favorite_rounded, color: AppColors.life, wheelLabel: '4', weight: 11, lives: 4),
+  _WheelPrize(icon: Icons.diamond_rounded, color: _gemColor, wheelLabel: '39', weight: 10, gems: 39),
   // pachete combinate — mai rare (weight mic) decât o resursă singură.
-  _WheelPrize(icon: Icons.card_giftcard_rounded, color: Color(0xFFB388FF), wheelLabel: 'XP+❤', weight: 4, xp: 40, lives: 1),
-  _WheelPrize(icon: Icons.redeem_rounded, color: _gemColor, wheelLabel: '💎+', weight: 3, gems: 5, coins: 40),
-  // jackpot — ultra-rar (weight 1 din 116 total ≈ 0.9%).
-  _WheelPrize(icon: Icons.all_inclusive_rounded, color: _jackpotColor, wheelLabel: '24h', weight: 1, unlimitedLives: Duration(hours: 24)),
+  _WheelPrize(icon: Icons.card_giftcard_rounded, color: Color(0xFFB388FF), wheelLabel: '692+❤', weight: 9, coins: 692, lives: 3),
+  _WheelPrize(icon: Icons.diamond_rounded, color: _gemColor, wheelLabel: '84', weight: 7, gems: 84),
+  _WheelPrize(icon: Icons.redeem_rounded, color: Color(0xFFB388FF), wheelLabel: 'MIX', weight: 6, coins: 344, hints: 9, lives: 4),
+  _WheelPrize(icon: Icons.workspace_premium_rounded, color: _gemColor, wheelLabel: '1284+💎', weight: 4, coins: 1284, gems: 53),
+  // jackpot — ultra-rar (weight 2 din 105 total ≈ 1,9%).
+  _WheelPrize(icon: Icons.all_inclusive_rounded, color: _jackpotColor, wheelLabel: '24h', weight: 2, coins: 500, gems: 173, unlimitedLives: Duration(hours: 24)),
 ];
 
 /// Roata norocului a inelului — un premiu o dată la 24h reale (vezi
@@ -292,17 +299,17 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
   /// Listează TOATE resursele câștigate — nu doar una — ca pachetele
   /// combinate (ex. XP+viață) să arate ambele rânduri, nu doar primul.
   Widget _buildResultRows(_WheelPrize prize) {
+    final rows = <Widget>[];
     if (prize.unlimitedLives != null) {
-      return Row(
+      rows.add(Row(
         mainAxisSize: MainAxisSize.min,
         children: const [
           Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
           SizedBox(width: 10),
           Text('Vieți nelimitate\n24 de ore!', textAlign: TextAlign.center, style: TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
         ],
-      );
+      ));
     }
-    final rows = <Widget>[];
     void addRow(IconData icon, Color color, String text) {
       rows.add(Padding(
         padding: const EdgeInsets.symmetric(vertical: 3),

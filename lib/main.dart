@@ -26,11 +26,12 @@ void main() async {
     // leaderboard-ul global (vezi PlayerProfileService).
     await MultiplayerService.instance.ensureInitialized();
     unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
+    unawaited(CloudSyncService.instance.consumePendingGrant());
   } catch (e) {
     debugPrint('Firebase.initializeApp/identitate a esuat: $e');
   }
-  // pregatire SDK reclame (ID-uri de test deocamdata) - vezi ads_service.dart;
-  // nu blocheaza pornirea si nu e inca folosit de butonul din GameScreen.
+  // init() cere intai consimtamantul GDPR (UMP) si abia apoi initializeaza
+  // SDK-ul de reclame reale (vezi ads_service.dart) - nu blocheaza pornirea.
   AdsService.instance.init();
   runApp(const GuessItApp());
 }
@@ -67,6 +68,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       Music.resumeFromBackground();
       PlayerProfileService.instance.ensureProfileHeartbeat();
+      CloudSyncService.instance.consumePendingGrant();
     }
   }
 

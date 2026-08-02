@@ -104,8 +104,6 @@ class _ShopScreenState extends State<ShopScreen> {
       targetKey: _livesBadgeKey,
       icon: Icons.favorite_rounded,
       color: AppColors.life,
-      flightDuration: const Duration(milliseconds: 1350),
-      serpentine: true,
       onImpact: Sfx.heartHit,
       onFinished: _loadState,
     );
@@ -172,7 +170,34 @@ class _ShopScreenState extends State<ShopScreen> {
 
   // ─── Bani reali (simulat — vezi shop.dart) ────────────────────────────────
 
-  Future<bool> _confirmPurchase(String itemLabel, double priceUsd) async {
+  Future<bool> _confirmPurchase(String itemLabel, double priceRon) async {
+    // Gate-ul de publicare: cât timp billing-ul real nu e integrat, nicio
+    // achiziție simulată nu se poate întâmpla (vezi realMoneyStoreEnabled
+    // din shop.dart — un build cu plăți simulate nu poate ajunge în Play).
+    if (!realMoneyStoreEnabled) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Text('În curând', style: TextStyle(color: Colors.white)),
+          content: Text(
+            'Plățile reale nu sunt încă active în acest build.\n\n'
+            '$itemLabel va costa ${formatRon(priceRon)} când magazinul se '
+            'deschide. Până atunci, tot ce e în joc se poate obține jucând.',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
+              child: const Text('Am înțeles', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -180,7 +205,7 @@ class _ShopScreenState extends State<ShopScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text('Cumperi $itemLabel?', style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Preț: \$${priceUsd.toStringAsFixed(2)}\n\n'
+          'Preț: ${formatRon(priceRon)}\n\n'
           'Magazinul de plăți reale nu e conectat încă în acest build — nu se percepe nicio sumă, achiziția e doar simulată pentru testare.',
           style: const TextStyle(color: Colors.white70),
         ),
@@ -198,7 +223,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyGemPack(GemPack pack) async {
     if (_busy) return;
-    if (!await _confirmPurchase('${pack.gems} gems', pack.priceUsd)) return;
+    if (!await _confirmPurchase('${pack.gems} gems', pack.priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -222,7 +247,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyLivesPack(LivesPack pack) async {
     if (_busy) return;
-    if (!await _confirmPurchase('${pack.lives} vieți', pack.priceUsd)) return;
+    if (!await _confirmPurchase('${pack.lives} vieți', pack.priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -244,7 +269,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyUnlimitedLives24h() async {
     if (_busy) return;
-    if (!await _confirmPurchase('Vieți nelimitate 24h', unlimitedLives24hPriceUsd)) return;
+    if (!await _confirmPurchase('Vieți nelimitate 24h', unlimitedLives24hPriceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -258,7 +283,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyHintPackReal(HintPackReal pack) async {
     if (_busy) return;
-    if (!await _confirmPurchase('${pack.hints} hints', pack.priceUsd)) return;
+    if (!await _confirmPurchase('${pack.hints} hints', pack.priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -285,7 +310,7 @@ class _ShopScreenState extends State<ShopScreen> {
     if (_busy) return;
     if (b.oneTimeOnly && _starterPackBought) return;
     if (b.permanentNoAds && _noAdsOwned) return;
-    if (!await _confirmPurchase(b.title, b.priceUsd)) return;
+    if (!await _confirmPurchase(b.title, b.priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -419,20 +444,22 @@ class _ShopScreenState extends State<ShopScreen> {
                             icon: Icons.lightbulb_rounded,
                             color: const Color(0xFFFFD54F),
                             children: [
+                              // prețul crește cu fiecare pachet luat azi (la
+                              // fel ca la vieți) — vezi hintPackPriceToday.
                               for (final pack in hintCoinPacks)
                                 _ShopItem(
                                   title: '${pack.amount} hints',
                                   subtitle: _hintPacksBoughtToday >= hintPackDailyLimit
                                       ? 'Plafon zilnic atins ($_hintPacksBoughtToday/$hintPackDailyLimit pachete)'
-                                      : 'Pachet ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit de azi',
+                                      : 'Pachet ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit de azi — prețul crește cu fiecare',
                                   priceLabel: _hintPacksBoughtToday >= hintPackDailyLimit
                                       ? '—'
-                                      : '${pack.priceCoins}',
+                                      : '${hintPackPriceToday(pack, _hintPacksBoughtToday)}',
                                   priceIcon: Icons.monetization_on_rounded,
                                   priceIconColor: AppColors.coin,
                                   disabled: _busy ||
                                       _hintPacksBoughtToday >= hintPackDailyLimit ||
-                                      _coins < pack.priceCoins,
+                                      _coins < hintPackPriceToday(pack, _hintPacksBoughtToday),
                                   onTap: () => _buyHintPack(pack),
                                 ),
                             ],
@@ -471,7 +498,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _ShopItem(
                                   title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
                                   subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  priceLabel: formatRon(pack.priceRon),
                                   disabled: _busy,
                                   onTap: () => _buyGemPack(pack),
                                 ),
@@ -488,14 +515,14 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _ShopItem(
                                   title: '${pack.lives} vieți instant',
                                   subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  priceLabel: formatRon(pack.priceRon),
                                   disabled: _busy,
                                   onTap: () => _buyLivesPack(pack),
                                 ),
                               _ShopItem(
                                 title: 'Vieți nelimitate 24h',
                                 subtitle: 'Joci fără să pierzi vieți timp de 24h',
-                                priceLabel: '\$${unlimitedLives24hPriceUsd.toStringAsFixed(2)}',
+                                priceLabel: formatRon(unlimitedLives24hPriceRon),
                                 disabled: _busy,
                                 onTap: _buyUnlimitedLives24h,
                               ),
@@ -503,7 +530,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _ShopItem(
                                   title: '${pack.hints} hints',
                                   subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: '\$${pack.priceUsd.toStringAsFixed(2)}',
+                                  priceLabel: formatRon(pack.priceRon),
                                   disabled: _busy,
                                   onTap: () => _buyHintPackReal(pack),
                                 ),
@@ -747,7 +774,7 @@ class _BundleItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(owned ? 'DEȚINUT' : '\$${bundle.priceUsd.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                child: Text(owned ? 'DEȚINUT' : formatRon(bundle.priceRon), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -846,7 +873,7 @@ class _NoAdsHeroCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
-                owned ? 'DEȚINUT' : 'Cumpără • \$${bundle.priceUsd.toStringAsFixed(2)}',
+                owned ? 'DEȚINUT' : 'Cumpără • ${formatRon(bundle.priceRon)}',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
               ),
             ),

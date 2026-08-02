@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/multiplayer_entry_fee_dialog.dart';
 import '../../widgets/network_scan_animation.dart';
 import 'multiplayer_match_screen.dart';
 import 'room_lobby_screen.dart';
@@ -14,7 +16,12 @@ import 'room_lobby_screen.dart';
 /// ficțivi, se așteaptă cât e nevoie până apare cineva real în coadă. Vezi
 /// [MultiplayerService.attemptFormMatch].
 class MatchmakingScreen extends StatefulWidget {
-  const MatchmakingScreen({super.key});
+  /// Miza deja plătită înainte de a intra aici (taxă + pariu, vezi
+  /// pickMatchStake) — se returnează integral dacă pleci din coadă fără să
+  /// fii cuplat cu nimeni.
+  final MatchStake stake;
+
+  const MatchmakingScreen({super.key, required this.stake});
 
   @override
   State<MatchmakingScreen> createState() => _MatchmakingScreenState();
@@ -39,7 +46,12 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   Future<void> _start() async {
     final identity = await AuthService.instance.multiplayerIdentity();
     _identity = identity;
-    await MultiplayerService.instance.joinMatchmakingQueue(displayName: identity.name, photoUrl: identity.photoUrl);
+    await MultiplayerService.instance.joinMatchmakingQueue(
+      displayName: identity.name,
+      photoUrl: identity.photoUrl,
+      bet: widget.stake.bet,
+      betPercent: widget.stake.betPercent,
+    );
     if (!mounted) return;
 
     _queueSub = MultiplayerService.instance.watchOwnQueueEntry().listen((matchId) {
@@ -71,6 +83,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   /// automat cu altcineva chiar când tocmai am ales o cameră anume.
   Future<void> _joinRoom(MatchInfo room) async {
     if (_matched || _left || _joiningRoom) return;
+    // Miza a fost deja plătită la intrarea în coadă — alegerea unei camere
+    // din listă în loc de cuplarea automată nu costă a doua oară.
     setState(() => _joiningRoom = true);
     _formTimer?.cancel();
     await _queueSub?.cancel();
@@ -85,14 +99,18 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
         matchId: room.id,
         displayName: identity.name,
         photoUrl: identity.photoUrl,
+        bet: widget.stake.bet,
+        betPercent: widget.stake.betPercent,
       );
       if (!mounted) return;
       _matched = true;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)),
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false, stakePaid: widget.stake.total)),
       );
     } catch (e) {
+      // nu am reusit sa intram in camera - miza ramane platita, dar userul se
+      // intoarce in coada de matchmaking cu ea (nu se pierde si nu se dubleaza).
       if (!mounted) return;
       setState(() => _joiningRoom = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +121,12 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
       // re-adăugat în coadă, pentru că am ieșit din ea mai sus.
       final identity = _identity ?? await AuthService.instance.multiplayerIdentity();
       try {
-        await MultiplayerService.instance.joinMatchmakingQueue(displayName: identity.name, photoUrl: identity.photoUrl);
+        await MultiplayerService.instance.joinMatchmakingQueue(
+          displayName: identity.name,
+          photoUrl: identity.photoUrl,
+          bet: widget.stake.bet,
+          betPercent: widget.stake.betPercent,
+        );
       } catch (e) {
         debugPrint('MatchmakingScreen._joinRoom: re-joinMatchmakingQueue a esuat: $e');
       }
@@ -127,6 +150,10 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     } catch (e) {
       debugPrint('MatchmakingScreen._leave: leaveQueue a esuat: $e');
     } finally {
+      // n-a început niciun meci — miza (taxă + pariu) se întoarce integral.
+      if (widget.stake.total > 0) {
+        await StorageService.addCoins(widget.stake.total);
+      }
       if (mounted) Navigator.pop(context);
     }
   }

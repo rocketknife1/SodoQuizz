@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../core/admin.dart';
 import '../core/leagues.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
@@ -11,6 +12,8 @@ import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
 import 'achievements_screen.dart';
+import 'admin_screen.dart';
+import 'friends_screen.dart';
 import 'multiplayer/leaderboard_screen.dart';
 import 'settings_screen.dart';
 
@@ -34,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       loadAllQuestions(),
       StorageService.hasClaimableAchievements(),
       PlayerProfileService.instance.getMyProfile(),
+      PlayerProfileService.instance.pendingFriendRequestCount(),
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
@@ -45,6 +49,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       totalQuestions: total,
       claimableAchievements: results[5] as bool,
       multiplayerProfile: results[6] as PlayerProfile?,
+      pendingFriendRequests: results[7] as int,
     );
   }
 
@@ -105,6 +110,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
                 GestureDetector(
                   onTap: () async {
+                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const FriendsScreen()));
+                    // cererile acceptate/refuzate în Prieteni trebuie să
+                    // schimbe pe loc bulina de mai jos, la fel ca la Realizări.
+                    if (!mounted) return;
+                    setState(() => _dataFuture = _load());
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.group_rounded, color: AppColors.teal, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Prieteni', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        if (data.pendingFriendRequests > 0) ...[
+                          const SizedBox(width: 8),
+                          const NotificationDot(borderColor: AppColors.card),
+                        ],
+                        const Spacer(),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
                     await Navigator.push(context, MaterialPageRoute(builder: (_) => const AchievementsScreen()));
                     // la revenire din Realizări, revendicările făcute acolo
                     // trebuie să dispară pe loc de pe rândul de mai jos și de
@@ -150,6 +182,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildAccountRow(),
+                _buildAdminRow(),
               ],
             );
           },
@@ -255,59 +288,108 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Vizibil DOAR pe contul de admin (vezi lib/core/admin.dart) — restul
+  /// jucătorilor nu văd niciodată acest rând. Reutilizează exact aceeași
+  /// pereche stream/initialData ca [_buildAccountRow], ca să nu adauge un
+  /// al doilea listener redundant pe authStateChanges.
+  Widget _buildAdminRow() {
+    return StreamBuilder<User?>(
+      stream: AuthService.instance.authStateChanges(),
+      initialData: AuthService.instance.currentUser,
+      builder: (context, snap) {
+        if (snap.data?.email != kAdminEmail) return const SizedBox.shrink();
+        return Column(
+          children: [
+            const SizedBox(height: 12),
+            GestureDetector(
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminScreen())),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+                child: const Row(
+                  children: [
+                    Icon(Icons.admin_panel_settings_rounded, color: AppColors.orange, size: 20),
+                    SizedBox(width: 12),
+                    Expanded(child: Text('Admin', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
+                    Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _showAccountSheet(User? user) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1a1a2e),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      // fara asta, randul nou (Sterge contul definitiv) pica taiat sub
+      // ecran pe telefonul de test (verificat live) - modal bottom sheet
+      // fara isScrollControlled nu lasa SingleChildScrollView sa creasca
+      // peste inaltimea intrinseca initiala, fara nicio eroare in release.
+      isScrollControlled: true,
       builder: (sheetContext) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: user == null
-                ? [
-                    const Text('Guest', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Progresul e salvat doar pe acest telefon. Conectează-te cu Google ca să nu-l pierzi la reinstalare.',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: user == null
+                  ? [
+                      const Text('Guest', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Progresul e salvat doar pe acest telefon. Conectează-te cu Google ca să nu-l pierzi la reinstalare.',
+                        style: TextStyle(color: Colors.white54, fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+                            _signIn();
+                          },
+                          icon: const Icon(Icons.login_rounded),
+                          label: const Text('Conectează-te cu Google'),
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        ),
+                      ),
+                    ]
+                  : [
+                      Text(user.displayName ?? 'Cont Google', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      if (user.email != null) ...[
+                        const SizedBox(height: 4),
+                        Text(user.email!, style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                      ],
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(sheetContext);
+                            AuthService.instance.signOut();
+                          },
+                          icon: const Icon(Icons.logout_rounded),
+                          label: const Text('Deconectare'),
+                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      TextButton(
                         onPressed: () {
                           Navigator.pop(sheetContext);
-                          _signIn();
+                          _confirmDeleteAccount();
                         },
-                        icon: const Icon(Icons.login_rounded),
-                        label: const Text('Conectează-te cu Google'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                        child: const Text('Șterge contul definitiv', style: TextStyle(color: Colors.white38, fontSize: 12)),
                       ),
-                    ),
-                  ]
-                : [
-                    Text(user.displayName ?? 'Cont Google', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                    if (user.email != null) ...[
-                      const SizedBox(height: 4),
-                      Text(user.email!, style: const TextStyle(color: Colors.white54, fontSize: 12)),
                     ],
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(sheetContext);
-                          AuthService.instance.signOut();
-                        },
-                        icon: const Icon(Icons.logout_rounded),
-                        label: const Text('Deconectare'),
-                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, padding: const EdgeInsets.symmetric(vertical: 14)),
-                      ),
-                    ),
-                  ],
+            ),
           ),
         ),
       ),
@@ -315,6 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _signIn() async {
+    _showSyncingDialog();
     try {
       await AuthService.instance.signInWithGoogle();
       // fara asta, numele public (leaderboard/profil) ar ramane pe cel
@@ -324,11 +407,90 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // reincarcam datele afisate ca schimbarea sa se vada pe loc.
       await PlayerProfileService.instance.ensureProfileHeartbeat();
       if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // inchide dialogul de sincronizare
       setState(() => _dataFuture = _load());
     } catch (e) {
       if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e is AccountUnavailableException ? e.message : 'Contul e indisponibil momentan.')),
+      );
+    }
+  }
+
+  /// Acoperă tot fluxul de login (alegere cont Google + CloudSyncService.pullOrSeed,
+  /// vezi AuthService.signInWithGoogle) — fără el, ecranul rămâne aparent
+  /// înghețat câteva secunde între tap și rezultat, mai ales quand cloud-ul
+  /// suprascrie progresul local (poate pierde progres de Guest, merită
+  /// feedback vizibil cât se întâmplă). Blocant (fără dismiss/back), la fel
+  /// ca celelalte dialoguri de tranziție obligatorie din joc (ex.
+  /// GameScreen._showCategoryExitDialog).
+  void _showSyncingDialog() {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          backgroundColor: const Color(0xFF1a1a2e),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          content: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              CircularProgressIndicator(color: AppColors.blue),
+              SizedBox(width: 20),
+              Flexible(child: Text('Se sincronizează progresul...', style: TextStyle(color: Colors.white))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Dialog de confirmare explicit înainte de ștergerea definitivă de cont
+  /// (vezi AuthService.deleteAccount) — enumeră clar ce se pierde, ca userul
+  /// să nu apese din greșeală pe un TextButton mic din sheet-ul de cont.
+  void _confirmDeleteAccount() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Ștergi contul definitiv?', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Se șterg definitiv profilul public, prietenii, clasamentul și progresul salvat în cloud pentru acest cont Google. '
+          'Progresul de pe acest telefon rămâne neatins. Acțiunea nu poate fi anulată.',
+          style: TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              _deleteAccount();
+            },
+            child: const Text('Șterge contul', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAccount() async {
+    _showSyncingDialog();
+    try {
+      await AuthService.instance.deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // inchide dialogul de sincronizare
+      setState(() => _dataFuture = _load());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Contul a fost șters.')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ștergerea a eșuat. Încearcă din nou.')),
       );
     }
   }
@@ -345,6 +507,7 @@ class _ProfileData {
   /// pornirea aplicației nu s-a scris încă) — tratat ca "niciun meci încă"
   /// în UI, nu ca eroare.
   final PlayerProfile? multiplayerProfile;
+  final int pendingFriendRequests;
   _ProfileData({
     required this.xp,
     required this.coins,
@@ -353,6 +516,7 @@ class _ProfileData {
     required this.totalQuestions,
     required this.claimableAchievements,
     this.multiplayerProfile,
+    this.pendingFriendRequests = 0,
   });
 }
 

@@ -107,7 +107,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Future<void> _enterCategory(GameMode mode) async {
     final coins = await StorageService.getCoins();
     if (!mounted) return;
-    final canAfford = coins >= categoryEntryFee;
+    // Taxa nu mai e fixă: e un procent din averea curentă, cu plafoane (vezi
+    // categoryEntryFee) — principalul sink care crește odată cu venitul.
+    final fee = categoryEntryFee(coins);
+    final canAfford = coins >= fee;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -116,10 +119,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
         title: Text('Intri în ${mode.title}?',
             style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Taxă de intrare: $categoryEntryFee monede.\n\n'
-          'Recompensa la ieșire depinde de câte răspunzi corect în sesiunea '
-          'asta — puțin peste jumătate din taxă dacă ieși devreme, taxa '
-          'întreagă la 4+ corecte, un bonus la 8+.'
+          'Taxă de intrare: $fee monede '
+          '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1).replaceAll('.', ',')}% '
+          'din câte ai, între $categoryEntryFeeMin și $categoryEntryFeeMax).\n\n'
+          'Recompensa la ieșire depinde STRICT de câte răspunzi corect:\n'
+          '• sub 4 corecte — nimic înapoi\n'
+          '• 4-7 corecte — 60% din taxă\n'
+          '• 8-14 corecte — taxa întreagă\n'
+          '• 15+ corecte — taxa +30%'
           '${canAfford ? '' : '\n\nNu ai destule monede (ai $coins).'}',
           style: const TextStyle(color: Colors.white70),
         ),
@@ -133,7 +140,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.play,
                 disabledBackgroundColor: Colors.white24),
-            child: Text('Intră  •  💰$categoryEntryFee',
+            child: Text('Intră  •  💰$fee',
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ),
@@ -141,14 +148,14 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       ),
     );
     if (confirmed != true) return;
-    final spent = await StorageService.spendCoins(categoryEntryFee);
+    final spent = await StorageService.spendCoins(fee);
     if (!mounted || !spent) return;
     Sfx.tileSelect();
     Navigator.push(
       context,
       MaterialPageRoute(
-          builder: (_) => LoadingScreen(
-              gameModeId: mode.id, entryFeePaid: categoryEntryFee)),
+          builder: (_) =>
+              LoadingScreen(gameModeId: mode.id, entryFeePaid: fee)),
     );
   }
 
@@ -277,6 +284,51 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     );
   }
 
+  /// Îndrumar pentru jucătorul nou: la instalare primește [starterGemGrant]
+  /// gems "din partea casei", exact cât să-și deblocheze SINGUR o categorie
+  /// pe care și-o dorește (cele 3 de start sunt alese random). Dispare de
+  /// îndată ce gems-ul scade sub prețul primei trepte — deci imediat după ce
+  /// și-a ales categoria.
+  Widget _buildStarterGemsBanner() {
+    return FutureBuilder<int>(
+      future: StorageService.getGems(),
+      builder: (context, snapshot) {
+        final gems = snapshot.data ?? 0;
+        final firstTierPrice = questionUnlockGemsPrice(1);
+        if (gems < firstTierPrice || gems > starterGemGrant) {
+          return const SizedBox.shrink();
+        }
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFF5EC8F2).withAlpha(28),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFF5EC8F2).withAlpha(120)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.diamond_rounded,
+                  color: Color(0xFF5EC8F2), size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Ai $gems 💎 din partea casei — deblochează categoria pe care '
+                  'o vrei tu (prima treaptă costă $firstTierPrice).',
+                  style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      height: 1.3),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -332,6 +384,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                       ],
                     ),
                   ),
+                  _buildStarterGemsBanner(),
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),

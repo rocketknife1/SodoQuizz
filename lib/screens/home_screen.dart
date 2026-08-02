@@ -4,9 +4,11 @@ import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
+import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
 import '../widgets/level_header.dart';
+import '../widgets/lives_countdown_card.dart';
 import '../widgets/mascots/discord_mascot.dart';
 import '../widgets/mascots/paperclip_mascot.dart';
 import '../widgets/mascots/ring_mascot.dart';
@@ -34,6 +36,14 @@ class _HomeScreenState extends State<HomeScreen> {
   final GlobalKey _hintsBadgeKey = GlobalKey();
   final GlobalKey _gemsBadgeKey = GlobalKey();
   final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
+
+  /// Vezi quests_screen.dart._refreshBalances — aplică rezultatul DOAR dacă
+  /// nicio altă reîncărcare n-a mai pornit între timp, altfel un răspuns
+  /// vechi ajuns ultimul ar suprascrie unul mai nou și o balanță (de obicei
+  /// hints, ultima etapă din collectRewards) ar părea "înghețată" — [_refresh]
+  /// e chemat o dată per etapă (onEachImpact) la recompense compuse (nivel,
+  /// Cultură Generală, bonusurile mascotelor), deci etapele se pot suprapune.
+  int _loadSeq = 0;
 
   @override
   void initState() {
@@ -128,8 +138,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _refresh() {
-    setState(() {
-      _dataFuture = _loadData();
+    final seq = ++_loadSeq;
+    _loadData().then((refreshed) {
+      if (!mounted || seq != _loadSeq) return;
+      setState(() {
+        _dataFuture = Future.value(refreshed);
+      });
     });
     // bulina/cufărul de pe tab-ul Quests trebuie să reflecte pe loc orice
     // quest terminat în timpul unei sesiuni de joc, nu doar la reintrarea
@@ -167,6 +181,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
                 Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
                 const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
+                // Balonul de BETA stă în golul dintre marțianul de Discord
+                // (cutia lui: left 104 + 92 lățime) și Clippy (right 0 + 116
+                // lățime), la nivelul lor. NU mai sus: acolo plutea peste
+                // panoul de Cultură Generală și acoperea variantele de
+                // răspuns, făcând panoul imposibil de jucat.
+                const Positioned(
+                    bottom: 30, left: 200, right: 120, child: BetaInfoBalloon()),
               ],
             ),
           ),
@@ -204,6 +225,9 @@ class _HomeScreenState extends State<HomeScreen> {
             },
             onClaimLevelRewards: _claimLevelRewards,
           ),
+          // vizibil DOAR pe 0 vieți — cât ai măcar una, nu se vede niciun
+          // timer (vezi LivesCountdownCard).
+          LivesCountdownCard(onLifeRecharged: _refresh),
           if ((data?.streak ?? 0) > 0) ...[
             const SizedBox(height: 6),
             _buildStreakChip(data!.streak),

@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import '../firebase_options.dart';
 import 'cloud_sync_service.dart';
+import 'player_profile_service.dart';
 import 'storage_service.dart';
 
 /// Scope suplimentar necesar ca Google chiar să trimită poza de profil —
@@ -105,24 +106,36 @@ class AuthService {
     }
   }
 
+  /// Pornește fluxul de alegere cont Google și întoarce credențiala Firebase
+  /// rezultată — folosit atât la [signInWithGoogle] (unde avem nevoie și de
+  /// [GoogleSignInAccount] pentru nume/poză), cât și la reautentificarea
+  /// cerută de [deleteAccount] când sesiunea curentă e prea veche pentru
+  /// operația sensibilă de ștergere ("requires-recent-login").
+  Future<({AuthCredential credential, GoogleSignInAccount account})> _authenticateGoogle() async {
+    if (!_googleInitialized) {
+      // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
+      // porneasca fluxul din browser - si NU accepta deloc serverClientId
+      // acolo (assertion: "serverClientId is not supported on Web").
+      // Android e invers: are nevoie de serverClientId (ca sa verifice
+      // id-token-ul), nu de clientId (vine din google-services.json). In
+      // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
+      // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
+      await GoogleSignIn.instance.initialize(
+        clientId: kIsWeb ? googleSignInServerClientId : null,
+        serverClientId: kIsWeb ? null : googleSignInServerClientId,
+      );
+      _googleInitialized = true;
+    }
+    final account = await GoogleSignIn.instance.authenticate();
+    final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
+    return (credential: credential, account: account);
+  }
+
   Future<void> signInWithGoogle() async {
     try {
-      if (!_googleInitialized) {
-        // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
-        // porneasca fluxul din browser - si NU accepta deloc serverClientId
-        // acolo (assertion: "serverClientId is not supported on Web").
-        // Android e invers: are nevoie de serverClientId (ca sa verifice
-        // id-token-ul), nu de clientId (vine din google-services.json). In
-        // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
-        // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
-        await GoogleSignIn.instance.initialize(
-          clientId: kIsWeb ? googleSignInServerClientId : null,
-          serverClientId: kIsWeb ? null : googleSignInServerClientId,
-        );
-        _googleInitialized = true;
-      }
-      final account = await GoogleSignIn.instance.authenticate();
-      final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
+      final auth = await _authenticateGoogle();
+      final credential = auth.credential;
+      final account = auth.account;
       final anonymous = FirebaseAuth.instance.currentUser;
       if (anonymous != null && anonymous.isAnonymous) {
         // LEAGĂ contul Google de identitatea anonimă curentă (păstrează
@@ -170,5 +183,37 @@ class AuthService {
       // ignorat - oricum ne deconectam din Firebase mai jos.
     }
     await FirebaseAuth.instance.signOut();
+  }
+
+  /// Șterge definitiv contul Google curent — cerință Play Console: orice cont
+  /// care se poate crea din aplicație trebuie să poată fi șters tot din
+  /// aplicație. No-op dacă nimeni nu e logat cu Google (Guest nu are ce
+  /// șterge). Curăță ÎNTÂI datele din Firestore (profil public, prieteni,
+  /// cloud-save) și abia apoi contul Firebase Auth propriu-zis — pe dos ar
+  /// invalida sesiunea înainte ca regulile Firestore (request.auth.uid) să
+  /// mai poată autoriza ștergerile. Fără Cloud Functions în acest proiect nu
+  /// există o tranzacție reală peste cei doi pași — dacă userul anulează
+  /// reautentificarea de mai jos, datele din Firestore tot au fost șterse
+  /// deja, dar contul Auth rămâne (poate reîncerca ștergerea din nou).
+  /// Progresul local de pe telefon (StorageService) NU e atins — userul
+  /// rămâne cu el, ca un Guest nou.
+  Future<void> deleteAccount() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) return;
+    await PlayerProfileService.instance.deleteMyProfile();
+    await CloudSyncService.instance.deleteCloudSave();
+    try {
+      await user.delete();
+    } on FirebaseAuthException catch (e) {
+      if (e.code != 'requires-recent-login') rethrow;
+      final auth = await _authenticateGoogle();
+      await user.reauthenticateWithCredential(auth.credential);
+      await user.delete();
+    }
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (_) {
+      // ignorat - la fel ca in signOut().
+    }
   }
 }

@@ -44,3 +44,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Platforme regenerate automat de flutter, dar nefolosite in acest proiect
+# (vezi commit-ul "Elimina folderele de platforma nefolosite") - se recreeaza
+# la orice "flutter create"/build, nu trebuie sa reintre in istoric.
+/ios/
+/macos/
+/linux/
+/windows/

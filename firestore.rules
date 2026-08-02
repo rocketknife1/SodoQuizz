@@ -45,7 +45,87 @@ service cloud.firestore {
     // rezultat, fără Cloud Functions în acest proiect).
     match /player_profiles/{uid} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // Scriere normala: doar propriul owner, si doar daca nu e banat (vezi
+      // banned_players mai jos - fara asta, un cont banat si-ar putea
+      // recrea singur profilul la urmatorul heartbeat, vezi
+      // PlayerProfileService.ensureProfileHeartbeat). A doua conditie
+      // (emailul de admin) da acces total de scriere/stergere pe ORICE
+      // profil - foloseste pentru actiunea de ban din AdminScreen
+      // (PlayerProfileService.banPlayer) si pentru grant-urile de resurse.
+      allow write: if request.auth != null
+        && !exists(/databases/$(database)/documents/banned_players/$(uid))
+        && (request.auth.uid == uid || request.auth.token.email == 'dragosssx@gmail.com');
+
+      // Curatare Guest abandonati (vezi PlayerProfileService.sweepStaleGuests
+      // - fara Cloud Functions in acest proiect, orice client autentificat
+      // face treaba, oportunist, la citirea leaderboard-ului). Un profil
+      // STRAIN poate fi sters doar daca intruneste TOATE conditiile:
+      //   - nu are cont Google legat - /users/{uid} se scrie DOAR la login
+      //     real (CloudSyncService), niciodata pentru Guest, vezi
+      //     player_profile.dart - asta functioneaza retroactiv si pentru
+      //     conturi create inainte de aceasta regula, fara nicio migrare;
+      //   - sub 3 meciuri jucate vreodata (matchesPlayed);
+      //   - inactiv de cel putin 15 zile (lastActive).
+      // Pragurile trebuie tinute in sincron cu guestSweepMinMatches /
+      // guestSweepInactivity din player_profile_service.dart.
+      allow delete: if request.auth != null
+        && !exists(/databases/$(database)/documents/users/$(uid))
+        && resource.data.get('matchesPlayed', 0) < 3
+        && resource.data.lastActive is timestamp
+        && request.time > resource.data.lastActive + duration.value(15, 'd');
+
+      // Cereri de prietenie primite — un doc per expeditor (id = uid-ul lui).
+      // Citire/ștergere permisă fie owner-ului (uid, care le primește), fie
+      // expeditorului însuși (fromUid, care poate verifica/anula propria
+      // cerere trimisă) — creare doar de către expeditor.
+      match /friend_requests/{fromUid} {
+        allow read: if request.auth != null && (request.auth.uid == uid || request.auth.uid == fromUid);
+        allow create: if request.auth != null && request.auth.uid == fromUid;
+        allow delete: if request.auth != null && (request.auth.uid == uid || request.auth.uid == fromUid);
+      }
+
+      // Prieteni acceptați — relație mutuală, câte un doc-oglindă pe fiecare
+      // parte (player_profiles/A/friends/B ȘI player_profiles/B/friends/A).
+      // La acceptare, oricare din cei doi trebuie să poată scrie AMBELE
+      // documente într-un singur batch — de-aia scrierea e permisă oricăruia
+      // din cei doi uid-uri implicate (owner SAU friendUid), nu doar owner-ului.
+      match /friends/{friendUid} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null && (request.auth.uid == uid || request.auth.uid == friendUid);
+      }
+    }
+
+    // Un doc per meci multiplayer ÎNCHEIAT NORMAL (vezi
+    // PlayerProfileService.recordCompletedMatch) — spre deosebire de
+    // matches/{matchId} de mai sus (șters când ultimul jucător pleacă),
+    // ăsta rămâne definitiv, ca sursă reală pentru "câte meciuri au fost
+    // jucate" (AdminScreen, tab Statistici — .count() agregat pe server).
+    // Orice jucător autentificat poate scrie (id-ul document-ului = matchId,
+    // deci scrierile mai multor jucători pentru același meci converg,
+    // merge:true, nu se dublează) — doar admin-ul citește/agregă.
+    match /completed_matches/{matchId} {
+      allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      allow write: if request.auth != null;
+    }
+
+    // Conturi banate de admin (vezi PlayerProfileService.banPlayer) — un doc
+    // = uid-ul nu mai are voie sa scrie player_profiles/{uid} (vezi
+    // conditia exists() de mai sus). Doar admin-ul citeste/scrie; nimeni
+    // altcineva nu are nevoie sa acceseze asta direct (verificarea exists()
+    // din regula de mai sus are acces implicit, indiferent de allow read).
+    match /banned_players/{uid} {
+      allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
+    // "Cutie postala" pentru grant-uri de resurse de la admin catre un
+    // jucator anume (vezi CloudSyncService.consumePendingGrant) — doar
+    // conturi Google, fiindca StorageService e local, nu exista alt canal
+    // catre Guest. Admin-ul creeaza/actualizeaza grant-ul; owner-ul (uid)
+    // doar citeste si sterge, la consum - nu poate scrie/crea unul singur.
+    match /admin_grants/{uid} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
     // Orice altceva neenumerat explicit mai sus — refuzat implicit.

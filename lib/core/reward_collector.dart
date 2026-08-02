@@ -50,8 +50,6 @@ Future<void> collectRewards(
       targetKey: targetKey,
       icon: icon,
       color: color,
-      flightDuration: const Duration(milliseconds: 1350),
-      serpentine: true,
       onImpact: () {
         impactSound();
         onEachImpact?.call();

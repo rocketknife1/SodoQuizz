@@ -147,7 +147,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final seq = ++_loadSeq;
     _load().then((refreshed) {
       if (!mounted || seq != _loadSeq) return;
-      setState(() => _dataFuture = Future.value(refreshed));
+      setState(() {
+        _dataFuture = Future.value(refreshed);
+      });
     });
   }
 

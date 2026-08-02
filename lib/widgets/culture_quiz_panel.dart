@@ -92,15 +92,28 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     super.dispose();
   }
 
-  /// Înregistrează sesiunea o singură dată — fie la tap pe COLECTEAZĂ, fie
-  /// automat, oricare vine prima. Fără asta, un utilizator care iese din
-  /// aplicație pe ecranul de recompensă fără să apese butonul ar rămâne cu
-  /// timer-ul de cooldown neîncepput la nesfârșit.
+  /// Înregistrează runda curentă (1 sau 2) o singură dată — fie la tap pe
+  /// "Pregătit pentru runda X", fie automat, oricare vine prima. Fără asta,
+  /// un utilizator care iese din aplicație fără să apese butonul ar rămâne
+  /// blocat la nesfârșit pe ecranul de pauză dintre runde.
   Future<void> _recordPlayOnce() async {
     if (_playRecorded) return;
     _playRecorded = true;
     _autoRecordTimer?.cancel();
     await StorageService.recordCultureQuizPlay();
+  }
+
+  /// Pornește cooldown-ul de [StorageService.cultureQuizWindowMinutes] o
+  /// singură dată — fie la tap pe COLECTEAZĂ, fie automat după 10s, oricare
+  /// vine prima (vezi [_collect]). Separat de [_recordPlayOnce]: doar runda
+  /// FINALĂ pornește efectiv cooldown-ul, ca numărătoarea afișată jucătorului
+  /// să înceapă mereu de la [StorageService.cultureQuizWindowMinutes] întregi,
+  /// nu de la momentul rundei 1.
+  Future<void> _startCooldownOnce() async {
+    if (_playRecorded) return;
+    _playRecorded = true;
+    _autoRecordTimer?.cancel();
+    await StorageService.startCultureQuizCooldown();
   }
 
   Future<void> _checkAvailability() async {
@@ -233,20 +246,25 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
 
     if (correct) {
       correctCount++;
-      const coinsPerCorrect = 20;
-      const xpPerCorrect = 40;
       // fără risc aici (nu se pierd vieți) — după plafonul zilnic de
       // răspunsuri corecte, rata scade mult; altfel "Daily Challenge" ar
       // putea rula la nesfârșit la rată integrală. Vezi game_helpers.dart.
       final correctToday = await StorageService.getDailyCounter('culture_correct');
       final fullRate = correctToday < cultureFullRateDailyCorrectCap;
-      _coinsEarned += fullRate ? coinsPerCorrect : cultureReducedCoinsPerCorrect;
-      _xpEarned += fullRate ? xpPerCorrect : cultureReducedXpPerCorrect;
+      _coinsEarned += fullRate ? cultureCoinsPerCorrect : cultureReducedCoinsPerCorrect;
+      _xpEarned += fullRate ? cultureXpPerCorrect : cultureReducedXpPerCorrect;
       await StorageService.incrementDailyCounter('culture_correct');
       if (mounted) await bumpQuestMetric(context, 'culture_quiz_correct', 1);
-      // bonus de viață la fiecare 3 răspunsuri corecte — doar acumulat aici,
-      // fără plafon (se acordă efectiv, peste maximul de 5, la colectare).
-      if (correctCount % 3 == 0) _livesEarned++;
+      // Bonus de viață la fiecare [cultureCorrectPerLife] răspunsuri corecte,
+      // cel mult [cultureMaxLivesPerDay] pe zi — înainte era 1 la 3 corecte
+      // fără niciun plafon, adică 10 vieți gratuite pe zi doar de aici.
+      if (correctCount % cultureCorrectPerLife == 0) {
+        final livesToday = await StorageService.getDailyCounter('culture_lives');
+        if (livesToday < cultureMaxLivesPerDay) {
+          await StorageService.incrementDailyCounter('culture_lives');
+          _livesEarned++;
+        }
+      }
     }
 
     await Future.delayed(const Duration(milliseconds: 900));
@@ -260,8 +278,8 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   }
 
   Future<void> _finish() async {
-    const completionCoins = 30;
-    const completionXp = 60;
+    const completionCoins = cultureBatchCompletionCoins;
+    const completionXp = cultureBatchCompletionXp;
     // contorul de quiz-uri terminate + progresul de quest se înregistrează
     // la final indiferent de colectare — doar monede/XP/vieți așteaptă tap-ul
     // pe COLECTEAZĂ.
@@ -315,7 +333,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Future<void> _collect() async {
     if (_collecting) return;
     setState(() => _collecting = true);
-    await _recordPlayOnce();
+    await _startCooldownOnce();
     if (!mounted) return;
     await collectRewards(
       context,
@@ -399,9 +417,16 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
               children: [
                 Icon(Icons.smart_display_rounded, size: 14, color: _watchingAd ? Colors.white38 : AppColors.coin),
                 const SizedBox(width: 6),
-                Text(
-                  _watchingAd ? 'Se încarcă reclama...' : 'Reclamă • Sari peste așteptare',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _watchingAd ? Colors.white38 : AppColors.coin),
+                // Flexible + ellipsis, nu Text simplu — pe carduri înguste
+                // (panoul e doar o parte din lățimea ecranului, vezi
+                // home_screen.dart) textul lung depășea butonul (overflow).
+                Flexible(
+                  child: Text(
+                    _watchingAd ? 'Se încarcă reclama...' : 'Reclamă • Sari peste așteptare',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _watchingAd ? Colors.white38 : AppColors.coin),
+                  ),
                 ),
               ],
             ),

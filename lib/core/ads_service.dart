@@ -13,11 +13,12 @@ const _rewardedAdUnitId = 'ca-app-pub-7925849908413802/5562564815';
 /// contul AdMob.
 const _testDeviceIds = ['211650EF1A0E1A07C39AF7E073AB33F4'];
 
-/// Wrapper minimal peste reclamele recompensate (Rewarded) — pregătit, dar
-/// NEconectat încă la butonul "Reclamă" din game_screen.dart (acela rămâne
-/// simulat deocamdată, la cerere explicită). Când se decide activarea
-/// reclamelor reale, [GameScreen] poate apela [AdsService.instance.showRewarded]
-/// în loc să acorde recompensa direct.
+/// Wrapper minimal peste reclamele recompensate (Rewarded), conectat la
+/// toate punctele din aplicație care oferă recompensă pentru reclamă:
+/// butonul "Reclamă" din game_screen.dart (apelează [showRewarded] direct)
+/// și quests/achievements/culture_quiz_panel (prin [watchOrSimulate], care
+/// acordă recompensa simulat dacă reclama nu s-a încărcat la timp, ca
+/// fluxul să nu depindă de fill rate-ul AdMob).
 class AdsService {
   AdsService._();
   static final instance = AdsService._();
@@ -25,10 +26,23 @@ class AdsService {
   bool _initialized = false;
   RewardedAd? _rewardedAd;
 
+  /// Fluxul UMP (User Messaging Platform) cere consimțământul GDPR înainte
+  /// de a cere reclame userilor din UE/UK/state americane reglementate —
+  /// obligatoriu conform politicii AdMob (nu opțional), altfel contul
+  /// riscă suspendare. [ConsentInformation.canRequestAds] rămâne sursa de
+  /// adevăr: dacă rămâne false (consimțământ neobținut sau cerere eșuată
+  /// fără net la pornire), SDK-ul de reclame nici nu se inițializează —
+  /// [_rewardedAd] rămâne null, iar [showRewarded]/[watchOrSimulate] cad
+  /// deja pe fallback-ul simulat, deci fluxul de recompensă tot funcționează.
   Future<void> init() async {
     if (_initialized || kIsWeb) return; // google_mobile_ads nu suporta Flutter Web
     _initialized = true;
     try {
+      await _requestConsent();
+      if (!await ConsentInformation.instance.canRequestAds()) {
+        debugPrint('AdsService: consimțământ neobținut — reclame dezactivate pentru sesiunea curentă.');
+        return;
+      }
       await MobileAds.instance.updateRequestConfiguration(
         RequestConfiguration(testDeviceIds: _testDeviceIds),
       );
@@ -37,6 +51,31 @@ class AdsService {
     } catch (e) {
       debugPrint('AdsService.init a esuat: $e');
     }
+  }
+
+  /// [testIdentifiers] activează UI-ul de debug UMP DOAR pe telefonul de
+  /// dezvoltare (același ID ca la [_testDeviceIds]) — fără [debugGeography]
+  /// setat, geografia rămâne cea reală (România e deja UE, deci formularul
+  /// apare oricum normal la testare, fără să simulăm nimic).
+  Future<void> _requestConsent() {
+    final completer = Completer<void>();
+    final params = ConsentRequestParameters(
+      consentDebugSettings: ConsentDebugSettings(testIdentifiers: _testDeviceIds),
+    );
+    ConsentInformation.instance.requestConsentInfoUpdate(
+      params,
+      () => ConsentForm.loadAndShowConsentFormIfRequired((formError) {
+        if (formError != null) {
+          debugPrint('AdsService: formularul de consimțământ a eșuat: ${formError.message}');
+        }
+        if (!completer.isCompleted) completer.complete();
+      }),
+      (error) {
+        debugPrint('AdsService: actualizarea consimțământului a eșuat: ${error.message}');
+        if (!completer.isCompleted) completer.complete();
+      },
+    );
+    return completer.future;
   }
 
   void _loadRewarded() {
@@ -96,5 +135,33 @@ class AdsService {
       earned = true;
     }
     return earned;
+  }
+
+  /// True doar pentru useri din UE/UK/state americane reglementate — Google
+  /// cere un buton vizibil de "Opțiuni de confidențialitate" în Setări
+  /// DOAR pentru aceștia (vezi rândul din settings_screen.dart), nu pentru
+  /// restul lumii.
+  Future<bool> privacyOptionsRequired() async {
+    if (kIsWeb) return false;
+    final status = await ConsentInformation.instance.getPrivacyOptionsRequirementStatus();
+    return status == PrivacyOptionsRequirementStatus.required;
+  }
+
+  /// Redeschide formularul de opțiuni de confidențialitate UMP (linkul cerut
+  /// de Google în Setări). Dacă userul tocmai a acordat consimțământul de
+  /// aici (nu la pornire), reclama recompensată nu era încă încărcată —
+  /// reîncearcă imediat, ca schimbarea să aibă efect fără un restart.
+  Future<void> showPrivacyOptionsForm() async {
+    final completer = Completer<void>();
+    ConsentForm.showPrivacyOptionsForm((formError) {
+      if (formError != null) debugPrint('AdsService: formularul de optiuni a esuat: ${formError.message}');
+      if (!completer.isCompleted) completer.complete();
+    });
+    await completer.future;
+    if (_rewardedAd == null && await ConsentInformation.instance.canRequestAds()) {
+      await MobileAds.instance.updateRequestConfiguration(RequestConfiguration(testDeviceIds: _testDeviceIds));
+      await MobileAds.instance.initialize();
+      _loadRewarded();
+    }
   }
 }

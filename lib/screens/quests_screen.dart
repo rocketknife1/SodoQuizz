@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
+import '../core/audio.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
 import '../widgets/level_header.dart';
 
@@ -89,6 +91,12 @@ class _QuestsScreenState extends State<QuestsScreen> {
     // sincron, niciodată un Future "în zbor".
     final current = await _dataFuture;
     if (!mounted) return;
+    // Gems-ul din quest-uri are un plafon zilnic ([dailyQuestGemCap]) —
+    // rezervăm partea care chiar se poate acorda ÎNAINTE de animație, ca
+    // numărul care zboară spre pastilă să fie exact cel primit, nu unul
+    // promis și netăiat.
+    final grantedGems = await StorageService.grantQuestGems(q.gemReward * multiplier);
+    if (!mounted) return;
     setState(() {
       _dataFuture = Future.value(_QuestsData(
         quests: current.quests,
@@ -108,7 +116,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
       lives: q.heartReward * multiplier,
       hints: q.hintReward * multiplier,
       hintsBadgeKey: _hintsBadgeKey,
-      gems: q.gemReward * multiplier,
+      gems: grantedGems,
       gemsBadgeKey: _gemsBadgeKey,
       coinBadgeKey: _coinBadgeKey,
       xpBadgeKey: _xpBadgeKey,
@@ -139,7 +147,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
     final seq = ++_loadSeq;
     _load().then((refreshed) {
       if (!mounted || seq != _loadSeq) return;
-      setState(() => _dataFuture = Future.value(refreshed));
+      setState(() {
+        _dataFuture = Future.value(refreshed);
+      });
     });
   }
 
@@ -164,7 +174,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
     for (final q in claimable) {
       xp += q.xpReward;
       coins += q.coinReward;
-      gems += q.gemReward;
+      // plafonul zilnic de gems se aplică per quest, exact ca la [_claim] —
+      // o colectare în bloc nu trebuie să-l poată ocoli.
+      gems += await StorageService.grantQuestGems(q.gemReward);
       hearts += q.heartReward;
       hints += q.hintReward;
       await StorageService.claimQuest(q.id);
@@ -174,29 +186,138 @@ class _QuestsScreenState extends State<QuestsScreen> {
     if (gems > 0) await StorageService.addGems(gems);
     if (hearts > 0) await StorageService.addLivesUncapped(hearts);
     // hints NECAPAT aici ar afișa temporar un total peste plafonul de 20 din
-    // StorageService — de-asta reîncărcăm din storage (deja plafonat) în loc
-    // să adunăm optimist current.hints + hints, altfel pastila arată o
-    // valoare care "sare înapoi" la închiderea dialogului.
+    // StorageService — de-asta citim valoarea finală DIN storage (deja
+    // plafonat corect) în loc să adunăm optimist current.hints + hints.
     if (hints > 0) await StorageService.addHints(hints);
     if (!mounted) return;
     _navBarKey.currentState?.refreshDots();
-    final refreshed = await _load();
+
+    // Citim valorile finale ACUM (corecte, plafonate), dar NU le aplicăm încă
+    // în header — doar bifele de pe carduri apar pe loc (vezi mai jos). Fără
+    // asta, bara de XP/pastilele ar sări la valoarea nouă cât timp dialogul
+    // de rezumat e încă pe ecran, cu mult înainte ca stelutele să ajungă
+    // vizual la ele (bug real semnalat de jucător). Fiecare valoare se
+    // aplică abia la impactul propriei animații, în [_launchCollectAllFlights].
+    final finalXp = xp > 0 ? await StorageService.getXp() : current.xp;
+    final finalCoins = coins > 0 ? await StorageService.getCoins() : current.coins;
+    final finalGems = gems > 0 ? await StorageService.getGems() : current.gems;
+    final finalLives = hearts > 0 ? await StorageService.getLives() : current.lives;
+    final finalHints = hints > 0 ? await StorageService.getHints() : current.hints;
     if (!mounted) return;
-    setState(() => _dataFuture = Future.value(refreshed));
+
+    final claimedUpdated = Map<String, bool>.of(current.claimed);
+    for (final q in claimable) {
+      claimedUpdated[q.id] = true; // bifele apar pe loc
+    }
+    setState(() {
+      _dataFuture = Future.value(current.copyWith(claimed: claimedUpdated));
+    });
 
     // ordinea intrărilor respectă mereu XP → monede → gems → viață → hints
     // (vezi reward_collector.dart și _RewardChips).
     final entries = <CollectAllEntry>[
-      if (xp > 0) CollectAllEntry(icon: Icons.star_rounded, color: AppColors.purple, amount: xp),
-      if (coins > 0) CollectAllEntry(icon: Icons.monetization_on_rounded, color: AppColors.coin, amount: coins),
-      if (gems > 0) CollectAllEntry(icon: Icons.diamond_rounded, color: AppColors.gem, amount: gems),
-      if (hearts > 0) CollectAllEntry(icon: Icons.favorite_rounded, color: AppColors.life, amount: hearts),
-      if (hints > 0) CollectAllEntry(icon: Icons.tips_and_updates_rounded, color: AppColors.hint, amount: hints),
+      if (xp > 0)
+        CollectAllEntry(
+          icon: Icons.star_rounded,
+          color: AppColors.purple,
+          amount: xp,
+          targetKey: _xpBadgeKey,
+          onImpact: () {
+            Sfx.xpHit();
+            _applyHeaderField((d) => d.copyWith(xp: finalXp));
+          },
+        ),
+      if (coins > 0)
+        CollectAllEntry(
+          icon: Icons.monetization_on_rounded,
+          color: AppColors.coin,
+          amount: coins,
+          targetKey: _coinBadgeKey,
+          onImpact: () {
+            Sfx.coinHit();
+            _applyHeaderField((d) => d.copyWith(coins: finalCoins));
+          },
+        ),
+      if (gems > 0)
+        CollectAllEntry(
+          icon: Icons.diamond_rounded,
+          color: AppColors.gem,
+          amount: gems,
+          targetKey: _gemsBadgeKey,
+          onImpact: () {
+            // nu exista un sunet dedicat de gems — refolosim coinHit (vezi Sfx).
+            Sfx.coinHit();
+            _applyHeaderField((d) => d.copyWith(gems: finalGems));
+          },
+        ),
+      if (hearts > 0)
+        CollectAllEntry(
+          icon: Icons.favorite_rounded,
+          color: AppColors.life,
+          amount: hearts,
+          targetKey: _livesBadgeKey,
+          onImpact: () {
+            Sfx.heartHit();
+            _applyHeaderField((d) => d.copyWith(lives: finalLives));
+          },
+        ),
+      if (hints > 0)
+        CollectAllEntry(
+          icon: Icons.tips_and_updates_rounded,
+          color: AppColors.hint,
+          amount: hints,
+          targetKey: _hintsBadgeKey,
+          onImpact: () {
+            // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
+            Sfx.xpHit();
+            _applyHeaderField((d) => d.copyWith(hints: finalHints));
+          },
+        ),
     ];
     await CollectAllOverlay.show(context, entries: entries, questCount: claimable.length);
 
     if (!mounted) return;
     setState(() => _claiming = false);
+    _launchCollectAllFlights(entries);
+  }
+
+  /// Aplică o singură schimbare punctuală (vezi apelurile din [_collectAll])
+  /// pe TOP de orice e afișat ACUM, nu pe [current]-ul de mai devreme — dacă
+  /// o altă resursă tocmai și-a aplicat propriul impact, nu vrem să o
+  /// suprascriem. `_dataFuture` e mereu deja rezolvat în acest punct (vezi
+  /// [_collectAll]), deci `.then` rulează practic imediat.
+  void _applyHeaderField(_QuestsData Function(_QuestsData d) apply) {
+    _dataFuture.then((d) {
+      if (!mounted) return;
+      setState(() {
+        _dataFuture = Future.value(apply(d));
+      });
+    });
+  }
+
+  /// Odată ce jucătorul apasă "Grozav!" (dialogul [CollectAllOverlay] se
+  /// închide și `await`-ul de mai sus se rezolvă), fiecare resursă își
+  /// zboară propria animație spre pastila ei din header — TOATE pornesc
+  /// aproape deodată, eșalonate cu doar 200ms între lansări (nu așteptate
+  /// secvențial, ca la [collectRewards]), ca "explozia" să pară un singur
+  /// moment, dar fără ca traseele suprapuse perfect să se încurce vizual.
+  /// Valorile finale sunt deja cunoscute (vezi [_collectAll]) — [onImpact]
+  /// doar le aplică în header, exact când propria animație ajunge acolo.
+  void _launchCollectAllFlights(List<CollectAllEntry> entries) {
+    for (var i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      Future.delayed(Duration(milliseconds: 200 * i), () {
+        if (!mounted) return;
+        CoinRewardOverlay.show(
+          context,
+          amount: entry.amount,
+          targetKey: entry.targetKey,
+          icon: entry.icon,
+          color: entry.color,
+          onImpact: entry.onImpact,
+        );
+      });
+    }
   }
 
   @override
@@ -235,11 +356,39 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     ],
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 4, 20, 12),
-                  child: Text(
-                    'Se resetează în fiecare zi la miezul nopții — toate cele 70 de quest-uri sunt active.',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Se resetează în fiecare zi la miezul nopții — toate cele ${allQuests.length} de quest-uri sunt active.',
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      // fiecare quest dă acum gems (1/2/4 după dificultate),
+                      // dar cu un plafon zilnic — arătăm explicit cât a mai
+                      // rămas, altfel un card cu 💎 care nu mai plătește ar
+                      // părea stricat.
+                      FutureBuilder<int>(
+                        future: StorageService.questGemsLeftToday(),
+                        builder: (context, snap) {
+                          final left = snap.data;
+                          if (left == null) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 3),
+                            child: Text(
+                              left > 0
+                                  ? 'Gems din quest-uri azi: încă $left din $dailyQuestGemCap.'
+                                  : 'Ai atins plafonul de $dailyQuestGemCap 💎 din quest-uri pe ziua de azi — restul recompenselor vin normal.',
+                              style: TextStyle(
+                                  color: left > 0 ? AppColors.gem : Colors.white38,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -328,6 +477,21 @@ class _QuestsData {
     required this.progress,
     required this.claimed,
   });
+
+  /// Vezi [_QuestsScreenState._applyHeaderField] — schimbă DOAR câmpurile
+  /// date, restul rămân cele curente (nu cele din momentul creării).
+  _QuestsData copyWith({int? xp, int? coins, int? lives, int? hints, int? gems, Map<String, bool>? claimed}) {
+    return _QuestsData(
+      quests: quests,
+      xp: xp ?? this.xp,
+      coins: coins ?? this.coins,
+      lives: lives ?? this.lives,
+      hints: hints ?? this.hints,
+      gems: gems ?? this.gems,
+      progress: progress,
+      claimed: claimed ?? this.claimed,
+    );
+  }
 }
 
 class _QuestCard extends StatelessWidget {

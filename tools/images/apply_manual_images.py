@@ -14,31 +14,14 @@ from fetch_question_images import normalize  # reuseste crop/letterbox 800x600
 SRC_DIR = "poze intrebari"
 
 # (json_path, img_dir, question_id, nume_fisier_sursa)
+# Runda 2026-08-02b: doar mec_018 (PISTON), adaugata dupa runda anterioara
+# (lgf_008-017, gam_*, restul mec_*, apl_001 - deja aplicate).
 REPLACEMENTS = [
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_001", "APPLE.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_002", "nike.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_003", "mcdonalds.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_004", "cola.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_005", "google.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_006", "adidas.png"),
-    ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "lgf_007", "ferrari.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_001", "stetoscop.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_002", "seringa.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_003", "scaun cu rotile.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_004", "aparat rmn.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_006", "ecograf.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_007", "bisturiu.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_008", "perfuzie.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_009", "branula.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_010", "termometru.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_011", "tensiometru.png"),
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_012", "pulsoximetru.png"),
+    ("assets/continut/mecanica/intrebari.json", "assets/continut/mecanica/poze", "mec_018", "piston.png"),
 ]
 
 # (json_path, img_dir, question_id) -- marcate "eliminata" in xlsx
-DELETIONS = [
-    ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "med_005"),
-]
+DELETIONS: list[tuple[str, str, str]] = []
 
 
 def apply_replacements():

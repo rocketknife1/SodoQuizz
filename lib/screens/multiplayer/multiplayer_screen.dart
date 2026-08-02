@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/multiplayer_entry_fee_dialog.dart';
+import '../../widgets/multiplayer_info_dialog.dart';
 import '../../widgets/solid_menu_button.dart';
 import 'matchmaking_screen.dart';
 import 'room_lobby_screen.dart';
@@ -41,6 +44,9 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         _photoUrl = identity.photoUrl;
       });
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) MultiplayerInfoDialog.maybeShow(context);
+    });
   }
 
   void _showUnavailable(Object error) {
@@ -72,6 +78,11 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     );
     if (result == null || result.isEmpty || !mounted) return;
     await StorageService.setDisplayName(result);
+    // fara asta, numele nou ar ramane doar local - leaderboard-ul/profilul
+    // public ar afisa in continuare numele vechi pana la urmatoarea
+    // pornire/revenire din fundal a aplicatiei (cand ruleaza heartbeat-ul
+    // din main.dart). Vezi acelasi fix in profile_screen.dart._signIn.
+    await PlayerProfileService.instance.ensureProfileHeartbeat();
     if (mounted) setState(() => _displayName = result);
   }
 
@@ -79,7 +90,14 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (_busy) return;
     final gameMode = await _pickGameMode();
     if (gameMode == null || !mounted) return;
+    final stake = await pickMatchStake(context);
+    if (stake == null || !mounted) return;
     setState(() => _busy = true);
+    final spent = await StorageService.spendCoins(stake.total);
+    if (!spent) {
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
     try {
       // identitate proaspătă, nu starea din câmp — dacă userul apasă chiar
       // la deschiderea ecranului, `_photoUrl`/`_displayName` pot fi încă
@@ -92,10 +110,17 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         displayName: identity.name,
         photoUrl: identity.photoUrl,
         gameMode: gameMode,
+        bet: stake.bet,
+        betPercent: stake.betPercent,
       );
       if (!mounted) return;
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true)));
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true, stakePaid: stake.total)),
+      );
     } catch (e) {
+      // camera nu s-a creat cu adevărat - miza nu a "cumparat" nimic.
+      await StorageService.addCoins(stake.total);
       _showUnavailable(e);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -138,12 +163,21 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     );
   }
 
+  /// Join Online nu mai e gratuit: acum se plătește aceeași taxă + pariu ca
+  /// la orice altă intrare în meci (cerința "oricine poate intra când
+  /// plătește taxa minimă"). Miza se întoarce integral dacă ieși din coadă
+  /// fără să fii cuplat cu nimeni — vezi MatchmakingScreen._leave.
   Future<void> _joinOnline() async {
     if (_busy) return;
     try {
       await MultiplayerService.instance.ensureInitialized();
       if (!mounted) return;
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => const MatchmakingScreen()));
+      final stake = await pickMatchStake(context);
+      if (stake == null || !mounted) return;
+      final spent = await StorageService.spendCoins(stake.total);
+      if (!spent || !mounted) return;
+      await Navigator.push(context,
+          MaterialPageRoute(builder: (_) => MatchmakingScreen(stake: stake)));
     } catch (e) {
       _showUnavailable(e);
     }
@@ -171,14 +205,32 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       ),
     );
     if (code == null || code.isEmpty || !mounted) return;
+    final stake = await pickMatchStake(context);
+    if (stake == null || !mounted) return;
     setState(() => _busy = true);
+    final spent = await StorageService.spendCoins(stake.total);
+    if (!spent) {
+      if (mounted) setState(() => _busy = false);
+      return;
+    }
     try {
       // identitate proaspătă — vezi comentariul din [_createRoom].
       final identity = await AuthService.instance.multiplayerIdentity();
-      final info = await MultiplayerService.instance.joinRoomByCode(code: code, displayName: identity.name, photoUrl: identity.photoUrl);
+      final info = await MultiplayerService.instance.joinRoomByCode(
+        code: code,
+        displayName: identity.name,
+        photoUrl: identity.photoUrl,
+        bet: stake.bet,
+        betPercent: stake.betPercent,
+      );
       if (!mounted) return;
-      await Navigator.push(context, MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false)));
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false, stakePaid: stake.total)),
+      );
     } catch (e) {
+      // nu am reusit sa intram cu adevarat - miza nu a "cumparat" nimic.
+      await StorageService.addCoins(stake.total);
       _showUnavailable(e);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -204,6 +256,11 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
                     ),
                     const SizedBox(width: 4),
                     const Text('Multiplayer', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => MultiplayerInfoDialog.show(context),
+                      icon: const Icon(Icons.info_outline_rounded, color: Colors.white70),
+                    ),
                   ],
                 ),
               ),

@@ -5,12 +5,23 @@ import '../core/theme.dart';
 
 /// O singură recompensă agregată (icon+total) pentru rezumatul din
 /// [CollectAllOverlay] — [amount] e deja SUMA tuturor quest-urilor colectate
-/// deodată pentru resursa asta, nu recompensa unui singur quest.
+/// deodată pentru resursa asta, nu recompensa unui singur quest. [targetKey]
+/// și [onImpact] sunt folosite DUPĂ ce jucătorul apasă "Grozav!", ca fiecare
+/// resursă să-și zboare propria animație spre pastila ei din header (vezi
+/// apelantul, QuestsScreen._launchCollectAllFlights).
 class CollectAllEntry {
   final IconData icon;
   final Color color;
   final int amount;
-  const CollectAllEntry({required this.icon, required this.color, required this.amount});
+  final GlobalKey targetKey;
+  final VoidCallback? onImpact;
+  const CollectAllEntry({
+    required this.icon,
+    required this.color,
+    required this.amount,
+    required this.targetKey,
+    this.onImpact,
+  });
 }
 
 /// Rezumatul butonului "Colectează tot": SPRE DEOSEBIRE de [collectRewards]
@@ -19,7 +30,12 @@ class CollectAllEntry {
 /// explicită a userului), aici e O SINGURĂ explozie de nori din care apar
 /// SIMULTAN toate iconițele resurselor câștigate, fiecare cu totalul
 /// dedesubt. Balanțele (storage) trebuie scrise ÎNAINTE de a arăta acest
-/// dialog — vezi apelantul (QuestsScreen._collectAll).
+/// dialog — vezi apelantul (QuestsScreen._collectAll). Când jucătorul apasă
+/// "Grozav!" (dialogul se închide), apelantul lansează pentru fiecare
+/// resursă câte o animație de zbor spre pastila ei din header — toate
+/// pornesc aproape deodată, eșalonate cu doar 200ms între lansări (nu
+/// așteptate secvențial), ca "explozia" să pară un singur moment, dar fără
+/// ca traseele suprapuse perfect să se încurce vizual.
 class CollectAllOverlay extends StatefulWidget {
   final List<CollectAllEntry> entries;
   final int questCount;
