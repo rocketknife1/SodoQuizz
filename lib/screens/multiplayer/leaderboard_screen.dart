@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import '../../core/gamemodes.dart';
 import '../../core/leagues.dart';
 import '../../core/theme.dart';
+import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
+import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../models/player_profile.dart';
 import '../../widgets/avatar.dart';
 
-/// Clasament — 2 taburi, ambele alimentate de PlayerProfileService/
-/// player_profiles din Firestore: "Toți jucătorii" (roster complet, inclusiv
-/// cei offline de mult, cu ultima oră online — vezi [_AllPlayersTab]) și
-/// "Leaderboard" (doar userii activi recent — vezi [_GlobalLeaderboardTab]).
+/// Clasament — 3 taburi: "Toți jucătorii" (roster complet, inclusiv cei
+/// offline de mult, cu ultima oră online — vezi [_AllPlayersTab]) și
+/// "Leaderboard" (doar userii activi recent — vezi [_GlobalLeaderboardTab]),
+/// ambele alimentate de PlayerProfileService/player_profiles din Firestore;
+/// "Al tău" (vezi [_MyStatsTab]) e strict local — punctajul propriu pe
+/// ciclul curent de [StorageService.leaderboardPeriodHours]h, pe categorie.
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
 
@@ -19,7 +24,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 2, vsync: this);
+  late final TabController _tabController = TabController(length: 3, vsync: this);
 
   @override
   void dispose() {
@@ -49,12 +54,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
               indicatorColor: AppColors.orange,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
-              tabs: const [Tab(text: 'Toți jucătorii'), Tab(text: 'Leaderboard')],
+              tabs: const [Tab(text: 'Toți jucătorii'), Tab(text: 'Leaderboard'), Tab(text: 'Al tău')],
             ),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_AllPlayersTab(), _GlobalLeaderboardTab()],
+                children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _MyStatsTab()],
               ),
             ),
           ],
@@ -353,4 +358,107 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
       },
     );
   }
+}
+
+String _formatPeriod(Duration d) {
+  final h = d.inHours;
+  final m = d.inMinutes % 60;
+  return '${h}h ${m}m';
+}
+
+/// Punctajul tău propriu, strict local (nu vine din Firestore) — totalul pe
+/// ciclul curent de [StorageService.leaderboardPeriodHours]h și defalcarea
+/// pe fiecare categorie, exact cum arăta vechiul ecran "Clasamentul tău"
+/// înainte de leaderboard-ul global (vezi git 3a2514d).
+class _MyStatsTab extends StatefulWidget {
+  const _MyStatsTab();
+
+  @override
+  State<_MyStatsTab> createState() => _MyStatsTabState();
+}
+
+class _MyStatsTabState extends State<_MyStatsTab> {
+  late Future<_MyStatsData> _future = _load();
+
+  static Future<_MyStatsData> _load() async {
+    final points = await StorageService.getAllLeaderboardPoints();
+    final periodRemaining = await StorageService.leaderboardPeriodRemaining();
+    return _MyStatsData(points: points, periodRemaining: periodRemaining);
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _future = _load());
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_MyStatsData>(
+      future: _future,
+      builder: (context, snap) {
+        final data = snap.data;
+        if (data == null) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+        }
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.orange,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            children: [
+              Container(
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [AppColors.orange, Color(0xFFFFB020)]),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 36),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Puncte în acest ciclu', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text('${data.total} puncte', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Se resetează în ${_formatPeriod(data.periodRemaining)}',
+                            style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              const Text('Puncte pe categorie (ciclul curent)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              // Higher or Lower nu face parte din gameModes (altă mecanică,
+              // fără poze/blur) — rândul lui e adăugat manual, nu prin bucla
+              // de mai jos.
+              _ModeScoreRow(
+                color: AppColors.purple,
+                icon: Icons.swap_vert_rounded,
+                title: 'Higher or Lower',
+                score: data.points[higherLowerModeId] ?? 0,
+              ),
+              for (final m in gameModes.where((m) => !m.locked))
+                _ModeScoreRow(color: m.accentColor, icon: m.icon, title: m.title, score: data.points[m.id] ?? 0),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MyStatsData {
+  final Map<String, int> points;
+  final Duration periodRemaining;
+  _MyStatsData({required this.points, required this.periodRemaining});
+
+  int get total => points.values.fold(0, (sum, v) => sum + v);
 }
