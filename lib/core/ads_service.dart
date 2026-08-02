@@ -3,14 +3,37 @@ import 'dart:async';
 import 'package:flutter/foundation.dart' show VoidCallback, debugPrint, kIsWeb;
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
-/// Ad unit ID real (Rewarded), din consola AdMob (app "Sodo Quizz").
-const _rewardedAdUnitId = 'ca-app-pub-7925849908413802/5562564815';
+// ─── Ce reclame cere aplicația: reale sau de test ─────────────────────────
+// Comutator la COMPILARE, nu la runtime. Implicit (fără flag) aplicația cere
+// unitățile OFICIALE DE TEST ale Google — arată reclame adevărate ca aspect,
+// dar nu produc venit și, esențial, nu pot fi raportate niciodată drept
+// trafic invalid, indiferent cine și de câte ori se uită la ele.
+//
+// De ce nu e implicit ID-ul real: APK-ul public (vezi LINKS.md) ajunge la
+// prieteni care testează. Vizionări repetate de pe câteva telefoane, fără
+// trafic real în spate, e exact tiparul pentru care Google suspendă conturi
+// AdMob. Lista [_testDeviceIds] protejează DOAR telefonul de dezvoltare, nu
+// și pe al lor.
+//
+//   build public (sigur):   flutter build apk --release
+//   build pentru Play:      flutter build appbundle --release --dart-define=REAL_ADS=true
+//
+// App ID-ul din AndroidManifest rămâne mereu cel real — Google cere doar
+// unitățile să fie de test, nu și aplicația.
+const bool useRealAds = bool.fromEnvironment('REAL_ADS');
 
-/// Device-urile de test (telefonul de dezvoltare) primesc reclame marcate
-/// clar "Test Ad" în loc de reclame reale, chiar și cu ad unit ID-ul real —
-/// altfel vizionările repetate de pe același device în timpul testării
-/// riscă să fie catalogate de Google drept trafic invalid și să suspende
-/// contul AdMob.
+/// Ad unit ID real (Rewarded), din consola AdMob (app "Sodo Quizz",
+/// unitatea "Game Over Reward").
+const _realRewardedAdUnitId = 'ca-app-pub-7925849908413802/5562564815';
+
+/// Unitatea oficială de test Google pentru Rewarded pe Android — vezi
+/// https://developers.google.com/admob/android/test-ads
+const _testRewardedAdUnitId = 'ca-app-pub-3940256099942544/5224354917';
+
+const _rewardedAdUnitId = useRealAds ? _realRewardedAdUnitId : _testRewardedAdUnitId;
+
+/// Al doilea strat de protecție, activ chiar și în build-urile cu REAL_ADS:
+/// telefonul de dezvoltare primește mereu reclame marcate "Test Ad".
 const _testDeviceIds = ['211650EF1A0E1A07C39AF7E073AB33F4'];
 
 /// Wrapper minimal peste reclamele recompensate (Rewarded), conectat la
@@ -47,6 +70,8 @@ class AdsService {
         RequestConfiguration(testDeviceIds: _testDeviceIds),
       );
       await MobileAds.instance.initialize();
+      debugPrint('AdsService: reclame ${useRealAds ? "REALE" : "de TEST"} '
+          '(unitate $_rewardedAdUnitId)');
       _loadRewarded();
     } catch (e) {
       debugPrint('AdsService.init a esuat: $e');

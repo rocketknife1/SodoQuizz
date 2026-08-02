@@ -19,6 +19,28 @@ Ultimul build: economia v3 (vezi `docs/economie_v3.md`) — XP decuplat de
 puncte, cost de hint proporțional cu averea, pariuri la multiplayer, balon
 de BETA și contor de reîncărcare a vieților.
 
+## Cum se construiește (reclame reale vs. de test)
+
+APK-ul public de mai sus se construiește **fără** flag, deci folosește
+unitățile oficiale de test AdMob:
+
+```
+flutter build apk --release
+```
+
+Nu produce venit, dar nici nu poate fi raportat drept trafic invalid,
+indiferent câți prieteni îl testează și de câte ori se uită la reclame.
+
+Build-ul care chiar câștigă bani (doar pentru încărcarea în Google Play):
+
+```
+flutter build appbundle --release --dart-define=REAL_ADS=true
+```
+
+Vezi `lib/core/ads_service.dart` pentru detalii. Reclamele reale nu vor
+servi oricum până când aplicația nu e publicată în Play, legată în AdMob și
+trecută prin review-ul lor.
+
 ## iOS
 
 Nu există momentan un link de instalare directă — Apple nu permite asta
