@@ -9,11 +9,11 @@ Se actualizează automat la fiecare push pe `main` (vezi
 
 ## Descarcă pentru Android
 
-https://github.com/rocketknife1/SodoQuizz/releases/download/v1.0.0-preview.2/app-release.apk
+https://github.com/rocketknife1/SodoQuizz/releases/download/v1.0.0-preview.3/app-release.apk
 
 APK semnat de release (upload keystore) — instalează manual, permite
-"surse necunoscute" dacă telefonul cere. ~647MB (majoritatea sunt pozele
-reale din `assets/continut/`, nu cod).
+"surse necunoscute" dacă telefonul cere. **~147MB** (era 647MB până la
+conversia pozelor în WebP).
 
 Ultimul build: economia v3 (vezi `docs/economie_v3.md`) — XP decuplat de
 puncte, cost de hint proporțional cu averea, pariuri la multiplayer, balon
