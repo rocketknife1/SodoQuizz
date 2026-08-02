@@ -417,6 +417,70 @@ class PlayerProfileService {
     }
   }
 
+  /// Șterge TOT ce ține de un cont, inițiat de admin (AdminScreen, tab
+  /// Jucători) — spre deosebire de [banPlayer], care doar îl scoate din
+  /// leaderboard și îi blochează recrearea profilului.
+  ///
+  /// Dispare: profilul public, legăturile de prietenie în ambele sensuri,
+  /// cererile de prietenie primite, salvarea din cloud (`users/{uid}`), un
+  /// eventual grant de resurse în așteptare și marcajul de ban. Funcționează
+  /// identic pentru Guest și pentru conturi Google.
+  ///
+  /// Contul din Firebase **Authentication** nu poate fi șters de aici: un
+  /// client n-are voie să șteargă contul altcuiva, operația cere Admin SDK,
+  /// iar proiectul e pe planul gratuit (fără Cloud Functions). De-aia uid-ul
+  /// se notează în `pending_auth_deletions`, iar `tools/purge_accounts.py`
+  /// termină treaba la următoarea rulare. Până atunci contul rămâne în Auth,
+  /// dar fără absolut nicio dată legată de el.
+  ///
+  /// Ștergerea pornită de jucătorul însuși (Profil → Șterge contul) nu are
+  /// nevoie de coada asta — acolo `user.delete()` chiar șterge contul Auth,
+  /// fiindcă îl șterge pe al lui.
+  Future<bool> purgePlayer(String uid, {required String name}) async {
+    if (uid.isEmpty) return false;
+    try {
+      final batch = _db.batch();
+
+      final friendsSnap = await _friendsCol(uid).get();
+      for (final doc in friendsSnap.docs) {
+        batch.delete(doc.reference);
+        batch.delete(_friendsCol(doc.id).doc(uid)); // oglinda din lista celuilalt
+      }
+      final requestsSnap = await _requestsCol(uid).get();
+      for (final doc in requestsSnap.docs) {
+        batch.delete(doc.reference);
+      }
+
+      batch.delete(_col.doc(uid));
+      batch.delete(_db.collection('users').doc(uid));
+      batch.delete(_db.collection('admin_grants').doc(uid));
+      batch.delete(_db.collection('banned_players').doc(uid));
+
+      batch.set(_db.collection('pending_auth_deletions').doc(uid), {
+        'name': name,
+        'requestedAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.purgePlayer a esuat: $e');
+      return false;
+    }
+  }
+
+  /// Câte conturi așteaptă ștergerea din Firebase Authentication — afișat în
+  /// AdminScreen, ca adminul să știe când merită rulat scriptul.
+  Future<int> pendingAuthDeletionCount() async {
+    try {
+      final snap = await _db.collection('pending_auth_deletions').count().get();
+      return snap.count ?? 0;
+    } catch (e) {
+      debugPrint('PlayerProfileService.pendingAuthDeletionCount a esuat: $e');
+      return 0;
+    }
+  }
+
   /// Curățare oportunistă a conturilor Guest abandonate — rulează cel mult o
   /// dată pe sesiune (nu la fiecare deschidere a leaderboard-ului), fără
   /// blocarea UI-ului (fire-and-forget din [fetchLeaderboard]). Fără Cloud

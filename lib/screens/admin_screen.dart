@@ -101,6 +101,66 @@ Future<bool> _confirmBan(BuildContext context, PlayerProfile p) async {
   return ok;
 }
 
+/// Ștergere totală a unui cont, din tab-ul Jucători. Spre deosebire de ban
+/// (care doar scoate profilul din leaderboard și blochează recrearea lui),
+/// asta șterge tot ce ține de cont — vezi [PlayerProfileService.purgePlayer]
+/// pentru lista exactă. Dialogul spune explicit și ce NU se întâmplă imediat,
+/// ca să nu pară că butonul a lăsat treaba pe jumătate.
+Future<bool> _confirmAndPurge(BuildContext context, PlayerProfile p) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: AppColors.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: const Text('Ștergi complet acest cont?', style: TextStyle(color: Colors.white)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${p.name} dispare definitiv. Se șterg:',
+              style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 8),
+          const Text(
+            '• profilul public și locul din clasament\n'
+            '• prietenii, în ambele sensuri\n'
+            '• cererile de prietenie primite\n'
+            '• salvarea din cloud (monede, XP, progres)\n'
+            '• grant-urile de resurse în așteptare',
+            style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Contul din Authentication se șterge la următoarea rulare a '
+            'scriptului de întreținere — până atunci rămâne gol, fără nicio '
+            'dată legată de el.',
+            style: TextStyle(color: Colors.white38, fontSize: 11.5, height: 1.35),
+          ),
+          const SizedBox(height: 10),
+          const Text('Nu poate fi anulat.',
+              style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Șterge tot', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return false;
+  final ok = await PlayerProfileService.instance.purgePlayer(p.uid, name: p.name);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok
+          ? '${p.name} a fost șters complet.'
+          : 'Nu am putut șterge acest cont.')),
+    );
+  }
+  return ok;
+}
+
 /// Deschide sheet-ul de trimitere resurse — refuză direct conturile Guest,
 /// care nu au niciun canal către telefonul lor (vezi CloudSyncService).
 void _openGrantSheet(BuildContext context, PlayerProfile p) {
@@ -123,7 +183,13 @@ class _AdminPlayerRow extends StatelessWidget {
   final PlayerProfile profile;
   final VoidCallback onGrant;
   final VoidCallback onBan;
-  const _AdminPlayerRow({required this.profile, required this.onGrant, required this.onBan});
+  final VoidCallback onPurge;
+  const _AdminPlayerRow({
+    required this.profile,
+    required this.onGrant,
+    required this.onBan,
+    required this.onPurge,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +220,11 @@ class _AdminPlayerRow extends StatelessWidget {
             tooltip: profile.hasGoogleAccount ? 'Trimite resurse' : 'Doar conturi Google',
           ),
           IconButton(onPressed: onBan, icon: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20), tooltip: 'Interzice'),
+          IconButton(
+            onPressed: onPurge,
+            icon: const Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 21),
+            tooltip: 'Șterge complet',
+          ),
         ],
       ),
     );
@@ -211,6 +282,9 @@ class _PlayersTabState extends State<_PlayersTab> {
                 onGrant: () => _openGrantSheet(context, p),
                 onBan: () async {
                   if (await _confirmBan(context, p)) await _refresh();
+                },
+                onPurge: () async {
+                  if (await _confirmAndPurge(context, p)) await _refresh();
                 },
               );
             },
@@ -272,6 +346,9 @@ class _NewTodayTabState extends State<_NewTodayTab> {
                 onGrant: () => _openGrantSheet(context, p),
                 onBan: () async {
                   if (await _confirmBan(context, p)) await _refresh();
+                },
+                onPurge: () async {
+                  if (await _confirmAndPurge(context, p)) await _refresh();
                 },
               );
             },
@@ -578,7 +655,12 @@ class _DebugTabState extends State<_DebugTab> {
 class _StatsData {
   final List<PlayerProfile> players;
   final int completedMatches;
-  const _StatsData({required this.players, required this.completedMatches});
+  final int pendingAuthDeletions;
+  const _StatsData({
+    required this.players,
+    required this.completedMatches,
+    required this.pendingAuthDeletions,
+  });
 }
 
 class _StatsTab extends StatefulWidget {
@@ -595,8 +677,13 @@ class _StatsTabState extends State<_StatsTab> {
     final results = await Future.wait([
       PlayerProfileService.instance.fetchAllPlayers(),
       PlayerProfileService.instance.fetchCompletedMatchesCount(),
+      PlayerProfileService.instance.pendingAuthDeletionCount(),
     ]);
-    return _StatsData(players: results[0] as List<PlayerProfile>, completedMatches: results[1] as int);
+    return _StatsData(
+      players: results[0] as List<PlayerProfile>,
+      completedMatches: results[1] as int,
+      pendingAuthDeletions: results[2] as int,
+    );
   }
 
   Future<void> _refresh() async {
@@ -631,6 +718,19 @@ class _StatsTabState extends State<_StatsTab> {
                 value: '${snap.data!.completedMatches}',
                 color: AppColors.blue,
               ),
+              // Cate conturi sterse din joc mai asteapta stergerea din
+              // Firebase Authentication — pasul care cere Admin SDK, deci
+              // scriptul de intretinere (vezi tools/purge_accounts.py).
+              // Aparea doar cand chiar e ceva de facut.
+              if (snap.data!.pendingAuthDeletions > 0) ...[
+                const SizedBox(height: 12),
+                _StatCard(
+                  icon: Icons.delete_sweep_rounded,
+                  label: 'Conturi de șters din Auth — rulează tools/purge_accounts.py',
+                  value: '${snap.data!.pendingAuthDeletions}',
+                  color: AppColors.danger,
+                ),
+              ],
               const SizedBox(height: 16),
               const Text(
                 'Meciuri: total real, încheiate normal, cu minim 2 jucători. Total jucători/Google-Guest: calculate din primii 300, ordonați după puncte de ligă.',

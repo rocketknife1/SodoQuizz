@@ -72,21 +72,51 @@ class MultiplayerService {
   /// main.dart); aici doar ne asigurăm că există un user curent. Aruncă
   /// [MultiplayerUnavailableException] dacă eșuează (ex. Firebase
   /// neconfigurat corect încă, sau fără rețea).
+  /// Trei încercări, cu pauză crescătoare între ele, și 15 secunde de
+  /// răbdare fiecare (era o singură încercare cu 8 secunde). Pe date mobile,
+  /// prima cerere după ce ecranul se aprinde poate depăși lejer 8 secunde cât
+  /// se trezește radioul — iar atunci userul vedea "Multiplayer indisponibil"
+  /// deși nu era nimic stricat, doar rețeaua lentă. Un Guest lovea asta mai
+  /// des decât un cont Google: el chiar trebuie să facă login anonim în acel
+  /// moment, pe când contul Google e deja autentificat de la pornire.
   Future<void> ensureInitialized() async {
     if (_initialized) return;
-    try {
-      await Future(() async {
-        if (FirebaseAuth.instance.currentUser == null) {
-          await FirebaseAuth.instance.signInAnonymously();
+    Object? lastError;
+    for (var attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await Future(() async {
+          if (FirebaseAuth.instance.currentUser == null) {
+            await FirebaseAuth.instance.signInAnonymously();
+          }
+        }).timeout(const Duration(seconds: 15));
+        _initialized = true;
+        return;
+      } catch (e) {
+        lastError = e;
+        debugPrint('MultiplayerService.ensureInitialized, incercarea $attempt/3 a esuat: $e');
+        if (attempt < 3) {
+          await Future<void>.delayed(Duration(milliseconds: 700 * attempt));
         }
-      }).timeout(const Duration(seconds: 8));
-      _initialized = true;
-    } catch (e) {
-      // detaliul tehnic (poate fi un stack trace nativ foarte lung) merge
-      // doar in log - userul vede mereu mesajul scurt, prietenos.
-      debugPrint('MultiplayerService.ensureInitialized a esuat: $e');
-      throw const MultiplayerUnavailableException();
+      }
     }
+    // Mesajul spune ce poate face userul, nu doar că "nu merge" — cel mai
+    // frecvent motiv real e conexiunea, nu serverul.
+    throw MultiplayerUnavailableException(
+      _looksOffline(lastError)
+          ? 'Nu am reușit să mă conectez. Verifică internetul și încearcă din nou.'
+          : 'Multiplayer indisponibil momentan. Încearcă din nou în câteva secunde.',
+    );
+  }
+
+  /// Erorile de rețea ale Firebase Auth vin cu coduri diferite pe Android și
+  /// pe web; le prindem pe cele uzuale, plus timeout-ul nostru.
+  static bool _looksOffline(Object? error) {
+    final text = error.toString().toLowerCase();
+    return text.contains('network') ||
+        text.contains('timeout') ||
+        text.contains('timeoutexception') ||
+        text.contains('unavailable') ||
+        text.contains('unreachable');
   }
 
   String get currentPlayerId => FirebaseAuth.instance.currentUser?.uid ?? '';

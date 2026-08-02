@@ -52,3 +52,7 @@ app.*.map.json
 /macos/
 /linux/
 /windows/
+
+# Cheia de cont de serviciu Firebase (vezi tools/purge_accounts.py) —
+# echivalentul unei parole de administrator peste tot proiectul.
+tools/service-account.json

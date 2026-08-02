@@ -6,6 +6,11 @@ service cloud.firestore {
     // (Google sau anonim) poate citi/scrie propriul document.
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Adminul poate STERGE salvarea din cloud a oricui (actiunea "Sterge
+      // complet" din AdminScreen, vezi PlayerProfileService.purgePlayer), dar
+      // NU o poate citi — continutul ramane privat, cum a fost mereu.
+      allow delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
     // Meciuri multiplayer — orice cont autentificat (inclusiv anonim,
@@ -82,6 +87,9 @@ service cloud.firestore {
       match /friend_requests/{fromUid} {
         allow read: if request.auth != null && (request.auth.uid == uid || request.auth.uid == fromUid);
         allow create: if request.auth != null && request.auth.uid == fromUid;
+        // adminul are nevoie sa le citeasca/stearga la stergerea completa a
+        // unui cont (purgePlayer), altfel raman cereri orfane in urma lui.
+        allow read, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
         allow delete: if request.auth != null && (request.auth.uid == uid || request.auth.uid == fromUid);
       }
 
@@ -92,7 +100,12 @@ service cloud.firestore {
       // din cei doi uid-uri implicate (owner SAU friendUid), nu doar owner-ului.
       match /friends/{friendUid} {
         allow read: if request.auth != null;
-        allow write: if request.auth != null && (request.auth.uid == uid || request.auth.uid == friendUid);
+        // a treia varianta: adminul, ca sa poata rupe legaturile de prietenie
+        // in ambele sensuri cand sterge complet un cont (purgePlayer).
+        allow write: if request.auth != null
+          && (request.auth.uid == uid
+              || request.auth.uid == friendUid
+              || request.auth.token.email == 'dragosssx@gmail.com');
       }
     }
 
@@ -126,6 +139,20 @@ service cloud.firestore {
     match /admin_grants/{uid} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
+    // Coada de conturi de sters din Firebase Authentication (vezi
+    // PlayerProfileService.purgePlayer + tools/purge_accounts.py).
+    //
+    // De ce exista: un client NU poate sterge contul Auth al altcuiva —
+    // operatia cere Admin SDK, iar proiectul e pe planul gratuit, fara Cloud
+    // Functions. Cand adminul sterge un jucator, datele din Firestore dispar
+    // pe loc (asta se poate din aplicatie), iar uid-ul ramane notat aici;
+    // scriptul de intretinere sterge apoi contul din Auth si goleste coada.
+    // Pana atunci, contul ramas in Auth e inert — nu mai are nicio data
+    // legata de el si nu apare nicaieri in joc.
+    match /pending_auth_deletions/{uid} {
+      allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
     // Orice altceva neenumerat explicit mai sus — refuzat implicit.
