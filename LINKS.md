@@ -15,6 +15,13 @@ APK semnat de release (upload keystore) — instalează manual, permite
 "surse necunoscute" dacă telefonul cere. **~147MB** (era 647MB până la
 conversia pozelor în WebP).
 
+Varianta mai mică, **~115MB**, pentru telefoanele moderne (orice telefon
+de după ~2017, procesor pe 64 de biți):
+
+https://github.com/rocketknife1/SodoQuizz/releases/download/v1.0.0-preview.3/app-arm64-v8a-release.apk
+
+Dacă nu ești sigur, ia-l pe primul — merge pe orice telefon.
+
 Ultimul build: economia v3 (vezi `docs/economie_v3.md`) — XP decuplat de
 puncte, cost de hint proporțional cu averea, pariuri la multiplayer, balon
 de BETA și contor de reîncărcare a vieților.
