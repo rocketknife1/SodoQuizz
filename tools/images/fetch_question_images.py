@@ -166,7 +166,13 @@ def normalize(raw, out_path):
         canvas.paste(img, ((TARGET_W - img.width) // 2, (TARGET_H - img.height) // 2))
         img = canvas
 
-    img.save(out_path, "PNG", optimize=True)
+    # Formatul iese din extensia ceruta de apelant. Pozele intrebarilor sunt
+    # WebP din 2026-08-02 (erau PNG, adica fara pierderi: 589MB pentru 1297 de
+    # imagini, peste limita de 200MB a Google Play) — vezi GameMode.imagePath.
+    if out_path.lower().endswith(".webp"):
+        img.save(out_path, "WEBP", quality=90, method=6)
+    else:
+        img.save(out_path, "PNG", optimize=True)
 
 
 def try_wiki(query, out_path):
@@ -221,7 +227,7 @@ def main():
         for cat in data["categorii"].values():
             for item in cat["intrebari"]:
                 qid, answer = item["id"], item["raspuns"]
-                out_path = os.path.join(img_dir, f"{qid}.png")
+                out_path = os.path.join(img_dir, f"{qid}.webp")
                 if os.path.exists(out_path):
                     ok += 1
                     continue

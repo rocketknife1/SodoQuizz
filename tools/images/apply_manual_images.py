@@ -27,7 +27,7 @@ DELETIONS: list[tuple[str, str, str]] = []
 def apply_replacements():
     for json_path, img_dir, qid, filename in REPLACEMENTS:
         src_path = os.path.join(SRC_DIR, filename)
-        out_path = os.path.join(img_dir, f"{qid}.png")
+        out_path = os.path.join(img_dir, f"{qid}.webp")
         with open(src_path, "rb") as f:
             raw = f.read()
         normalize(raw, out_path)
@@ -53,7 +53,7 @@ def apply_deletions():
             json.dump(data, f, ensure_ascii=False, indent=2)
 
         for img_dir, qid in entries:
-            img_path = os.path.join(img_dir, f"{qid}.png")
+            img_path = os.path.join(img_dir, f"{qid}.webp")
             if os.path.exists(img_path):
                 os.remove(img_path)
                 print(f"[DEL] removed image {img_path}")

@@ -5,7 +5,13 @@ import 'package:flutter/material.dart';
 /// fișiere (home screen, loader de întrebări etc).
 ///
 /// Fiecare gamemod își are conținutul într-un singur folder:
-/// `assets/continut/{id}/intrebari.json` și `assets/continut/{id}/poze/{id_intrebare}.png`.
+/// `assets/continut/{id}/intrebari.json` și `assets/continut/{id}/poze/{id_intrebare}.webp`.
+///
+/// Pozele au fost PNG până în 2026-08-02 — format fără pierderi, deci cel mai
+/// prost caz posibil pentru fotografii: 1297 de imagini de 800x600 ocupau
+/// 589MB. Convertite în WebP q90 (diferență invizibilă chiar și la zoom 100%)
+/// ocupă 89MB, ceea ce aduce bundle-ul sub limita de 200MB a Google Play
+/// pentru descărcarea de bază — singurul lucru care bloca publicarea.
 class GameMode {
   final String id;
   final String title;
@@ -28,7 +34,7 @@ class GameMode {
 
   String get contentPath => 'assets/continut/$id';
   String get questionsAssetPath => '$contentPath/intrebari.json';
-  String imagePath(String questionId) => '$contentPath/poze/$questionId.png';
+  String imagePath(String questionId) => '$contentPath/poze/$questionId.webp';
 }
 
 const List<GameMode> gameModes = [

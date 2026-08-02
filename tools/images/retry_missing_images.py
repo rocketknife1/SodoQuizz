@@ -38,7 +38,7 @@ def main():
     slow = "--slow" in sys.argv
     ok, fail = 0, 0
     for img_dir, qid, attempts in ATTEMPTS:
-        out_path = os.path.join(img_dir, f"{qid}.png")
+        out_path = os.path.join(img_dir, f"{qid}.webp")
         found = None
         for kind, query in attempts:
             try:
