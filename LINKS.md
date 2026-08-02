@@ -1,56 +1,68 @@
-# Link-uri Sodo Quizz
+# 🎮 Sodo Quizz
 
-## Joacă direct din browser (Android, iPhone, PC)
+**Vezi o poză neclară. Ai patru variante. Cât de repede îți dai seama ce e?**
 
-https://rocketknife1.github.io/SodoQuizz/
+1.394 de întrebări în 14 categorii: logo-uri, desene animate și filme, jocuri
+video, mașini de lux, celebrități, sport, monumente, animale, steaguri,
+instrumente, obiecte medicale, scule auto, aplicații de telefon și România.
 
-Se actualizează automat la fiecare push pe `main` (vezi
-`.github/workflows/flutter_web.yml`).
+---
 
-## Descarcă pentru Android
+## ▶️ Joacă direct din browser
 
-https://github.com/rocketknife1/SodoQuizz/releases/download/v1.0.0-preview.3/app-release.apk
+Merge pe orice — telefon Android, iPhone, tabletă, calculator. Nu trebuie
+instalat nimic.
 
-APK semnat de release (upload keystore) — instalează manual, permite
-"surse necunoscute" dacă telefonul cere. **~147MB** (era 647MB până la
-conversia pozelor în WebP).
+**https://rocketknife1.github.io/SodoQuizz/**
 
-Varianta mai mică, **~115MB**, pentru telefoanele moderne (orice telefon
-de după ~2017, procesor pe 64 de biți):
+---
 
-https://github.com/rocketknife1/SodoQuizz/releases/download/v1.0.0-preview.3/app-arm64-v8a-release.apk
+## 📱 Instalează pe Android
 
-Dacă nu ești sigur, ia-l pe primul — merge pe orice telefon.
+**https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-release.apk**
 
-Ultimul build: economia v3 (vezi `docs/economie_v3.md`) — XP decuplat de
-puncte, cost de hint proporțional cu averea, pariuri la multiplayer, balon
-de BETA și contor de reîncărcare a vieților.
+*~154 MB · merge pe orice telefon Android*
 
-## Cum se construiește (reclame reale vs. de test)
+Dacă vrei un fișier mai mic (~120 MB) și ai un telefon de după 2017:
 
-APK-ul public de mai sus se construiește **fără** flag, deci folosește
-unitățile oficiale de test AdMob:
+https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-arm64-v8a-release.apk
 
-```
-flutter build apk --release
-```
+**Cum se instalează:** apeși pe link, aștepți descărcarea, apoi deschizi
+fișierul. Telefonul o să te întrebe dacă permiți instalarea din „surse
+necunoscute" — accepți, e normal pentru aplicațiile care nu vin din Magazin
+Play. Instalarea durează un minut.
 
-Nu produce venit, dar nici nu poate fi raportat drept trafic invalid,
-indiferent câți prieteni îl testează și de câte ori se uită la reclame.
+---
 
-Build-ul care chiar câștigă bani (doar pentru încărcarea în Google Play):
+## 🚧 Jocul e în BETA
 
-```
-flutter build appbundle --release --dart-define=REAL_ADS=true
-```
+Îl dezvolt singur, în timpul liber. Ce înseamnă asta pentru tine:
 
-Vezi `lib/core/ads_service.dart` pentru detalii. Reclamele reale nu vor
-servi oricum până când aplicația nu e publicată în Play, legată în AdMob și
-trecută prin review-ul lor.
+- unele poze sunt încă provizorii sau lipsesc de tot
+- se mai întâmplă să apară erori
+- update-urile vin mai greu decât mi-aș dori
 
-## iOS
+Dacă găsești ceva stricat sau ai o idee, spune-mi pe Discord — citesc tot:
 
-Nu există momentan un link de instalare directă — Apple nu permite asta
-în afara App Store/TestFlight, iar proiectul nu are încă un cont de
-Apple Developer configurat. Varianta de browser de mai sus merge și pe
-iPhone.
+**https://discord.gg/ejGRMWJH5**
+
+---
+
+## 🍏 iPhone
+
+Nu există instalare directă pe iPhone — Apple nu permite asta în afara App
+Store-ului. Varianta din browser de mai sus merge perfect și pe iPhone,
+inclusiv salvată pe ecranul principal.
+
+---
+
+## ⚙️ Ce e nou
+
+- economie complet reproiectată: cost de hint proporțional cu banii tăi,
+  roata norocului devenită cel mai mare premiu, quest-uri care dau gems
+- multiplayer cu pariuri — mizezi cât ai curaj, între 5% și 85%
+- Higher or Lower, modul în care ghicești ce se caută mai mult
+- contor pe ecranul principal care îți arată cât mai e până primești o viață
+
+<sub>Notă pentru dezvoltare: instrucțiunile de build sunt în
+[docs/build.md](docs/build.md), nu aici.</sub>
