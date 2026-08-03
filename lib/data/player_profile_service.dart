@@ -314,6 +314,40 @@ class PlayerProfileService {
     }
   }
 
+  /// Prietenii ORICUI, nu doar ai contului curent — pentru ecranul de detaliu
+  /// din AdminScreen. Citirea subcolecției `friends` e permisă oricui e
+  /// autentificat (vezi firestore.rules), deci nu cere drepturi speciale.
+  Future<List<PlayerProfile>> fetchFriendsOf(String uid) async {
+    if (uid.isEmpty) return [];
+    try {
+      final snap = await _friendsCol(uid).get();
+      final profiles = await Future.wait(snap.docs.map((d) => getProfile(d.id)));
+      return profiles.whereType<PlayerProfile>().toList();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchFriendsOf a esuat: $e');
+      return [];
+    }
+  }
+
+  /// Cloud-save-ul privat al unui jucător (`users/{uid}`) — DOAR pentru
+  /// AdminScreen. Regula din firestore.rules dă drept de citire exclusiv
+  /// emailului de admin; pentru oricine altcineva apelul eșuează cu
+  /// permission-denied și se întoarce null, ceea ce e comportamentul dorit.
+  ///
+  /// Null înseamnă și "cont Guest" — un Guest nu are niciodată document aici,
+  /// fiindcă `users/{uid}` se scrie doar la login real (vezi CloudSyncService).
+  Future<Map<String, dynamic>?> fetchCloudSaveAsAdmin(String uid) async {
+    if (uid.isEmpty) return null;
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchCloudSaveAsAdmin a esuat: $e');
+      return null;
+    }
+  }
+
   Future<List<FriendRequest>> fetchIncomingRequests() async {
     final me = _uid;
     if (me.isEmpty) return [];

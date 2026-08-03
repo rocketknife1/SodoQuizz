@@ -4,9 +4,11 @@ import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
 import '../../core/theme.dart';
+import '../../data/multiplayer_activity_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
+import '../../models/multiplayer_activity.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
@@ -98,6 +100,31 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         gameModeId: widget.gameMode.name,
         playerCount: sorted.length,
       );
+      // Tabloul complet al mesei, pentru tab-ul Camere din AdminScreen — se
+      // șterge singur după roomActivityRetention. Aici e singurul loc din
+      // aplicație unde se știu simultan mizele puse și plățile calculate.
+      await MultiplayerActivityService.instance.recordRoom(
+        matchId: widget.matchId,
+        gameModeId: widget.gameMode.name,
+        pool: payouts.pool,
+        tableCap: payouts.tableCap,
+        players: [
+          for (var i = 0; i < sorted.length; i++)
+            RoomActivityPlayer(
+              uid: sorted[i].id,
+              name: sorted[i].name,
+              place: i + 1,
+              score: sorted[i].score,
+              // cât l-a costat participarea: taxa fixă + miza pusă
+              entry: multiplayerEntryFee + sorted[i].bet,
+              // cât i s-a creditat înapoi: câștig din pool + surplus returnat
+              exit: payouts.totalCreditFor(sorted[i].id),
+            ),
+        ],
+      );
+      // Curăță camerele expirate scrise de telefonul ăsta la meciurile
+      // anterioare (ștergere țintită, fără listare — vezi serviciul).
+      await MultiplayerActivityService.instance.sweepMine();
     }
     await MultiplayerService.instance.leaveMatch(widget.matchId);
     return sorted;

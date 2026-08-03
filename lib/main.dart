@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/audio.dart';
 import 'data/cloud_sync_service.dart';
+import 'data/multiplayer_activity_service.dart';
 import 'data/multiplayer_service.dart';
 import 'data/player_profile_service.dart';
 import 'firebase_options.dart';
@@ -27,6 +28,11 @@ void main() async {
     await MultiplayerService.instance.ensureInitialized();
     unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
     unawaited(CloudSyncService.instance.consumePendingGrant());
+    // Sterge camerele de multiplayer scrise de telefonul asta carora le-a
+    // expirat termenul de 10 minute. Aici, la pornire, si nu doar la finalul
+    // meciului, fiindca ultima camera jucata ar ramane altfel pana la
+    // urmatorul meci - vezi MultiplayerActivityService.
+    unawaited(MultiplayerActivityService.instance.sweepMine());
   } catch (e) {
     debugPrint('Firebase.initializeApp/identitate a esuat: $e');
   }

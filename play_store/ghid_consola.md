@@ -91,15 +91,27 @@ verificat în cod exact ce colectează aplicația — completează așa:
 
 | Tip de dată | Colectată | Trimisă terților | Obligatorie | De ce |
 |---|---|---|---|---|
+| **Adresă de email** | **Da** | Nu | **Nu** (doar dacă te loghezi cu Google) | Gestionarea contului: identifică contul la reconectare |
 | **Nume** | Da | Nu | **Nu** (doar dacă te loghezi cu Google) | Funcționalitate: numele afișat în clasament și multiplayer |
 | **Fotografii** (poza de profil Google) | Da | Nu | **Nu** | Funcționalitate: avatarul din clasament |
 | **Acțiuni în aplicație** (progres, scoruri) | Da | Nu | Da | Funcționalitate: salvare în cloud, clasament |
 | **ID-uri de dispozitiv** | Da | **Da** | Da | Publicitate (AdMob) |
 
-**Ce NU colectează** — nu bifa: adresă de email, locație, contacte, mesaje,
-fișiere, informații financiare, date de sănătate. Verificat în cod: în
-Firestore se scriu doar `name`, `photoUrl`, `avatarSeed`, `lastActive`,
-`hasGoogleAccount` și statistici de joc. Email-ul nu se stochează nicăieri.
+⚠️ **Emailul TREBUIE bifat.** E ușor de ratat, pentru că în Firestore nu se
+scrie nicăieri — dar Firebase Authentication îl stochează la conectarea cu
+Google, aplicația îl afișează în Profil, iar `firestore.rules` îl folosește
+ca să recunoască adminul. Google consideră asta colectare de date, iar
+politica ta de confidențialitate o declară deja. Dacă bifezi „nu", intri în
+contradicție cu propria politică — motiv clasic de suspendare.
+
+La „Data usage and handling" pentru email alege: **Colectată**, *nu* trimisă
+terților, **opțională**, scop **Gestionarea contului**. Poate fi ștearsă de
+utilizator (Profil → Șterge contul definitiv).
+
+**Ce NU colectează** — nu bifa: locație, contacte, mesaje, fișiere,
+informații financiare, date de sănătate, istoric de căutare. Verificat în
+cod: în Firestore se scriu doar `name`, `photoUrl`, `avatarSeed`,
+`lastActive`, `hasGoogleAccount` și statistici de joc.
 
 **Datele sunt criptate în tranzit?** Da (Firebase folosește HTTPS peste tot).
 

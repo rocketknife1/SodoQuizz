@@ -7,10 +7,27 @@ service cloud.firestore {
     match /users/{uid} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
 
-      // Adminul poate STERGE salvarea din cloud a oricui (actiunea "Sterge
-      // complet" din AdminScreen, vezi PlayerProfileService.purgePlayer), dar
-      // NU o poate citi — continutul ramane privat, cum a fost mereu.
-      allow delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      // Adminul poate CITI si STERGE salvarea din cloud a oricui.
+      //
+      // Stergerea e ceruta de actiunea "Sterge complet" din AdminScreen (vezi
+      // PlayerProfileService.purgePlayer). Citirea a fost adaugata deliberat
+      // pe 3 august 2026, ca ecranul de detaliu al unui jucator sa poata
+      // arata balanta reala (monede/gems/inimi/hints) si nivelul — fara ea,
+      // un "mi-au disparut monedele" sau o suspiciune de trisare nu se pot
+      // verifica in niciun fel.
+      //
+      // Ce contine documentul, ca decizia sa fie judecabila: doar progres de
+      // joc si setari (coins, gems, hints_balance, lives, xp, high_score,
+      // streak, quests, music_enabled, display_name). Fara email, fara
+      // locatie, fara mesaje. Emailul exista doar in Firebase Auth.
+      //
+      // ATENTIE la lucrul care NU se schimba: ceilalti jucatori tot NU pot
+      // citi documentul. Se largeste strict pentru un singur email, care are
+      // deja drept de ban/stergere/grant peste tot in fisierul asta.
+      //
+      // Alternativa respinsa: oglindirea balantei in player_profiles ar fi
+      // facut-o vizibila TUTUROR jucatorilor, deci strict mai rau.
+      allow read, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
     // Meciuri multiplayer — orice cont autentificat (inclusiv anonim,
@@ -120,6 +137,35 @@ service cloud.firestore {
     match /completed_matches/{matchId} {
       allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
       allow write: if request.auth != null;
+    }
+
+    // Jurnalul camerelor terminate, cu tabloul complet al mesei (cine a jucat,
+    // cu ce a intrat, cu ce a iesit) — vezi MultiplayerActivityService.
+    // Se autodistruge dupa 10 minute; `completed_matches` de mai sus ramane
+    // definitiv, fiindca el e sursa pentru "cate meciuri s-au jucat".
+    match /multiplayer_activity/{matchId} {
+      // Citirea (deci si listarea) e strict a adminului: documentul contine
+      // cati bani a pus si a luat fiecare. Participantii vad oricum datele
+      // astea in timpul meciului, dar nu au de ce sa vada mesele altora.
+      allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+
+      // Scrierea: orice jucator autentificat, la finalul propriului meci.
+      // Id-ul documentului = matchId, deci scrierile tuturor jucatorilor de
+      // la aceeasi masa converg in acelasi document (merge:true).
+      // ATENTIE: "create, update", NU "write" — in Firestore `write` include
+      // si delete, iar asta ar fi permis oricui sa stearga orice camera.
+      allow create, update: if request.auth != null;
+
+      // Stergere: fie adminul (matura din tab-ul Camere ce a ramas de la
+      // jucatori care n-au mai deschis aplicatia), fie ORICINE, dar numai
+      // dupa ce a trecut termenul — asa isi poate curata fiecare client
+      // camerele proprii, tintit dupa id, fara sa aiba drept de citire
+      // (vezi MultiplayerActivityService.sweepMine). Conditia pe expiresAt e
+      // verificata pe server, deci o camera inca activa nu poate fi stearsa
+      // de nimeni, oricat ar incerca un client modificat.
+      allow delete: if request.auth != null
+        && (request.auth.token.email == 'dragosssx@gmail.com'
+            || (resource.data.expiresAt is timestamp && request.time > resource.data.expiresAt));
     }
 
     // Conturi banate de admin (vezi PlayerProfileService.banPlayer) — un doc
