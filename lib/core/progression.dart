@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 /// Formula de nivel/XP: curbă mixtă pătratică+cubică, deliberat mai severă
@@ -171,10 +173,10 @@ class Quest {
   final int target;
   final String metricKey;
   final QuestTier tier;
-  final int coinReward;
-  final int xpReward;
-  final int heartReward;
-  final int hintReward;
+  final int _baseCoinReward;
+  final int _baseXpReward;
+  final int _baseHeartReward;
+  final int _baseHintReward;
   final IconData icon;
 
   const Quest({
@@ -183,34 +185,73 @@ class Quest {
     required this.target,
     required this.tier,
     String? metricKey,
-    this.coinReward = 0,
-    this.xpReward = 0,
-    this.heartReward = 0,
-    this.hintReward = 0,
+    int coinReward = 0,
+    int xpReward = 0,
+    int heartReward = 0,
+    int hintReward = 0,
     required this.icon,
-  }) : metricKey = metricKey ?? id;
+  })  : metricKey = metricKey ?? id,
+        _baseCoinReward = coinReward,
+        _baseXpReward = xpReward,
+        _baseHeartReward = heartReward,
+        _baseHintReward = hintReward;
 
-  /// Gems acordate de acest quest, dedus din dificultate — vezi comentariul
-  /// clasei. Cantitatea EFECTIV primită poate fi mai mică (0) dacă s-a atins
-  /// deja [dailyQuestGemCap] azi, vezi StorageService.grantQuestGems.
+  // Valorile scrise în catalog sunt cele de BAZĂ, calibrate pe vremea când
+  // toate cele 71 de quest-uri erau active simultan. De când e rotație
+  // zilnică (vezi [todaysQuests] — ~10 quest-uri pe zi), fiecare quest
+  // rămas trebuie să plătească proporțional mai mult, altfel venitul zilnic
+  // din quest-uri s-ar prăbuși de ~7 ori. Multiplicatorii se aplică AICI, o
+  // singură dată, ca să nu trebuiască rescrise 71 de intrări la fiecare
+  // recalibrare.
+
+  int get coinReward => (_baseCoinReward * questCoinRewardMultiplier).round();
+  int get xpReward => (_baseXpReward * questXpRewardMultiplier).round();
+  int get heartReward => (_baseHeartReward * questHeartRewardMultiplier).round();
+  int get hintReward => (_baseHintReward * questHintRewardMultiplier).round();
+
+  /// Gems acordate de acest quest, dedus din dificultate. Ținta e explicită:
+  /// o SĂPTĂMÂNĂ de joc, cu puțină străduință și puțin noroc, să adune cât
+  /// costă deblocarea unei categorii noi (34 gems, vezi
+  /// [questionUnlockGemsPrice]) — nu o categorie pe zi.
+  ///
+  /// De-aia quest-urile ușoare nu mai dau gems deloc: o săptămână întreagă
+  /// înseamnă 27 de quest-uri medii (1 gem) + 16 grele (2 gems) = maximum 59
+  /// dacă le termini absolut pe toate, ceea ce nu se întâmplă — un jucător
+  /// realist ajunge pe la 30-40, adică fix o categorie pe săptămână.
+  ///
+  /// Cantitatea EFECTIV primită poate fi mai mică (0) dacă s-a atins deja
+  /// [dailyQuestGemCap] azi, vezi StorageService.grantQuestGems.
   int get gemReward => switch (tier) {
-        QuestTier.easy => 1,
-        QuestTier.medium => 2,
-        QuestTier.hard => 4,
+        QuestTier.easy => 0,
+        QuestTier.medium => 1,
+        QuestTier.hard => 2,
       };
 }
 
+/// Multiplicatorii de recompensă aplicați peste valorile din catalog (vezi
+/// comentariul din [Quest]). Monedele/XP-ul cresc de 3×, fiindcă numărul de
+/// quest-uri revendicabile pe zi a scăzut de la ~30 (dintr-un pool de 71,
+/// toate active) la ~10. Hint-urile cresc mai puțin (plafon de stoc la 26,
+/// vezi StorageService) și vieţile cel mai puțin — sunt resursa care
+/// controlează cât poți juca, deci cea mai sensibilă la inflație.
+const double questCoinRewardMultiplier = 3.0;
+const double questXpRewardMultiplier = 3.0;
+const double questHintRewardMultiplier = 1.5;
+const double questHeartRewardMultiplier = 2.0;
+
 /// Câte gems pot veni în total din quest-uri într-o zi calendaristică. Peste
 /// plafon, quest-ul se revendică normal (monede/XP/hints/vieți), doar partea
-/// de gems e 0 — altfel un jucător care termină 30 de quest-uri într-o zi ar
-/// aduna gems mai repede decât poate consuma conținutul deblocat cu ei.
-const int dailyQuestGemCap = 37;
+/// de gems e 0. Cea mai bogată zi din rotație dă 10 gems revendicată integral
+/// (4 medii + 3 grele), deci plafonul de 13 nu retează niciodată un jucător
+/// cinstit — există strict ca "Revendică x2" (care dublează și gems-ul) să nu
+/// poată transforma o săptămână de gems într-una singură.
+const int dailyQuestGemCap = 13;
 
 // ─── Catalogul de quest-uri (71 în total) ──────────────────────────────────
 // Împărțit pe 3 nivele de dificultate ([QuestTier], care determină și gems-ul
-// acordat). TOATE sunt afișate/active în fiecare zi (vezi [todaysQuests],
-// fără rotație, la cerere explicită) — progresul fiecăruia se resetează
-// totuși zilnic.
+// acordat). NU toate sunt active în aceeași zi: [todaysQuests] le împarte
+// într-o rotație săptămânală de ~10 pe zi. Progresul fiecăruia se resetează
+// oricum zilnic.
 
 const List<Quest> _easyQuests = [
   Quest(
@@ -940,10 +981,70 @@ const List<Quest> allQuests = [
 
 Quest questById(String id) => allQuests.firstWhere((q) => q.id == id);
 
-/// Quest-urile active AZI — la cerere explicită, TOATE, fără rotație/subset
-/// zilnic. Progresul fiecăruia tot se resetează zilnic (chei de storage
-/// scoped pe dată) — doar setul AFIȘAT nu mai variază de la o zi la alta.
-List<Quest> todaysQuests([DateTime? now]) => allQuests;
+// ─── Rotația săptămânală de quest-uri ──────────────────────────────────────
+// Cerința: nu toate cele 71 de quest-uri deodată, ci ~10 pe zi, DIFERITE de
+// la o zi la alta și fără repetare în cadrul aceleiași săptămâni — iar când
+// vine iar lunea, revine exact setul de luni.
+//
+// De-aia catalogul e împărțit O SINGURĂ DATĂ în [questRotationDays] grupe
+// disjuncte, iar ziua săptămânii ([DateTime.weekday]) alege grupa. Partiția
+// NU depinde de dată (sămânță fixă, vezi [_questRotationSeed]) — dacă ar
+// depinde, "lunea viitoare" ar aduce alt set, nu același.
+//
+// Cele 71 nu se împart perfect la 7: grupele au 9-11 quest-uri (media 10,1),
+// iar fiecare grupă primește din toate cele trei dificultăți, fiindcă
+// împărțirea se face separat pe fiecare tier, cu decalaje diferite de
+// pornire (0/3/5) ca resturile să nu cadă mereu în aceleași zile.
+
+const int questRotationDays = 7;
+
+/// Sămânță FIXĂ pentru amestecarea catalogului înainte de împărțire —
+/// schimbarea ei rearanjează complet ce quest-uri pică în ce zi.
+const int _questRotationSeed = 20260803;
+
+List<List<Quest>>? _rotationCache;
+
+/// Împarte un tier în grupele zilnice, dealuind familie cu familie (toate
+/// variantele care împart același [Quest.metricKey], ex. answer_3/answer_5/
+/// answer_10). Membrii unei familii pică pe zile CONSECUTIVE, deci — cât timp
+/// o familie are cel mult [questRotationDays] variante într-un tier — nicio
+/// zi nu primește două quest-uri care se completează din același contor.
+void _dealTier(List<List<Quest>> days, List<Quest> pool, int startDay) {
+  final families = <String, List<Quest>>{};
+  for (final q in pool) {
+    families.putIfAbsent(q.metricKey, () => <Quest>[]).add(q);
+  }
+  final keys = families.keys.toList()
+    ..sort()
+    ..shuffle(Random(_questRotationSeed + startDay));
+  var slot = startDay;
+  for (final key in keys) {
+    for (final quest in families[key]!) {
+      days[slot % questRotationDays].add(quest);
+      slot++;
+    }
+  }
+}
+
+List<List<Quest>> _questRotation() {
+  final cached = _rotationCache;
+  if (cached != null) return cached;
+  final days = List.generate(questRotationDays, (_) => <Quest>[]);
+  _dealTier(days, _easyQuests, 0);
+  _dealTier(days, _mediumQuests, 3);
+  _dealTier(days, _hardQuests, 5);
+  for (final day in days) {
+    // ușoare întâi, grele la final — lista de pe ecran urcă în dificultate.
+    day.sort((a, b) => a.tier.index.compareTo(b.tier.index));
+  }
+  return _rotationCache = days;
+}
+
+/// Quest-urile active AZI — grupa zilei curente din rotația săptămânală (vezi
+/// mai sus). Progresul fiecăruia se resetează oricum zilnic (chei de storage
+/// scoped pe dată).
+List<Quest> todaysQuests([DateTime? now]) =>
+    _questRotation()[((now ?? DateTime.now()).weekday - 1) % questRotationDays];
 
 /// O realizare permanentă: spre deosebire de [Quest] (zilnic, se resetează),
 /// progresul unei realizări e cumulativ pe viață — o dată revendicată,

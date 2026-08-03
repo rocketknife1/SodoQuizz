@@ -137,6 +137,7 @@ class AuthService {
       final credential = auth.credential;
       final account = auth.account;
       final anonymous = FirebaseAuth.instance.currentUser;
+      var linked = false;
       if (anonymous != null && anonymous.isAnonymous) {
         // LEAGĂ contul Google de identitatea anonimă curentă (păstrează
         // ACELAȘI uid) în loc de signInWithCredential direct, care ar crea
@@ -150,6 +151,7 @@ class AuthService {
         // care să contopească două conturi deja separate).
         try {
           await anonymous.linkWithCredential(credential);
+          linked = true;
         } on FirebaseAuthException catch (e) {
           if (e.code != 'credential-already-in-use' && e.code != 'email-already-in-use') rethrow;
           await FirebaseAuth.instance.signInWithCredential(credential);
@@ -165,7 +167,19 @@ class AuthService {
         photoURL: photoUrl,
       );
       await FirebaseAuth.instance.currentUser?.reload();
-      await CloudSyncService.instance.pullOrSeed();
+      // Legarea (link) păstrează ACELAȘI uid, deci singurul cloud-save de sub
+      // el e chiar cel urcat de telefonul ăsta cât era Guest — și poate fi mai
+      // vechi decât ce are pe telefon acum (urcarea se face când aplicația
+      // trece în fundal, vezi CloudSyncService.push). Un pullOrSeed aici ar
+      // aplica regula "cloud-ul câștigă" peste propriul progres proaspăt și ar
+      // da jucătorul cu o sesiune înapoi chiar în momentul în care se
+      // conectează. Deci: la legare urcăm noi, la logarea într-un cont Google
+      // care exista deja în altă parte rămâne cum a fost, cloud-ul câștigă.
+      if (linked) {
+        await CloudSyncService.instance.push();
+      } else {
+        await CloudSyncService.instance.pullOrSeed();
+      }
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return; // userul a renuntat, nu e o eroare
       debugPrint('AuthService.signInWithGoogle a esuat: $e');

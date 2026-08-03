@@ -10,9 +10,9 @@ import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
 import '../widgets/level_header.dart';
 
-/// Quest-uri zilnice — toate cele 70, mereu active (vezi [todaysQuests]).
-/// Progresul se resetează automat la miezul nopții (stocat sub o cheie care
-/// include data curentă).
+/// Quest-uri zilnice — ~10 pe zi, dintr-o rotație săptămânală peste tot
+/// catalogul (vezi [todaysQuests]). Progresul se resetează automat la miezul
+/// nopții (stocat sub o cheie care include data curentă).
 class QuestsScreen extends StatefulWidget {
   const QuestsScreen({super.key});
 
@@ -362,7 +362,8 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Se resetează în fiecare zi la miezul nopții — toate cele ${allQuests.length} de quest-uri sunt active.',
+                        'Azi ai ${todaysQuests().length} quest-uri din cele ${allQuests.length}. '
+                        'La miezul nopții primești un set complet nou — aceleași revin abia peste o săptămână.',
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                       // fiecare quest dă acum gems (1/2/4 după dificultate),

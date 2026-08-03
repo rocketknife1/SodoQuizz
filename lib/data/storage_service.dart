@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/progression.dart';
 import 'shop.dart';
@@ -79,6 +80,15 @@ class StorageService {
   static const leaderboardPeriodHours = 48;
   static const _starterCategoriesKey = 'starter_unlocked_categories';
   static const _firstMultiplayerWinKey = 'first_mp_win_date';
+  static const _activityEventsKey = 'activity_events';
+  static const _cloudPushSnapshotKey = 'cloud_push_snapshot';
+
+  /// Chei pur locale, care NU pleacă niciodată în cloud (vezi [exportAll]).
+  /// [_cloudPushSnapshotKey] e amprenta ultimei urcări, deci e derivată din
+  /// export: dacă ar face parte din el, s-ar auto-invalida la fiecare urcare
+  /// (amprenta nouă schimbă exportul, care cere altă urcare, la nesfârșit) —
+  /// exact optimizarea pe care o servește ar deveni imposibilă.
+  static const _localOnlyKeys = <String>[_cloudPushSnapshotKey];
 
   /// Câte categorii sunt deblocate gratuit, random, la prima intrare în joc
   /// (vezi [getStarterCategories]) — restul pornesc complet blocate (tier 0).
@@ -203,6 +213,30 @@ class StorageService {
     return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
   }
 
+  // ─── Semne de activitate ─────────────────────────────────────────────────
+  // Un contor local care crește la fiecare gest ce dovedește că cineva chiar
+  // a deschis jocul și a făcut ceva: o rotire de roată sau orice mișcare de
+  // balanță (monede/gems, în plus sau în minus). Urcă în profilul public la
+  // fiecare heartbeat (vezi PlayerProfileService.ensureProfileHeartbeat),
+  // fiindcă ștergerea automată a conturilor Guest abandonate se decide pe
+  // server, din firestore.rules — iar acolo se poate citi DOAR profilul
+  // public, nu și salvarea privată din cloud.
+  //
+  // Vieţile și hint-urile NU intră aici, deliberat: vieţile se reîncarcă
+  // singure în timp (vezi [_rechargeLives]), deci ar marca drept "activ" un
+  // cont pe care nu l-a atins nimeni.
+
+  static Future<int> getActivityEvents() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_activityEventsKey) ?? 0;
+  }
+
+  /// Primește [prefs] deja deschis, ca apelanții (care tocmai au scris o
+  /// balanță) să nu mai ceară încă o instanță.
+  static Future<void> _recordActivity(SharedPreferences prefs) async {
+    await prefs.setInt(_activityEventsKey, (prefs.getInt(_activityEventsKey) ?? 0) + 1);
+  }
+
   // ─── Monede ──────────────────────────────────────────────────────────────
 
   static Future<int> getCoins() async {
@@ -210,10 +244,16 @@ class StorageService {
     return prefs.getInt(_coinsKey) ?? _startingCoins;
   }
 
+  /// Zero e un caz real, nu o greșeală de apelant — o rundă terminată fără
+  /// niciun răspuns corect, un pot de multiplayer pierdut. Se iese devreme ca
+  /// să nu treacă drept mișcare de balanță (vezi [_recordActivity]) și ca să
+  /// nu se scrie degeaba aceeași valoare înapoi.
   static Future<void> addCoins(int amount) async {
+    if (amount == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_coinsKey) ?? _startingCoins;
     await prefs.setInt(_coinsKey, current + amount);
+    await _recordActivity(prefs);
   }
 
   static Future<bool> spendCoins(int amount) async {
@@ -221,6 +261,7 @@ class StorageService {
     final current = prefs.getInt(_coinsKey) ?? _startingCoins;
     if (current < amount) return false;
     await prefs.setInt(_coinsKey, current - amount);
+    await _recordActivity(prefs);
     return true;
   }
 
@@ -228,11 +269,15 @@ class StorageService {
   /// deosebire de [addCoins]/[spendCoins], care presupun un sens fix.
   /// Folosit DOAR de CloudSyncService.consumePendingGrant (grant-uri de
   /// admin), unde cantitatea poate fi și o "luare" de monede.
+  /// Numără și ca semn de activitate (vezi [_recordActivity]), deși vine de
+  /// la admin, nu de la jucător — un cont pe care adminul a pus mâna nu
+  /// trebuie măturat automat ca abandonat.
   static Future<void> adjustCoins(int delta) async {
     if (delta == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final updated = (prefs.getInt(_coinsKey) ?? _startingCoins) + delta;
     await prefs.setInt(_coinsKey, updated < 0 ? 0 : updated);
+    await _recordActivity(prefs);
   }
 
   // ─── Gems (monedă premium — rară, din achievements/nivel, cheltuită în
@@ -248,6 +293,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
     await prefs.setInt(_gemsKey, current + amount);
+    await _recordActivity(prefs);
   }
 
   static Future<bool> spendGems(int amount) async {
@@ -255,6 +301,7 @@ class StorageService {
     final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
     if (current < amount) return false;
     await prefs.setInt(_gemsKey, current - amount);
+    await _recordActivity(prefs);
     return true;
   }
 
@@ -264,6 +311,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final updated = (prefs.getInt(_gemsKey) ?? starterGemGrant) + delta;
     await prefs.setInt(_gemsKey, updated < 0 ? 0 : updated);
+    await _recordActivity(prefs);
   }
 
   /// Acordă gems dintr-un quest, respectând plafonul zilnic
@@ -487,6 +535,48 @@ class StorageService {
     await prefs.clear();
   }
 
+  /// Cheile care SUPRAVIEȚUIESC unui reset pornit de admin (vezi
+  /// [resetToStartingBalance]) — nu sunt progres, deci n-au ce căuta la zero:
+  /// preferințe (sunet, blur, tutoriale deja văzute), numele afișat (altfel
+  /// jucătorul s-ar trezi redenumit în leaderboard, vezi
+  /// PlayerProfileService.ensureProfileHeartbeat) și marcajul "fără reclame"
+  /// (o dată devenit achiziție cu bani reali — vezi shop.dart — un tap greșit
+  /// din admin n-ar mai fi reparabil).
+  static const _resetPreservedKeys = <String>[
+    _displayNameKey,
+    _musicEnabledKey,
+    _musicVolumeKey,
+    _noBlurKey,
+    _introSeenKey,
+    _multiplayerInfoSeenKey,
+    _noAdsForeverKey,
+  ];
+
+  /// Aduce contul de pe TELEFONUL ACESTA în starea unui jucător nou: tot
+  /// progresul (XP/nivel, întrebări răspunse, quest-uri, realizări, serii,
+  /// highscore-uri, categorii deblocate) dispare, iar balanța revine la
+  /// zestrea de start — [_startingCoins] monede, [_startingLives] vieți,
+  /// [_startingHints] hint-uri, [starterGemGrant] gems.
+  ///
+  /// Nu scrie balanțele explicit, ci ȘTERGE cheile: fiecare getter de mai sus
+  /// cade oricum pe valoarea de start când cheia lipsește, deci așa nu poate
+  /// rămâne un al doilea set de valori "de start" care s-ar desincroniza tăcut
+  /// de cel real la următoarea reglare a economiei.
+  ///
+  /// Apelat de CloudSyncService.consumePendingGrant, când adminul a cerut un
+  /// reset din fișa jucătorului (AdminScreen) — la jucător ajunge cel târziu
+  /// la următoarea deschidere a jocului, ca orice grant de resurse.
+  static Future<void> resetToStartingBalance() async {
+    final prefs = await SharedPreferences.getInstance();
+    final preserved = <String, dynamic>{};
+    for (final key in _resetPreservedKeys) {
+      final value = prefs.get(key);
+      if (value != null) preserved[key] = value;
+    }
+    await prefs.clear();
+    await importAll(preserved);
+  }
+
   // ─── Recompensă zilnică gratuită (vieți) ───────────────────────────────────
 
   static Future<bool> canClaimDailyReward() async {
@@ -547,6 +637,7 @@ class StorageService {
   static Future<void> recordRingSpin() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_ringSpinTimestampKey, DateTime.now().millisecondsSinceEpoch);
+    await _recordActivity(prefs);
   }
 
   // ─── Notificarea lui Clippy (bonus cu 3 întrebări, la fiecare 5 minute) ────
@@ -554,10 +645,26 @@ class StorageService {
   // navigării între tab-uri (Home se recreează la fiecare schimbare de tab
   // din bottom nav) — altfel notificarea se pierdea/reseta la revenirea pe
   // Home, deși încă era valabilă.
+  //
+  // Peste cooldown-ul de 5 minute există și un plafon zilnic DUR de
+  // [clippyDailyPlayLimit] runde (contorul zilnic `clippy_rounds`, incrementat
+  // de ClippyBonusScreen la finalul efectiv al unei runde). Odată consumate
+  // toate, Clippy nu mai e disponibil deloc până după miezul nopții — vezi
+  // [clippyPlaysLeftToday] / [clippyNextDayRemaining], afișate sub mascotă.
 
   static const clippyReadyIntervalSeconds = 5 * 60;
 
+  /// Câte runde mai are jucătorul azi (0..[clippyDailyPlayLimit]).
+  static Future<int> clippyPlaysLeftToday() async {
+    final used = await getDailyCounter('clippy_rounds');
+    final left = clippyDailyPlayLimit - used;
+    return left > 0 ? left : 0;
+  }
+
   static Future<bool> isClippyReady() async {
+    // plafonul zilnic bate cooldown-ul: la 0 runde rămase nu mai contează cât
+    // timp a trecut de la ultima rundă.
+    if (await clippyPlaysLeftToday() <= 0) return false;
     final prefs = await SharedPreferences.getInstance();
     final next = prefs.getInt(_clippyNextReadyKey);
     if (next == null) return true; // prima dată — notificare imediată
@@ -571,6 +678,15 @@ class StorageService {
     if (next == null) return Duration.zero;
     final remaining = next - DateTime.now().millisecondsSinceEpoch;
     return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
+  }
+
+  /// Cât mai e până la miezul nopții — cât timp Clippy stă blocat după ce
+  /// s-au consumat toate rundele zilei (contoarele zilnice sunt scoped pe
+  /// data calendaristică, deci se eliberează exact la 00:00).
+  static Duration clippyNextDayRemaining() {
+    final now = DateTime.now();
+    final midnight = DateTime(now.year, now.month, now.day).add(const Duration(days: 1));
+    return midnight.difference(now);
   }
 
   /// Repornește așteptarea pentru următoarea notificare — apelat DOAR când
@@ -1280,9 +1396,23 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final map = <String, dynamic>{};
     for (final key in prefs.getKeys()) {
+      if (_localOnlyKeys.contains(key)) continue;
       map[key] = prefs.get(key);
     }
     return map;
+  }
+
+  /// Amprenta ultimei urcări reușite în cloud — vezi CloudSyncService.push,
+  /// singurul care o scrie și o citește. Null înseamnă "nu s-a urcat nimic de
+  /// pe telefonul ăsta încă", deci următoarea urcare se face oricum.
+  static Future<String?> getCloudPushSnapshot() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_cloudPushSnapshotKey);
+  }
+
+  static Future<void> setCloudPushSnapshot(String snapshot) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_cloudPushSnapshotKey, snapshot);
   }
 
   static Future<void> importAll(Map<String, dynamic> data) async {

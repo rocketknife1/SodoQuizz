@@ -205,6 +205,11 @@ altă acțiune singulară din joc.
 Plafon: **37 gems/zi** din quest-uri (peste plafon, quest-ul plătește monede/XP/
 hints, dar 0 gems). Hint-urile din quest-uri rămân ca acum.
 
+> **Actualizat în v3.1 (2026-08-03)** — vezi secțiunea 13. Valorile din tabelul
+> de mai sus rămân cele din CATALOG (`lib/core/progression.dart`), dar monedele/
+> XP-ul/hints-urile/viețile sunt multiplicate la acordare, iar gems-ul per tier a
+> SCĂZUT la 0/1/2 (ținta: o categorie nouă pe săptămână, nu pe zi).
+
 ---
 
 ## 6. Sink-uri care scalează cu venitul (PAS 2.6)
@@ -466,3 +471,126 @@ cu noua logică de pariuri — acum descrie formula veche.
 Build + instalare pe telefon cu verificare pe capturi de ecran, apoi actualizare
 GitHub, GitHub Pages (pagina web), Firebase, AdMob, Play Console — vezi
 `LINKS.md` pentru destinațiile reale.
+
+---
+
+## 13. v3.1 — rotație de quest-uri, plafon Clippy, magazin premium ascuns (2026-08-03)
+
+Ajustări cerute pentru lansarea publică, peste economia v3 de mai sus.
+
+### 13.1 Quest-uri: ~10 pe zi, în rotație săptămânală
+
+Înainte: toate cele 71 de quest-uri erau active în fiecare zi — o listă
+copleșitoare, în care nimeni nu le termina oricum pe toate.
+
+Acum catalogul e împărțit o singură dată în **7 grupe disjuncte** (partiție cu
+sămânță fixă, `_questRotationSeed`), iar ziua săptămânii alege grupa. Deci:
+
+- **9-11 quest-uri pe zi** (media 10,1 — cele 71 nu se împart perfect la 7);
+- niciun quest nu se repetă în cadrul aceleiași săptămâni;
+- **lunea revine exact setul de luni**, cum s-a cerut;
+- fiecare zi primește din toate cele trei dificultăți (împărțirea se face
+  separat pe tier, cu decalaje de pornire 0/3/5, ca resturile să nu cadă mereu
+  în aceleași zile);
+- variantele aceleiași familii (`answer_3`/`answer_5`/`answer_10`, care împart
+  un singur contor de progres) pică pe zile consecutive, deci nu se aglomerează
+  în aceeași zi în cadrul unui tier.
+
+Recompensele sunt multiplicate, fiindcă numărul de quest-uri revendicabile a
+scăzut de ~3× față de ce termina realist un jucător activ:
+
+| Resursă | Multiplicator | De ce |
+|---|---|---|
+| Monede | **×3** | păstrează venitul zilnic din quest-uri la nivelul din v3 |
+| XP | **×3** | idem |
+| Hints | **×1,5** | stocul e oricum plafonat la 26 — mai mult s-ar irosi |
+| Vieți | **×2** | resursa care decide cât poți juca, cea mai sensibilă la inflație |
+| Gems | 1/2/4 → **0/1/2** per tier | scad, nu cresc — vezi mai jos |
+
+Multiplicatorii se aplică într-un singur loc (getterii din `Quest`), nu prin
+rescrierea celor 71 de intrări din catalog.
+
+**Gems: ținta e o categorie pe SĂPTĂMÂNĂ, nu pe zi.** v3 făcea fiecare quest să
+dea gems (1/2/4) cu un plafon de 37/zi — adică o categorie nouă (34 gems, vezi
+`questionUnlockGemsPrice(1)`) la fiecare zi de joc, mult prea repede. Acum:
+
+| Tier | Gems |
+|---|---|
+| Ușor | **0** |
+| Mediu | **1** |
+| Greu | **2** |
+
+Pe o săptămână întreagă (27 medii + 16 grele, tot catalogul) maximul teoretic e
+**59 gems**, dar nimeni nu termină chiar toate quest-urile grele (20 de răspunsuri
+corecte, serie de 10, 5 gamemoduri, 500 de monede...). Un jucător realist adună
+**30-40 gems pe săptămână** — adică exact pragul unei categorii noi, cu puțină
+străduință și puțin noroc, cum s-a cerut.
+
+**Plafon gems: 37 → 13/zi.** Cea mai bogată zi din rotație dă 10 gems revendicată
+integral, deci plafonul nu retează niciodată un jucător cinstit — există strict ca
+"Revendică x2" (care dublează și gems-ul) să nu poată comprima o săptămână de gems
+într-o singură zi.
+
+Verificat pe cele 7 zile: **681-876 monede**, **567-780 XP**, **7-10 gems**,
+**22-29 hints** pe zi la revendicare completă (v3 estima ~660 monede pentru ~30
+de quest-uri revendicate). Invariantele sunt prinse în
+`test/quest_rotation_test.dart` și în `test/game_logic_test.dart`.
+
+### 13.2 Clippy: plafon dur de 5 runde pe zi
+
+Înainte: cooldown de 5 minute, fără plafon dur — doar o rată redusă (0,4×)
+după 7 runde. Teoretic 12 runde/oră.
+
+Acum: **5 runde pe zi calendaristică**, tot cu 5 minute de cooldown între ele.
+Contorul se vede permanent sub mascotă, ca pastilă **"N/5"**: pornește la 5/5,
+scade la 4/5 după fiecare rundă terminată, iar la 0/5 eticheta arată "MÂINE" în
+loc de numărătoarea inversă și Clippy nu mai poate fi deschis până după 00:00
+(contoarele zilnice sunt scoped pe dată). Ecranul de final al bonusului spune
+și el explicit câte runde au mai rămas.
+
+Fiindcă plafonul dur (5) e sub pragul de rată plină (acum tot 5), **toate**
+rundele zilei plătesc integral; `clippyReducedMultiplier` rămâne doar plasă de
+siguranță. Venit maxim de la Clippy: ~5×71 = **~355 monede/zi** (față de ~500
+la 7 runde în v3).
+
+Roata norocului rămâne neschimbată: o învârtire la 24h.
+
+### 13.3 Magazinul premium — ascuns până la lansare
+
+Tot ce se plătește cu bani reali (de la "Fără reclame pe veci" în jos: pachete,
+gems, vieți & hints) e afișat **blurat**, complet inert, sub un strat "În
+curând". Motivul e comercial: până la deschiderea magazinului nu vrem ca
+ofertele și prețurile să fie vizibile în capturile de ecran din Google Play.
+
+Secțiunile plătite în monede (Vieți, Hints) rămân neatinse — fac parte din joc,
+nu din magazinul cu bani reali.
+
+Reveal-ul e o singură linie: `premiumShopRevealed = true` în `lib/data/shop.dart`.
+Comutatorul e separat de `realMoneyStoreEnabled` (ăla deblochează plățile
+efective, ăsta doar vizibilitatea).
+
+### 13.4 Home pe 0 vieți — Cultura Generală nu mai intră peste mascote
+
+Cardul roșu cu numărătoarea de reîncărcare (`LivesCountdownCard`, ~62px) împingea
+tot conținutul în jos, iar panoul de Cultură Generală ajungea exact peste Clippy
+și balonul de BETA (ambele plutesc fix, în Stack-ul de deasupra) — variantele de
+răspuns erau acoperite.
+
+Cât timp cardul e pe ecran, logo-ul "GUESS IT!" (92px, pur decorativ) se ascunde.
+Net, conținutul urcă ~30px față de normal: Cultura Generală stă imediat sub
+"fereastra" de vieți și rămâne complet liberă de mascote.
+
+### 13.5 Fișiere atinse în v3.1
+
+| Fișier | Ce s-a schimbat |
+|---|---|
+| `lib/core/progression.dart` | rotația săptămânală, multiplicatorii de recompensă, gems 0/1/2, plafon 13 |
+| `lib/core/game_helpers.dart` | `clippyDailyPlayLimit` |
+| `lib/data/storage_service.dart` | `clippyPlaysLeftToday`, plafonul în `isClippyReady`, `clippyNextDayRemaining` |
+| `lib/widgets/mascots/paperclip_mascot.dart` | pastila "N/5", starea "MÂINE" |
+| `lib/screens/clippy_bonus_screen.dart` | runde rămase pe ecranul de final |
+| `lib/screens/quests_screen.dart` | textul explicativ al rotației |
+| `lib/data/shop.dart` | `premiumShopRevealed` |
+| `lib/screens/shop_screen.dart` | `_PremiumVeil` (blur + "În curând") |
+| `lib/screens/home_screen.dart` | logo ascuns pe 0 vieți |
+| `test/quest_rotation_test.dart` *(nou)* | invariantele rotației |

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/betting.dart';
 import 'package:guess_it/core/game_helpers.dart';
 import 'package:guess_it/core/progression.dart';
+import 'package:guess_it/data/shop.dart';
 
 void main() {
   group('costul hint-ului', () {
@@ -80,10 +81,33 @@ void main() {
   });
 
   group('quest-uri', () {
-    test('fiecare quest da gems, in functie de dificultate', () {
+    test('gems doar la quest-urile medii si grele, crescator', () {
+      // Ținta: o săptămână de joc adună cât costă o categorie noua (34 gems),
+      // nu o categorie pe zi — de-aia cele ușoare nu mai dau gems deloc.
       for (final q in allQuests) {
-        expect(q.gemReward, greaterThan(0), reason: q.id);
+        expect(
+          q.gemReward,
+          q.tier == QuestTier.easy ? 0 : greaterThan(0),
+          reason: q.id,
+        );
       }
+      final perTier = {
+        for (final tier in QuestTier.values)
+          tier: allQuests.firstWhere((q) => q.tier == tier).gemReward
+      };
+      expect(perTier[QuestTier.medium], greaterThan(perTier[QuestTier.easy]!));
+      expect(perTier[QuestTier.hard], greaterThan(perTier[QuestTier.medium]!));
+    });
+
+    test('o saptamana de quest-uri ajunge fix pentru o categorie noua', () {
+      // 2026-08-03 e o luni; suma peste toate cele 7 zile din rotație.
+      final weekly = List.generate(7, (i) => DateTime(2026, 8, 3 + i))
+          .expand(todaysQuests)
+          .fold<int>(0, (sum, q) => sum + q.gemReward);
+      // maximul teoretic (absolut TOATE terminate) trebuie să fie peste prețul
+      // unei categorii, dar nu cu mult — altfel s-ar aduna mai repede de-atât.
+      expect(weekly, greaterThan(questionUnlockGemsPrice(1)));
+      expect(weekly, lessThan(questionUnlockGemsPrice(1) * 2));
     });
 
     test('toate metricile de quest sunt distincte de id doar unde trebuie', () {

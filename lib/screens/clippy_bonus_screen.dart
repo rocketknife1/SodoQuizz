@@ -28,8 +28,8 @@ const int clippyPerfectBonusLives = 1;
 /// Regula economică (vezi [clippyRewardMultiplier]): o întrebare de aici
 /// plătește STRICT mai mult decât una din gameplay-ul normal — înainte
 /// plătea 0,85×, adică mai puțin. Rămâne totuși mic în absolut (3 întrebări)
-/// și limitat la [clippyFullRateDailyRounds] runde pe zi la rată plină, ca
-/// să nu poată fi farmat la 12 runde pe oră.
+/// și limitat la [clippyDailyPlayLimit] runde pe zi calendaristică (cu 5
+/// minute de cooldown între ele), ca să nu poată fi farmat la 12 runde pe oră.
 class ClippyBonusScreen extends StatefulWidget {
   const ClippyBonusScreen({super.key});
 
@@ -50,6 +50,11 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
   bool _collecting = false;
   bool _collected = false;
   Timer? _autoCollectTimer;
+
+  /// Câte runde mai are jucătorul azi DUPĂ cea tocmai terminată — afișat pe
+  /// ecranul de final, ca plafonul zilnic să fie explicit exact în momentul
+  /// în care se consumă (contorul de sub mascotă e departe, pe Home).
+  int _playsLeftToday = clippyDailyPlayLimit;
 
   final _coinBadgeKey = GlobalKey();
   final _xpBadgeKey = GlobalKey();
@@ -122,8 +127,10 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
       final roundsToday = await StorageService.getDailyCounter('clippy_rounds');
       final withinDailyCap = roundsToday < clippyFullRateDailyRounds;
       await StorageService.incrementDailyCounter('clippy_rounds');
+      final playsLeft = await StorageService.clippyPlaysLeftToday();
       if (!mounted) return;
       setState(() {
+        _playsLeftToday = playsLeft;
         if (perfect) _livesEarned = clippyPerfectBonusLives;
         if (withinDailyCap && correctCount > 0) {
           _coinsEarned += clippyCompletionCoins;
@@ -313,7 +320,27 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: (_playsLeftToday > 0 ? AppColors.hint : Colors.white).withAlpha(24),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: (_playsLeftToday > 0 ? AppColors.hint : Colors.white).withAlpha(90)),
+            ),
+            child: Text(
+              _playsLeftToday > 0
+                  ? 'Îți mai rămân $_playsLeftToday/$clippyDailyPlayLimit runde azi'
+                  : 'Ai folosit toate cele $clippyDailyPlayLimit runde de azi — '
+                      'revin în ${_untilTomorrow()}',
+              style: TextStyle(
+                color: _playsLeftToday > 0 ? AppColors.hint : Colors.white54,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -345,6 +372,15 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
         ],
       ),
     );
+  }
+
+  /// "4h 12m" / "12m" — cât mai e până la 00:00, când se eliberează rundele.
+  /// Mai util decât un simplu "mâine": la 23:50 diferența e reală.
+  static String _untilTomorrow() {
+    final left = StorageService.clippyNextDayRemaining();
+    final hours = left.inHours;
+    final minutes = left.inMinutes % 60;
+    return hours > 0 ? '${hours}h ${minutes}m' : '${minutes}m';
   }
 
   Widget _miniBadge(GlobalKey key, IconData icon, Color color) {

@@ -343,7 +343,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Text('Guest', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
                       const Text(
-                        'Progresul e salvat doar pe acest telefon. Conectează-te cu Google ca să nu-l pierzi la reinstalare.',
+                        'Progresul e legat de această instalare. Conectează-te cu Google ca să nu-l pierzi la reinstalare sau la schimbarea telefonului.',
                         style: TextStyle(color: Colors.white54, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),

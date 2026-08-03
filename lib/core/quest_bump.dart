@@ -9,8 +9,8 @@ import '../widgets/in_app_notification.dart';
 /// Adaugă progres la un quest zilnic, identificat prin [metricKey] (nu prin
 /// id — mai multe variante de dificultate ale aceleiași acțiuni, ex.
 /// correct_5/10/15, împart același contor de progres, vezi
-/// [Quest.metricKey]). Dacă vreunul dintre quest-urile active (vezi
-/// [todaysQuests] — toate cele 70) care folosesc acest metric tocmai și-a
+/// [Quest.metricKey]). Dacă vreunul dintre quest-urile active AZI (vezi
+/// [todaysQuests] — grupa zilei din rotația săptămânală) care folosesc acest metric tocmai și-a
 /// atins ținta, arată o notificare in-app. Un singur bump poate completa
 /// mai multe quest-uri deodată (ex: un salt mare de monede poate trece
 /// simultan pragul unui quest ușor și al unuia mediu din aceeași familie).

@@ -1,0 +1,140 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:guess_it/data/shop.dart' show starterGemGrant;
+import 'package:guess_it/data/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Cele două bucăți de logică pur locală din resetul de cont pornit de admin
+/// (AdminScreen → PlayerProfileService.resetPlayer → cutia poștală →
+/// CloudSyncService.consumePendingGrant). Se testează aici fiindcă amândouă
+/// greșesc tăcut și scump:
+///  - o cheie uitată din lista de păstrate la reset ar șterge o achiziție
+///    ("fără reclame") sau ar redenumi jucătorul, la un singur tap din admin;
+///  - un contor de activitate care nu crește trimite la ștergerea automată
+///    conturi Guest ale unor jucători reali (vezi
+///    PlayerProfileService.guestSweepInactivity).
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('resetToStartingBalance', () {
+    test('aduce balanța și progresul la zestrea de start', () async {
+      SharedPreferences.setMockInitialValues({
+        'coins': 9999,
+        'gems': 400,
+        'lives': 1,
+        'hints_balance': 0,
+        'xp': 250000,
+        'high_score': 88,
+        'streak_count': 42,
+        'answered_ids': <String>['q1', 'q2'],
+      });
+
+      await StorageService.resetToStartingBalance();
+
+      expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);
+      expect(await StorageService.getGems(), starterGemGrant);
+      expect(await StorageService.getLives(), StorageService.startingLivesDefault);
+      expect(await StorageService.getHints(), StorageService.startingHintsDefault);
+      expect(await StorageService.getXp(), 0);
+      expect(await StorageService.getHighScore(), 0);
+      expect(await StorageService.getStreak(), 0);
+      expect(await StorageService.getAnsweredIds(), isEmpty);
+      expect(await StorageService.getActivityEvents(), 0);
+    });
+
+    test('păstrează numele, setările și achiziția "fără reclame"', () async {
+      SharedPreferences.setMockInitialValues({
+        'display_name': 'Dragos',
+        'music_enabled': false,
+        'music_volume': 0.3,
+        'no_blur_mode': true,
+        'intro_tutorial_seen': true,
+        'multiplayer_info_seen': true,
+        'no_ads_forever': true,
+        'coins': 9999,
+      });
+
+      await StorageService.resetToStartingBalance();
+
+      expect(await StorageService.getDisplayName(), 'Dragos');
+      expect(await StorageService.getMusicEnabled(), false);
+      expect(await StorageService.getMusicVolume(), 0.3);
+      expect(await StorageService.getNoBlurMode(), true);
+      expect(await StorageService.getIntroSeen(), true);
+      expect(await StorageService.getMultiplayerInfoSeen(), true);
+      expect(await StorageService.getNoAdsForever(), true);
+      expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);
+    });
+  });
+
+  group('semne de activitate', () {
+    test('un cont abia instalat e la zero', () async {
+      SharedPreferences.setMockInitialValues({});
+      expect(await StorageService.getActivityEvents(), 0);
+    });
+
+    test('roata și mișcările de balanță contează', () async {
+      SharedPreferences.setMockInitialValues({});
+
+      await StorageService.recordRingSpin();
+      expect(await StorageService.getActivityEvents(), 1);
+
+      await StorageService.addCoins(10);
+      await StorageService.spendCoins(5);
+      await StorageService.addGems(1);
+      await StorageService.spendGems(1);
+      expect(await StorageService.getActivityEvents(), 5);
+    });
+
+    test('o cheltuială respinsă nu trece drept activitate', () async {
+      SharedPreferences.setMockInitialValues({'coins': 0, 'gems': 0});
+
+      expect(await StorageService.spendCoins(50), false);
+      expect(await StorageService.spendGems(3), false);
+      expect(await StorageService.getActivityEvents(), 0);
+    });
+
+    test('o recompensă de zero monede nu trece drept activitate', () async {
+      // Rundă terminată fără niciun răspuns corect — se întâmplă des.
+      SharedPreferences.setMockInitialValues({});
+
+      await StorageService.addCoins(0);
+      await StorageService.addGems(0);
+      expect(await StorageService.getActivityEvents(), 0);
+      expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);
+    });
+
+    test('amprenta ultimei urcări în cloud nu pleacă ea însăși în cloud', () async {
+      // Dacă ar face parte din export, s-ar auto-invalida la fiecare urcare și
+      // optimizarea "sari peste urcare dacă nimic nu s-a schimbat" (vezi
+      // CloudSyncService.push) n-ar sări niciodată nimic.
+      SharedPreferences.setMockInitialValues({'coins': 500});
+      await StorageService.setCloudPushSnapshot('amprenta');
+
+      final exported = await StorageService.exportAll();
+      expect(exported.containsKey('cloud_push_snapshot'), false);
+      expect(exported['coins'], 500);
+      expect(await StorageService.getCloudPushSnapshot(), 'amprenta');
+    });
+
+    test('resetul șterge amprenta, ca noua stare să se urce sigur', () async {
+      SharedPreferences.setMockInitialValues({'coins': 9999});
+      await StorageService.setCloudPushSnapshot('amprenta veche');
+
+      await StorageService.resetToStartingBalance();
+
+      expect(await StorageService.getCloudPushSnapshot(), isNull);
+    });
+
+    test('doar deschiderea jocului nu contează ca activitate', () async {
+      // Vieţile se reîncarcă singure, în timp — dacă ar fi numărate, orice
+      // cont pornit și lăsat în pace ar părea activ și n-ar mai fi măturat
+      // niciodată. La fel, simpla citire a balanței nu schimbă nimic.
+      SharedPreferences.setMockInitialValues({});
+
+      await StorageService.getLives();
+      await StorageService.getCoins();
+      await StorageService.getHints();
+      expect(await StorageService.getActivityEvents(), 0);
+    });
+  });
+}

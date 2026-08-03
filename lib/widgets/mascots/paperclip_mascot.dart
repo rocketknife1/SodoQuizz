@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
+import '../../core/game_helpers.dart';
 import '../../core/theme.dart';
 import '../../data/storage_service.dart';
 import '../../screens/clippy_bonus_screen.dart';
@@ -36,6 +37,11 @@ const _localGestures = [
 /// amuzantă — timpul rămas se vede oricum permanent sub mascotă (vezi
 /// [_buildLabel], aceeași convenție ca la RingMascot / Roata norocului).
 ///
+/// Peste cooldown-ul de 5 minute există un plafon zilnic dur de
+/// [clippyDailyPlayLimit] runde: contorul "N/5" de sub mascotă scade cu
+/// fiecare rundă terminată, iar la 0 Clippy tace până după miezul nopții
+/// (eticheta arată "MÂINE" în loc de numărătoare).
+///
 /// Disponibilitatea e persistată (vezi [StorageService.isClippyReady]), nu
 /// ținută doar în memoria widget-ului — altfel se pierdea la orice
 /// recreare a lui Home (ex: schimbarea unui tab din bottom nav).
@@ -56,6 +62,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   bool _excited = false;
   bool _questionReady = false;
   bool _checked = false;
+  int _playsLeft = clippyDailyPlayLimit;
   _Gesture? _currentGesture;
   String? _speechText;
   Timer? _gestureTimer;
@@ -95,14 +102,19 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   /// [_buildLabel]) — la fel ca [RingMascot], nu mai depinde de un tap ca
   /// să afle cât a mai rămas, se vede tot timpul.
   Future<void> _refreshReady() async {
+    final playsLeft = await StorageService.clippyPlaysLeftToday();
     final ready = await StorageService.isClippyReady();
     if (!mounted) return;
     setState(() {
       _questionReady = ready;
+      _playsLeft = playsLeft;
       _checked = true;
     });
     _countdownTicker?.cancel();
-    if (ready) {
+    // fără runde rămase, nu are ce număra: contorul de 5 minute ar ajunge la
+    // 00:00 și ar rămâne blocat acolo, deși Clippy tot nu poate fi jucat.
+    // Eticheta arată în schimb explicit că revine mâine (vezi [_buildLabel]).
+    if (ready || playsLeft <= 0) {
       setState(() => _remaining = null);
       return;
     }
@@ -229,26 +241,65 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
     );
   }
 
-  /// Eticheta permanentă de sub mascotă — numele + numărătoarea inversă cât
-  /// timp bonusul nu e disponibil, sau doar numele (fără timer) când e gata.
-  /// Aceeași convenție ca [RingMascot._buildLabel].
+  /// Eticheta permanentă de sub mascotă — numele, contorul de runde rămase
+  /// azi ([_playsLeft]/[clippyDailyPlayLimit]) și, dedesubt, numărătoarea
+  /// inversă a cooldown-ului de 5 minute (sau "MÂINE", când s-au consumat
+  /// toate rundele zilei). Aceeași convenție ca [RingMascot._buildLabel].
   Widget _buildLabel() {
     const labelStyle = TextStyle(color: Colors.white54, fontSize: 7.5, fontWeight: FontWeight.w700, letterSpacing: 0.3);
-    if (_questionReady) {
-      return const Text('CLIPPY', style: TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
-    }
     if (!_checked) {
       return const Text('CLIPPY', style: labelStyle);
     }
+    final exhausted = _playsLeft <= 0;
     final r = _remaining ?? Duration.zero;
     final m = r.inMinutes.toString().padLeft(2, '0');
     final s = (r.inSeconds % 60).toString().padLeft(2, '0');
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('CLIPPY', style: labelStyle),
-        Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800)),
+        Text(
+          'CLIPPY',
+          style: _questionReady
+              ? const TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)
+              : labelStyle,
+        ),
+        const SizedBox(height: 2),
+        _buildPlaysPill(exhausted),
+        if (!_questionReady && !exhausted) ...[
+          const SizedBox(height: 1),
+          Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800)),
+        ],
+        if (exhausted) ...[
+          const SizedBox(height: 1),
+          const Text('MÂINE', style: TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+        ],
       ],
+    );
+  }
+
+  /// Pastila "4/5" — câte runde de bonus mai are jucătorul azi. Se vede
+  /// permanent (nu doar când e gata), ca să fie clar din prima că resursa e
+  /// limitată pe zi, nu doar temporizată.
+  Widget _buildPlaysPill(bool exhausted) {
+    final color = exhausted ? Colors.white38 : AppColors.hint;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(exhausted ? 18 : 34),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: color.withAlpha(exhausted ? 60 : 130)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome_rounded, size: 8, color: color),
+          const SizedBox(width: 3),
+          Text(
+            '$_playsLeft/$clippyDailyPlayLimit',
+            style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
     );
   }
 

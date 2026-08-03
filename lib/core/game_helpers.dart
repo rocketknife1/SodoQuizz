@@ -95,12 +95,23 @@ const int cultureReducedXpPerCorrect = 3;
 // Regula cerută explicit: o întrebare de la Clippy trebuie să plătească
 // STRICT mai mult decât una din gameplay-ul normal (înainte plătea 0,85×,
 // adică mai puțin). Rămâne totuși mic în valoare absolută — o rundă are doar
-// 3 întrebări — și e limitat la [clippyFullRateDailyRounds] runde pe zi la
-// rată plină, ca să nu poată fi farmat la 12 runde pe oră.
+// 3 întrebări.
+//
+// Anti-farm-ul nu mai e o rată redusă după N runde, ci un plafon DUR:
+// [clippyDailyPlayLimit] runde pe zi calendaristică, cu 5 minute de cooldown
+// între ele (vezi StorageService.isClippyReady). Odată consumate, Clippy
+// tace până după miezul nopții. Fiindcă plafonul dur (5) e sub pragul de
+// rată plină ([clippyFullRateDailyRounds]), toate rundele zilei plătesc
+// integral, iar [clippyReducedMultiplier] rămâne doar o plasă de siguranță.
 
 const double clippyRewardMultiplier = 1.35;
 const double clippyReducedMultiplier = 0.4;
-const int clippyFullRateDailyRounds = 7;
+
+/// Câte runde de bonus Clippy se pot juca într-o zi calendaristică — se
+/// resetează la 00:00, nu la 24h de la prima rundă.
+const int clippyDailyPlayLimit = 5;
+
+const int clippyFullRateDailyRounds = clippyDailyPlayLimit;
 const int clippyCompletionCoins = 23;
 
 // ─── Higher or Lower (solo) ────────────────────────────────────────────────

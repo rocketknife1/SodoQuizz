@@ -98,6 +98,18 @@ class GemPack {
 /// cu integrarea reală Google Play Billing.
 const bool realMoneyStoreEnabled = false;
 
+/// Al doilea comutator, pur VIZUAL: cât timp e `false`, toată zona premium
+/// (de la "Fără reclame pe veci" în jos — pachete, gems, vieți & hints cu
+/// bani reali) e afișată blurată și complet inertă, cu un strat "În curând"
+/// peste ea. Motivul e comercial, nu tehnic: până la lansarea magazinului nu
+/// vrem ca prețurile și conținutul ofertelor să fie vizibile în capturile de
+/// ecran din Google Play. Secțiunile care se plătesc în monede (Vieți, Hints)
+/// rămân neatinse — ele fac parte din joc, nu din magazinul cu bani reali.
+///
+/// Reveal-ul e o singură linie: `true` aici. [realMoneyStoreEnabled] rămâne
+/// separat — ăla deblochează plățile efective, ăsta doar vizibilitatea.
+const bool premiumShopRevealed = false;
+
 /// Formatare unitară a prețului, cu virgulă zecimală (convenția din România).
 String formatRon(double price) => '${price.toStringAsFixed(2).replaceAll('.', ',')} lei';
 

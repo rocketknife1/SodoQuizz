@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/quest_bump.dart';
@@ -465,80 +467,175 @@ class _ShopScreenState extends State<ShopScreen> {
                             ],
                           ),
                           const SizedBox(height: 14),
-                          _NoAdsHeroCard(
-                            bundle: noAdsBundle,
-                            owned: _noAdsOwned,
-                            busy: _busy,
-                            onTap: () => _buyBundle(noAdsBundle),
-                          ),
-                          const SizedBox(height: 14),
-                          _ShopSectionCard(
-                            title: 'Pachete',
-                            subtitle: 'Mai multe resurse la un preț mai bun — bani reali',
-                            icon: Icons.card_giftcard_rounded,
-                            color: AppColors.teal,
-                            children: [
-                              for (final b in bundles)
-                                _BundleItem(
-                                  bundle: b,
-                                  disabled: _busy || (b.oneTimeOnly && _starterPackBought),
-                                  owned: b.oneTimeOnly && _starterPackBought,
-                                  onTap: () => _buyBundle(b),
+                          // Tot ce urmează se plătește cu bani reali și stă
+                          // ascuns sub un strat "În curând" până la lansarea
+                          // magazinului — vezi [premiumShopRevealed].
+                          _PremiumVeil(
+                            revealed: premiumShopRevealed,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _NoAdsHeroCard(
+                                  bundle: noAdsBundle,
+                                  owned: _noAdsOwned,
+                                  busy: _busy,
+                                  onTap: () => _buyBundle(noAdsBundle),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          _ShopSectionCard(
-                            title: 'Gems',
-                            subtitle: 'Cumpără gems cu bani reali',
-                            icon: Icons.diamond_rounded,
-                            color: AppColors.gem,
-                            children: [
-                              for (final pack in gemPacks)
-                                _ShopItem(
-                                  title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
-                                  subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: formatRon(pack.priceRon),
-                                  disabled: _busy,
-                                  onTap: () => _buyGemPack(pack),
+                                const SizedBox(height: 14),
+                                _ShopSectionCard(
+                                  title: 'Pachete',
+                                  subtitle: 'Mai multe resurse la un preț mai bun — bani reali',
+                                  icon: Icons.card_giftcard_rounded,
+                                  color: AppColors.teal,
+                                  children: [
+                                    for (final b in bundles)
+                                      _BundleItem(
+                                        bundle: b,
+                                        disabled: _busy || (b.oneTimeOnly && _starterPackBought),
+                                        owned: b.oneTimeOnly && _starterPackBought,
+                                        onTap: () => _buyBundle(b),
+                                      ),
+                                  ],
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          _ShopSectionCard(
-                            title: 'Vieți & Hints (bani reali)',
-                            subtitle: 'Cumpărare directă, fără gems',
-                            icon: Icons.shopping_bag_rounded,
-                            color: AppColors.life,
-                            children: [
-                              for (final pack in livesPacks)
-                                _ShopItem(
-                                  title: '${pack.lives} vieți instant',
-                                  subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: formatRon(pack.priceRon),
-                                  disabled: _busy,
-                                  onTap: () => _buyLivesPack(pack),
+                                const SizedBox(height: 14),
+                                _ShopSectionCard(
+                                  title: 'Gems',
+                                  subtitle: 'Cumpără gems cu bani reali',
+                                  icon: Icons.diamond_rounded,
+                                  color: AppColors.gem,
+                                  children: [
+                                    for (final pack in gemPacks)
+                                      _ShopItem(
+                                        title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
+                                        subtitle: 'Achiziție cu bani reali',
+                                        priceLabel: formatRon(pack.priceRon),
+                                        disabled: _busy,
+                                        onTap: () => _buyGemPack(pack),
+                                      ),
+                                  ],
                                 ),
-                              _ShopItem(
-                                title: 'Vieți nelimitate 24h',
-                                subtitle: 'Joci fără să pierzi vieți timp de 24h',
-                                priceLabel: formatRon(unlimitedLives24hPriceRon),
-                                disabled: _busy,
-                                onTap: _buyUnlimitedLives24h,
-                              ),
-                              for (final pack in hintPacksReal)
-                                _ShopItem(
-                                  title: '${pack.hints} hints',
-                                  subtitle: 'Achiziție cu bani reali',
-                                  priceLabel: formatRon(pack.priceRon),
-                                  disabled: _busy,
-                                  onTap: () => _buyHintPackReal(pack),
+                                const SizedBox(height: 14),
+                                _ShopSectionCard(
+                                  title: 'Vieți & Hints (bani reali)',
+                                  subtitle: 'Cumpărare directă, fără gems',
+                                  icon: Icons.shopping_bag_rounded,
+                                  color: AppColors.life,
+                                  children: [
+                                    for (final pack in livesPacks)
+                                      _ShopItem(
+                                        title: '${pack.lives} vieți instant',
+                                        subtitle: 'Achiziție cu bani reali',
+                                        priceLabel: formatRon(pack.priceRon),
+                                        disabled: _busy,
+                                        onTap: () => _buyLivesPack(pack),
+                                      ),
+                                    _ShopItem(
+                                      title: 'Vieți nelimitate 24h',
+                                      subtitle: 'Joci fără să pierzi vieți timp de 24h',
+                                      priceLabel: formatRon(unlimitedLives24hPriceRon),
+                                      disabled: _busy,
+                                      onTap: _buyUnlimitedLives24h,
+                                    ),
+                                    for (final pack in hintPacksReal)
+                                      _ShopItem(
+                                        title: '${pack.hints} hints',
+                                        subtitle: 'Achiziție cu bani reali',
+                                        priceLabel: formatRon(pack.priceRon),
+                                        disabled: _busy,
+                                        onTap: () => _buyHintPackReal(pack),
+                                      ),
+                                  ],
                                 ),
-                            ],
+                              ],
+                            ),
                           ),
                         ],
                       ),
                     ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ascunde zona premium a shop-ului (bani reali) sub un blur + un strat "În
+/// curând", fără să o scoată din layout — vezi [premiumShopRevealed] pentru
+/// de ce. Când [revealed] e `true`, copilul se afișează absolut neatins, deci
+/// reveal-ul nu cere nicio altă modificare de cod.
+///
+/// Blurăm CONȚINUTUL ([ImageFiltered]), nu fundalul din spate
+/// ([BackdropFilter]) — altfel un scroll ar plimba blur-ul peste secțiunile
+/// care trebuie să rămână citibile, iar textul de dedesubt ar rămâne lizibil
+/// la margini.
+class _PremiumVeil extends StatelessWidget {
+  final bool revealed;
+  final Widget child;
+
+  /// Cât ocupă zona blurată pe ecran. Conținutul real e de ~4× mai înalt, dar
+  /// nu are rost să fie parcurs la scroll cât timp e oricum ilizibil și
+  /// inert — [OverflowBox] îl lasă să se așeze la înălțimea lui naturală, iar
+  /// [ClipRRect] taie restul.
+  static const double _veilHeight = 360;
+
+  const _PremiumVeil({required this.revealed, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    if (revealed) return child;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: SizedBox(
+        height: _veilHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: OverflowBox(
+                alignment: Alignment.topCenter,
+                minHeight: 0,
+                maxHeight: double.infinity,
+                child: ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 11, sigmaY: 11, tileMode: TileMode.decal),
+                  child: child,
+                ),
+              ),
+            ),
+            // IgnorePointer pe TOT (inclusiv peste conținut): niciun buton de
+            // sub blur nu trebuie să mai poată fi apăsat "pe ghicite".
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Container(
+                  color: AppColors.bg.withAlpha(150),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.coin.withAlpha(38),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.coin.withAlpha(140)),
+                        ),
+                        child: const Icon(Icons.lock_rounded, color: AppColors.coin, size: 26),
+                      ),
+                      const SizedBox(height: 14),
+                      const Text(
+                        'În curând',
+                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 6),
+                      const Text(
+                        'Magazinul premium încă nu s-a deschis.\nTot ce e în joc se poate obține jucând.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.35),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),

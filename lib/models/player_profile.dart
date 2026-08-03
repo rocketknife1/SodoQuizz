@@ -37,10 +37,18 @@ class PlayerProfile {
   final Timestamp? createdAt;
 
   /// True dacă profilul e legat de un cont Google (vezi AuthService.isSignedIn,
-  /// rescris la fiecare heartbeat) — folosit de AdminScreen ca să știe cui
-  /// îi poate trimite grant-uri de resurse (Guest nu are niciun canal, vezi
-  /// CloudSyncService.consumePendingGrant).
+  /// rescris la fiecare heartbeat) — azi doar informativ (eticheta din
+  /// AdminScreen) plus criteriu de ștergere automată: numai un Guest poate fi
+  /// măturat ca abandonat. Resursele de la admin ajung la ambele feluri de
+  /// cont (vezi CloudSyncService.consumePendingGrant).
   final bool hasGoogleAccount;
+
+  /// Câte gesturi care dovedesc folosirea reală a jocului s-au înregistrat pe
+  /// telefonul acestui cont — roți învârtite + mișcări de balanță (vezi
+  /// StorageService.getActivityEvents, de unde e urcat la fiecare heartbeat).
+  /// Orice valoare peste 0 scutește definitiv un Guest de ștergerea automată
+  /// (vezi PlayerProfileService.guestSweepInactivity).
+  final int activityEvents;
 
   const PlayerProfile({
     required this.uid,
@@ -58,6 +66,7 @@ class PlayerProfile {
     this.friendCode,
     this.createdAt,
     this.hasGoogleAccount = false,
+    this.activityEvents = 0,
   });
 
   double get winrate => matchesPlayed == 0 ? 0 : wins / matchesPlayed;
@@ -80,6 +89,7 @@ class PlayerProfile {
       friendCode: data['friendCode'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
       hasGoogleAccount: data['hasGoogleAccount'] as bool? ?? false,
+      activityEvents: data['activityEvents'] as int? ?? 0,
     );
   }
 }

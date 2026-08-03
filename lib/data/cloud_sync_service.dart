@@ -1,23 +1,67 @@
+import 'dart:collection';
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'auth_service.dart';
+import 'multiplayer_service.dart';
+import 'player_profile_service.dart';
 import 'storage_service.dart';
 
 /// Sincronizează progresul local (tot ce ține `StorageService` prin
-/// SharedPreferences) cu Firestore, pentru un cont Google logat — Guest
-/// rămâne 100% local, neatins. Sincronizare generică (vezi
+/// SharedPreferences) cu Firestore. Sincronizare generică (vezi
 /// `StorageService.exportAll/importAll`), nu câmp-cu-câmp.
+///
+/// URCAREA ([push]) se face pentru ORICINE are o identitate, inclusiv Guest
+/// (anonim). Nu ca să-i dea Guest-ului salvare în cloud — [pullOrSeed]
+/// rămâne strict pentru conturi Google, deci un Guest tot nu-și recuperează
+/// progresul pe alt telefon (identitatea lui anonimă e legată de instalare) —
+/// ci pentru ca fișa din AdminScreen să arate aceleași cifre pentru toată
+/// lumea. Fără asta, un "mi-au dispărut monedele" sau o suspiciune de trișare
+/// venită de la un Guest nu se putea verifica în niciun fel.
 class CloudSyncService {
   CloudSyncService._();
   static final instance = CloudSyncService._();
 
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) => FirebaseFirestore.instance.collection('users').doc(uid);
 
-  /// Apelat imediat după login. Dacă acest cont are deja progres salvat în
-  /// cloud (de pe alt telefon/instalare), CLOUD-UL CÂȘTIGĂ — se suprascrie
-  /// local cu el (decizie explicită, comportament standard de cloud save).
-  /// Dacă e prima logare pe acest cont, progresul local curent (Guest) se
-  /// urcă și devine punctul de plecare.
+  /// Crește de fiecare dată când chiar s-a aplicat ceva primit de la admin
+  /// (resurse sau reset) pe telefonul ăsta. Ecranele deschise ascultă și își
+  /// reîncarcă balanța — vezi HomeScreen. Fără el, un jucător care primește
+  /// monede cât stă în joc le vede abia după ce navighează altundeva, iar un
+  /// cont resetat ar arăta în continuare cifrele vechi.
+  final ValueNotifier<int> grantsApplied = ValueNotifier<int>(0);
+
+  /// Blochează consumarea simultană a aceleiași cutii poștale. Pornirea
+  /// aplicației și revenirea din fundal pot declanșa amândouă [consumePendingGrant]
+  /// aproape în același timp (vezi main.dart); fără garda asta, ambele apucă să
+  /// citească documentul înainte ca vreuna să-l șteargă, iar grant-ul se aplică
+  /// de două ori — jucătorul primea dublu, iar un reset se aplica de două ori.
+  bool _consumingGrant = false;
+
+  /// Uid-ul identității curente — Google dacă e logat, altfel cel anonim
+  /// creat la pornire (vezi main.dart). Gol dacă Firebase n-a pornit deloc pe
+  /// platforma asta: accesul la FirebaseAuth.instance aruncă sincron în acel
+  /// caz ("core/no-app"), iar [push] e apelat fără `await` din
+  /// didChangeAppLifecycleState, deci excepția ar rămâne neprinsă — același
+  /// motiv pentru care AuthService.currentUser își prinde singur excepția.
+  String get _uid {
+    try {
+      return MultiplayerService.instance.currentPlayerId;
+    } catch (e) {
+      debugPrint('CloudSyncService._uid a esuat: $e');
+      return '';
+    }
+  }
+
+  /// Apelat imediat după logarea într-un cont Google care exista deja în altă
+  /// parte. Dacă acel cont are progres salvat în cloud (de pe alt
+  /// telefon/instalare), CLOUD-UL CÂȘTIGĂ — se suprascrie local cu el
+  /// (decizie explicită, comportament standard de cloud save). Dacă nu are,
+  /// progresul local curent se urcă și devine punctul de plecare.
+  ///
+  /// NU se apelează când contul Google tocmai s-a legat de identitatea
+  /// anonimă de pe telefonul ăsta (același uid) — acolo local-ul e cel bun,
+  /// vezi AuthService.signInWithGoogle.
   Future<void> pullOrSeed() async {
     final user = AuthService.instance.currentUser;
     if (user == null || user.isAnonymous) return;
@@ -33,14 +77,40 @@ class CloudSyncService {
     }
   }
 
-  /// No-op sigur dacă nu e logat (Guest sau anonim din multiplayer) — se
-  /// poate apela oricând fără să verifice apelantul starea de login.
+  /// Amprenta exactă a ceea ce s-ar urca acum: uid-ul + toate cheile locale,
+  /// ordonate alfabetic ca două export-uri identice să dea mereu același șir.
+  ///
+  /// Uid-ul face parte din amprentă intenționat — la schimbarea identității
+  /// (Guest care se conectează cu Google, sau delogare, care dă alt uid
+  /// anonim) documentul destinație e altul, deci prima urcare pe el nu are
+  /// voie să fie sărită, oricât de neschimbate ar fi datele.
+  ///
+  /// Se compară șirul întreg, nu un hash: o coliziune de hash ar însemna o
+  /// urcare sărită pe tăcute, adică progres pierdut din cloud — exact felul
+  /// de bug care iese la iveală abia când cineva chiar are nevoie de salvare.
+  String _snapshotOf(String uid, Map<String, dynamic> data) =>
+      jsonEncode({'uid': uid, 'data': SplayTreeMap<String, dynamic>.from(data)});
+
+  /// Urcă progresul local — și pentru Guest, vezi comentariul clasei. No-op
+  /// sigur dacă nu există nicio identitate (Firebase nepornit), deci se poate
+  /// apela oricând fără ca apelantul să verifice starea de login.
+  ///
+  /// Sare peste scriere dacă de la ultima urcare nu s-a schimbat absolut
+  /// nimic. Se apelează la fiecare trecere în fundal (vezi main.dart), deci
+  /// fără verificarea asta orice sesiune în care jucătorul doar a deschis
+  /// aplicația și a închis-o costa o scriere Firestore — înmulțit cu toți
+  /// jucătorii, de câteva ori pe zi, pe planul gratuit.
   Future<void> push() async {
-    final user = AuthService.instance.currentUser;
-    if (user == null || user.isAnonymous) return;
+    final uid = _uid;
+    if (uid.isEmpty) return;
     try {
       final data = await StorageService.exportAll();
-      await _userDoc(user.uid).set(data);
+      final snapshot = _snapshotOf(uid, data);
+      if (snapshot == await StorageService.getCloudPushSnapshot()) return;
+      await _userDoc(uid).set(data);
+      // Abia după ce scrierea a reușit — dacă pică (fără net), amprenta rămâne
+      // cea veche și următoarea încercare reia urcarea, nu o sare.
+      await StorageService.setCloudPushSnapshot(snapshot);
     } catch (e) {
       debugPrint('CloudSyncService.push a esuat: $e');
     }
@@ -66,21 +136,34 @@ class CloudSyncService {
     }
   }
 
-  /// "Ridică" un eventual grant de resurse lăsat de admin (vezi AdminScreen +
-  /// firestore.rules `admin_grants/{uid}`) — no-op sigur dacă nu e logat
-  /// (Guest, singurul care nu are niciun canal către admin) sau dacă nu
-  /// există niciun grant în așteptare. Apelată alături de
-  /// PlayerProfileService.ensureProfileHeartbeat (main.dart), deci rulează
-  /// la fiecare pornire/revenire din fundal a aplicației — grant-ul ajunge
-  /// la jucător cel târziu la următoarea deschidere, nu instant.
+  /// "Ridică" ce a lăsat adminul în cutia poștală a acestui cont (vezi
+  /// AdminScreen + firestore.rules `admin_grants/{uid}`): un reset de cont,
+  /// resurse, sau amândouă. Merge pentru ORICINE, Guest inclusiv — cutia
+  /// poștală e legată de uid, iar un Guest are uid (anonim) de la prima
+  /// pornire, deci nu are nevoie de cont Google ca să primească.
+  ///
+  /// No-op sigur dacă nu există identitate sau dacă nu e nimic în așteptare.
+  /// Apelată alături de PlayerProfileService.ensureProfileHeartbeat
+  /// (main.dart), deci rulează la fiecare pornire/revenire din fundal —
+  /// ajunge la jucător cel târziu la următoarea deschidere, nu instant.
   Future<void> consumePendingGrant() async {
-    final user = AuthService.instance.currentUser;
-    if (user == null || user.isAnonymous) return;
+    final uid = _uid;
+    if (uid.isEmpty || _consumingGrant) return;
+    _consumingGrant = true;
     try {
-      final ref = FirebaseFirestore.instance.collection('admin_grants').doc(user.uid);
+      final ref = FirebaseFirestore.instance.collection('admin_grants').doc(uid);
       final doc = await ref.get();
       if (!doc.exists) return;
       final data = doc.data() ?? const <String, dynamic>{};
+
+      // ÎNTÂI resetul, abia apoi resursele: dacă adminul a resetat contul și
+      // i-a trimis apoi și ceva de pornire, jucătorul trebuie să rămână cu
+      // acel ceva, nu să i-l șteargă resetul aplicat după. (Resursele trimise
+      // ÎNAINTE de reset nu supraviețuiesc — cererea de reset le suprascrie
+      // în cutia poștală, vezi PlayerProfileService.resetPlayer.)
+      final reset = data['reset'] == true;
+      if (reset) await StorageService.resetToStartingBalance();
+
       final hearts = data['hearts'] as int? ?? 0;
       final hints = data['hints'] as int? ?? 0;
       final coins = data['coins'] as int? ?? 0;
@@ -94,8 +177,22 @@ class CloudSyncService {
       if (gems != 0) await StorageService.adjustGems(gems);
       if (xp != 0) await StorageService.adjustXp(xp);
       await ref.delete();
+
+      // Ecranele deschise nu știu că balanța de sub ele s-a schimbat.
+      grantsApplied.value++;
+
+      if (reset) {
+        // Profilul public a fost deja pus la zero de admin; heartbeat-ul de
+        // aici doar confirmă starea nouă a telefonului (contorul de
+        // activitate golit de reset), altfel ar rămâne în profil valoarea de
+        // dinainte până la următoarea pornire.
+        await PlayerProfileService.instance.ensureProfileHeartbeat();
+        await push();
+      }
     } catch (e) {
       debugPrint('CloudSyncService.consumePendingGrant a esuat: $e');
+    } finally {
+      _consumingGrant = false;
     }
   }
 }

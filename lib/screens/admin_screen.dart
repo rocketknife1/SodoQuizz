@@ -170,13 +170,79 @@ Future<bool> _confirmAndPurge(BuildContext context, PlayerProfile p) async {
   return ok;
 }
 
-/// Deschide sheet-ul de trimitere resurse — refuză direct conturile Guest,
-/// care nu au niciun canal către telefonul lor (vezi CloudSyncService).
-void _openGrantSheet(BuildContext context, PlayerProfile p) {
-  if (!p.hasGoogleAccount) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Doar conturile Google pot primi resurse.')));
-    return;
+/// Confirmă și execută resetarea unui cont — vezi
+/// [PlayerProfileService.resetPlayer] pentru ce se întâmplă imediat și ce
+/// abia la următoarea deschidere a jocului de către jucător. Merge identic
+/// pentru Guest și pentru conturi Google.
+Future<bool> _confirmReset(BuildContext context, PlayerProfile p) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (_) => AlertDialog(
+      backgroundColor: AppColors.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: const Text('Resetezi acest cont?', style: TextStyle(color: Colors.white)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('${p.name} o ia de la capăt, ca un jucător nou.',
+              style: const TextStyle(color: Colors.white70)),
+          const SizedBox(height: 10),
+          const Text('PE LOC:',
+              style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+          const SizedBox(height: 4),
+          const Text(
+            '• puncte de ligă, meciuri, victorii și serii → 0',
+            style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          const Text('LA URMĂTOAREA LUI DESCHIDERE A JOCULUI:',
+              style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
+          const SizedBox(height: 4),
+          Text(
+            '• XP/nivel, întrebări răspunse, quest-uri, realizări și categorii deblocate → de la zero\n'
+            '• balanța → zestrea de start (${StorageService.startingCoinsDefault} monede, '
+            '$starterGemGrant gems, ${StorageService.startingLivesDefault} inimi, '
+            '${StorageService.startingHintsDefault} hint-uri)\n'
+            '• resursele trimise de tine și neridicate încă se anulează',
+            style: const TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.5),
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Rămân: numele, prietenii, codul de prieten și setările lui (sunet, '
+            '"fără reclame"). Contul nu dispare, doar o ia de la început.',
+            style: TextStyle(color: Colors.white38, fontSize: 11.5, height: 1.35),
+          ),
+          const SizedBox(height: 10),
+          const Text('Nu poate fi anulat.',
+              style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w700)),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+        TextButton(
+          onPressed: () => Navigator.pop(context, true),
+          child: const Text('Resetează', style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return false;
+  final ok = await PlayerProfileService.instance.resetPlayer(p.uid);
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok
+          ? '${p.name} a fost resetat — balanța lui revine la start la următoarea deschidere a jocului.'
+          : 'Nu am putut reseta acest cont.')),
+    );
   }
+  return ok;
+}
+
+/// Deschide sheet-ul de trimitere resurse. Merge pentru orice cont, Guest
+/// inclusiv — cutia poștală e legată de uid, nu de contul Google (vezi
+/// CloudSyncService.consumePendingGrant).
+void _openGrantSheet(BuildContext context, PlayerProfile p) {
   showModalBottomSheet<void>(
     context: context,
     backgroundColor: const Color(0xFF1a1a2e),
@@ -239,8 +305,8 @@ class _AdminPlayerRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onGrant,
-            icon: Icon(Icons.card_giftcard_rounded, color: profile.hasGoogleAccount ? AppColors.teal : Colors.white24, size: 20),
-            tooltip: profile.hasGoogleAccount ? 'Trimite resurse' : 'Doar conturi Google',
+            icon: const Icon(Icons.card_giftcard_rounded, color: AppColors.teal, size: 20),
+            tooltip: 'Trimite resurse',
           ),
           IconButton(onPressed: onBan, icon: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20), tooltip: 'Interzice'),
           IconButton(
@@ -830,6 +896,21 @@ String _relative(DateTime d) {
   return 'acum ${diff.inDays} zile';
 }
 
+/// Dacă (și când) contul intră singur la curățarea automată a Guest-ilor
+/// abandonați — vezi PlayerProfileService.guestSweepInactivity pentru
+/// criteriul complet. Răspunsul e aproape mereu "nu": e de ajuns un singur
+/// semn de activitate ca profilul să fie păstrat definitiv.
+String _autoDeleteLabel(PlayerProfile p) {
+  if (p.hasGoogleAccount) return 'Nu — cont Google';
+  if (p.matchesPlayed > 0) return 'Nu — a jucat meciuri';
+  if (p.activityEvents > 0) return 'Nu — are activitate';
+  if (p.lastActive == null) return '—';
+  final due = p.lastActive!.toDate().add(PlayerProfileService.guestSweepInactivity);
+  final left = due.difference(DateTime.now());
+  if (left.isNegative) return 'Da — eligibil acum';
+  return 'Da — peste ${left.inDays + 1} zile';
+}
+
 /// Numere lizibile pentru sume mari: 18750 → "18.750".
 String _grouped(int n) {
   final s = n.abs().toString();
@@ -866,14 +947,20 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
   late Future<_PlayerDetail> _future = _load();
   bool _changed = false;
 
+  /// Profilul se recitește, nu se folosește cel primit de la listă: după un
+  /// reset (sau după orice a mai făcut jucătorul între timp) cifrele din
+  /// rândul pe care s-a dat tap sunt deja vechi. Dacă recitirea eșuează,
+  /// rămâne cel vechi — mai bine cifre învechite decât un ecran gol.
   Future<_PlayerDetail> _load() async {
     final results = await Future.wait([
       PlayerProfileService.instance.fetchFriendsOf(widget.profile.uid),
       PlayerProfileService.instance.fetchCloudSaveAsAdmin(widget.profile.uid),
+      PlayerProfileService.instance.getProfile(widget.profile.uid),
     ]);
     return _PlayerDetail(
       friends: results[0] as List<PlayerProfile>,
       cloudSave: results[1] as Map<String, dynamic>?,
+      profile: results[2] as PlayerProfile? ?? widget.profile,
     );
   }
 
@@ -933,7 +1020,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                       color: AppColors.orange,
                       child: ListView(
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
-                        children: _body(p, snap.data!),
+                        children: _body(snap.data!.profile, snap.data!),
                       ),
                     );
                   },
@@ -1024,11 +1111,11 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       // ── Balanța ──
       const _SectionTitle('Balanță'),
       if (save == null)
-        _InfoCard(
+        const _InfoCard(
           icon: Icons.lock_outline_rounded,
-          text: p.hasGoogleAccount
-              ? 'Nu există salvare în cloud pentru acest cont încă — se scrie la prima sincronizare după login.'
-              : 'Cont Guest: progresul stă doar pe telefonul lui, nu ajunge niciodată în cloud. Nu are balanță de arătat aici.',
+          text: 'Nu a urcat încă nimic în cloud. Prima sincronizare se face '
+              'când trimite aplicația în fundal — până atunci nu există '
+              'balanță de arătat aici, indiferent de felul contului.',
         )
       else ...[
         // ATENȚIE la valorile implicite: `exportAll` urcă doar cheile chiar
@@ -1131,15 +1218,34 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
         value: p.matchesPlayed == 0 ? '—' : '${(p.winrate * 100).toStringAsFixed(0)}%',
       ),
       _DetailRow(label: 'Serie curentă', value: '${p.currentStreak}  (record ${p.longestStreak})'),
+      // Cifra care decide soarta unui cont Guest lăsat în pace: roți învârtite
+      // + mișcări de balanță, urcate de telefonul lui la fiecare pornire.
+      _DetailRow(label: 'Semne de activitate', value: _grouped(p.activityEvents)),
+      _DetailRow(label: 'Se șterge automat?', value: _autoDeleteLabel(p)),
       const SizedBox(height: 26),
 
       // ── Acțiuni ──
       const _SectionTitle('Acțiuni'),
       _ActionButton(
-        label: p.hasGoogleAccount ? 'Trimite resurse' : 'Trimite resurse (doar conturi Google)',
+        label: 'Trimite resurse',
         icon: Icons.card_giftcard_rounded,
-        color: p.hasGoogleAccount ? AppColors.teal : AppColors.gray,
+        color: AppColors.teal,
         onPressed: () => _openGrantSheet(context, p),
+      ),
+      const SizedBox(height: 10),
+      // Resetul stă lângă ban/ștergere fiindcă e tot ireversibil, dar nu e
+      // distructiv la fel: contul rămâne, doar o ia de la capăt — de-aia e
+      // portocaliu, nu roșu.
+      _ActionButton(
+        label: 'Resetează contul',
+        icon: Icons.restart_alt_rounded,
+        color: AppColors.orange,
+        onPressed: () async {
+          if (await _confirmReset(context, p)) {
+            _changed = true;
+            await _refresh();
+          }
+        },
       ),
       const SizedBox(height: 10),
       _ActionButton(
@@ -1172,9 +1278,13 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
 class _PlayerDetail {
   final List<PlayerProfile> friends;
 
-  /// null = cont Guest, sau cont Google fără sincronizare încă.
+  /// null = încă n-a urcat nimic în cloud (vezi
+  /// PlayerProfileService.fetchCloudSaveAsAdmin) — nu mai înseamnă "Guest".
   final Map<String, dynamic>? cloudSave;
-  const _PlayerDetail({required this.friends, required this.cloudSave});
+
+  /// Profilul public recitit acum, nu cel din listă — vezi [_load].
+  final PlayerProfile profile;
+  const _PlayerDetail({required this.friends, required this.cloudSave, required this.profile});
 }
 
 class _SectionTitle extends StatelessWidget {

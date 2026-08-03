@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../models/player_profile.dart';
 import 'auth_service.dart';
 import 'multiplayer_service.dart';
+import 'storage_service.dart';
 
 /// Rezultatul unei [PlayerProfileService.sendFriendRequest] — UI-ul arată un
 /// mesaj diferit pentru fiecare caz.
@@ -34,14 +35,17 @@ class PlayerProfileService {
   static const winPoints = 20;
   static const lossPoints = 8;
 
-  /// Praguri pentru curățarea conturilor Guest abandonate — vezi
-  /// [_sweepStaleGuests]. Un cont e eligibil pentru ștergere doar dacă
-  /// întrunește AMBELE condiții: inactiv de [guestSweepInactivity] ȘI sub
-  /// [guestSweepMinMatches] meciuri jucate vreodată. Ținute și în
-  /// firestore.rules (regula de `allow delete`) — dacă schimbi pragul aici,
-  /// schimbă-l și acolo.
+  /// Prag pentru curățarea conturilor Guest abandonate — vezi
+  /// [_sweepStaleGuests]. Ținut și în firestore.rules (regula de `allow
+  /// delete`) — dacă îl schimbi aici, schimbă-l și acolo.
+  ///
+  /// Se șterge DOAR contul complet gol: fără cont Google, fără niciun meci,
+  /// fără niciun semn de activitate (vezi StorageService.getActivityEvents —
+  /// o rotire de roată sau orice mișcare de balanță ajunge ca să fie păstrat
+  /// definitiv) și neatins de [guestSweepInactivity]. Cine a apucat să facă
+  /// măcar ceva rămâne, oricât ar lipsi — pierderea unui jucător real e mult
+  /// mai scumpă decât un document rămas degeaba în bază.
   static const guestSweepInactivity = Duration(days: 15);
-  static const guestSweepMinMatches = 3;
 
   bool _sweptStaleGuestsThisSession = false;
 
@@ -70,6 +74,14 @@ class PlayerProfileService {
         'lastActive': FieldValue.serverTimestamp(),
         'hasGoogleAccount': AuthService.instance.isSignedIn,
         if (isNew) 'createdAt': FieldValue.serverTimestamp(),
+        // Contorul local de semne de activitate (roată învârtită, balanță
+        // mișcată) — urcat aici fiindca stergerea automata a Guest-ilor
+        // abandonati se decide in firestore.rules, care poate citi DOAR
+        // profilul public, nu si salvarea privata din `users/{uid}`. E un
+        // simplu numar de interactiuni, nu o balanta — oglindirea balantei
+        // in profilul public a fost respinsa explicit (ar fi facut-o
+        // vizibila tuturor jucatorilor, vezi firestore.rules).
+        'activityEvents': await StorageService.getActivityEvents(),
         // increment(0) creează câmpul pe 0 dacă lipsește (jucător nou) și nu
         // atinge valoarea deja acumulată dacă există — necesar fiindcă
         // Firestore EXCLUDE din orderBy('leaguePoints', ...) orice document
@@ -334,8 +346,11 @@ class PlayerProfileService {
   /// emailului de admin; pentru oricine altcineva apelul eșuează cu
   /// permission-denied și se întoarce null, ceea ce e comportamentul dorit.
   ///
-  /// Null înseamnă și "cont Guest" — un Guest nu are niciodată document aici,
-  /// fiindcă `users/{uid}` se scrie doar la login real (vezi CloudSyncService).
+  /// Null = jucătorul n-a apucat încă să urce nimic. Se întâmplă la un cont
+  /// abia creat (documentul se scrie prima oară când trimite aplicația în
+  /// fundal) sau la un Guest care nu a mai deschis jocul de dinainte ca
+  /// Guest-ii să urce și ei (vezi CloudSyncService.push) — NU mai înseamnă
+  /// "cont Guest", ca înainte.
   Future<Map<String, dynamic>?> fetchCloudSaveAsAdmin(String uid) async {
     if (uid.isEmpty) return null;
     try {
@@ -503,6 +518,53 @@ class PlayerProfileService {
     }
   }
 
+  /// Aduce un cont la zero, din fișa jucătorului (AdminScreen) — pentru
+  /// ORICINE, Guest sau cont Google, fiindcă ambele jumătăți ale operației se
+  /// leagă de uid, nu de tipul contului.
+  ///
+  /// Se întâmplă în doi timpi, cu viteze diferite, și e important de știut la
+  /// ce te uiți după apăsare:
+  ///  1. IMEDIAT, aici: profilul public (puncte de ligă, meciuri, victorii,
+  ///     serii, defalcarea pe moduri) se pune pe zero, deci jucătorul pică
+  ///     instant la coada clasamentului. Documentul NU se șterge — numele,
+  ///     prietenii și codul de prieten rămân, contul e resetat, nu desființat.
+  ///  2. LA URMĂTOAREA DESCHIDERE a jocului de către el: telefonul lui își
+  ///     golește progresul local și revine la zestrea de start (vezi
+  ///     StorageService.resetToStartingBalance). Progresul stă în
+  ///     SharedPreferences, pe telefon — nimeni nu-l poate șterge de la
+  ///     distanță, deci cererea se lasă în aceeași cutie poștală ca
+  ///     grant-urile de resurse și se aplică singură când ajunge acolo.
+  ///
+  /// Cererea se scrie fără `merge`, deliberat: dacă în cutie mai era un grant
+  /// de resurse neridicat, resetul îl anulează. Altfel "l-am adus la zero" ar
+  /// fi fost urmat, în aceeași secundă, de 5000 de monede trimise săptămâna
+  /// trecută și uitate.
+  Future<bool> resetPlayer(String uid) async {
+    if (uid.isEmpty) return false;
+    try {
+      final batch = _db.batch();
+      batch.set(_col.doc(uid), {
+        'matchesPlayed': 0,
+        'wins': 0,
+        'losses': 0,
+        'currentStreak': 0,
+        'longestStreak': 0,
+        'leaguePoints': 0,
+        'modeBreakdown': <String, int>{},
+        'activityEvents': 0,
+      }, SetOptions(merge: true));
+      batch.set(_db.collection('admin_grants').doc(uid), {
+        'reset': true,
+        'resetRequestedAt': FieldValue.serverTimestamp(),
+      });
+      await batch.commit();
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.resetPlayer a esuat: $e');
+      return false;
+    }
+  }
+
   /// Câte conturi așteaptă ștergerea din Firebase Authentication — afișat în
   /// AdminScreen, ca adminul să știe când merită rulat scriptul.
   Future<int> pendingAuthDeletionCount() async {
@@ -515,19 +577,6 @@ class PlayerProfileService {
     }
   }
 
-  /// Curățare oportunistă a conturilor Guest abandonate — rulează cel mult o
-  /// dată pe sesiune (nu la fiecare deschidere a leaderboard-ului), fără
-  /// blocarea UI-ului (fire-and-forget din [fetchLeaderboard]). Fără Cloud
-  /// Functions în acest proiect (vezi memoria de deploy), orice client activ
-  /// face treaba asta — firestore.rules permite ștergerea unui document
-  /// STRĂIN doar dacă întrunește exact condiția (nu are cont Google legat,
-  /// inactiv 15+ zile, sub pragul de meciuri), deci nu poate fi abuzat pentru
-  /// a șterge alte profiluri. Șterge DOAR documentul din `player_profiles`
-  /// (leaderboard/profil public) — contul anonim din Firebase Authentication
-  /// nu poate fi șters dintr-un alt client (ar necesita Admin SDK), dar
-  /// rămâne fără nicio dată vizibilă/legată de el odată ce documentul
-  /// dispare. Meciurile vechi din `matches` nu sunt atinse aici (curățare
-  /// separată, deja flagged ca lucru viitor).
   /// Șterge definitiv profilul public + toate legăturile de prietenie ale
   /// contului curent — apelat DOAR de [AuthService.deleteAccount] la ștergere
   /// definitivă de cont, spre deosebire de [banPlayer] (inițiat de admin, nu
@@ -559,6 +608,30 @@ class PlayerProfileService {
     }
   }
 
+  /// Curățare oportunistă a conturilor Guest abandonate — rulează cel mult o
+  /// dată pe sesiune (nu la fiecare deschidere a leaderboard-ului), fără
+  /// blocarea UI-ului (fire-and-forget din [fetchLeaderboard]). Fără Cloud
+  /// Functions în acest proiect (vezi memoria de deploy), orice client activ
+  /// face treaba asta.
+  ///
+  /// Se șterge STRICT contul rămas gol — vezi [guestSweepInactivity] pentru
+  /// criteriul complet și de ce e atât de conservator. Odată dispărut,
+  /// contul nu mai e verificat niciodată (nu mai există ce verifica): nu
+  /// rămâne nicio urmă care să-l readucă în listă, iar identitatea anonimă
+  /// din Auth e legată de instalarea aceea, deci nici ea nu se mai întoarce.
+  ///
+  /// Se șterg amândouă documentele legate de cont, într-un batch atomic:
+  /// profilul public și salvarea din cloud (`users/{uid}`, pe care Guest-ii
+  /// o au și ei de la [CloudSyncService.push]). firestore.rules verifică
+  /// independent, pentru fiecare, exact aceleași condiții — un client
+  /// modificat nu poate șterge profilul altcuiva oricât ar încerca; dacă
+  /// nu-s întrunite, batch-ul pică întreg cu permission-denied, e prins mai
+  /// jos și nimic nu se strică.
+  ///
+  /// Ce NU se atinge: contul anonim din Firebase Authentication (ar cere
+  /// Admin SDK, imposibil dintr-un alt client — dar rămâne inert, fără nicio
+  /// dată legată de el) și meciurile vechi din `matches` (curățare separată,
+  /// deja notată ca lucru viitor).
   Future<void> _sweepStaleGuests() async {
     if (_sweptStaleGuestsThisSession) return;
     _sweptStaleGuestsThisSession = true;
@@ -567,13 +640,19 @@ class PlayerProfileService {
       final snap = await _col.where('lastActive', isLessThan: Timestamp.fromDate(cutoff)).limit(300).get();
       for (final doc in snap.docs) {
         final data = doc.data();
-        final matchesPlayed = data['matchesPlayed'] as int? ?? 0;
-        if (matchesPlayed >= guestSweepMinMatches) continue;
+        if (data['hasGoogleAccount'] == true) continue;
+        if ((data['matchesPlayed'] as int? ?? 0) > 0) continue;
+        // Lipsa câmpului = profil scris înainte de introducerea contorului,
+        // deci tratat ca 0. Nu e o regresie față de criteriul dinainte (care
+        // ștergea sub 3 meciuri, fără să se uite deloc la activitate) și se
+        // corectează singur: primul heartbeat de după actualizare urcă
+        // numărul real, iar contul devine intangibil.
+        if ((data['activityEvents'] as int? ?? 0) > 0) continue;
         try {
-          // firestore.rules verifică independent (din nou) că e într-adevăr
-          // un Guest fără cont Google — dacă nu e, ștergerea pică cu
-          // permission-denied, prins și ignorat mai jos, nimic nu se strică.
-          await doc.reference.delete();
+          final batch = _db.batch();
+          batch.delete(doc.reference);
+          batch.delete(_db.collection('users').doc(doc.id));
+          await batch.commit();
         } catch (e) {
           debugPrint('PlayerProfileService._sweepStaleGuests a esuat la stergerea ${doc.id}: $e');
         }

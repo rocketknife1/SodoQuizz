@@ -2,6 +2,34 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Un cont Guest ABANDONAT SI COMPLET GOL, singurul fel de cont pe care
+    // orice jucator autentificat are voie sa-l stearga (vezi
+    // PlayerProfileService._sweepStaleGuests — fara Cloud Functions in acest
+    // proiect, curatarea o fac clientii activi, oportunist).
+    //
+    // Adevarul se citeste din profilul public, singurul document vizibil
+    // tuturor. Conditiile, toate obligatorii:
+    //   - fara cont Google legat (hasGoogleAccount). Inainte semnul era
+    //     "nu exista users/{uid}" — nu mai merge, fiindca de acum urca si
+    //     Guest-ii progresul acolo (vezi CloudSyncService);
+    //   - zero meciuri multiplayer jucate vreodata;
+    //   - zero semne de activitate (activityEvents: roata invartita, balanta
+    //     miscata — vezi StorageService). E de ajuns UNUL ca sa fie pastrat
+    //     definitiv: a pierde un jucator real e mult mai scump decat un
+    //     document ramas degeaba in baza;
+    //   - neatins de 15+ zile.
+    // Pragurile trebuie tinute in sincron cu guestSweepInactivity din
+    // player_profile_service.dart.
+    function isSweepableGuest(uid) {
+      let p = get(/databases/$(database)/documents/player_profiles/$(uid));
+      return p != null
+        && p.data.get('hasGoogleAccount', false) == false
+        && p.data.get('matchesPlayed', 0) == 0
+        && p.data.get('activityEvents', 0) == 0
+        && p.data.lastActive is timestamp
+        && request.time > p.data.lastActive + duration.value(15, 'd');
+    }
+
     // Cloud-save profil (XP, monede, progres) — doar propriul cont
     // (Google sau anonim) poate citi/scrie propriul document.
     match /users/{uid} {
@@ -28,6 +56,18 @@ service cloud.firestore {
       // Alternativa respinsa: oglindirea balantei in player_profiles ar fi
       // facut-o vizibila TUTUROR jucatorilor, deci strict mai rau.
       allow read, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+
+      // Curatarea Guest-ilor abandonati sterge AMANDOUA documentele contului
+      // (profilul public + asta) intr-un singur batch — de cand urca si
+      // Guest-ii progresul aici, fara regula asta ar fi ramas in urma lor
+      // cloud-save-uri orfane, imposibil de sters de altcineva decat de
+      // proprietarul care nu mai vine niciodata.
+      //
+      // Conditiile sunt exact aceleasi ca la stergerea profilului public si
+      // se verifica pe ACELA, nu aici (documentul asta nu contine nimic
+      // despre activitate/vechime). Costa un read in plus la evaluare, dar
+      // se intampla doar la maturare, deci practic niciodata.
+      allow delete: if request.auth != null && isSweepableGuest(uid);
     }
 
     // Meciuri multiplayer — orice cont autentificat (inclusiv anonim,
@@ -79,21 +119,16 @@ service cloud.firestore {
         && !exists(/databases/$(database)/documents/banned_players/$(uid))
         && (request.auth.uid == uid || request.auth.token.email == 'dragosssx@gmail.com');
 
-      // Curatare Guest abandonati (vezi PlayerProfileService.sweepStaleGuests
+      // Curatare Guest abandonati (vezi PlayerProfileService._sweepStaleGuests
       // - fara Cloud Functions in acest proiect, orice client autentificat
-      // face treaba, oportunist, la citirea leaderboard-ului). Un profil
-      // STRAIN poate fi sters doar daca intruneste TOATE conditiile:
-      //   - nu are cont Google legat - /users/{uid} se scrie DOAR la login
-      //     real (CloudSyncService), niciodata pentru Guest, vezi
-      //     player_profile.dart - asta functioneaza retroactiv si pentru
-      //     conturi create inainte de aceasta regula, fara nicio migrare;
-      //   - sub 3 meciuri jucate vreodata (matchesPlayed);
-      //   - inactiv de cel putin 15 zile (lastActive).
-      // Pragurile trebuie tinute in sincron cu guestSweepMinMatches /
-      // guestSweepInactivity din player_profile_service.dart.
+      // face treaba, oportunist, la citirea leaderboard-ului). Conditiile
+      // sunt cele din isSweepableGuest() de la inceputul fisierului, scrise
+      // aici pe `resource.data` (documentul se sterge chiar pe el insusi,
+      // deci nu mai e nevoie de un get() in plus).
       allow delete: if request.auth != null
-        && !exists(/databases/$(database)/documents/users/$(uid))
-        && resource.data.get('matchesPlayed', 0) < 3
+        && resource.data.get('hasGoogleAccount', false) == false
+        && resource.data.get('matchesPlayed', 0) == 0
+        && resource.data.get('activityEvents', 0) == 0
         && resource.data.lastActive is timestamp
         && request.time > resource.data.lastActive + duration.value(15, 'd');
 
@@ -177,11 +212,12 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
-    // "Cutie postala" pentru grant-uri de resurse de la admin catre un
-    // jucator anume (vezi CloudSyncService.consumePendingGrant) — doar
-    // conturi Google, fiindca StorageService e local, nu exista alt canal
-    // catre Guest. Admin-ul creeaza/actualizeaza grant-ul; owner-ul (uid)
-    // doar citeste si sterge, la consum - nu poate scrie/crea unul singur.
+    // "Cutie postala" de la admin catre un jucator anume (vezi
+    // CloudSyncService.consumePendingGrant): resurse trimise si/sau cererea
+    // de reset a contului. Merge pentru ORICINE, Guest inclusiv — cutia e
+    // legata de uid, iar un Guest are uid (anonim) de la prima pornire.
+    // Admin-ul creeaza/actualizeaza continutul; owner-ul (uid) doar citeste
+    // si sterge, la consum - nu poate scrie/crea unul singur.
     match /admin_grants/{uid} {
       allow read, delete: if request.auth != null && request.auth.uid == uid;
       allow write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';

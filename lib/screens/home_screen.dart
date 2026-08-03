@@ -3,6 +3,7 @@ import '../core/audio.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
+import '../data/cloud_sync_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -50,12 +51,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _dataFuture = _loadData();
     _checkStreakMilestones();
+    // Resursele trimise de admin (și resetul de cont) se aplică în fundal, la
+    // pornire și la revenirea din fundal — momente în care ecranul ăsta poate
+    // fi deja construit, cu cifrele de dinainte. Vezi CloudSyncService.
+    CloudSyncService.instance.grantsApplied.addListener(_refresh);
     // Dezactivat temporar - popup-ul cerea prea multe apasari (o pagina pe
     // rand) la prima intrare. Codul (IntroTutorialDialog) ramane neatins,
     // doar apelul e oprit.
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   if (mounted) IntroTutorialDialog.maybeShow(context);
     // });
+  }
+
+  @override
+  void dispose() {
+    CloudSyncService.instance.grantsApplied.removeListener(_refresh);
+    super.dispose();
   }
 
   Future<_HomeData> _loadData() async {
@@ -198,12 +209,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContent(BuildContext context, _HomeData? data) {
+    // Pe 0 vieți apare cardul roșu cu numărătoarea inversă (LivesCountdownCard,
+    // ~62px) și împinge tot ce e sub el în jos — inclusiv panoul de Cultură
+    // Generală, care ajungea astfel exact peste Clippy și balonul de BETA
+    // (ambele plutesc fix, în Stack-ul de deasupra). Soluția: ascundem logo-ul
+    // (92px, pur decorativ) cât timp cardul e pe ecran. Net, conținutul urcă
+    // ~30px față de normal, deci Cultura Generală stă imediat sub "fereastra"
+    // de vieți și rămâne complet liberă de mascote.
+    final outOfLives = data != null && data.lives == 0;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
       child: Column(
         children: [
-          _buildLogo(),
-          const SizedBox(height: 4),
+          if (!outOfLives) ...[
+            _buildLogo(),
+            const SizedBox(height: 4),
+          ],
           LevelHeader(
             xp: data?.xp ?? 0,
             coins: data?.coins ?? 0,
