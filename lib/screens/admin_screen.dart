@@ -6,6 +6,7 @@ import '../core/progression.dart' show levelForXp;
 import '../core/theme.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';
+import '../data/shop.dart' show starterGemGrant;
 import '../data/storage_service.dart';
 import '../models/multiplayer_activity.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
@@ -1030,19 +1031,24 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
               : 'Cont Guest: progresul stă doar pe telefonul lui, nu ajunge niciodată în cloud. Nu are balanță de arătat aici.',
         )
       else ...[
+        // ATENȚIE la valorile implicite: `exportAll` urcă doar cheile chiar
+        // scrise în SharedPreferences, deci la un cont nou `coins`/`gems`/
+        // `lives`/`hints` LIPSESC din cloud-save până când jucătorul câștigă
+        // sau cheltuie ceva. Lipsa înseamnă "încă la valoarea de start", nu
+        // zero — cu `?? 0` fișa arăta 0 monede unui jucător care avea 173.
         Row(
           children: [
             Expanded(
                 child: _BalanceTile(
                     label: 'Monede',
-                    value: (save['coins'] as num?)?.toInt() ?? 0,
+                    value: (save['coins'] as num?)?.toInt() ?? StorageService.startingCoinsDefault,
                     color: AppColors.coin,
                     icon: Icons.monetization_on_rounded)),
             const SizedBox(width: 10),
             Expanded(
                 child: _BalanceTile(
                     label: 'Gems',
-                    value: (save['gems'] as num?)?.toInt() ?? 0,
+                    value: (save['gems'] as num?)?.toInt() ?? starterGemGrant,
                     color: AppColors.gem,
                     icon: Icons.diamond_rounded)),
           ],
@@ -1053,14 +1059,14 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
             Expanded(
                 child: _BalanceTile(
                     label: 'Inimi',
-                    value: (save['lives'] as num?)?.toInt() ?? 0,
+                    value: (save['lives'] as num?)?.toInt() ?? StorageService.startingLivesDefault,
                     color: AppColors.life,
                     icon: Icons.favorite_rounded)),
             const SizedBox(width: 10),
             Expanded(
                 child: _BalanceTile(
                     label: 'Hints',
-                    value: (save['hints_balance'] as num?)?.toInt() ?? 0,
+                    value: (save['hints_balance'] as num?)?.toInt() ?? StorageService.startingHintsDefault,
                     color: AppColors.hint,
                     icon: Icons.lightbulb_rounded)),
           ],
@@ -1070,6 +1076,13 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
         // e ce înseamnă ea de fapt (vezi core/progression.dart).
         _DetailRow(label: 'Nivel', value: '${levelForXp(xp)}', highlight: true),
         _DetailRow(label: 'XP total', value: _grouped(xp)),
+        const SizedBox(height: 8),
+        const _InfoCard(
+          icon: Icons.cloud_sync_rounded,
+          text: 'Cifrele vin din ultima sincronizare cu cloud-ul, care se face '
+              'când jucătorul trimite aplicația în fundal. Pot fi în urma față '
+              'de ce are pe telefon chiar acum.',
+        ),
       ],
       const SizedBox(height: 22),
 

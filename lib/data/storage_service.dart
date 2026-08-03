@@ -41,6 +41,18 @@ class StorageService {
   static const _startingHints = 9;
   static const _startingCoins = 173;
   static const _startingLives = 7;
+
+  /// Aceleași valori, publice, pentru cine citește un cloud-save din afară
+  /// (AdminScreen). E nevoie de ele fiindcă [exportAll] urcă DOAR cheile
+  /// chiar scrise în SharedPreferences: la un cont nou, `coins`/`gems`/
+  /// `lives`/`hints` lipsesc complet din `users/{uid}` până când jucătorul
+  /// câștigă sau cheltuie ceva. Absența cheii înseamnă deci "încă la valoarea
+  /// de start", NU zero — citită ca zero, fișa din admin arăta 0 monede unui
+  /// jucător care avea 173.
+  static const startingCoinsDefault = _startingCoins;
+  static const startingLivesDefault = _startingLives;
+  static const startingHintsDefault = _startingHints;
+
   static const _lastPlayedDateKey = 'last_played_date';
   static const _streakCountKey = 'streak_count';
   static const _streakMilestonesKey = 'streak_milestones_claimed';
