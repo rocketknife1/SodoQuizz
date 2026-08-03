@@ -97,6 +97,13 @@ verificat în cod exact ce colectează aplicația — completează așa:
 | **Acțiuni în aplicație** (progres, scoruri) | Da | Nu | Da | Funcționalitate: salvare în cloud, clasament |
 | **ID-uri de dispozitiv** | Da | **Da** | Da | Publicitate (AdMob) |
 
+⚠️ **„Acțiuni în aplicație" se bifează ca fiind colectată de la TOȚI, nu doar
+de la cei logați** (schimbare din 3 august 2026). Înainte, progresul unui
+jucător fără cont Google rămânea doar pe telefon; acum se urcă și el în
+`users/{uid}`, legat de identitatea anonimă, ca să poată fi verificat din
+panoul de admin. E singurul motiv pentru care rândul ăsta e „obligatorie: Da"
+— politica de confidențialitate publicată spune deja același lucru.
+
 ⚠️ **Emailul TREBUIE bifat.** E ușor de ratat, pentru că în Firestore nu se
 scrie nicăieri — dar Firebase Authentication îl stochează la conectarea cu
 Google, aplicația îl afișează în Profil, iar `firestore.rules` îl folosește
@@ -110,8 +117,11 @@ utilizator (Profil → Șterge contul definitiv).
 
 **Ce NU colectează** — nu bifa: locație, contacte, mesaje, fișiere,
 informații financiare, date de sănătate, istoric de căutare. Verificat în
-cod: în Firestore se scriu doar `name`, `photoUrl`, `avatarSeed`,
-`lastActive`, `hasGoogleAccount` și statistici de joc.
+cod, Firestore conține exact două lucruri:
+- `player_profiles/{uid}`, public: `name`, `photoUrl`, `avatarSeed`,
+  `lastActive`, `hasGoogleAccount`, `activityEvents` și statistici de joc;
+- `users/{uid}`, privat (doar proprietarul și adminul): progresul de joc și
+  setările — monede, gems, XP, întrebări răspunse, quest-uri, sunet.
 
 **Datele sunt criptate în tranzit?** Da (Firebase folosește HTTPS peste tot).
 
