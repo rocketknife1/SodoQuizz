@@ -102,6 +102,10 @@ def delete_auth_user(session, uid: str) -> tuple[bool, str]:
 
 def main() -> int:
     apply = "--sterge" in sys.argv
+    # "Curata conturi Auth.bat" isi pune singur intrebarea de confirmare, deci
+    # acolo indicatia "ruleaza din nou cu --sterge" ar trimite userul sa faca
+    # manual exact ce face butonul.
+    only_list = "--lista" in sys.argv
     session = _session()
 
     items = queued(session)
@@ -113,7 +117,8 @@ def main() -> int:
         print(f"     - {name}  ({uid})")
 
     if not apply:
-        print("\nRulare de proba. Ruleaza din nou cu --sterge ca sa le stergi efectiv.")
+        if not only_list:
+            print("\nRulare de proba. Ruleaza din nou cu --sterge ca sa le stergi efectiv.")
         return 0
 
     print("\nSterg...")

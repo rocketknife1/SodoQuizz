@@ -565,15 +565,30 @@ class PlayerProfileService {
     }
   }
 
-  /// Câte conturi așteaptă ștergerea din Firebase Authentication — afișat în
-  /// AdminScreen, ca adminul să știe când merită rulat scriptul.
-  Future<int> pendingAuthDeletionCount() async {
+  /// Conturile care așteaptă ștergerea din Firebase Authentication — afișate
+  /// pe nume în AdminScreen (tab Statistici), nu doar numărate, ca să se vadă
+  /// exact CINE e în coadă înainte de a rula scriptul care șterge definitiv.
+  /// Vezi [PendingAuthDeletion] pentru de ce e nevoie de coadă.
+  ///
+  /// Cele mai recente primele. Fără `orderBy` pe server: coada are în mod
+  /// normal câteva intrări, iar un `orderBy` ar cere ca fiecare document să
+  /// aibă câmpul, ceea ce ar ascunde tăcut intrările vechi, scrise înainte ca
+  /// `requestedAt` să existe.
+  Future<List<PendingAuthDeletion>> fetchPendingAuthDeletions() async {
     try {
-      final snap = await _db.collection('pending_auth_deletions').count().get();
-      return snap.count ?? 0;
+      final snap = await _db.collection('pending_auth_deletions').limit(100).get();
+      final items = snap.docs.map(PendingAuthDeletion.fromDoc).toList();
+      items.sort((a, b) {
+        final ta = a.requestedAt, tb = b.requestedAt;
+        if (ta == null && tb == null) return 0;
+        if (ta == null) return 1;
+        if (tb == null) return -1;
+        return tb.compareTo(ta);
+      });
+      return items;
     } catch (e) {
-      debugPrint('PlayerProfileService.pendingAuthDeletionCount a esuat: $e');
-      return 0;
+      debugPrint('PlayerProfileService.fetchPendingAuthDeletions a esuat: $e');
+      return [];
     }
   }
 

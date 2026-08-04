@@ -94,6 +94,33 @@ class PlayerProfile {
   }
 }
 
+/// Un cont care așteaptă ștergerea din Firebase **Authentication** — un doc în
+/// `pending_auth_deletions`, scris de [PlayerProfileService.purgePlayer].
+///
+/// Există fiindcă „Șterge complet" din admin curăță instant tot ce ține de
+/// jucător în Firestore, dar NU poate atinge identitatea lui din
+/// Authentication: Firebase interzice unui client să șteargă contul altcuiva,
+/// operația cere cheia de service account — adică parola de administrator
+/// peste tot proiectul, care n-are ce căuta într-un APK public. Coada e citită
+/// de `tools/purge_accounts.py`, care rulează pe calculator, unde cheia stă în
+/// siguranță.
+class PendingAuthDeletion {
+  final String uid;
+  final String name;
+  final Timestamp? requestedAt;
+
+  const PendingAuthDeletion({required this.uid, required this.name, this.requestedAt});
+
+  factory PendingAuthDeletion.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? const {};
+    return PendingAuthDeletion(
+      uid: doc.id,
+      name: data['name'] as String? ?? '?',
+      requestedAt: data['requestedAt'] as Timestamp?,
+    );
+  }
+}
+
 /// O cerere de prietenie primită — un doc în subcolecția
 /// `player_profiles/{eu}/friend_requests/{fromUid}` (vezi firestore.rules și
 /// PlayerProfileService.fetchIncomingRequests).
