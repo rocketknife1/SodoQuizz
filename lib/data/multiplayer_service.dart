@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/multiplayer_models.dart';
-import 'practice_bot.dart'; // TEMP BOT — vezi data/practice_bot.dart
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
 /// are valori placeholder până userul pune un proiect real. UI-ul o prinde și
@@ -428,7 +427,6 @@ class MultiplayerService {
       return;
     }
     await matchRef.collection('players').doc(me).delete();
-    await PracticeBot.cleanup(matchId); // TEMP BOT — vezi data/practice_bot.dart
     final remaining = await matchRef.collection('players').limit(1).get();
     if (remaining.docs.isEmpty) {
       await _deleteMatch(matchRef);

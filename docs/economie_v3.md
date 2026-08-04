@@ -674,12 +674,15 @@ De când greșelile scad puncte, scorul de meci poate fi negativ:
   cu scorurile încă nescrise ale celorlalți. Ecranul așteaptă acum semnalul
   `finished` de la toată lumea, cu 12 secunde răbdare.
 
-### 14.5 Bot de antrenament — TEMPORAR
+### 14.5 Bot de antrenament — a existat, a fost scos
 
-`lib/data/practice_bot.dart` adaugă un adversar simulat care intră singur în
-camera privată după 6 secunde, ca multiplayer-ul să poată fi probat fără un al
-doilea telefon. **Stins implicit**, aprins doar cu
-`--dart-define=PRACTICE_BOT=true`, din motiv economic: pariul lui sunt bani
-fantomă care intră în pool fără să fie scăzuți din vreun portofel, deci un om
-care câștigă ar primi monede care n-au existat. De șters înainte de lansare —
-instrucțiunile complete sunt în antetul fișierului.
+Pe 4 august a existat câteva ore un adversar simulat, ca multiplayerul să poată
+fi probat fără al doilea telefon. A fost **eliminat complet** în aceeași zi,
+imediat ce au apărut jucători reali cu care se putea testa.
+
+Nota rămâne aici pentru un motiv: dacă cineva se gândește vreodată să-l aducă
+înapoi, pariul unui bot sunt **bani fantomă**. Intră în pool (vezi
+`core/betting.dart`) fără să fie scăzuți din vreun portofel, deci un om care
+câștigă meciul primește monede care n-au existat niciodată. Orice bot viitor
+trebuie ori să parieze zero, ori să fie ținut strict în afara build-urilor
+publice.

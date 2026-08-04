@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../core/game_helpers.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
-import '../../data/practice_bot.dart';
 import '../../data/questions.dart';
 import '../../models/multiplayer_models.dart';
 import '../../models/question.dart';
@@ -62,12 +61,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   bool _midSynced = false;
   bool _finishing = false;
 
-  /// TEMP BOT — adversarul simulat, vezi data/practice_bot.dart.
-  PracticeBotBrain? _bot;
-
   Question get _current => _questions[_qIndex];
-
-  int get _elapsed => multiplayerMatchSeconds - _secondsLeft;
 
   @override
   void initState() {
@@ -87,7 +81,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     setState(() {
       _questions = all;
       _loading = false;
-      _bot = PracticeBotBrain(questions: all, seed: widget.matchId.hashCode); // TEMP BOT
     });
     await _startClock();
   }
@@ -119,10 +112,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     final deadline = _deadline;
     if (deadline == null || !mounted) return;
     final left = deadline.difference(DateTime.now()).inSeconds.clamp(0, multiplayerMatchSeconds);
-    setState(() {
-      _secondsLeft = left;
-      _bot?.tick(_elapsed); // TEMP BOT
-    });
+    setState(() => _secondsLeft = left);
 
     // Singura împrospătare a scorurilor celorlalți din tot meciul, la
     // jumătatea minutului. Vezi MultiplayerService.updateScore pentru de ce
@@ -130,10 +120,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     if (!_midSynced && left <= multiplayerMatchSeconds ~/ 2) {
       _midSynced = true;
       MultiplayerService.instance.updateScore(matchId: widget.matchId, score: _myScore);
-      final bot = _bot; // TEMP BOT
-      if (bot != null) {
-        PracticeBot.publishScore(matchId: widget.matchId, score: bot.score, finished: false);
-      }
     }
 
     if (left <= 0) _finish();
@@ -165,10 +151,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     _finishing = true;
     _ticker?.cancel();
     _left = true; // rezultatele preiau curatenia finala, nu mai trecem si prin leaveMatch
-    final bot = _bot; // TEMP BOT
-    if (bot != null) {
-      await PracticeBot.publishScore(matchId: widget.matchId, score: bot.score, finished: true);
-    }
     try {
       await MultiplayerService.instance.finishWithScore(matchId: widget.matchId, score: _myScore);
     } catch (e) {

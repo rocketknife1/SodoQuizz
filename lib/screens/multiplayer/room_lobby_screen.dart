@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
-import '../../data/practice_bot.dart'; // TEMP BOT — vezi data/practice_bot.dart
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
@@ -38,25 +35,16 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
   bool _navigated = false;
   bool _leaving = false;
 
-  /// TEMP BOT — vezi data/practice_bot.dart.
-  Timer? _botTimer;
-
   @override
   void initState() {
     super.initState();
     AuthService.instance.multiplayerIdentity().then((identity) {
       if (mounted) setState(() => _displayName = identity.name);
     });
-    // TEMP BOT: dacă după câteva secunde ești tot singur în cameră, intră un
-    // adversar simulat ca să poți porni meciul fără al doilea telefon.
-    if (widget.isHost && PracticeBot.enabled) {
-      _botTimer = Timer(PracticeBot.joinDelay, () => PracticeBot.maybeJoin(widget.matchId));
-    }
   }
 
   @override
   void dispose() {
-    _botTimer?.cancel(); // TEMP BOT
     _chatController.dispose();
     _scrollController.dispose();
     super.dispose();
