@@ -150,9 +150,17 @@ const int multiplayerParticipationXpBonus = 13;
 const int multiplayerFirstWinBonusCoins = 137;
 const int multiplayerFirstWinBonusXp = 89;
 
-int multiplayerXpForScore(int score, {required bool won}) =>
-    (score * 0.012).round() +
-    (won ? multiplayerWinXpBonus : multiplayerParticipationXpBonus);
+/// XP-ul de la finalul unui meci. Partea din scor nu poate scădea sub zero:
+/// de când un răspuns greșit costă puncte în modul Clasic (vezi
+/// multiplayerWrongPenalty), scorul poate ieși negativ, iar fără garda asta un
+/// meci foarte prost i-ar fi ȘTERS jucătorului XP câștigat în altă parte —
+/// sub −1.084 de puncte, funcția întorcea un număr negativ care ajungea direct
+/// în StorageService.addXp. Un meci slab nu aduce mare lucru, dar nu ia înapoi.
+int multiplayerXpForScore(int score, {required bool won}) {
+  final fromScore = (score * 0.012).round();
+  return (fromScore < 0 ? 0 : fromScore) +
+      (won ? multiplayerWinXpBonus : multiplayerParticipationXpBonus);
+}
 
 /// Un quest zilnic: progresul se ține în [StorageService], definiția
 /// (țintă, recompensă) e statică aici. [metricKey] leagă variante de

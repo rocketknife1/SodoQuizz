@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/betting.dart';
+import '../core/game_helpers.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
@@ -100,16 +101,36 @@ class MultiplayerInfoDialog extends StatelessWidget {
                           'meciul nu apucă să înceapă, primești totul înapoi.',
                     ),
                     _section(
+                      icon: Icons.timer_rounded,
+                      color: AppColors.play,
+                      title: 'Meciul Clasic ține $multiplayerMatchSeconds de secunde',
+                      body: 'Același cronometru pentru toată lumea, pornit când hostul apasă '
+                          'START. Câte întrebări apuci în minutul ăla ține numai de tine — '
+                          'meciul se încheie singur când se termină timpul.',
+                    ),
+                    _section(
+                      icon: Icons.lightbulb_rounded,
+                      color: AppColors.orange,
+                      title: 'Puncte, hint și greșeli',
+                      body: 'Răspuns corect = punctele întrebării. Răspuns greșit = le pierzi pe '
+                          'o parte din ele, deci bătutul la nimereală te bagă pe minus.\n'
+                          'Ai $multiplayerHintsPerMatch hint-uri pe meci (maximum unul pe '
+                          'întrebare): ascund două variante greșite și te costă puncte. NU se '
+                          'scad din hint-urile tale și nu costă monede — toți intră în meci cu '
+                          'exact aceleași unelte, ca nimeni să nu-și poată cumpăra avantaj.',
+                    ),
+                    _section(
                       icon: Icons.pie_chart_rounded,
                       color: AppColors.purple,
                       title: 'Cum se împarte pool-ul',
-                      body: 'Toate pariurile de la masă formează un pool (minus '
-                          '${(betRake * 100).toStringAsFixed(1).replaceAll('.', ',')}% comision). '
-                          'Din el, ${(stakePotShare * 100).round()}% se împart după cât ai pariat × '
-                          'cât de bine ai jucat × cât risc ți-ai asumat, iar '
-                          '${(placementPotShare * 100).round()}% se împart STRICT după locul din '
-                          'clasament, indiferent de mărimea pariului. Cu cât sunt mai mulți '
-                          'jucători la masă, cu atât pool-ul e mai mare.',
+                      body: 'Toate pariurile de la masă formează un pool, din care se ia un '
+                          'comision mic. Cea mai mare parte se împarte după cât ai pariat × cât '
+                          'de bine ai jucat × cât risc ți-ai asumat, iar restul STRICT după locul '
+                          'din clasament, indiferent de mărimea pariului.\n'
+                          'La mesele mari, partea împărțită după loc scade — altfel, cu cât '
+                          'sunteți mai mulți, cu atât jumătatea de jos ar plăti mai mult vârful. '
+                          'Pool-ul crește oricum cu numărul de jucători: locul 1 ia peste 2× miza '
+                          'la o masă plină.',
                     ),
                     _section(
                       icon: Icons.balance_rounded,

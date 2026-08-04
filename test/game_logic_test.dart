@@ -207,10 +207,93 @@ void main() {
     });
 
     test('cotele potului de loc insumeaza 1 pentru orice numar de jucatori', () {
-      for (var n = 2; n <= 9; n++) {
+      for (var n = 2; n <= 20; n++) {
         final sum = placementShares(n).fold<double>(0, (s, v) => s + v);
         expect(sum, closeTo(1.0, 1e-9), reason: '$n jucatori');
       }
+    });
+
+    test('fiecare loc valoreaza strict mai putin decat cel dinaintea lui', () {
+      // Inainte, orice loc de la al 8-lea incolo primea aceeasi cota plata
+      // (0,01), deci intr-o camera plina nu mai exista niciun motiv sa lupti
+      // pentru locul 9 in loc de 11.
+      // 11 = capacitatea unei camere private (matchPlayerCount din
+      // multiplayer_service.dart, scris aici ca literal ca testul sa nu tarasca
+      // dupa el importurile de Firebase).
+      final shares = placementShares(11);
+      for (var i = 1; i < shares.length; i++) {
+        expect(shares[i], lessThan(shares[i - 1]), reason: 'locul ${i + 1}');
+      }
+    });
+
+    test('la masa mare, mijlocul plutonului nu mai sangereaza ca inainte', () {
+      // Cota potului de loc scade cu marimea mesei tocmai ca jumatatea de jos
+      // sa nu plateasca sistematic varful la fiecare meci.
+      List<BetEntry> table(int n) => [
+            for (var i = 0; i < n; i++)
+              BetEntry(
+                playerId: 'p$i',
+                bet: 300,
+                betPercent: 0.23,
+                performance: n > 1 ? (n - 1 - i) / (n - 1) : 1.0,
+                place: i + 1,
+              ),
+          ];
+      final big = BetPayouts.compute(table(20));
+      final median = big.payouts['p10']!;
+      final winner = big.payouts['p0']!;
+      expect(median / 300, greaterThan(0.85), reason: 'mijlocul mesei');
+      expect(winner / 300, greaterThan(1.8), reason: 'locul 1 ramane atractiv');
+    });
+
+    test('performanta ramane ordonata chiar si cu scoruri negative', () {
+      final perfs = classicPerformances([2006, 1584, 372, -121]);
+      expect(perfs.first, 1.0);
+      expect(perfs.last, 0.0);
+      for (var i = 1; i < perfs.length; i++) {
+        expect(perfs[i], lessThan(perfs[i - 1]));
+      }
+    });
+
+    test('o masa fara scoruri negative se comporta exact ca inainte', () {
+      // Translatia nu trebuie sa se atinga de mesele "normale": aici raportul
+      // simplu scor/scorMaxim e si el raspunsul corect.
+      final perfs = classicPerformances([2000, 1900, 1850]);
+      expect(perfs[1], closeTo(0.95, 1e-9));
+      expect(perfs[2], closeTo(0.925, 1e-9));
+    });
+
+    test('toti la egalitate nu inseamna performanta zero pentru nimeni', () {
+      expect(classicPerformances([0, 0, 0]), everyElement(1.0));
+      expect(classicPerformances([-140, -140]), everyElement(1.0));
+    });
+  });
+
+  group('multiplayer clasic', () {
+    test('ghicitul orb pierde puncte, hint-ul plus ghicit nu', () {
+      // Calibrarea penalizarilor: bataia la nimereala pe 4 variante trebuie sa
+      // aiba valoare asteptata negativa, iar hint-ul (care lasa 2 variante) sa
+      // scoata jucatorul din minus. Verificat pe toate valorile reale de
+      // intrebare din joc.
+      for (final maxPoints in [200, 300, 400, 700, 1000]) {
+        final hint = multiplayerHintPenalty(maxPoints);
+        final wrong = multiplayerWrongPenalty(maxPoints);
+
+        final blindGuess = 0.25 * maxPoints - 0.75 * wrong;
+        expect(blindGuess, lessThan(0), reason: 'ghicit orb la ${maxPoints}p');
+
+        final afterHint = 0.5 * (maxPoints - hint) - 0.5 * (hint + wrong);
+        expect(afterHint, greaterThan(0), reason: 'hint + ghicit la ${maxPoints}p');
+
+        // cine STIE raspunsul nu are ce castiga dintr-un hint
+        expect(maxPoints - hint, lessThan(maxPoints));
+      }
+    });
+
+    test('un meci prost nu poate sterge XP castigat aiurea', () {
+      expect(multiplayerXpForScore(-5000, won: false),
+          greaterThanOrEqualTo(multiplayerParticipationXpBonus));
+      expect(multiplayerXpForScore(0, won: false), multiplayerParticipationXpBonus);
     });
   });
 }

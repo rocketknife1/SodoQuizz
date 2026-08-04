@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../models/multiplayer_models.dart';
+import 'practice_bot.dart'; // TEMP BOT — vezi data/practice_bot.dart
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
 /// are valori placeholder până userul pune un proiect real. UI-ul o prinde și
@@ -16,7 +17,15 @@ class MultiplayerUnavailableException implements Exception {
 }
 
 /// Capacitatea maximă a unei camere private (Create Room / Join with Code).
-const int matchPlayerCount = 5;
+///
+/// Ridicat de la 5 la 11: 5 oameni nu e "un grup". 11 e mărimea la care
+/// ladder-ul potului de loc are trepte cu valori distincte (vezi
+/// placementShares din core/betting.dart), rândul de avatare de sus rămâne
+/// lizibil fiindcă derulează orizontal, iar traficul spre Firestore rămâne sub
+/// ~250 de citiri pe meci cu sincronizarea rară de scor din
+/// MultiplayerMatchScreen. Matchmaking-ul public rămâne 1 vs 1 — o coadă care
+/// așteaptă 11 străini simultan nu s-ar completa niciodată.
+const int matchPlayerCount = 11;
 
 /// Timp minim garantat între un tap al jucătorului (create/join room, dat
 /// un răspuns, trimis un mesaj) și finalizarea scrierii în Firestore — nu
@@ -276,8 +285,12 @@ class MultiplayerService {
   /// chiar acum, nu la crearea camerei, care poate fi cu mult timp în urmă
   /// dacă hostul a așteptat în lobby). Resetul e inofensiv pentru
   /// [MatchGameMode.classic], care nu citește aceste câmpuri.
+  /// [startedAt] e ancora comună a cronometrului de 60 de secunde din modul
+  /// Clasic — scrisă de server, nu de telefonul hostului, ca să nu depindă de
+  /// ceasul (posibil greșit) al vreunui dispozitiv.
   Future<void> startMatch(String matchId) => _db.collection('matches').doc(matchId).update({
         'status': MatchStatus.playing.name,
+        'startedAt': FieldValue.serverTimestamp(),
         'roundIndex': 0,
         'roundPhase': HigherLowerRoundPhase.answering.name,
         'roundAnswers': <String, String>{},
@@ -415,6 +428,7 @@ class MultiplayerService {
       return;
     }
     await matchRef.collection('players').doc(me).delete();
+    await PracticeBot.cleanup(matchId); // TEMP BOT — vezi data/practice_bot.dart
     final remaining = await matchRef.collection('players').limit(1).get();
     if (remaining.docs.isEmpty) {
       await _deleteMatch(matchRef);
@@ -445,8 +459,26 @@ class MultiplayerService {
         );
   }
 
+  /// Publică scorul curent. ATENȚIE la cât de des se apelează: fiecare
+  /// scriere e livrată TUTUROR celor care ascultă masa, deci costul în citiri
+  /// Firestore crește cu PĂTRATUL numărului de jucători. Scris la fiecare
+  /// răspuns, un meci de 20 de oameni consuma ~4.000 de citiri — adică ~12
+  /// meciuri pe zi din cota gratuită, împărțită cu tot restul aplicației.
+  /// De-aia modul Clasic îl cheamă exact de două ori pe meci (la jumătatea
+  /// minutului și la final), nu la fiecare răspuns.
   Future<void> updateScore({required String matchId, required int score}) {
     return _paced(() => _db.collection('matches').doc(matchId).collection('players').doc(currentPlayerId).update({'score': score}));
+  }
+
+  /// Scorul FINAL, plus semnalul că jucătorul și-a încheiat minutul — vezi
+  /// [MatchPlayer.finished] pentru de ce contează la decontare.
+  Future<void> finishWithScore({required String matchId, required int score}) {
+    return _paced(() => _db
+        .collection('matches')
+        .doc(matchId)
+        .collection('players')
+        .doc(currentPlayerId)
+        .update({'score': score, 'finished': true}));
   }
 
   // ─── Matchmaking public ─────────────────────────────────────────────────

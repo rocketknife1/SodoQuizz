@@ -43,6 +43,41 @@ int hintCoinCost(int coins) {
   return scaled > coins ? coins : scaled;
 }
 
+// ─── Multiplayer Clasic: cronometru, hint 50/50, penalizări ────────────────
+// Modul Clasic din multiplayer nu avea nici limită de timp (meciul rula prin
+// TOATE întrebările din joc, deci nu se termina niciodată de la sine), nici
+// hint, nici vreo consecință pentru un răspuns greșit — se putea bate la
+// nimereală în ecran fără să coste nimic.
+//
+// Acum: un singur minut, același pentru toți, iar fiecare acțiune are preț.
+// Penalizările sunt PROCENT din valoarea întrebării, nu sume fixe: altfel a
+// greși la o întrebare de 1000p ar costa exact cât la una de 200p, iar
+// hint-ul pe întrebările mari ar fi fost aproape gratis.
+
+const int multiplayerMatchSeconds = 60;
+
+/// Câte hint-uri are fiecare jucător pe meci, maximum unul pe întrebare.
+///
+/// NU se scad din stocul de hint-uri al jucătorului și NU costă monede, spre
+/// deosebire de modul solo — și e o decizie deliberată, nu o scăpare:
+/// magazinul vinde hint-uri, iar într-un mod unde monedele chiar trec dintr-un
+/// buzunar în altul prin pariuri, cine cumpără hint-uri ar câștiga sistematic
+/// mai mult. Toată lumea intră în meci cu exact aceleași unelte; singurul preț
+/// al hint-ului sunt punctele.
+const int multiplayerHintsPerMatch = 2;
+
+/// Costul în puncte al hint-ului 50/50 (ascunde două variante greșite).
+/// Calibrat împreună cu [multiplayerWrongPenalty] astfel încât hint-ul să fie
+/// rentabil DOAR sub ~70% siguranță pe răspuns: dacă știi răspunsul, hint-ul e
+/// pierdere curată; dacă habar n-ai, te scoate din minus.
+int multiplayerHintPenalty(int maxPoints) => (7 + maxPoints * 0.23).round();
+
+/// Costul în puncte al unui răspuns greșit. La 4 variante, valoarea așteptată
+/// a unei ghiciri oarbe rămâne ușor negativă (−15 puncte la o întrebare de
+/// 200p), deci spam-ul pe butoane pierde — dar o greșeală sinceră nu îngroapă
+/// meciul.
+int multiplayerWrongPenalty(int maxPoints) => (13 + maxPoints * 0.37).round();
+
 // ─── Recompensa unui răspuns corect ────────────────────────────────────────
 // XP-ul NU mai e egal cu punctele întrebării (era 140-200 XP per răspuns,
 // motivul real pentru care se ajungea la nivelul 5 în 16 răspunsuri corecte —

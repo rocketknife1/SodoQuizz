@@ -31,6 +31,11 @@ class MatchInfo {
   final String? hostName;
   final String? hostPhotoUrl;
   final Timestamp? createdAt;
+
+  /// Momentul (de server) în care hostul a apăsat START — ancora
+  /// cronometrului de 60 de secunde din modul Clasic. `null` cât timp meciul
+  /// e încă în lobby.
+  final Timestamp? startedAt;
   final MatchGameMode gameMode;
 
   /// Câmpuri de sincronizare a rundei — folosite doar în [MatchGameMode.higherLower],
@@ -51,6 +56,7 @@ class MatchInfo {
     this.hostName,
     this.hostPhotoUrl,
     this.createdAt,
+    this.startedAt,
     this.gameMode = MatchGameMode.classic,
     this.roundIndex = 0,
     this.roundPhase = HigherLowerRoundPhase.answering,
@@ -73,6 +79,7 @@ class MatchInfo {
       hostName: data['hostName'] as String?,
       hostPhotoUrl: data['hostPhotoUrl'] as String?,
       createdAt: data['createdAt'] as Timestamp?,
+      startedAt: data['startedAt'] as Timestamp?,
       gameMode: (data['gameMode'] as String?) == 'higherLower' ? MatchGameMode.higherLower : MatchGameMode.classic,
       roundIndex: data['roundIndex'] as int? ?? 0,
       roundPhase: HigherLowerRoundPhase.values.firstWhere(
@@ -129,6 +136,13 @@ class MatchPlayer {
   final int bet;
   final double betPercent;
 
+  /// Marcat o singură dată, când jucătorului i s-a scurs minutul și și-a
+  /// scris scorul FINAL. Ecranul de rezultate așteaptă ca toată lumea de la
+  /// masă să-l aibă înainte să calculeze plățile — altfel, cine termină cu o
+  /// secundă mai devreme ar împărți pool-ul după scoruri încă nescrise ale
+  /// celorlalți și ar ajunge la alte cifre decât ei.
+  final bool finished;
+
   const MatchPlayer({
     required this.id,
     required this.name,
@@ -140,6 +154,7 @@ class MatchPlayer {
     this.eliminated = false,
     this.bet = 0,
     this.betPercent = 0,
+    this.finished = false,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -155,6 +170,7 @@ class MatchPlayer {
       eliminated: data['eliminated'] as bool? ?? false,
       bet: data['bet'] as int? ?? 0,
       betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
+      finished: data['finished'] as bool? ?? false,
     );
   }
 
@@ -166,6 +182,7 @@ class MatchPlayer {
         'isHost': isHost,
         'bet': bet,
         'betPercent': betPercent,
+        'finished': finished,
         'joinedAt': FieldValue.serverTimestamp(),
       };
 }

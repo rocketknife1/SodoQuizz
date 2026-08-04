@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../core/betting.dart';
 import '../../core/progression.dart';
@@ -59,7 +61,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// (pariurile și scorurile tuturor, din Firestore) și își creditează doar
   /// propriul cont — la fel ca la scor, nu există autoritate de server.
   Future<List<MatchPlayer>> _load() async {
-    final players = await MultiplayerService.instance.watchPlayers(widget.matchId).first;
+    final players = await _awaitFinalScores();
     final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
     final me = MultiplayerService.instance.currentPlayerId;
     final myIndex = sorted.indexWhere((p) => p.id == me);
@@ -130,30 +132,52 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     return sorted;
   }
 
+  /// Cât așteptăm ca toată lumea de la masă să-și scrie scorul final înainte
+  /// să împărțim pool-ul. Necesar de când modul Clasic e o cursă cronometrată:
+  /// toți termină în aceeași secundă, iar cine ajunge primul aici ar citi
+  /// altfel scoruri încă nescrise ale celorlalți și ar calcula alte plăți
+  /// decât ei. Peste termen mergem mai departe cu ce există — un jucător
+  /// căruia i-a picat rețeaua nu are voie să blocheze decontarea celorlalți.
+  static const _finalScoreWait = Duration(seconds: 12);
+
+  Future<List<MatchPlayer>> _awaitFinalScores() async {
+    final stream = MultiplayerService.instance.watchPlayers(widget.matchId);
+    // Higher or Lower nu are "scor final scris la fluier": acolo meciul se
+    // încheie prin eliminare, iar scorurile sunt deja definitive în Firestore.
+    if (widget.gameMode != MatchGameMode.classic) return stream.first;
+    try {
+      return await stream
+          .firstWhere((players) => players.isNotEmpty && players.every((p) => p.finished))
+          .timeout(_finalScoreWait);
+    } on TimeoutException {
+      debugPrint('MultiplayerResultsScreen: cineva nu si-a scris scorul final, decontez cu ce am.');
+      return stream.first;
+    }
+  }
+
   /// Construiește intrările de pariu din clasamentul final și rulează
   /// împărțirea pool-ului. [sorted] e deja ordonat descrescător după scor,
   /// deci poziția din listă e chiar treapta din ladder-ul potului de loc.
   ///
-  /// Performanța e raportată la cel mai bun scor al mesei în modul Clasic
-  /// (cine a punctat mult ia mai mult chiar dacă n-a ieșit primul) și la
-  /// poziția finală în Higher or Lower, unde scorul e doar un contor de
-  /// runde câștigate și conteaza cât de departe ai ajuns.
+  /// Performanța e raportată la scorurile mesei în modul Clasic (cine a
+  /// punctat mult ia mai mult chiar dacă n-a ieșit primul) și la poziția
+  /// finală în Higher or Lower, unde scorul e doar un contor de runde
+  /// câștigate și contează cât de departe ai ajuns.
   BetPayouts _settleBets(List<MatchPlayer> sorted) {
-    final topScore = sorted.isEmpty ? 0 : sorted.first.score;
+    final performances = widget.gameMode == MatchGameMode.higherLower
+        ? <double>[
+            for (var i = 0; i < sorted.length; i++)
+              sorted.length > 1 ? (sorted.length - 1 - i) / (sorted.length - 1) : 1.0,
+          ]
+        : classicPerformances([for (final p in sorted) p.score]);
     final entries = <BetEntry>[];
     for (var i = 0; i < sorted.length; i++) {
       final p = sorted[i];
-      final double performance;
-      if (widget.gameMode == MatchGameMode.higherLower || topScore <= 0) {
-        performance = sorted.length > 1 ? (sorted.length - 1 - i) / (sorted.length - 1) : 1.0;
-      } else {
-        performance = p.score / topScore;
-      }
       entries.add(BetEntry(
         playerId: p.id,
         bet: p.bet,
         betPercent: p.betPercent,
-        performance: performance,
+        performance: performances[i],
         place: i + 1,
       ));
     }

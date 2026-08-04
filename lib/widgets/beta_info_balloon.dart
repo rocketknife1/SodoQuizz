@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/betting.dart';
+import '../core/game_helpers.dart';
 import '../core/theme.dart';
 
 /// Balonul de vorbă care plutește pe Home, în golul dintre mascota Discord
@@ -248,11 +249,25 @@ class BetaInfoDialog extends StatelessWidget {
                           'monede taxă fixă PLUS un pariu ales de tine, între '
                           '${(minBetPercent * 100).round()}% și ${(maxBetPercent * 100).round()}% '
                           'din câte monede ai. Toate pariurile formează un pool '
-                          'care se împarte la final: '
-                          '${(stakePotShare * 100).round()}% după cât ai pariat, '
-                          'cât de bine ai jucat și cât risc ți-ai asumat, iar '
-                          '${(placementPotShare * 100).round()}% strict după locul '
-                          'în clasament, indiferent de mărimea pariului.',
+                          'care se împarte la final: cea mai mare parte după cât '
+                          'ai pariat, cât de bine ai jucat și cât risc ți-ai '
+                          'asumat, iar restul strict după locul în clasament, '
+                          'indiferent de mărimea pariului. Cu cât sunteți mai '
+                          'mulți la masă, cu atât premiul locului 1 e mai mare.',
+                    ),
+                    _section(
+                      icon: Icons.timer_rounded,
+                      color: AppColors.play,
+                      title: 'Multiplayer Clasic — un minut, contra tuturor',
+                      body: 'Meciul ține $multiplayerMatchSeconds de secunde, '
+                          'același cronometru pentru toți. Răspuns corect = '
+                          'punctele întrebării; răspuns GREȘIT = pierzi puncte, '
+                          'deci nu merită să bați la nimereală. Ai '
+                          '$multiplayerHintsPerMatch hint-uri pe tot meciul '
+                          '(maximum unul pe întrebare): îți lasă doar două '
+                          'variante și te costă puncte, dar NU se scad din '
+                          'hint-urile tale și nu costă monede — la masă toți au '
+                          'exact aceleași unelte.',
                     ),
                     _section(
                       icon: Icons.balance_rounded,
