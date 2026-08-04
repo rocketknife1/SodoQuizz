@@ -594,3 +594,92 @@ Net, conținutul urcă ~30px față de normal: Cultura Generală stă imediat su
 | `lib/screens/shop_screen.dart` | `_PremiumVeil` (blur + "În curând") |
 | `lib/screens/home_screen.dart` | logo ascuns pe 0 vieți |
 | `test/quest_rotation_test.dart` *(nou)* | invariantele rotației |
+
+---
+
+## 14. v3.2 — multiplayer Clasic cronometrat, mese de 11 (2026-08-04)
+
+Secțiunea 8 descria pariurile, dar nu și ce se întâmplă ÎN meci. Modul Clasic
+n-avea nici limită de timp (rula prin toate cele ~1.400 de întrebări, deci nu se
+încheia niciodată de la sine — singura ieșire era ca cineva să abandoneze), nici
+hint, nici vreo consecință pentru un răspuns greșit.
+
+### 14.1 Un minut, aceleași unelte pentru toți
+
+| | Acum |
+|---|---|
+| Durata meciului | **60 s**, cronometru comun ancorat în `startedAt` (server) |
+| Răspuns corect | **+`puncte_max`** (neschimbat) |
+| Hint 50/50 | **−(7 + `puncte_max` × 0,23)** |
+| Răspuns greșit | **−(13 + `puncte_max` × 0,37)** |
+| Hint-uri | **2 pe meci**, maximum 1 pe întrebare |
+
+Concret: 200p → hint −53, greșit −87; 1000p → hint −237, greșit −383.
+
+**Hint-ul NU se scade din stocul jucătorului și nu costă monede** — spre
+deosebire de solo. Magazinul vinde hint-uri (23/68/172 pe bani reali), iar
+într-un mod unde monedele chiar trec dintr-un buzunar în altul prin pariuri,
+cine cumpără ar câștiga sistematic mai mult. Prețul hint-ului în multiplayer
+sunt exclusiv punctele.
+
+Calibrare (prinsă în `test/game_logic_test.dart`):
+- ghicitul orb pe 4 variante are valoare așteptată **negativă** la orice
+  valoare de întrebare (−15 puncte la 200p) — spam-ul pe butoane pierde;
+- hint + ghicit are valoare **pozitivă** — hint-ul e colac de salvare real;
+- hint-ul e rentabil doar sub **~70% siguranță**; dacă știi răspunsul, e
+  pierdere curată.
+
+### 14.2 Mese mari (`matchPlayerCount` 5 → 11)
+
+Trei lucruri se rup la masă mare și s-au reparat:
+
+| Problemă | Reparație |
+|---|---|
+| Ladder-ul potului de loc are 7 trepte, apoi 0,01 **plat** — locurile 8-11 valorau identic | coadă geometrică `0,02 × 0,83^(loc−6)`, fiecare poziție distinctă |
+| Mijlocul plutonului ieșea pe **0,79× miza** la fiecare meci de 20 (potul de loc concentrează 41% pe primul) | `placementPotShare = 0,20 × 7/N`, plafonat la 9%-20% → mijlocul urcă la **0,89×**, locul 1 rămâne **2,01×** |
+| Rake fix 3,5% arde mult în absolut pe mese mari | `rake = 0,035 × 7/N`, plafonat la 1,3%-3,5% |
+
+La `N ≤ 7` ambele formule dau exact valorile din secțiunea 8, deci simulările
+de acolo rămân valabile.
+
+### 14.3 Costul în Firestore, motivul sincronizării rare
+
+Scorul se scria la **fiecare răspuns**, iar fiecare scriere e livrată tuturor
+ascultătorilor mesei — deci citirile cresc cu **pătratul** numărului de
+jucători:
+
+| Jucători | Citiri/meci (înainte) | Meciuri/zi din cota gratuită |
+|---|---|---|
+| 5 | 250 | ~200 |
+| 11 | 1.210 | ~41 |
+| 20 | 4.000 | **~12** |
+
+Cota e 50.000 de citiri/zi, împărțită cu tot restul aplicației. Scorul se
+publică acum de **două ori pe meci** (la 30 s și la final), deci ~206
+meciuri/zi la 11 jucători. Scorul propriu rămâne local și instant; doar al
+celorlalți se împrospătează rar.
+
+### 14.4 Ce a atras scorul negativ după el
+
+De când greșelile scad puncte, scorul de meci poate fi negativ:
+
+- `perf = scor / scorMaxim` dădea performanță negativă, tăiată la 0 — cine
+  termina pe −400 era tratat ca cineva pe 0. Înlocuit cu o **translație**
+  (`classicPerformances`): dacă cineva e pe minus, toate scorurile urcă până
+  ultimul ajunge la zero. Deliberat NU min-max, care ar fi întins diferențe
+  minuscule pe tot intervalul;
+- `multiplayerXpForScore` întorcea XP negativ sub −1.084 puncte, care ajungea
+  direct în `addXp` — acum partea din scor e plafonată la zero;
+- toți terminând în aceeași secundă, cine ajungea primul la rezultate deconta
+  cu scorurile încă nescrise ale celorlalți. Ecranul așteaptă acum semnalul
+  `finished` de la toată lumea, cu 12 secunde răbdare.
+
+### 14.5 Bot de antrenament — TEMPORAR
+
+`lib/data/practice_bot.dart` adaugă un adversar simulat care intră singur în
+camera privată după 6 secunde, ca multiplayer-ul să poată fi probat fără un al
+doilea telefon. **Stins implicit**, aprins doar cu
+`--dart-define=PRACTICE_BOT=true`, din motiv economic: pariul lui sunt bani
+fantomă care intră în pool fără să fie scăzuți din vreun portofel, deci un om
+care câștigă ar primi monede care n-au existat. De șters înainte de lansare —
+instrucțiunile complete sunt în antetul fișierului.
