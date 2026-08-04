@@ -101,7 +101,7 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
           children: [
             Row(
               children: [
-                Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl),
+                Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl, style: avatarStyleFromId(p.avatarStyle)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(p.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
@@ -194,7 +194,7 @@ class _PlayerRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(width: 36, child: Text('#$rank', maxLines: 1, softWrap: false, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800))),
-            Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl),
+            Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl, style: avatarStyleFromId(profile.avatarStyle)),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

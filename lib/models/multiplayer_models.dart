@@ -136,6 +136,11 @@ class MatchPlayer {
   final int bet;
   final double betPercent;
 
+  /// Id-ul avatarului desenat ales de jucător (vezi widgets/avatar_art.dart).
+  /// Gol = poza obișnuită. Călătorește cu jucătorul ca ceilalți de la masă
+  /// să-l vadă exact cum și-a ales, nu ca inițială.
+  final String avatarStyle;
+
   /// Marcat o singură dată, când jucătorului i s-a scurs minutul și și-a
   /// scris scorul FINAL. Ecranul de rezultate așteaptă ca toată lumea de la
   /// masă să-l aibă înainte să calculeze plățile — altfel, cine termină cu o
@@ -155,6 +160,7 @@ class MatchPlayer {
     this.bet = 0,
     this.betPercent = 0,
     this.finished = false,
+    this.avatarStyle = '',
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -171,6 +177,7 @@ class MatchPlayer {
       bet: data['bet'] as int? ?? 0,
       betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
       finished: data['finished'] as bool? ?? false,
+      avatarStyle: data['avatarStyle'] as String? ?? '',
     );
   }
 
@@ -183,6 +190,7 @@ class MatchPlayer {
         'bet': bet,
         'betPercent': betPercent,
         'finished': finished,
+        'avatarStyle': avatarStyle,
         'joinedAt': FieldValue.serverTimestamp(),
       };
 }

@@ -64,6 +64,7 @@ class StorageService {
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
+  static const _avatarStyleKey = 'avatar_style';
   static const _gemsKey = 'gems';
   static const _lastClaimedRewardLevelKey = 'last_claimed_reward_level';
   static const _xpCurveMigratedKey = 'xp_curve_migrated_v2';
@@ -544,6 +545,7 @@ class StorageService {
   /// din admin n-ar mai fi reparabil).
   static const _resetPreservedKeys = <String>[
     _displayNameKey,
+    _avatarStyleKey,
     _musicEnabledKey,
     _musicVolumeKey,
     _noBlurKey,
@@ -976,6 +978,20 @@ class StorageService {
   }
 
   // ─── Muzică de fundal (separată de volumul efectelor sonore) ──────────────
+
+  /// Avatarul ales din Profil, ca id de [AvatarStyle] (vezi
+  /// widgets/avatar_art.dart). Șirul gol înseamnă „poza implicită" — la fel ca
+  /// AvatarStyle.poza, deci un jucător vechi care n-a ales niciodată nimic
+  /// rămâne exact cum arăta.
+  static Future<String> getAvatarStyleId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_avatarStyleKey) ?? '';
+  }
+
+  static Future<void> setAvatarStyleId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_avatarStyleKey, id);
+  }
 
   static Future<bool> getMusicEnabled() async {
     final prefs = await SharedPreferences.getInstance();

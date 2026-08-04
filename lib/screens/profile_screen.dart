@@ -53,6 +53,75 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  /// Alegerea avatarului. Se salvează pe loc, la tap — fără buton de
+  /// confirmare: e o alegere reversibilă dintr-o singură apăsare, iar
+  /// avatarul din spatele dialogului se schimbă instant, deci se și vede ce
+  /// ai ales. Alegerea urcă și în profilul public la următorul heartbeat, ca
+  /// s-o vadă și ceilalți în clasament și în multiplayer.
+  Future<void> _pickAvatar() async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Alege-ți avatarul',
+            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ValueListenableBuilder<AvatarStyle>(
+            valueListenable: myAvatarStyle,
+            builder: (context, current, __) => Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                for (final style in AvatarStyle.values)
+                  GestureDetector(
+                    onTap: () => setMyAvatarStyle(style),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(3),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: style == current ? AppColors.play : Colors.transparent,
+                              width: 3,
+                            ),
+                          ),
+                          child: style == AvatarStyle.poza
+                              ? const MyPhotoPreview(size: 62)
+                              : AvatarArt(style: style, size: 62),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(style.label,
+                            style: TextStyle(
+                              color: style == current ? Colors.white : Colors.white54,
+                              fontSize: 11,
+                              fontWeight: style == current ? FontWeight.w800 : FontWeight.w500,
+                            )),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Gata', style: TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    // urcă alegerea în profilul public, ca ceilalți s-o vadă fără să aștepte
+    // repornirea aplicației
+    await PlayerProfileService.instance.ensureProfileHeartbeat();
+    if (mounted) setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -71,7 +140,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return ListView(
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
               children: [
-                const Center(child: MyAvatar(size: 88)),
+                Center(
+                  child: GestureDetector(
+                    onTap: _pickAvatar,
+                    child: const Stack(
+                      alignment: Alignment.bottomRight,
+                      children: [
+                        MyAvatar(size: 88),
+                        // insignă mică de creion: fără ea, nimeni n-ar ghici
+                        // că poza e apăsabilă
+                        CircleAvatar(
+                          radius: 13,
+                          backgroundColor: AppColors.purple,
+                          child: Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Center(
+                  child: Text('Apasă pe poză ca să-ți schimbi avatarul',
+                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                ),
                 const SizedBox(height: 14),
                 Center(child: Text('Level $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
                 const SizedBox(height: 4),

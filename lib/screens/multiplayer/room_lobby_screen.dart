@@ -216,6 +216,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                             label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
                             accentColor: pickAvatarColor(p.avatarSeed),
                             photoUrl: p.photoUrl,
+                            style: avatarStyleFromId(p.avatarStyle),
                           ),
                           const SizedBox(height: 4),
                           Text(p.isHost ? '${p.name} 👑' : p.name,

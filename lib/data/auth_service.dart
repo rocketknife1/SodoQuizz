@@ -74,14 +74,19 @@ class AuthService {
   /// instantaneul curent al profilului Firebase — sincronizarea lui cu
   /// contul Google se face explicit, o singură dată, la [signInWithGoogle]
   /// (nicio reconectare automată în fundal aici).
-  Future<({String name, String? photoUrl})> multiplayerIdentity() async {
+  /// [avatarStyle] e avatarul desenat ales de jucător din Profil (vezi
+  /// widgets/avatar_art.dart). Călătorește odată cu numele și poza tocmai ca
+  /// să ajungă în TOATE locurile unde apare jucătorul pentru ceilalți —
+  /// lobby, meci, clasament, listă de prieteni — dintr-un singur loc.
+  Future<({String name, String? photoUrl, String avatarStyle})> multiplayerIdentity() async {
+    final avatarStyle = await StorageService.getAvatarStyleId();
     final u = currentUser;
     if (u != null) {
       final googleName = u.displayName;
       final name = (googleName != null && googleName.isNotEmpty) ? googleName : await StorageService.getDisplayName();
-      return (name: name, photoUrl: u.photoURL);
+      return (name: name, photoUrl: u.photoURL, avatarStyle: avatarStyle);
     }
-    return (name: await StorageService.getDisplayName(), photoUrl: null);
+    return (name: await StorageService.getDisplayName(), photoUrl: null, avatarStyle: avatarStyle);
   }
 
   /// Cere autorizare pentru scope-ul de profil și ia poza direct de la

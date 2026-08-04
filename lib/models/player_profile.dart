@@ -11,6 +11,11 @@ class PlayerProfile {
   final String name;
   final String? photoUrl;
   final String avatarSeed;
+
+  /// Id-ul avatarului desenat ales din Profil (vezi widgets/avatar_art.dart).
+  /// Gol = poza obișnuită. E aici, în profilul PUBLIC, tocmai ca ceilalți
+  /// jucători să-l vadă în clasament și în lista de prieteni.
+  final String avatarStyle;
   final int matchesPlayed;
   final int wins;
   final int losses;
@@ -55,6 +60,7 @@ class PlayerProfile {
     required this.name,
     required this.avatarSeed,
     this.photoUrl,
+    this.avatarStyle = '',
     this.matchesPlayed = 0,
     this.wins = 0,
     this.losses = 0,
@@ -78,6 +84,7 @@ class PlayerProfile {
       name: data['name'] as String? ?? '?',
       avatarSeed: data['avatarSeed'] as String? ?? doc.id,
       photoUrl: data['photoUrl'] as String?,
+      avatarStyle: data['avatarStyle'] as String? ?? '',
       matchesPlayed: data['matchesPlayed'] as int? ?? 0,
       wins: data['wins'] as int? ?? 0,
       losses: data['losses'] as int? ?? 0,

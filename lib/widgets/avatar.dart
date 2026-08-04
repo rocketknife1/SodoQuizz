@@ -2,6 +2,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
+import '../data/storage_service.dart';
+import 'avatar_art.dart';
+
+// Oriunde se folosește un Avatar se folosește și stilul lui — reexportate ca
+// fiecare ecran să nu aibă nevoie de un al doilea import.
+export 'avatar_art.dart';
+
+/// Avatarul ales de jucătorul de pe TELEFONUL ăsta, ținut aici ca să se
+/// împrospăteze instant peste tot (header, Profil) în clipa în care îl
+/// schimbă, fără restart și fără să reîncarce fiecare ecran din
+/// SharedPreferences.
+final ValueNotifier<AvatarStyle> myAvatarStyle = ValueNotifier(AvatarStyle.poza);
+
+bool _myAvatarStyleLoaded = false;
+
+Future<void> loadMyAvatarStyle() async {
+  myAvatarStyle.value = avatarStyleFromId(await StorageService.getAvatarStyleId());
+  _myAvatarStyleLoaded = true;
+}
+
+Future<void> setMyAvatarStyle(AvatarStyle style) async {
+  myAvatarStyle.value = style;
+  _myAvatarStyleLoaded = true;
+  await StorageService.setAvatarStyleId(style.id);
+}
 
 /// Avatarul jucătorului — poza reală de Google ([photoUrl], dacă userul e
 /// logat cu Google, vezi AuthService.multiplayerIdentity), altfel poza
@@ -15,7 +40,20 @@ class Avatar extends StatelessWidget {
   final String? label;
   final Color? accentColor;
   final String? photoUrl;
-  const Avatar({super.key, this.size = 44, this.label, this.accentColor, this.photoUrl});
+
+  /// Avatarul desenat, ales de jucătorul ăsta. Când e altul decât
+  /// [AvatarStyle.poza], BATE și poza de Google, și inițiala — altfel alegerea
+  /// n-ar avea niciun efect vizibil pentru cine e logat cu Google.
+  final AvatarStyle style;
+
+  const Avatar({
+    super.key,
+    this.size = 44,
+    this.label,
+    this.accentColor,
+    this.photoUrl,
+    this.style = AvatarStyle.poza,
+  });
 
   /// Pozele de Google (`...googleusercontent.com/...=s96-c`) vin implicit la
   /// o rezoluție mică (96px) — se vede pixelat aici, unde poza e afișată la
@@ -58,11 +96,13 @@ class Avatar extends StatelessWidget {
         border: Border.all(color: color, width: size > 60 ? 3 : 2),
       ),
       clipBehavior: Clip.hardEdge,
-      child: (photoUrl != null && photoUrl!.isNotEmpty)
-          ? photo(photoUrl!)
-          : label != null
-              ? fallback
-              : localPhoto(),
+      child: style.isArt
+          ? AvatarArt(style: style, size: size)
+          : (photoUrl != null && photoUrl!.isNotEmpty)
+              ? photo(photoUrl!)
+              : label != null
+                  ? fallback
+                  : localPhoto(),
     );
   }
 }
@@ -71,9 +111,13 @@ class Avatar extends StatelessWidget {
 /// starea de login cu Google se schimbă (poza reală de Google dacă e logat,
 /// altfel poza locală default). Folosit în LevelHeader și Profile, ca
 /// iconița să reflecte imediat login-ul, fără să fie nevoie de restart.
-class MyAvatar extends StatelessWidget {
+/// Previzualizarea opțiunii „Poza mea" din selectorul de avatar: arată mereu
+/// poza reală (Google sau cea implicită), indiferent ce stil desenat e ales
+/// în momentul ăsta — altfel opțiunea de a te întoarce la poză ar arăta
+/// exact ca avatarul curent și n-ar mai însemna nimic.
+class MyPhotoPreview extends StatelessWidget {
   final double size;
-  const MyAvatar({super.key, this.size = 44});
+  const MyPhotoPreview({super.key, this.size = 62});
 
   @override
   Widget build(BuildContext context) {
@@ -81,6 +125,37 @@ class MyAvatar extends StatelessWidget {
       stream: AuthService.instance.authStateChanges(),
       initialData: AuthService.instance.currentUser,
       builder: (context, snap) => Avatar(size: size, photoUrl: snap.data?.photoURL),
+    );
+  }
+}
+
+class MyAvatar extends StatefulWidget {
+  final double size;
+  const MyAvatar({super.key, this.size = 44});
+
+  @override
+  State<MyAvatar> createState() => _MyAvatarState();
+}
+
+class _MyAvatarState extends State<MyAvatar> {
+  @override
+  void initState() {
+    super.initState();
+    // prima montare din sesiune hidratează notifier-ul; celelalte îl citesc
+    // direct din memorie
+    if (!_myAvatarStyleLoaded) loadMyAvatarStyle();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<AvatarStyle>(
+      valueListenable: myAvatarStyle,
+      builder: (context, style, __) => StreamBuilder<User?>(
+        stream: AuthService.instance.authStateChanges(),
+        initialData: AuthService.instance.currentUser,
+        builder: (context, snap) =>
+            Avatar(size: widget.size, photoUrl: snap.data?.photoURL, style: style),
+      ),
     );
   }
 }

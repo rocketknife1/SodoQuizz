@@ -109,6 +109,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       final info = await MultiplayerService.instance.createRoom(
         displayName: identity.name,
         photoUrl: identity.photoUrl,
+        avatarStyle: identity.avatarStyle,
         gameMode: gameMode,
         bet: stake.bet,
         betPercent: stake.betPercent,
@@ -220,6 +221,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         code: code,
         displayName: identity.name,
         photoUrl: identity.photoUrl,
+        avatarStyle: identity.avatarStyle,
         bet: stake.bet,
         betPercent: stake.betPercent,
       );
@@ -271,7 +273,10 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Avatar(size: 100, photoUrl: _photoUrl),
+                        // MyAvatar, nu Avatar(photoUrl:) — ține cont și de
+                        // avatarul desenat ales din Profil, și se
+                        // împrospătează singur când îl schimbi
+                        const MyAvatar(size: 100),
                         const SizedBox(height: 10),
                         GestureDetector(
                           onTap: _editName,

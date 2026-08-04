@@ -71,6 +71,7 @@ class PlayerProfileService {
         'name': identity.name,
         'photoUrl': identity.photoUrl,
         'avatarSeed': uid,
+        'avatarStyle': identity.avatarStyle,
         'lastActive': FieldValue.serverTimestamp(),
         'hasGoogleAccount': AuthService.instance.isSignedIn,
         if (isNew) 'createdAt': FieldValue.serverTimestamp(),

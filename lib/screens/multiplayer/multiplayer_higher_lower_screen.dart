@@ -264,7 +264,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                   Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      Avatar(size: 48, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl),
+                      Avatar(size: 48, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl, style: avatarStyleFromId(p.avatarStyle)),
                       if (voted && !p.eliminated && info.roundPhase == HigherLowerRoundPhase.answering)
                         Positioned(
                           right: -2,

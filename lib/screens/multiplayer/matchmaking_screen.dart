@@ -34,7 +34,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   bool _matched = false;
   bool _left = false;
   bool _joiningRoom = false;
-  ({String name, String? photoUrl})? _identity;
+  ({String name, String? photoUrl, String avatarStyle})? _identity;
 
   @override
   void initState() {
@@ -49,6 +49,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     await MultiplayerService.instance.joinMatchmakingQueue(
       displayName: identity.name,
       photoUrl: identity.photoUrl,
+      avatarStyle: identity.avatarStyle,
       bet: widget.stake.bet,
       betPercent: widget.stake.betPercent,
     );
@@ -99,6 +100,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
         matchId: room.id,
         displayName: identity.name,
         photoUrl: identity.photoUrl,
+        avatarStyle: identity.avatarStyle,
         bet: widget.stake.bet,
         betPercent: widget.stake.betPercent,
       );
@@ -124,6 +126,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
         await MultiplayerService.instance.joinMatchmakingQueue(
           displayName: identity.name,
           photoUrl: identity.photoUrl,
+          avatarStyle: identity.avatarStyle,
           bet: widget.stake.bet,
           betPercent: widget.stake.betPercent,
         );

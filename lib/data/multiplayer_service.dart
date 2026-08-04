@@ -139,6 +139,7 @@ class MultiplayerService {
   Future<MatchInfo> createRoom({
     required String displayName,
     String? photoUrl,
+    String avatarStyle = '',
     MatchGameMode gameMode = MatchGameMode.classic,
     int bet = 0,
     double betPercent = 0,
@@ -169,6 +170,7 @@ class MultiplayerService {
               isHost: true,
               bet: bet,
               betPercent: betPercent,
+              avatarStyle: avatarStyle,
             ).toMap(),
           );
     });
@@ -181,6 +183,7 @@ class MultiplayerService {
     required String code,
     required String displayName,
     String? photoUrl,
+    String avatarStyle = '',
     int bet = 0,
     double betPercent = 0,
   }) async {
@@ -195,7 +198,11 @@ class MultiplayerService {
       throw const MultiplayerUnavailableException('Cod invalid sau camera a pornit deja.');
     }
     return _joinRoomDoc(query.docs.first,
-        displayName: displayName, photoUrl: photoUrl, bet: bet, betPercent: betPercent);
+        displayName: displayName,
+        photoUrl: photoUrl,
+        avatarStyle: avatarStyle,
+        bet: bet,
+        betPercent: betPercent);
   }
 
   /// La fel ca [joinRoomByCode], dar pentru o cameră aleasă direct din
@@ -204,6 +211,7 @@ class MultiplayerService {
     required String matchId,
     required String displayName,
     String? photoUrl,
+    String avatarStyle = '',
     int bet = 0,
     double betPercent = 0,
   }) async {
@@ -213,13 +221,18 @@ class MultiplayerService {
       throw const MultiplayerUnavailableException('Camera nu mai e disponibilă.');
     }
     return _joinRoomDoc(doc,
-        displayName: displayName, photoUrl: photoUrl, bet: bet, betPercent: betPercent);
+        displayName: displayName,
+        photoUrl: photoUrl,
+        avatarStyle: avatarStyle,
+        bet: bet,
+        betPercent: betPercent);
   }
 
   Future<MatchInfo> _joinRoomDoc(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     required String displayName,
     String? photoUrl,
+    String avatarStyle = '',
     int bet = 0,
     double betPercent = 0,
   }) async {
@@ -237,6 +250,7 @@ class MultiplayerService {
             score: 0,
             bet: bet,
             betPercent: betPercent,
+            avatarStyle: avatarStyle,
           ).toMap(),
         ));
     return MatchInfo.fromDoc(doc);
@@ -488,6 +502,7 @@ class MultiplayerService {
   Future<void> joinMatchmakingQueue({
     required String displayName,
     String? photoUrl,
+    String avatarStyle = '',
     int bet = 0,
     double betPercent = 0,
   }) async {
@@ -497,6 +512,7 @@ class MultiplayerService {
       'name': displayName,
       'avatarSeed': me,
       'photoUrl': photoUrl,
+      'avatarStyle': avatarStyle,
       'matchId': null,
       'bet': bet,
       'betPercent': betPercent,
@@ -554,6 +570,7 @@ class MultiplayerService {
               name: data['name'] as String? ?? '?',
               avatarSeed: data['avatarSeed'] as String? ?? c.id,
               photoUrl: data['photoUrl'] as String?,
+              avatarStyle: data['avatarStyle'] as String? ?? '',
               score: 0,
               isHost: c.id == me,
               bet: data['bet'] as int? ?? 0,
