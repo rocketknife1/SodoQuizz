@@ -61,14 +61,19 @@ vedere, altul ascunsă. Ghicești dacă al doilea e căutat mai mult sau mai
 puțin. O singură greșeală și seria se termină — dar cu cât ajungi mai
 departe, cu atât fiecare pas plătește mai bine.
 
-MULTIPLAYER CU PARIURI
-Joci live cu prieteni sau cu adversari găsiți automat. Intri cu o taxă fixă
-plus un pariu ales de tine, între 5% și 85% din câte monede ai. Toate
-pariurile de la masă formează un pool care se împarte la final după cât ai
-pariat, cât de bine ai jucat și cât risc ți-ai asumat — dar o parte se împarte
-strict după clasament, indiferent de mărimea pariului. Concret: dacă cineva
-mizează mult și pierde, banii lui ajung la cei care au rezistat până la final,
-oricât de puțin ar fi pus ei.
+MULTIPLAYER — UN MINUT, CONTRA TUTUROR
+Joci live cu până la 11 prieteni sau cu adversari găsiți automat. Meciul ține
+60 de secunde, același cronometru pentru toți: câte întrebări apuci ține numai
+de tine. Răspunsul corect aduce puncte, cel greșit te costă, iar cele două
+hint-uri de meci îți lasă doar două variante pe ecran — dar și ele se plătesc
+în puncte.
+
+Intri cu o taxă fixă plus un pariu ales de tine, între 5% și 85% din câte
+monede ai. Toate pariurile de la masă formează un pool care se împarte la
+final după cât ai pariat, cât de bine ai jucat și cât risc ți-ai asumat — dar
+o parte se împarte strict după clasament, indiferent de mărimea pariului.
+Concret: dacă cineva mizează mult și pierde, banii lui ajung la cei care au
+rezistat până la final, oricât de puțin ar fi pus ei.
 
 CE MAI E ÎN JOC
 • Roata norocului — un premiu mare o dată la 24 de ore
