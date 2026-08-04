@@ -44,7 +44,7 @@ Play. Instalarea durează un minut.
 
 Dacă găsești ceva stricat sau ai o idee, spune-mi pe Discord — citesc tot:
 
-**https://discord.gg/ejGRMWJH5**
+**https://discord.gg/uumq3RRgE**
 
 ---
 
