@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/game_helpers.dart';
+import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/questions.dart';
@@ -17,8 +18,9 @@ import 'multiplayer_results_screen.dart';
 /// întrebările din toate categoriile formează un singur pool comun.
 /// Întrebările NU se sincronizează prin Firestore: fiecare client încarcă
 /// local exact același pool prin `loadAllQuestions()` și îl amestecă
-/// determinist cu `Random(matchId.hashCode)`, ca toți să vadă exact aceeași
-/// ordine.
+/// determinist cu `stableShuffle(..., stableHash(matchId))`, ca toți să vadă
+/// exact aceeași ordine — vezi core/stable_hash.dart pentru de ce nu merge
+/// aici nici `String.hashCode`, nici `Random(seed)` din `dart:math`.
 ///
 /// Meciul e o CURSĂ DE UN MINUT ([multiplayerMatchSeconds]), nu o parcurgere
 /// a întregului pool: înainte, ecranul rula prin toate cele ~1.400 de
@@ -76,7 +78,8 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   }
 
   Future<void> _load() async {
-    final all = List.of(await loadAllQuestions())..shuffle(Random(widget.matchId.hashCode));
+    final all = List.of(await loadAllQuestions());
+    stableShuffle(all, stableHash(widget.matchId));
     if (!mounted) return;
     setState(() {
       _questions = all;
@@ -179,8 +182,8 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   void _useHint() {
     if (_answered || _hintUsedHere || _hintsLeft <= 0 || _finishing) return;
     final q = _current;
-    final wrong = q.choices.where((c) => c != q.answer).toList()
-      ..shuffle(Random(q.id.hashCode + _qIndex));
+    final wrong = q.choices.where((c) => c != q.answer).toList();
+    stableShuffle(wrong, stableHash(q.id) + _qIndex);
     setState(() {
       _hiddenOptions = wrong.take(max(0, wrong.length - 1)).toSet();
       _hintUsedHere = true;
@@ -224,7 +227,8 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     }
 
     final q = _current;
-    final opts = [...q.choices]..shuffle(Random(q.id.hashCode + _qIndex));
+    final opts = [...q.choices];
+    stableShuffle(opts, stableHash(q.id) + _qIndex);
 
     return PopScope(
       canPop: false,

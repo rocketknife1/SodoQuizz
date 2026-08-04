@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
@@ -12,8 +12,14 @@ import 'multiplayer_results_screen.dart';
 /// Varianta multiplayer a mini-jocului solo Higher or Lower
 /// (higher_lower_screen.dart): toți jucătorii din cameră văd aceeași
 /// pereche campion/provocator pe rundă (aceeași ordine determinist
-/// amestecată din higherLowerItems, seed = matchId.hashCode — la fel ca
+/// amestecată din higherLowerItems, seed = stableHash(matchId) — la fel ca
 /// pool-ul comun de întrebări din modul Clasic) și votează în secret.
+///
+/// Amestecarea trece OBLIGATORIU prin core/stable_hash.dart, nu prin
+/// `shuffle(Random(matchId.hashCode))`: runda se rezolvă cu perechea văzută
+/// de clientul care apucă primul tranzacția, deci dacă pool-ul diferă între
+/// platforme (și `String.hashCode` chiar diferă), ceilalți primesc "greșit"
+/// pe un răspuns corect.
 ///
 /// Rezolvarea rundei (cine a ghicit, cine primește o "pâine", cine e
 /// eliminat) se întâmplă printr-o tranzacție Firestore pe care O POATE
@@ -30,7 +36,13 @@ class MultiplayerHigherLowerScreen extends StatefulWidget {
 }
 
 class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScreen> {
-  late final List<HigherLowerItem> _pool = List.of(higherLowerItems)..shuffle(Random(widget.matchId.hashCode));
+  late final List<HigherLowerItem> _pool = _buildPool();
+
+  List<HigherLowerItem> _buildPool() {
+    final pool = List.of(higherLowerItems);
+    stableShuffle(pool, stableHash(widget.matchId));
+    return pool;
+  }
 
   int _lastRoundIndex = -1;
   bool _showWinners = false;
