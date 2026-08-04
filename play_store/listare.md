@@ -76,6 +76,8 @@ Concret: dacă cineva mizează mult și pierde, banii lui ajung la cei care au
 rezistat până la final, oricât de puțin ar fi pus ei.
 
 CE MAI E ÎN JOC
+• Avatare de ales: fată, băiat, pisică sau porcușor de Guineea — se schimbă
+  dintr-o apăsare pe poza din Profil și te urmează în clasament și multiplayer
 • Roata norocului — un premiu mare o dată la 24 de ore
 • Clippy — un bonus rapid de trei întrebări, fără risc, la fiecare 5 minute
 • Cultură Generală — runde de întrebări cu răspuns la timp
