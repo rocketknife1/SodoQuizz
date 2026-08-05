@@ -51,6 +51,11 @@ class _QuestsScreenState extends State<QuestsScreen> {
 
   Future<_QuestsData> _load() async {
     final quests = todaysQuests();
+    // Nivelul cu care a început ziua — el fixează țintele și plățile de azi
+    // (vezi StorageService.questScaleLevel). NU se recitește la fiecare
+    // refresh de balanță, altfel un level-up câștigat chiar din colectarea
+    // unui quest ar rescrie țintele celorlalte în mijlocul ecranului.
+    final level = await StorageService.questScaleLevel();
     final xp = await StorageService.getXp();
     final coins = await StorageService.getCoins();
     final lives = await StorageService.getLives();
@@ -64,6 +69,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
     }
     return _QuestsData(
       quests: quests,
+      level: level,
       xp: xp,
       coins: coins,
       lives: lives,
@@ -101,6 +107,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
     setState(() {
       _dataFuture = Future.value(_QuestsData(
         quests: current.quests,
+        level: current.level,
         xp: current.xp,
         coins: current.coins,
         lives: current.lives,
@@ -112,8 +119,8 @@ class _QuestsScreenState extends State<QuestsScreen> {
     });
     await collectRewards(
       context,
-      coins: q.coinReward * multiplier,
-      xp: q.xpReward * multiplier,
+      coins: q.coinRewardAt(current.level) * multiplier,
+      xp: q.xpRewardAt(current.level) * multiplier,
       lives: q.heartReward * multiplier,
       hints: q.hintReward * multiplier,
       hintsBadgeKey: _hintsBadgeKey,
@@ -165,7 +172,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
     final current = await _dataFuture;
     final claimable = current.quests.where((q) {
       final p = current.progress[q.id] ?? 0;
-      return p >= q.target && !(current.claimed[q.id] ?? false);
+      return p >= q.targetAt(current.level) && !(current.claimed[q.id] ?? false);
     }).toList();
     if (claimable.isEmpty) return;
     if (!mounted) return;
@@ -173,8 +180,8 @@ class _QuestsScreenState extends State<QuestsScreen> {
 
     var coins = 0, xp = 0, gems = 0, hearts = 0, hints = 0;
     for (final q in claimable) {
-      xp += q.xpReward;
-      coins += q.coinReward;
+      xp += q.xpRewardAt(current.level);
+      coins += q.coinRewardAt(current.level);
       // plafonul zilnic de gems se aplică per quest, exact ca la [_claim] —
       // o colectare în bloc nu trebuie să-l poată ocoli.
       gems += await StorageService.grantQuestGems(q.gemReward);
@@ -402,11 +409,13 @@ class _QuestsScreenState extends State<QuestsScreen> {
                           itemCount: data.quests.length,
                           itemBuilder: (context, i) {
                             final q = data.quests[i];
-                            final progress = (data.progress[q.id] ?? 0).clamp(0, q.target);
-                            final done = progress >= q.target;
+                            final target = q.targetAt(data.level);
+                            final progress = (data.progress[q.id] ?? 0).clamp(0, target);
+                            final done = progress >= target;
                             final claimed = data.claimed[q.id] ?? false;
                             return _QuestCard(
                               quest: q,
+                              level: data.level,
                               progress: progress,
                               done: done,
                               claimed: claimed,
@@ -436,7 +445,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
   Widget _buildCollectAllButton(_QuestsData data) {
     final claimableCount = data.quests.where((q) {
       final p = data.progress[q.id] ?? 0;
-      return p >= q.target && !(data.claimed[q.id] ?? false);
+      return p >= q.targetAt(data.level) && !(data.claimed[q.id] ?? false);
     }).length;
     if (claimableCount < 2) {
       return Row(
@@ -484,6 +493,12 @@ class _QuestsScreenState extends State<QuestsScreen> {
 
 class _QuestsData {
   final List<Quest> quests;
+
+  /// Nivelul cu care a început ziua — fixează țintele și plățile tuturor
+  /// quest-urilor afișate (vezi StorageService.questScaleLevel). Ținut în
+  /// date, nu recitit din storage la fiecare rebuild, ca un level-up câștigat
+  /// chiar din colectare să nu rescrie ecranul sub ochii jucătorului.
+  final int level;
   final int xp;
   final int coins;
   final int lives;
@@ -493,6 +508,7 @@ class _QuestsData {
   final Map<String, bool> claimed;
   _QuestsData({
     required this.quests,
+    required this.level,
     required this.xp,
     required this.coins,
     required this.lives,
@@ -507,6 +523,7 @@ class _QuestsData {
   _QuestsData copyWith({int? xp, int? coins, int? lives, int? hints, int? gems, Map<String, bool>? claimed}) {
     return _QuestsData(
       quests: quests,
+      level: level,
       xp: xp ?? this.xp,
       coins: coins ?? this.coins,
       lives: lives ?? this.lives,
@@ -520,6 +537,10 @@ class _QuestsData {
 
 class _QuestCard extends StatelessWidget {
   final Quest quest;
+
+  /// Nivelul zilei — cardul îl are nevoie ca să afișeze ținta și plata
+  /// EFECTIVE, nu valorile de catalog (vezi economyGrowth).
+  final int level;
   final int progress;
   final bool done;
   final bool claimed;
@@ -529,6 +550,7 @@ class _QuestCard extends StatelessWidget {
 
   const _QuestCard({
     required this.quest,
+    required this.level,
     required this.progress,
     required this.done,
     required this.claimed,
@@ -562,12 +584,12 @@ class _QuestCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(quest.title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                Text(quest.titleAt(level), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
-                    value: progress / quest.target,
+                    value: progress / quest.targetAt(level),
                     minHeight: 6,
                     backgroundColor: Colors.white12,
                     valueColor: AlwaysStoppedAnimation(claimed ? AppColors.success : AppColors.purple),
@@ -577,9 +599,9 @@ class _QuestCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text('$progress / ${quest.target}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    Text('$progress / ${quest.targetAt(level)}', style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     const SizedBox(width: 8),
-                    Expanded(child: _RewardChips(quest: quest)),
+                    Expanded(child: _RewardChips(quest: quest, level: level)),
                   ],
                 ),
               ],
@@ -640,13 +662,16 @@ class _QuestCard extends StatelessWidget {
 /// text ce nu mai încape odată ce un quest poate combina mai multe resurse.
 class _RewardChips extends StatelessWidget {
   final Quest quest;
-  const _RewardChips({required this.quest});
+  final int level;
+  const _RewardChips({required this.quest, required this.level});
 
   @override
   Widget build(BuildContext context) {
+    final xp = quest.xpRewardAt(level);
+    final coins = quest.coinRewardAt(level);
     final chips = <Widget>[
-      if (quest.xpReward > 0) _chip(Icons.star_rounded, AppColors.purple, quest.xpReward),
-      if (quest.coinReward > 0) _chip(Icons.monetization_on_rounded, AppColors.coin, quest.coinReward),
+      if (xp > 0) _chip(Icons.star_rounded, AppColors.purple, xp),
+      if (coins > 0) _chip(Icons.monetization_on_rounded, AppColors.coin, coins),
       if (quest.gemReward > 0) _chip(Icons.diamond_rounded, AppColors.gem, quest.gemReward),
       if (quest.heartReward > 0) _chip(Icons.favorite_rounded, AppColors.life, quest.heartReward),
       if (quest.hintReward > 0) _chip(Icons.tips_and_updates_rounded, AppColors.hint, quest.hintReward),

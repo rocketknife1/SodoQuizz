@@ -729,10 +729,15 @@ aduce cu el și "de"-ul, fiindcă în română depinde de număr ("5 întrebări
 
 ### 15.2 Recompensele quest-urilor, recalibrate
 
+> **Corectat imediat după prima versiune a acestei secțiuni:** multiplicatorul
+> fix de 5,4 a fost înlocuit cu o **creștere organică pe nivel** — vezi 15.2.1.
+> Un număr fix e mereu greșit pentru cineva, iar saltul 3,0 → 5,4 se simțea ca
+> un cadou artificial, nu ca progres.
+
 | Resursă | v3.1 | Acum | De ce |
 |---|---|---|---|
-| Monede | ×3,0 | **×5,4** | ținte de 2,3× și 1,25× mai multe quest-uri pe zi |
-| XP | ×3,0 | **×5,4** | idem |
+| Monede | ×3,0 fix | **×2,9 × creșterea de nivel** (2,9 → 6,0) | vezi 15.2.1 |
+| XP | ×3,0 fix | **×2,9 × creșterea de nivel** | idem |
 | Hints | ×1,5 | **×1,0** | stocul e plafonat la 26; la ×2,2 ieșeau 35-54 pe zi, iar surplusul se evapora — cardul promitea ce nu primeai |
 | Vieți | ×2,0 | **×1,0** | valoarea din catalog e acum exact cea primită (vezi mai jos) |
 | Gems | 0/1/2 per tier | neschimbat | plafonul zilnic a urcat 13 → **19** |
@@ -753,13 +758,65 @@ Verificat pe cele 7 zile ale rotației, la revendicare completă:
 | Vieți | 5-11 | 11-14 |
 | Hints | 14-19 | 24-25 |
 
-> ⚠️ **Efect asupra inflației, de urmărit.** Venitul zilnic din quest-uri urcă
-> de la ~780 de monede la ~1.500-2.500. Efortul crește însă mai mult decât
-> plata (ținte ×2,3 și 1,25× mai multe quest-uri ≈ ×2,9 muncă, pentru ×2,5
-> bani), deci **moneda pe minut a scăzut ușor** — un jucător primește mai mult
-> pe zi fiindcă joacă mai mult, nu fiindcă a devenit mai ieftin. Rămâne totuși
-> peste calculul din secțiunea 6.1: un jucător hard ajunge acum la ~+800
-> monede net pe zi în loc de ~0. Knob-ul e `questCoinRewardMultiplier`.
+### 15.2.1 Creșterea organică (`economyGrowth`)
+
+Cerința: *"o creștere organică, nu bruscă; să nu te îneci în monede, nici să
+nu mori de foame după ele; gândit pe termen lung, să nu piardă jucători."*
+
+Un multiplicator fix nu poate satisface asta — e mereu greșit pentru cineva.
+Calibrat pentru nivelul 20 îneacă un începător; calibrat pentru începător face
+ca la nivelul 20 să nu mai conteze nimic. De-aia **și efortul și plata cresc
+împreună cu nivelul**, pe aceeași curbă:
+
+| Nivel | Creștere |
+|---|---|
+| 1 | 1,00× |
+| 5 | 1,19× |
+| 10 | 1,42× |
+| 15 | 1,65× |
+| 20 | 1,88× |
+| 24+ | **2,07× (plafon)** |
+
+Curba e liniară (`1 + 0,0465 × (nivel − 1)`, plafonată), deci **niciun nivel
+nu aduce un salt de peste 10%** — nu există momentul în care ziua ta valorează
+brusc dublu. Se aplică DOAR monedelor și XP-ului; gems, vieți și hint-uri
+rămân fixe, fiindcă toate trei au plafoane pe care scalarea le-ar face fără sens.
+
+Ce iese, verificat în `test/economy_balance_test.dart`:
+
+| Nivel | Monede/zi din quest-uri | Taxă categorie | Sesiuni pe care le acoperă |
+|---|---|---|---|
+| 1 | 1.064 | 67 | **15,9** |
+| 5 | 1.262 | 80 | **15,8** |
+| 10 | 1.509 | 95 | **15,9** |
+| 15 | 1.756 | 111 | **15,8** |
+| 24+ | 2.200 | 139 | **15,8** |
+
+Cifrele de pe ecran cresc vizibil (un quest care dădea 90 de monede dă 186 la
+nivelul 24; "Răspunde la 46 de întrebări" devine "la 95"), dar **puterea de
+cumpărare rămâne identică** — 15,8-15,9 sesiuni de joc pe zi la orice nivel.
+Asta e definiția lui "nici înecat, nici înfometat": progresul se vede, dar nu
+schimbă echilibrul.
+
+Mecanismul care ține totul în frâu: **venitul crește cu NIVELUL, taxele cresc
+cu AVEREA** (`categoryEntryFee` 2,1%, `hintCoinCost` 3,7%). Dacă aduni bani
+fără să-i cheltui, taxele urcă singure și te readuc în bandă.
+
+**Nivelul e înghețat pe zi** (`StorageService.questScaleLevel`): un level-up la
+mijlocul zilei ar mări țintele sub degetul jucătorului, iar bara de progres ar
+da înapoi. Ziua se joacă pe regulile cu care a început; nivelul nou se aplică
+de mâine.
+
+Knob-uri, într-un singur loc: `economyGrowthMax` (cât de sus urcă),
+`economyGrowthPerLevel` (cât de repede), `questCoinRewardMultiplier` (punctul
+de plecare).
+
+**Multiplayer-ul nu are nevoie de tratament separat:** e deja auto-scalat —
+pariul e un procent din portofel, iar rake-ul un procent din pool. Singurul
+număr fix rămas acolo e taxa de intrare (37), iar ea nu poate deveni
+procentuală fără să fie stocată per jucător în Firestore (ecranul de rezultate
+o folosește ca să reconstituie cât a plătit fiecare). De făcut doar dacă devine
+o problemă reală.
 
 ### 15.3 Realizări: 10 → 20, gândite pe o lună
 

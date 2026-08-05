@@ -1169,6 +1169,24 @@ class StorageService {
   // Progresul unui quest se resetează automat quand se schimbă ziua, pentru că
   // e stocat sub o cheie care include data ("quest_<id>_<data>").
 
+  /// Nivelul după care se calculează țintele și plățile quest-urilor de AZI
+  /// (vezi [economyGrowth]). Se fixează la prima citire din ziua respectivă și
+  /// NU se mai schimbă până la miezul nopții.
+  ///
+  /// Fără înghețarea asta, un level-up la mijlocul zilei ar mări țintele sub
+  /// degetul jucătorului: bara de progres ar da înapoi, iar un quest care era
+  /// gata ar redeveni neterminat. Cu ea, ziua se joacă pe regulile cu care a
+  /// început, iar nivelul nou se aplică de mâine.
+  static Future<int> questScaleLevel() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'quest_level_${_dateKey(DateTime.now())}';
+    final stored = prefs.getInt(key);
+    if (stored != null) return stored;
+    final level = levelForXp(prefs.getInt(_xpKey) ?? 0);
+    await prefs.setInt(key, level);
+    return level;
+  }
+
   static Future<int> getQuestProgress(String questId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_questProgressKey(questId)) ?? 0;
@@ -1217,9 +1235,12 @@ class StorageService {
   /// True dacă vreun quest activ AZI are ținta atinsă și încă nerevendicată
   /// — folosit pentru punctul roșu de notificare de pe tab-ul Quests.
   static Future<bool> hasClaimableQuests() async {
+    final level = await questScaleLevel();
     for (final q in todaysQuests()) {
       final progress = await getQuestProgress(q.metricKey);
-      if (progress >= q.target && !await isQuestClaimed(q.id)) return true;
+      if (progress >= q.targetAt(level) && !await isQuestClaimed(q.id)) {
+        return true;
+      }
     }
     return false;
   }
@@ -1478,10 +1499,12 @@ class StorageService {
   static Future<void> debugUnlockAllQuestsAndAchievements() async {
     final prefs = await SharedPreferences.getInstance();
 
+    final level = await questScaleLevel();
     final maxTargetByMetric = <String, int>{};
     for (final q in todaysQuests()) {
       final current = maxTargetByMetric[q.metricKey] ?? 0;
-      if (q.target > current) maxTargetByMetric[q.metricKey] = q.target;
+      final target = q.targetAt(level);
+      if (target > current) maxTargetByMetric[q.metricKey] = target;
     }
     for (final entry in maxTargetByMetric.entries) {
       await prefs.setInt(_questProgressKey(entry.key), entry.value);

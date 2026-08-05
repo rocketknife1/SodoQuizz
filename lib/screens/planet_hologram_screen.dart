@@ -227,10 +227,16 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   Future<void> _finishRun() async {
     final chance = planetJackpotChance(_correct);
     final won = chance >= 1.0 || _rnd.nextDouble() < chance;
+    // Aceeași curbă ca la quest-uri: recompensa crește cu nivelul, ca un
+    // premiu fix să nu fie enorm pentru un începător și derizoriu pentru un
+    // veteran (vezi economyGrowth).
+    final level = levelForXp(_xp);
     setState(() {
       _finished = true;
       _jackpot = won;
-      _reward = won ? planetJackpotReward : planetConsolationReward(_correct);
+      _reward = won
+          ? planetJackpotReward(level)
+          : planetConsolationReward(_correct, level);
     });
     Sfx.rewardPop();
 

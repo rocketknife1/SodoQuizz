@@ -220,19 +220,34 @@ class PlanetReward {
 /// "Reward din toate" — se acordă întreg, din toate cele cinci resurse.
 /// Deliberat mare: planeta se poate juca de cel mult 3 ori la 12 ore, deci
 /// valoarea unei rulări reușite trebuie să se simtă, nu să fie încă o sursă
-/// măruntă. Comparabilă cu o rotire de roată (~489 echivalent-monede, vezi
-/// docs/economie_v3.md secțiunea 4.1), fiindcă și cooldown-ul e comparabil.
-const PlanetReward planetJackpotReward =
-    PlanetReward(coins: 517, xp: 233, gems: 23, hearts: 4, hints: 7);
+/// măruntă. La mijlocul curbei e comparabilă cu o rotire de roată (~489
+/// echivalent-monede, vezi secțiunea 4.1), fiindcă și cooldown-ul e comparabil.
+///
+/// Monedele și XP-ul urmează [economyGrowth] ca tot restul economiei: 373 la
+/// nivelul 1, ~522 la nivelul 10, 772 la plafon. Un premiu fix ar fi fost
+/// enorm pentru un începător (aproape o zi întreagă de venit) și derizoriu
+/// pentru un veteran. Gems, vieți și hint-uri rămân fixe — sunt resursele cu
+/// plafon.
+PlanetReward planetJackpotReward(int level) {
+  final g = economyGrowth(level);
+  return PlanetReward(
+    coins: (373 * g).round(),
+    xp: (167 * g).round(),
+    gems: 23,
+    hearts: 4,
+    hints: 7,
+  );
+}
 
 /// Ce primești când zarul nu a căzut bine — sau când n-ai atins nici pragul
 /// minim. Proporțională cu câte ai nimerit, ca o rulare bună fără noroc să
 /// nu iasă pe zero. Fără gems: aceia rămân exclusiv la recompensa mare.
-PlanetReward planetConsolationReward(int correct) {
+PlanetReward planetConsolationReward(int correct, int level) {
   if (correct <= 0) return const PlanetReward();
+  final g = economyGrowth(level);
   return PlanetReward(
-    coins: 11 * correct,
-    xp: 6 * correct,
+    coins: (8 * correct * g).round(),
+    xp: (4 * correct * g).round(),
     hearts: correct >= planetGreatRunCorrect ? 1 : 0,
     hints: correct >= planetGoodRunCorrect ? 2 : 0,
   );
@@ -297,41 +312,46 @@ class Quest {
   // singură dată, ca să nu trebuiască rescrise 71 de intrări la fiecare
   // recalibrare.
 
-  int get coinReward => (_baseCoinReward * questCoinRewardMultiplier).round();
-  int get xpReward => (_baseXpReward * questXpRewardMultiplier).round();
+  /// Monedele și XP-ul cresc cu nivelul jucătorului (vezi [economyGrowth]) —
+  /// de-aia sunt METODE, nu getteri: nu există o valoare corectă a lor în
+  /// afara unui jucător anume.
+  int coinRewardAt(int level) =>
+      (_baseCoinReward * questCoinRewardMultiplier * economyGrowth(level))
+          .round();
+
+  int xpRewardAt(int level) =>
+      (_baseXpReward * questXpRewardMultiplier * economyGrowth(level)).round();
+
+  /// Vieți, hint-uri și gems NU cresc cu nivelul — toate trei au plafoane pe
+  /// care scalarea le-ar face fără sens (vezi comentariul de la
+  /// [economyGrowth]).
   int get heartReward => (_baseHeartReward * questHeartRewardMultiplier).round();
   int get hintReward => (_baseHintReward * questHintRewardMultiplier).round();
 
-  /// Ținta EFECTIVĂ, după scalarea cerută ("un quest se termină în decursul
-  /// unei zile, nu în câteva minute") — vezi [questTargetScale] și
-  /// [scalableQuestMetrics]. Catalogul de mai jos păstrează valorile de bază,
-  /// exact ca la recompense: un singur loc de recalibrat, nu 88 de intrări.
+  /// Ținta EFECTIVĂ la nivelul dat. Crește pe ACEEAȘI curbă ca plata, ca
+  /// moneda pe minut să rămână constantă: un jucător de nivel 20 are cifre mai
+  /// mari pe ecran, dar nu și o zi mai profitabilă la aceeași cantitate de joc.
   ///
   /// Scalarea se aplică DOAR metricilor fără plafon zilnic natural. Un quest
   /// pe `wheel_spin` (o rotire la 24h) sau pe `planet_run` (2-3 rulări la 12h)
-  /// ar deveni imposibil de terminat dacă i-am înmulți ținta — de-aia lista e
-  /// o listă albă explicită, nu o excludere.
-  int get target => scalableQuestMetrics.contains(metricKey)
-      ? (_baseTarget * questTargetScale).round()
+  /// ar deveni imposibil de terminat dacă i-am înmulți ținta — de-aia
+  /// [scalableQuestMetrics] e o listă albă explicită, nu o excludere.
+  int targetAt(int level) => scalableQuestMetrics.contains(metricKey)
+      ? (_baseTarget * questTargetScale * economyGrowth(level)).round()
       : _baseTarget;
 
-  /// Titlul afișat. Quest-urile a căror țintă se scalează își scriu numărul
-  /// în catalog ca `{n}`, nu ca cifră: altfel "Răspunde corect la 5
-  /// întrebări" ar rămâne pe ecran lângă o bară care cere 12, iar textul ar
-  /// minți la fiecare recalibrare a lui [questTargetScale].
+  /// Titlul afișat, la nivelul dat. Quest-urile a căror țintă se scalează își
+  /// scriu numărul în catalog ca `{n}`, nu ca cifră: altfel "Răspunde corect
+  /// la 5 întrebări" ar rămâne pe ecran lângă o bară care cere 12.
   ///
   /// `{n}` aduce cu el și "de"-ul, fiindcă în română depinde de număr: "5
-  /// întrebări", dar "35 DE întrebări". Cum ținta se schimbă cu
-  /// [questTargetScale], "de" nu poate sta scris în catalog — un titlu
-  /// calibrat pe 15 ar fi ajuns "35 întrebări" după scalare.
-  String get title => _titleTemplate.replaceAll('{n}', _spelledTarget);
-
-  /// Regula: "de" se pune când ultimele două cifre sunt 00 sau între 20 și
-  /// 99 (20 de mere, 100 de mere, dar 15 mere și 101 mere).
-  String get _spelledTarget {
-    final lastTwo = target % 100;
+  /// întrebări", dar "35 DE întrebări". Cum ținta depinde de nivel, "de" nu
+  /// poate sta scris în catalog.
+  String titleAt(int level) {
+    final n = targetAt(level);
+    final lastTwo = n % 100;
     final needsDe = lastTwo == 0 || lastTwo >= 20;
-    return needsDe ? '$target de' : '$target';
+    return _titleTemplate.replaceAll('{n}', needsDe ? '$n de' : '$n');
   }
 
   /// Gems acordate de acest quest, dedus din dificultate. Ținta e explicită:
@@ -353,16 +373,50 @@ class Quest {
       };
 }
 
-/// Multiplicatorii de recompensă aplicați peste valorile din catalog (vezi
-/// comentariul din [Quest]). Au crescut de la 3,0 la 6,3 odată cu
-/// [questTargetScale]: dacă un quest cere acum de ~2,3× mai multă muncă și
-/// ziua are 12-14 quest-uri în loc de ~10, plata trebuie să urce în același
-/// ritm, altfel aceeași zi de joc ar valora brusc mai puțin. Hint-urile cresc
-/// mai puțin (stocul e oricum plafonat la 26, vezi StorageService) și viețile
-/// cel mai puțin — sunt resursa care controlează cât poți juca, deci cea mai
-/// sensibilă la inflație.
-const double questCoinRewardMultiplier = 5.4;
-const double questXpRewardMultiplier = 5.4;
+// ─── Creșterea organică a economiei ───────────────────────────────────────
+// Problema pe care o rezolvă: orice număr FIX e greșit pentru cineva. O
+// recompensă calibrată pentru un jucător de nivel 20 îneacă un începător; una
+// calibrată pentru începător face ca la nivelul 20 să nu mai conteze nimic.
+// Iar o creștere pusă dintr-o dată (multiplicatorul sărit de la 3,0 la 5,4)
+// se simte ca un salt artificial, nu ca progres.
+//
+// De-aia și EFORTUL și PLATA cresc împreună cu nivelul, pe aceeași curbă:
+//
+//   nivel 1  → 1,00×      nivel 15 → 1,63×
+//   nivel 5  → 1,18×      nivel 20 → 1,86×
+//   nivel 10 → 1,40×      nivel 24+ → 2,07× (plafon)
+//
+// Consecințele intenționate:
+//  • moneda pe minut rămâne aproape constantă la orice nivel — nimeni nu
+//    "descoperă" brusc că ziua lui valorează dublu;
+//  • cifrele de pe ecran cresc totuși vizibil, deci progresul se vede;
+//  • taxele (intrare în categorie, hint, pariu multiplayer) scalează deja cu
+//    AVEREA, nu cu nivelul, deci ele urcă doar dacă chiar aduni bani — asta
+//    e frâna care împiedică acumularea exponențială;
+//  • plafonul la 2,07× la nivelul 24 oprește curba înainte să devină absurdă.
+//
+// Se aplică DOAR monedelor și XP-ului. Gems, vieți și hint-uri rămân fixe:
+// toate trei sunt resurse cu plafon (stoc de hint-uri 26, gems calibrate pe
+// "o categorie pe săptămână", viețile controlează cât poți juca), iar
+// scalarea lor ar strica exact plafoanele alea.
+
+/// Plafonul curbei și nivelul la care se atinge — un singur loc de reglat.
+const double economyGrowthMax = 2.07;
+
+/// Ales ca plafonul să cadă EXACT pe nivelul 24 (1 + 0,0465 × 23 = 2,0695),
+/// nu undeva la 24,8 — ca "de la nivelul 24 în sus nu mai crește" să fie o
+/// afirmație adevărată, nu aproximativă.
+const double economyGrowthPerLevel = 0.0465;
+
+double economyGrowth(int level) =>
+    (1.0 + economyGrowthPerLevel * (level - 1)).clamp(1.0, economyGrowthMax);
+
+/// Multiplicatorii de bază, aplicați peste valorile din catalog ÎNAINTE de
+/// [economyGrowth]. 2,9 la nivelul 1 e practic cât era vechiul multiplicator
+/// fix (3,0), deci un jucător nou primește exact ce primea înainte — creșterea
+/// vine din curbă, nu dintr-un salt.
+const double questCoinRewardMultiplier = 2.9;
+const double questXpRewardMultiplier = 2.9;
 
 /// Hint-urile NU urmează saltul monedelor, ci rămân la valoarea din catalog.
 /// Stocul de hint-uri e plafonat la 26 (vezi StorageService.addHints), iar la

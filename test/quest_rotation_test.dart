@@ -109,36 +109,96 @@ void main() {
       }
     });
 
-    test('nicio țintă nu depășește plafonul zilnic al metricului ei', () {
-      for (final q in allQuests) {
-        final ceiling = dailyCeiling[q.metricKey];
-        if (ceiling == null) continue;
-        expect(q.target, lessThanOrEqualTo(ceiling),
-            reason: '${q.id} cere ${q.target} din ${q.metricKey}, dar maximul zilnic e $ceiling');
+    test('nicio țintă nu depășește plafonul zilnic al metricului ei, la niciun nivel', () {
+      for (final level in _levels) {
+        for (final q in allQuests) {
+          final ceiling = dailyCeiling[q.metricKey];
+          if (ceiling == null) continue;
+          expect(q.targetAt(level), lessThanOrEqualTo(ceiling),
+              reason: 'nivel $level: ${q.id} cere ${q.targetAt(level)} din ${q.metricKey}, maximul zilnic e $ceiling');
+        }
       }
     });
 
     test('quest-urile pe numărul de revendicări încap în ziua lor', () {
       // "Revendică alte N quest-uri azi" nu poate cere mai multe decât are
       // ziua în care pică, minus el însuși.
-      for (var d = 0; d < questRotationDays; d++) {
-        for (final q in todaysQuests(DateTime(2026, 8, 3 + d))) {
-          if (q.metricKey != 'quests_claimed_today') continue;
-          expect(q.target, lessThan(questsPerWeekday[d]),
-              reason: '${q.id} cere ${q.target} revendicări într-o zi cu ${questsPerWeekday[d]} quest-uri');
+      for (final level in _levels) {
+        for (var d = 0; d < questRotationDays; d++) {
+          for (final q in todaysQuests(DateTime(2026, 8, 3 + d))) {
+            if (q.metricKey != 'quests_claimed_today') continue;
+            expect(q.targetAt(level), lessThan(questsPerWeekday[d]),
+                reason: 'nivel $level: ${q.id} cere ${q.targetAt(level)} revendicări într-o zi cu ${questsPerWeekday[d]} quest-uri');
+          }
         }
       }
     });
   });
 
-  test('titlurile cu țintă scalabilă afișează ținta EFECTIVĂ', () {
+  test('titlurile afișează ținta EFECTIVĂ a nivelului', () {
     // Catalogul scrie {n}; dacă cineva pune iar cifra direct în titlu, textul
-    // ar minți față de bara de progres de sub el.
-    for (final q in allQuests) {
-      if (!scalableQuestMetrics.contains(q.metricKey)) continue;
-      expect(q.title, contains('${q.target}'),
-          reason: '${q.id}: titlul "${q.title}" nu conține ținta ${q.target}');
-      expect(q.title, isNot(contains('{n}')));
+    // ar minți față de bara de progres de sub el — și ar minți diferit la
+    // fiecare nivel, de când ținta crește cu economyGrowth.
+    for (final level in _levels) {
+      for (final q in allQuests) {
+        if (!scalableQuestMetrics.contains(q.metricKey)) continue;
+        final t = q.targetAt(level);
+        expect(q.titleAt(level), contains('$t'),
+            reason: 'nivel $level, ${q.id}: titlul "${q.titleAt(level)}" nu conține ținta $t');
+        expect(q.titleAt(level), isNot(contains('{n}')));
+      }
     }
   });
+
+  group('creșterea organică (economyGrowth)', () {
+    test('pornește de la 1 și se oprește la plafon', () {
+      expect(economyGrowth(1), 1.0);
+      expect(economyGrowth(0), 1.0); // sub nivelul 1 nu coboară niciodată
+      expect(economyGrowth(100), economyGrowthMax);
+      expect(economyGrowth(24), closeTo(economyGrowthMax, 0.01));
+    });
+
+    test('crește monoton, fără salturi', () {
+      // "organic, nu brusc": niciun nivel nu trebuie să aducă un salt de peste
+      // 10% față de cel dinainte.
+      for (var l = 2; l <= 40; l++) {
+        final prev = economyGrowth(l - 1);
+        final now = economyGrowth(l);
+        expect(now, greaterThanOrEqualTo(prev));
+        expect(now / prev, lessThan(1.10),
+            reason: 'salt prea mare între nivelul ${l - 1} și $l');
+      }
+    });
+
+    test('efortul și plata cresc împreună — moneda pe efort rămâne stabilă', () {
+      // Ăsta e miezul: dacă ținta ar crește mai repede decât plata, jucătorii
+      // vechi ar fi pedepsiți; invers, ar fi inundați de monede.
+      //
+      // Verificat doar pe quest-urile cu ținte destul de mari cât rotunjirea
+      // la întreg să nu domine: la o țintă de 2, un singur pas de rotunjire
+      // înseamnă 50% diferență, ceea ce nu spune nimic despre curbă.
+      var checked = 0;
+      for (final q in allQuests) {
+        if (!scalableQuestMetrics.contains(q.metricKey)) continue;
+        if (q.targetAt(1) < 10) continue;
+        checked++;
+        final low = q.coinRewardAt(1) / q.targetAt(1);
+        final high = q.coinRewardAt(24) / q.targetAt(24);
+        expect(high / low, closeTo(1.0, 0.04),
+            reason: '${q.id}: moneda pe unitate de efort sare de la $low la $high');
+      }
+      expect(checked, greaterThan(20), reason: 'prea puține quest-uri verificate');
+    });
+
+    test('un jucător nou primește cam cât primea înainte de curbă', () {
+      // Vechiul multiplicator fix era 3,0. La nivelul 1 curba trebuie să dea
+      // aproximativ același lucru, altfel începătorii ar fi înfometați de o
+      // schimbare care nu-i privește.
+      expect(questCoinRewardMultiplier * economyGrowth(1), closeTo(3.0, 0.15));
+    });
+  });
 }
+
+/// Nivelurile pe care se verifică invariantele: start, mijloc, plafonul curbei
+/// și mult peste el.
+const _levels = [1, 5, 10, 15, 24, 60];

@@ -26,8 +26,12 @@ Future<void> bumpQuestMetric(BuildContext context, String metricKey, int amount)
   if (active.isEmpty) return;
   final updated = await StorageService.addQuestProgress(metricKey, amount);
   final previous = updated - amount;
+  // Nivelul zilei, nu cel de acum: țintele sunt înghețate la ce erau când a
+  // început ziua (vezi StorageService.questScaleLevel).
+  final level = await StorageService.questScaleLevel();
   for (final quest in active) {
-    final justCompleted = updated >= quest.target && previous < quest.target;
+    final target = quest.targetAt(level);
+    final justCompleted = updated >= target && previous < target;
     if (!justCompleted) continue;
     if (await StorageService.isQuestClaimed(quest.id)) continue;
     if (!context.mounted) return;
@@ -35,7 +39,7 @@ Future<void> bumpQuestMetric(BuildContext context, String metricKey, int amount)
     InAppNotification.show(
       context,
       title: 'Quest completat! 🎯',
-      message: quest.title,
+      message: quest.titleAt(level),
       icon: quest.icon,
       color: const Color(0xFF534AB7),
       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuestsScreen())),
