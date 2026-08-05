@@ -16,6 +16,12 @@ import '../widgets/in_app_notification.dart';
 /// simultan pragul unui quest ușor și al unuia mediu din aceeași familie).
 Future<void> bumpQuestMetric(BuildContext context, String metricKey, int amount) async {
   if (amount == 0) return;
+  // Totalul pe viață se scrie MEREU, chiar dacă metricul nu e în rotația de
+  // azi — realizările permanente sunt construite pe el (vezi
+  // StorageService.addLifetimeMetric). Dacă ar sta sub filtrul de mai jos, o
+  // realizare pe "răspunsuri fără hint" ar avansa doar în ziua în care pică
+  // un quest de no_hint_correct, adică o dată pe săptămână.
+  await StorageService.addLifetimeMetric(metricKey, amount);
   final active = todaysQuests().where((q) => q.metricKey == metricKey).toList();
   if (active.isEmpty) return;
   final updated = await StorageService.addQuestProgress(metricKey, amount);

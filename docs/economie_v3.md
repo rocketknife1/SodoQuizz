@@ -686,3 +686,195 @@ Nota rămâne aici pentru un motiv: dacă cineva se gândește vreodată să-l a
 câștigă meciul primește monede care n-au existat niciodată. Orice bot viitor
 trebuie ori să parieze zero, ori să fie ținut strict în afara build-urilor
 publice.
+
+---
+
+## 15. v3.3 — quest-uri de o zi, realizări de o lună, Planeta hologramelor (2026-08-05)
+
+Trei cerințe legate între ele: quest-urile se terminau în câteva minute,
+realizările se epuizau prea repede, iar Quiz Nelimitat era un mod fără nicio
+limită. Toate trei se rezolvă mutând jocul de la "multe recompense mici și
+dese" la "mai puține, mai mari, mai rare".
+
+### 15.1 Quest-uri: 88 în catalog, 12-14 pe zi, unice
+
+| | v3.1 | Acum |
+|---|---|---|
+| Catalog | 71 | **88** |
+| Pe zi | 9-11 (media 10,1) | **12 luni-vineri, 14 sâmbătă și duminică** |
+| Unicitate în cadrul zilei | doar per dificultate | **totală: niciun contor repetat** |
+| Ținte | de câteva minute | **×2,3 pe metricile fără plafon** |
+
+**Cotele zilnice sunt explicite** (`questsPerWeekday = [12,12,12,12,12,14,14]`)
+și suma lor trebuie să fie egală cu mărimea catalogului — weekendul primește
+două în plus fiindcă atunci se joacă mai mult. Un test prinde nepotrivirea.
+
+**Unicitate.** Variantele aceleiași familii (`answer_10`/`answer_25`/...)
+împart un singur contor de progres, deci două în aceeași zi însemnau că una se
+bifa singură pe drumul spre cealaltă. Acum împărțirea e o constrângere dură, cu
+o consecință de ținut minte: **o familie nu poate avea mai mult de 7 variante**
+(câte zile are săptămâna). `answer_count` avea 10 și `correct_count` 8;
+surplusul a fost mutat pe alte metrici, nu șters.
+
+**Ținte de o zi.** `questTargetScale = 2,3`, aplicat DOAR metricilor din
+`scalableQuestMetrics`. Lista e albă, nu neagră, fiindcă restul au plafoane
+fizice: o rotire de roată la 24h, 5 runde de Clippy pe zi, 3 rulări de planetă
+la 12 ore, 14 gamemoduri existente. O țintă scalată peste plafonul ei ar fi
+imposibil de terminat, fără ca jucătorul să înțeleagă de ce — există test.
+
+**Titlurile sunt șabloane.** Catalogul scrie `{n}`, nu cifra: altfel "Răspunde
+corect la 5 întrebări" ar fi rămas pe ecran lângă o bară care cere 12. `{n}`
+aduce cu el și "de"-ul, fiindcă în română depinde de număr ("5 întrebări", dar
+"35 DE întrebări") și ținta se schimbă la fiecare recalibrare.
+
+### 15.2 Recompensele quest-urilor, recalibrate
+
+| Resursă | v3.1 | Acum | De ce |
+|---|---|---|---|
+| Monede | ×3,0 | **×5,4** | ținte de 2,3× și 1,25× mai multe quest-uri pe zi |
+| XP | ×3,0 | **×5,4** | idem |
+| Hints | ×1,5 | **×1,0** | stocul e plafonat la 26; la ×2,2 ieșeau 35-54 pe zi, iar surplusul se evapora — cardul promitea ce nu primeai |
+| Vieți | ×2,0 | **×1,0** | valoarea din catalog e acum exact cea primită (vezi mai jos) |
+| Gems | 0/1/2 per tier | neschimbat | plafonul zilnic a urcat 13 → **19** |
+
+**Vieți din quest-uri (cerut explicit):** la unele nimic, la altele 1-2, la
+câteva 5. Distribuția din catalog: **44 fără vieți, 36 cu una, 5 cu două, 3 cu
+cinci**. Cele cu cinci sunt cele mai grele din tot jocul — serie de 10 corecte
+la rând, 9 quest-uri revendicate într-o zi, rulare perfectă pe planetă. Un
+multiplicator ar fi făcut imposibilă treapta de 1 sau 2, de-aia a dispărut.
+
+Verificat pe cele 7 zile ale rotației, la revendicare completă:
+
+| | Luni-vineri | Weekend |
+|---|---|---|
+| Monede | 1.522-1.917 | 2.425-2.490 |
+| XP | 1.344-1.643 | 1.982-2.048 |
+| Gems | 9-11 | 14 |
+| Vieți | 5-11 | 11-14 |
+| Hints | 14-19 | 24-25 |
+
+> ⚠️ **Efect asupra inflației, de urmărit.** Venitul zilnic din quest-uri urcă
+> de la ~780 de monede la ~1.500-2.500. Efortul crește însă mai mult decât
+> plata (ținte ×2,3 și 1,25× mai multe quest-uri ≈ ×2,9 muncă, pentru ×2,5
+> bani), deci **moneda pe minut a scăzut ușor** — un jucător primește mai mult
+> pe zi fiindcă joacă mai mult, nu fiindcă a devenit mai ieftin. Rămâne totuși
+> peste calculul din secțiunea 6.1: un jucător hard ajunge acum la ~+800
+> monede net pe zi în loc de ~0. Knob-ul e `questCoinRewardMultiplier`.
+
+### 15.3 Realizări: 10 → 20, gândite pe o lună
+
+Cele 10 vechi rămân neatinse. Cele 10 noi au ca țintă lucruri care **nu se pot
+grăbi** — o serie de zile, un cooldown de 24h, un plafon zilnic — sau volume
+care cer săptămâni.
+
+Regula de compoziție cerută: **nicio recompensă nu seamănă cu alta**. Fiecare
+combină alt subset din cele cinci resurse:
+
+| Realizare | Țintă | Recompensă |
+|---|---|---|
+| Lună fără pauză | 30 de zile la rând | 2.417 monede + 37 vieți + 43 hints |
+| Curtezanul norocului | 28 de rotiri de roată (una la 24h) | 347 gems |
+| Spaima mesei | 23 de victorii multiplayer | 3.271 monede + 583 XP |
+| Ochi liber | 250 de corecte fără hint | 719 XP + 89 hints |
+| Enciclopedia ambulantă | 600 de corecte la Cultură | 1.879 monede + 113 gems + 19 vieți |
+| Cel mai bun prieten al agrafei | 47 de Clippy perfecte | 461 XP + 23 vieți + 61 hints |
+| Colecționarul | 3 loturi deblocate cu gems | 4.637 monede |
+| Stăpânul hologramelor | 5 rulări perfecte pe planetă | 167 gems + 29 vieți + 37 hints |
+| Bancherul | 37.000 de monede strânse jucând | 907 XP + 89 gems + 53 hints |
+| Neobositul | 180 de quest-uri revendicate | 3.889 monede + 1.117 XP + 211 gems + 41 vieți |
+
+Hint-urile realizărilor se acordă **necapat** (`hintsUncapped`), la fel ca
+viețile: se revendică o singură dată în viața contului, iar 89 de hint-uri
+plafonate la 26 ar fi fost încă un număr care minte.
+
+**Cum se măsoară progresul, fără instrumentare nouă.** `bumpQuestMetric` scrie
+acum și un contor pe VIAȚĂ (`StorageService.addLifetimeMetric`), înaintea
+filtrului "e metricul ăsta în rotația de azi?". Toate locurile din joc care
+raportau deja un metric hrănesc automat realizările. Fără ordinea asta, o
+realizare pe "răspunsuri fără hint" ar fi avansat doar în ziua în care pică un
+quest de `no_hint_correct`, adică o dată pe săptămână.
+
+Ecranul de Realizări nu-și mai calculează singur progresul: folosește aceeași
+`StorageService.achievementProgressResolver()` ca notificările in-app și bulina
+roșie. Avea o copie proprie a switch-ului, care ar fi rămas tăcut în urmă la
+fiecare realizare nouă.
+
+### 15.4 Planeta hologramelor — a înlocuit Quiz Nelimitat
+
+Quiz Nelimitat era singurul mod fără nicio limită: se putea juca la nesfârșit,
+deci plata pe întrebare trebuia ținută artificial sub baseline (0,58×) ca să nu
+devină cea mai bună sursă din joc doar prin volum. A fost **șters complet**
+(`lib/screens/unlimited_quiz_screen.dart` și ratele lui din `game_helpers.dart`)
+și înlocuit cu exact soluția opusă: rulări scurte, rare și bine plătite.
+
+| | |
+|---|---|
+| Întrebări pe rulare | **17**, amestec de poze și Cultură Generală |
+| Proporția amestecului | **trasă la zar la fiecare rulare** (35%-75% poze), minimum 3 din fiecare fel |
+| Inimi | **10, ale PLANETEI** — separate de balanță, o greșeală aici nu costă niciodată o viață reală |
+| Hint / blur | **niciunul** — pozele se văd clare de la început |
+| Rulări | **2 pe ciclu**, sau **3 cu o reclamă vizionată** |
+| Cooldown | **12 ore**, pornit când ridici recompensa ultimei rulări |
+
+Cele 10 inimi la 17 întrebări sunt o condiție reală de eșec: a 11-a greșeală
+încheie rularea înainte de final.
+
+**Recompensa.** Pragurile au fost cerute pe 10 întrebări ("7/10 șansă mică,
+8/10 mai mare, 9/10 și mai mare, 10/10 sigur") și sunt mutate proporțional pe 17:
+
+| Scor | Proporție | Șansă la recompensa mare |
+|---|---|---|
+| 12/17 | 70% | **17%** |
+| 14/17 | 82% | **34%** |
+| 15-16/17 | 88% | **61%** |
+| 17/17 | 100% | **garantat** |
+
+Doar rularea perfectă e sigură; restul sunt explicit nesigure și rare, cum s-a
+cerut. Recompensa mare e **517 monede + 233 XP + 23 gems + 4 vieți + 7 hints** —
+comparabilă cu o rotire de roată (~489 echivalent-monede), fiindcă și
+cooldown-ul e comparabil. Când zarul nu cade bine, rularea plătește oricum o
+consolare proporțională cu scorul (`11 × corecte` monede, `6 × corecte` XP),
+fără gems: aceia rămân exclusiv la recompensa mare.
+
+Ecranul de rezultate spune pe față ce s-a întâmplat ("Aveai 61% șansă la
+recompensa mare. N-a picat de data asta."), altfel un 15/17 fără jackpot pare bug.
+
+**Cooldown-ul pornește la colectare, nu la intrare** — cine închide aplicația
+în mijlocul unei rulări nu rămâne blocat 12 ore fără să fi primit nimic. Cât
+timp fereastra de colectare e deschisă, back-ul e inert.
+
+Cele 5 quest-uri de Quiz Nelimitat au fost **repunctate pe planetă**
+(`planet_correct`, ținte 7/12/17/23/29 — maximul fizic e 3×17 = 51), iar
+planeta a adus 6 metrici noi: `planet_run`, `planet_correct`, `planet_survived`,
+`planet_good_run`, `planet_great_run`, `planet_perfect`.
+
+Intrarea e tot planeta rotitoare de pe Home, dar tap-ul deschide acum
+`PlanetEntryDialog`: regulile, câte rulări mai ai și cât mai durează
+cooldown-ul se văd ÎNAINTE de intrare, nu după.
+
+### 15.5 Alte reparații incluse
+
+| Ce | De ce |
+|---|---|
+| `mp_win` se raportează la finalul meciului | nu exista niciun metric de victorie; o remiză pe locul 1 NU numără, la fel ca la statisticile de profil |
+| "Colectează tot" rămâne vizibil sub 2 quest-uri | ca etichetă cyan discretă, nu dispărut complet — un buton care apare din senin abia la al doilea quest terminat nu se poate descoperi |
+| Plafonul de gems 13 → 19 | zilele de 14 quest-uri dau 14-16 gems revendicate integral; plafonul rămâne doar gardă anti-"Revendică x2" |
+
+### 15.6 Fișiere atinse în v3.3
+
+| Fișier | Ce s-a schimbat |
+|---|---|
+| `lib/core/progression.dart` | catalog 88, rotație cu cote/unicitate, scalarea țintelor, titluri-șablon, 10 realizări noi, constantele planetei |
+| `lib/core/quest_bump.dart` | contorul pe viață, înaintea filtrului de rotație |
+| `lib/core/game_helpers.dart` | ratele Quiz Nelimitat, șterse |
+| `lib/data/storage_service.dart` | `addLifetimeMetric`, ciclul planetei, resolver public de realizări |
+| `lib/screens/planet_hologram_screen.dart` *(nou)* | rularea de 17 întrebări |
+| `lib/widgets/planet_entry_dialog.dart` *(nou)* | poarta cu reguli, rulări rămase, cooldown, reclamă |
+| `lib/widgets/spinning_planet.dart` | tap → dialogul planetei |
+| `lib/screens/unlimited_quiz_screen.dart` | **șters** |
+| `lib/screens/achievements_screen.dart` | resolver comun, hints necapate |
+| `lib/screens/quests_screen.dart` | eticheta cyan de "Colectează tot", texte |
+| `lib/screens/multiplayer/multiplayer_results_screen.dart` | `mp_win` |
+| `lib/screens/home_screen.dart` | planeta primește `onRewardsChanged` |
+| `test/quest_rotation_test.dart` | cote, unicitate, mărimea familiilor, ținte realizabile, titluri oneste |
+| `test/game_logic_test.dart` | metricile noi, plafonul săptămânal de gems |

@@ -10,9 +10,10 @@ import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
 import '../widgets/level_header.dart';
 
-/// Quest-uri zilnice — ~10 pe zi, dintr-o rotație săptămânală peste tot
-/// catalogul (vezi [todaysQuests]). Progresul se resetează automat la miezul
-/// nopții (stocat sub o cheie care include data curentă).
+/// Quest-uri zilnice — 12 pe zi în timpul săptămânii și 14 în weekend,
+/// dintr-o rotație săptămânală peste tot catalogul (vezi [todaysQuests]).
+/// Progresul se resetează automat la miezul nopții (stocat sub o cheie care
+/// include data curentă).
 class QuestsScreen extends StatefulWidget {
   const QuestsScreen({super.key});
 
@@ -363,6 +364,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     children: [
                       Text(
                         'Azi ai ${todaysQuests().length} quest-uri din cele ${allQuests.length}. '
+                        'Fiecare are alt contor, deci niciunul nu se bifează singur. '
                         'La miezul nopții primești un set complet nou — aceleași revin abia peste o săptămână.',
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
@@ -424,15 +426,36 @@ class _QuestsScreenState extends State<QuestsScreen> {
     );
   }
 
-  /// Numărul de quest-uri terminate și încă nerevendicate — butonul e vizibil
-  /// doar când sunt cel puțin 2 (la unul singur, "Ridică" de pe cardul lui e
-  /// deja suficient, n-are sens un buton separat pentru un singur element).
+  /// Butonul plin, galben, apare doar de la 2 quest-uri colectabile în sus —
+  /// la unul singur, "Ridică" de pe cardul lui e deja suficient.
+  ///
+  /// Sub acest prag NU dispare complet, ca înainte: rămâne o etichetă cyan
+  /// discretă, ca jucătorul să știe că funcția există și de ce nu e activă
+  /// încă. Un buton care apare din senin abia la al doilea quest terminat nu
+  /// se poate descoperi.
   Widget _buildCollectAllButton(_QuestsData data) {
     final claimableCount = data.quests.where((q) {
       final p = data.progress[q.id] ?? 0;
       return p >= q.target && !(data.claimed[q.id] ?? false);
     }).length;
-    if (claimableCount < 2) return const SizedBox.shrink();
+    if (claimableCount < 2) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.auto_awesome_rounded,
+              color: AppColors.gem.withAlpha(110), size: 13),
+          const SizedBox(width: 4),
+          Text(
+            'Colectează tot',
+            style: TextStyle(
+              color: AppColors.gem.withAlpha(130),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
+    }
     return GestureDetector(
       onTap: _claiming ? null : _collectAll,
       child: AnimatedOpacity(

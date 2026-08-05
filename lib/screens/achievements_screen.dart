@@ -46,44 +46,26 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       StorageService.getLives(),
       StorageService.getHints(),
       StorageService.getGems(),
-      StorageService.getAnsweredIds(),
-      StorageService.getModesEverPlayed(),
-      StorageService.getHintsUsedTotal(),
-      StorageService.getQuestsClaimedTotal(),
-      StorageService.getDailyChallengesTotal(),
-      StorageService.getStarterPackBought(),
     ]);
-    final xp = results[0] as int;
-    final answeredCount = (results[5] as Set<String>).length;
-    final modesPlayed = (results[6] as Set<String>).length;
-    final hintsUsed = results[7] as int;
-    final questsClaimed = results[8] as int;
-    final dailyChallenges = results[9] as int;
-    final starterPackBought = results[10] as bool;
-    final level = levelForXp(xp);
+    // Progresul vine din aceeași funcție folosită de notificările in-app și
+    // de bulina roșie (vezi StorageService.achievementProgressResolver) —
+    // ecranul avea înainte o copie proprie a switch-ului, care ar fi rămas în
+    // urmă la fiecare realizare nouă.
+    final progressFor = await StorageService.achievementProgressResolver();
 
     final progress = <String, int>{};
     final claimed = <String, bool>{};
     for (final a in achievements) {
-      progress[a.id] = switch (a.id) {
-        'correct_50' || 'correct_150' || 'correct_400' => answeredCount,
-        'level_5' || 'level_15' => level,
-        'all_modes' => modesPlayed,
-        'hints_50' => hintsUsed,
-        'quests_25' => questsClaimed,
-        'daily_10' => dailyChallenges,
-        'starter_pack_bought' => starterPackBought ? 1 : 0,
-        _ => 0,
-      };
+      progress[a.id] = progressFor(a);
       claimed[a.id] = await StorageService.isAchievementClaimed(a.id);
     }
 
     return _AchievementsData(
-      xp: xp,
-      coins: results[1] as int,
-      lives: results[2] as int,
-      hints: results[3] as int,
-      gems: results[4] as int,
+      xp: results[0],
+      coins: results[1],
+      lives: results[2],
+      hints: results[3],
+      gems: results[4],
       progress: progress,
       claimed: claimed,
     );
@@ -119,6 +101,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       lives: a.heartReward * multiplier,
       hints: a.hintReward * multiplier,
       hintsBadgeKey: _hintsBadgeKey,
+      // Realizările se revendică o singură dată în viața contului și cele din
+      // seria lungă acordă 37-89 de hint-uri — peste plafonul de stoc (26).
+      // Fără asta, cardul ar promite 89 și ar livra 26, exact ca la vieți,
+      // unde se folosește deja addLivesUncapped.
+      hintsUncapped: true,
       gems: a.gemReward * multiplier,
       gemsBadgeKey: _gemsBadgeKey,
       coinBadgeKey: _coinBadgeKey,

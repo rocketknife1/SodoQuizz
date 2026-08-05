@@ -162,6 +162,89 @@ int multiplayerXpForScore(int score, {required bool won}) {
       (won ? multiplayerWinXpBonus : multiplayerParticipationXpBonus);
 }
 
+// ─── Planeta hologramelor ─────────────────────────────────────────────────
+// Înlocuiește vechiul Quiz Nelimitat (nelimitat, plătea puțin, se putea farma
+// la nesfârșit) cu o rulare SCURTĂ, RARĂ și cu miză: 17 întrebări, 10 inimi
+// proprii ale planetei, două-trei rulări la 12 ore.
+//
+// Inimile planetei sunt separate de cele din balanță — o greșeală aici nu te
+// costă niciodată o viață reală. Sunt totuși o condiție de eșec adevărată:
+// 10 inimi la 17 întrebări înseamnă că a 11-a greșeală încheie rularea
+// înainte de final.
+//
+// Întrebările sunt un amestec de poze (loadAllQuestions) și Cultură Generală,
+// în proporție care se schimbă de la o rulare la alta — vezi
+// PlanetHologramScreen. Fără hint și fără blur: pozele se văd clar.
+
+const int planetQuestionCount = 17;
+const int planetHearts = 10;
+
+/// Pragurile de scor peste care rularea poate plăti recompensa MARE. Cerința
+/// a fost exprimată pe 10 întrebări ("7/10 șansă mică, 8/10 mai mare, 9/10 și
+/// mai mare, 10/10 sigur"); aici sunt aceleași proporții mutate pe 17:
+/// 70%, 82%, 88% și 100%.
+const int planetGoodRunCorrect = 12; // ~70%
+const int planetStrongRunCorrect = 14; // ~82%
+const int planetGreatRunCorrect = 15; // ~88%
+
+/// Probabilitatea ca recompensa mare să pice, pe praguri. Doar rularea
+/// perfectă e garantată; restul sunt EXPLICIT nesigure și rare, cum s-a
+/// cerut — un 15/17 e o veste bună, nu un salariu.
+double planetJackpotChance(int correct) {
+  if (correct >= planetQuestionCount) return 1.0;
+  if (correct >= planetGreatRunCorrect) return 0.61;
+  if (correct >= planetStrongRunCorrect) return 0.34;
+  if (correct >= planetGoodRunCorrect) return 0.17;
+  return 0.0;
+}
+
+/// Recompensa pe care o poate da o rulare, indiferent de formă.
+class PlanetReward {
+  final int coins;
+  final int xp;
+  final int gems;
+  final int hearts;
+  final int hints;
+  const PlanetReward({
+    this.coins = 0,
+    this.xp = 0,
+    this.gems = 0,
+    this.hearts = 0,
+    this.hints = 0,
+  });
+
+  bool get isEmpty =>
+      coins == 0 && xp == 0 && gems == 0 && hearts == 0 && hints == 0;
+}
+
+/// "Reward din toate" — se acordă întreg, din toate cele cinci resurse.
+/// Deliberat mare: planeta se poate juca de cel mult 3 ori la 12 ore, deci
+/// valoarea unei rulări reușite trebuie să se simtă, nu să fie încă o sursă
+/// măruntă. Comparabilă cu o rotire de roată (~489 echivalent-monede, vezi
+/// docs/economie_v3.md secțiunea 4.1), fiindcă și cooldown-ul e comparabil.
+const PlanetReward planetJackpotReward =
+    PlanetReward(coins: 517, xp: 233, gems: 23, hearts: 4, hints: 7);
+
+/// Ce primești când zarul nu a căzut bine — sau când n-ai atins nici pragul
+/// minim. Proporțională cu câte ai nimerit, ca o rulare bună fără noroc să
+/// nu iasă pe zero. Fără gems: aceia rămân exclusiv la recompensa mare.
+PlanetReward planetConsolationReward(int correct) {
+  if (correct <= 0) return const PlanetReward();
+  return PlanetReward(
+    coins: 11 * correct,
+    xp: 6 * correct,
+    hearts: correct >= planetGreatRunCorrect ? 1 : 0,
+    hints: correct >= planetGoodRunCorrect ? 2 : 0,
+  );
+}
+
+/// Câte rulări ai la dispoziție într-un ciclu, fără și cu reclamă vizionată.
+/// După ce le consumi pe toate ȘI ridici recompensa ultimei, pornește
+/// cooldown-ul — vezi StorageService.planetRunsLeft / startPlanetCooldown.
+const int planetRunsPerCycle = 2;
+const int planetRunsPerCycleWithAd = 3;
+const int planetCooldownHours = 12;
+
 /// Un quest zilnic: progresul se ține în [StorageService], definiția
 /// (țintă, recompensă) e statică aici. [metricKey] leagă variante de
 /// dificultate diferită ale aceleiași acțiuni (ex: correct_5/10/15) de UN
@@ -177,8 +260,8 @@ enum QuestTier { easy, medium, hard }
 
 class Quest {
   final String id;
-  final String title;
-  final int target;
+  final String _titleTemplate;
+  final int _baseTarget;
   final String metricKey;
   final QuestTier tier;
   final int _baseCoinReward;
@@ -189,8 +272,8 @@ class Quest {
 
   const Quest({
     required this.id,
-    required this.title,
-    required this.target,
+    required String title,
+    required int target,
     required this.tier,
     String? metricKey,
     int coinReward = 0,
@@ -199,6 +282,8 @@ class Quest {
     int hintReward = 0,
     required this.icon,
   })  : metricKey = metricKey ?? id,
+        _titleTemplate = title,
+        _baseTarget = target,
         _baseCoinReward = coinReward,
         _baseXpReward = xpReward,
         _baseHeartReward = heartReward,
@@ -216,6 +301,38 @@ class Quest {
   int get xpReward => (_baseXpReward * questXpRewardMultiplier).round();
   int get heartReward => (_baseHeartReward * questHeartRewardMultiplier).round();
   int get hintReward => (_baseHintReward * questHintRewardMultiplier).round();
+
+  /// Ținta EFECTIVĂ, după scalarea cerută ("un quest se termină în decursul
+  /// unei zile, nu în câteva minute") — vezi [questTargetScale] și
+  /// [scalableQuestMetrics]. Catalogul de mai jos păstrează valorile de bază,
+  /// exact ca la recompense: un singur loc de recalibrat, nu 88 de intrări.
+  ///
+  /// Scalarea se aplică DOAR metricilor fără plafon zilnic natural. Un quest
+  /// pe `wheel_spin` (o rotire la 24h) sau pe `planet_run` (2-3 rulări la 12h)
+  /// ar deveni imposibil de terminat dacă i-am înmulți ținta — de-aia lista e
+  /// o listă albă explicită, nu o excludere.
+  int get target => scalableQuestMetrics.contains(metricKey)
+      ? (_baseTarget * questTargetScale).round()
+      : _baseTarget;
+
+  /// Titlul afișat. Quest-urile a căror țintă se scalează își scriu numărul
+  /// în catalog ca `{n}`, nu ca cifră: altfel "Răspunde corect la 5
+  /// întrebări" ar rămâne pe ecran lângă o bară care cere 12, iar textul ar
+  /// minți la fiecare recalibrare a lui [questTargetScale].
+  ///
+  /// `{n}` aduce cu el și "de"-ul, fiindcă în română depinde de număr: "5
+  /// întrebări", dar "35 DE întrebări". Cum ținta se schimbă cu
+  /// [questTargetScale], "de" nu poate sta scris în catalog — un titlu
+  /// calibrat pe 15 ar fi ajuns "35 întrebări" după scalare.
+  String get title => _titleTemplate.replaceAll('{n}', _spelledTarget);
+
+  /// Regula: "de" se pune când ultimele două cifre sunt 00 sau între 20 și
+  /// 99 (20 de mere, 100 de mere, dar 15 mere și 101 mere).
+  String get _spelledTarget {
+    final lastTwo = target % 100;
+    final needsDe = lastTwo == 0 || lastTwo >= 20;
+    return needsDe ? '$target de' : '$target';
+  }
 
   /// Gems acordate de acest quest, dedus din dificultate. Ținta e explicită:
   /// o SĂPTĂMÂNĂ de joc, cu puțină străduință și puțin noroc, să adune cât
@@ -237,23 +354,68 @@ class Quest {
 }
 
 /// Multiplicatorii de recompensă aplicați peste valorile din catalog (vezi
-/// comentariul din [Quest]). Monedele/XP-ul cresc de 3×, fiindcă numărul de
-/// quest-uri revendicabile pe zi a scăzut de la ~30 (dintr-un pool de 71,
-/// toate active) la ~10. Hint-urile cresc mai puțin (plafon de stoc la 26,
-/// vezi StorageService) și vieţile cel mai puțin — sunt resursa care
-/// controlează cât poți juca, deci cea mai sensibilă la inflație.
-const double questCoinRewardMultiplier = 3.0;
-const double questXpRewardMultiplier = 3.0;
-const double questHintRewardMultiplier = 1.5;
-const double questHeartRewardMultiplier = 2.0;
+/// comentariul din [Quest]). Au crescut de la 3,0 la 6,3 odată cu
+/// [questTargetScale]: dacă un quest cere acum de ~2,3× mai multă muncă și
+/// ziua are 12-14 quest-uri în loc de ~10, plata trebuie să urce în același
+/// ritm, altfel aceeași zi de joc ar valora brusc mai puțin. Hint-urile cresc
+/// mai puțin (stocul e oricum plafonat la 26, vezi StorageService) și viețile
+/// cel mai puțin — sunt resursa care controlează cât poți juca, deci cea mai
+/// sensibilă la inflație.
+const double questCoinRewardMultiplier = 5.4;
+const double questXpRewardMultiplier = 5.4;
+
+/// Hint-urile NU urmează saltul monedelor, ci rămân la valoarea din catalog.
+/// Stocul de hint-uri e plafonat la 26 (vezi StorageService.addHints), iar la
+/// un multiplicator de 2,2 o zi de quest-uri acorda 35-54 de hint-uri: cea mai
+/// mare parte se evapora la plafon, deci cifra de pe card promitea ceva ce
+/// jucătorul nu primea. La ×1 ies ~14-22 pe zi, adică sub plafon.
+const double questHintRewardMultiplier = 1.0;
+
+/// Viețile sunt SINGURA recompensă de quest care nu se mai multiplică: acum
+/// numărul scris în catalog e exact cel primit. Cerința a fost o distribuție
+/// citibilă — "la unele nimic, la altele 1-2, la câteva 5" — iar un
+/// multiplicator ar fi transformat un 1 din catalog în 3 pe ecran și n-ar mai
+/// fi existat nicio treaptă de 1 sau 2.
+///
+/// Distribuția din catalog: 44 de quest-uri fără vieți, 36 cu una, 5 cu două
+/// și 3 cu cinci (cele mai grele din tot jocul: serie de 10 la rând, 9
+/// quest-uri revendicate într-o zi, rulare perfectă pe planetă). Pe o zi
+/// întreagă revendicată ies ~8-9 vieți.
+const double questHeartRewardMultiplier = 1.0;
+
+/// Cât se înmulțesc țintele din catalog — cerința a fost ca un quest să se
+/// termine "în decursul unei zile, nu în câteva minute / o oră". Se aplică
+/// DOAR metricilor din [scalableQuestMetrics].
+const double questTargetScale = 2.3;
+
+/// Metricile care pot crește oricât într-o zi, deci cărora li se poate mări
+/// ținta fără să devină imposibile.
+///
+/// Restul catalogului rămâne NESCALAT, și fiecare exclus are un motiv fizic:
+/// `wheel_spin` are o rotire la 24h; `planet_run`/`planet_correct` și
+/// familiile lor sunt limitate la 2-3 rulări la 12 ore; `clippy_done`/
+/// `clippy_perfect` la 5 runde pe zi; `heart_bought` la 5 și
+/// `hint_pack_bought` la 3; `modes_played` la câte gamemoduri există (14);
+/// `daily_challenge_done`/`daily_lives_claimed` sunt o dată pe zi;
+/// `quests_claimed_today` nu poate depăși numărul de quest-uri ale zilei;
+/// `streak_hit_*` numără cât de des atingi o serie, nu volum.
+const Set<String> scalableQuestMetrics = {
+  'answer_count',
+  'correct_count',
+  'coins_earned',
+  'no_hint_correct',
+  'hints_used',
+  'culture_quiz_correct',
+};
 
 /// Câte gems pot veni în total din quest-uri într-o zi calendaristică. Peste
 /// plafon, quest-ul se revendică normal (monede/XP/hints/vieți), doar partea
-/// de gems e 0. Cea mai bogată zi din rotație dă 10 gems revendicată integral
-/// (4 medii + 3 grele), deci plafonul de 13 nu retează niciodată un jucător
-/// cinstit — există strict ca "Revendică x2" (care dublează și gems-ul) să nu
-/// poată transforma o săptămână de gems într-una singură.
-const int dailyQuestGemCap = 13;
+/// de gems e 0. A urcat de la 13 la 19 odată cu trecerea la 12-14 quest-uri
+/// pe zi: cea mai bogată zi din rotație dă acum 15-16 gems revendicată
+/// integral, deci plafonul tot nu retează un jucător cinstit — există strict
+/// ca "Revendică x2" (care dublează și gems-ul) să nu poată transforma o
+/// săptămână de gems într-una singură.
+const int dailyQuestGemCap = 19;
 
 // ─── Catalogul de quest-uri (71 în total) ──────────────────────────────────
 // Împărțit pe 3 nivele de dificultate ([QuestTier], care determină și gems-ul
@@ -263,18 +425,19 @@ const int dailyQuestGemCap = 13;
 
 const List<Quest> _easyQuests = [
   Quest(
-      id: 'answer_1',
-      title: 'Răspunde la prima întrebare a zilei',
+      id: 'planet_survive_1',
+      title: 'Ieși de pe planetă cu inimi rămase',
       target: 1,
-      metricKey: 'answer_count',
+      metricKey: 'planet_survived',
       tier: QuestTier.easy,
-      coinReward: 9,
-      xpReward: 8,
+      coinReward: 14,
+      xpReward: 11,
       hintReward: 1,
-      icon: Icons.play_circle_fill_rounded),
+      heartReward: 1,
+      icon: Icons.favorite_border_rounded),
   Quest(
       id: 'correct_5',
-      title: 'Răspunde corect la 5 întrebări',
+      title: 'Răspunde corect la {n} întrebări',
       target: 5,
       metricKey: 'correct_count',
       tier: QuestTier.easy,
@@ -284,7 +447,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.check_circle_rounded),
   Quest(
       id: 'answer_10',
-      title: 'Răspunde la 10 întrebări (corect sau greșit)',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
       target: 10,
       metricKey: 'answer_count',
       tier: QuestTier.easy,
@@ -304,7 +467,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.grid_view_rounded),
   Quest(
       id: 'use_hints_3',
-      title: 'Folosește 3 hint-uri',
+      title: 'Folosește {n} hint-uri',
       target: 3,
       metricKey: 'hints_used',
       tier: QuestTier.easy,
@@ -313,17 +476,18 @@ const List<Quest> _easyQuests = [
       icon: Icons.tips_and_updates_rounded),
   Quest(
       id: 'no_hint_3',
-      title: 'Ghicește corect 3 întrebări fără niciun hint',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
       target: 3,
       metricKey: 'no_hint_correct',
       tier: QuestTier.easy,
       coinReward: 17,
       xpReward: 12,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.visibility_off_rounded),
   Quest(
       id: 'earn_60_coins',
-      title: 'Strânge 60 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 60,
       metricKey: 'coins_earned',
       tier: QuestTier.easy,
@@ -352,7 +516,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.bolt_rounded),
   Quest(
       id: 'culture_correct_5',
-      title: 'Răspunde corect la 5 întrebări de Cultură Generală',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
       target: 5,
       metricKey: 'culture_quiz_correct',
       tier: QuestTier.easy,
@@ -369,17 +533,18 @@ const List<Quest> _easyQuests = [
       coinReward: 11,
       xpReward: 9,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.auto_awesome_rounded),
   Quest(
-      id: 'unlimited_correct_10',
-      title: 'Răspunde corect la 10 întrebări în Quiz Nelimitat',
-      target: 10,
-      metricKey: 'unlimited_quiz_correct',
+      id: 'planet_correct_12',
+      title: 'Ghicește 12 holograme pe Planeta hologramelor',
+      target: 12,
+      metricKey: 'planet_correct',
       tier: QuestTier.easy,
       coinReward: 13,
       xpReward: 10,
       hintReward: 1,
-      icon: Icons.all_inclusive_rounded),
+      icon: Icons.blur_on_rounded),
   Quest(
       id: 'wheel_spin_1',
       title: 'Învârte Roata norocului',
@@ -408,7 +573,6 @@ const List<Quest> _easyQuests = [
       tier: QuestTier.easy,
       coinReward: 9,
       xpReward: 8,
-      heartReward: 1,
       icon: Icons.storefront_rounded),
   Quest(
       id: 'heart_buy_1',
@@ -419,40 +583,41 @@ const List<Quest> _easyQuests = [
       coinReward: 9,
       xpReward: 8,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.storefront_rounded),
   Quest(
-      id: 'answer_5',
-      title: 'Răspunde la 5 întrebări (corect sau greșit)',
-      target: 5,
-      metricKey: 'answer_count',
+      id: 'clippy_done_4',
+      title: 'Termină 4 bonusuri de la Clippy',
+      target: 4,
+      metricKey: 'clippy_done',
       tier: QuestTier.easy,
-      coinReward: 13,
-      xpReward: 9,
+      coinReward: 15,
+      xpReward: 11,
       hintReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.auto_awesome_rounded),
   Quest(
-      id: 'answer_3',
-      title: 'Răspunde la 3 întrebări (corect sau greșit)',
-      target: 3,
-      metricKey: 'answer_count',
+      id: 'culture_batches_4',
+      title: 'Termină 4 loturi de Cultură Generală',
+      target: 4,
+      metricKey: 'culture_quiz_batches',
       tier: QuestTier.easy,
-      coinReward: 11,
-      xpReward: 8,
+      coinReward: 16,
+      xpReward: 12,
       hintReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.public_rounded),
   Quest(
-      id: 'correct_3',
-      title: 'Răspunde corect la 3 întrebări',
+      id: 'streak_5_thrice',
+      title: 'Obține o serie de 5 răspunsuri corecte, de 3 ori azi',
       target: 3,
-      metricKey: 'correct_count',
+      metricKey: 'streak_hit_5',
       tier: QuestTier.easy,
-      coinReward: 11,
-      xpReward: 8,
+      coinReward: 17,
+      xpReward: 13,
       hintReward: 1,
-      icon: Icons.check_circle_rounded),
+      icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'earn_30_coins',
-      title: 'Strânge 30 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 30,
       metricKey: 'coins_earned',
       tier: QuestTier.easy,
@@ -462,17 +627,18 @@ const List<Quest> _easyQuests = [
       icon: Icons.savings_rounded),
   Quest(
       id: 'earn_45_coins',
-      title: 'Strânge 45 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 45,
       metricKey: 'coins_earned',
       tier: QuestTier.easy,
       coinReward: 11,
       xpReward: 9,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.savings_rounded),
   Quest(
       id: 'use_hints_1',
-      title: 'Folosește 1 hint',
+      title: 'Folosește {n} hint',
       target: 1,
       metricKey: 'hints_used',
       tier: QuestTier.easy,
@@ -481,7 +647,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.tips_and_updates_rounded),
   Quest(
       id: 'use_hints_2',
-      title: 'Folosește 2 hint-uri',
+      title: 'Folosește {n} hint-uri',
       target: 2,
       metricKey: 'hints_used',
       tier: QuestTier.easy,
@@ -490,7 +656,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.tips_and_updates_rounded),
   Quest(
       id: 'no_hint_1',
-      title: 'Ghicește corect o întrebare fără niciun hint',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
       target: 1,
       metricKey: 'no_hint_correct',
       tier: QuestTier.easy,
@@ -500,7 +666,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.visibility_off_rounded),
   Quest(
       id: 'culture_correct_3',
-      title: 'Răspunde corect la 3 întrebări de Cultură Generală',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
       target: 3,
       metricKey: 'culture_quiz_correct',
       tier: QuestTier.easy,
@@ -517,17 +683,18 @@ const List<Quest> _easyQuests = [
       coinReward: 11,
       xpReward: 9,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.public_rounded),
   Quest(
-      id: 'unlimited_correct_5',
-      title: 'Răspunde corect la 5 întrebări în Quiz Nelimitat',
-      target: 5,
-      metricKey: 'unlimited_quiz_correct',
+      id: 'planet_correct_7',
+      title: 'Ghicește 7 holograme pe Planeta hologramelor',
+      target: 7,
+      metricKey: 'planet_correct',
       tier: QuestTier.easy,
       coinReward: 11,
       xpReward: 8,
       hintReward: 1,
-      icon: Icons.all_inclusive_rounded),
+      icon: Icons.blur_on_rounded),
   Quest(
       id: 'play_1_mode',
       title: 'Joacă într-un gamemod, oricare',
@@ -538,22 +705,63 @@ const List<Quest> _easyQuests = [
       xpReward: 7,
       hintReward: 1,
       icon: Icons.grid_view_rounded),
+  Quest(
+      id: 'planet_visit_1',
+      title: 'Aterizează o dată pe Planeta hologramelor',
+      target: 1,
+      metricKey: 'planet_run',
+      tier: QuestTier.easy,
+      coinReward: 14,
+      xpReward: 11,
+      hintReward: 1,
+      icon: Icons.travel_explore_rounded),
+  Quest(
+      id: 'answer_12',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
+      target: 12,
+      metricKey: 'answer_count',
+      tier: QuestTier.easy,
+      coinReward: 16,
+      xpReward: 12,
+      hintReward: 1,
+      icon: Icons.playlist_add_check_rounded),
+  Quest(
+      id: 'correct_7',
+      title: 'Răspunde corect la {n} întrebări',
+      target: 7,
+      metricKey: 'correct_count',
+      tier: QuestTier.easy,
+      coinReward: 16,
+      xpReward: 11,
+      hintReward: 1,
+      heartReward: 1,
+      icon: Icons.check_circle_rounded),
+  Quest(
+      id: 'use_hints_4',
+      title: 'Folosește {n} hint-uri',
+      target: 4,
+      metricKey: 'hints_used',
+      tier: QuestTier.easy,
+      coinReward: 12,
+      xpReward: 9,
+      icon: Icons.tips_and_updates_rounded),
 ];
 
 const List<Quest> _mediumQuests = [
   Quest(
       id: 'correct_10',
-      title: 'Răspunde corect la 10 întrebări',
+      title: 'Răspunde corect la {n} întrebări',
       target: 10,
       metricKey: 'correct_count',
       tier: QuestTier.medium,
       coinReward: 29,
       xpReward: 24,
       hintReward: 2,
+      heartReward: 2,
       icon: Icons.check_circle_rounded),
   Quest(
       id: 'answer_20',
-      title: 'Răspunde la 20 de întrebări (corect sau greșit)',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
       target: 20,
       metricKey: 'answer_count',
       tier: QuestTier.medium,
@@ -573,16 +781,17 @@ const List<Quest> _mediumQuests = [
       icon: Icons.grid_view_rounded),
   Quest(
       id: 'use_hints_6',
-      title: 'Folosește 6 hint-uri',
+      title: 'Folosește {n} hint-uri',
       target: 6,
       metricKey: 'hints_used',
       tier: QuestTier.medium,
       coinReward: 27,
       xpReward: 20,
+      heartReward: 1,
       icon: Icons.tips_and_updates_rounded),
   Quest(
       id: 'no_hint_6',
-      title: 'Ghicește corect 6 întrebări fără niciun hint',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
       target: 6,
       metricKey: 'no_hint_correct',
       tier: QuestTier.medium,
@@ -592,7 +801,7 @@ const List<Quest> _mediumQuests = [
       icon: Icons.visibility_off_rounded),
   Quest(
       id: 'earn_150_coins',
-      title: 'Strânge 150 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 150,
       metricKey: 'coins_earned',
       tier: QuestTier.medium,
@@ -619,10 +828,11 @@ const List<Quest> _mediumQuests = [
       coinReward: 24,
       xpReward: 22,
       hintReward: 2,
+      heartReward: 2,
       icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'culture_correct_10',
-      title: 'Răspunde corect la 10 întrebări de Cultură Generală',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
       target: 10,
       metricKey: 'culture_quiz_correct',
       tier: QuestTier.medium,
@@ -638,8 +848,8 @@ const List<Quest> _mediumQuests = [
       tier: QuestTier.medium,
       coinReward: 24,
       xpReward: 22,
-      heartReward: 1,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.public_rounded),
   Quest(
       id: 'clippy_done_2',
@@ -652,15 +862,15 @@ const List<Quest> _mediumQuests = [
       hintReward: 2,
       icon: Icons.auto_awesome_rounded),
   Quest(
-      id: 'unlimited_correct_25',
-      title: 'Răspunde corect la 25 de întrebări în Quiz Nelimitat',
-      target: 25,
-      metricKey: 'unlimited_quiz_correct',
+      id: 'planet_correct_17',
+      title: 'Ghicește 17 holograme pe Planeta hologramelor',
+      target: 17,
+      metricKey: 'planet_correct',
       tier: QuestTier.medium,
       coinReward: 29,
       xpReward: 24,
       hintReward: 2,
-      icon: Icons.all_inclusive_rounded),
+      icon: Icons.blur_on_rounded),
   Quest(
       id: 'level_up_1',
       title: 'Revendică o recompensă de nivel',
@@ -670,6 +880,7 @@ const List<Quest> _mediumQuests = [
       coinReward: 24,
       xpReward: 19,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.military_tech_rounded),
   Quest(
       id: 'spend_any_1',
@@ -678,32 +889,33 @@ const List<Quest> _mediumQuests = [
       metricKey: 'shop_spend',
       tier: QuestTier.medium,
       xpReward: 16,
-      heartReward: 1,
       hintReward: 1,
       icon: Icons.shopping_cart_rounded),
   Quest(
       id: 'answer_15',
-      title: 'Răspunde la 15 întrebări (corect sau greșit)',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
       target: 15,
       metricKey: 'answer_count',
       tier: QuestTier.medium,
       coinReward: 23,
       xpReward: 20,
       hintReward: 2,
+      heartReward: 2,
       icon: Icons.playlist_add_check_rounded),
   Quest(
       id: 'answer_25',
-      title: 'Răspunde la 25 de întrebări (corect sau greșit)',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
       target: 25,
       metricKey: 'answer_count',
       tier: QuestTier.medium,
       coinReward: 31,
       xpReward: 27,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.playlist_add_check_rounded),
   Quest(
       id: 'hints_used_10',
-      title: 'Folosește 10 hint-uri',
+      title: 'Folosește {n} hint-uri',
       target: 10,
       metricKey: 'hints_used',
       tier: QuestTier.medium,
@@ -713,7 +925,7 @@ const List<Quest> _mediumQuests = [
       icon: Icons.tips_and_updates_rounded),
   Quest(
       id: 'no_hint_10',
-      title: 'Ghicește corect 10 întrebări fără niciun hint',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
       target: 10,
       metricKey: 'no_hint_correct',
       tier: QuestTier.medium,
@@ -723,17 +935,18 @@ const List<Quest> _mediumQuests = [
       icon: Icons.visibility_off_rounded),
   Quest(
       id: 'earn_250_coins',
-      title: 'Strânge 250 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 250,
       metricKey: 'coins_earned',
       tier: QuestTier.medium,
       coinReward: 27,
       xpReward: 22,
       hintReward: 1,
+      heartReward: 1,
       icon: Icons.savings_rounded),
   Quest(
       id: 'culture_correct_15',
-      title: 'Răspunde corect la 15 întrebări de Cultură Generală',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
       target: 15,
       metricKey: 'culture_quiz_correct',
       tier: QuestTier.medium,
@@ -742,15 +955,15 @@ const List<Quest> _mediumQuests = [
       hintReward: 2,
       icon: Icons.public_rounded),
   Quest(
-      id: 'unlimited_correct_35',
-      title: 'Răspunde corect la 35 de întrebări în Quiz Nelimitat',
-      target: 35,
-      metricKey: 'unlimited_quiz_correct',
+      id: 'planet_correct_23',
+      title: 'Ghicește 23 de holograme pe Planeta hologramelor',
+      target: 23,
+      metricKey: 'planet_correct',
       tier: QuestTier.medium,
       coinReward: 27,
       xpReward: 23,
       hintReward: 2,
-      icon: Icons.all_inclusive_rounded),
+      icon: Icons.blur_on_rounded),
   Quest(
       id: 'clippy_done_3',
       title: 'Termină 3 bonusuri de la Clippy',
@@ -760,6 +973,7 @@ const List<Quest> _mediumQuests = [
       coinReward: 24,
       xpReward: 22,
       hintReward: 2,
+      heartReward: 2,
       icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'hint_pack_bought_2',
@@ -790,6 +1004,7 @@ const List<Quest> _mediumQuests = [
       coinReward: 21,
       xpReward: 19,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.shopping_cart_rounded),
   Quest(
       id: 'streak_5_twice',
@@ -811,18 +1026,81 @@ const List<Quest> _mediumQuests = [
       xpReward: 23,
       hintReward: 1,
       icon: Icons.casino_rounded),
+  Quest(
+      id: 'planet_visit_2',
+      title: 'Intră de 2 ori pe Planeta hologramelor',
+      target: 2,
+      metricKey: 'planet_run',
+      tier: QuestTier.medium,
+      coinReward: 28,
+      xpReward: 24,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.travel_explore_rounded),
+  Quest(
+      id: 'planet_good_run_1',
+      title: 'Ieși de pe planetă cu cel puțin $planetGoodRunCorrect din $planetQuestionCount',
+      target: 1,
+      metricKey: 'planet_good_run',
+      tier: QuestTier.medium,
+      coinReward: 32,
+      xpReward: 26,
+      heartReward: 2,
+      icon: Icons.auto_graph_rounded),
+  Quest(
+      id: 'mp_win_1',
+      title: 'Câștigă un meci multiplayer',
+      target: 1,
+      metricKey: 'mp_win',
+      tier: QuestTier.medium,
+      coinReward: 33,
+      xpReward: 28,
+      hintReward: 1,
+      icon: Icons.emoji_events_rounded),
+  Quest(
+      id: 'correct_13',
+      title: 'Răspunde corect la {n} întrebări',
+      target: 13,
+      metricKey: 'correct_count',
+      tier: QuestTier.medium,
+      coinReward: 32,
+      xpReward: 26,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.check_circle_rounded),
+  Quest(
+      id: 'culture_correct_21',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
+      target: 21,
+      metricKey: 'culture_quiz_correct',
+      tier: QuestTier.medium,
+      coinReward: 31,
+      xpReward: 25,
+      hintReward: 2,
+      icon: Icons.public_rounded),
+  Quest(
+      id: 'no_hint_8',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
+      target: 8,
+      metricKey: 'no_hint_correct',
+      tier: QuestTier.medium,
+      coinReward: 33,
+      xpReward: 27,
+      hintReward: 2,
+      icon: Icons.visibility_off_rounded),
 ];
 
 const List<Quest> _hardQuests = [
   Quest(
       id: 'correct_15',
-      title: 'Răspunde corect la 15 întrebări',
+      title: 'Răspunde corect la {n} întrebări',
       target: 15,
       metricKey: 'correct_count',
       tier: QuestTier.hard,
       coinReward: 51,
       xpReward: 42,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.check_circle_rounded),
   Quest(
       id: 'streak_8',
@@ -832,19 +1110,19 @@ const List<Quest> _hardQuests = [
       tier: QuestTier.hard,
       coinReward: 54,
       xpReward: 54,
-      heartReward: 1,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'earn_300_coins',
-      title: 'Strânge 300 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 300,
       metricKey: 'coins_earned',
       tier: QuestTier.hard,
       coinReward: 48,
       xpReward: 39,
-      heartReward: 1,
       hintReward: 3,
+      heartReward: 1,
       icon: Icons.savings_rounded),
   Quest(
       id: 'clippy_perfect_1',
@@ -855,6 +1133,7 @@ const List<Quest> _hardQuests = [
       coinReward: 41,
       xpReward: 33,
       hintReward: 3,
+      heartReward: 1,
       icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'unlock_batch_1',
@@ -865,6 +1144,7 @@ const List<Quest> _hardQuests = [
       coinReward: 67,
       xpReward: 36,
       hintReward: 3,
+      heartReward: 1,
       icon: Icons.lock_open_rounded),
   Quest(
       id: 'play_4_modes',
@@ -875,6 +1155,7 @@ const List<Quest> _hardQuests = [
       coinReward: 51,
       xpReward: 45,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.grid_view_rounded),
   Quest(
       id: 'culture_batches_3',
@@ -885,36 +1166,40 @@ const List<Quest> _hardQuests = [
       coinReward: 48,
       xpReward: 42,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.public_rounded),
   Quest(
       id: 'claim_3_quests_today',
-      title: 'Revendică alte 3 quest-uri azi',
-      target: 3,
+      title: 'Revendică alte 6 quest-uri azi',
+      target: 6,
       metricKey: 'quests_claimed_today',
       tier: QuestTier.hard,
       coinReward: 54,
       xpReward: 48,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.flag_rounded),
   Quest(
       id: 'correct_20',
-      title: 'Răspunde corect la 20 de întrebări',
+      title: 'Răspunde corect la {n} întrebări',
       target: 20,
       metricKey: 'correct_count',
       tier: QuestTier.hard,
       coinReward: 53,
       xpReward: 45,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.check_circle_rounded),
   Quest(
       id: 'answer_40',
-      title: 'Răspunde la 40 de întrebări (corect sau greșit)',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
       target: 40,
       metricKey: 'answer_count',
       tier: QuestTier.hard,
       coinReward: 51,
       xpReward: 42,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.playlist_add_check_rounded),
   Quest(
       id: 'streak_10',
@@ -925,16 +1210,18 @@ const List<Quest> _hardQuests = [
       coinReward: 57,
       xpReward: 51,
       hintReward: 3,
+      heartReward: 5,
       icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'earn_500_coins',
-      title: 'Strânge 500 de monede jucând',
+      title: 'Strânge {n} monede jucând',
       target: 500,
       metricKey: 'coins_earned',
       tier: QuestTier.hard,
       coinReward: 51,
       xpReward: 42,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.savings_rounded),
   Quest(
       id: 'play_5_modes',
@@ -945,17 +1232,19 @@ const List<Quest> _hardQuests = [
       coinReward: 54,
       xpReward: 48,
       hintReward: 2,
+      heartReward: 1,
       icon: Icons.grid_view_rounded),
   Quest(
-      id: 'unlimited_correct_60',
-      title: 'Răspunde corect la 60 de întrebări în Quiz Nelimitat',
-      target: 60,
-      metricKey: 'unlimited_quiz_correct',
+      id: 'planet_correct_29',
+      title: 'Ghicește 29 de holograme pe Planeta hologramelor',
+      target: 29,
+      metricKey: 'planet_correct',
       tier: QuestTier.hard,
       coinReward: 53,
       xpReward: 45,
       hintReward: 2,
-      icon: Icons.all_inclusive_rounded),
+      heartReward: 1,
+      icon: Icons.blur_on_rounded),
   Quest(
       id: 'clippy_perfect_2',
       title: 'Termină un bonus de la Clippy perfect (3/3), de 2 ori azi',
@@ -965,17 +1254,96 @@ const List<Quest> _hardQuests = [
       coinReward: 48,
       xpReward: 42,
       hintReward: 3,
+      heartReward: 1,
       icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'claim_5_quests_today',
-      title: 'Revendică alte 5 quest-uri azi',
-      target: 5,
+      title: 'Revendică alte 9 quest-uri azi',
+      target: 9,
       metricKey: 'quests_claimed_today',
       tier: QuestTier.hard,
       coinReward: 61,
       xpReward: 54,
       hintReward: 3,
+      heartReward: 5,
       icon: Icons.flag_rounded),
+  Quest(
+      id: 'planet_great_run_1',
+      title: 'Ieși de pe planetă cu cel puțin $planetGreatRunCorrect din $planetQuestionCount',
+      target: 1,
+      metricKey: 'planet_great_run',
+      tier: QuestTier.hard,
+      coinReward: 59,
+      xpReward: 49,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.auto_graph_rounded),
+  Quest(
+      id: 'planet_perfect_1',
+      title: 'Rulare perfectă pe planetă: $planetQuestionCount din $planetQuestionCount',
+      target: 1,
+      metricKey: 'planet_perfect',
+      tier: QuestTier.hard,
+      coinReward: 71,
+      xpReward: 63,
+      hintReward: 3,
+      heartReward: 5,
+      icon: Icons.workspace_premium_rounded),
+  Quest(
+      id: 'mp_win_2',
+      title: 'Câștigă 2 meciuri multiplayer',
+      target: 2,
+      metricKey: 'mp_win',
+      tier: QuestTier.hard,
+      coinReward: 64,
+      xpReward: 56,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.emoji_events_rounded),
+  Quest(
+      id: 'correct_27',
+      title: 'Răspunde corect la {n} întrebări',
+      target: 27,
+      metricKey: 'correct_count',
+      tier: QuestTier.hard,
+      coinReward: 58,
+      xpReward: 51,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.check_circle_rounded),
+  Quest(
+      id: 'answer_55',
+      title: 'Răspunde la {n} întrebări (corect sau greșit)',
+      target: 55,
+      metricKey: 'answer_count',
+      tier: QuestTier.hard,
+      coinReward: 62,
+      xpReward: 53,
+      hintReward: 3,
+      heartReward: 1,
+      icon: Icons.playlist_add_check_rounded),
+  Quest(
+      id: 'culture_correct_27',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
+      target: 27,
+      metricKey: 'culture_quiz_correct',
+      tier: QuestTier.hard,
+      coinReward: 56,
+      xpReward: 47,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.public_rounded),
+  Quest(
+      id: 'no_hint_23',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
+      target: 23,
+      metricKey: 'no_hint_correct',
+      tier: QuestTier.hard,
+      coinReward: 66,
+      xpReward: 57,
+      hintReward: 2,
+      heartReward: 1,
+      icon: Icons.visibility_off_rounded),
 ];
 
 /// Toate quest-urile din joc — sursă pentru [questById] și pentru afișarea
@@ -990,21 +1358,25 @@ const List<Quest> allQuests = [
 Quest questById(String id) => allQuests.firstWhere((q) => q.id == id);
 
 // ─── Rotația săptămânală de quest-uri ──────────────────────────────────────
-// Cerința: nu toate cele 71 de quest-uri deodată, ci ~10 pe zi, DIFERITE de
-// la o zi la alta și fără repetare în cadrul aceleiași săptămâni — iar când
-// vine iar lunea, revine exact setul de luni.
+// Cerința: nu tot catalogul deodată, ci 12 pe zi în timpul săptămânii și mai
+// multe în weekend, DIFERITE de la o zi la alta și fără repetare în cadrul
+// aceleiași săptămâni — iar când vine iar lunea, revine exact setul de luni.
 //
 // De-aia catalogul e împărțit O SINGURĂ DATĂ în [questRotationDays] grupe
 // disjuncte, iar ziua săptămânii ([DateTime.weekday]) alege grupa. Partiția
 // NU depinde de dată (sămânță fixă, vezi [_questRotationSeed]) — dacă ar
 // depinde, "lunea viitoare" ar aduce alt set, nu același.
 //
-// Cele 71 nu se împart perfect la 7: grupele au 9-11 quest-uri (media 10,1),
-// iar fiecare grupă primește din toate cele trei dificultăți, fiindcă
-// împărțirea se face separat pe fiecare tier, cu decalaje diferite de
-// pornire (0/3/5) ca resturile să nu cadă mereu în aceleași zile.
+// Numărul de quest-uri din catalog nu e ales la întâmplare: 5×12 + 2×14 = 88,
+// exact cât are [allQuests]. Sâmbăta și duminica primesc câte două în plus
+// fiindcă atunci se joacă mai mult — cerut explicit. Dacă adaugi sau scoți
+// quest-uri din catalog, [questsPerWeekday] trebuie să însumeze noul total,
+// altfel partiția nu mai iese exact (există un test care prinde asta).
 
 const int questRotationDays = 7;
+
+/// Câte quest-uri primește fiecare zi, indexat de la luni (0) la duminică (6).
+const List<int> questsPerWeekday = [12, 12, 12, 12, 12, 14, 14];
 
 /// Sămânță FIXĂ pentru amestecarea catalogului înainte de împărțire —
 /// schimbarea ei rearanjează complet ce quest-uri pică în ce zi.
@@ -1012,40 +1384,92 @@ const int _questRotationSeed = 20260803;
 
 List<List<Quest>>? _rotationCache;
 
-/// Împarte un tier în grupele zilnice, dealuind familie cu familie (toate
-/// variantele care împart același [Quest.metricKey], ex. answer_3/answer_5/
-/// answer_10). Membrii unei familii pică pe zile CONSECUTIVE, deci — cât timp
-/// o familie are cel mult [questRotationDays] variante într-un tier — nicio
-/// zi nu primește două quest-uri care se completează din același contor.
-void _dealTier(List<List<Quest>> days, List<Quest> pool, int startDay) {
-  final families = <String, List<Quest>>{};
-  for (final q in pool) {
-    families.putIfAbsent(q.metricKey, () => <Quest>[]).add(q);
-  }
-  final keys = families.keys.toList()
-    ..sort()
-    ..shuffle(Random(_questRotationSeed + startDay));
-  var slot = startDay;
-  for (final key in keys) {
-    for (final quest in families[key]!) {
-      days[slot % questRotationDays].add(quest);
-      slot++;
-    }
-  }
-}
-
+/// Împarte TOT catalogul în cele 7 grupe zilnice.
+///
+/// Regula tare: **într-o zi, fiecare quest e unic** — nu există două
+/// quest-uri care se completează din același contor de progres
+/// ([Quest.metricKey]). Fără ea, "Răspunde la 23 de întrebări" și "Răspunde
+/// la 35" ar apărea în aceeași zi, iar prima s-ar bifa singură pe drumul spre
+/// a doua: două rânduri pe ecran pentru o singură acțiune.
+///
+/// Consecința asupra catalogului, de ținut minte la orice adăugare: **o
+/// familie nu poate avea mai mult de [questRotationDays] variante**, altfel
+/// nu încap pe zile distincte. De-aia `answer_count` și `correct_count` au
+/// exact 7 fiecare, nu 10 și 8 cum ajunseseră — surplusul a fost mutat pe
+/// alte metrici. Există un test care prinde depășirea.
+///
+/// Familiile mari se așază primele, cât timp tabla e goală. Fiecare quest
+/// ajunge în ziua care are (în ordine) cele mai puține quest-uri din
+/// dificultatea lui și cele mai puține în total; zilele pline (vezi
+/// [questsPerWeekday]) sau care au deja familia respectivă sunt excluse din
+/// start. Decalajul per familie ține împărțirea variată fără hazard.
 List<List<Quest>> _questRotation() {
   final cached = _rotationCache;
   if (cached != null) return cached;
+
   final days = List.generate(questRotationDays, (_) => <Quest>[]);
-  _dealTier(days, _easyQuests, 0);
-  _dealTier(days, _mediumQuests, 3);
-  _dealTier(days, _hardQuests, 5);
+  final metricsPerDay = List.generate(questRotationDays, (_) => <String>{});
+
+  final families = <String, List<Quest>>{};
+  for (final q in allQuests) {
+    families.putIfAbsent(q.metricKey, () => <Quest>[]).add(q);
+  }
+  for (final members in families.values) {
+    members.sort((a, b) => a.tier.index.compareTo(b.tier.index));
+  }
+
+  final keys = families.keys.toList()
+    ..sort()
+    ..shuffle(Random(_questRotationSeed));
+  // familiile mari întâi — ele sunt cele constrânse, restul umple golurile.
+  keys.sort((a, b) => families[b]!.length.compareTo(families[a]!.length));
+
+  for (var f = 0; f < keys.length; f++) {
+    final key = keys[f];
+    assert(families[key]!.length <= questRotationDays,
+        'familia "$key" are ${families[key]!.length} variante, peste cele $questRotationDays zile');
+    for (final quest in families[key]!) {
+      var best = -1;
+      List<int>? bestScore;
+      for (var i = 0; i < questRotationDays; i++) {
+        // decalajul per familie: fără el, toate familiile ar începe să caute
+        // din ziua 0 și primele zile s-ar umple sistematic mai repede.
+        final d = (i + f) % questRotationDays;
+        if (days[d].length >= questsPerWeekday[d]) continue;
+        if (metricsPerDay[d].contains(key)) continue; // regula tare
+        final score = [
+          days[d].where((q) => q.tier == quest.tier).length,
+          days[d].length,
+        ];
+        if (bestScore == null || _lessThan(score, bestScore)) {
+          bestScore = score;
+          best = d;
+        }
+      }
+      // Suma din questsPerWeekday e egală cu allQuests.length și nicio
+      // familie nu depășește 7 (ambele prinse de teste), deci există mereu o
+      // zi liberă. Assert-ul e plasa pentru viitor.
+      assert(best >= 0,
+          'nu mai e loc pentru "${quest.id}": verifica questsPerWeekday si marimea familiilor');
+      if (best < 0) continue;
+      days[best].add(quest);
+      metricsPerDay[best].add(key);
+    }
+  }
+
   for (final day in days) {
     // ușoare întâi, grele la final — lista de pe ecran urcă în dificultate.
     day.sort((a, b) => a.tier.index.compareTo(b.tier.index));
   }
   return _rotationCache = days;
+}
+
+/// Comparație lexicografică pe scorurile din [_questRotation].
+bool _lessThan(List<int> a, List<int> b) {
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) return a[i] < b[i];
+  }
+  return false;
 }
 
 /// Quest-urile active AZI — grupa zilei curente din rotația săptămânală (vezi
@@ -1199,5 +1623,114 @@ const List<Achievement> achievements = [
     heartReward: 13,
     hintReward: 27,
     icon: Icons.diamond_rounded,
+  ),
+
+  // ─── Seria lungă (adăugată 2026-08-05) ──────────────────────────────────
+  // Zece realizări gândite pe o LUNĂ de joc, nu pe o seară: fiecare are ca
+  // țintă un lucru care nu se poate grăbi (o serie de zile, un cooldown de
+  // 24h, un plafon zilnic) sau un volum care cere săptămâni.
+  //
+  // Regula de compoziție: NICIO recompensă nu seamănă cu alta. Fiecare
+  // combină alt SUBSET din cele cinci resurse (monede / XP / gems / vieți /
+  // hints), ca deblocarea să se simtă de fiecare dată altfel — singurul
+  // lucru comun e că toate sunt generoase.
+  //
+  // Progresul lor vine din contoarele pe viață (vezi
+  // StorageService.getLifetimeMetric), hrănite automat de bumpQuestMetric.
+
+  Achievement(
+    id: 'streak_30',
+    title: 'Lună fără pauză',
+    description: 'Intră în joc 30 de zile la rând',
+    target: 30,
+    coinReward: 2417,
+    heartReward: 37,
+    hintReward: 43,
+    icon: Icons.local_fire_department_rounded,
+  ),
+  Achievement(
+    id: 'wheel_28',
+    title: 'Curtezanul norocului',
+    description: 'Învârte Roata norocului de 28 de ori (una la 24h)',
+    target: 28,
+    gemReward: 347,
+    icon: Icons.casino_rounded,
+  ),
+  Achievement(
+    id: 'mp_wins_23',
+    title: 'Spaima mesei',
+    description: 'Câștigă 23 de meciuri multiplayer',
+    target: 23,
+    coinReward: 3271,
+    xpReward: 583,
+    icon: Icons.sports_mma_rounded,
+  ),
+  Achievement(
+    id: 'no_hint_250',
+    title: 'Ochi liber',
+    description: '250 de răspunsuri corecte fără niciun hint',
+    target: 250,
+    xpReward: 719,
+    hintReward: 89,
+    icon: Icons.visibility_off_rounded,
+  ),
+  Achievement(
+    id: 'culture_600',
+    title: 'Enciclopedia ambulantă',
+    description: '600 de răspunsuri corecte la Cultură Generală',
+    target: 600,
+    coinReward: 1879,
+    gemReward: 113,
+    heartReward: 19,
+    icon: Icons.menu_book_rounded,
+  ),
+  Achievement(
+    id: 'clippy_perfect_47',
+    title: 'Cel mai bun prieten al agrafei',
+    description: '47 de bonusuri de la Clippy terminate perfect (3/3)',
+    target: 47,
+    xpReward: 461,
+    heartReward: 23,
+    hintReward: 61,
+    icon: Icons.auto_awesome_rounded,
+  ),
+  Achievement(
+    id: 'unlock_batches_3',
+    title: 'Colecționarul',
+    description: 'Deblochează 3 loturi noi de întrebări cu gems',
+    target: 3,
+    coinReward: 4637,
+    icon: Icons.lock_open_rounded,
+  ),
+  Achievement(
+    id: 'planet_perfect_5',
+    title: 'Stăpânul hologramelor',
+    description: '5 rulări perfecte pe Planeta hologramelor',
+    target: 5,
+    gemReward: 167,
+    heartReward: 29,
+    hintReward: 37,
+    icon: Icons.blur_on_rounded,
+  ),
+  Achievement(
+    id: 'coins_earned_37k',
+    title: 'Bancherul',
+    description: 'Strânge 37.000 de monede jucând',
+    target: 37000,
+    xpReward: 907,
+    gemReward: 89,
+    hintReward: 53,
+    icon: Icons.account_balance_rounded,
+  ),
+  Achievement(
+    id: 'quests_180',
+    title: 'Neobositul',
+    description: 'Revendică 180 de quest-uri zilnice',
+    target: 180,
+    coinReward: 3889,
+    xpReward: 1117,
+    gemReward: 211,
+    heartReward: 41,
+    icon: Icons.workspace_premium_rounded,
   ),
 ];

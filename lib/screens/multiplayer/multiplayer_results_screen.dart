@@ -86,6 +86,12 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       if (_myBet > 0 && mounted) {
         await bumpQuestMetric(context, 'mp_bet_played', 1);
       }
+      // O remiză pe locul 1 NU e victorie (aceeași convenție ca la
+      // statisticile de profil de mai jos), altfel două conturi care termină
+      // la egalitate ar bifa amândouă quest-ul de victorii la fiecare meci.
+      if (won && mounted) {
+        await bumpQuestMetric(context, 'mp_win', 1);
+      }
       if (won && await StorageService.canClaimFirstWinOfDay()) {
         await StorageService.claimFirstWinOfDay();
         _firstWinBonus = true;

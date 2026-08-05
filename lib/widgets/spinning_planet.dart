@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/gamemodes.dart';
-import '../screens/unlimited_quiz_screen.dart';
+import 'planet_entry_dialog.dart';
 
 /// Planetă centrală, cu funcție reală (spre deosebire de vechiul element
 /// pur decorativ): se rotește continuu, are o aură pulsantă care sugerează
@@ -12,11 +12,18 @@ import '../screens/unlimited_quiz_screen.dart';
 /// mai mici/estompate în spatele sferei), iar restul traversează diagonal
 /// peste toată zona — inclusiv peste planetă — pe unghiuri aleatorii,
 /// apărând și dispărând la capete, ca niște resturi care levitează în spațiu.
-/// Tap → [UnlimitedQuizScreen] — întrebări aleatorii din toate categoriile,
-/// nelimitat, până ieși.
+/// Tap → [PlanetEntryDialog], poarta către Planeta hologramelor: 17 întrebări
+/// (poze + Cultură Generală), 10 inimi ale planetei, 2-3 rulări la 12 ore.
+/// Înainte, tap-ul ducea în Quiz Nelimitat, mod care a fost înlocuit de
+/// planetă.
 class SpinningPlanet extends StatefulWidget {
   final double size;
-  const SpinningPlanet({super.key, this.size = 96});
+
+  /// Chemat după ce jucătorul se întoarce dintr-o rulare, ca ecranul-gazdă
+  /// să-și împrospăteze balanțele (la fel ca la celelalte mascote de pe Home).
+  final VoidCallback? onRewardsChanged;
+
+  const SpinningPlanet({super.key, this.size = 96, this.onRewardsChanged});
 
   @override
   State<SpinningPlanet> createState() => _SpinningPlanetState();
@@ -62,7 +69,7 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
 
   Future<void> _onTap() async {
     Sfx.tileSelect();
-    await Navigator.push(context, MaterialPageRoute(builder: (_) => const UnlimitedQuizScreen()));
+    await PlanetEntryDialog.show(context, onRewardsChanged: widget.onRewardsChanged);
   }
 
   @override

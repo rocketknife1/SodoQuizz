@@ -323,7 +323,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: OverflowBox(
                         maxWidth: 260,
                         maxHeight: 260,
-                        child: const SpinningPlanet(size: 76),
+                        child: SpinningPlanet(size: 76, onRewardsChanged: _refresh),
                       ),
                     ),
                   ],

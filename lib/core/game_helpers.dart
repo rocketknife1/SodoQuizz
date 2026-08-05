@@ -99,12 +99,12 @@ double streakMultiplier(int streak) {
   return 1.0;
 }
 
-/// Unlimited Quiz nu are risc de inimă (spre deosebire de GameScreen) — ca
-/// să nu fie niciodată mai eficient decât modul cu risc, plătește sub
-/// baseline: 0,58× sub plafonul zilnic de răspunsuri corecte, 0,19× peste.
-const double unlimitedQuizFullRate = 0.58;
-const double unlimitedQuizReducedRate = 0.19;
-const int unlimitedQuizFullRateDailyCap = 43;
+// Quiz Nelimitat a fost ELIMINAT pe 2026-08-05, împreună cu ratele lui
+// (0,58× / 0,19× peste 43 de corecte pe zi). Era singurul mod fără nicio
+// limită: se putea juca la nesfârșit, deci plata pe întrebare trebuia ținută
+// artificial sub baseline ca să nu devină cea mai bună sursă din joc doar
+// prin volum. Planeta hologramelor (vezi progression.dart) i-a luat locul cu
+// exact soluția opusă — rulări scurte, rare și bine plătite.
 
 // ─── Cultură Generală ("Daily Challenge") ─────────────────────────────────
 // Era de departe cea mai generoasă sursă din joc (690 monede + 1.380 XP + 10

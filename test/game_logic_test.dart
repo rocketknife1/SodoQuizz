@@ -99,15 +99,27 @@ void main() {
       expect(perTier[QuestTier.hard], greaterThan(perTier[QuestTier.medium]!));
     });
 
-    test('o saptamana de quest-uri ajunge fix pentru o categorie noua', () {
+    test('o saptamana de quest-uri ajunge pentru o categorie noua, nu pentru un tier intreg', () {
       // 2026-08-03 e o luni; suma peste toate cele 7 zile din rotație.
       final weekly = List.generate(7, (i) => DateTime(2026, 8, 3 + i))
           .expand(todaysQuests)
           .fold<int>(0, (sum, q) => sum + q.gemReward);
-      // maximul teoretic (absolut TOATE terminate) trebuie să fie peste prețul
-      // unei categorii, dar nu cu mult — altfel s-ar aduna mai repede de-atât.
+      // Maximul TEORETIC (absolut toate cele 88 terminate) trebuie să fie
+      // peste prețul unei categorii, dar sub prețul cumulat al primelor trei
+      // — altfel s-ar debloca tot arborele într-o săptămână.
+      //
+      // Plafonul a urcat de la 2× la 3× odată cu trecerea la 12-14 quest-uri
+      // pe zi cu ținte de o zi întreagă (questTargetScale). Nu înseamnă gems
+      // mai ieftini: "toate quest-urile unei săptămâni" e acum un scenariu
+      // mult mai extrem decât era la 71 de quest-uri cu ținte de câteva
+      // minute. Ce contează pentru ritmul real e plafonul zilnic
+      // (dailyQuestGemCap), verificat separat în quest_rotation_test.
       expect(weekly, greaterThan(questionUnlockGemsPrice(1)));
-      expect(weekly, lessThan(questionUnlockGemsPrice(1) * 2));
+      expect(
+          weekly,
+          lessThan(questionUnlockGemsPrice(1) +
+              questionUnlockGemsPrice(2) +
+              questionUnlockGemsPrice(3)));
     });
 
     test('toate metricile de quest sunt distincte de id doar unde trebuie', () {
@@ -120,8 +132,12 @@ void main() {
         'answer_count', 'correct_count', 'coins_earned', 'no_hint_correct',
         'streak_hit_3', 'streak_hit_5', 'streak_hit_8', 'streak_hit_10',
         'level_reward_claimed', 'daily_lives_claimed', 'heart_bought',
-        'hint_pack_bought', 'unlimited_quiz_correct', 'quests_claimed_today',
-        'mp_bet_played',
+        'hint_pack_bought', 'quests_claimed_today',
+        'mp_bet_played', 'mp_win',
+        // Planeta hologramelor (a înlocuit Quiz Nelimitat, deci
+        // 'unlimited_quiz_correct' a ieșit din listă odată cu ecranul lui)
+        'planet_run', 'planet_correct', 'planet_survived',
+        'planet_good_run', 'planet_great_run', 'planet_perfect',
       };
       for (final q in allQuests) {
         expect(bumpedMetrics.contains(q.metricKey), isTrue,

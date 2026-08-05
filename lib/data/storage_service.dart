@@ -82,6 +82,9 @@ class StorageService {
   static const _starterCategoriesKey = 'starter_unlocked_categories';
   static const _firstMultiplayerWinKey = 'first_mp_win_date';
   static const _activityEventsKey = 'activity_events';
+  static const _planetRunsUsedKey = 'planet_runs_used';
+  static const _planetAdUnlockedKey = 'planet_ad_unlocked';
+  static const _planetCooldownUntilKey = 'planet_cooldown_until';
   static const _cloudPushSnapshotKey = 'cloud_push_snapshot';
 
   /// Chei pur locale, care NU pleacă niciodată în cloud (vezi [exportAll]).
@@ -782,6 +785,108 @@ class StorageService {
   // modurile fără risc (Unlimited Quiz, Cultură Generală), vezi reproiectarea
   // economiei: niciun mod nu trebuie să poată fi "farmat" la nesfârșit.
 
+  // ─── Planeta hologramelor: rulări și cooldown ─────────────────────────────
+  // Ciclul e: [planetRunsPerCycle] rulări → cooldown de [planetCooldownHours]
+  // ore. O reclamă vizionată ridică plafonul ciclului curent la
+  // [planetRunsPerCycleWithAd] și anulează cooldown-ul tocmai pornit, deci
+  // "2 rulări, sau 3 dacă te uiți la o reclamă" e o singură stare, nu două.
+  //
+  // Cooldown-ul pornește abia când jucătorul RIDICĂ recompensa ultimei rulări
+  // permise și iese din fereastra de colectare (vezi
+  // PlanetHologramScreen._finishAndCollect) — nu la intrarea în rulare.
+  // Altfel, cine închide aplicația în mijlocul unei rulări ar rămâne blocat
+  // 12 ore fără să fi primit nimic.
+  //
+  // Spre deosebire de Clippy, ciclul NU e legat de ziua calendaristică: 12
+  // ore înseamnă 12 ore, oricând ar fi început.
+
+  static Future<int> _planetLimit(SharedPreferences prefs) async =>
+      (prefs.getBool(_planetAdUnlockedKey) ?? false)
+          ? planetRunsPerCycleWithAd
+          : planetRunsPerCycle;
+
+  /// Cât mai e din cooldown (zero dacă planeta e liberă). Trecerea peste zero
+  /// resetează ciclul, deci se poate apela oricând, inclusiv din build.
+  static Future<Duration> planetCooldownRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    final until = prefs.getInt(_planetCooldownUntilKey);
+    if (until == null) return Duration.zero;
+    final left = until - DateTime.now().millisecondsSinceEpoch;
+    if (left > 0) return Duration(milliseconds: left);
+    // ciclul s-a încheiat — rulările și reclama se resetează împreună.
+    await prefs.remove(_planetCooldownUntilKey);
+    await prefs.setInt(_planetRunsUsedKey, 0);
+    await prefs.setBool(_planetAdUnlockedKey, false);
+    return Duration.zero;
+  }
+
+  /// Câte rulări mai are jucătorul în ciclul curent (0 cât timp e cooldown).
+  static Future<int> planetRunsLeft() async {
+    if ((await planetCooldownRemaining()) > Duration.zero) return 0;
+    final prefs = await SharedPreferences.getInstance();
+    final used = prefs.getInt(_planetRunsUsedKey) ?? 0;
+    final left = (await _planetLimit(prefs)) - used;
+    return left > 0 ? left : 0;
+  }
+
+  /// True dacă mai poate fi oferită reclama pentru o rulare în plus — o
+  /// singură dată per ciclu.
+  static Future<bool> canWatchAdForPlanetRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    return !(prefs.getBool(_planetAdUnlockedKey) ?? false);
+  }
+
+  /// Reclama vizionată: ridică plafonul ciclului la
+  /// [planetRunsPerCycleWithAd] și șterge cooldown-ul, ca rularea în plus să
+  /// fie disponibilă imediat.
+  static Future<void> unlockPlanetAdRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_planetAdUnlockedKey, true);
+    await prefs.remove(_planetCooldownUntilKey);
+  }
+
+  /// Marchează o rulare consumată și, dacă era ultima permisă, pornește
+  /// cooldown-ul. Se apelează DUPĂ colectarea recompensei.
+  static Future<void> recordPlanetRunFinished() async {
+    final prefs = await SharedPreferences.getInstance();
+    final used = (prefs.getInt(_planetRunsUsedKey) ?? 0) + 1;
+    await prefs.setInt(_planetRunsUsedKey, used);
+    if (used >= await _planetLimit(prefs)) {
+      await prefs.setInt(
+        _planetCooldownUntilKey,
+        DateTime.now()
+            .add(const Duration(hours: planetCooldownHours))
+            .millisecondsSinceEpoch,
+      );
+    }
+  }
+
+  // ─── Contoare pe VIAȚĂ, derivate din metricile de quest ───────────────────
+  // Quest-urile își resetează progresul zilnic (cheie scoped pe dată), dar
+  // realizările permanente au nevoie de totaluri care nu se resetează
+  // niciodată. În loc să instrumentăm din nou fiecare loc din joc care deja
+  // raportează un metric, [bumpQuestMetric] hrănește ȘI contorul de mai jos —
+  // o singură cârlig, valabil pentru orice metric existent sau viitor.
+  //
+  // ATENȚIE: incrementarea se face ÎNAINTE de filtrul "e metricul ăsta activ
+  // azi?" din bumpQuestMetric. Altfel, un metric care nu pică în rotația zilei
+  // n-ar fi numărat deloc, iar realizările construite pe el ar avansa doar în
+  // ~1 zi din 7.
+
+  static String _lifetimeMetricKey(String metric) => 'lifetime_$metric';
+
+  static Future<int> getLifetimeMetric(String metric) async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_lifetimeMetricKey(metric)) ?? 0;
+  }
+
+  static Future<void> addLifetimeMetric(String metric, int amount) async {
+    if (amount <= 0) return;
+    final prefs = await SharedPreferences.getInstance();
+    final key = _lifetimeMetricKey(metric);
+    await prefs.setInt(key, (prefs.getInt(key) ?? 0) + amount);
+  }
+
   static String _dailyCounterKey(String name) => 'daily_${name}_${_dateKey(DateTime.now())}';
 
   static Future<int> getDailyCounter(String name) async {
@@ -1273,9 +1378,17 @@ class StorageService {
   static const _achievementsDoneKnownKey = 'achievements_done_known';
 
   /// Construiește funcția care dă progresul curent al fiecărei realizări,
-  /// citind toate contoarele o singură dată — sursă unică folosită atât de
-  /// [checkNewlyCompletedAchievements] cât și de [hasClaimableAchievements].
-  static Future<int Function(Achievement)> _achievementProgressResolver() async {
+  /// citind toate contoarele o singură dată — sursă unică folosită de
+  /// [checkNewlyCompletedAchievements], [hasClaimableAchievements] și de
+  /// AchievementsScreen. Ecranul avea o copie proprie a acestui switch; când
+  /// s-au adăugat realizări noi, cele două ar fi divergat tăcut (bara de
+  /// progres ar fi arătat 0 pentru realizări care se deblocau totuși singure),
+  /// de-aia acum e publică și una singură.
+  ///
+  /// Realizările din seria lungă citesc contoarele pe VIAȚĂ
+  /// ([getLifetimeMetric]), alimentate automat de bumpQuestMetric — nu au
+  /// nevoie de instrumentare separată în ecranele de joc.
+  static Future<int Function(Achievement)> achievementProgressResolver() async {
     final prefs = await SharedPreferences.getInstance();
     final answeredCount = (prefs.getStringList(_answeredKey) ?? []).length;
     final level = levelForXp(prefs.getInt(_xpKey) ?? 0);
@@ -1284,14 +1397,25 @@ class StorageService {
     final questsClaimed = prefs.getInt(_questsClaimedTotalKey) ?? 0;
     final dailyChallenges = prefs.getInt(_dailyChallengesTotalKey) ?? 0;
     final starterPackBought = prefs.getBool(_starterPackBoughtKey) ?? false;
+    final streak = prefs.getInt(_streakCountKey) ?? 0;
+    int lifetime(String metric) => prefs.getInt(_lifetimeMetricKey(metric)) ?? 0;
     return (Achievement a) => switch (a.id) {
           'correct_50' || 'correct_150' || 'correct_400' => answeredCount,
           'level_5' || 'level_15' => level,
           'all_modes' => modesPlayed,
           'hints_50' => hintsUsed,
-          'quests_25' => questsClaimed,
+          'quests_25' || 'quests_180' => questsClaimed,
           'daily_10' => dailyChallenges,
           'starter_pack_bought' => starterPackBought ? 1 : 0,
+          'streak_30' => streak,
+          'wheel_28' => lifetime('wheel_spin'),
+          'mp_wins_23' => lifetime('mp_win'),
+          'no_hint_250' => lifetime('no_hint_correct'),
+          'culture_600' => lifetime('culture_quiz_correct'),
+          'clippy_perfect_47' => lifetime('clippy_perfect'),
+          'unlock_batches_3' => lifetime('question_batch_unlocked'),
+          'planet_perfect_5' => lifetime('planet_perfect'),
+          'coins_earned_37k' => lifetime('coins_earned'),
           _ => 0,
         };
   }
@@ -1303,7 +1427,7 @@ class StorageService {
   /// Nu marchează nimic ca revendicat — doar ca "deja anunțat".
   static Future<List<Achievement>> checkNewlyCompletedAchievements() async {
     final prefs = await SharedPreferences.getInstance();
-    final progressFor = await _achievementProgressResolver();
+    final progressFor = await achievementProgressResolver();
 
     final knownDone = prefs.getStringList(_achievementsDoneKnownKey)?.toSet() ?? <String>{};
     final newlyDone = <Achievement>[];
@@ -1324,7 +1448,7 @@ class StorageService {
   /// folosit pentru punctul roșu de notificare de pe tab-ul Profil și de pe
   /// rândul "Realizări" din profil.
   static Future<bool> hasClaimableAchievements() async {
-    final progressFor = await _achievementProgressResolver();
+    final progressFor = await achievementProgressResolver();
     for (final a in achievements) {
       if (progressFor(a) >= a.target && !await isAchievementClaimed(a.id)) return true;
     }
