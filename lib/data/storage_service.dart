@@ -889,6 +889,29 @@ class StorageService {
 
   static String _dailyCounterKey(String name) => 'daily_${name}_${_dateKey(DateTime.now())}';
 
+  /// Sterge contoarele zilnice din zilele trecute.
+  ///
+  /// [_dailyCounterKey] scrie o cheie noua in fiecare zi si nimeni nu le
+  /// stergea vreodata: dupa cateva luni un cont aduna sute de chei moarte
+  /// (`daily_clippy_rounds_2026-8-5`, `..._2026-8-6`, ...), care se urcau si
+  /// in `users/{uid}` la fiecare sincronizare, pentru ca [exportAll] trimite
+  /// tot ce gaseste. Se pastreaza doar ziua curenta — un contor de ieri nu e
+  /// citit niciodata, cheia lui contine data.
+  static Future<void> pruneOldDailyCounters() async {
+    final prefs = await SharedPreferences.getInstance();
+    final azi = '_${_dateKey(DateTime.now())}';
+    for (final key in prefs.getKeys().toList()) {
+      if (key.startsWith('daily_') && !key.endsWith(azi)) {
+        // `daily_claim_date`/`daily_challenge_date`/`daily_challenges_total`
+        // incep tot cu "daily_" dar nu sunt contoare pe zi — nu au data in
+        // nume, deci n-au voie sa cada aici.
+        if (RegExp(r'_\d{4}-\d{1,2}-\d{1,2}$').hasMatch(key)) {
+          await prefs.remove(key);
+        }
+      }
+    }
+  }
+
   static Future<int> getDailyCounter(String name) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_dailyCounterKey(name)) ?? 0;

@@ -7,6 +7,7 @@ import 'data/cloud_sync_service.dart';
 import 'data/multiplayer_activity_service.dart';
 import 'data/multiplayer_service.dart';
 import 'data/player_profile_service.dart';
+import 'data/storage_service.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
@@ -15,6 +16,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   Sfx.preload();
   Music.start();
+  // Inainte de orice sincronizare, ca sa nu se mai urce in cloud contoarele
+  // zilnice ale zilelor trecute — vezi StorageService.pruneOldDailyCounters.
+  await StorageService.pruneOldDailyCounters();
   // O singura initializare, la pornire - restul (login Google) ramane lazy,
   // declansat doar cand userul chiar foloseste acele functii. Esec aici
   // (ex. platforma neconfigurata inca in Firebase Console) nu trebuie sa

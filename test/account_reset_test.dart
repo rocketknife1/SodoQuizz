@@ -137,4 +137,43 @@ void main() {
       expect(await StorageService.getActivityEvents(), 0);
     });
   });
+
+  group('pruneOldDailyCounters', () {
+    test('sterge contoarele din zilele trecute, le pastreaza pe cele de azi', () async {
+      final acum = DateTime.now();
+      final azi = '${acum.year}-${acum.month}-${acum.day}';
+      SharedPreferences.setMockInitialValues({
+        'daily_clippy_rounds_$azi': 3,
+        'daily_culture_batches_$azi': 1,
+        'daily_clippy_rounds_2026-8-5': 5,
+        'daily_hearts_bought_2026-8-5': 4,
+        'daily_quest_gems_2025-12-31': 7,
+      });
+
+      await StorageService.pruneOldDailyCounters();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getInt('daily_clippy_rounds_$azi'), 3);
+      expect(prefs.getInt('daily_culture_batches_$azi'), 1);
+      expect(prefs.getKeys().where((k) => k.endsWith('2026-8-5')), isEmpty);
+      expect(prefs.getInt('daily_quest_gems_2025-12-31'), isNull);
+    });
+
+    test('nu atinge cheile "daily_" care nu sunt contoare pe zi', () async {
+      SharedPreferences.setMockInitialValues({
+        'daily_claim_date': '2026-8-5',
+        'daily_challenge_date': '2026-8-5',
+        'daily_challenges_total': 12,
+        'daily_lives_claimed': 4,
+      });
+
+      await StorageService.pruneOldDailyCounters();
+
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('daily_claim_date'), '2026-8-5');
+      expect(prefs.getString('daily_challenge_date'), '2026-8-5');
+      expect(prefs.getInt('daily_challenges_total'), 12);
+      expect(prefs.getInt('daily_lives_claimed'), 4);
+    });
+  });
 }

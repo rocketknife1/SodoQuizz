@@ -19,6 +19,7 @@ CE NU FACE, si e important de stiut:
 RULARE (din radacina proiectului):
     python tools/reset_all.py            # doar raporteaza, nu sterge
     python tools/reset_all.py --sterge   # sterge efectiv
+    python tools/reset_all.py --sterge --doar-firestore   # lasa conturile
 
 Are nevoie de tools/service-account.json (vezi tools/purge_accounts.py).
 """
@@ -130,6 +131,10 @@ def list_accounts(s):
 
 def main():
     apply = "--sterge" in sys.argv
+    # Golirea Firestore fara sa se atinga conturile: dupa reset fiecare
+    # jucator se reconecteaza cu acelasi uid si isi reurca progresul de pe
+    # telefon, in loc sa primeasca un cont nou.
+    doar_firestore = "--doar-firestore" in sys.argv
     s = session()
 
     print("=" * 64)
@@ -137,7 +142,7 @@ def main():
     print("=" * 64)
 
     targets, per_collection = collect_targets(s)
-    accounts = list_accounts(s)
+    accounts = [] if doar_firestore else list_accounts(s)
 
     print("\n--- Firestore ---")
     if not per_collection or not any(per_collection.values()):
@@ -148,12 +153,15 @@ def main():
     print(f"\n  TOTAL de sters: {len(targets)} documente")
 
     print("\n--- Authentication ---")
-    if not accounts:
+    if doar_firestore:
+        print("  neatins (--doar-firestore)")
+    elif not accounts:
         print("  niciun cont")
-    for a in accounts:
-        who = a.get("email") or ("anonim" if not a.get("providerUserInfo") else "?")
-        print(f"  {a['localId']}  {who}")
-    print(f"\n  TOTAL de sters: {len(accounts)} conturi")
+    else:
+        for a in accounts:
+            who = a.get("email") or ("anonim" if not a.get("providerUserInfo") else "?")
+            print(f"  {a['localId']}  {who}")
+        print(f"\n  TOTAL de sters: {len(accounts)} conturi")
 
     if not apply:
         print("\nRulare de proba. Nimic nu a fost sters.")
@@ -169,20 +177,22 @@ def main():
             print(f"  ESUAT {name.split('/documents/')[-1]}: HTTP {r.status_code}")
     print(f"  {len(targets) - failed}/{len(targets)} documente sterse")
 
-    print("\nSterg conturile...")
     afailed = 0
-    for a in accounts:
-        r = s.post(f"{IDENTITY}/accounts:delete", json={"localId": a["localId"]}, timeout=90)
-        if r.status_code != 200:
-            afailed += 1
-            print(f"  ESUAT {a['localId']}: HTTP {r.status_code} {r.text[:120]}")
-    print(f"  {len(accounts) - afailed}/{len(accounts)} conturi sterse")
+    if not doar_firestore:
+        print("\nSterg conturile...")
+        for a in accounts:
+            r = s.post(f"{IDENTITY}/accounts:delete", json={"localId": a["localId"]}, timeout=90)
+            if r.status_code != 200:
+                afailed += 1
+                print(f"  ESUAT {a['localId']}: HTTP {r.status_code} {r.text[:120]}")
+        print(f"  {len(accounts) - afailed}/{len(accounts)} conturi sterse")
 
     print("\n" + "=" * 64)
     if failed or afailed:
         print("  Gata, dar cu erori — vezi mai sus.")
     else:
-        print("  Gata. Firestore gol, Authentication gol.")
+        print("  Gata. Firestore gol"
+              + (", Authentication neatins." if doar_firestore else ", Authentication gol."))
     print("=" * 64)
 
 
