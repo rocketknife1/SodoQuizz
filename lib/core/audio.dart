@@ -31,7 +31,13 @@ Future<void> _ensureGlobalAudioContext() {
 /// Muzică de fundal — o singură piesă în buclă, complet separată de [Sfx]
 /// (player propriu, volum propriu persistat). Pornește automat la lansarea
 /// aplicației (vezi main.dart) și respectă preferința "Music Off" +
-/// volumul salvat din ecranul de Setări.
+/// volumul salvat din ecranul de Setări. Fiind un singur player pornit din
+/// main, aceeași piesă merge continuu pe toate ecranele.
+///
+/// Piesa e `.mp3` (era `.wav` până pe 8 august 2026): aceeași durată, dar
+/// 0,9 MB în loc de 2,3 MB. MP3-ul poate lăsa o pauză foarte scurtă la
+/// reluare, din cauza padding-ului pus de encoder — dacă se aude vreodată
+/// deranjant, soluția e un `.ogg`, nu întoarcerea la `.wav`.
 class Music {
   static final AudioPlayer _player = AudioPlayer(playerId: 'bg_music');
   static Future<void>? _preloadFuture;
@@ -51,7 +57,7 @@ class Music {
       await _player.setReleaseMode(ReleaseMode.loop);
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
       await _player.setVolume(_volume);
-      await _player.setSourceAsset('music/theme_loop.wav');
+      await _player.setSourceAsset('music/theme_loop.mp3');
     } catch (e) {
       debugPrint('Music: nu am putut pregăti piesa de fundal: $e');
     }
