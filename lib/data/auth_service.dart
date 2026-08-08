@@ -287,35 +287,66 @@ class AuthService {
     await FirebaseAuth.instance.signOut();
   }
 
-  /// Șterge definitiv contul Google curent — cerință Play Console: orice cont
-  /// care se poate crea din aplicație trebuie să poată fi șters tot din
-  /// aplicație. No-op dacă nimeni nu e logat cu Google (Guest nu are ce
-  /// șterge). Curăță ÎNTÂI datele din Firestore (profil public, prieteni,
-  /// cloud-save) și abia apoi contul Firebase Auth propriu-zis — pe dos ar
-  /// invalida sesiunea înainte ca regulile Firestore (request.auth.uid) să
-  /// mai poată autoriza ștergerile. Fără Cloud Functions în acest proiect nu
-  /// există o tranzacție reală peste cei doi pași — dacă userul anulează
-  /// reautentificarea de mai jos, datele din Firestore tot au fost șterse
-  /// deja, dar contul Auth rămâne (poate reîncerca ștergerea din nou).
-  /// Progresul local de pe telefon (StorageService) NU e atins — userul
-  /// rămâne cu el, ca un Guest nou.
+  /// Șterge definitiv contul curent — cerință Play Console: orice cont care
+  /// se poate crea din aplicație trebuie să poată fi șters tot din aplicație.
+  /// Merge pentru ORICE fel de cont: Google, Play Games și **Guest**.
+  ///
+  /// Curăță ÎNTÂI datele din Firestore (profil public, prieteni, cloud-save)
+  /// și abia apoi contul Firebase Auth propriu-zis — pe dos ar invalida
+  /// sesiunea înainte ca regulile Firestore (request.auth.uid) să mai poată
+  /// autoriza ștergerile. Fără Cloud Functions în acest proiect nu există o
+  /// tranzacție reală peste cei doi pași — dacă userul anulează
+  /// reautentificarea, datele din Firestore tot au fost șterse deja, dar
+  /// contul Auth rămâne (poate reîncerca ștergerea din nou).
+  ///
+  /// DIFERENȚA DINTRE GUEST ȘI CONT CU LOGIN, și de ce există:
+  /// la un cont cu login progresul local NU se atinge — userul rămâne cu el
+  /// pe telefon ca un Guest nou, iar dacă se răzgândește se poate reloga
+  /// altundeva. La un **Guest** progresul local SE ȘTERGE, altfel ștergerea
+  /// ar fi teatru: identitatea anonimă e legată de instalare, deci la
+  /// următoarea pornire s-ar crea alt uid anonim (main.dart), iar
+  /// `ensureProfileHeartbeat` + prima sincronizare ar reface exact aceleași
+  /// documente sub uid-ul nou. Datele ar reapărea în consolă imediat, iar
+  /// jucătorul ar rămâne convins că și-a șters contul.
   Future<void> deleteAccount() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null || user.isAnonymous) return;
+    if (user == null) return;
+    final eraGuest = user.isAnonymous;
+
     await PlayerProfileService.instance.deleteMyProfile();
     await CloudSyncService.instance.deleteCloudSave();
     try {
       await user.delete();
     } on FirebaseAuthException catch (e) {
       if (e.code != 'requires-recent-login') rethrow;
+      // Un cont anonim nu poate cere reautentificare (n-are cu ce), deci
+      // ramura asta e strict pentru conturile cu login.
       final auth = await _authenticateGoogle();
       await user.reauthenticateWithCredential(auth.credential);
       await user.delete();
     }
+
+    if (eraGuest) {
+      await StorageService.resetAll();
+    } else {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (_) {
+        // ignorat - la fel ca in signOut().
+      }
+    }
+
+    // Identitate anonimă nouă, imediat. Fără ea aplicația rămâne cu
+    // `currentUser == null` până la următoarea pornire: singurul loc care
+    // cheamă signInAnonymously e MultiplayerService.ensureInitialized, iar
+    // acela are un zăvor (`_initialized`) deja închis de la pornirea
+    // aplicației, deci n-ar mai crea nimic. Jucătorul ar continua să joace
+    // fără uid — nu ar apărea în clasament și multiplayer-ul ar da eroare,
+    // fără niciun semn că de la ștergere i se trage.
     try {
-      await GoogleSignIn.instance.signOut();
-    } catch (_) {
-      // ignorat - la fel ca in signOut().
+      await FirebaseAuth.instance.signInAnonymously();
+    } catch (e) {
+      debugPrint('AuthService.deleteAccount: identitatea noua a esuat: $e');
     }
   }
 }

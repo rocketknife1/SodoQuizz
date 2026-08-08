@@ -118,12 +118,19 @@ class CloudSyncService {
 
   /// Șterge cloud-save-ul privat (progres local urcat) + un eventual grant
   /// de admin în așteptare — apelat DOAR de [AuthService.deleteAccount] la
-  /// ștergere definitivă de cont. Nu atinge progresul local de pe telefon
-  /// (StorageService rămâne neschimbat, userul devine un Guest nou).
+  /// ștergere definitivă de cont. Nu atinge progresul local de pe telefon;
+  /// de asta se ocupă [AuthService.deleteAccount], și doar pentru Guest.
+  ///
+  /// Merge și pentru conturile anonime: un Guest are uid de la prima
+  /// pornire și are deci `users/{uid}` de șters ca oricine altcineva.
+  /// Sărea peste ele înainte, așa că un Guest nu avea nicio cale să-și
+  /// șteargă datele din cloud (vezi [AuthService.deleteAccount]).
   Future<void> deleteCloudSave() async {
-    final user = AuthService.instance.currentUser;
-    if (user == null || user.isAnonymous) return;
-    final uid = user.uid;
+    // [_uid], nu AuthService.currentUser: acela întoarce null și pentru
+    // identitatea anonimă, deci exact pentru Guest — cazul pentru care a fost
+    // deschisă metoda asta — ștergerea ar fi fost sărită în tăcere.
+    final uid = _uid;
+    if (uid.isEmpty) return;
     try {
       await FirebaseFirestore.instance.collection('admin_grants').doc(uid).delete();
     } catch (_) {

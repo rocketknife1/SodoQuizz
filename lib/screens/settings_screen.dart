@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/theme.dart';
+import '../data/auth_service.dart';
 import '../data/storage_service.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
@@ -82,6 +83,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (confirmed != true) return;
     await StorageService.resetAll();
     if (!context.mounted) return;
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoadingScreen(nextBuilder: (_) => const HomeScreen(), duration: const Duration(milliseconds: 900)),
+      ),
+      (route) => false,
+    );
+  }
+
+  /// Ștergerea definitivă de cont, disponibilă pentru ORICINE — inclusiv
+  /// pentru un Guest, care până acum n-avea nicio cale să-și scoată datele
+  /// din cloud (vezi AuthService.deleteAccount). Butonul stă lângă resetul
+  /// de progres fiindcă amândouă sunt acțiuni distructive de cont, dar textul
+  /// dialogului diferă: la Guest dispare și progresul de pe telefon, la un
+  /// cont cu login rămâne.
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    // `AuthService.currentUser` întoarce null și pentru identitatea anonimă,
+    // nu doar când chiar nu e nimeni — deci null aici înseamnă exact "Guest".
+    final eGuest = AuthService.instance.currentUser == null;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Ștergi contul definitiv?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          eGuest
+              ? 'Se șterg definitiv profilul public, prietenii, clasamentul, progresul salvat în cloud ȘI progresul '
+                  'de pe acest telefon. Fiind cont de Guest, nu există unde să te reconectezi ca să-l recuperezi. '
+                  'Acțiunea nu poate fi anulată.'
+              : 'Se șterg definitiv profilul public, prietenii, clasamentul și progresul salvat în cloud pentru acest cont. '
+                  'Progresul de pe acest telefon rămâne neatins. Acțiunea nu poate fi anulată.',
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Anulează')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Șterge contul', style: TextStyle(color: AppColors.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.purple)),
+    );
+    try {
+      await AuthService.instance.deleteAccount();
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ștergerea a eșuat. Încearcă din nou.')),
+      );
+      return;
+    }
+    if (!context.mounted) return;
+    Navigator.of(context, rootNavigator: true).pop();
+    // Aceeași ieșire ca la reset: se pleacă de la zero, deci nu are sens să
+    // rămână în spate ecrane construite pe datele vechi.
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
@@ -280,6 +345,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           SizedBox(width: 12),
                           Expanded(
                             child: Text('Resetează tot progresul', style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () => _confirmDeleteAccount(context),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withAlpha(30),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.danger.withAlpha(120)),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.person_remove_rounded, color: AppColors.danger),
+                          SizedBox(width: 12),
+                          Expanded(
+                            child: Text('Șterge contul definitiv', style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w700)),
                           ),
                         ],
                       ),

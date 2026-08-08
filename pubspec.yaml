@@ -2,7 +2,7 @@ name: guess_it
 description: "Ghicește ce se ascunde în poza neclară. 14 categorii și multiplayer live."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.6.2
