@@ -81,7 +81,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Sodo Quizz',
+      title: 'SodoQuizz',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(

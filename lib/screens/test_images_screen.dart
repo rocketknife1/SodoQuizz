@@ -7,20 +7,29 @@ import '../widgets/blur_image.dart';
 import '../widgets/next_button.dart';
 
 /// Id-urile intrebarilor la care poza automata a fost inlocuita cu una
-/// adusa manual — actualizeaza lista pe masura ce se testeaza poze noi.
+/// adusa manual de user.
+///
+/// NU edita lista de mai jos cu mana: e rescrisa automat de
+/// `tools/images/apply_manual_images.py`, din marcajele "facut" ale
+/// fisierului `tools/images/baza_de_date_intrebari.xlsx`. Inainte era
+/// tinuta manual si ramanea mereu in urma fata de pozele chiar aplicate.
+// GENERAT AUTOMAT — START
 const List<String> testQuestionIds = [
   'lgf_001', 'lgf_002', 'lgf_003', 'lgf_004', 'lgf_005', 'lgf_006', 'lgf_007',
   'lgf_008', 'lgf_009', 'lgf_010', 'lgf_011', 'lgf_012', 'lgf_013', 'lgf_014',
   'lgf_015', 'lgf_016', 'lgf_017',
-  'med_001', 'med_002', 'med_003', 'med_004', 'med_006', 'med_007', 'med_008',
-  'med_009', 'med_010', 'med_011', 'med_012',
   'gam_001', 'gam_003', 'gam_004', 'gam_005', 'gam_006', 'gam_007', 'gam_009',
   'gam_010', 'gam_011',
+  'med_001', 'med_002', 'med_003', 'med_004', 'med_006', 'med_007', 'med_008',
+  'med_009', 'med_010', 'med_011', 'med_012',
   'mec_001', 'mec_002', 'mec_003', 'mec_004', 'mec_005', 'mec_006', 'mec_007',
   'mec_008', 'mec_009', 'mec_010', 'mec_011', 'mec_012', 'mec_013', 'mec_014',
-  'mec_015', 'mec_016', 'mec_017', 'mec_018', 'mec_019', 'mec_020',
-  'apl_001',
+  'mec_015', 'mec_016', 'mec_017', 'mec_018', 'mec_019', 'mec_020', 'mec_021',
+  'mec_022', 'mec_023',
+  'apl_001', 'apl_002', 'apl_003', 'apl_004', 'apl_005', 'apl_007', 'apl_008',
+  'apl_009', 'apl_010', 'apl_011',
 ];
+// GENERAT AUTOMAT — STOP
 
 /// Ecran de test intern: acelasi stil vizual ca in joc (blur, hint-uri,
 /// grid de variante) dar restrans doar la [testQuestionIds] si fara sa

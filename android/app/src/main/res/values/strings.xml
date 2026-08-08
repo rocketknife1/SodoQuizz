@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Project ID din Play Console > Play Games Services > Configuration. -->
+    <string translatable="false" name="game_services_project_id">112195368669</string>
+    <!-- Acelasi client "Web" auto-creat de Firebase pe care il foloseste si
+         Google Sign-In (googleSignInServerClientId din firebase_options.dart)
+         si credentiala "Game server" din Play Games Services. -->
+    <string translatable="false" name="firebase_auth_oauth_2_web_client_id">112195368669-p8qe6f5doeraqj3qc61f1l1tmcdu1le2.apps.googleusercontent.com</string>
+</resources>

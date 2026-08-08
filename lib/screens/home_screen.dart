@@ -408,7 +408,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 2),
               const Text(
-                'GUESS IT!',
+                'SODO QUIZZ',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 25,

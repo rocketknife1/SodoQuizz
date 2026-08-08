@@ -122,3 +122,12 @@ sunt cele care se văd fără să dea nimeni scroll.
 8. `5-questuri.png` — Quest-uri noi în fiecare zi
 
 (`_contact_sheet.png` e doar pentru previzualizare rapidă, nu se încarcă.)
+
+### Capturi pentru tabletă (7-inch și 10-inch)
+
+Play Console cere obligatoriu capturi și la cele două câmpuri de tabletă.
+Se încarcă **exact aceleași opt fișiere** din `capturi/`: cerința Google e
+strict pe dimensiuni (7-inch: laturi între 320–3840 px; 10-inch: între
+1080–7680 px) și pe raportul 16:9 / 9:16 — pe care 1080×1920 le îndeplinesc
+deja. Nu există capturi separate de tabletă și nu e nevoie de niciuna:
+Google nu compară conținutul pozei cu forma ecranului.

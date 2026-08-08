@@ -13,7 +13,7 @@ import 'package:guess_it/main.dart';
 import 'package:guess_it/widgets/mascots/mascot_sync.dart';
 
 void main() {
-  testWidgets('Guess It app loads home screen', (WidgetTester tester) async {
+  testWidgets('SodoQuizz app loads home screen', (WidgetTester tester) async {
     // Marcheaza intro tutorial-ul ca deja vazut - testul verifica doar ca
     // ecranul de Acasa se incarca, nu fluxul separat al popup-ului de
     // introducere (vezi IntroTutorialDialog.maybeShow, aratat automat la
@@ -28,7 +28,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('GUESS IT!'), findsAtLeastNWidgets(1));
+    expect(find.text('SODO QUIZZ'), findsAtLeastNWidgets(1));
     expect(find.text('PLAY'), findsOneWidget);
     expect(find.byIcon(Icons.play_arrow_rounded), findsOneWidget);
 

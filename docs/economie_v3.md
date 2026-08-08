@@ -576,7 +576,7 @@ tot conținutul în jos, iar panoul de Cultură Generală ajungea exact peste Cl
 și balonul de BETA (ambele plutesc fix, în Stack-ul de deasupra) — variantele de
 răspuns erau acoperite.
 
-Cât timp cardul e pe ecran, logo-ul "GUESS IT!" (92px, pur decorativ) se ascunde.
+Cât timp cardul e pe ecran, logo-ul "SODO QUIZZ" (92px, pur decorativ) se ascunde.
 Net, conținutul urcă ~30px față de normal: Cultura Generală stă imediat sub
 "fereastra" de vieți și rămâne complet liberă de mascote.
 

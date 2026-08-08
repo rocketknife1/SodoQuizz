@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Curata jurnalul de meciuri terminate - Sodo Quizz
+title Curata jurnalul de meciuri terminate - SodoQuizz
 cd /d "%~dp0.."
 
 echo.

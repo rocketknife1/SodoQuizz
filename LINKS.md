@@ -1,4 +1,4 @@
-# 🎮 Sodo Quizz
+# 🎮 SodoQuizz
 
 **Vezi o poză neclară. Ai patru variante. Cât de repede îți dai seama ce e?**
 
@@ -21,7 +21,7 @@ instalat nimic.
 
 **https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-release.apk**
 
-*~154 MB · merge pe orice telefon Android*
+*~154 MB · merge pe telefoane cu Android 7.0 sau mai nou*
 
 Dacă vrei un fișier mai mic (~120 MB) și ai un telefon de după 2017:
 

@@ -286,7 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text('Guess It — v1.0.0', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                  const Text('SodoQuizz — v1.0.0', style: TextStyle(color: Colors.white38, fontSize: 12)),
                 ],
               ),
             ),

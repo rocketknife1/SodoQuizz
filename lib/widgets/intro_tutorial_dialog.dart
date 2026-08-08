@@ -44,7 +44,7 @@ class _IntroTutorialDialogState extends State<IntroTutorialDialog> {
     const _IntroPage(
       icon: Icons.emoji_events_rounded,
       color: AppColors.purple,
-      title: 'Bun venit la Sodo Quizz!',
+      title: 'Bun venit la SodoQuizz!',
       body: 'Răspunzi la întrebări din categorii diferite, câștigi monede, '
           'gems, XP și urci în nivel. Cu cât știi mai multe, cu atât '
           'deblochezi mai mult din joc!',

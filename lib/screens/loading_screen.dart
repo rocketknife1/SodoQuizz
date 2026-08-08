@@ -90,7 +90,7 @@ class _LoadingScreenState extends State<LoadingScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('GUESS IT',
+                Text('SODO QUIZZ',
                     style: TextStyle(
                         letterSpacing: 3,
                         color: const Color(0xFF9A5AFB).withAlpha(220),

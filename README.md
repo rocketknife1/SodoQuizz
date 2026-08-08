@@ -1,6 +1,6 @@
-# Guess It
+# SodoQuizz
 
-Guess It este o aplicație Flutter de tip quiz: o imagine se limpezește
+SodoQuizz este o aplicație Flutter de tip quiz: o imagine se limpezește
 treptat pe măsură ce folosești hint-uri, iar tu alegi răspunsul corect
 din 4 variante. Patru gamemoduri, aceeași mecanică peste tot.
 

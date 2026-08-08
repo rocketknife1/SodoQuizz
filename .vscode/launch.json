@@ -2,21 +2,21 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Guess It (Chrome)",
+      "name": "SodoQuizz (Chrome)",
       "request": "launch",
       "type": "dart",
       "deviceId": "chrome",
       "program": "lib/main.dart"
     },
     {
-      "name": "Guess It (Edge)",
+      "name": "SodoQuizz (Edge)",
       "request": "launch",
       "type": "dart",
       "deviceId": "edge",
       "program": "lib/main.dart"
     },
     {
-      "name": "Guess It (Windows)",
+      "name": "SodoQuizz (Windows)",
       "request": "launch",
       "type": "dart",
       "deviceId": "windows",

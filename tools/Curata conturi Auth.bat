@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Curata conturi din Firebase Authentication - Sodo Quizz
+title Curata conturi din Firebase Authentication - SodoQuizz
 cd /d "%~dp0.."
 
 echo.

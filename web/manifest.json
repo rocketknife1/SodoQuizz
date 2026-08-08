@@ -1,11 +1,11 @@
 {
-    "name": "guess_it",
-    "short_name": "guess_it",
+    "name": "SodoQuizz",
+    "short_name": "SodoQuizz",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "Ghicește ce se ascunde în poza neclară. 14 categorii și multiplayer live.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -56,3 +56,9 @@ app.*.map.json
 # Cheia de cont de serviciu Firebase (vezi tools/purge_accounts.py) —
 # echivalentul unei parole de administrator peste tot proiectul.
 tools/service-account.json
+
+# Copii identice ale play_store/capturi/, facute doar ca sa fie la indemana
+# cand se incarca in Play Console la cele doua campuri de tableta. Aceleasi
+# bytes, deci nu are rost sa stea de doua ori in istoric — vezi nota din
+# play_store/listare.md.
+play_store/capturi_tableta/

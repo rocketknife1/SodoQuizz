@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_auth_games_services/firebase_auth_games_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
@@ -191,6 +192,88 @@ class AuthService {
       throw const AccountUnavailableException();
     } catch (e) {
       debugPrint('AuthService.signInWithGoogle a esuat: $e');
+      throw const AccountUnavailableException();
+    }
+  }
+
+  /// Play Games există doar pe Android — pe web/desktop butonul de login nu
+  /// trebuie nici măcar arătat (pluginul aruncă acolo, nu e o cale validă).
+  bool get isPlayGamesAvailable {
+    if (kIsWeb) return false;
+    try {
+      return FirebaseAuth.instance.isGamesServicesAvailable;
+    } catch (e) {
+      debugPrint('AuthService.isPlayGamesAvailable a esuat: $e');
+      return false;
+    }
+  }
+
+  /// Copiază gamer tag-ul din providerData pe user, dacă acesta a rămas fără
+  /// displayName după login-ul prin Play Games. Eșuează silențios: un nume
+  /// lipsă e o problemă cosmetică, nu un motiv să pice tot login-ul.
+  Future<void> _adoptPlayGamesDisplayName() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      final current = user.displayName;
+      if (current != null && current.isNotEmpty) return;
+      String? tag;
+      for (final info in user.providerData) {
+        if (info.providerId != PlayGamesAuthProvider.PROVIDER_ID) continue;
+        tag = info.displayName;
+        break;
+      }
+      if (tag == null || tag.isEmpty) return;
+      await user.updateProfile(displayName: tag);
+      await user.reload();
+    } catch (e) {
+      debugPrint('AuthService._adoptPlayGamesDisplayName a esuat: $e');
+    }
+  }
+
+  /// Login prin Play Games — alternativă la [signInWithGoogle] pentru cine are
+  /// deja profil de jucător pe telefon (nu cere alegerea unui cont, contul
+  /// Play Games e deja logat la nivel de sistem). Rezultatul e tot un user
+  /// Firebase obișnuit, deci profilul public, prietenii și salvarea în cloud
+  /// merg identic, fără nicio ramură separată în restul aplicației.
+  /// Aceeași grijă ca la Google pentru identitatea anonimă a multiplayer-ului:
+  /// legăm (link) în loc de sign-in curat, ca uid-ul — și tot ce s-a acumulat
+  /// sub el — să rămână al aceluiași jucător.
+  Future<void> signInWithPlayGames() async {
+    try {
+      final anonymous = FirebaseAuth.instance.currentUser;
+      var linked = false;
+      if (anonymous != null && anonymous.isAnonymous) {
+        try {
+          await anonymous.linkWithGamesServices();
+          linked = true;
+        } on FirebaseAuthException catch (e) {
+          if (e.code != 'credential-already-in-use') rethrow;
+          await FirebaseAuth.instance.signInWithGamesServices();
+        }
+      } else {
+        await FirebaseAuth.instance.signInWithGamesServices();
+      }
+      // Spre deosebire de Google, Play Games nu dă email și nici poză de
+      // profil, iar displayName-ul de pe user rămâne gol (verificat pe
+      // telefon: fără asta, contul conectat apărea în Profil ca "Guest",
+      // pentru că UI-ul cade pe displayName ?? email ?? 'Guest'). Numele
+      // jucătorului (gamer tag) vine doar în providerData, sub intrarea
+      // providerului Play Games — îl copiem pe user ca restul aplicației
+      // să-l găsească unde se așteaptă.
+      await _adoptPlayGamesDisplayName();
+      if (linked) {
+        await CloudSyncService.instance.push();
+      } else {
+        await CloudSyncService.instance.pullOrSeed();
+      }
+    } on FirebaseAuthGamesServicesException catch (e) {
+      // Cel mai frecvent caz e că userul a închis fereastra Play Games —
+      // nedistins de o eroare reală de configurare, pluginul dă același cod.
+      debugPrint('AuthService.signInWithPlayGames a esuat: $e');
+      throw const AccountUnavailableException('Nu ne-am putut conecta la Play Games.');
+    } catch (e) {
+      debugPrint('AuthService.signInWithPlayGames a esuat: $e');
       throw const AccountUnavailableException();
     }
   }

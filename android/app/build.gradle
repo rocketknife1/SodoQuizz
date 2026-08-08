@@ -33,7 +33,11 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         // Firebase (cloud_firestore/firebase_auth) cere minim API 23 - flutter.minSdkVersion
         // (21) e prea jos si sparge manifest merge-ul, indiferent daca Firebase e configurat.
-        minSdk = 23
+        // Urcat la 24 (Android 7.0) pentru play-services-games-v2, cerut de
+        // firebase_auth_games_services (login prin Play Games) - la 23 pica direct
+        // manifest merge-ul. Android 6.0 nu mai apare deloc in statisticile de
+        // distributie in 2026, deci nu pierdem jucatori reali.
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

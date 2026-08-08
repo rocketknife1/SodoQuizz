@@ -1,5 +1,5 @@
 name: guess_it
-description: "A new Flutter project."
+description: "Ghicește ce se ascunde în poza neclară. 14 categorii și multiplayer live."
 publish_to: 'none'
 
 version: 1.0.0+2
@@ -19,6 +19,7 @@ dependencies:
   google_sign_in: ^7.1.1
   http: ^1.6.0
   google_mobile_ads: ^5.3.1
+  firebase_auth_games_services: ^3.0.1
 
 dev_dependencies:
   flutter_test:

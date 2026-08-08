@@ -366,7 +366,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text('Cont', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                      Text(user?.displayName ?? user?.email ?? 'Guest', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      // "Guest" DOAR când chiar nu e nimeni logat — un cont
+                      // Play Games vine fără email si uneori fără nume, iar
+                      // înainte cădea tocmai pe "Guest", deși era conectat.
+                      Text(user == null ? 'Guest' : (user.displayName ?? user.email ?? 'Cont conectat'), style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     ],
                   ),
                 ),
@@ -451,9 +454,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
                         ),
                       ),
+                      if (AuthService.instance.isPlayGamesAvailable) ...[
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              _signIn(playGames: true);
+                            },
+                            icon: const Icon(Icons.sports_esports_rounded),
+                            label: const Text('Conectează-te cu Play Games'),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.play, padding: const EdgeInsets.symmetric(vertical: 14)),
+                          ),
+                        ),
+                      ],
                     ]
                   : [
-                      Text(user.displayName ?? 'Cont Google', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(user.displayName ?? user.email ?? 'Cont conectat', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       if (user.email != null) ...[
                         const SizedBox(height: 4),
                         Text(user.email!, style: const TextStyle(color: Colors.white54, fontSize: 12)),
@@ -487,10 +505,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _signIn() async {
+  Future<void> _signIn({bool playGames = false}) async {
     _showSyncingDialog();
     try {
-      await AuthService.instance.signInWithGoogle();
+      if (playGames) {
+        await AuthService.instance.signInWithPlayGames();
+      } else {
+        await AuthService.instance.signInWithGoogle();
+      }
       // fara asta, numele public (leaderboard/profil) ar ramane pe cel
       // generat aleator - vezi AuthService.signInWithGoogle - pana la
       // urmatoarea pornire/revenire din fundal a aplicatiei (cand rulează
