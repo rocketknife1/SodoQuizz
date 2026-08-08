@@ -15,7 +15,12 @@ if (hasKeystore) {
 
 android {
     namespace = "com.example.guess_it"
-    compileSdk = flutter.compileSdkVersion
+    // Fixat pe 36 (Android 16), nu flutter.compileSdkVersion: SDK-ul Flutter
+    // instalat (3.27.4) inca da 35, iar Google Play cere targetSdk 36 pana la
+    // 31 august 2026, altfel nu se mai pot publica update-uri. Se compileaza
+    // cu 36 pentru ca targetSdk n-are voie sa fie peste compileSdk.
+    // De sters cand Flutter urca singur la 36 - pana atunci raman explicite.
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -38,7 +43,13 @@ android {
         // manifest merge-ul. Android 6.0 nu mai apare deloc in statisticile de
         // distributie in 2026, deci nu pierdem jucatori reali.
         minSdk = 24
-        targetSdk = flutter.targetSdkVersion
+        // Vezi compileSdk de mai sus. Urcarea la 36 aduce doua schimbari de
+        // comportament pe Android 16, ambele deja acoperite:
+        //  - edge-to-edge obligatoriu, fara opt-out (aplicatia deseneaza sub
+        //    bara de status si cea de navigare) - ecranele folosesc SafeArea;
+        //  - predictive back pornit implicit - manifestul are deja
+        //    enableOnBackInvokedCallback si codul foloseste PopScope.
+        targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
