@@ -21,11 +21,7 @@ instalat nimic.
 
 **https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-release.apk**
 
-*~154 MB · merge pe telefoane cu Android 7.0 sau mai nou*
-
-Dacă vrei un fișier mai mic (~120 MB) și ai un telefon de după 2017:
-
-https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-arm64-v8a-release.apk
+*~148 MB · merge pe telefoane cu Android 7.0 sau mai nou*
 
 **Cum se instalează:** apeși pe link, aștepți descărcarea, apoi deschizi
 fișierul. Telefonul o să te întrebe dacă permiți instalarea din „surse
