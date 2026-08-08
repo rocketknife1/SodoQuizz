@@ -935,3 +935,63 @@ cooldown-ul se văd ÎNAINTE de intrare, nu după.
 | `lib/screens/home_screen.dart` | planeta primește `onRewardsChanged` |
 | `test/quest_rotation_test.dart` | cote, unicitate, mărimea familiilor, ținte realizabile, titluri oneste |
 | `test/game_logic_test.dart` | metricile noi, plafonul săptămânal de gems |
+
+---
+
+## 16. v3.4 — fără quest-uri pe volum, shop premium vizibil (2026-08-05)
+
+Două cereri directe, independente de restul.
+
+### 16.1 "Răspunde la N întrebări (corect sau greșit)" — eliminat complet
+
+Șapte quest-uri din catalog (`answer_10`, `answer_12`, `answer_15`, `answer_20`,
+`answer_25`, `answer_40`, `answer_55`, toate pe metricul `answer_count`) se
+completau indiferent dacă răspunsul era corect. Practic încurajau spam pe
+butoane: apeși orice variantă, contorul crește la fel.
+
+**Toate șapte au fost înlocuite**, nu doar redenumite — fiecare cu un quest
+care cere REZULTAT, distribuit pe metrici cu loc liber în familia lor (regula
+de la §15.1: nicio familie nu poate avea peste 7 variante, altfel nu mai încap
+pe zile distincte în rotație):
+
+| Vechi (pe volum) | Nou (pe rezultat) |
+|---|---|
+| Răspunde la 10 întrebări | Răspunde corect la 8 de Cultură Generală |
+| Răspunde la 12 întrebări | Termină 5 bonusuri de la Clippy |
+| Răspunde la 20 întrebări | Termină 3 bonusuri de la Clippy perfect (3/3) |
+| Răspunde la 15 întrebări | Intră de 3 ori pe Planeta hologramelor |
+| Răspunde la 25 întrebări | Ghicește corect 13 întrebări fără niciun hint |
+| Răspunde la 40 întrebări | Câștigă 3 meciuri multiplayer |
+| Răspunde la 55 întrebări | Termină un Clippy perfect, de 4 ori azi |
+
+`answer_count` a ieșit complet din catalog: scos din `scalableQuestMetrics`
+(nu mai are ce scala) și din comentariile care descriau vechea repartiție pe
+familii. Rămâne instrumentat în `game_screen.dart` (nu costă nimic să rămână),
+dar niciun quest nu-l mai ascultă, deci `bumpQuestMetric` e no-op pentru el.
+
+`correct_count` (deja exista, cere explicit "corect") rămâne principalul
+metric de volum onest — la 7 variante, la limită.
+
+### 16.2 Shop-ul premium — vizibil, plățile tot simulate
+
+`premiumShopRevealed` (vezi §13.3) a trecut pe `true`: secțiunea de bani reali
+(pachete, gems, vieți & hints, "Fără reclame") nu mai stă sub blur + "În
+curând", se vede normal.
+
+**Nu s-a activat billing-ul.** `realMoneyStoreEnabled` a rămas `false` — orice
+tap pe o ofertă premium arată în continuare dialogul "Plățile reale nu sunt
+încă active în acest build", fiindcă `in_app_purchase` tot nu e integrat și
+Play Console tot n-are produse configurate. Cele două comutatoare există
+separat exact pentru asta: unul controlează ce se VEDE, celălalt ce se poate
+CUMPĂRA efectiv.
+
+> ⚠️ Dacă acest build ajunge vreodată în Play Console, verifică din nou ambele
+> comutatoare. `premiumShopRevealed = true` e sigur oricând (doar UI).
+> `realMoneyStoreEnabled` trebuie să rămână `false` până la integrarea reală.
+
+### 16.3 Fișiere atinse în v3.4
+
+| Fișier | Ce s-a schimbat |
+|---|---|
+| `lib/core/progression.dart` | 7 quest-uri de volum înlocuite cu quest-uri de rezultat; `answer_count` scos din `scalableQuestMetrics` |
+| `lib/data/shop.dart` | `premiumShopRevealed = true` |

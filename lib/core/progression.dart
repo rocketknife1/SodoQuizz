@@ -454,7 +454,6 @@ const double questTargetScale = 2.3;
 /// `quests_claimed_today` nu poate depăși numărul de quest-uri ale zilei;
 /// `streak_hit_*` numără cât de des atingi o serie, nu volum.
 const Set<String> scalableQuestMetrics = {
-  'answer_count',
   'correct_count',
   'coins_earned',
   'no_hint_correct',
@@ -500,15 +499,15 @@ const List<Quest> _easyQuests = [
       hintReward: 1,
       icon: Icons.check_circle_rounded),
   Quest(
-      id: 'answer_10',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 10,
-      metricKey: 'answer_count',
+      id: 'culture_correct_8',
+      title: 'Răspunde corect la {n} întrebări de Cultură Generală',
+      target: 8,
+      metricKey: 'culture_quiz_correct',
       tier: QuestTier.easy,
       coinReward: 15,
       xpReward: 11,
       hintReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.public_rounded),
   Quest(
       id: 'play_2_modes',
       title: 'Joacă în 2 gamemoduri diferite',
@@ -770,15 +769,15 @@ const List<Quest> _easyQuests = [
       hintReward: 1,
       icon: Icons.travel_explore_rounded),
   Quest(
-      id: 'answer_12',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 12,
-      metricKey: 'answer_count',
+      id: 'clippy_done_5',
+      title: 'Termină 5 bonusuri de la Clippy',
+      target: 5,
+      metricKey: 'clippy_done',
       tier: QuestTier.easy,
       coinReward: 16,
       xpReward: 12,
       hintReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'correct_7',
       title: 'Răspunde corect la {n} întrebări',
@@ -814,15 +813,15 @@ const List<Quest> _mediumQuests = [
       heartReward: 2,
       icon: Icons.check_circle_rounded),
   Quest(
-      id: 'answer_20',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 20,
-      metricKey: 'answer_count',
+      id: 'clippy_perfect_3',
+      title: 'Termină 3 bonusuri de la Clippy perfect (3/3)',
+      target: 3,
+      metricKey: 'clippy_perfect',
       tier: QuestTier.medium,
       coinReward: 31,
       xpReward: 25,
       hintReward: 2,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'play_3_modes',
       title: 'Joacă în 3 gamemoduri diferite',
@@ -946,27 +945,27 @@ const List<Quest> _mediumQuests = [
       hintReward: 1,
       icon: Icons.shopping_cart_rounded),
   Quest(
-      id: 'answer_15',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 15,
-      metricKey: 'answer_count',
+      id: 'planet_visit_3',
+      title: 'Intră de 3 ori pe Planeta hologramelor',
+      target: 3,
+      metricKey: 'planet_run',
       tier: QuestTier.medium,
       coinReward: 23,
       xpReward: 20,
       hintReward: 2,
       heartReward: 2,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.travel_explore_rounded),
   Quest(
-      id: 'answer_25',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 25,
-      metricKey: 'answer_count',
+      id: 'no_hint_13',
+      title: 'Ghicește corect {n} întrebări fără niciun hint',
+      target: 13,
+      metricKey: 'no_hint_correct',
       tier: QuestTier.medium,
       coinReward: 31,
       xpReward: 27,
       hintReward: 2,
       heartReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.visibility_off_rounded),
   Quest(
       id: 'hints_used_10',
       title: 'Folosește {n} hint-uri',
@@ -1245,16 +1244,16 @@ const List<Quest> _hardQuests = [
       heartReward: 1,
       icon: Icons.check_circle_rounded),
   Quest(
-      id: 'answer_40',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 40,
-      metricKey: 'answer_count',
+      id: 'mp_win_3',
+      title: 'Câștigă {n} meciuri multiplayer',
+      target: 3,
+      metricKey: 'mp_win',
       tier: QuestTier.hard,
       coinReward: 51,
       xpReward: 42,
       hintReward: 2,
       heartReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.emoji_events_rounded),
   Quest(
       id: 'streak_10',
       title: 'Obține o serie de 10 răspunsuri corecte la rând',
@@ -1366,16 +1365,16 @@ const List<Quest> _hardQuests = [
       heartReward: 1,
       icon: Icons.check_circle_rounded),
   Quest(
-      id: 'answer_55',
-      title: 'Răspunde la {n} întrebări (corect sau greșit)',
-      target: 55,
-      metricKey: 'answer_count',
+      id: 'clippy_perfect_4',
+      title: 'Termină un bonus de la Clippy perfect (3/3), de {n} ori azi',
+      target: 4,
+      metricKey: 'clippy_perfect',
       tier: QuestTier.hard,
       coinReward: 62,
       xpReward: 53,
       hintReward: 3,
       heartReward: 1,
-      icon: Icons.playlist_add_check_rounded),
+      icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'culture_correct_27',
       title: 'Răspunde corect la {n} întrebări de Cultură Generală',
@@ -1448,9 +1447,11 @@ List<List<Quest>>? _rotationCache;
 ///
 /// Consecința asupra catalogului, de ținut minte la orice adăugare: **o
 /// familie nu poate avea mai mult de [questRotationDays] variante**, altfel
-/// nu încap pe zile distincte. De-aia `answer_count` și `correct_count` au
-/// exact 7 fiecare, nu 10 și 8 cum ajunseseră — surplusul a fost mutat pe
-/// alte metrici. Există un test care prinde depășirea.
+/// nu încap pe zile distincte. `correct_count` are exact 7; `answer_count`
+/// (răspunsuri "corecte SAU greșite", care se putea termina spamând
+/// întrebări la nimereală) a fost eliminat complet pe 2026-08-05 — surplusul
+/// lui de atunci a fost mutat pe alte metrici, care cer rezultat, nu volum.
+/// Există un test care prinde orice familie viitoare peste limită.
 ///
 /// Familiile mari se așază primele, cât timp tabla e goală. Fiecare quest
 /// ajunge în ziua care are (în ordine) cele mai puține quest-uri din
