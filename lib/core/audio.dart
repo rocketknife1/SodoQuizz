@@ -251,3 +251,78 @@ class Sfx {
   static void xpHit() => _play(_xp);
   static void heartHit() => _play(_heart);
 }
+
+/// Sunetele modului multiplayer Quizz Tanks — ținute separat de [Sfx]
+/// DINADINS, cu preîncărcare proprie: sunt cinci fișiere (dintre care unul
+/// de peste o secundă, explozia), folosite de un singur ecran din toată
+/// aplicația. Băgate în preîncărcarea generală din main.dart, fiecare
+/// pornire de joc ar fi plătit decodarea lor, inclusiv pornirile în care
+/// nimeni nu deschide multiplayer-ul.
+///
+/// [preload] se cheamă din MultiplayerTanksScreen.initState, adică în
+/// lobby-ul de dinaintea meciului — sunt câteva secunde bune de așteptare
+/// acolo, deci primul foc de tun se aude la fel de sigur ca ultimul.
+///
+/// Fiecare sunet are player propriu: într-o rundă pleacă până la patru
+/// tunuri aproape simultan, iar un singur player le-ar fi tăiat unul pe
+/// altul. Vezi [Sfx] pentru de ce se folosește seek(0)+resume() și nu
+/// stop()+play().
+class TankSfx {
+  static final AudioPlayer _fire = AudioPlayer(playerId: 'tank_fire');
+  static final AudioPlayer _hit = AudioPlayer(playerId: 'tank_hit');
+  static final AudioPlayer _dodge = AudioPlayer(playerId: 'tank_dodge');
+  static final AudioPlayer _explode = AudioPlayer(playerId: 'tank_explode');
+  static final AudioPlayer _lock = AudioPlayer(playerId: 'tank_lock');
+  static final AudioPlayer _alarm = AudioPlayer(playerId: 'tank_alarm');
+
+  static Future<void>? _preloadFuture;
+
+  static Future<void> preload() {
+    return _preloadFuture ??= _init();
+  }
+
+  static Future<void> _init() async {
+    await _ensureGlobalAudioContext();
+    await Future.wait([
+      _prepare(_fire, 'tank_fire.wav'),
+      _prepare(_hit, 'tank_hit.wav'),
+      _prepare(_dodge, 'tank_dodge.wav'),
+      _prepare(_explode, 'tank_explode.wav'),
+      _prepare(_lock, 'tank_lock.wav'),
+      _prepare(_alarm, 'tank_alarm.wav'),
+    ]);
+  }
+
+  static Future<void> _prepare(AudioPlayer player, String asset) async {
+    try {
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
+      await player.setReleaseMode(ReleaseMode.stop);
+      await player.setVolume(1.0);
+      await player.setSourceAsset('sfx/$asset');
+    } catch (e) {
+      debugPrint('TankSfx: nu am putut pregăti $asset: $e');
+    }
+  }
+
+  static Future<void> _play(AudioPlayer player, double volume) async {
+    try {
+      await preload();
+      await player.setVolume(volume);
+      await player.seek(Duration.zero);
+      await player.resume();
+    } catch (e) {
+      debugPrint('TankSfx: nu am putut reda sunetul: $e');
+    }
+  }
+
+  /// Volumele nu sunt toate 1.0: într-o rundă plină se suprapun un tun, două
+  /// impacturi și un ricoșeu, iar dacă toate ar veni la maximum rezultatul e
+  /// zgomot, nu bătălie. Explozia rămâne cea mai tare — e evenimentul care
+  /// chiar contează.
+  static void fire() => _play(_fire, 0.75);
+  static void hit() => _play(_hit, 0.9);
+  static void dodge() => _play(_dodge, 0.55);
+  static void explode() => _play(_explode, 1.0);
+  static void lock() => _play(_lock, 0.7);
+  static void alarm() => _play(_alarm, 0.6);
+}

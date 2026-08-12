@@ -94,10 +94,10 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   }
 
   void _selectGuess(MatchInfo info, String guess) {
-    if (info.roundPhase != HigherLowerRoundPhase.answering) return;
+    if (info.roundPhase != RoundPhase.answering) return;
     final me = MultiplayerService.instance.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
-    MultiplayerService.instance.submitHigherLowerGuess(matchId: widget.matchId, guess: guess);
+    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: guess);
   }
 
   Future<void> _tryResolve(MatchInfo info) async {
@@ -135,19 +135,19 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       _advanceTimer = null;
     }
 
-    if (info.roundPhase == HigherLowerRoundPhase.answering) {
+    if (info.roundPhase == RoundPhase.answering) {
       final activeIds = players.where((p) => !p.eliminated).map((p) => p.id).toSet();
       final allAnswered = activeIds.isNotEmpty && activeIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
       if (allAnswered || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }
-    } else if (info.roundPhase == HigherLowerRoundPhase.revealed) {
+    } else if (info.roundPhase == RoundPhase.revealed) {
       _revealDelayTimer ??= Timer(const Duration(milliseconds: 700), () {
         if (mounted) setState(() => _showWinners = true);
       });
       _advanceTimer ??= Timer(const Duration(seconds: higherLowerRevealSeconds), () {
-        MultiplayerService.instance.advanceHigherLowerRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+        MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
       });
     }
 
@@ -211,7 +211,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                       }
                     }
                     final participatedThisRound = info.roundAnswers.containsKey(me);
-                    final revealed = info.roundPhase == HigherLowerRoundPhase.revealed;
+                    final revealed = info.roundPhase == RoundPhase.revealed;
                     return Column(
                       children: [
                         _buildTopBar(),
@@ -280,7 +280,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                     clipBehavior: Clip.none,
                     children: [
                       Avatar(size: 48, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl, style: avatarStyleFromId(p.avatarStyle)),
-                      if (voted && !p.eliminated && info.roundPhase == HigherLowerRoundPhase.answering)
+                      if (voted && !p.eliminated && info.roundPhase == RoundPhase.answering)
                         Positioned(
                           right: -2,
                           bottom: -2,
@@ -317,7 +317,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
             margin: const EdgeInsets.symmetric(horizontal: 10),
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
-            child: info.roundPhase == HigherLowerRoundPhase.answering
+            child: info.roundPhase == RoundPhase.answering
                 ? CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: higherLowerRoundSeconds, size: 44)
                 : const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 32),
           ),
@@ -389,7 +389,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       );
     }
 
-    if (info.roundPhase == HigherLowerRoundPhase.revealed) {
+    if (info.roundPhase == RoundPhase.revealed) {
       if (!_showWinners) {
         return const Padding(
           padding: EdgeInsets.symmetric(vertical: 20),

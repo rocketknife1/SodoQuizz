@@ -99,6 +99,27 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // "Cineva tocmai a intrat in Multiplayer" — un document per jucator,
+    // rescris la fiecare intrare (vezi MultiplayerPresenceService). Din el
+    // se face anuntul scurt care apare pe ecran tuturor, ca cei care ar
+    // vrea sa joace sa nimereasca aceeasi fereastra de timp.
+    //
+    // CITIREA E PUBLICA (orice cont autentificat) fiindca exact asta e
+    // rostul: sa vada ceilalti. Documentul contine strict numele afisat si
+    // poza de profil, adica lucruri deja vizibile in leaderboard.
+    //
+    // SCRIEREA E STRICT PE PROPRIUL DOCUMENT: fara conditia pe uid, un
+    // client modificat ar fi putut anunta in numele altcuiva — adica sa
+    // trimita jocului intreg notificari false, semnate cu numele unui om
+    // care nici macar nu deschisese aplicatia.
+    match /multiplayer_presence/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+      // adminul, la stergerea completa a unui cont (purgePlayer) — altfel ar
+      // fi ramas un anunt orfan cu numele unui cont care nu mai exista.
+      allow delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
     // Profil public (leaderboard global, ligă, statistici) — spre
     // deosebire de users/{uid} de mai sus, citirea e publică (orice cont
     // autentificat, inclusiv anonim, trebuie să poată vedea leaderboard-ul

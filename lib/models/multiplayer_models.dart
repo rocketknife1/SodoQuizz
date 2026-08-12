@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../core/tanks.dart';
 import '../core/theme.dart';
 
 enum MatchMode { private, public }
@@ -10,13 +11,49 @@ enum MatchStatus { lobby, playing, finished }
 /// răspunde în ritmul lui, fără sincronizare), [higherLower] e varianta
 /// multiplayer a mini-jocului solo Higher or Lower (higher_lower_data.dart):
 /// toți din cameră văd aceeași pereche campion/provocator pe rundă și
-/// votează în secret, vezi MultiplayerHigherLowerScreen.
-enum MatchGameMode { classic, higherLower }
+/// votează în secret, vezi MultiplayerHigherLowerScreen. [quizzTanks] e
+/// lupta cu bare de viață: patru jucători, întrebări de cultură generală,
+/// cinci secunde de răspuns, iar cine răspunde corect trage în ceilalți —
+/// vezi core/tanks.dart și MultiplayerTanksScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks }
 
-/// Faza rundei curente în modul [MatchGameMode.higherLower] — [answering]
-/// cât se așteaptă voturile, [revealed] după ce răspunsul corect și
-/// câștigătorii rundei au fost calculați.
-enum HigherLowerRoundPhase { answering, revealed }
+/// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
+/// ([MatchGameMode.higherLower] și [MatchGameMode.quizzTanks]) —
+/// [answering] cât se așteaptă răspunsurile, [targeting] doar la Quizz
+/// Tanks (cei care au răspuns corect își aleg ținta), [revealed] după ce
+/// runda a fost rezolvată (câștigătorii la Higher & Lower, proiectilele
+/// trase la Quizz Tanks).
+///
+/// Higher & Lower nu trece NICIODATĂ prin [targeting] — sare direct de la
+/// [answering] la [revealed], ca înainte.
+///
+/// Numele valorilor e și ce se scrie în Firestore, deci nu se pot redenumi
+/// fără să rămână în urmă meciurile aflate în desfășurare.
+enum RoundPhase { answering, targeting, revealed }
+
+/// O tragere dintr-o rundă de Quizz Tanks, așa cum a ieșit din zarurile
+/// aruncate O SINGURĂ DATĂ, în tranzacția care rezolvă runda (vezi
+/// core/tanks.dart pentru de ce contează asta). Toți clienții citesc exact
+/// aceleași trageri și le animează identic.
+class TankShot {
+  final String byId;
+  final String atId;
+  final bool hit;
+  final int damage;
+
+  const TankShot({required this.byId, required this.atId, required this.hit, required this.damage});
+
+  factory TankShot.fromMap(Map<String, dynamic> map) => TankShot(
+        byId: map['by'] as String? ?? '',
+        atId: map['at'] as String? ?? '',
+        hit: map['hit'] as bool? ?? false,
+        damage: map['dmg'] as int? ?? 0,
+      );
+
+  // chei scurte: lista asta se rescrie pe documentul meciului la fiecare
+  // rundă și e livrată tuturor ascultătorilor, deci contează cât ocupă.
+  Map<String, dynamic> toMap() => {'by': byId, 'at': atId, 'hit': hit, 'dmg': damage};
+}
 
 /// Un meci multiplayer (cameră privată SAU matchmaking public) — un singur
 /// model deservește ambele fluxuri, vezi planul de arhitectură: o cameră
@@ -51,14 +88,35 @@ class MatchInfo {
   final Timestamp? startedAt;
   final MatchGameMode gameMode;
 
-  /// Câmpuri de sincronizare a rundei — folosite doar în [MatchGameMode.higherLower],
-  /// dar scrise (cu valori implicite, neutre) și pentru [MatchGameMode.classic],
+  /// Câmpuri de sincronizare a rundei — folosite doar în modurile cu rundă
+  /// comună ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks]), dar
+  /// scrise (cu valori implicite, neutre) și pentru [MatchGameMode.classic],
   /// ca [toMap] să nu aibă nevoie de ramificații pe mod.
+  ///
+  /// [roundAnswers] ține uid → răspunsul lui: 'higher'/'lower' la Higher &
+  /// Lower, textul variantei alese la Quizz Tanks.
   final int roundIndex;
-  final HigherLowerRoundPhase roundPhase;
+  final RoundPhase roundPhase;
   final Map<String, String> roundAnswers;
   final List<String> roundWinnerIds;
   final Timestamp? roundStartedAt;
+
+  /// Doar [MatchGameMode.quizzTanks]: proiectilele trase în runda tocmai
+  /// rezolvată și tancurile care au fost distruse de ele. Scrise o singură
+  /// dată, de clientul care câștigă tranzacția de rezolvare — restul doar
+  /// le animează, vezi [TankShot].
+  final List<TankShot> roundShots;
+  final List<String> roundDestroyedIds;
+
+  /// Doar [MatchGameMode.quizzTanks], în faza [RoundPhase.targeting]:
+  /// uid-ul țintașului → uid-ul celui pe care l-a ales. Cine a răspuns
+  /// corect apare în [roundWinnerIds] (lista țintașilor) încă de la
+  /// începutul fazei; cine a și apucat să aleagă apare și aici.
+  ///
+  /// Ținta ALEASĂ nu e secretă între țintași — dar ecranul n-o arată
+  /// nimănui până la foc, ca alegerea să nu devină o negociere de trei
+  /// secunde.
+  final Map<String, String> roundTargets;
 
   const MatchInfo({
     required this.id,
@@ -75,10 +133,13 @@ class MatchInfo {
     this.startedAt,
     this.gameMode = MatchGameMode.classic,
     this.roundIndex = 0,
-    this.roundPhase = HigherLowerRoundPhase.answering,
+    this.roundPhase = RoundPhase.answering,
     this.roundAnswers = const {},
     this.roundWinnerIds = const [],
     this.roundStartedAt,
+    this.roundShots = const [],
+    this.roundDestroyedIds = const [],
+    this.roundTargets = const {},
   });
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -99,15 +160,24 @@ class MatchInfo {
       stake: data['stake'] as int? ?? 0,
       exists: doc.exists,
       startedAt: data['startedAt'] as Timestamp?,
-      gameMode: (data['gameMode'] as String?) == 'higherLower' ? MatchGameMode.higherLower : MatchGameMode.classic,
+      gameMode: MatchGameMode.values.firstWhere(
+        (m) => m.name == data['gameMode'],
+        orElse: () => MatchGameMode.classic,
+      ),
       roundIndex: data['roundIndex'] as int? ?? 0,
-      roundPhase: HigherLowerRoundPhase.values.firstWhere(
+      roundPhase: RoundPhase.values.firstWhere(
         (p) => p.name == data['roundPhase'],
-        orElse: () => HigherLowerRoundPhase.answering,
+        orElse: () => RoundPhase.answering,
       ),
       roundAnswers: Map<String, String>.from(data['roundAnswers'] as Map? ?? const {}),
       roundWinnerIds: List<String>.from(data['roundWinnerIds'] as List? ?? const []),
       roundStartedAt: data['roundStartedAt'] as Timestamp?,
+      roundShots: [
+        for (final s in (data['roundShots'] as List? ?? const []))
+          TankShot.fromMap(Map<String, dynamic>.from(s as Map)),
+      ],
+      roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
+      roundTargets: Map<String, String>.from(data['roundTargets'] as Map? ?? const {}),
     );
   }
 
@@ -123,9 +193,12 @@ class MatchInfo {
         'createdAt': FieldValue.serverTimestamp(),
         'gameMode': gameMode.name,
         'roundIndex': 0,
-        'roundPhase': HigherLowerRoundPhase.answering.name,
+        'roundPhase': RoundPhase.answering.name,
         'roundAnswers': <String, String>{},
         'roundWinnerIds': <String>[],
+        'roundShots': <Map<String, dynamic>>[],
+        'roundDestroyedIds': <String>[],
+        'roundTargets': <String, String>{},
       };
 }
 
@@ -141,11 +214,27 @@ class MatchPlayer {
   final int score;
   final bool isHost;
 
-  /// Folosite doar în [MatchGameMode.higherLower] — număr de răspunsuri
-  /// greșite ("pâini", vezi widget-ul dedicat) și dacă a atins pragul de
-  /// eliminare (devine spectator, vezi MultiplayerHigherLowerScreen).
+  /// [breads] e folosit doar în [MatchGameMode.higherLower] — număr de
+  /// răspunsuri greșite ("pâini", vezi widget-ul dedicat).
+  ///
+  /// [eliminated] e comun: la Higher & Lower înseamnă „a strâns prea multe
+  /// pâini", la Quizz Tanks „tancul a fost distrus". În ambele cazuri
+  /// jucătorul rămâne la masă ca spectator, nu e dat afară.
   final int breads;
   final bool eliminated;
+
+  /// Doar [MatchGameMode.quizzTanks]: viața rămasă (din [tanksMaxHp]) și
+  /// totalul daunelor făcute de la începutul meciului.
+  ///
+  /// [damageDealt] e ținut separat de [score] deși, azi, scorul unui meci de
+  /// Quizz Tanks E chiar totalul daunelor (vezi
+  /// MultiplayerService.resolveTanksRound): [score] e câmpul pe care îl
+  /// citește tot restul aplicației (clasament, XP, statistici de profil),
+  /// iar [damageDealt] e cifra proprie modului, folosită la împărțirea
+  /// prăzii. Dacă vreodată scorul capătă și alte componente, prada rămâne
+  /// legată de daunele reale, care sunt criteriul cerut.
+  final int hp;
+  final int damageDealt;
 
   /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi
   /// [MatchInfo.stake]). Scrisă o singură dată, la intrare, și citită de TOȚI
@@ -180,6 +269,8 @@ class MatchPlayer {
     this.bet = 0,
     this.finished = false,
     this.avatarStyle = '',
+    this.hp = tanksMaxHp,
+    this.damageDealt = 0,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -196,6 +287,8 @@ class MatchPlayer {
       bet: data['bet'] as int? ?? 0,
       finished: data['finished'] as bool? ?? false,
       avatarStyle: data['avatarStyle'] as String? ?? '',
+      hp: data['hp'] as int? ?? tanksMaxHp,
+      damageDealt: data['damageDealt'] as int? ?? 0,
     );
   }
 
@@ -208,6 +301,10 @@ class MatchPlayer {
         'bet': bet,
         'finished': finished,
         'avatarStyle': avatarStyle,
+        // scrise pentru toate modurile, ca fișa de jucător să aibă aceeași
+        // formă peste tot; în afara Quizz Tanks nu le citește nimeni.
+        'hp': hp,
+        'damageDealt': damageDealt,
         'joinedAt': FieldValue.serverTimestamp(),
       };
 }

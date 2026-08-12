@@ -1,13 +1,16 @@
 ﻿import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/audio.dart';
 import 'core/eco_mode.dart';
 import 'core/lang.dart';
+import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
+import 'data/multiplayer_presence_service.dart';
 import 'data/multiplayer_service.dart';
 import 'data/notification_service.dart';
 import 'data/player_profile_service.dart';
@@ -15,6 +18,7 @@ import 'data/storage_service.dart';
 import 'firebase_options.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
+import 'widgets/in_app_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,16 +82,60 @@ class GuessItApp extends StatefulWidget {
 /// no-op sigur pentru Guest) când aplicația trece în fundal - prinde
 /// momentul normal în care userul închide jocul.
 class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
+  /// Necesară anunțului „cineva a intrat în Multiplayer": banner-ul se
+  /// inserează într-un Overlay, iar Overlay-ul aplicației trăiește SUB
+  /// Navigator. Contextul din `build`-ul ăsta e deasupra lui, deci
+  /// `Overlay.of(context)` de aici n-ar găsi nimic — cheia dă acces la
+  /// contextul corect, oricare ar fi ecranul deschis în acel moment.
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  StreamSubscription<MultiplayerPresencePing>? _presenceSub;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _listenForMultiplayerPresence();
   }
 
   @override
   void dispose() {
+    _presenceSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Ascultarea pornește o singură dată, la lansare, și ține cât ține
+  /// aplicația: anunțul are sens tocmai pentru că ajunge ORIUNDE ai fi în
+  /// joc, nu doar în ecranul de Multiplayer.
+  ///
+  /// Nu are nevoie de login explicit: dacă utilizatorul n-a ajuns niciodată
+  /// în multiplayer, nu există încă un cont anonim, iar interogarea ar fi
+  /// respinsă de reguli. De-aia se abonează abia după ce Firebase Auth chiar
+  /// are pe cineva — și se reabonează dacă contul se schimbă (Guest → Google).
+  void _listenForMultiplayerPresence() {
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      _presenceSub?.cancel();
+      if (user == null) return;
+      _presenceSub = MultiplayerPresenceService.instance.watchOthers().listen(_showPresenceBanner);
+    });
+  }
+
+  void _showPresenceBanner(MultiplayerPresencePing ping) {
+    // Overlay-ul se ia DIRECT din starea Navigator-ului, nu prin
+    // `Overlay.of(context)` — vezi InAppNotification.showInfo pentru de ce
+    // căutarea obișnuită n-are ce găsi de la rădăcina aplicației.
+    final overlay = _navigatorKey.currentState?.overlay;
+    final context = _navigatorKey.currentContext;
+    if (overlay == null || context == null || !context.mounted) return;
+    InAppNotification.showInfo(
+      context,
+      overlay: overlay,
+      title: tr('${ping.name} a intrat în Multiplayer', '${ping.name} just entered Multiplayer'),
+      message: tr('Intră și tu acum dacă vrei să prinzi un meci.', 'Jump in now if you want to catch a match.'),
+      icon: Icons.groups_rounded,
+      color: AppColors.play,
+    );
   }
 
   @override
@@ -138,6 +186,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           builder: (context, eco, __) {
             return MaterialApp(
               key: ValueKey(language.code),
+              navigatorKey: _navigatorKey,
               title: 'SodoQuizz',
               debugShowCheckedModeBanner: false,
               theme: ThemeData(

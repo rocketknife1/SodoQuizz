@@ -3,6 +3,7 @@ import '../core/betting.dart';
 import '../core/game_helpers.dart';
 import '../core/lang.dart';
 import '../core/progression.dart';
+import '../core/tanks.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
@@ -136,6 +137,31 @@ class MultiplayerInfoDialog extends StatelessWidget {
                           'The game keeps ${(matchRake * 100).round()}% of the pot. The rest is '
                               'split between players. There are no other hidden fees.\n'
                               'On a tied score, the tied players split their prizes between them.'),
+                    ),
+                    _section(
+                      icon: Icons.military_tech_rounded,
+                      color: AppColors.orange,
+                      title: tr('Quizz Tanks — singurul mod fără miză',
+                          'Quizz Tanks — the one mode with no stake'),
+                      body: tr(
+                          'Patru tancuri, întrebări de cultură generală, $tanksRoundSeconds secunde de '
+                              'răspuns. Cine nimerește răspunsul primește ecranul de țintire și '
+                              'alege, în $tanksTargetSeconds secunde, PE CINE trage; cine a răspuns '
+                              'corect e și mult mai greu de lovit. Fiecare pornește cu '
+                              '$tanksMaxHp viață și pierde $tanksDamageMin-$tanksDamageMax la o '
+                              'lovitură primită.\n'
+                              'Aici NU se pune miză și nu pierzi nimic din balanță. La final se '
+                              'împarte pradă — monede, inimi, hints și, rar, gems — după cât ai '
+                              'lovit. Cine face cele mai multe daune ia cel mai mult.',
+                          'Four tanks, general knowledge questions, $tanksRoundSeconds seconds to '
+                              'answer. Whoever gets it right goes to the targeting screen and picks, '
+                              'in $tanksTargetSeconds seconds, WHO they shoot; answering correctly '
+                              'also makes you much harder to hit. Everyone starts at '
+                              '$tanksMaxHp health and loses $tanksDamageMin-$tanksDamageMax per hit '
+                              'taken.\n'
+                              'There is NO stake here and nothing leaves your balance. At the end '
+                              'there is salvage — coins, hearts, hints and, rarely, gems — split by '
+                              'how much damage you dealt. The biggest gunner takes the most.'),
                     ),
                     _section(
                       icon: Icons.meeting_room_rounded,

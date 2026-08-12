@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/chat_filter.dart';
 import '../../core/lang.dart';
+import '../../core/tanks.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/moderation_service.dart';
@@ -13,6 +14,7 @@ import '../../widgets/moderation_sheet.dart';
 import '../../widgets/network_scan_animation.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
+import 'multiplayer_tanks_screen.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, premiile mesei
 /// (actualizate pe măsură ce intră lume), chat live, și (doar pentru gazdă)
@@ -166,9 +168,11 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => gameMode == MatchGameMode.higherLower
-              ? MultiplayerHigherLowerScreen(matchId: widget.matchId)
-              : MultiplayerMatchScreen(matchId: widget.matchId),
+          builder: (_) => switch (gameMode) {
+            MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: widget.matchId),
+            MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: widget.matchId),
+            MatchGameMode.classic => MultiplayerMatchScreen(matchId: widget.matchId),
+          },
         ),
       );
     });
@@ -244,10 +248,13 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                             ),
                             _buildCodeBanner(info?.code),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
-                            MatchPrizeStrip(
-                              stake: info?.stake ?? widget.stakePaid,
-                              players: players.length,
-                            ),
+                            if (info?.gameMode == MatchGameMode.quizzTanks)
+                              _buildTanksBanner(players.length)
+                            else
+                              MatchPrizeStrip(
+                                stake: info?.stake ?? widget.stakePaid,
+                                players: players.length,
+                              ),
                             _buildPlayers(players),
                             Expanded(child: _buildChat()),
                             _buildChatInput(),
@@ -304,6 +311,44 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
           Text('🍞', style: TextStyle(fontSize: 16)),
           SizedBox(width: 8),
           Text('Mod: Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+        ],
+      ),
+    );
+  }
+
+  /// Ce ține locul tabelului de premii la Quizz Tanks: acolo nu există pot,
+  /// deci n-are ce împărți. În loc de asta, cifra care chiar contează în
+  /// lobby — câte locuri mai sunt libere din cele [tanksPlayerCount].
+  Widget _buildTanksBanner(int playerCount) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withAlpha(30),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.orange.withAlpha(140)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.military_tech_rounded, color: AppColors.orange, size: 16),
+              const SizedBox(width: 8),
+              const Text('Quizz Tanks', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+              const SizedBox(width: 10),
+              Text('$playerCount/$tanksPlayerCount',
+                  style: const TextStyle(color: AppColors.orange, fontSize: 13, fontWeight: FontWeight.w900)),
+            ],
+          ),
+          const SizedBox(height: 3),
+          Text(
+            tr('Fără miză. Prada de la final se împarte după daunele făcute.',
+                'No stake. The salvage at the end is split by damage dealt.'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white54, fontSize: 11),
+          ),
         ],
       ),
     );

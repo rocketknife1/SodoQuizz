@@ -6,6 +6,7 @@ import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
 import '../../core/lang.dart';
+import '../../core/tanks.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_activity_service.dart';
 import '../../data/multiplayer_service.dart';
@@ -39,9 +40,20 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// ca la orice alt apel collectRewards din aplicație (quests_screen.dart
   /// etc.), ca reîmprospătarea balanței să fie sincronă cu animația.
   bool _firstWinBonus = false;
-  bool _firstWinAnimationFired = false;
+  bool _rewardAnimationFired = false;
   final _coinBadgeKey = GlobalKey();
   final _xpBadgeKey = GlobalKey();
+
+  /// Prada de la un meci de Quizz Tanks — modul fără miză, unde nu se
+  /// împarte niciun pot, ci „fier vechi recuperat din epave", proporțional cu
+  /// daunele făcute (vezi core/tanks.dart pentru de ce nu se ia din balanța
+  /// celorlalți). Rămâne goală în toate celelalte moduri.
+  TanksSalvage _salvage = const TanksSalvage();
+  bool _salvageTopDamage = false;
+  final _salvageCoinKey = GlobalKey();
+  final _salvageHeartKey = GlobalKey();
+  final _salvageHintKey = GlobalKey();
+  final _salvageGemKey = GlobalKey();
 
   /// Miza pusă de jucătorul curent și locul pe care a ieșit — folosite în
   /// antetul ecranului, ca rezultatul să fie explicit ("ai pus X, ai luat Y"),
@@ -95,6 +107,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       if (won && await StorageService.canClaimFirstWinOfDay()) {
         await StorageService.claimFirstWinOfDay();
         _firstWinBonus = true;
+      }
+      if (widget.gameMode == MatchGameMode.quizzTanks) {
+        _computeSalvage(sorted, sorted[myIndex]);
       }
       await PlayerProfileService.instance.recordMatchResult(
         gameModeId: widget.gameMode.name,
@@ -167,24 +182,143 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   int _tableStake(List<MatchPlayer> players) =>
       players.fold<int>(0, (best, p) => p.bet > best ? p.bet : best);
 
-  /// Pornește animația abia după ce pastilele de mai jos (targetKey-urile)
-  /// chiar există în arbore — la fel ca la fluxul de reclamă recompensată
-  /// din game_screen.dart, care așteaptă explicit endOfFrame înainte de
-  /// collectRewards, altfel targetKey.currentContext e încă null și
-  /// animația cade pe fallback-ul din dreapta-sus.
-  Future<void> _maybePlayFirstWinAnimation() async {
-    if (_firstWinAnimationFired || !_firstWinBonus) return;
-    _firstWinAnimationFired = true;
+  /// Cine ia prada de la un meci de Quizz Tanks. Criteriul e cel cerut de
+  /// mod: DAUNELE făcute, nu locul din clasament — deși azi cele două
+  /// coincid, fiindcă scorul unui meci de tancuri chiar E totalul daunelor.
+  ///
+  /// Egalitatea la vârf (mai mulți cu exact aceleași daune, cel mai des
+  /// zero, într-un meci în care nimeni n-a nimerit nimic) NU se departajează
+  /// artificial: primesc toți sau, la zero daune, nu primește nimeni — vezi
+  /// [tanksSalvageFor], care nu dă nimic celui care n-a lovit și n-a
+  /// supraviețuit.
+  void _computeSalvage(List<MatchPlayer> table, MatchPlayer me) {
+    final topDamage = table.fold<int>(0, (best, p) => p.damageDealt > best ? p.damageDealt : best);
+    _salvageTopDamage = topDamage > 0 && me.damageDealt == topDamage;
+    _salvage = tanksSalvageFor(
+      damageDealt: me.damageDealt,
+      isTopDamage: _salvageTopDamage,
+      survived: !me.eliminated,
+    );
+  }
+
+  /// Pornește animațiile de recompensă abia după ce pastilele de mai jos
+  /// (targetKey-urile) chiar există în arbore — la fel ca la fluxul de
+  /// reclamă recompensată din game_screen.dart, care așteaptă explicit
+  /// endOfFrame înainte de collectRewards, altfel targetKey.currentContext e
+  /// încă null și animația cade pe fallback-ul din dreapta-sus.
+  ///
+  /// Cele două recompense posibile (bonusul de primă victorie și prada de la
+  /// Quizz Tanks) rulează UNA DUPĂ ALTA, în același `await`: pornite în
+  /// paralel, cele două șiruri de monede ar zbura peste aceleași pastile în
+  /// același timp și nu s-ar mai înțelege ce de unde vine.
+  ///
+  /// ATENȚIE: `collectRewards` e cel care SCRIE recompensa în balanță, deci
+  /// sumele NU se adaugă și în [_load] — s-ar dubla.
+  Future<void> _playRewardAnimations() async {
+    if (_rewardAnimationFired) return;
+    _rewardAnimationFired = true;
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
+    if (_firstWinBonus) {
+      await collectRewards(
+        context,
+        coins: multiplayerFirstWinBonusCoins,
+        xp: multiplayerFirstWinBonusXp,
+        lives: 0,
+        coinBadgeKey: _coinBadgeKey,
+        xpBadgeKey: _xpBadgeKey,
+        livesBadgeKey: GlobalKey(),
+      );
+    }
+    if (!mounted || _salvage.isEmpty) return;
     await collectRewards(
       context,
-      coins: multiplayerFirstWinBonusCoins,
-      xp: multiplayerFirstWinBonusXp,
-      lives: 0,
-      coinBadgeKey: _coinBadgeKey,
-      xpBadgeKey: _xpBadgeKey,
-      livesBadgeKey: GlobalKey(),
+      coins: _salvage.coins,
+      xp: 0,
+      lives: _salvage.hearts,
+      coinBadgeKey: _salvageCoinKey,
+      // xp: 0 — cheia nu e folosită, dar parametrul e obligatoriu.
+      xpBadgeKey: GlobalKey(),
+      livesBadgeKey: _salvageHeartKey,
+      hints: _salvage.hints,
+      hintsBadgeKey: _salvageHintKey,
+      gems: _salvage.gems,
+      gemsBadgeKey: _salvageGemKey,
+    );
+  }
+
+  /// Prada de la Quizz Tanks. Pastilele au GlobalKey pentru că sunt ȚINTELE
+  /// animației de colectare (vezi [_playRewardAnimations]) — fiecare monedă,
+  /// inimă, hint sau gem zboară exact spre pastila lui.
+  Widget _buildSalvagePanel() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withAlpha(28),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.orange.withAlpha(130)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _salvageTopDamage
+                ? tr('🔧 PRADĂ DIN EPAVE • cele mai multe daune', '🔧 SALVAGE • most damage dealt')
+                : tr('🔧 PRADĂ DIN EPAVE', '🔧 SALVAGE'),
+            style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _salvageItem(_salvageCoinKey, Icons.monetization_on_rounded, AppColors.coin, _salvage.coins),
+              _salvageItem(_salvageHeartKey, Icons.favorite_rounded, AppColors.life, _salvage.hearts),
+              _salvageItem(_salvageHintKey, Icons.tips_and_updates_rounded, AppColors.hint, _salvage.hints),
+              _salvageItem(_salvageGemKey, Icons.diamond_rounded, AppColors.gem, _salvage.gems),
+            ],
+          ),
+          if (_salvageTopDamage && _salvage.gems == 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              tr('Gems n-au ieșit de data asta — sunt rare chiar și pentru primul.',
+                  'No gems this time — they are rare even for the top gunner.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white38, fontSize: 10.5),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Pastilele cu 0 rămân vizibile, doar stinse: golul e informație („n-am
+  /// luat inimi"), iar dacă ar dispărea, rândul ar sări de la un meci la
+  /// altul și n-ai mai ști ce se putea câștiga.
+  Widget _salvageItem(GlobalKey key, IconData icon, Color color, int amount) {
+    final has = amount > 0;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 7),
+      child: Opacity(
+        opacity: has ? 1 : 0.32,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              key: key,
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: color.withAlpha(has ? 40 : 16),
+                shape: BoxShape.circle,
+                border: Border.all(color: has ? color.withAlpha(150) : Colors.white24),
+              ),
+              child: Icon(icon, color: color, size: 15),
+            ),
+            const SizedBox(width: 4),
+            Text('$amount', style: TextStyle(color: has ? Colors.white : Colors.white54, fontWeight: FontWeight.w900, fontSize: 13)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -230,20 +364,40 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
               if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.blue));
               }
-              if (_firstWinBonus) {
-                WidgetsBinding.instance.addPostFrameCallback((_) => _maybePlayFirstWinAnimation());
+              if (_firstWinBonus || !_salvage.isEmpty) {
+                WidgetsBinding.instance.addPostFrameCallback((_) => _playRewardAnimations());
               }
               final me = MultiplayerService.instance.currentPlayerId;
               final players = snap.data!;
               return Column(
                 children: [
                   const SizedBox(height: 20),
-                  const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 56),
+                  Icon(
+                    widget.gameMode == MatchGameMode.quizzTanks
+                        ? Icons.military_tech_rounded
+                        : Icons.emoji_events_rounded,
+                    color: widget.gameMode == MatchGameMode.quizzTanks ? AppColors.orange : AppColors.coin,
+                    size: 56,
+                  ),
                   const SizedBox(height: 8),
                   const Text('Clasament final', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  if (widget.gameMode == MatchGameMode.quizzTanks)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        tr('Ordinea o dau daunele făcute', 'Ranked by damage dealt'),
+                        style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                      ),
+                    ),
                   if (_coinsEarned > 0 || _xpEarned > 0) ...[
                     const SizedBox(height: 6),
-                    Text('+$_coinsEarned monede  •  +$_xpEarned XP', style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700)),
+                    // La Quizz Tanks nu există pot, deci monedele de aici sunt
+                    // mereu 0 — iar un „+0 monede" lângă XP arată a bug, nu a
+                    // regulă. Monedele modului vin din pradă, mai jos.
+                    Text(
+                      _coinsEarned > 0 ? '+$_coinsEarned monede  •  +$_xpEarned XP' : '+$_xpEarned XP',
+                      style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
+                    ),
                   ],
                   if (_myBet > 0) ...[
                     const SizedBox(height: 6),
@@ -286,6 +440,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                       ),
                     ),
                   ],
+                  if (!_salvage.isEmpty) _buildSalvagePanel(),
                   const SizedBox(height: 20),
                   Expanded(
                     child: ListView.builder(
@@ -325,7 +480,26 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                     child: Text('🍞' * p.breads.clamp(0, 5), style: const TextStyle(fontSize: 12)),
                                   ),
                               ],
-                              Text('${p.score} pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
+                              if (widget.gameMode == MatchGameMode.quizzTanks)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    p.eliminated ? '💥 KO' : '❤ ${p.hp}',
+                                    style: TextStyle(
+                                      color: p.eliminated ? AppColors.danger : AppColors.play,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              // La Quizz Tanks "punctele" chiar SUNT daunele
+                              // (vezi resolveTanksRound), deci se scriu ca
+                              // atare — „82 pct" n-ar fi spus nimic despre ce
+                              // s-a întâmplat în meci.
+                              Text(
+                                widget.gameMode == MatchGameMode.quizzTanks ? '${p.damageDealt} dmg' : '${p.score} pct',
+                                style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),
+                              ),
                             ],
                           ),
                         );

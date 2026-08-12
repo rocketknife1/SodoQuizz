@@ -337,6 +337,57 @@ Future<bool> confirmMatchStake(
   return ok ?? false;
 }
 
+/// Confirmarea la intrarea într-o cameră de Quizz Tanks — singurul mod fără
+/// miză (vezi core/tanks.dart). Nu trece prin [confirmMatchStake] fiindcă
+/// acela refuză din principiu orice cameră cu miză 0: acolo, 0 înseamnă
+/// „cameră făcută de o versiune veche a jocului", ceea ce aici nu e cazul.
+///
+/// Dialogul spune explicit că nu se plătește nimic. Fără propoziția asta,
+/// cineva obișnuit cu celelalte moduri ar presupune că i s-au luat monede
+/// pe tăcute.
+Future<bool> confirmTanksRoom(BuildContext context, {required String title}) async {
+  final ok = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: const Color(0xFF1a1a2e),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 17)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            tr('Quizz Tanks • intrare gratuită', 'Quizz Tanks • free entry'),
+            style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            tr(
+                'Aici nu se pune miză și nu pierzi nimic din balanță. Patru '
+                    'tancuri, întrebări de cultură generală, 5 secunde de răspuns. '
+                    'La final se împarte pradă (monede, inimi, hints, rar gems) '
+                    'după cât ai lovit.',
+                'No stake here and nothing leaves your balance. Four tanks, general '
+                    'knowledge questions, 5 seconds to answer. At the end there is '
+                    'salvage (coins, hearts, hints, rarely gems) split by how much '
+                    'damage you dealt.'),
+            style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(tr('Renunță', 'Cancel'))),
+        ElevatedButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
+          child: Text(tr('Intră', 'Join'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    ),
+  );
+  return ok ?? false;
+}
+
 Future<void> _notEnoughCoins(BuildContext context, {required int needed, required int coins}) {
   return showDialog<void>(
     context: context,

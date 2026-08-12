@@ -1510,6 +1510,28 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
     await _future;
   }
 
+  /// Cererea pleacă de pe contul cu care e logat adminul — nu e o „cerere de
+  /// sistem", ci una obișnuită, de la un jucător anume. Rezultatul se spune
+  /// pe față, inclusiv cazul în care cererea s-a transformat în prietenie pe
+  /// loc (pentru că exista deja una în sens invers).
+  Future<void> _sendFriendRequest(BuildContext context, PlayerProfile p) async {
+    final outcome = await PlayerProfileService.instance.sendFriendRequestToUid(p.uid);
+    if (!context.mounted) return;
+    final (text, color) = switch (outcome) {
+      FriendRequestOutcome.sent => ('Cerere trimisă către ${p.name}. Îi apare în clopoțel.', AppColors.play),
+      FriendRequestOutcome.autoAccepted => ('${p.name} îți trimisese deja cerere — sunteți prieteni acum.', AppColors.play),
+      FriendRequestOutcome.alreadyFriends => ('Sunteți deja prieteni.', AppColors.blue),
+      FriendRequestOutcome.isSelf => ('Ăsta e chiar contul tău.', AppColors.orange),
+      FriendRequestOutcome.notFound => ('Nu am putut trimite cererea.', AppColors.danger),
+    };
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: color,
+        content: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      ),
+    );
+  }
+
   void _copyUid() {
     Clipboard.setData(ClipboardData(text: widget.profile.uid));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1787,6 +1809,17 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
           shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
           builder: (_) => _MessageSheet(profile: p),
         ),
+      ),
+      const SizedBox(height: 10),
+      // Cererea pleacă pe UID, nu pe codul de prieten: un jucător care n-a
+      // deschis niciodată ecranul de Prieteni n-are încă un cod generat, și
+      // tocmai pe ăia vrei să-i poți contacta din panou. Îi apare în
+      // clopoțel ca orice altă cerere (NotificationService.fetchLive).
+      _ActionButton(
+        label: 'Trimite cerere de prietenie',
+        icon: Icons.person_add_rounded,
+        color: AppColors.purple,
+        onPressed: () => _sendFriendRequest(context, p),
       ),
       const SizedBox(height: 10),
       // Resetul stă lângă ban/ștergere fiindcă e tot ireversibil, dar nu e

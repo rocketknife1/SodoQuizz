@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../core/betting.dart';
 import '../core/lang.dart';
+import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
@@ -27,6 +28,13 @@ class MultiplayerUnavailableException implements Exception {
 /// MultiplayerMatchScreen. Matchmaking-ul public rămâne 1 vs 1 — o coadă care
 /// așteaptă 11 străini simultan nu s-ar completa niciodată.
 const int matchPlayerCount = 11;
+
+/// Câți jucători încap într-o cameră, după modul ei de joc. Quizz Tanks e
+/// singurul cu limită proprie ([tanksPlayerCount] = 4): acolo numărul nu e o
+/// preferință, ci parte din reguli — „cine răspunde corect trage în ceilalți
+/// trei" și arena desenată 2×2 (vezi core/tanks.dart).
+int maxPlayersForMode(MatchGameMode mode) =>
+    mode == MatchGameMode.quizzTanks ? tanksPlayerCount : matchPlayerCount;
 
 /// Timp minim garantat între un tap al jucătorului (create/join room, dat
 /// un răspuns, trimis un mesaj) și finalizarea scrierii în Firestore — nu
@@ -248,11 +256,13 @@ class MultiplayerService {
     String? photoUrl,
     String avatarStyle = '',
   }) async {
+    final info = MatchInfo.fromDoc(doc);
     final players = await doc.reference.collection('players').get();
-    if (players.docs.length >= matchPlayerCount) {
+    // Plafonul e al MODULUI, nu al camerei: Quizz Tanks nu primește al
+    // cincilea jucător, oricât de goală ar părea camera din listă.
+    if (players.docs.length >= maxPlayersForMode(info.gameMode)) {
       throw MultiplayerUnavailableException(tr('Camera e plină.', 'That room is full.'));
     }
-    final info = MatchInfo.fromDoc(doc);
     final me = currentPlayerId;
     await _paced(() => doc.reference.collection('players').doc(me).set(
           MatchPlayer(
@@ -317,17 +327,23 @@ class MultiplayerService {
         'status': MatchStatus.playing.name,
         'startedAt': FieldValue.serverTimestamp(),
         'roundIndex': 0,
-        'roundPhase': HigherLowerRoundPhase.answering.name,
+        'roundPhase': RoundPhase.answering.name,
         'roundAnswers': <String, String>{},
         'roundWinnerIds': <String>[],
+        'roundShots': <Map<String, dynamic>>[],
+        'roundDestroyedIds': <String>[],
         'roundStartedAt': FieldValue.serverTimestamp(),
       });
 
-  // ─── Higher & Lower multiplayer (rundă sincronizată) ───────────────────
+  // ─── Runda sincronizată (Higher & Lower + Quizz Tanks) ─────────────────
 
-  Future<void> submitHigherLowerGuess({required String matchId, required String guess}) {
+  /// Răspunsul propriu la runda curentă — 'higher'/'lower' la Higher &
+  /// Lower, textul variantei alese la Quizz Tanks. Ceilalți văd că ai
+  /// răspuns (cheia există în `roundAnswers`), nu și CE ai răspuns: nimeni
+  /// nu se uită la harta răspunsurilor înainte de rezolvarea rundei.
+  Future<void> submitRoundAnswer({required String matchId, required String answer}) {
     final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundAnswers.$me': guess}));
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundAnswers.$me': answer}));
   }
 
   /// Calculează rezultatul rundei curente — poate fi apelată de ORICE
@@ -356,7 +372,7 @@ class MultiplayerService {
       await _db.runTransaction((tx) async {
         final matchDoc = await tx.get(matchRef);
         final data = matchDoc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != HigherLowerRoundPhase.answering.name) {
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja rezolvată de alt client - nimic de facut
         }
         final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
@@ -383,7 +399,7 @@ class MultiplayerService {
           }
         }
         tx.update(matchRef, {
-          'roundPhase': HigherLowerRoundPhase.revealed.name,
+          'roundPhase': RoundPhase.revealed.name,
           'roundWinnerIds': winnerIds,
           if (stillActive <= 1) 'status': MatchStatus.finished.name,
         });
@@ -394,27 +410,234 @@ class MultiplayerService {
   }
 
   /// Trece la runda următoare — apelabilă de orice client la fel ca
-  /// [resolveHigherLowerRound], cu aceeași gardă anti-cursă.
-  Future<void> advanceHigherLowerRound({required String matchId, required int roundIndex}) async {
+  /// [resolveHigherLowerRound], cu aceeași gardă anti-cursă. Comună ambelor
+  /// moduri cu rundă sincronizată: golește TOT ce ține de runda încheiată,
+  /// inclusiv câmpurile pe care le folosește doar Quizz Tanks (a le șterge
+  /// și în Higher & Lower nu strică nimic, dar a le uita ar face ca
+  /// proiectilele rundei trecute să fie animate din nou în cea nouă).
+  Future<void> advanceSyncRound({required String matchId, required int roundIndex}) async {
     final matchRef = _db.collection('matches').doc(matchId);
     try {
       await _db.runTransaction((tx) async {
         final doc = await tx.get(matchRef);
         final data = doc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != HigherLowerRoundPhase.revealed.name) {
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
           return;
         }
         tx.update(matchRef, {
           'roundIndex': roundIndex + 1,
-          'roundPhase': HigherLowerRoundPhase.answering.name,
+          'roundPhase': RoundPhase.answering.name,
           'roundAnswers': <String, String>{},
           'roundWinnerIds': <String>[],
+          'roundShots': <Map<String, dynamic>>[],
+          'roundDestroyedIds': <String>[],
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
     } catch (e) {
-      debugPrint('MultiplayerService.advanceHigherLowerRound a esuat: $e');
+      debugPrint('MultiplayerService.advanceSyncRound a esuat: $e');
     }
+  }
+
+  // ─── Quizz Tanks ────────────────────────────────────────────────────────
+
+  /// Închide faza de răspuns a unei runde de Quizz Tanks și decide ce
+  /// urmează: dacă a nimerit măcar unul, se trece la ȚINTIRE (cei care au
+  /// răspuns corect își aleg victima); dacă n-a nimerit nimeni, se sare
+  /// direct la faza de foc, cu runda goală — n-are cine trage.
+  ///
+  /// Apelabilă de ORICE client, ca la Higher & Lower — meciul nu are voie să
+  /// se blocheze dacă pleacă tocmai hostul. Garda din capul tranzacției face
+  /// ca, dintre cei (până la patru) clienți care încearcă simultan, exact
+  /// unul să apuce să scrie: ceilalți văd faza deja schimbată și ies fără să
+  /// facă nimic.
+  ///
+  /// Cine n-a apucat să răspundă în cele [tanksRoundSeconds] secunde e tratat
+  /// exact ca cine a răspuns greșit: nu trage, și evită mult mai greu.
+  Future<void> closeTanksAnswering({
+    required String matchId,
+    required int roundIndex,
+    required String correctAnswer,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja închisă de alt client
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+
+        final shooters = <String>[];
+        var aliveCount = 0;
+        for (final id in playerIds) {
+          final doc = await tx.get(matchRef.collection('players').doc(id));
+          if (!doc.exists || doc.data()!['eliminated'] == true) continue;
+          aliveCount++;
+          if (answers[id] == correctAnswer) shooters.add(id);
+        }
+
+        // Un singur jucător rămas în viață nu are pe cine ținti — ar rămâne
+        // blocat pe ecranul de țintire până la plafonul de runde.
+        if (shooters.isEmpty || aliveCount < 2) {
+          final outOfRounds = roundIndex + 1 >= tanksMaxRounds;
+          tx.update(matchRef, {
+            'roundPhase': RoundPhase.revealed.name,
+            'roundWinnerIds': shooters,
+            'roundShots': <Map<String, dynamic>>[],
+            'roundDestroyedIds': <String>[],
+            if (aliveCount <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
+          });
+          return;
+        }
+
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.targeting.name,
+          'roundWinnerIds': shooters,
+          'roundTargets': <String, String>{},
+          // cronometrul de țintire pornește ACUM, nu de la începutul rundei
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeTanksAnswering a esuat: $e');
+    }
+  }
+
+  /// Ținta aleasă de jucătorul curent, din ecranul de țintire.
+  Future<void> submitTanksTarget({required String matchId, required String targetId}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundTargets.$me': targetId}));
+  }
+
+  /// Trage efectiv: fiecare țintaș trimite UN proiectil spre ținta lui, se
+  /// aruncă zarurile (vezi [rollTankShot]), se scad vieți, se marchează
+  /// tancurile distruse.
+  ///
+  /// DE CE SE APLICĂ TOT SIMULTAN: daunele se calculează pe viața de la
+  /// ÎNCEPUTUL rundei, nu pe măsură ce se scad. Așa doi jucători care se
+  /// termină reciproc chiar mor amândoi, în loc ca cel care s-a nimerit
+  /// primul în listă să scape. Consecința acceptată: daunele „în plus" peste
+  /// viața rămasă a țintei se contorizează întregi la cel care a tras —
+  /// contorul se numește daune FĂCUTE, iar el chiar atât a tras.
+  ///
+  /// Cine n-a apucat să aleagă în cele [tanksTargetSeconds] secunde NU pierde
+  /// tragerea: țintește automat adversarul cu cea mai puțină viață. E și cea
+  /// mai bună alegere evidentă, deci penalizarea pentru ezitare rămâne mică —
+  /// dar tot pierzi dreptul de a decide, ceea ce contează când vrei să lovești
+  /// pe cine face daune, nu pe cine e aproape mort.
+  Future<void> resolveTanksRound({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    // ordonate, ca lista de proiectile să iasă în aceeași ordine indiferent
+    // ce client rezolvă runda — animația e mai ușor de urmărit așa.
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.targeting.name) {
+          return; // deja rezolvată de alt client - nimic de facut
+        }
+        final targets = Map<String, dynamic>.from(data['roundTargets'] as Map? ?? const {});
+        // Lista țintașilor E lista celor care au răspuns corect, scrisă de
+        // [closeTanksAnswering] — deci tot din ea se citește și cine e „în
+        // gardă" la apărare, fără să mai comparăm răspunsurile a doua oară.
+        final shooters = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
+
+        // TOATE citirile înaintea oricărei scrieri — cerință Firestore
+        // pentru tranzacții, nu o preferință de stil.
+        final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (final id in playerIds) {
+          docs[id] = await tx.get(matchRef.collection('players').doc(id));
+        }
+
+        final alive = <String>[];
+        final hpAtStart = <String, int>{};
+        for (final id in playerIds) {
+          final doc = docs[id]!;
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          if (pData['eliminated'] == true) continue; // tanc deja distrus - spectator
+          alive.add(id);
+          hpAtStart[id] = pData['hp'] as int? ?? tanksMaxHp;
+        }
+
+        final rnd = Random();
+        final shots = <Map<String, dynamic>>[];
+        final incoming = {for (final id in alive) id: 0};
+        final dealt = {for (final id in alive) id: 0};
+        for (final shooter in alive) {
+          if (!shooters.contains(shooter)) continue;
+          final chosen = targets[shooter] as String?;
+          final target = (chosen != null && chosen != shooter && alive.contains(chosen))
+              ? chosen
+              : _weakestEnemy(alive, hpAtStart, shooter);
+          if (target == null) continue; // nu mai are pe cine trage
+          // „În gardă" = a răspuns și el corect, adică e tot în lista
+          // țintașilor — de-aia evită mult mai des.
+          final roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(target), rnd: rnd);
+          shots.add(TankShot(byId: shooter, atId: target, hit: roll.hit, damage: roll.damage).toMap());
+          if (roll.hit) {
+            incoming[target] = incoming[target]! + roll.damage;
+            dealt[shooter] = dealt[shooter]! + roll.damage;
+          }
+        }
+
+        final destroyed = <String>[];
+        var stillAlive = 0;
+        for (final id in alive) {
+          final newHp = hpAtStart[id]! - incoming[id]!;
+          final isDestroyed = newHp <= 0;
+          if (isDestroyed) {
+            destroyed.add(id);
+          } else {
+            stillAlive++;
+          }
+          // scorul E totalul daunelor: restul aplicației (clasament final,
+          // XP, statistici) citește `score`, iar cerința modului spune că
+          // ordinea o dau daunele făcute. Vezi și MatchPlayer.damageDealt.
+          final totalDealt = (docs[id]!.data()!['damageDealt'] as int? ?? 0) + dealt[id]!;
+          tx.update(docs[id]!.reference, {
+            'hp': isDestroyed ? 0 : newHp,
+            'eliminated': isDestroyed,
+            'damageDealt': totalDealt,
+            'score': totalDealt,
+          });
+        }
+
+        // Meciul se termină când rămâne cel mult un tanc în picioare (zero e
+        // posibil: două tancuri se pot distruge reciproc în aceeași rundă) —
+        // sau la plafonul de runde, ca o masă în care nimeni nu mai nimerește
+        // nimic să nu curgă la nesfârșit.
+        final outOfRounds = roundIndex + 1 >= tanksMaxRounds;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundShots': shots,
+          'roundDestroyedIds': destroyed,
+          if (stillAlive <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveTanksRound a esuat: $e');
+    }
+  }
+
+  /// Ținta implicită a unui țintaș care n-a apucat să aleagă: adversarul cu
+  /// cea mai puțină viață. La egalitate decide uid-ul, ca alegerea să fie
+  /// aceeași oricare client ar rezolva runda.
+  static String? _weakestEnemy(List<String> alive, Map<String, int> hp, String shooter) {
+    String? best;
+    for (final id in alive) {
+      if (id == shooter) continue;
+      if (best == null || hp[id]! < hp[best]! || (hp[id]! == hp[best]! && id.compareTo(best) < 0)) {
+        best = id;
+      }
+    }
+    return best;
   }
 
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {

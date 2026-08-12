@@ -105,17 +105,25 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     // Camera are miza EI, aleasă de gazda ei, care poate fi alta decât cea
     // fixă de la Join Online. Nu se plătește a doua oară: se reglează doar
     // diferența față de cât e deja plătit pentru coadă.
-    final ok = await confirmMatchStake(
-      context,
-      stake: room.stake,
-      title: 'Camera lui ${room.hostName ?? '?'}',
-      subtitle: tr(
-          'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
-              'mulți, cu atât premiile cresc.',
-          'The stake is set by whoever created the room. The more players join, '
-              'the bigger the prizes.'),
-      alreadyPaid: _stakePaid,
-    );
+    // O cameră de Quizz Tanks nu are miză deloc (vezi core/tanks.dart), deci
+    // are dialogul ei. Miza plătită deja pentru coadă nu se pierde: mai jos,
+    // diferența negativă se întoarce integral în balanță.
+    final bool ok;
+    if (room.gameMode == MatchGameMode.quizzTanks) {
+      ok = await confirmTanksRoom(context, title: 'Camera lui ${room.hostName ?? '?'}');
+    } else {
+      ok = await confirmMatchStake(
+        context,
+        stake: room.stake,
+        title: 'Camera lui ${room.hostName ?? '?'}',
+        subtitle: tr(
+            'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
+                'mulți, cu atât premiile cresc.',
+            'The stake is set by whoever created the room. The more players join, '
+                'the bigger the prizes.'),
+        alreadyPaid: _stakePaid,
+      );
+    }
     if (!mounted || _left) return;
     if (!ok) {
       await _resumeQueue();
@@ -322,12 +330,18 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (room.gameMode == MatchGameMode.higherLower)
+              if (room.gameMode != MatchGameMode.classic)
                 Container(
                   margin: const EdgeInsets.only(bottom: 2),
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                  decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(6)),
-                  child: const Text('H&L', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800)),
+                  decoration: BoxDecoration(
+                    color: room.gameMode == MatchGameMode.quizzTanks ? AppColors.orange : AppColors.danger,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    room.gameMode == MatchGameMode.quizzTanks ? 'TANKS' : 'H&L',
+                    style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
+                  ),
                 ),
               Avatar(
                 size: 40,
@@ -348,9 +362,13 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
               ),
               // Miza camerei, direct pe chip: de când n-o mai alege cel care
               // intră, e singurul lucru care diferențiază două camere din
-              // listă și trebuie văzut ÎNAINTE de tap.
-              Text('💰${room.stake}',
-                  style: const TextStyle(color: AppColors.coin, fontSize: 10, fontWeight: FontWeight.w800)),
+              // listă și trebuie văzut ÎNAINTE de tap. La Quizz Tanks nu
+              // există miză, iar „💰0" ar fi arătat ca o cameră stricată.
+              room.gameMode == MatchGameMode.quizzTanks
+                  ? Text(tr('gratis', 'free'),
+                      style: const TextStyle(color: AppColors.play, fontSize: 10, fontWeight: FontWeight.w800))
+                  : Text('💰${room.stake}',
+                      style: const TextStyle(color: AppColors.coin, fontSize: 10, fontWeight: FontWeight.w800)),
             ],
           ),
         ),

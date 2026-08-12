@@ -252,26 +252,60 @@ class PlayerProfileService {
     if (target == null) return FriendRequestOutcome.notFound;
     if (target.uid == me) return FriendRequestOutcome.isSelf;
     try {
-      final alreadyFriend = await _friendsCol(me).doc(target.uid).get();
-      if (alreadyFriend.exists) return FriendRequestOutcome.alreadyFriends;
-      final incoming = await _requestsCol(me).doc(target.uid).get();
-      if (incoming.exists) {
-        await acceptFriendRequest(target.uid);
-        return FriendRequestOutcome.autoAccepted;
-      }
-      final myProfile = await getMyProfile();
-      await _requestsCol(target.uid).doc(me).set({
-        'fromName': myProfile?.name ?? '?',
-        'fromAvatarSeed': myProfile?.avatarSeed ?? me,
-        'fromPhotoUrl': myProfile?.photoUrl,
-        'fromAvatarStyle': myProfile?.avatarStyle ?? '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      return FriendRequestOutcome.sent;
+      return _createRequest(me: me, targetUid: target.uid);
     } catch (e) {
       debugPrint('PlayerProfileService.sendFriendRequest a esuat: $e');
       return FriendRequestOutcome.notFound;
     }
+  }
+
+  /// Aceeași cerere de prietenie, dar trimisă direct pe uid, nu pe cod.
+  ///
+  /// Există pentru panoul de Admin (vezi AdminScreen — butonul „Trimite
+  /// cerere de prietenie" din fișa unui jucător): acolo se știe uid-ul, dar
+  /// codul de prieten poate lipsi cu totul, fiindcă se generează abia când
+  /// jucătorul deschide prima dată ecranul de Prieteni. Fără varianta asta,
+  /// adminul n-ar fi putut trimite cerere tocmai jucătorilor noi.
+  ///
+  /// Nu are nevoie de niciun drept special: scrie în
+  /// `player_profiles/{target}/friend_requests/{propriul uid}`, exact ce
+  /// permite regula normală oricărui jucător (vezi firestore.rules).
+  /// Destinatarul o vede în clopoțel ca pe orice altă cerere — panoul de
+  /// notificări le citește live (NotificationService.fetchLive).
+  Future<FriendRequestOutcome> sendFriendRequestToUid(String targetUid) async {
+    final me = _uid;
+    if (me.isEmpty) return FriendRequestOutcome.notFound;
+    if (targetUid == me) return FriendRequestOutcome.isSelf;
+    try {
+      final target = await _col.doc(targetUid).get();
+      if (!target.exists) return FriendRequestOutcome.notFound;
+      return _createRequest(me: me, targetUid: targetUid);
+    } catch (e) {
+      debugPrint('PlayerProfileService.sendFriendRequestToUid a esuat: $e');
+      return FriendRequestOutcome.notFound;
+    }
+  }
+
+  /// Partea comună a celor două feluri de a trimite o cerere (pe cod sau pe
+  /// uid): verificările de „suntem deja prieteni" / „mi-a trimis el deja
+  /// cerere" și scrierea propriu-zisă.
+  Future<FriendRequestOutcome> _createRequest({required String me, required String targetUid}) async {
+    final alreadyFriend = await _friendsCol(me).doc(targetUid).get();
+    if (alreadyFriend.exists) return FriendRequestOutcome.alreadyFriends;
+    final incoming = await _requestsCol(me).doc(targetUid).get();
+    if (incoming.exists) {
+      await acceptFriendRequest(targetUid);
+      return FriendRequestOutcome.autoAccepted;
+    }
+    final myProfile = await getMyProfile();
+    await _requestsCol(targetUid).doc(me).set({
+      'fromName': myProfile?.name ?? '?',
+      'fromAvatarSeed': myProfile?.avatarSeed ?? me,
+      'fromPhotoUrl': myProfile?.photoUrl,
+      'fromAvatarStyle': myProfile?.avatarStyle ?? '',
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+    return FriendRequestOutcome.sent;
   }
 
   /// Acceptă o cerere primită de la [fromUid] — scrie ambele documente
@@ -516,6 +550,9 @@ class PlayerProfileService {
       batch.delete(_db.collection('users').doc(uid));
       batch.delete(_db.collection('admin_grants').doc(uid));
       batch.delete(_db.collection('banned_players').doc(uid));
+      // Ultimul „a intrat în Multiplayer" al lui — altfel putea să-i mai
+      // apară numele pe ecranele altora după ce contul nu mai există.
+      batch.delete(_db.collection('multiplayer_presence').doc(uid));
 
       batch.set(_db.collection('pending_auth_deletions').doc(uid), {
         'name': name,

@@ -3,6 +3,7 @@ import '../../core/betting.dart';
 import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
+import '../../data/multiplayer_presence_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
@@ -45,6 +46,17 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         _displayName = identity.name;
         _photoUrl = identity.photoUrl;
       });
+      // „Am intrat în Multiplayer" — anunțul scurt care le apare celorlalți
+      // oriunde ar fi în joc (vezi MultiplayerPresenceService pentru de ce
+      // există și cât de rar se scrie). Aici, nu la Create Room: rostul e
+      // să se adune lume în același interval de timp, iar pentru asta
+      // trebuie anunțat momentul în care CAUȚI un meci, nu cel în care ai
+      // deschis deja o cameră.
+      MultiplayerPresenceService.instance.announceEntered(
+        name: identity.name,
+        photoUrl: identity.photoUrl,
+        avatarStyle: identity.avatarStyle,
+      );
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) MultiplayerInfoDialog.maybeShow(context);
@@ -91,12 +103,22 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
   /// Singurul loc din aplicație unde se alege o sumă: cel care creează camera
   /// fixează miza pentru toți. Cine intră după aceea (cod, listă, Join Online)
   /// doar vede cât costă și confirmă.
+  /// Quizz Tanks e SINGURUL mod fără miză (vezi core/tanks.dart): acolo nu se
+  /// pune și nu se pierde nimic din balanță, se câștigă doar prada de la
+  /// final. Deci pentru el nu se deschide dialogul de mize deloc — a-l arăta
+  /// cu „0" ar fi sugerat că miza există, dar e goală.
   Future<void> _createRoom() async {
     if (_busy) return;
     final gameMode = await _pickGameMode();
     if (gameMode == null || !mounted) return;
-    final stake = await pickMatchStake(context);
-    if (stake == null || !mounted) return;
+    final int stake;
+    if (gameMode == MatchGameMode.quizzTanks) {
+      stake = 0;
+    } else {
+      final picked = await pickMatchStake(context);
+      if (picked == null || !mounted) return;
+      stake = picked;
+    }
     setState(() => _busy = true);
     final spent = await StorageService.spendCoins(stake);
     if (!spent) {
@@ -158,6 +180,14 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
               subtitle: tr('Voturi secrete, eliminare progresivă', 'Secret votes, progressive elimination'),
               color: AppColors.danger,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.higherLower),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.military_tech_rounded,
+              label: 'Quizz Tanks',
+              subtitle: tr('4 tancuri, 5 secunde, fără miză', '4 tanks, 5 seconds, no stake'),
+              color: AppColors.orange,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.quizzTanks),
             ),
           ],
         ),
@@ -232,16 +262,24 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     }
     if (!mounted) return;
     setState(() => _busy = false);
-    final ok = await confirmMatchStake(
-      context,
-      stake: room.stake,
-      title: tr('Camera lui ${room.hostName ?? '?'}', '${room.hostName ?? '?'}\'s room'),
-      subtitle: tr(
-          'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
-              'mulți, cu atât premiile cresc.',
-          'The stake is set by whoever created the room. The more players join, '
-              'the bigger the prizes.'),
-    );
+    final roomTitle = tr('Camera lui ${room.hostName ?? '?'}', '${room.hostName ?? '?'}\'s room');
+    // Quizz Tanks nu are miză deloc, deci nici dialog de miză — vezi
+    // confirmTanksRoom pentru de ce nu merge cel obișnuit cu 0.
+    final bool ok;
+    if (room.gameMode == MatchGameMode.quizzTanks) {
+      ok = await confirmTanksRoom(context, title: roomTitle);
+    } else {
+      ok = await confirmMatchStake(
+        context,
+        stake: room.stake,
+        title: roomTitle,
+        subtitle: tr(
+            'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
+                'mulți, cu atât premiile cresc.',
+            'The stake is set by whoever created the room. The more players join, '
+                'the bigger the prizes.'),
+      );
+    }
     if (!ok || !mounted) return;
     setState(() => _busy = true);
     final spent = await StorageService.spendCoins(room.stake);
