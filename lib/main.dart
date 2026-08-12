@@ -113,12 +113,23 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   /// în multiplayer, nu există încă un cont anonim, iar interogarea ar fi
   /// respinsă de reguli. De-aia se abonează abia după ce Firebase Auth chiar
   /// are pe cineva — și se reabonează dacă contul se schimbă (Guest → Google).
+  ///
+  /// Garda pe `Firebase.apps`: în testul de widget aplicația se construiește
+  /// DIRECT, fără `main()`, deci fără `Firebase.initializeApp` — iar simpla
+  /// atingere a lui `FirebaseAuth.instance` ar arunca și ar face aplicația
+  /// imposibil de montat fără Firebase. Anunțul e o îmbunătățire, nu o
+  /// condiție de pornire: dacă nu există Firebase, pur și simplu nu apare.
   void _listenForMultiplayerPresence() {
-    FirebaseAuth.instance.authStateChanges().listen((user) {
-      _presenceSub?.cancel();
-      if (user == null) return;
-      _presenceSub = MultiplayerPresenceService.instance.watchOthers().listen(_showPresenceBanner);
-    });
+    if (Firebase.apps.isEmpty) return;
+    try {
+      FirebaseAuth.instance.authStateChanges().listen((user) {
+        _presenceSub?.cancel();
+        if (user == null) return;
+        _presenceSub = MultiplayerPresenceService.instance.watchOthers().listen(_showPresenceBanner);
+      });
+    } catch (e) {
+      debugPrint('Anunturile de Multiplayer nu au putut porni: $e');
+    }
   }
 
   void _showPresenceBanner(MultiplayerPresencePing ping) {
