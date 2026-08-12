@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/betting.dart';
 import '../core/lang.dart';
+import '../core/tanks.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
@@ -364,11 +365,11 @@ Future<bool> confirmTanksRoom(BuildContext context, {required String title}) asy
           Text(
             tr(
                 'Aici nu se pune miză și nu pierzi nimic din balanță. Patru '
-                    'tancuri, întrebări de cultură generală, 5 secunde de răspuns. '
+                    'tancuri, întrebări de cultură generală, $tanksRoundSeconds secunde de răspuns. '
                     'La final se împarte pradă (monede, inimi, hints, rar gems) '
                     'după cât ai lovit.',
                 'No stake here and nothing leaves your balance. Four tanks, general '
-                    'knowledge questions, 5 seconds to answer. At the end there is '
+                    'knowledge questions, $tanksRoundSeconds seconds to answer. At the end there is '
                     'salvage (coins, hearts, hints, rarely gems) split by how much '
                     'damage you dealt.'),
             style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.4),

@@ -13,7 +13,7 @@ enum MatchStatus { lobby, playing, finished }
 /// toți din cameră văd aceeași pereche campion/provocator pe rundă și
 /// votează în secret, vezi MultiplayerHigherLowerScreen. [quizzTanks] e
 /// lupta cu bare de viață: patru jucători, întrebări de cultură generală,
-/// cinci secunde de răspuns, iar cine răspunde corect trage în ceilalți —
+/// timp fix de răspuns, iar cine răspunde corect își alege ținta —
 /// vezi core/tanks.dart și MultiplayerTanksScreen.
 enum MatchGameMode { classic, higherLower, quizzTanks }
 

@@ -176,7 +176,7 @@ class _TankPainter extends CustomPainter {
 /// Bara de viață în stil joc de luptă: sub bara colorată curentă rămâne o
 /// „fantomă" roșie care coboară cu întârziere spre valoarea nouă.
 ///
-/// Fantoma nu e decor: la cinci secunde pe rundă, o bară care sare direct de
+/// Fantoma nu e decor: în ritmul unei runde, o bară care sare direct de
 /// la 74 la 51 nu-i lasă ochiului timp să vadă CÂT s-a pierdut. Fâșia roșie
 /// rămasă în urmă arată exact mărimea loviturii, chiar dacă te uitai în altă
 /// parte în clipa impactului.

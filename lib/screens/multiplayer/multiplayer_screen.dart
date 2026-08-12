@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/betting.dart';
 import '../../core/lang.dart';
+import '../../core/tanks.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_presence_service.dart';
@@ -185,7 +186,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
             _GameModeOption(
               icon: Icons.military_tech_rounded,
               label: 'Quizz Tanks',
-              subtitle: tr('4 tancuri, 5 secunde, fără miză', '4 tanks, 5 seconds, no stake'),
+              subtitle: tr('4 tancuri, $tanksRoundSeconds secunde, fără miză',
+                  '4 tanks, $tanksRoundSeconds seconds, no stake'),
               color: AppColors.orange,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.quizzTanks),
             ),

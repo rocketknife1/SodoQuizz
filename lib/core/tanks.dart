@@ -58,10 +58,10 @@ const int tanksPlayerCount = 4;
 /// citească direct ca HP.
 const int tanksMaxHp = 100;
 
-/// Cât are fiecare la dispoziție ca să răspundă. Cinci secunde e o cerință
-/// explicită a modului: e prea puțin pentru a raționa, deci contează ce
-/// știi deja — exact senzația de „reflex" pe care o vrea o luptă.
-const int tanksRoundSeconds = 5;
+/// Cât are fiecare la dispoziție ca să răspundă. Ridicat de la 5 la 12
+/// secunde la cererea explicită a userului — 5 secunde era prea puțin ca
+/// să apuci și să citești întrebarea, nu doar să reacționezi.
+const int tanksRoundSeconds = 12;
 
 /// Cât durează alegerea țintei. Puțin mai lung decât răspunsul, fiindcă aici
 /// chiar ai ce cântări (cine e slăbit? cine mă vânează?), dar tot scurt: o

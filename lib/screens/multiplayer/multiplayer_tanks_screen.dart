@@ -279,8 +279,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       final aliveIds = players.where((p) => !p.eliminated).map((p) => p.id).toSet();
       final allAnswered = aliveIds.isNotEmpty && aliveIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
-      // Ultimele două secunde: un bip scurt. La cinci secunde pe rundă, cine
-      // se uită la variante nu are cum să vadă și cronometrul.
+      // Ultimele două secunde: un bip scurt — cine citește variantele nu are
+      // cum să se uite în același timp și la cronometru.
       if (!_playedAlarm && !allAnswered && _secondsLeftFor(info) <= 2) {
         _playedAlarm = true;
         final me = MultiplayerService.instance.currentPlayerId;
@@ -1088,10 +1088,10 @@ class _TargetClock extends StatelessWidget {
   }
 }
 
-/// Cronometrul rundei — cifră mare într-un hexagon, roșu în ultimele două
-/// secunde. Nu e CountdownRing (folosit la Higher & Lower / Daily): acolo
-/// sunt 15 secunde și inelul are ce descrie, aici sunt cinci și contează să
-/// se citească cifra dintr-o privire periferică.
+/// Cronometrul rundei — cifră mare într-un pătrat rotunjit, roșu în ultimele
+/// două secunde. Nu e CountdownRing (folosit la Higher & Lower / Daily):
+/// aici contează să se citească CIFRA dintr-o privire periferică, în timp ce
+/// ochiul e pe variante, nu cât a mai rămas dintr-un arc.
 class _CountdownDial extends StatelessWidget {
   final int seconds;
   const _CountdownDial({required this.seconds});
