@@ -252,7 +252,10 @@ class PlayerProfileService {
     if (target == null) return FriendRequestOutcome.notFound;
     if (target.uid == me) return FriendRequestOutcome.isSelf;
     try {
-      return _createRequest(me: me, targetUid: target.uid);
+      // `await`, nu doar `return`: fără el, Future-ul iese din try înainte
+      // să se termine, iar catch-ul de mai jos n-ar prinde NICIODATĂ o
+      // eroare de scriere în Firestore.
+      return await _createRequest(me: me, targetUid: target.uid);
     } catch (e) {
       debugPrint('PlayerProfileService.sendFriendRequest a esuat: $e');
       return FriendRequestOutcome.notFound;
@@ -279,7 +282,8 @@ class PlayerProfileService {
     try {
       final target = await _col.doc(targetUid).get();
       if (!target.exists) return FriendRequestOutcome.notFound;
-      return _createRequest(me: me, targetUid: targetUid);
+      // `await` obligatoriu — vezi [sendFriendRequest] de mai sus.
+      return await _createRequest(me: me, targetUid: targetUid);
     } catch (e) {
       debugPrint('PlayerProfileService.sendFriendRequestToUid a esuat: $e');
       return FriendRequestOutcome.notFound;
