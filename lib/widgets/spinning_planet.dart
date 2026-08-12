@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/eco_mode.dart';
 import '../core/gamemodes.dart';
 import 'planet_entry_dialog.dart';
 
@@ -46,9 +47,12 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
   @override
   void initState() {
     super.initState();
-    _spin = AnimationController(vsync: this, duration: const Duration(seconds: 9))..repeat();
-    _orbit = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
-    _aura = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat(reverse: true);
+    // EcoAnimationController: planeta, orbitele si aura sunt trei bucle
+    // infinite pornite chiar in meniul principal — se opresc singure in
+    // Modul Eco, iar planeta ramane desenata, doar nemiscata.
+    _spin = EcoAnimationController(vsync: this, duration: const Duration(seconds: 9))..repeat();
+    _orbit = EcoAnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    _aura = EcoAnimationController(vsync: this, duration: const Duration(seconds: 2), restValue: 0.5)..repeat(reverse: true);
 
     final rnd = Random();
     final n = gameModes.length;

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/admin.dart';
 import '../core/leagues.dart';
 import '../core/progression.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
 import '../data/player_profile_service.dart';
@@ -64,8 +65,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Alege-ți avatarul',
-            style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+        title: Text(tr('Alege-ți avatarul', 'Pick your avatar'),
+            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
         content: SizedBox(
           width: double.maxFinite,
           child: ValueListenableBuilder<AvatarStyle>(
@@ -111,7 +112,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Gata', style: TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
+            child: Text(tr('Gata', 'Done'), style: const TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -159,15 +160,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Center(
-                  child: Text('Apasă pe poză ca să-ți schimbi avatarul',
-                      style: TextStyle(color: Colors.white38, fontSize: 11)),
+                Center(
+                  child: Text(tr('Apasă pe poză ca să-ți schimbi avatarul',
+                          'Tap the picture to change your avatar'),
+                      style: const TextStyle(color: Colors.white38, fontSize: 11)),
                 ),
                 const SizedBox(height: 14),
                 Center(child: Text('Level $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
                 const SizedBox(height: 4),
                 Center(
-                  child: Text('${xpIntoCurrentLevel(data.xp)} / ${xpForLevel(level)} XP către nivelul ${level + 1}',
+                  child: Text(
+                      tr('${xpIntoCurrentLevel(data.xp)} / ${xpForLevel(level)} XP către nivelul ${level + 1}',
+                          '${xpIntoCurrentLevel(data.xp)} / ${xpForLevel(level)} XP to level ${level + 1}'),
                       style: const TextStyle(color: Colors.white54, fontSize: 12)),
                 ),
                 const SizedBox(height: 10),
@@ -183,16 +187,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Expanded(child: _StatTile(icon: Icons.monetization_on_rounded, color: AppColors.coin, label: 'Monede', value: '${data.coins}')),
+                    Expanded(child: _StatTile(icon: Icons.monetization_on_rounded, color: AppColors.coin, label: tr('Monede', 'Coins'), value: '${data.coins}')),
                     const SizedBox(width: 12),
-                    Expanded(child: _StatTile(icon: Icons.emoji_events_rounded, color: AppColors.orange, label: 'Record', value: '${data.highScore}')),
+                    Expanded(child: _StatTile(icon: Icons.emoji_events_rounded, color: AppColors.orange, label: tr('Record', 'Best'), value: '${data.highScore}')),
                   ],
                 ),
                 const SizedBox(height: 12),
                 _StatTile(
                   icon: Icons.fact_check_rounded,
                   color: AppColors.play,
-                  label: 'Întrebări răspunse',
+                  label: tr('Întrebări răspunse', 'Questions answered'),
                   value: '${data.answeredCount} / ${data.totalQuestions}',
                   wide: true,
                 ),
@@ -214,7 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Icon(Icons.group_rounded, color: AppColors.teal, size: 20),
                         const SizedBox(width: 12),
-                        const Text('Prieteni', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(tr('Prieteni', 'Friends'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                         if (data.pendingFriendRequests > 0) ...[
                           const SizedBox(width: 8),
                           const NotificationDot(borderColor: AppColors.card),
@@ -244,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         const Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 20),
                         const SizedBox(width: 12),
-                        const Text('Realizări', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text(tr('Realizări', 'Achievements'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                         if (data.claimableAchievements) ...[
                           const SizedBox(width: 8),
                           const NotificationDot(borderColor: AppColors.card),
@@ -261,12 +265,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                     decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.settings_rounded, color: Colors.white70, size: 20),
-                        SizedBox(width: 12),
-                        Expanded(child: Text('Setări', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
-                        Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                        const Icon(Icons.settings_rounded, color: Colors.white70, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(tr('Setări', 'Settings'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
                       ],
                     ),
                   ),
@@ -327,8 +331,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Liga ${league.name}', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                      Text('${p.leaguePoints} puncte de ligă', style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      Text(tr('Liga ${league.name}', '${league.name} League'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(tr('${p.leaguePoints} puncte de ligă', '${p.leaguePoints} league points'), style: const TextStyle(color: Colors.white54, fontSize: 11)),
                     ],
                   ),
                 ),
@@ -436,9 +440,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ? [
                       const Text('Guest', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Progresul e legat de această instalare. Conectează-te cu Google ca să nu-l pierzi la reinstalare sau la schimbarea telefonului.',
-                        style: TextStyle(color: Colors.white54, fontSize: 12),
+                      Text(
+                        tr('Progresul e legat de această instalare. Conectează-te cu Google ca să nu-l pierzi la reinstalare sau la schimbarea telefonului.',
+                            'Your progress is tied to this install. Sign in with Google so you do not lose it when reinstalling or changing phones.'),
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 18),
@@ -450,7 +455,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             _signIn();
                           },
                           icon: const Icon(Icons.login_rounded),
-                          label: const Text('Conectează-te cu Google'),
+                          label: Text(tr('Conectează-te cu Google', 'Sign in with Google')),
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
                         ),
                       ),
@@ -464,14 +469,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               _signIn(playGames: true);
                             },
                             icon: const Icon(Icons.sports_esports_rounded),
-                            label: const Text('Conectează-te cu Play Games'),
+                            label: Text(tr('Conectează-te cu Play Games', 'Sign in with Play Games')),
                             style: ElevatedButton.styleFrom(backgroundColor: AppColors.play, padding: const EdgeInsets.symmetric(vertical: 14)),
                           ),
                         ),
                       ],
                     ]
                   : [
-                      Text(user.displayName ?? user.email ?? 'Cont conectat', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      Text(user.displayName ?? user.email ?? tr('Cont conectat', 'Signed in'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                       if (user.email != null) ...[
                         const SizedBox(height: 4),
                         Text(user.email!, style: const TextStyle(color: Colors.white54, fontSize: 12)),
@@ -485,7 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             AuthService.instance.signOut();
                           },
                           icon: const Icon(Icons.logout_rounded),
-                          label: const Text('Deconectare'),
+                          label: Text(tr('Deconectare', 'Sign out')),
                           style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger, padding: const EdgeInsets.symmetric(vertical: 14)),
                         ),
                       ),
@@ -495,7 +500,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Navigator.pop(sheetContext);
                           _confirmDeleteAccount();
                         },
-                        child: const Text('Șterge contul definitiv', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                        child: Text(tr('Șterge contul definitiv', 'Delete account permanently'), style: const TextStyle(color: Colors.white38, fontSize: 12)),
                       ),
                     ],
             ),
@@ -549,10 +554,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           content: Row(
             mainAxisSize: MainAxisSize.min,
-            children: const [
-              CircularProgressIndicator(color: AppColors.blue),
-              SizedBox(width: 20),
-              Flexible(child: Text('Se sincronizează progresul...', style: TextStyle(color: Colors.white))),
+            children: [
+              const CircularProgressIndicator(color: AppColors.blue),
+              const SizedBox(width: 20),
+              Flexible(child: Text(tr('Se sincronizează progresul...', 'Syncing your progress...'), style: const TextStyle(color: Colors.white))),
             ],
           ),
         ),
@@ -569,20 +574,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Ștergi contul definitiv?', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Se șterg definitiv profilul public, prietenii, clasamentul și progresul salvat în cloud pentru acest cont Google. '
-          'Progresul de pe acest telefon rămâne neatins. Acțiunea nu poate fi anulată.',
-          style: TextStyle(color: Colors.white70, fontSize: 13),
+        title: Text(tr('Ștergi contul definitiv?', 'Delete your account permanently?'), style: const TextStyle(color: Colors.white)),
+        content: Text(
+          tr(
+            'Se șterg definitiv profilul public, prietenii, clasamentul și progresul salvat în cloud pentru acest cont Google. '
+                'Progresul de pe acest telefon rămâne neatins. Acțiunea nu poate fi anulată.',
+            'This permanently deletes the public profile, friends, leaderboard entry and cloud save for this Google account. '
+                'The progress on this phone is left untouched. This cannot be undone.',
+          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 13),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               _deleteAccount();
             },
-            child: const Text('Șterge contul', style: TextStyle(color: AppColors.danger)),
+            child: Text(tr('Șterge contul', 'Delete account'), style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -597,13 +606,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       Navigator.of(context, rootNavigator: true).pop(); // inchide dialogul de sincronizare
       setState(() => _dataFuture = _load());
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Contul a fost șters.')),
+        SnackBar(content: Text(tr('Contul a fost șters.', 'The account has been deleted.'))),
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ștergerea a eșuat. Încearcă din nou.')),
+        SnackBar(content: Text(tr('Ștergerea a eșuat. Încearcă din nou.', 'Deletion failed. Please try again.'))),
       );
     }
   }

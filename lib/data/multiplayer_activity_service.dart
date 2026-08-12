@@ -47,7 +47,7 @@ class MultiplayerActivityService {
     required String gameModeId,
     required List<RoomActivityPlayer> players,
     int pool = 0,
-    int tableCap = 0,
+    int stake = 0,
   }) async {
     if (players.length < 2) return;
     final expires = DateTime.now().add(roomActivityRetention);
@@ -56,7 +56,7 @@ class MultiplayerActivityService {
         'gameModeId': gameModeId,
         'playerCount': players.length,
         'pool': pool,
-        'tableCap': tableCap,
+        'stake': stake,
         'finishedAt': FieldValue.serverTimestamp(),
         'expiresAt': Timestamp.fromDate(expires),
         'players': [for (final p in players) p.toMap()],

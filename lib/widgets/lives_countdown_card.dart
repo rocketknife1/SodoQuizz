@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../core/eco_mode.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
@@ -32,7 +34,7 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(
+    _pulse = EcoAnimationController(
         vsync: this, duration: const Duration(milliseconds: 1100))
       ..repeat(reverse: true);
     _refresh();
@@ -137,17 +139,17 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Nu mai ai vieți',
-                  style: TextStyle(
+                Text(
+                  tr('Nu mai ai vieți', 'You are out of lives'),
+                  style: const TextStyle(
                       color: Colors.white,
                       fontSize: 13,
                       fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
-                const Text(
-                  'Următoarea se încarcă în',
-                  style: TextStyle(
+                Text(
+                  tr('Următoarea se încarcă în', 'Next one recharges in'),
+                  style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 11.5,
                       fontWeight: FontWeight.w600),

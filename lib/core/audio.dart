@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import '../data/storage_service.dart';
+import 'music_tracks.dart';
 
 /// Contextul audio global (Android/iOS), comun pentru [Music] și [Sfx] —
 /// setat o singură dată, idempotent, indiferent care din cele două pornește
@@ -44,6 +45,11 @@ class Music {
   static bool _enabled = true;
   static double _volume = 0.5;
   static bool _started = false;
+  static MusicTrack _track = defaultMusicTrack;
+
+  /// Piesa aleasă acum. Ecranul de muzică o citește ca să bifeze rândul
+  /// potrivit; vezi [setTrack] pentru schimbare.
+  static MusicTrack get track => _track;
 
   static Future<void> preload() {
     return _preloadFuture ??= _init();
@@ -53,13 +59,58 @@ class Music {
     await _ensureGlobalAudioContext();
     _enabled = await StorageService.getMusicEnabled();
     _volume = await StorageService.getMusicVolume();
+    _track = musicTrackById(await StorageService.getMusicTrackId());
     try {
       await _player.setReleaseMode(ReleaseMode.loop);
       await _player.setPlayerMode(PlayerMode.mediaPlayer);
       await _player.setVolume(_volume);
-      await _player.setSourceAsset('music/theme_loop.mp3');
+      await _player.setSourceAsset(_track.assetPath);
     } catch (e) {
       debugPrint('Music: nu am putut pregăti piesa de fundal: $e');
+      // Piesa salvată nu mai există (fișier scos din assets între versiuni) —
+      // se cade pe cea originală în loc să rămână tăcere pe tot jocul, iar
+      // preferința se rescrie ca data viitoare să nu se mai încerce degeaba.
+      if (_track.id != defaultMusicTrack.id) {
+        _track = defaultMusicTrack;
+        await StorageService.setMusicTrackId(_track.id);
+        try {
+          await _player.setSourceAsset(_track.assetPath);
+        } catch (e2) {
+          debugPrint('Music: nici piesa implicită nu a putut fi încărcată: $e2');
+        }
+      }
+    }
+  }
+
+  /// Schimbă piesa de fundal pe loc, fără repornirea aplicației: oprește ce
+  /// se aude, încarcă sursa nouă și, dacă muzica era pornită, reia imediat —
+  /// așa alegerea din meniu se AUDE în aceeași secundă, ceea ce e singurul
+  /// mod în care cineva poate compara cu adevărat două piese.
+  ///
+  /// Întoarce false dacă fișierul nu a putut fi încărcat; în acel caz piesa
+  /// dinainte rămâne activă și preferința NU se salvează, ca jocul să nu
+  /// rămână mut după o alegere eșuată.
+  static Future<bool> setTrack(MusicTrack next) async {
+    await preload();
+    final previous = _track;
+    try {
+      await _player.stop();
+      await _player.setSourceAsset(next.assetPath);
+      await _player.setVolume(_volume);
+      _track = next;
+      await StorageService.setMusicTrackId(next.id);
+      if (_enabled && _started) await _player.resume();
+      return true;
+    } catch (e) {
+      debugPrint('Music: nu am putut schimba piesa pe ${next.assetName}: $e');
+      _track = previous;
+      try {
+        await _player.setSourceAsset(previous.assetPath);
+        if (_enabled && _started) await _player.resume();
+      } catch (e2) {
+        debugPrint('Music: revenirea la piesa anterioară a eșuat: $e2');
+      }
+      return false;
     }
   }
 

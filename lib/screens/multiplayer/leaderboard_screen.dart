@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/gamemodes.dart';
 import '../../core/leagues.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
@@ -54,7 +55,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
               indicatorColor: AppColors.orange,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
-              tabs: const [Tab(text: 'Toți jucătorii'), Tab(text: 'Leaderboard'), Tab(text: 'Al tău')],
+              tabs: [
+                Tab(text: tr('Toți jucătorii', 'All players')),
+                const Tab(text: 'Leaderboard'),
+                Tab(text: tr('Al tău', 'Yours')),
+              ],
             ),
             Expanded(
               child: TabBarView(
@@ -72,7 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
 /// Formatează [Timestamp] "ultima activitate" cu dată+oră, scurt: "azi
 /// HH:mm" / "ieri HH:mm" / "dd.MM HH:mm" (sau cu anul, dacă e diferit).
 String _formatLastActive(dynamic ts) {
-  if (ts == null) return 'niciodată online';
+  if (ts == null) return tr('niciodată online', 'never online');
   final dt = (ts.toDate() as DateTime).toLocal();
   final now = DateTime.now();
   final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -113,14 +118,14 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
               children: [
                 const Icon(Icons.access_time_rounded, color: Colors.white38, size: 14),
                 const SizedBox(width: 4),
-                Text('Ultima dată online: ${_formatLastActive(p.lastActive)}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                Text(tr('Ultima dată online: ${_formatLastActive(p.lastActive)}', 'Last online: ${_formatLastActive(p.lastActive)}'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 16),
-            const Text('Unde și-a făcut punctajul', style: TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
+            Text(tr('Unde și-a făcut punctajul', 'Where the points came from'), style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
             if (p.modeBreakdown.isEmpty)
-              const Text('Niciun meci încă.', style: TextStyle(color: Colors.white38, fontSize: 13))
+              Text(tr('Niciun meci încă.', 'No matches yet.'), style: const TextStyle(color: Colors.white38, fontSize: 13))
             else
               for (final entry in p.modeBreakdown.entries)
                 _ModeScoreRow(
@@ -262,10 +267,10 @@ class _AllPlayersTabState extends State<_AllPlayersTab> {
             onRefresh: _refresh,
             color: AppColors.orange,
             child: ListView(
-              children: const [
-                SizedBox(height: 120),
+              children: [
+                const SizedBox(height: 120),
                 Center(
-                  child: Text('Niciun jucător înregistrat momentan.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                  child: Text(tr('Niciun jucător înregistrat momentan.', 'No registered players right now.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
                 ),
               ],
             ),
@@ -328,10 +333,10 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
             onRefresh: _refresh,
             color: AppColors.orange,
             child: ListView(
-              children: const [
-                SizedBox(height: 120),
+              children: [
+                const SizedBox(height: 120),
                 Center(
-                  child: Text('Niciun jucător activ momentan.', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                  child: Text(tr('Niciun jucător activ momentan.', 'No active players right now.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
                 ),
               ],
             ),
@@ -420,11 +425,12 @@ class _MyStatsTabState extends State<_MyStatsTab> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Puncte în acest ciclu', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          Text(tr('Puncte în acest ciclu', 'Points this cycle'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                           Text('${data.total} puncte', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
                           const SizedBox(height: 4),
                           Text(
-                            'Se resetează în ${_formatPeriod(data.periodRemaining)}',
+                            tr('Se resetează în ${_formatPeriod(data.periodRemaining)}',
+                                'Resets in ${_formatPeriod(data.periodRemaining)}'),
                             style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                         ],
@@ -434,7 +440,7 @@ class _MyStatsTabState extends State<_MyStatsTab> {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text('Puncte pe categorie (ciclul curent)', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              Text(tr('Puncte pe categorie (ciclul curent)', 'Points per category (current cycle)'), style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
               // Higher or Lower nu face parte din gameModes (altă mecanică,
               // fără poze/blur) — rândul lui e adăugat manual, nu prin bucla

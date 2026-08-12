@@ -136,7 +136,7 @@ int categoryExitReward(int correctCount, int feePaid) {
 }
 
 // ─── Recompensa de la finalul unui meci multiplayer ───────────────────────
-// Monedele NU mai vin de aici: la final se împarte pool-ul de pariuri (vezi
+// Monedele NU mai vin de aici: la final se împarte grămada de mize (vezi
 // core/betting.dart) — un meci multiplayer e acum redistribuire între
 // jucători, nu o sursă nouă de bani. XP-ul rămâne o recompensă normală,
 // recalibrată pe noua scară (un răspuns corect solo dă 11-37 XP).

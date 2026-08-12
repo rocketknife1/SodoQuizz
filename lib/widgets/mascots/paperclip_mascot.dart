@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
+import '../../core/eco_mode.dart';
 import '../../core/game_helpers.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/storage_service.dart';
 import '../../screens/clippy_bonus_screen.dart';
@@ -76,7 +78,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   @override
   void initState() {
     super.initState();
-    _idle = AnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
+    _idle = EcoAnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
     _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
@@ -271,7 +273,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
         ],
         if (exhausted) ...[
           const SizedBox(height: 1),
-          const Text('MÂINE', style: TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+          Text(tr('MÂINE', 'TOMORROW'), style: const TextStyle(color: Colors.white38, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
         ],
       ],
     );

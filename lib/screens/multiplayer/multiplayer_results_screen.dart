@@ -5,6 +5,7 @@ import '../../core/betting.dart';
 import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_activity_service.dart';
 import '../../data/multiplayer_service.dart';
@@ -42,23 +43,19 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   final _coinBadgeKey = GlobalKey();
   final _xpBadgeKey = GlobalKey();
 
-  /// Miza pusă de jucătorul curent și cât s-a întors din ea — folosite în
-  /// antetul ecranului ca rezultatul pariului să fie explicit, nu doar "ai
-  /// primit X monede".
+  /// Miza pusă de jucătorul curent și locul pe care a ieșit — folosite în
+  /// antetul ecranului, ca rezultatul să fie explicit ("ai pus X, ai luat Y"),
+  /// nu doar "ai primit X monede".
   int _myBet = 0;
-  int _myRefund = 0;
-  int _pool = 0;
-  int _tableCap = 0;
+  int _myPlace = 0;
+  int _pot = 0;
 
-  /// Monedele nu mai vin "din partea casei": la final se împarte pool-ul de
-  /// pariuri (vezi core/betting.dart) — 80% după miză × performanță × risc,
-  /// 20% strict după clasament. Partea a doua e cea care face ca un jucător
-  /// mic, care rezistă până la capăt la o masă unde cineva a pariat mult și a
-  /// pierdut, să plece cu de câteva ori miza lui. XP-ul rămâne o recompensă
-  /// normală, acordată de joc.
+  /// Monedele nu vin "din partea casei": la final se împarte grămada de mize
+  /// (vezi core/betting.dart) între locurile din jumătatea de sus a
+  /// clasamentului. XP-ul rămâne o recompensă normală, acordată de joc.
   ///
   /// Fiecare client calculează ACELEAȘI plăți din aceleași date publice
-  /// (pariurile și scorurile tuturor, din Firestore) și își creditează doar
+  /// (mizele și scorurile tuturor, din Firestore) și își creditează doar
   /// propriul cont — la fel ca la scor, nu există autoritate de server.
   Future<List<MatchPlayer>> _load() async {
     final players = await _awaitFinalScores();
@@ -74,12 +71,15 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       final draw = myIndex == 0 && sorted.length >= 2 && sorted[1].score == myScore;
       final won = myIndex == 0 && !draw;
 
-      final payouts = _settleBets(sorted);
-      _myBet = sorted[myIndex].bet;
-      _myRefund = payouts.refunds[me] ?? 0;
-      _pool = payouts.pool;
-      _tableCap = payouts.tableCap;
-      _coinsEarned = payouts.totalCreditFor(me);
+      final stake = _tableStake(sorted);
+      final prizes = matchPrizesForRanking(
+        stake: stake,
+        sortedScores: [for (final p in sorted) p.score],
+      );
+      _myBet = stake;
+      _myPlace = myIndex + 1;
+      _pot = matchPot(stake: stake, players: sorted.length);
+      _coinsEarned = prizes[myIndex];
       _xpEarned = multiplayerXpForScore(myScore, won: won);
       await StorageService.addCoins(_coinsEarned);
       await StorageService.addXp(_xpEarned);
@@ -114,8 +114,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       await MultiplayerActivityService.instance.recordRoom(
         matchId: widget.matchId,
         gameModeId: widget.gameMode.name,
-        pool: payouts.pool,
-        tableCap: payouts.tableCap,
+        pool: _pot,
+        stake: stake,
         players: [
           for (var i = 0; i < sorted.length; i++)
             RoomActivityPlayer(
@@ -123,10 +123,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
               name: sorted[i].name,
               place: i + 1,
               score: sorted[i].score,
-              // cât l-a costat participarea: taxa fixă + miza pusă
-              entry: multiplayerEntryFee + sorted[i].bet,
-              // cât i s-a creditat înapoi: câștig din pool + surplus returnat
-              exit: payouts.totalCreditFor(sorted[i].id),
+              entry: stake,
+              exit: prizes[i],
             ),
         ],
       );
@@ -161,34 +159,13 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     }
   }
 
-  /// Construiește intrările de pariu din clasamentul final și rulează
-  /// împărțirea pool-ului. [sorted] e deja ordonat descrescător după scor,
-  /// deci poziția din listă e chiar treapta din ladder-ul potului de loc.
-  ///
-  /// Performanța e raportată la scorurile mesei în modul Clasic (cine a
-  /// punctat mult ia mai mult chiar dacă n-a ieșit primul) și la poziția
-  /// finală în Higher or Lower, unde scorul e doar un contor de runde
-  /// câștigate și contează cât de departe ai ajuns.
-  BetPayouts _settleBets(List<MatchPlayer> sorted) {
-    final performances = widget.gameMode == MatchGameMode.higherLower
-        ? <double>[
-            for (var i = 0; i < sorted.length; i++)
-              sorted.length > 1 ? (sorted.length - 1 - i) / (sorted.length - 1) : 1.0,
-          ]
-        : classicPerformances([for (final p in sorted) p.score]);
-    final entries = <BetEntry>[];
-    for (var i = 0; i < sorted.length; i++) {
-      final p = sorted[i];
-      entries.add(BetEntry(
-        playerId: p.id,
-        bet: p.bet,
-        betPercent: p.betPercent,
-        performance: performances[i],
-        place: i + 1,
-      ));
-    }
-    return BetPayouts.compute(entries);
-  }
+  /// Miza mesei. Toți jucătorii au plătit exact aceeași sumă (e miza camerei,
+  /// vezi core/betting.dart), deci în mod normal orice `bet` de la masă e
+  /// răspunsul. Luăm totuși maximul, ca o singură fișă de jucător rămasă fără
+  /// câmpul `bet` — scrisă de un client mai vechi — să nu tragă toată masa la
+  /// zero și să anuleze premiile tuturor.
+  int _tableStake(List<MatchPlayer> players) =>
+      players.fold<int>(0, (best, p) => p.bet > best ? p.bet : best);
 
   /// Pornește animația abia după ce pastilele de mai jos (targetKey-urile)
   /// chiar există în arbore — la fel ca la fluxul de reclamă recompensată
@@ -220,13 +197,13 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     );
   }
 
-  /// "Ai pariat X din pool-ul de Y — ai ieșit pe plus/minus cu Z." Textul
-  /// compară cu miza, nu cu zero: 300 de monede primite după un pariu de 500
-  /// nu e un câștig, oricât ar arăta plusul de deasupra a bine.
+  /// "Ai pus X, ai luat Y — deci ești pe plus/minus cu Z." Textul compară cu
+  /// miza, nu cu zero: 300 de monede primite după o miză de 500 nu e un
+  /// câștig, oricât ar arăta plusul de deasupra a bine.
   String _betSummary() {
     final delta = _coinsEarned - _myBet;
     final sign = delta >= 0 ? '+' : '';
-    return 'Pariu: $_myBet din pool-ul de $_pool  •  $sign$delta';
+    return 'Ai pus 💰$_myBet, ai luat 💰$_coinsEarned  →  $sign$delta';
   }
 
   void _goHome() {
@@ -278,15 +255,15 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                           fontSize: 12,
                           fontWeight: FontWeight.w700),
                     ),
-                    if (_myRefund > 0)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 3),
-                        child: Text(
-                          'Masa a limitat pariurile la $_tableCap — ți-am returnat $_myRefund.',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white38, fontSize: 10.5),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        tr('Locul $_myPlace din ${players.length}  •  pe masă erau 💰$_pot',
+                            'Place $_myPlace of ${players.length}  •  💰$_pot was on the table'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white38, fontSize: 10.5),
                       ),
+                    ),
                   ],
                   if (_firstWinBonus) ...[
                     const SizedBox(height: 10),
@@ -362,7 +339,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                       child: ElevatedButton(
                         onPressed: _goHome,
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.purple, padding: const EdgeInsets.symmetric(vertical: 14)),
-                        child: const Text('Acasă', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        child: Text(tr('Acasă', 'Home'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/higher_lower_data.dart';
 import '../data/storage_service.dart';
@@ -179,12 +180,12 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Ai ales greșit! 📉', style: TextStyle(color: Colors.white)),
+        title: Text(tr('Ai ales greșit! 📉', 'Wrong pick! 📉'), style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ai ghicit corect de $_streak ori la rând.', style: const TextStyle(color: Colors.white70)),
+            Text(tr('Ai ghicit corect de $_streak ori la rând.', 'You guessed right $_streak times in a row.'), style: const TextStyle(color: Colors.white70)),
             if (_coinsEarned > 0) ...[
               const SizedBox(height: 8),
               Text('+$_coinsEarned monede  •  +$_xpEarned XP',
@@ -194,7 +195,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
             if (isNewBest)
               const Text('🏆 Record nou!', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800))
             else
-              Text('Recordul tău rămâne $_bestScore.', style: const TextStyle(color: Colors.white38, fontSize: 12.5)),
+              Text(tr('Recordul tău rămâne $_bestScore.', 'Your best stays at $_bestScore.'), style: const TextStyle(color: Colors.white38, fontSize: 12.5)),
           ],
         ),
         actions: [
@@ -203,7 +204,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
               Navigator.pop(dialogContext);
               _goHome();
             },
-            child: const Text('Acasă', style: TextStyle(color: Colors.white54)),
+            child: Text(tr('Acasă', 'Home'), style: const TextStyle(color: Colors.white54)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.purple),
@@ -211,7 +212,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
               Navigator.pop(dialogContext);
               _restart();
             },
-            child: const Text('Joacă din nou', style: TextStyle(color: Colors.white)),
+            child: Text(tr('Joacă din nou', 'Play again'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -394,7 +395,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
     final disabled = _revealed || _busy;
     return Row(
       children: [
-        Expanded(child: _arrowButton(label: 'MAI PUȚIN', icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: disabled ? null : () => _choose(false))),
+        Expanded(child: _arrowButton(label: tr('MAI PUȚIN', 'LOWER'), icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: disabled ? null : () => _choose(false))),
         const SizedBox(width: 12),
         Expanded(child: _arrowButton(label: 'MAI MULT', icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: disabled ? null : () => _choose(true))),
       ],

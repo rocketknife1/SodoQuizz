@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../core/lang.dart';
 
 /// Avatarele pe care și le poate alege jucătorul din Profil, pe lângă poza
 /// implicită.
@@ -15,19 +16,24 @@ import 'package:flutter/material.dart';
 /// pentru conturile Google — altfel alegerea n-ar avea niciun efect vizibil
 /// pentru cine e logat.
 enum AvatarStyle {
-  poza('poza', 'Poza mea'),
-  fata('fata', 'Fată'),
-  baiat('baiat', 'Băiat'),
-  pisica('pisica', 'Pisică'),
-  porcusor('porcusor', 'Porcușor');
+  poza('poza', 'Poza mea', 'My picture'),
+  fata('fata', 'Fată', 'Girl'),
+  baiat('baiat', 'Băiat', 'Boy'),
+  pisica('pisica', 'Pisică', 'Cat'),
+  porcusor('porcusor', 'Porcușor', 'Piglet');
 
-  const AvatarStyle(this.id, this.label);
+  const AvatarStyle(this.id, this._labelRo, this._labelEn);
 
   /// Id-ul scris în SharedPreferences și în profilul public din Firestore.
   /// Deliberat un șir scurt și stabil, NU indexul din enum: o reordonare a
   /// valorilor de mai jos ar schimba altfel avatarul tuturor jucătorilor.
   final String id;
-  final String label;
+  final String _labelRo;
+  final String _labelEn;
+
+  /// Numele arătat în ecranul de Profil. Getter, nu câmp: o constantă de enum
+  /// nu poate chema tr(), deci se țin ambele variante și se alege la citire.
+  String get label => tr(_labelRo, _labelEn);
 
   bool get isArt => this != AvatarStyle.poza;
 }

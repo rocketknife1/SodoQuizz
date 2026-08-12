@@ -314,6 +314,11 @@ România, dar cu cifre "calculate", nu rotunde.
 
 ## 8. Multiplayer — sistem de pariuri (PAS 4)
 
+> ⛔ **ÎNLOCUITĂ INTEGRAL de §17 (v3.5, 2026-08-09).** Nimic din secțiunea asta
+> nu mai există în cod: nici taxa fixă, nici slider-ul de procent, nici bonusul
+> de risc, nici plafonul mesei, nici pool-ul rupt în două. Rămâne aici doar ca
+> istoric al motivelor. Pentru sistemul real, sari la §17.
+
 ### 8.1 Intrarea în meci
 
 | | Acum | Nou |
@@ -995,3 +1000,112 @@ CUMPĂRA efectiv.
 |---|---|
 | `lib/core/progression.dart` | 7 quest-uri de volum înlocuite cu quest-uri de rezultat; `answer_count` scos din `scalableQuestMetrics` |
 | `lib/data/shop.dart` | `premiumShopRevealed = true` |
+
+---
+
+## 17. v3.5 — miza camerei, o singură cifră (2026-08-09)
+
+Secțiunea 8 (taxă fixă + slider de procent + bonus de risc + plafon de masă +
+pool rupt în două) **nu mai descrie codul**. A fost înlocuită integral. Ce
+scrie acolo rămâne ca istoric al motivelor, nu ca referință.
+
+### 17.1 De ce s-a aruncat sistemul vechi
+
+Cererea, în cuvintele userului: *„vreau simplificat totul că sunt multe cifre
+detalii și făcut să înțeleagă un copil de 13 ani sistemul și cât pierzi, cât
+primești"*, plus *„când cineva dă join online să nu mai trebuiască să își
+aleagă miza, doar când se creează camera se alege miza"*.
+
+Sistemul v3 cerea, la FIECARE intrare în meci, să înțelegi simultan: o taxă
+fixă de 37 care nu se întoarce, un procent între 5% și 85% ales pe slider, un
+bonus de risc care creștea recompensa cu până la 54%, un plafon de masă egal cu
+7,3× mediana pariurilor (calculabil abia după ce se știa cine joacă) și un pool
+rupt în două bucăți cu cote care scădeau cu numărul de jucători. Nimeni nu
+putea răspunde, uitându-se la ecran, la întrebarea *„dacă termin al doilea, iau
+sau pierd?"*.
+
+### 17.2 Sistemul nou, în trei propoziții
+
+1. **Camera are o miză**, aleasă o singură dată de cel care o creează:
+   **50 / 150 / 500** (`matchStakeOptions`). Toți ceilalți plătesc exact
+   aceeași sumă — cine intră nu mai alege nimic, doar confirmă.
+   La **Join Online** miza e fixă, **50** (`publicMatchStake`), fiindcă acolo
+   nu există o gazdă care s-o aleagă; deliberat cea mai mică din joc, ca
+   singurul drum fără alegere să nu fie și cel mai scump.
+2. Mizele se strâng într-o grămadă, din care jocul oprește **10%**
+   (`matchRake`). Ăsta e acum SINGURUL sink al multiplayer-ului — a înlocuit
+   și taxa fixă de 37, și rake-ul variabil de 1,3-3,5%.
+3. Restul se împarte doar în **jumătatea de sus** a clasamentului
+   (`paidPlaceCount` = `(n+1) ~/ 2`): locul 1 ia dublu față de locul 2, locul 2
+   dublu față de locul 3, ș.a.m.d. Ceilalți pierd miza.
+
+La egalitate de scor, cei egali împart între ei suma premiilor lor
+(`matchPrizesForRanking`) — fără asta, o remiză în duel l-ar fi lăsat pe unul
+cu toată grămada și pe celălalt cu zero, după cum s-ar fi nimerit sortarea.
+
+**Ce a dispărut din cod:** `multiplayerEntryFee`, `minBetAmount`,
+`multiplayerMinimumBankroll`, `minBetPercent`/`maxBetPercent`,
+`defaultBetPercent`, `betAmountFor`, `betRakeFor`, `placementPotShareFor`,
+`tableCapMedianMultiple`, `classicPerformances`, `estimateTopPayout`,
+`BetEntry`, `BetPayouts`, câmpul `betPercent` de pe jucător.
+
+### 17.3 De ce „doar jumătatea de sus", și de ce dublu
+
+Consecința care contează e la **2 jucători**: `paidPlaceCount(2) = 1`, deci
+câștigătorul ia tot. Join Online e mereu 1 vs 1, iar cu premiile împărțite
+între amândoi (și cu 10% oprit) o victorie în duel ar fi adus +30 la o miză de
+150 — un plus derizoriu față de cât se riscă. Așa, ia +120.
+
+Tabelul la miza 150:
+
+| Jucători | Pe masă | 🥇 | 🥈 | 🥉 | 4 | 5 | 6 | restul |
+|---|---|---|---|---|---|---|---|---|
+| 2 | 300 | **270** (+120) | 0 (−150) | | | | | |
+| 3 | 450 | **270** (+120) | 135 (−15) | 0 | | | | |
+| 4 | 600 | **360** (+210) | 180 (+30) | 0 | 0 | | | |
+| 5 | 750 | **386** (+236) | 193 (+43) | 96 (−54) | 0 | 0 | | |
+| 7 | 1.050 | **504** (+354) | 252 (+102) | 126 (−24) | 63 (−87) | 0 | 0 | 0 |
+| 11 | 1.650 | **754** (+604) | 377 (+227) | 189 (+39) | 94 (−56) | 47 (−103) | 24 (−126) | 0 |
+
+Cifrele nu mai trebuie ținute minte de nimeni: **se afișează**. Același tabel
+apare în dialogul de creare, în cel de intrare și, live, în lobby — unde se
+rearanjează pe măsură ce intră lume (`MatchPrizeTable` / `MatchPrizeStrip`).
+
+### 17.4 Efect asupra economiei
+
+Arderea per meci SCADE față de v3 (la o masă de 2 cu miza 150: 30 de monede
+arse, față de 84 înainte), fiindcă taxa fixă de 37 de om era un sink brutal la
+mese mici. Multiplayer-ul rămâne redistribuire, nu faucet: singurele monede
+„din partea casei" continuă să fie bonusul de primă victorie a zilei.
+
+### 17.5 Gazda pleacă → camera se închide (bug reparat)
+
+Bug raportat în aceeași sesiune: *„am rămas blocat în cameră singur și nu
+puteam să dau nici start"*. `leaveMatch` ștergea documentul camerei când pleca
+gazda, dar clienții rămași nu aflau: `MatchInfo.fromDoc` pe un document șters
+întorcea un obiect gol, care arăta exact ca o cameră normală goală. Rezultatul
+era un lobby fantomă — fără cod, fără jucători, fără Start (nu ești host) și
+invizibil pentru oricine ar fi vrut să intre.
+
+Reparat cu `MatchInfo.exists` (din `doc.exists`): lobby-ul îi scoate afară pe
+ceilalți cu mesajul „Gazda a părăsit camera" și le dă miza înapoi. În plus,
+gazda e întrebată înainte („dacă pleci, se închide și ceilalți ies"), iar când
+e singură în cameră îi scrie explicit pe unde poate intra lumea — inclusiv
+faptul că propria cameră NU i se arată ei în lista din Join Online.
+
+### 17.6 Fișiere atinse în v3.5
+
+| Fișier | Ce s-a schimbat |
+|---|---|
+| `lib/core/betting.dart` | rescris integral: mize fixe, comision unic, premii pe locuri |
+| `lib/widgets/match_stake_dialog.dart` | NOU — alegerea mizei, confirmarea la intrare, tabelul de premii |
+| `lib/widgets/multiplayer_entry_fee_dialog.dart` | ȘTERS (slider-ul de procent) |
+| `lib/models/multiplayer_models.dart` | `MatchInfo.stake` + `MatchInfo.exists`; `MatchPlayer.betPercent` scos |
+| `lib/data/multiplayer_service.dart` | `createRoom(stake:)`, `lookupRoomByCode`, miza citită de pe cameră la join |
+| `lib/screens/multiplayer/multiplayer_screen.dart` | miza se alege doar la Create Room; Join Online/cod doar confirmă |
+| `lib/screens/multiplayer/matchmaking_screen.dart` | miză fixă, miza pe chip-urile de cameră, reglaj de diferență, `_resumeQueue` |
+| `lib/screens/multiplayer/room_lobby_screen.dart` | scoaterea la închiderea camerei, tabel de premii live, un singur abonament la jucători |
+| `lib/screens/multiplayer/multiplayer_results_screen.dart` | premiu după loc, nu după formulă |
+| `lib/models/multiplayer_activity.dart`, `lib/data/multiplayer_activity_service.dart`, `lib/screens/admin_screen.dart` | `tableCap` → `stake` |
+| `lib/widgets/multiplayer_info_dialog.dart`, `lib/widgets/beta_info_balloon.dart` | explicațiile rescrise pe noul sistem |
+| `test/game_logic_test.dart` | grupul de pariuri înlocuit cu 10 teste pe noul model |

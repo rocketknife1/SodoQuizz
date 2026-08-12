@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/lang.dart';
 import 'game_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
@@ -116,7 +117,7 @@ class _LoadingScreenState extends State<LoadingScreen>
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text('Pregătesc întrebările...',
+                Text(tr('Pregătesc întrebările...', 'Getting the questions ready...'),
                     style: TextStyle(color: Colors.white54)),
               ],
             ),

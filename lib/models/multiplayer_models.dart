@@ -30,7 +30,20 @@ class MatchInfo {
   final String hostId;
   final String? hostName;
   final String? hostPhotoUrl;
+  final String hostAvatarStyle;
   final Timestamp? createdAt;
+
+  /// Miza camerei — aleasă o singură dată, de cel care a creat-o (vezi
+  /// core/betting.dart). Toți jucătorii plătesc exact atât; cine intră nu mai
+  /// alege nimic. 0 doar la camerele rămase de la versiuni mai vechi.
+  final int stake;
+
+  /// Dacă documentul chiar mai EXISTĂ în Firestore. Contează pentru că ștergerea
+  /// camerei e felul în care gazda îi anunță pe ceilalți că a plecat: fără
+  /// steagul ăsta, un `fromDoc` pe un document șters întorcea un MatchInfo gol,
+  /// care arăta exact ca o cameră normală goală — iar cei rămași înăuntru
+  /// stăteau blocați într-un lobby fantomă. Vezi RoomLobbyScreen.
+  final bool exists;
 
   /// Momentul (de server) în care hostul a apăsat START — ancora
   /// cronometrului de 60 de secunde din modul Clasic. `null` cât timp meciul
@@ -55,7 +68,10 @@ class MatchInfo {
     this.code,
     this.hostName,
     this.hostPhotoUrl,
+    this.hostAvatarStyle = '',
     this.createdAt,
+    this.stake = 0,
+    this.exists = true,
     this.startedAt,
     this.gameMode = MatchGameMode.classic,
     this.roundIndex = 0,
@@ -78,7 +94,10 @@ class MatchInfo {
       hostId: data['hostId'] as String? ?? '',
       hostName: data['hostName'] as String?,
       hostPhotoUrl: data['hostPhotoUrl'] as String?,
+      hostAvatarStyle: data['hostAvatarStyle'] as String? ?? '',
       createdAt: data['createdAt'] as Timestamp?,
+      stake: data['stake'] as int? ?? 0,
+      exists: doc.exists,
       startedAt: data['startedAt'] as Timestamp?,
       gameMode: (data['gameMode'] as String?) == 'higherLower' ? MatchGameMode.higherLower : MatchGameMode.classic,
       roundIndex: data['roundIndex'] as int? ?? 0,
@@ -99,6 +118,8 @@ class MatchInfo {
         'hostId': hostId,
         'hostName': hostName,
         'hostPhotoUrl': hostPhotoUrl,
+        'hostAvatarStyle': hostAvatarStyle,
+        'stake': stake,
         'createdAt': FieldValue.serverTimestamp(),
         'gameMode': gameMode.name,
         'roundIndex': 0,
@@ -126,15 +147,14 @@ class MatchPlayer {
   final int breads;
   final bool eliminated;
 
-  /// Pariul pus la intrarea în meci și procentul din avere pe care l-a
-  /// reprezentat (vezi core/betting.dart). Sunt scrise o singură dată, la
-  /// intrare, și citite de TOȚI clienții la final ca fiecare să calculeze
-  /// exact aceeași împărțire a pool-ului. [betPercent] contează separat de
-  /// [bet]: riscul asumat (procentul din cât ai) e o pârghie proprie în
-  /// formulă, altfel un jucător bogat care pariază 5% ar fi tratat la fel ca
-  /// unul sărac care pariază 80%, doar pentru că suma se nimerește egală.
+  /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi
+  /// [MatchInfo.stake]). Scrisă o singură dată, la intrare, și citită de TOȚI
+  /// clienții la final, ca fiecare să calculeze exact aceeași împărțire.
+  ///
+  /// Se ține și aici, nu doar pe documentul camerei, ca ecranul de rezultate
+  /// să nu mai aibă nevoie de o citire în plus și ca un meci să se poată
+  /// deconta corect chiar dacă documentul camerei a fost între timp curățat.
   final int bet;
-  final double betPercent;
 
   /// Id-ul avatarului desenat ales de jucător (vezi widgets/avatar_art.dart).
   /// Gol = poza obișnuită. Călătorește cu jucătorul ca ceilalți de la masă
@@ -158,7 +178,6 @@ class MatchPlayer {
     this.breads = 0,
     this.eliminated = false,
     this.bet = 0,
-    this.betPercent = 0,
     this.finished = false,
     this.avatarStyle = '',
   });
@@ -175,7 +194,6 @@ class MatchPlayer {
       breads: data['breads'] as int? ?? 0,
       eliminated: data['eliminated'] as bool? ?? false,
       bet: data['bet'] as int? ?? 0,
-      betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
       finished: data['finished'] as bool? ?? false,
       avatarStyle: data['avatarStyle'] as String? ?? '',
     );
@@ -188,7 +206,6 @@ class MatchPlayer {
         'score': score,
         'isHost': isHost,
         'bet': bet,
-        'betPercent': betPercent,
         'finished': finished,
         'avatarStyle': avatarStyle,
         'joinedAt': FieldValue.serverTimestamp(),

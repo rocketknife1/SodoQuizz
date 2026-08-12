@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
@@ -234,16 +235,16 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
             ),
             child: Column(
               children: [
-                const Text(
-                  'Am 3 întrebări speciale pentru tine!',
+                Text(
+                  tr('Am 3 întrebări speciale pentru tine!', 'I have 3 special questions for you!'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Fără risc — un răspuns greșit nu pierde nimic!',
+                Text(
+                  tr('Fără risc — un răspuns greșit nu pierde nimic!', 'No risk — a wrong answer costs you nothing!'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
+                  style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -260,7 +261,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
     return Column(
       children: [
         const SizedBox(height: 8),
-        Text('Întrebarea ${qIndex + 1} din ${_questions.length}', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+        Text(tr('Întrebarea ${qIndex + 1} din ${_questions.length}', 'Question ${qIndex + 1} of ${_questions.length}'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
         const SizedBox(height: 12),
         Expanded(
           child: BlurImage(
@@ -313,10 +314,11 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
         children: [
           const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 40),
           const SizedBox(height: 10),
-          Text('$correctCount/${_questions.length} corecte', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(tr('$correctCount/${_questions.length} corecte', '$correctCount/${_questions.length} correct'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
           Text(
-            '+$_coinsEarned monede\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned viață (răspuns perfect!)' : ''}',
+            tr('+$_coinsEarned monede\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned viață (răspuns perfect!)' : ''}',
+                '+$_coinsEarned coins\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned life (perfect round!)' : ''}'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white70, fontSize: 13),
           ),
@@ -330,9 +332,13 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
             ),
             child: Text(
               _playsLeftToday > 0
-                  ? 'Îți mai rămân $_playsLeftToday/$clippyDailyPlayLimit runde azi'
-                  : 'Ai folosit toate cele $clippyDailyPlayLimit runde de azi — '
-                      'revin în ${_untilTomorrow()}',
+                  ? tr('Îți mai rămân $_playsLeftToday/$clippyDailyPlayLimit runde azi',
+                      'You have $_playsLeftToday/$clippyDailyPlayLimit rounds left today')
+                  : tr(
+                      'Ai folosit toate cele $clippyDailyPlayLimit runde de azi — '
+                          'revin în ${_untilTomorrow()}',
+                      'You used all $clippyDailyPlayLimit rounds for today — '
+                          'they come back in ${_untilTomorrow()}'),
               style: TextStyle(
                 color: _playsLeftToday > 0 ? AppColors.hint : Colors.white54,
                 fontSize: 11.5,
@@ -356,7 +362,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.play, padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12)),
-              child: const Text('Înapoi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: Text(tr('Înapoi', 'Back'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )
           else
             ElevatedButton(
@@ -367,7 +373,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               ),
-              child: Text(_collecting ? '...' : 'COLECTEAZĂ', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+              child: Text(_collecting ? '...' : tr('COLECTEAZĂ', 'COLLECT'), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
             ),
         ],
       ),

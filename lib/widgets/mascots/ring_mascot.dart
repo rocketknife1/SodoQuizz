@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
+import '../../core/lang.dart';
+import '../../core/eco_mode.dart';
 import '../../core/theme.dart';
 import '../../data/storage_service.dart';
 import '../wheel_spin_dialog.dart';
@@ -57,7 +59,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _idle = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+    _idle = EcoAnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 850));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
@@ -218,10 +220,10 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   Widget _buildLabel() {
     const labelStyle = TextStyle(color: Colors.white54, fontSize: 7.5, fontWeight: FontWeight.w700, letterSpacing: 0.3);
     if (_ready) {
-      return const Text('ROATA NOROCULUI', style: TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
+      return Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: const TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
     }
     if (!_checked) {
-      return const Text('ROATA NOROCULUI', style: labelStyle);
+      return Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: labelStyle);
     }
     final r = _remaining ?? Duration.zero;
     final h = r.inHours.toString().padLeft(2, '0');
@@ -230,7 +232,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text('ROATA NOROCULUI', style: labelStyle),
+        Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: labelStyle),
         Text('$h:$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 9, fontWeight: FontWeight.w800)),
       ],
     );

@@ -146,142 +146,105 @@ void main() {
     });
   });
 
-  group('pariuri multiplayer', () {
-    test('pariul respecta procentul, minimul si averea', () {
-      expect(betAmountFor(coins: 40, percent: 0.5), 0); // sub pragul de intrare
-      expect(betAmountFor(coins: 1000, percent: 0.10), 96);
-      expect(betAmountFor(coins: 100, percent: 0.05), minBetAmount);
+  group('mizele multiplayer', () {
+    test('in doi, castigatorul ia tot ce ramane dupa comision', () {
+      // Cazul care conteaza cel mai mult: Join Online e mereu 1 vs 1. Cu
+      // premiile impartite intre amandoi, o victorie in duel ar fi adus un
+      // plus derizoriu fata de cat s-a riscat.
+      final prizes = matchPrizes(stake: 150, players: 2);
+      expect(prizes[1], 0);
+      expect(prizes[0], matchPrizePool(stake: 150, players: 2));
+      // comisionul chiar iese din joc - nu se imparte tot ce s-a pus pe masa
+      expect(prizes[0], lessThan(matchPot(stake: 150, players: 2)));
     });
 
-    test('la masa echilibrata, primul castiga si ultimul pierde', () {
-      final entries = [
-        for (var i = 0; i < 7; i++)
-          BetEntry(
-            playerId: 'p$i',
-            bet: 300,
-            betPercent: 0.3,
-            performance: 1 - i / 6,
-            place: i + 1,
-          ),
-      ];
-      final result = BetPayouts.compute(entries);
-      expect(result.payouts['p0']!, greaterThan(300));
-      expect(result.payouts['p6']!, lessThan(300));
-      // suma platilor nu poate depasi pool-ul net (rake-ul chiar iese din joc)
-      final total = result.payouts.values.fold<int>(0, (s, v) => s + v);
-      expect(total, lessThanOrEqualTo(result.poolNet + entries.length));
-      expect(result.poolNet, lessThan(result.pool));
-    });
-
-    test('plafonul mesei retează pariul unui jucător bogat si îi returnează restul', () {
-      final bets = [6000, 40, 300, 300, 300, 300, 300];
-      final entries = [
-        // bogatul termina ULTIMUL, micul termina PRIMUL
-        BetEntry(playerId: 'mic', bet: 40, betPercent: 0.10, performance: 1.0, place: 1),
-        for (var i = 0; i < 5; i++)
-          BetEntry(
-            playerId: 'mid$i',
-            bet: 300,
-            betPercent: 0.3,
-            performance: 0.8 - i * 0.12,
-            place: i + 2,
-          ),
-        BetEntry(playerId: 'bogat', bet: 6000, betPercent: 0.6, performance: 0.0, place: 7),
-      ];
-      final cap = BetPayouts.tableCapFor(bets);
-      final result = BetPayouts.compute(entries);
-
-      expect(result.effectiveBets['bogat'], cap);
-      expect(result.refunds['bogat'], 6000 - cap);
-      // bogatul pierde o parte reala din miza efectiva...
-      expect(result.payouts['bogat']!, lessThan(cap));
-      // ...iar micul, care a rezistat pana la final, pleaca cu de cateva ori
-      // miza lui — exact redistribuirea pentru care exista potul de loc.
-      expect(result.payouts['mic']!, greaterThan(40 * 3));
-    });
-
-    test('a paria enorm la o masa mica e prost chiar si cand castigi', () {
-      List<BetEntry> table({required double whalePerf}) => [
-            BetEntry(playerId: 'bogat', bet: 6000, betPercent: 0.6, performance: whalePerf, place: whalePerf > 0.5 ? 1 : 7),
-            for (var i = 0; i < 5; i++)
-              BetEntry(playerId: 'mid$i', bet: 300, betPercent: 0.3, performance: 0.5, place: i + 2),
-            BetEntry(playerId: 'mic', bet: 40, betPercent: 0.10, performance: 0.2, place: 7),
-          ];
-      final won = BetPayouts.compute(table(whalePerf: 1.0));
-      final effective = won.effectiveBets['bogat']!;
-      final profit = won.payouts['bogat']! - effective;
-      // castiga, dar marginal — nu poate "aspira" masa
-      expect(profit, greaterThan(0));
-      expect(profit / effective, lessThan(0.25));
-    });
-
-    test('sub 2 jucatori nu exista pool — miza se intoarce', () {
-      final result = BetPayouts.compute([
-        const BetEntry(playerId: 'solo', bet: 500, betPercent: 0.4, performance: 1, place: 1),
-      ]);
-      expect(result.payouts['solo'], 500);
-    });
-
-    test('cotele potului de loc insumeaza 1 pentru orice numar de jucatori', () {
-      for (var n = 2; n <= 20; n++) {
-        final sum = placementShares(n).fold<double>(0, (s, v) => s + v);
-        expect(sum, closeTo(1.0, 1e-9), reason: '$n jucatori');
-      }
-    });
-
-    test('fiecare loc valoreaza strict mai putin decat cel dinaintea lui', () {
-      // Inainte, orice loc de la al 8-lea incolo primea aceeasi cota plata
-      // (0,01), deci intr-o camera plina nu mai exista niciun motiv sa lupti
-      // pentru locul 9 in loc de 11.
+    test('premiile nu inventeaza si nu pierd monede', () {
       // 11 = capacitatea unei camere private (matchPlayerCount din
-      // multiplayer_service.dart, scris aici ca literal ca testul sa nu tarasca
-      // dupa el importurile de Firebase).
-      final shares = placementShares(11);
-      for (var i = 1; i < shares.length; i++) {
-        expect(shares[i], lessThan(shares[i - 1]), reason: 'locul ${i + 1}');
+      // multiplayer_service.dart, scris aici ca literal ca testul sa nu
+      // tarasca dupa el importurile de Firebase).
+      for (final stake in matchStakeOptions) {
+        for (var n = 2; n <= 11; n++) {
+          final prizes = matchPrizes(stake: stake, players: n);
+          final total = prizes.fold<int>(0, (s, v) => s + v);
+          expect(total, matchPrizePool(stake: stake, players: n),
+              reason: '$n jucatori, miza $stake');
+          expect(total, lessThan(matchPot(stake: stake, players: n)),
+              reason: 'comisionul la $n jucatori, miza $stake');
+        }
       }
     });
 
-    test('la masa mare, mijlocul plutonului nu mai sangereaza ca inainte', () {
-      // Cota potului de loc scade cu marimea mesei tocmai ca jumatatea de jos
-      // sa nu plateasca sistematic varful la fiecare meci.
-      List<BetEntry> table(int n) => [
-            for (var i = 0; i < n; i++)
-              BetEntry(
-                playerId: 'p$i',
-                bet: 300,
-                betPercent: 0.23,
-                performance: n > 1 ? (n - 1 - i) / (n - 1) : 1.0,
-                place: i + 1,
-              ),
-          ];
-      final big = BetPayouts.compute(table(20));
-      final median = big.payouts['p10']!;
-      final winner = big.payouts['p0']!;
-      expect(median / 300, greaterThan(0.85), reason: 'mijlocul mesei');
-      expect(winner / 300, greaterThan(1.8), reason: 'locul 1 ramane atractiv');
+    test('doar jumatatea de sus a clasamentului ia premiu', () {
+      expect(paidPlaceCount(2), 1);
+      expect(paidPlaceCount(3), 2);
+      expect(paidPlaceCount(4), 2);
+      expect(paidPlaceCount(11), 6);
     });
 
-    test('performanta ramane ordonata chiar si cu scoruri negative', () {
-      final perfs = classicPerformances([2006, 1584, 372, -121]);
-      expect(perfs.first, 1.0);
-      expect(perfs.last, 0.0);
-      for (var i = 1; i < perfs.length; i++) {
-        expect(perfs[i], lessThan(perfs[i - 1]));
+    test('fiecare loc platit ia jumatate din cat ia cel dinaintea lui', () {
+      // Regula pe care o citeste jucatorul in dialog. Daca se strica aici, tot
+      // ce scrie in interfata devine minciuna.
+      for (var n = 2; n <= 11; n++) {
+        final prizes = matchPrizes(stake: 150, players: n);
+        final paid = paidPlaceCount(n);
+        for (var i = 1; i < paid; i++) {
+          expect(prizes[i] / prizes[i - 1], closeTo(0.5, 0.03),
+              reason: 'locul ${i + 1} la $n jucatori');
+        }
+        for (var i = paid; i < n; i++) {
+          expect(prizes[i], 0, reason: 'locul ${i + 1} e in jumatatea de jos');
+        }
       }
     });
 
-    test('o masa fara scoruri negative se comporta exact ca inainte', () {
-      // Translatia nu trebuie sa se atinga de mesele "normale": aici raportul
-      // simplu scor/scorMaxim e si el raspunsul corect.
-      final perfs = classicPerformances([2000, 1900, 1850]);
-      expect(perfs[1], closeTo(0.95, 1e-9));
-      expect(perfs[2], closeTo(0.925, 1e-9));
+    test('locul 1 iese mereu pe plus, ultimul mereu pe minus', () {
+      for (final stake in matchStakeOptions) {
+        for (var n = 2; n <= 11; n++) {
+          final prizes = matchPrizes(stake: stake, players: n);
+          expect(prizes.first, greaterThan(stake),
+              reason: 'castigatorul la $n jucatori, miza $stake');
+          expect(prizes.last, lessThan(stake),
+              reason: 'ultimul la $n jucatori, miza $stake');
+        }
+      }
     });
 
-    test('toti la egalitate nu inseamna performanta zero pentru nimeni', () {
-      expect(classicPerformances([0, 0, 0]), everyElement(1.0));
-      expect(classicPerformances([-140, -140]), everyElement(1.0));
+    test('la egalitate se imparte, nu ia unul tot', () {
+      // Fara asta, o remiza intr-un duel l-ar fi lasat pe unul cu toata
+      // gramada si pe celalalt cu zero, dupa cum s-a nimerit sortarea.
+      final draw = matchPrizesForRanking(stake: 150, sortedScores: [900, 900]);
+      expect(draw[0], draw[1]);
+      expect(draw[0] + draw[1], matchPrizePool(stake: 150, players: 2));
+    });
+
+    test('egalitatea partiala atinge doar premiile celor egali', () {
+      final base = matchPrizes(stake: 500, players: 4);
+      final tied = matchPrizesForRanking(stake: 500, sortedScores: [900, 300, 300, 100]);
+      expect(tied[0], base[0]);
+      expect(tied[3], base[3]);
+      expect(tied[1], tied[2]);
+      expect(tied[1] + tied[2], base[1] + base[2]);
+    });
+
+    test('un meci ramas cu un singur jucator returneaza miza intreaga', () {
+      expect(matchPrizes(stake: 500, players: 1), [500]);
+    });
+
+    test('Join Online nu poate fi cel mai scump drum din joc', () {
+      // E singurul loc unde jucatorul NU alege miza, deci nu are voie sa fie
+      // si cel care il costa cel mai mult.
+      final cheapest = matchStakeOptions.reduce((a, b) => a < b ? a : b);
+      expect(publicMatchStake, cheapest);
+      expect(minMatchStake, cheapest);
+    });
+
+    test('fiecare miza are un nume afisabil', () {
+      expect(matchStakeLabels.length, matchStakeOptions.length);
+      for (final stake in matchStakeOptions) {
+        expect(matchStakeLabel(stake), isNotEmpty);
+      }
+      expect(matchStakeLabel(1234), isEmpty);
+      expect(matchStakeOptions.contains(defaultMatchStake), isTrue);
     });
   });
 

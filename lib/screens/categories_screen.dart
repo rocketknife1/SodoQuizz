@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/gamemodes.dart';
+import '../core/lang.dart';
 import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/theme.dart';
@@ -79,9 +80,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     if (!mounted) return;
     if (!ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Nu ai destule gems.'),
-            duration: Duration(milliseconds: 1400)),
+        SnackBar(
+            content: Text(tr('Nu ai destule gems.', 'Not enough gems.')),
+            duration: const Duration(milliseconds: 1400)),
       );
       return;
     }
@@ -116,31 +117,42 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Intri în ${mode.title}?',
+        title: Text(tr('Intri în ${mode.title}?', 'Enter ${mode.title}?'),
             style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Taxă de intrare: $fee monede '
-          '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1).replaceAll('.', ',')}% '
-          'din câte ai, între $categoryEntryFeeMin și $categoryEntryFeeMax).\n\n'
-          'Recompensa la ieșire depinde STRICT de câte răspunzi corect:\n'
-          '• sub 4 corecte — nimic înapoi\n'
-          '• 4-7 corecte — 60% din taxă\n'
-          '• 8-14 corecte — taxa întreagă\n'
-          '• 15+ corecte — taxa +30%'
-          '${canAfford ? '' : '\n\nNu ai destule monede (ai $coins).'}',
+          tr(
+            'Taxă de intrare: $fee monede '
+                '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1).replaceAll('.', ',')}% '
+                'din câte ai, între $categoryEntryFeeMin și $categoryEntryFeeMax).\n\n'
+                'Recompensa la ieșire depinde STRICT de câte răspunzi corect:\n'
+                '• sub 4 corecte — nimic înapoi\n'
+                '• 4-7 corecte — 60% din taxă\n'
+                '• 8-14 corecte — taxa întreagă\n'
+                '• 15+ corecte — taxa +30%'
+                '${canAfford ? '' : '\n\nNu ai destule monede (ai $coins).'}',
+            'Entry fee: $fee coins '
+                '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1)}% '
+                'of what you have, between $categoryEntryFeeMin and $categoryEntryFeeMax).\n\n'
+                'Your payout depends STRICTLY on how many you answer correctly:\n'
+                '• under 4 correct — nothing back\n'
+                '• 4-7 correct — 60% of the fee\n'
+                '• 8-14 correct — the whole fee\n'
+                '• 15+ correct — the fee +30%'
+                '${canAfford ? '' : '\n\nNot enough coins (you have $coins).'}',
+          ),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Renunță')),
+              child: Text(tr('Renunță', 'Cancel'))),
           ElevatedButton(
             onPressed:
                 canAfford ? () => Navigator.pop(dialogContext, true) : null,
             style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.play,
                 disabledBackgroundColor: Colors.white24),
-            child: Text('Intră  •  💰$fee',
+            child: Text('${tr('Intră', 'Enter')}  •  💰$fee',
                 style: const TextStyle(
                     color: Colors.white, fontWeight: FontWeight.bold)),
           ),
@@ -228,8 +240,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             decoration: BoxDecoration(
                                 color: AppColors.purple,
                                 borderRadius: BorderRadius.circular(8)),
-                            child: const Text('NOU',
-                                style: TextStyle(
+                            child: Text(tr('NOU', 'NEW'),
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.w800,
@@ -250,11 +262,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         ],
                       ),
                       const SizedBox(height: 5),
-                      const Text(
-                        'Ce se caută mai mult? Ai 10 secunde să ghicești.',
+                      Text(
+                        tr('Ce se caută mai mult? Ai 10 secunde să ghicești.',
+                            'Which one is searched more? You have 10 seconds to guess.'),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.white54,
                             fontSize: 12,
                             fontWeight: FontWeight.w600),
@@ -313,8 +326,12 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Ai $gems 💎 din partea casei — deblochează categoria pe care '
-                  'o vrei tu (prima treaptă costă $firstTierPrice).',
+                  tr(
+                    'Ai $gems 💎 din partea casei — deblochează categoria pe care '
+                        'o vrei tu (prima treaptă costă $firstTierPrice).',
+                    'Here are $gems 💎 on the house — unlock whichever category '
+                        'you want (the first tier costs $firstTierPrice).',
+                  ),
                   style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 12,
@@ -363,9 +380,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               shaderCallback: (r) => const LinearGradient(
                                       colors: [Colors.white, Color(0xFFC9B8FF)])
                                   .createShader(r),
-                              child: const Text(
-                                'Alege o categorie',
-                                style: TextStyle(
+                              child: Text(
+                                tr('Alege o categorie', 'Pick a category'),
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 21,
                                     fontWeight: FontWeight.w900),
@@ -373,7 +390,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                             ),
                             if (totalQuestions > 0)
                               Text(
-                                '$totalAnswered/$totalQuestions întrebări cucerite',
+                                tr('$totalAnswered/$totalQuestions întrebări cucerite',
+                                    '$totalAnswered/$totalQuestions questions conquered'),
                                 style: const TextStyle(
                                     color: Colors.white54,
                                     fontSize: 11.5,
@@ -417,14 +435,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
                         final String subtitle;
                         if (mode.locked) {
-                          subtitle = 'Va urma într-un update viitor';
+                          subtitle = tr('Va urma într-un update viitor',
+                              'Coming in a future update');
                         } else if (accessLocked) {
-                          subtitle = 'Blocată — deblocheaz-o cu Gems mai jos';
+                          subtitle = tr('Blocată — deblocheaz-o cu Gems mai jos',
+                              'Locked — unlock it with Gems below');
                         } else if (unlocked < total) {
-                          subtitle =
-                              '${s?.answered ?? 0}/$unlocked jucate (din $total)';
+                          subtitle = tr(
+                              '${s?.answered ?? 0}/$unlocked jucate (din $total)',
+                              '${s?.answered ?? 0}/$unlocked played (of $total)');
                         } else {
-                          subtitle = '${s?.answered ?? 0}/$total întrebări';
+                          subtitle = tr('${s?.answered ?? 0}/$total întrebări',
+                              '${s?.answered ?? 0}/$total questions');
                         }
 
                         return CategoryCard(
@@ -442,16 +464,18 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                           onTap: mode.locked
                               ? () =>
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Va urma în următorul update! 🚀')),
+                                    SnackBar(
+                                        content: Text(tr(
+                                            'Va urma în următorul update! 🚀',
+                                            'Coming in the next update! 🚀'))),
                                   )
                               : accessLocked
                                   ? () => ScaffoldMessenger.of(context)
                                           .showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Deblocheaz-o cu Gems — vezi butonul de pe card.')),
+                                        SnackBar(
+                                            content: Text(tr(
+                                                'Deblocheaz-o cu Gems — vezi butonul de pe card.',
+                                                'Unlock it with Gems — see the button on the card.'))),
                                       )
                                   : () => _enterCategory(mode),
                         );

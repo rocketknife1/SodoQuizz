@@ -136,6 +136,7 @@ class FriendRequest {
   final String fromName;
   final String fromAvatarSeed;
   final String? fromPhotoUrl;
+  final String fromAvatarStyle;
   final Timestamp? createdAt;
 
   const FriendRequest({
@@ -143,6 +144,7 @@ class FriendRequest {
     required this.fromName,
     required this.fromAvatarSeed,
     this.fromPhotoUrl,
+    this.fromAvatarStyle = '',
     this.createdAt,
   });
 
@@ -153,6 +155,7 @@ class FriendRequest {
       fromName: data['fromName'] as String? ?? '?',
       fromAvatarSeed: data['fromAvatarSeed'] as String? ?? doc.id,
       fromPhotoUrl: data['fromPhotoUrl'] as String?,
+      fromAvatarStyle: data['fromAvatarStyle'] as String? ?? '',
       createdAt: data['createdAt'] as Timestamp?,
     );
   }

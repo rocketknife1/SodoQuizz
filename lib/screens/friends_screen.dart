@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../core/leagues.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
+import '../data/friend_chat_service.dart';
+import '../data/moderation_service.dart';
+import '../data/multiplayer_service.dart';
 import '../data/player_profile_service.dart';
+import '../models/friend_chat.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
+import 'friend_chat_screen.dart';
 
 /// Ecran de Prieteni — codul propriu (generat lazy, vezi
 /// PlayerProfileService.getOrCreateFriendCode), adăugare prin cod (cerere +
@@ -24,15 +30,28 @@ class _FriendsScreenState extends State<FriendsScreen> {
   bool _sending = false;
 
   Future<_FriendsData> _load() async {
+    // No-op dacă e deja încărcată pentru contul curent — e aici pentru cazul
+    // în care userul tocmai s-a logat cu Google și uid-ul s-a schimbat.
+    await ModerationService.instance.loadBlocked();
     final results = await Future.wait([
       PlayerProfileService.instance.getOrCreateFriendCode(),
       PlayerProfileService.instance.fetchIncomingRequests(),
       PlayerProfileService.instance.fetchFriends(),
     ]);
+    final friends = results[2] as List<PlayerProfile>;
+    // Rezumatele firelor private se cer DUPĂ ce se știe lista de prieteni
+    // (una pe fir), nu în paralel cu ea. Sunt ce alimentează bulina de mesaj
+    // nou și începutul ultimului mesaj de pe fiecare rând.
+    final summaries = await FriendChatService.instance.fetchSummaries(friends.map((f) => f.uid).toList());
     return _FriendsData(
       myCode: results[0] as String?,
-      requests: results[1] as List<FriendRequest>,
-      friends: results[2] as List<PlayerProfile>,
+      // Cererile de la cineva blocat nu se mai arată deloc — altfel blocarea
+      // ar fi lăsat deschis exact canalul pe care poate reveni cel blocat.
+      requests: (results[1] as List<FriendRequest>)
+          .where((r) => !ModerationService.instance.isBlocked(r.fromUid))
+          .toList(),
+      friends: friends,
+      summaries: summaries,
     );
   }
 
@@ -55,11 +74,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     final message = switch (outcome) {
-      FriendRequestOutcome.sent => 'Cerere trimisă!',
-      FriendRequestOutcome.autoAccepted => 'V-ați adăugat reciproc!',
-      FriendRequestOutcome.alreadyFriends => 'Sunteți deja prieteni.',
-      FriendRequestOutcome.notFound => 'Nu am găsit niciun jucător cu acest cod.',
-      FriendRequestOutcome.isSelf => 'Nu te poți adăuga pe tine însuți.',
+      FriendRequestOutcome.sent => tr('Cerere trimisă!', 'Request sent!'),
+      FriendRequestOutcome.autoAccepted => tr('V-ați adăugat reciproc!', 'You added each other!'),
+      FriendRequestOutcome.alreadyFriends => tr('Sunteți deja prieteni.', 'You are already friends.'),
+      FriendRequestOutcome.notFound => tr('Nu am găsit niciun jucător cu acest cod.', 'No player found with that code.'),
+      FriendRequestOutcome.isSelf => tr('Nu te poți adăuga pe tine însuți.', 'You cannot add yourself.'),
     };
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     if (outcome == FriendRequestOutcome.sent || outcome == FriendRequestOutcome.autoAccepted) {
@@ -81,8 +100,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<void> _remove(String friendUid) async {
     await PlayerProfileService.instance.removeFriend(friendUid);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Prieten eliminat.')));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(tr('Prieten eliminat.', 'Friend removed.'))));
     await _reload();
+  }
+
+  /// Deschide firul privat cu un prieten. La întoarcere se reîncarcă lista:
+  /// firul tocmai a fost citit (deci bulina trebuie să dispară) și de obicei
+  /// s-a și scris ceva (deci ultimul mesaj s-a schimbat).
+  Future<void> _openChat(PlayerProfile friend) async {
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => FriendChatScreen(friend: friend)));
+    if (mounted) await _reload();
   }
 
   void _copyCode(String code) {
@@ -103,7 +130,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 children: [
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
                   const SizedBox(width: 4),
-                  const Text('Prieteni', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(tr('Prieteni', 'Friends'), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -133,22 +160,29 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             _RequestRow(request: r, onAccept: () => _accept(r.fromUid), onDecline: () => _decline(r.fromUid)),
                           const SizedBox(height: 24),
                         ],
-                        Text('Prietenii tăi (${data.friends.length})',
+                        Text(tr('Prietenii tăi (${data.friends.length})', 'Your friends (${data.friends.length})'),
                             style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
                         if (data.friends.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 24),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 24),
                             child: Center(
                               child: Text(
-                                'Nu ai niciun prieten încă.\nAdaugă-i după codul lor.',
+                                tr('Nu ai niciun prieten încă.\nAdaugă-i după codul lor.',
+                                    'No friends yet.\nAdd them using their code.'),
                                 textAlign: TextAlign.center,
-                                style: TextStyle(color: Colors.white38, fontSize: 13),
+                                style: const TextStyle(color: Colors.white38, fontSize: 13),
                               ),
                             ),
                           )
                         else
-                          for (final f in data.friends) _FriendRow(profile: f, onRemove: () => _remove(f.uid)),
+                          for (final f in data.friends)
+                            _FriendRow(
+                              profile: f,
+                              summary: data.summaries[f.uid],
+                              onRemove: () => _remove(f.uid),
+                              onOpenChat: () => _openChat(f),
+                            ),
                       ],
                     ),
                   );
@@ -174,7 +208,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Codul tău', style: TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
+                Text(tr('Codul tău', 'Your code'), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 2),
                 Text(
                   code ?? '......',
@@ -184,7 +218,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             ),
           ),
           if (code != null)
-            IconButton(onPressed: () => _copyCode(code), icon: const Icon(Icons.copy_rounded, color: Colors.white70), tooltip: 'Copiază'),
+            IconButton(onPressed: () => _copyCode(code), icon: const Icon(Icons.copy_rounded, color: Colors.white70), tooltip: tr('Copiază', 'Copy')),
         ],
       ),
     );
@@ -217,7 +251,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           style: ElevatedButton.styleFrom(backgroundColor: AppColors.teal, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
           child: _sending
               ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : const Text('Adaugă'),
+              : Text(tr('Adaugă', 'Add')),
         ),
       ],
     );
@@ -228,7 +262,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
 /// (vezi leaderboard_screen.dart), reconstruit local aici ca să nu extindă
 /// legăturile dintre ecrane pentru un helper de câteva linii.
 String _formatLastActive(dynamic ts) {
-  if (ts == null) return 'niciodată online';
+  if (ts == null) return tr('niciodată online', 'never online');
   final dt = (ts.toDate() as DateTime).toLocal();
   final now = DateTime.now();
   final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -243,7 +277,17 @@ class _FriendsData {
   final String? myCode;
   final List<FriendRequest> requests;
   final List<PlayerProfile> friends;
-  const _FriendsData({required this.myCode, required this.requests, required this.friends});
+
+  /// uid-ul prietenului → capul firului privat cu el. Lipsește pentru
+  /// prietenii cu care nu s-a schimbat niciun mesaj.
+  final Map<String, FriendChatSummary> summaries;
+
+  const _FriendsData({
+    required this.myCode,
+    required this.requests,
+    required this.friends,
+    this.summaries = const {},
+  });
 }
 
 class _RequestRow extends StatelessWidget {
@@ -265,11 +309,12 @@ class _RequestRow extends StatelessWidget {
             label: request.fromName.isNotEmpty ? request.fromName[0].toUpperCase() : '?',
             accentColor: pickAvatarColor(request.fromAvatarSeed),
             photoUrl: request.fromPhotoUrl,
+            style: avatarStyleFromId(request.fromAvatarStyle),
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(request.fromName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
-          IconButton(onPressed: onAccept, icon: const Icon(Icons.check_circle_rounded, color: AppColors.play), tooltip: 'Acceptă'),
-          IconButton(onPressed: onDecline, icon: const Icon(Icons.cancel_rounded, color: AppColors.danger), tooltip: 'Refuză'),
+          IconButton(onPressed: onAccept, icon: const Icon(Icons.check_circle_rounded, color: AppColors.play), tooltip: tr('Acceptă', 'Accept')),
+          IconButton(onPressed: onDecline, icon: const Icon(Icons.cancel_rounded, color: AppColors.danger), tooltip: tr('Refuză', 'Decline')),
         ],
       ),
     );
@@ -278,49 +323,95 @@ class _RequestRow extends StatelessWidget {
 
 class _FriendRow extends StatelessWidget {
   final PlayerProfile profile;
+  final FriendChatSummary? summary;
   final VoidCallback onRemove;
-  const _FriendRow({required this.profile, required this.onRemove});
+  final VoidCallback onOpenChat;
+
+  const _FriendRow({
+    required this.profile,
+    required this.onRemove,
+    required this.onOpenChat,
+    this.summary,
+  });
 
   @override
   Widget build(BuildContext context) {
     final league = leagueForPoints(profile.leaguePoints);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(color: Colors.white.withAlpha(12), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
-      child: Row(
-        children: [
-          Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl, style: avatarStyleFromId(profile.avatarStyle)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(profile.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
-                Row(
-                  children: [
-                    Icon(league.icon, color: league.color, size: 12),
-                    const SizedBox(width: 4),
-                    Text('${league.name} · ${profile.leaguePoints} pct', style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
-                  ],
-                ),
-                Row(
-                  children: [
-                    const Icon(Icons.access_time_rounded, color: Colors.white38, size: 12),
-                    const SizedBox(width: 4),
-                    Text(_formatLastActive(profile.lastActive), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ],
+    final unread = summary?.hasUnreadFor(MultiplayerService.instance.currentPlayerId) ?? false;
+    final preview = summary?.lastText ?? '';
+    return GestureDetector(
+      // Tot rândul deschide firul privat, nu doar iconița — e ținta cea mai
+      // ușor de nimerit cu degetul, iar rândul n-avea până acum nicio altă
+      // acțiune la tap.
+      onTap: onOpenChat,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(color: Colors.white.withAlpha(12), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
+        child: Row(
+          children: [
+            Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl, style: avatarStyleFromId(profile.avatarStyle)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(profile.name,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis),
+                      ),
+                      if (unread) ...[const SizedBox(width: 6), const UnreadDot()],
+                    ],
+                  ),
+                  // Ultimul mesaj ia locul rândului de ligă doar când există —
+                  // altfel rândul ar fi crescut cu o linie goală pentru toți
+                  // prietenii cu care n-ai vorbit niciodată.
+                  if (preview.isNotEmpty)
+                    Text(
+                      preview,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: unread ? Colors.white : Colors.white54,
+                        fontSize: 11.5,
+                        fontWeight: unread ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    )
+                  else
+                    Row(
+                      children: [
+                        Icon(league.icon, color: league.color, size: 12),
+                        const SizedBox(width: 4),
+                        Text('${league.name} · ${profile.leaguePoints} pct', style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  Row(
+                    children: [
+                      const Icon(Icons.access_time_rounded, color: Colors.white38, size: 12),
+                      const SizedBox(width: 4),
+                      Text(_formatLastActive(profile.lastActive), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            onPressed: () => _confirmRemove(context),
-            icon: const Icon(Icons.person_remove_rounded, color: Colors.white38, size: 20),
-            tooltip: 'Elimină prieten',
-          ),
-        ],
+            IconButton(
+              onPressed: onOpenChat,
+              icon: const Icon(Icons.chat_bubble_rounded, color: AppColors.teal, size: 19),
+              tooltip: 'Scrie-i',
+            ),
+            IconButton(
+              onPressed: () => _confirmRemove(context),
+              icon: const Icon(Icons.person_remove_rounded, color: Colors.white38, size: 20),
+              tooltip: tr('Elimină prieten', 'Remove friend'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -331,15 +422,15 @@ class _FriendRow extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         title: const Text('Elimini prietenul?', style: TextStyle(color: Colors.white)),
-        content: Text('${profile.name} nu va mai apărea în lista ta de prieteni.', style: const TextStyle(color: Colors.white70)),
+        content: Text(tr('${profile.name} nu va mai apărea în lista ta de prieteni.', '${profile.name} will no longer appear in your friends list.'), style: const TextStyle(color: Colors.white70)),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
           TextButton(
             onPressed: () {
               Navigator.pop(dialogContext);
               onRemove();
             },
-            child: const Text('Elimină', style: TextStyle(color: AppColors.danger)),
+            child: Text(tr('Elimină', 'Remove'), style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

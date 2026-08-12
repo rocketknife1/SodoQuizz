@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import '../core/audio.dart';
 import '../core/quest_bump.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
@@ -204,9 +205,9 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Roata norocului', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(tr('Roata norocului', 'Lucky wheel'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            const Text('Un premiu o dată la 24 de ore', style: TextStyle(color: Colors.white54, fontSize: 12)),
+            Text(tr('Un premiu o dată la 24 de ore', 'One prize every 24 hours'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
             const SizedBox(height: 20),
             SizedBox(
               width: 240,
@@ -263,7 +264,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
             const SizedBox(height: 22),
             if (_done && _result != null) ...[
               Text(
-                _result!.unlimitedLives != null ? 'JACKPOT! 🎉' : 'Ai câștigat!',
+                _result!.unlimitedLives != null ? 'JACKPOT! 🎉' : tr('Ai câștigat!', 'You won!'),
                 style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 8),
@@ -286,7 +287,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                   shadowColor: _wheelOrange,
                 ),
                 child: Text(
-                  _spinning ? 'Se învârte...' : 'ÎNVÂRTE',
+                  _spinning ? tr('Se învârte...', 'Spinning...') : tr('ÎNVÂRTE', 'SPIN'),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -303,10 +304,10 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     if (prize.unlimitedLives != null) {
       rows.add(Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
-          SizedBox(width: 10),
-          Text('Vieți nelimitate\n24 de ore!', textAlign: TextAlign.center, style: TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
+        children: [
+          const Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
+          const SizedBox(width: 10),
+          Text(tr('Vieți nelimitate\n24 de ore!', 'Unlimited lives\nfor 24 hours!'), textAlign: TextAlign.center, style: const TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
         ],
       ));
     }

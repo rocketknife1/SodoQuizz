@@ -3,6 +3,7 @@ import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -370,9 +371,13 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Azi ai ${todaysQuests().length} quest-uri din cele ${allQuests.length}. '
-                        'Fiecare are alt contor, deci niciunul nu se bifează singur. '
-                        'La miezul nopții primești un set complet nou — aceleași revin abia peste o săptămână.',
+                        tr(
+                            'Azi ai ${todaysQuests().length} quest-uri din cele ${allQuests.length}. '
+                                'Fiecare are alt contor, deci niciunul nu se bifează singur. '
+                                'La miezul nopții primești un set complet nou — aceleași revin abia peste o săptămână.',
+                            'Today you have ${todaysQuests().length} quests out of ${allQuests.length}. '
+                                'Each one tracks something different, so none of them completes itself. '
+                                'At midnight you get a brand new set — the same ones only come back a week later.'),
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                       // fiecare quest dă acum gems (1/2/4 după dificultate),
@@ -388,7 +393,8 @@ class _QuestsScreenState extends State<QuestsScreen> {
                             padding: const EdgeInsets.only(top: 3),
                             child: Text(
                               left > 0
-                                  ? 'Gems din quest-uri azi: încă $left din $dailyQuestGemCap.'
+                                  ? tr('Gems din quest-uri azi: încă $left din $dailyQuestGemCap.',
+                                      'Gems from quests today: $left more out of $dailyQuestGemCap.')
                                   : 'Ai atins plafonul de $dailyQuestGemCap 💎 din quest-uri pe ziua de azi — restul recompenselor vin normal.',
                               style: TextStyle(
                                   color: left > 0 ? AppColors.gem : Colors.white38,
@@ -455,7 +461,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
               color: AppColors.gem.withAlpha(110), size: 13),
           const SizedBox(width: 4),
           Text(
-            'Colectează tot',
+            tr('Colectează tot', 'Collect all'),
             style: TextStyle(
               color: AppColors.gem.withAlpha(130),
               fontSize: 11.5,
@@ -482,7 +488,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
             children: [
               const Icon(Icons.auto_awesome_rounded, color: Colors.black, size: 15),
               const SizedBox(width: 5),
-              Text('Colectează tot ($claimableCount)', style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800)),
+              Text(tr('Colectează tot ($claimableCount)', 'Collect all ($claimableCount)'), style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800)),
             ],
           ),
         ),
@@ -622,7 +628,7 @@ class _QuestCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Revendică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text(tr('Revendică', 'Claim'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 6),
                 GestureDetector(
@@ -640,7 +646,7 @@ class _QuestCard extends StatelessWidget {
                         Icon(Icons.smart_display_rounded, size: 12, color: disabled ? Colors.white38 : AppColors.coin),
                         const SizedBox(width: 4),
                         Text(
-                          'Revendică x2',
+                          tr('Revendică x2', 'Claim x2'),
                           style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: disabled ? Colors.white38 : AppColors.coin),
                         ),
                       ],

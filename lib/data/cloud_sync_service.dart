@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'auth_service.dart';
 import 'multiplayer_service.dart';
+import 'notification_service.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
 
@@ -183,6 +184,34 @@ class CloudSyncService {
       if (coins != 0) await StorageService.adjustCoins(coins);
       if (gems != 0) await StorageService.adjustGems(gems);
       if (xp != 0) await StorageService.adjustXp(xp);
+
+      // „Felicitări, ai primit..." — compusă din ce s-a aplicat EFECTIV, nu
+      // din ce a apăsat adminul, și scrisă înainte de ștergerea cutiei
+      // poștale: dacă pică ceva între ele, grant-ul se reia la următoarea
+      // deschidere, iar id-ul stabil (uid + momentul cererii) împiedică
+      // notificarea să apară de două ori pentru același cadou.
+      //
+      // Fără ea, resursele intrau în cont în tăcere: jucătorul vedea altă
+      // balanță decât și-o amintea și n-avea de unde să afle de ce.
+      //
+      // Id-ul vine din marcajul de timp pus de admin la trimitere
+      // (`sentAt`/`resetRequestedAt`, vezi AdminScreen), NU din id-ul
+      // documentului: acela e chiar uid-ul jucătorului, deci ar fi fost
+      // același pentru toate cadourile lui, iar al doilea „+100 monede"
+      // trimis vreodată n-ar mai fi produs nicio notificare. Pentru un grant
+      // vechi, rămas în cutie de dinaintea acestui cod, se cade pe momentul
+      // consumării — unic prin construcție.
+      final sentAt = (data['sentAt'] as Timestamp?) ?? (data['resetRequestedAt'] as Timestamp?);
+      await NotificationService.instance.addGrantNotification(
+        grantId: '${sentAt?.millisecondsSinceEpoch ?? DateTime.now().millisecondsSinceEpoch}',
+        hearts: hearts,
+        hints: hints,
+        coins: coins,
+        gems: gems,
+        xp: xp,
+        wasReset: reset,
+      );
+
       await ref.delete();
 
       // Ecranele deschise nu știu că balanța de sub ele s-a schimbat.

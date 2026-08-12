@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/player_profile.dart';
 import 'auth_service.dart';
+import 'friend_chat_service.dart';
+import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'storage_service.dart';
 
@@ -262,6 +264,7 @@ class PlayerProfileService {
         'fromName': myProfile?.name ?? '?',
         'fromAvatarSeed': myProfile?.avatarSeed ?? me,
         'fromPhotoUrl': myProfile?.photoUrl,
+        'fromAvatarStyle': myProfile?.avatarStyle ?? '',
         'createdAt': FieldValue.serverTimestamp(),
       });
       return FriendRequestOutcome.sent;
@@ -501,6 +504,14 @@ class PlayerProfileService {
         batch.delete(doc.reference);
       }
 
+      // Anunțurile încă neridicate de el. În Firestore documentele-copil NU
+      // dispar odată cu părintele, deci fără asta ar fi rămas atârnate sub un
+      // profil inexistent — aceeași grijă ca la `blocked` și `friends`.
+      final notificationsSnap = await _col.doc(uid).collection('notifications').get();
+      for (final doc in notificationsSnap.docs) {
+        batch.delete(doc.reference);
+      }
+
       batch.delete(_col.doc(uid));
       batch.delete(_db.collection('users').doc(uid));
       batch.delete(_db.collection('admin_grants').doc(uid));
@@ -512,12 +523,83 @@ class PlayerProfileService {
       });
 
       await batch.commit();
+
+      // Ca la deleteMyProfile: lista de blocați și firele de chat privat sunt
+      // documente-copil / documente separate, care ar fi rămas în urmă.
+      // Permise adminului explicit în firestore.rules.
+      await ModerationService.instance.deleteBlockListOf(uid);
+      for (final doc in friendsSnap.docs) {
+        await FriendChatService.instance.deleteThreadWith(doc.id, forUid: uid);
+      }
       return true;
     } catch (e) {
       debugPrint('PlayerProfileService.purgePlayer a esuat: $e');
       return false;
     }
   }
+
+  /// Lasă un anunț în cutia poștală de notificări a unui jucător — vezi
+  /// NotificationService, care îl descarcă la următoarea deschidere a
+  /// jocului, îl scrie pe telefon și îl șterge din cloud.
+  ///
+  /// Merge și pentru Guest: cutia e legată de uid, iar un Guest are uid de la
+  /// prima pornire. Nu ajunge instant — jocul nu are notificări push (ar fi
+  /// cerut Cloud Functions, iar proiectul e pe planul gratuit) — deci apare
+  /// cel târziu la următoarea intrare în joc, ca și grant-urile de resurse.
+  Future<bool> sendNotification(String uid, {required String title, required String body}) async {
+    if (uid.isEmpty || (title.trim().isEmpty && body.trim().isEmpty)) return false;
+    try {
+      await _col.doc(uid).collection('notifications').add({
+        'title': title.trim(),
+        'body': body.trim(),
+        'sentAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.sendNotification a esuat: $e');
+      return false;
+    }
+  }
+
+  /// Același anunț către TOȚI jucătorii cunoscuți — întoarce câți au primit.
+  ///
+  /// Se scrie câte un document per jucător, în loturi de [_broadcastBatchSize]
+  /// (Firestore refuză un batch mai mare de 500 de operații). Fără Cloud
+  /// Functions, un „anunț global" citit de toți dintr-un singur loc ar fi
+  /// cerut o colecție publică pe care oricine o poate citi mereu; asta
+  /// costă mai multe scrieri o dată, dar păstrează tiparul deja folosit peste
+  /// tot (cutie poștală per cont) și, mai ales, nu deschide nimic la citire.
+  ///
+  /// Lista de jucători e cea din AdminScreen ([fetchAllPlayers], plafonată la
+  /// 300) — deci un anunț ajunge la cei 300 de jucători cei mai activi, nu
+  /// neapărat la absolut toate conturile existente vreodată.
+  Future<int> broadcastNotification({required String title, required String body}) async {
+    if (title.trim().isEmpty && body.trim().isEmpty) return 0;
+    try {
+      final players = await fetchAllPlayers();
+      var sent = 0;
+      for (var i = 0; i < players.length; i += _broadcastBatchSize) {
+        final chunk = players.skip(i).take(_broadcastBatchSize);
+        final batch = _db.batch();
+        for (final player in chunk) {
+          batch.set(_col.doc(player.uid).collection('notifications').doc(), {
+            'title': title.trim(),
+            'body': body.trim(),
+            'sentAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+        sent += chunk.length;
+      }
+      return sent;
+    } catch (e) {
+      debugPrint('PlayerProfileService.broadcastNotification a esuat: $e');
+      return 0;
+    }
+  }
+
+  /// Sub plafonul Firestore de 500 de operații per batch, cu loc de rezervă.
+  static const _broadcastBatchSize = 400;
 
   /// Aduce un cont la zero, din fișa jucătorului (AdminScreen) — pentru
   /// ORICINE, Guest sau cont Google, fiindcă ambele jumătăți ale operației se
@@ -619,6 +701,20 @@ class PlayerProfileService {
       }
       batch.delete(_col.doc(uid));
       await batch.commit();
+
+      // Subcolecțiile și firele de chat NU dispar odată cu documentul de mai
+      // sus — în Firestore documentele-copil supraviețuiesc ștergerii
+      // părintelui. Fără curățarea asta, în urma unui cont șters ar fi rămas
+      // lista lui de blocați și toate conversațiile lui private, invizibile în
+      // consolă (părintele nu mai există) dar prezente în bază.
+      //
+      // Se fac DUPĂ commit, nu în batch: firele au fiecare mesajele lor de
+      // șters, deci sunt operații separate oricum, iar un eșec aici nu trebuie
+      // să anuleze ștergerea profilului, partea care chiar contează.
+      await ModerationService.instance.deleteMyBlockList();
+      for (final doc in friendsSnap.docs) {
+        await FriendChatService.instance.deleteThreadWith(doc.id, forUid: uid);
+      }
     } catch (e) {
       debugPrint('PlayerProfileService.deleteMyProfile a esuat: $e');
     }

@@ -2,6 +2,7 @@ import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
@@ -127,8 +128,8 @@ class _ShopScreenState extends State<ShopScreen> {
       await _loadState();
     } else {
       _toast(_heartsBoughtToday >= heartCoinPrices.length
-          ? 'Ai atins plafonul zilnic de achiziții.'
-          : 'Nu ai destule monede.');
+          ? tr('Ai atins plafonul zilnic de achiziții.', 'You have hit the daily purchase limit.')
+          : tr('Nu ai destule monede.', 'Not enough coins.'));
     }
   }
 
@@ -145,7 +146,9 @@ class _ShopScreenState extends State<ShopScreen> {
       _navBarKey.currentState?.refreshDots();
       await _loadState();
     } else {
-      _toast(_lives >= 5 ? 'Ești deja plin.' : 'Nu ai destule gems.');
+      _toast(_lives >= 5
+          ? tr('Ești deja plin.', 'You are already full.')
+          : tr('Nu ai destule gems.', 'Not enough gems.'));
     }
   }
 
@@ -182,18 +185,23 @@ class _ShopScreenState extends State<ShopScreen> {
         builder: (_) => AlertDialog(
           backgroundColor: AppColors.card,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          title: const Text('În curând', style: TextStyle(color: Colors.white)),
+          title: Text(tr('În curând', 'Coming soon'), style: const TextStyle(color: Colors.white)),
           content: Text(
-            'Plățile reale nu sunt încă active în acest build.\n\n'
-            '$itemLabel va costa ${formatRon(priceRon)} când magazinul se '
-            'deschide. Până atunci, tot ce e în joc se poate obține jucând.',
+            tr(
+              'Plățile reale nu sunt încă active în acest build.\n\n'
+                  '$itemLabel va costa ${formatRon(priceRon)} când magazinul se '
+                  'deschide. Până atunci, tot ce e în joc se poate obține jucând.',
+              'Real payments are not active yet in this build.\n\n'
+                  '$itemLabel will cost ${formatRon(priceRon)} once the shop '
+                  'opens. Until then, everything in the game can be earned by playing.',
+            ),
             style: const TextStyle(color: Colors.white70),
           ),
           actions: [
             ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
-              child: const Text('Am înțeles', style: TextStyle(color: Colors.white)),
+              child: Text(tr('Am înțeles', 'Got it'), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -205,17 +213,21 @@ class _ShopScreenState extends State<ShopScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: AppColors.card,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Cumperi $itemLabel?', style: const TextStyle(color: Colors.white)),
+        title: Text(tr('Cumperi $itemLabel?', 'Buy $itemLabel?'), style: const TextStyle(color: Colors.white)),
         content: Text(
-          'Preț: ${formatRon(priceRon)}\n\n'
-          'Magazinul de plăți reale nu e conectat încă în acest build — nu se percepe nicio sumă, achiziția e doar simulată pentru testare.',
+          tr(
+            'Preț: ${formatRon(priceRon)}\n\n'
+                'Magazinul de plăți reale nu e conectat încă în acest build — nu se percepe nicio sumă, achiziția e doar simulată pentru testare.',
+            'Price: ${formatRon(priceRon)}\n\n'
+                'The real-money shop is not connected yet in this build — nothing is charged, the purchase is only simulated for testing.',
+          ),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Renunță', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Cumpără', style: TextStyle(color: AppColors.play, fontWeight: FontWeight.bold)),
+            child: Text(tr('Cumpără', 'Buy'), style: const TextStyle(color: AppColors.play, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -249,7 +261,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyLivesPack(LivesPack pack) async {
     if (_busy) return;
-    if (!await _confirmPurchase('${pack.lives} vieți', pack.priceRon)) return;
+    if (!await _confirmPurchase(tr('${pack.lives} vieți', '${pack.lives} lives'), pack.priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -271,7 +283,7 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Future<void> _buyUnlimitedLives24h() async {
     if (_busy) return;
-    if (!await _confirmPurchase('Vieți nelimitate 24h', unlimitedLives24hPriceRon)) return;
+    if (!await _confirmPurchase(tr('Vieți nelimitate 24h', 'Unlimited lives 24h'), unlimitedLives24hPriceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
     await Future.delayed(const Duration(milliseconds: 900));
@@ -279,7 +291,7 @@ class _ShopScreenState extends State<ShopScreen> {
     if (!mounted) return;
     setState(() => _busy = false);
     Sfx.rewardPop();
-    _toast('Vieți nelimitate activate pentru 24h!');
+    _toast(tr('Vieți nelimitate activate pentru 24h!', 'Unlimited lives activated for 24h!'));
     await _loadState();
   }
 
@@ -362,12 +374,12 @@ class _ShopScreenState extends State<ShopScreen> {
                     icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
                   ),
                   const SizedBox(width: 4),
-                  const Column(
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('MAGAZIN', style: TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 1.2, fontWeight: FontWeight.w600)),
-                      SizedBox(height: 2),
-                      Text('Shop', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                      Text(tr('MAGAZIN', 'STORE'), style: const TextStyle(color: Colors.white38, fontSize: 11, letterSpacing: 1.2, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 2),
+                      const Text('Shop', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const Spacer(),
@@ -399,25 +411,29 @@ class _ShopScreenState extends State<ShopScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _ShopSectionCard(
-                            title: 'Vieți',
-                            subtitle: 'Joacă fără să te oprești',
+                            title: tr('Vieți', 'Lives'),
+                            subtitle: tr('Joacă fără să te oprești', 'Play without stopping'),
                             icon: Icons.favorite_rounded,
                             color: AppColors.purple,
                             children: [
                               _ShopItem(
-                                title: 'Recompensă zilnică',
-                                subtitle: '+$freeDailyLivesTarget vieți',
-                                priceLabel: _canClaimDaily ? 'GRATUIT' : 'Revino mâine',
+                                title: tr('Recompensă zilnică', 'Daily reward'),
+                                subtitle: '+$freeDailyLivesTarget ${tr('vieți', 'lives')}',
+                                priceLabel: _canClaimDaily
+                                    ? tr('GRATUIT', 'FREE')
+                                    : tr('Revino mâine', 'Come back tomorrow'),
                                 free: true,
                                 disabled: !_canClaimDaily,
                                 owned: !_canClaimDaily,
                                 onTap: _canClaimDaily ? _claimDaily : null,
                               ),
                               _ShopItem(
-                                title: '+1 viață',
+                                title: tr('+1 viață', '+1 life'),
                                 subtitle: _heartsBoughtToday >= heartCoinPrices.length
-                                    ? 'Plafon zilnic atins ($_heartsBoughtToday/${heartCoinPrices.length})'
-                                    : 'Achiziția ${_heartsBoughtToday + 1}/${heartCoinPrices.length} de azi — prețul crește cu fiecare',
+                                    ? tr('Plafon zilnic atins ($_heartsBoughtToday/${heartCoinPrices.length})',
+                                        'Daily limit reached ($_heartsBoughtToday/${heartCoinPrices.length})')
+                                    : tr('Achiziția ${_heartsBoughtToday + 1}/${heartCoinPrices.length} de azi — prețul crește cu fiecare',
+                                        'Purchase ${_heartsBoughtToday + 1}/${heartCoinPrices.length} today — the price goes up each time'),
                                 priceLabel: _heartsBoughtToday >= heartCoinPrices.length
                                     ? '—'
                                     : '${heartCoinPrices[_heartsBoughtToday]}',
@@ -429,8 +445,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                 onTap: _buyHeart,
                               ),
                               _ShopItem(
-                                title: 'Completare instantă',
-                                subtitle: 'Umple viețile la $freeDailyLivesTarget, indiferent de plafon',
+                                title: tr('Completare instantă', 'Instant refill'),
+                                subtitle: tr('Umple viețile la $freeDailyLivesTarget, indiferent de plafon',
+                                    'Fills your lives to $freeDailyLivesTarget, ignoring the limit'),
                                 priceLabel: '$heartRefillGemsPrice',
                                 priceIcon: Icons.diamond_rounded,
                                 priceIconColor: AppColors.gem,
@@ -442,7 +459,7 @@ class _ShopScreenState extends State<ShopScreen> {
                           const SizedBox(height: 14),
                           _ShopSectionCard(
                             title: 'Hints',
-                            subtitle: 'Primește ajutor când ai nevoie',
+                            subtitle: tr('Primește ajutor când ai nevoie', 'Get help when you need it'),
                             icon: Icons.lightbulb_rounded,
                             color: const Color(0xFFFFD54F),
                             children: [
@@ -452,8 +469,10 @@ class _ShopScreenState extends State<ShopScreen> {
                                 _ShopItem(
                                   title: '${pack.amount} hints',
                                   subtitle: _hintPacksBoughtToday >= hintPackDailyLimit
-                                      ? 'Plafon zilnic atins ($_hintPacksBoughtToday/$hintPackDailyLimit pachete)'
-                                      : 'Pachet ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit de azi — prețul crește cu fiecare',
+                                      ? tr('Plafon zilnic atins ($_hintPacksBoughtToday/$hintPackDailyLimit pachete)',
+                                          'Daily limit reached ($_hintPacksBoughtToday/$hintPackDailyLimit packs)')
+                                      : tr('Pachet ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit de azi — prețul crește cu fiecare',
+                                          'Pack ${_hintPacksBoughtToday + 1}/$hintPackDailyLimit today — the price goes up each time'),
                                   priceLabel: _hintPacksBoughtToday >= hintPackDailyLimit
                                       ? '—'
                                       : '${hintPackPriceToday(pack, _hintPacksBoughtToday)}',
@@ -483,8 +502,9 @@ class _ShopScreenState extends State<ShopScreen> {
                                 ),
                                 const SizedBox(height: 14),
                                 _ShopSectionCard(
-                                  title: 'Pachete',
-                                  subtitle: 'Mai multe resurse la un preț mai bun — bani reali',
+                                  title: tr('Pachete', 'Bundles'),
+                                  subtitle: tr('Mai multe resurse la un preț mai bun — bani reali',
+                                      'More resources at a better price — real money'),
                                   icon: Icons.card_giftcard_rounded,
                                   color: AppColors.teal,
                                   children: [
@@ -500,14 +520,14 @@ class _ShopScreenState extends State<ShopScreen> {
                                 const SizedBox(height: 14),
                                 _ShopSectionCard(
                                   title: 'Gems',
-                                  subtitle: 'Cumpără gems cu bani reali',
+                                  subtitle: tr('Cumpără gems cu bani reali', 'Buy gems with real money'),
                                   icon: Icons.diamond_rounded,
                                   color: AppColors.gem,
                                   children: [
                                     for (final pack in gemPacks)
                                       _ShopItem(
                                         title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
-                                        subtitle: 'Achiziție cu bani reali',
+                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
                                         priceLabel: formatRon(pack.priceRon),
                                         disabled: _busy,
                                         onTap: () => _buyGemPack(pack),
@@ -516,22 +536,23 @@ class _ShopScreenState extends State<ShopScreen> {
                                 ),
                                 const SizedBox(height: 14),
                                 _ShopSectionCard(
-                                  title: 'Vieți & Hints (bani reali)',
-                                  subtitle: 'Cumpărare directă, fără gems',
+                                  title: tr('Vieți & Hints (bani reali)', 'Lives & Hints (real money)'),
+                                  subtitle: tr('Cumpărare directă, fără gems', 'Buy directly, no gems needed'),
                                   icon: Icons.shopping_bag_rounded,
                                   color: AppColors.life,
                                   children: [
                                     for (final pack in livesPacks)
                                       _ShopItem(
-                                        title: '${pack.lives} vieți instant',
-                                        subtitle: 'Achiziție cu bani reali',
+                                        title: tr('${pack.lives} vieți instant', '${pack.lives} instant lives'),
+                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
                                         priceLabel: formatRon(pack.priceRon),
                                         disabled: _busy,
                                         onTap: () => _buyLivesPack(pack),
                                       ),
                                     _ShopItem(
-                                      title: 'Vieți nelimitate 24h',
-                                      subtitle: 'Joci fără să pierzi vieți timp de 24h',
+                                      title: tr('Vieți nelimitate 24h', 'Unlimited lives 24h'),
+                                      subtitle: tr('Joci fără să pierzi vieți timp de 24h',
+                                          'Play for 24h without losing lives'),
                                       priceLabel: formatRon(unlimitedLives24hPriceRon),
                                       disabled: _busy,
                                       onTap: _buyUnlimitedLives24h,
@@ -539,7 +560,7 @@ class _ShopScreenState extends State<ShopScreen> {
                                     for (final pack in hintPacksReal)
                                       _ShopItem(
                                         title: '${pack.hints} hints',
-                                        subtitle: 'Achiziție cu bani reali',
+                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
                                         priceLabel: formatRon(pack.priceRon),
                                         disabled: _busy,
                                         onTap: () => _buyHintPackReal(pack),
@@ -622,15 +643,16 @@ class _PremiumVeil extends StatelessWidget {
                         child: const Icon(Icons.lock_rounded, color: AppColors.coin, size: 26),
                       ),
                       const SizedBox(height: 14),
-                      const Text(
-                        'În curând',
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
+                      Text(
+                        tr('În curând', 'Coming soon'),
+                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(height: 6),
-                      const Text(
-                        'Magazinul premium încă nu s-a deschis.\nTot ce e în joc se poate obține jucând.',
+                      Text(
+                        tr('Magazinul premium încă nu s-a deschis.\nTot ce e în joc se poate obține jucând.',
+                            'The premium store has not opened yet.\nEverything in the game can be earned by playing.'),
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.35),
+                        style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.35),
                       ),
                     ],
                   ),
@@ -850,7 +872,7 @@ class _BundleItem extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppColors.play.withAlpha(50), borderRadius: BorderRadius.circular(6)),
-                            child: const Text('O SINGURĂ DATĂ', style: TextStyle(color: AppColors.play, fontSize: 8, fontWeight: FontWeight.w800)),
+                            child: Text(tr('O SINGURĂ DATĂ', 'ONE TIME ONLY'), style: const TextStyle(color: AppColors.play, fontSize: 8, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ],
@@ -871,7 +893,7 @@ class _BundleItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(owned ? 'DEȚINUT' : formatRon(bundle.priceRon), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                child: Text(owned ? tr('DEȚINUT', 'OWNED') : formatRon(bundle.priceRon), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
@@ -932,18 +954,19 @@ class _NoAdsHeroCard extends StatelessWidget {
             children: [
               const Icon(Icons.workspace_premium_rounded, color: AppColors.coin, size: 22),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Fără reclame pe veci',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  tr('Fără reclame pe veci', 'No ads, forever'),
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
+          Text(
+            tr('Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
+                'Forced ads stay off for good, plus an instant bonus'),
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
           const SizedBox(height: 10),
           Wrap(
@@ -970,7 +993,7 @@ class _NoAdsHeroCard extends StatelessWidget {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(
-                owned ? 'DEȚINUT' : 'Cumpără • ${formatRon(bundle.priceRon)}',
+                owned ? tr('DEȚINUT', 'OWNED') : '${tr('Cumpără', 'Buy')} • ${formatRon(bundle.priceRon)}',
                 style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
               ),
             ),

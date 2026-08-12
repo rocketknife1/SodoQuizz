@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 
 class NextButton extends StatelessWidget {
   final VoidCallback onTap;
@@ -27,9 +28,9 @@ class NextButton extends StatelessWidget {
           ],
         ),
         alignment: Alignment.center,
-        child: const Text(
-          'Următoarea întrebare →',
-          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        child: Text(
+          tr('Următoarea întrebare →', 'Next question →'),
+          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ),
     );

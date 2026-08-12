@@ -5,6 +5,7 @@ import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
+import '../core/lang.dart';
 import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
@@ -192,9 +193,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final cost = _hintCost;
     if (hintsBalance <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Nu mai ai hint-uri — cumpără din Magazin.'),
-            duration: Duration(milliseconds: 1400)),
+        SnackBar(
+            content: Text(tr('Nu mai ai hint-uri — cumpără din Magazin.',
+                'You are out of hints — buy some from the Shop.')),
+            duration: const Duration(milliseconds: 1400)),
       );
       return;
     }
@@ -238,9 +240,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       });
       if (hintsUsed == 2) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('50/50! 2 variante greșite au fost eliminate.'),
-              duration: Duration(milliseconds: 1600)),
+          SnackBar(
+              content: Text(tr('50/50! 2 variante greșite au fost eliminate.',
+                  '50/50! 2 wrong options have been removed.')),
+              duration: const Duration(milliseconds: 1600)),
         );
       }
       bumpQuestMetric(context, 'hints_used', 1);
@@ -364,8 +367,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     Sfx.rewardPop();
     InAppNotification.show(
       context,
-      title: 'Bonus la $_sessionAnswered întrebări! 🎁',
-      message: '+${reward.coins} monede, +${reward.xp} XP'
+      title: tr('Bonus la $_sessionAnswered întrebări! 🎁',
+          'Bonus at $_sessionAnswered questions! 🎁'),
+      message: '+${reward.coins} ${tr('monede', 'coins')}, +${reward.xp} XP'
           '${grantsLife ? ', +1 ❤️' : ''}'
           '${reward.gems > 0 ? ', +${reward.gems} 💎' : ''}',
       icon: Icons.military_tech_rounded,
@@ -385,7 +389,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       Sfx.tileSelect();
       InAppNotification.show(
         context,
-        title: 'Realizare deblocată! 🏆',
+        title: tr('Realizare deblocată! 🏆', 'Achievement unlocked! 🏆'),
         message: a.title,
         icon: a.icon,
         color: const Color(0xFFFF7A1A),
@@ -450,20 +454,26 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           backgroundColor: const Color(0xFF1a1a2e),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Recompensă la ieșire',
-              style: TextStyle(color: Colors.white)),
+          title: Text(tr('Recompensă la ieșire', 'Payout on exit'),
+              style: const TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$_sessionCorrect ${_sessionCorrect == 1 ? 'răspuns corect' : 'răspunsuri corecte'} în sesiunea asta (taxă plătită: ${widget.entryFeePaid} monede).',
+                tr(
+                  '$_sessionCorrect ${_sessionCorrect == 1 ? 'răspuns corect' : 'răspunsuri corecte'} în sesiunea asta (taxă plătită: ${widget.entryFeePaid} monede).',
+                  '$_sessionCorrect correct ${_sessionCorrect == 1 ? 'answer' : 'answers'} this session (fee paid: ${widget.entryFeePaid} coins).',
+                ),
                 style: const TextStyle(color: Colors.white70),
               ),
               const SizedBox(height: 6),
-              const Text(
-                'Praguri: 4 corecte → 60% din taxă · 8 → taxa întreagă · 15 → +30%.',
-                style: TextStyle(color: Colors.white38, fontSize: 11.5),
+              Text(
+                tr(
+                  'Praguri: 4 corecte → 60% din taxă · 8 → taxa întreagă · 15 → +30%.',
+                  'Thresholds: 4 correct → 60% of the fee · 8 → the whole fee · 15 → +30%.',
+                ),
+                style: const TextStyle(color: Colors.white38, fontSize: 11.5),
               ),
               const SizedBox(height: 14),
               Row(
@@ -472,7 +482,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   const Icon(Icons.monetization_on_rounded,
                       color: AppColors.coin, size: 28),
                   const SizedBox(width: 8),
-                  Text('+$reward monede',
+                  Text('+$reward ${tr('monede', 'coins')}',
                       style: const TextStyle(
                           color: AppColors.coin,
                           fontSize: 22,
@@ -485,8 +495,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Am înțeles',
-                  style: TextStyle(
+              child: Text(tr('Am înțeles', 'Got it'),
+                  style: const TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold)),
             ),
           ],
@@ -522,7 +532,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               Navigator.pop(dialogContext);
               _goHome();
             },
-            child: const Text('Acasă', style: TextStyle(color: Colors.white)),
+            child: Text(tr('Acasă', 'Home'), style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -579,14 +589,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
     }
     final lockedNote = extraActions.isNotEmpty
-        ? '\n\n$locked întrebări mai sunt de deblocat în această categorie.'
+        ? tr('\n\n$locked întrebări mai sunt de deblocat în această categorie.',
+            '\n\n$locked more questions can still be unlocked in this category.')
         : (locked > 0
-            ? '\n\nAi atins nivelul maxim de upgrade pentru această categorie.'
+            ? tr('\n\nAi atins nivelul maxim de upgrade pentru această categorie.',
+                '\n\nYou have reached the maximum upgrade level for this category.')
             : '');
     _showEndDialog(
-      title: 'Ai terminat toate întrebările! 🎉',
-      message:
+      title: tr('Ai terminat toate întrebările! 🎉', 'You finished every question! 🎉'),
+      message: tr(
           'Ai răspuns la ${questions.length} întrebări în modul ${mode.title}.\nScor final: $score$lockedNote',
+          'You answered ${questions.length} questions in ${mode.title}.\nFinal score: $score$lockedNote'),
       extraActions: extraActions,
     );
   }
@@ -624,7 +637,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Scor final: $score puncte\nSeria: $streak',
+              Text(tr('Scor final: $score puncte\nSeria: $streak', 'Final score: $score points\nStreak: $streak'),
                   style: const TextStyle(color: Colors.white70)),
               if (adWatched) ...[
                 const SizedBox(height: 16),
@@ -706,8 +719,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 ),
                 child: Text(
                   watchingAd
-                      ? 'Se încarcă reclama...'
-                      : 'Reclamă  •  +${adReward.hearts} ❤ +${adReward.hints} 💡 +${adReward.coins} 💰',
+                      ? tr('Se încarcă reclama...', 'Loading the ad...')
+                      : '${tr('Reclamă', 'Watch ad')}  •  +${adReward.hearts} ❤ +${adReward.hints} 💡 +${adReward.coins} 💰',
                   style: const TextStyle(
                       color: Colors.black, fontWeight: FontWeight.w800),
                 ),
@@ -724,7 +737,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                       Navigator.pop(dialogContext);
                       _goHome();
                     },
-              child: const Text('Acasă', style: TextStyle(color: Colors.white)),
+              child: Text(tr('Acasă', 'Home'), style: const TextStyle(color: Colors.white)),
             ),
           ],
         ),
@@ -768,12 +781,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.white24),
               const SizedBox(height: 16),
-              const Text('Nicio întrebare disponibilă pentru acest mod.',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+              Text(tr('Nicio întrebare disponibilă pentru acest mod.',
+                      'No questions available for this mode.'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 16),
                   textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton(
-                  onPressed: _goHome, child: const Text('Înapoi la meniu')),
+                  onPressed: _goHome, child: Text(tr('Înapoi la meniu', 'Back to the menu'))),
             ],
           ),
         ),
@@ -975,7 +989,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           const SizedBox(height: 4),
           Row(
             children: [
-              Text('Întrebarea ${qIndex + 1} din ${questions.length}',
+              Text(
+                  tr('Întrebarea ${qIndex + 1} din ${questions.length}',
+                      'Question ${qIndex + 1} of ${questions.length}'),
                   style: const TextStyle(color: Colors.white70, fontSize: 12)),
             ],
           ),
@@ -1094,7 +1110,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// jucătorul să nu tragă concluzia greșită că highlight-ul = răspunsul.
   Widget _buildConfidenceHint() {
     return Text(
-      'Șansă răspuns corect: $_hintGuessPercent% (nu e o garanție)',
+      tr('Șansă răspuns corect: $_hintGuessPercent% (nu e o garanție)',
+          'Chance of being right: $_hintGuessPercent% (not a guarantee)'),
       style: const TextStyle(
         color: Color(0xFFFFC107),
         fontSize: 12,

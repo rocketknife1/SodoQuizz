@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 
 /// Card orizontal, lat cât ecranul, pentru o categorie (gamemod) — planetă
@@ -340,7 +341,7 @@ class _UpgradeChip extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                locked ? 'DEBLOCHEAZĂ' : 'UPGRADE',
+                locked ? tr('DEBLOCHEAZĂ', 'UNLOCK') : 'UPGRADE',
                 style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 0.3),
               ),
               const SizedBox(width: 5),

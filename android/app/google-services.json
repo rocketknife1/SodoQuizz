@@ -22,11 +22,27 @@
           }
         },
         {
+          "client_id": "112195368669-dc6kft5n9d1vof6usmg04jmhoc17b0ch.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dragosssx.guessit",
+            "certificate_hash": "bf4758624d496610c327854d0f23ea36244f7c8d"
+          }
+        },
+        {
           "client_id": "112195368669-eo2pe475793iplo1joljvaj4epa3n8hi.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.dragosssx.guessit",
             "certificate_hash": "e466d4cff3315196e2965ccf9ed88a774169d9de"
+          }
+        },
+        {
+          "client_id": "112195368669-temiutniq2enippt15uu908ddp75kkl7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dragosssx.guessit",
+            "certificate_hash": "33d8c32e4d2e69a298a9dd862be1d8adb4d9e1ab"
           }
         },
         {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/betting.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_service.dart';
@@ -6,7 +8,7 @@ import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
-import '../../widgets/multiplayer_entry_fee_dialog.dart';
+import '../../widgets/match_stake_dialog.dart';
 import '../../widgets/multiplayer_info_dialog.dart';
 import '../../widgets/solid_menu_button.dart';
 import 'matchmaking_screen.dart';
@@ -63,7 +65,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
-        title: const Text('Numele tău', style: TextStyle(color: Colors.white)),
+        title: Text(tr('Numele tău', 'Your name'), style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           maxLength: 16,
@@ -71,8 +73,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
           decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
-          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: const Text('Salvează')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: Text(tr('Salvează', 'Save'))),
         ],
       ),
     );
@@ -86,6 +88,9 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     if (mounted) setState(() => _displayName = result);
   }
 
+  /// Singurul loc din aplicație unde se alege o sumă: cel care creează camera
+  /// fixează miza pentru toți. Cine intră după aceea (cod, listă, Join Online)
+  /// doar vede cât costă și confirmă.
   Future<void> _createRoom() async {
     if (_busy) return;
     final gameMode = await _pickGameMode();
@@ -93,7 +98,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
     final stake = await pickMatchStake(context);
     if (stake == null || !mounted) return;
     setState(() => _busy = true);
-    final spent = await StorageService.spendCoins(stake.total);
+    final spent = await StorageService.spendCoins(stake);
     if (!spent) {
       if (mounted) setState(() => _busy = false);
       return;
@@ -111,17 +116,16 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         photoUrl: identity.photoUrl,
         avatarStyle: identity.avatarStyle,
         gameMode: gameMode,
-        bet: stake.bet,
-        betPercent: stake.betPercent,
+        stake: stake,
       );
       if (!mounted) return;
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true, stakePaid: stake.total)),
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: true, stakePaid: stake)),
       );
     } catch (e) {
       // camera nu s-a creat cu adevărat - miza nu a "cumparat" nimic.
-      await StorageService.addCoins(stake.total);
+      await StorageService.addCoins(stake);
       _showUnavailable(e);
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -136,14 +140,14 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
-        title: const Text('Alege modul de joc', style: TextStyle(color: Colors.white)),
+        title: Text(tr('Alege modul de joc', 'Pick the game mode'), style: const TextStyle(color: Colors.white)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _GameModeOption(
               icon: Icons.quiz_rounded,
-              label: 'Clasic',
-              subtitle: 'Fiecare răspunde în ritmul lui',
+              label: tr('Clasic', 'Classic'),
+              subtitle: tr('Fiecare răspunde în ritmul lui', 'Everyone answers at their own pace'),
               color: AppColors.blue,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.classic),
             ),
@@ -151,34 +155,43 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
             _GameModeOption(
               icon: Icons.compare_arrows_rounded,
               label: 'Higher & Lower',
-              subtitle: 'Voturi secrete, eliminare progresivă',
+              subtitle: tr('Voturi secrete, eliminare progresivă', 'Secret votes, progressive elimination'),
               color: AppColors.danger,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.higherLower),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
         ],
       ),
     );
   }
 
-  /// Join Online nu mai e gratuit: acum se plătește aceeași taxă + pariu ca
-  /// la orice altă intrare în meci (cerința "oricine poate intra când
-  /// plătește taxa minimă"). Miza se întoarce integral dacă ieși din coadă
-  /// fără să fii cuplat cu nimeni — vezi MatchmakingScreen._leave.
+  /// La Join Online nu se alege nimic: miza e fixă ([publicMatchStake]) și e
+  /// cea mai mică din joc, fiindcă aici nu există gazdă care să decidă. Se
+  /// întoarce integral dacă ieși din coadă fără să fii cuplat cu nimeni — vezi
+  /// MatchmakingScreen._leave.
   Future<void> _joinOnline() async {
     if (_busy) return;
     try {
       await MultiplayerService.instance.ensureInitialized();
       if (!mounted) return;
-      final stake = await pickMatchStake(context);
-      if (stake == null || !mounted) return;
-      final spent = await StorageService.spendCoins(stake.total);
+      final ok = await confirmMatchStake(
+        context,
+        stake: publicMatchStake,
+        title: 'Join Online',
+        subtitle: tr(
+            'Te cuplăm cu un adversar real, unu la unu. Miza e mereu '
+                'aceeași aici — nu ai ce alege.',
+            'We match you with a real opponent, one on one. The stake is always '
+                'the same here — there is nothing to pick.'),
+      );
+      if (!ok || !mounted) return;
+      final spent = await StorageService.spendCoins(publicMatchStake);
       if (!spent || !mounted) return;
       await Navigator.push(context,
-          MaterialPageRoute(builder: (_) => MatchmakingScreen(stake: stake)));
+          MaterialPageRoute(builder: (_) => const MatchmakingScreen()));
     } catch (e) {
       _showUnavailable(e);
     }
@@ -191,7 +204,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
-        title: const Text('Cod cameră', style: TextStyle(color: Colors.white)),
+        title: Text(tr('Cod cameră', 'Room code'), style: const TextStyle(color: Colors.white)),
         content: TextField(
           controller: controller,
           textCapitalization: TextCapitalization.characters,
@@ -200,16 +213,38 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
           decoration: const InputDecoration(hintText: '7K4PX', hintStyle: TextStyle(color: Colors.white24), counterStyle: TextStyle(color: Colors.white54)),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
-          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: const Text('Intră')),
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
+          ElevatedButton(onPressed: () => Navigator.pop(dialogContext, controller.text.trim()), child: Text(tr('Intră', 'Join'))),
         ],
       ),
     );
     if (code == null || code.isEmpty || !mounted) return;
-    final stake = await pickMatchStake(context);
-    if (stake == null || !mounted) return;
     setState(() => _busy = true);
-    final spent = await StorageService.spendCoins(stake.total);
+    // Camera se caută ÎNAINTE de orice plată: miza n-o mai alege cel care
+    // intră, deci trebuie s-o citim de pe cameră ca să i-o putem arăta.
+    final MatchInfo room;
+    try {
+      room = await MultiplayerService.instance.lookupRoomByCode(code);
+    } catch (e) {
+      if (mounted) setState(() => _busy = false);
+      _showUnavailable(e);
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _busy = false);
+    final ok = await confirmMatchStake(
+      context,
+      stake: room.stake,
+      title: tr('Camera lui ${room.hostName ?? '?'}', '${room.hostName ?? '?'}\'s room'),
+      subtitle: tr(
+          'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
+              'mulți, cu atât premiile cresc.',
+          'The stake is set by whoever created the room. The more players join, '
+              'the bigger the prizes.'),
+    );
+    if (!ok || !mounted) return;
+    setState(() => _busy = true);
+    final spent = await StorageService.spendCoins(room.stake);
     if (!spent) {
       if (mounted) setState(() => _busy = false);
       return;
@@ -222,17 +257,15 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
         displayName: identity.name,
         photoUrl: identity.photoUrl,
         avatarStyle: identity.avatarStyle,
-        bet: stake.bet,
-        betPercent: stake.betPercent,
       );
       if (!mounted) return;
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false, stakePaid: stake.total)),
+        MaterialPageRoute(builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false, stakePaid: info.stake)),
       );
     } catch (e) {
       // nu am reusit sa intram cu adevarat - miza nu a "cumparat" nimic.
-      await StorageService.addCoins(stake.total);
+      await StorageService.addCoins(room.stake);
       _showUnavailable(e);
     } finally {
       if (mounted) setState(() => _busy = false);

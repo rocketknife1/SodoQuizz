@@ -1,3 +1,5 @@
+import '../core/lang.dart';
+
 /// Câte vieți se adaugă la recompensa zilnică gratuită (peste orice ai deja
 /// — vezi StorageService.claimDailyReward) — și, separat, plafonul standard
 /// până la care "Completare instantă" (Gems) umple viețile.
@@ -161,8 +163,16 @@ const List<HintPackReal> hintPacksReal = [
 /// specială de eliminare a reclamelor pe veci (vezi [noAdsBundle]).
 class Bundle {
   final String productId;
-  final String title;
-  final String subtitle;
+  final String _titleRo;
+  final String _subtitleRo;
+  final String _titleEn;
+  final String _subtitleEn;
+
+  /// Gettere, nu câmpuri: [bundles] e o listă `const`, iar o constantă nu
+  /// poate chema tr() — se țin ambele variante și se alege la afișare.
+  String get title => tr(_titleRo, _titleEn);
+  String get subtitle => tr(_subtitleRo, _subtitleEn);
+
   final int gems;
   final int coins;
   final int hearts;
@@ -172,8 +182,10 @@ class Bundle {
   final bool permanentNoAds;
   const Bundle({
     required this.productId,
-    required this.title,
-    required this.subtitle,
+    required String title,
+    required String subtitle,
+    required String titleEn,
+    required String subtitleEn,
     this.gems = 0,
     this.coins = 0,
     this.hearts = 0,
@@ -181,14 +193,19 @@ class Bundle {
     required this.priceRon,
     this.oneTimeOnly = false,
     this.permanentNoAds = false,
-  });
+  })  : _titleRo = title,
+        _subtitleRo = subtitle,
+        _titleEn = titleEn,
+        _subtitleEn = subtitleEn;
 }
 
 const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_starter',
     title: 'Pachet de Start',
+    titleEn: 'Starter Pack',
     subtitle: 'O singură dată — cea mai bună ofertă din shop',
+    subtitleEn: 'One time only — the best deal in the shop',
     gems: 434,
     coins: 3170,
     hearts: 17,
@@ -199,7 +216,9 @@ const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_aventurier',
     title: 'Pachet Aventurier',
+    titleEn: 'Adventurer Pack',
     subtitle: 'Un plus solid pentru orice sesiune',
+    subtitleEn: 'A solid boost for any session',
     gems: 167,
     coins: 1283,
     hearts: 6,
@@ -209,7 +228,9 @@ const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_campion',
     title: 'Pachet Campion',
+    titleEn: 'Champion Pack',
     subtitle: 'Pentru cine joacă mult',
+    subtitleEn: 'For people who play a lot',
     gems: 534,
     coins: 4270,
     hearts: 17,
@@ -219,7 +240,9 @@ const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_legendar',
     title: 'Pachet Legendar',
+    titleEn: 'Legendary Pack',
     subtitle: 'Cel mai mare pachet disponibil',
+    subtitleEn: 'The biggest pack available',
     gems: 1634,
     coins: 12840,
     hearts: 43,
@@ -237,7 +260,9 @@ const List<Bundle> bundles = [
 const Bundle noAdsBundle = Bundle(
   productId: 'no_ads_forever',
   title: 'Fără reclame pe veci',
+  titleEn: 'No ads, forever',
   subtitle: 'Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
+  subtitleEn: 'Forced ads stay off for good, plus an instant bonus',
   gems: 214,
   coins: 2130,
   hearts: 17,

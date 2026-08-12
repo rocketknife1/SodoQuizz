@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 
 /// O singură recompensă agregată (icon+total) pentru rezumatul din
@@ -100,7 +101,8 @@ class _CollectAllOverlayState extends State<CollectAllOverlay> with SingleTicker
                 const Text('Colectat tot!', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
                 Text(
-                  '${widget.questCount} quest-uri revendicate dintr-o dată',
+                  tr('${widget.questCount} quest-uri revendicate dintr-o dată',
+                      '${widget.questCount} quests claimed at once'),
                   style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 const SizedBox(height: 18),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/level_header.dart';
@@ -160,7 +161,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
                       ),
                       const SizedBox(width: 4),
-                      const Text('Realizări', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text(tr('Realizări', 'Achievements'), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -179,11 +180,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     gemsBadgeKey: _gemsBadgeKey,
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(20, 0, 20, 12),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                   child: Text(
-                    'Progres permanent — nu se resetează niciodată.',
-                    style: TextStyle(color: Colors.white54, fontSize: 12),
+                    tr('Progres permanent — nu se resetează niciodată.',
+                        'Permanent progress — it never resets.'),
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
                   ),
                 ),
                 Expanded(
@@ -321,7 +323,7 @@ class _AchievementCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
-                  child: const Text('Revendică', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  child: Text(tr('Revendică', 'Claim'), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                 ),
                 const SizedBox(height: 6),
                 GestureDetector(
@@ -339,7 +341,7 @@ class _AchievementCard extends StatelessWidget {
                         Icon(Icons.smart_display_rounded, size: 12, color: disabled ? Colors.white38 : AppColors.coin),
                         const SizedBox(width: 4),
                         Text(
-                          'Revendică x2',
+                          tr('Revendică x2', 'Claim x2'),
                           style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: disabled ? Colors.white38 : AppColors.coin),
                         ),
                       ],

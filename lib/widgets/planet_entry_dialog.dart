@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/progression.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../screens/planet_hologram_screen.dart';
@@ -147,8 +148,8 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
               const SizedBox(height: 6),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Mai târziu',
-                    style: TextStyle(color: Colors.white54, fontSize: 13)),
+                child: Text(tr('Mai târziu', 'Later'),
+                    style: const TextStyle(color: Colors.white54, fontSize: 13)),
               ),
             ],
           ),
@@ -167,13 +168,17 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
       child: Column(
         children: [
           _rule(Icons.help_outline_rounded,
-              '$planetQuestionCount de holograme: poze și Cultură Generală, amestecate altfel de fiecare dată.'),
+              tr('$planetQuestionCount de holograme: poze și Cultură Generală, amestecate altfel de fiecare dată.',
+                  '$planetQuestionCount holograms: pictures and General Knowledge, shuffled differently every time.')),
           _rule(Icons.favorite_rounded,
-              '$planetHearts inimi ALE PLANETEI. Greșelile se scad din ele, niciodată din viețile tale.'),
+              tr('$planetHearts inimi ALE PLANETEI. Greșelile se scad din ele, niciodată din viețile tale.',
+                  '$planetHearts hearts BELONGING TO THE PLANET. Mistakes come out of those, never out of your own lives.')),
           _rule(Icons.visibility_rounded,
-              'Fără hint și fără blur — pozele se văd clar de la început.'),
+              tr('Fără hint și fără blur — pozele se văd clar de la început.',
+                  'No hints and no blur — the pictures are clear from the start.')),
           _rule(Icons.auto_awesome_rounded,
-              'De la $planetGoodRunCorrect corecte ai șansă la recompensa mare; la $planetQuestionCount din $planetQuestionCount e garantată.'),
+              tr('De la $planetGoodRunCorrect corecte ai șansă la recompensa mare; la $planetQuestionCount din $planetQuestionCount e garantată.',
+                  'From $planetGoodRunCorrect correct upwards you get a shot at the big reward; at $planetQuestionCount out of $planetQuestionCount it is guaranteed.')),
         ],
       ),
     );
@@ -208,8 +213,8 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
         ),
         child: Text(
           _runsLeft == 1
-              ? 'Mai ai o rulare în ciclul ăsta.'
-              : 'Mai ai $_runsLeft rulări în ciclul ăsta.',
+              ? tr('Mai ai o rulare în ciclul ăsta.', 'You have one run left this cycle.')
+              : tr('Mai ai $_runsLeft rulări în ciclul ăsta.', 'You have $_runsLeft runs left this cycle.'),
           textAlign: TextAlign.center,
           style: const TextStyle(
               color: AppColors.play, fontSize: 13, fontWeight: FontWeight.w800),
@@ -225,8 +230,8 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
       ),
       child: Column(
         children: [
-          const Text('Planeta se reîncarcă',
-              style: TextStyle(
+          Text(tr('Planeta se reîncarcă', 'The planet is recharging'),
+              style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
                   fontWeight: FontWeight.w700)),
@@ -255,8 +260,8 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
-          child: const Text('Intră pe planetă',
-              style: TextStyle(
+          child: Text(tr('Intră pe planetă', 'Enter the planet'),
+              style: const TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                   color: Colors.black)),
@@ -265,7 +270,8 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
     }
     if (!_canWatchAd) {
       return Text(
-        'Ai folosit toate cele $planetRunsPerCycleWithAd rulări ale ciclului. Revino după numărătoare.',
+        tr('Ai folosit toate cele $planetRunsPerCycleWithAd rulări ale ciclului. Revino după numărătoare.',
+            'You used all $planetRunsPerCycleWithAd runs of this cycle. Come back after the countdown.'),
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12),
       );
@@ -275,9 +281,9 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
       child: ElevatedButton.icon(
         onPressed: _busy ? null : _watchAd,
         icon: const Icon(Icons.smart_display_rounded, size: 18),
-        label: const Text('Vezi o reclamă pentru o rulare în plus',
+        label: Text(tr('Vezi o reclamă pentru o rulare în plus', 'Watch an ad for one extra run'),
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900)),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.coin,
           disabledBackgroundColor: Colors.white24,

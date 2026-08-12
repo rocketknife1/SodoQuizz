@@ -7,11 +7,10 @@ const Duration roomActivityRetention = Duration(minutes: 10);
 
 /// Un jucător, așa cum a intrat și cum a ieșit dintr-o cameră terminată.
 ///
-/// [entry] și [exit] sunt cifre de portofel, nu scor: [entry] e tot ce l-a
-/// costat participarea (taxa fixă de intrare + miza pusă), iar [exit] e tot ce
-/// i s-a creditat înapoi la decontare (câștigul din pool + surplusul returnat
-/// de plafonul mesei). Diferența dintre ele e câștigul sau pierderea reală —
-/// vezi core/betting.dart.
+/// [entry] și [exit] sunt cifre de portofel, nu scor: [entry] e miza plătită
+/// la intrare (aceeași pentru toți de la masă), iar [exit] e premiul primit la
+/// final. Diferența dintre ele e câștigul sau pierderea reală — vezi
+/// core/betting.dart.
 class RoomActivityPlayer {
   /// Identificatorul unic prin care se leagă totul de baza de date — același
   /// uid ca în `player_profiles` și `users`. Numele e doar pentru citit.
@@ -65,8 +64,13 @@ class RoomActivity {
   final String gameModeId;
   final Timestamp? finishedAt;
   final Timestamp? expiresAt;
+  /// Tot ce s-a strâns pe masă (miza × jucători).
   final int pool;
-  final int tableCap;
+
+  /// Miza camerei — aceeași pentru toți. A înlocuit vechiul „plafon al mesei",
+  /// care nu mai există de când nimeni nu mai poate paria cât vrea.
+  final int stake;
+
   final List<RoomActivityPlayer> players;
 
   const RoomActivity({
@@ -76,7 +80,7 @@ class RoomActivity {
     this.finishedAt,
     this.expiresAt,
     this.pool = 0,
-    this.tableCap = 0,
+    this.stake = 0,
   });
 
   int get playerCount => players.length;
@@ -103,7 +107,10 @@ class RoomActivity {
       finishedAt: data['finishedAt'] as Timestamp?,
       expiresAt: data['expiresAt'] as Timestamp?,
       pool: (data['pool'] as num?)?.toInt() ?? 0,
-      tableCap: (data['tableCap'] as num?)?.toInt() ?? 0,
+      // 'tableCap' e cheia veche, scrisă de telefoanele rămase pe versiunea
+      // cu plafon de masă — camerele astea expiră în 10 minute, dar până
+      // atunci adminul are ce citi.
+      stake: (data['stake'] as num?)?.toInt() ?? (data['tableCap'] as num?)?.toInt() ?? 0,
       players: [
         for (final p in raw)
           if (p is Map) RoomActivityPlayer.fromMap(Map<String, dynamic>.from(p)),

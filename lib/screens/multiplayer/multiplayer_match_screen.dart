@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/game_helpers.dart';
 import '../../core/stable_hash.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/questions.dart';
@@ -31,7 +32,8 @@ import 'multiplayer_results_screen.dart';
 /// Fiecare acțiune are preț (vezi game_helpers.dart): corect adaugă punctele
 /// întrebării, greșit scade [multiplayerWrongPenalty], iar hint-ul 50/50
 /// scade [multiplayerHintPenalty]. Scorul POATE ieși negativ — e intenționat,
-/// și e tratat corect la împărțirea pool-ului (vezi classicPerformances).
+/// și nu strică împărțirea premiilor: acolo contează doar ORDINEA scorurilor,
+/// nu valoarea lor (vezi core/betting.dart).
 class MultiplayerMatchScreen extends StatefulWidget {
   final String matchId;
   const MultiplayerMatchScreen({super.key, required this.matchId});
@@ -217,9 +219,9 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Nicio întrebare disponibilă.', style: TextStyle(color: Colors.white70)),
+              Text(tr('Nicio întrebare disponibilă.', 'No questions available.'), style: const TextStyle(color: Colors.white70)),
               const SizedBox(height: 12),
-              ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Înapoi')),
+              ElevatedButton(onPressed: () => Navigator.pop(context), child: Text(tr('Înapoi', 'Back'))),
             ],
           ),
         ),
@@ -278,7 +280,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Întrebarea ${_qIndex + 1}',
+              Text(tr('Întrebarea ${_qIndex + 1}', 'Question ${_qIndex + 1}'),
                   style: const TextStyle(color: Colors.white70, fontSize: 12)),
               Text('$_secondsLeft s',
                   style: TextStyle(
@@ -317,8 +319,11 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
             size: 18, color: available ? Colors.white : Colors.white38),
         label: Text(
           available
-              ? 'HINT 50/50  ·  −$cost pct  ·  $_hintsLeft rămase'
-              : (_hintUsedHere ? 'Hint folosit la întrebarea asta' : 'Nu mai ai hint-uri'),
+              ? tr('HINT 50/50  ·  −$cost pct  ·  $_hintsLeft rămase',
+                  'HINT 50/50  ·  −$cost pts  ·  $_hintsLeft left')
+              : (_hintUsedHere
+                  ? tr('Hint folosit la întrebarea asta', 'Hint already used on this question')
+                  : tr('Nu mai ai hint-uri', 'No hints left')),
           style: TextStyle(
             color: available ? Colors.white : Colors.white38,
             fontWeight: FontWeight.w800,

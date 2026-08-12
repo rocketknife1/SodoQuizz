@@ -5,6 +5,7 @@ import '../core/ads_service.dart';
 import '../core/game_helpers.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/culture_questions.dart';
 import '../data/storage_service.dart';
@@ -387,21 +388,22 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       children: [
         const Icon(Icons.hourglass_bottom_rounded, color: Colors.white38, size: 32),
         const SizedBox(height: 10),
-        const Text(
-          'Cultură Generală',
+        Text(
+          tr('Cultură Generală', 'General Knowledge'),
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          'Ai jucat de ${StorageService.cultureQuizPlayLimit} ori în ultimele ${StorageService.cultureQuizWindowMinutes} minute',
+          tr('Ai jucat de ${StorageService.cultureQuizPlayLimit} ori în ultimele ${StorageService.cultureQuizWindowMinutes} minute',
+              'You played ${StorageService.cultureQuizPlayLimit} times in the last ${StorageService.cultureQuizWindowMinutes} minutes'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white54, fontSize: 11),
         ),
         const SizedBox(height: 12),
         Text('$m:$s', style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
-        const Text('până la următoarea sesiune', style: TextStyle(color: Colors.white38, fontSize: 10)),
+        Text(tr('până la următoarea sesiune', 'until the next session'), style: const TextStyle(color: Colors.white38, fontSize: 10)),
         const SizedBox(height: 12),
         GestureDetector(
           onTap: _watchingAd ? null : _skipCooldownWithAd,
@@ -422,7 +424,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
                 // home_screen.dart) textul lung depășea butonul (overflow).
                 Flexible(
                   child: Text(
-                    _watchingAd ? 'Se încarcă reclama...' : 'Reclamă • Sari peste așteptare',
+                    _watchingAd
+                        ? tr('Se încarcă reclama...', 'Loading the ad...')
+                        : tr('Reclamă • Sari peste așteptare', 'Watch ad • Skip the wait'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: _watchingAd ? Colors.white38 : AppColors.coin),
@@ -443,10 +447,10 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       children: [
         const Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
         const SizedBox(height: 8),
-        const Text(
-          'Cultură Generală',
+        Text(
+          tr('Cultură Generală', 'General Knowledge'),
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
+          style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Container(
@@ -460,12 +464,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         ),
         const SizedBox(height: 4),
         Text(
-          '${StorageService.cultureQuizPlayLimit} runde • ${cultureSecondsPerQuestion}s/întrebare',
+          tr('${StorageService.cultureQuizPlayLimit} runde • ${cultureSecondsPerQuestion}s/întrebare',
+              '${StorageService.cultureQuizPlayLimit} rounds • ${cultureSecondsPerQuestion}s/question'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white60, fontSize: 10),
         ),
         Text(
-          'Recompensă la finalul rundei ${StorageService.cultureQuizPlayLimit}',
+          tr('Recompensă la finalul rundei ${StorageService.cultureQuizPlayLimit}',
+              'Reward at the end of round ${StorageService.cultureQuizPlayLimit}'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white38, fontSize: 8.5),
         ),
@@ -554,7 +560,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   /// între runde.
   Widget _buildFinished() {
     if (!_isFinalRound) {
-      final nextLabel = _roundNumber == 1 ? 'Pregătit pentru runda a II-a' : 'Pregătit pentru runda finală';
+      final nextLabel = _roundNumber == 1
+          ? tr('Pregătit pentru runda a II-a', 'Ready for round two')
+          : tr('Pregătit pentru runda finală', 'Ready for the final round');
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
@@ -562,7 +570,8 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
           const SizedBox(height: 8),
           Text(
-            'Runda $_roundNumber/$_totalRounds terminată — $correctCount/${_questions.length} corecte',
+            tr('Runda $_roundNumber/$_totalRounds terminată — $correctCount/${_questions.length} corecte',
+                'Round $_roundNumber/$_totalRounds done — $correctCount/${_questions.length} correct'),
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
           ),
@@ -589,13 +598,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       children: [
         const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
         const SizedBox(height: 8),
-        const Text(
-          'Runda finală terminată!',
-          style: TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+        Text(
+          tr('Runda finală terminată!', 'Final round done!'),
+          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 6),
         Text(
-          '+$_coinsEarned monede\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned viață/vieți' : ''}',
+          tr('+$_coinsEarned monede\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned viață/vieți' : ''}',
+              '+$_coinsEarned coins\n+$_xpEarned XP${_livesEarned > 0 ? '\n+$_livesEarned ${_livesEarned == 1 ? 'life' : 'lives'}' : ''}'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white70, fontSize: 11),
         ),
@@ -609,7 +619,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              _collecting ? '...' : 'COLECTEAZĂ',
+              _collecting ? '...' : tr('COLECTEAZĂ', 'COLLECT'),
               style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w800),
             ),
           ),

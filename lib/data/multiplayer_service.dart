@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../core/betting.dart';
+import '../core/lang.dart';
 import '../models/multiplayer_models.dart';
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
@@ -111,8 +113,10 @@ class MultiplayerService {
     // frecvent motiv real e conexiunea, nu serverul.
     throw MultiplayerUnavailableException(
       _looksOffline(lastError)
-          ? 'Nu am reușit să mă conectez. Verifică internetul și încearcă din nou.'
-          : 'Multiplayer indisponibil momentan. Încearcă din nou în câteva secunde.',
+          ? tr('Nu am reușit să mă conectez. Verifică internetul și încearcă din nou.',
+              'Could not connect. Check your internet and try again.')
+          : tr('Multiplayer indisponibil momentan. Încearcă din nou în câteva secunde.',
+              'Multiplayer is unavailable right now. Try again in a few seconds.'),
     );
   }
 
@@ -136,13 +140,16 @@ class MultiplayerService {
 
   // ─── Camera privată ─────────────────────────────────────────────────────
 
+  /// [stake] e miza camerei, aleasă de cel care o creează — singurul moment
+  /// din tot fluxul în care cineva alege o sumă. Se scrie pe documentul
+  /// camerei, ca oricine intră după aceea să plătească exact atât, fără să mai
+  /// aibă ceva de decis.
   Future<MatchInfo> createRoom({
     required String displayName,
     String? photoUrl,
     String avatarStyle = '',
     MatchGameMode gameMode = MatchGameMode.classic,
-    int bet = 0,
-    double betPercent = 0,
+    int stake = 0,
   }) async {
     await ensureInitialized();
     final me = currentPlayerId;
@@ -156,7 +163,9 @@ class MultiplayerService {
       hostId: me,
       hostName: displayName,
       hostPhotoUrl: photoUrl,
+      hostAvatarStyle: avatarStyle,
       gameMode: gameMode,
+      stake: stake,
     );
     await _paced(() async {
       await ref.set(info.toMap());
@@ -168,8 +177,7 @@ class MultiplayerService {
               photoUrl: photoUrl,
               score: 0,
               isHost: true,
-              bet: bet,
-              betPercent: betPercent,
+              bet: stake,
               avatarStyle: avatarStyle,
             ).toMap(),
           );
@@ -177,17 +185,16 @@ class MultiplayerService {
     return info;
   }
 
-  /// Caută o cameră după cod și te alătură ca jucător — aruncă dacă nu
-  /// există, dacă meciul a pornit deja, sau dacă e plină.
-  Future<MatchInfo> joinRoomByCode({
-    required String code,
-    required String displayName,
-    String? photoUrl,
-    String avatarStyle = '',
-    int bet = 0,
-    double betPercent = 0,
-  }) async {
+  /// Caută o cameră după cod FĂRĂ să intri în ea — folosit ca să-i putem
+  /// arăta jucătorului miza camerei înainte să plătească ceva. Aruncă dacă
+  /// nu există sau dacă meciul a pornit deja.
+  Future<MatchInfo> lookupRoomByCode(String code) async {
     await ensureInitialized();
+    final doc = await _findLobbyByCode(code);
+    return MatchInfo.fromDoc(doc);
+  }
+
+  Future<DocumentSnapshot<Map<String, dynamic>>> _findLobbyByCode(String code) async {
     final query = await _db
         .collection('matches')
         .where('code', isEqualTo: code.toUpperCase())
@@ -197,12 +204,20 @@ class MultiplayerService {
     if (query.docs.isEmpty) {
       throw const MultiplayerUnavailableException('Cod invalid sau camera a pornit deja.');
     }
-    return _joinRoomDoc(query.docs.first,
-        displayName: displayName,
-        photoUrl: photoUrl,
-        avatarStyle: avatarStyle,
-        bet: bet,
-        betPercent: betPercent);
+    return query.docs.first;
+  }
+
+  /// Caută o cameră după cod și te alătură ca jucător — aruncă dacă nu
+  /// există, dacă meciul a pornit deja, sau dacă e plină.
+  Future<MatchInfo> joinRoomByCode({
+    required String code,
+    required String displayName,
+    String? photoUrl,
+    String avatarStyle = '',
+  }) async {
+    await ensureInitialized();
+    return _joinRoomDoc(await _findLobbyByCode(code),
+        displayName: displayName, photoUrl: photoUrl, avatarStyle: avatarStyle);
   }
 
   /// La fel ca [joinRoomByCode], dar pentru o cameră aleasă direct din
@@ -212,34 +227,32 @@ class MultiplayerService {
     required String displayName,
     String? photoUrl,
     String avatarStyle = '',
-    int bet = 0,
-    double betPercent = 0,
   }) async {
     await ensureInitialized();
     final doc = await _db.collection('matches').doc(matchId).get();
     if (!doc.exists || doc.data()?['status'] != MatchStatus.lobby.name) {
-      throw const MultiplayerUnavailableException('Camera nu mai e disponibilă.');
+      throw MultiplayerUnavailableException(
+          tr('Camera nu mai e disponibilă.', 'That room is no longer available.'));
     }
     return _joinRoomDoc(doc,
-        displayName: displayName,
-        photoUrl: photoUrl,
-        avatarStyle: avatarStyle,
-        bet: bet,
-        betPercent: betPercent);
+        displayName: displayName, photoUrl: photoUrl, avatarStyle: avatarStyle);
   }
 
+  /// Miza NU e un parametru: se citește de pe documentul camerei. Cine intră
+  /// plătește exact cât a stabilit cel care a creat camera, și n-are cum să
+  /// ajungă la masă cu altă sumă decât ceilalți — nici din grabă, nici dintr-un
+  /// client modificat.
   Future<MatchInfo> _joinRoomDoc(
     DocumentSnapshot<Map<String, dynamic>> doc, {
     required String displayName,
     String? photoUrl,
     String avatarStyle = '',
-    int bet = 0,
-    double betPercent = 0,
   }) async {
     final players = await doc.reference.collection('players').get();
     if (players.docs.length >= matchPlayerCount) {
-      throw const MultiplayerUnavailableException('Camera e plină.');
+      throw MultiplayerUnavailableException(tr('Camera e plină.', 'That room is full.'));
     }
+    final info = MatchInfo.fromDoc(doc);
     final me = currentPlayerId;
     await _paced(() => doc.reference.collection('players').doc(me).set(
           MatchPlayer(
@@ -248,12 +261,11 @@ class MultiplayerService {
             avatarSeed: me,
             photoUrl: photoUrl,
             score: 0,
-            bet: bet,
-            betPercent: betPercent,
+            bet: info.stake,
             avatarStyle: avatarStyle,
           ).toMap(),
         ));
-    return MatchInfo.fromDoc(doc);
+    return info;
   }
 
   /// O cameră abandonată (host ieșit brusc din tab, fără să treacă prin
@@ -423,9 +435,12 @@ class MultiplayerService {
         .map((s) => s.docs.map(ChatMessage.fromDoc).toList());
   }
 
-  /// Părăsește meciul — dacă hostul pleacă în timp ce meciul e încă în
-  /// lobby, ștergem camera întreagă (players + chat) ca să nu rămână
-  /// listeners orfani pentru ceilalți; altfel propriul jucător e scos, iar
+  /// Părăsește meciul — dacă GAZDA pleacă în timp ce meciul e încă în lobby,
+  /// ștergem camera întreagă (players + chat). Ștergerea e și semnalul prin
+  /// care ceilalți află: documentul dispare, iar lobby-ul lor îi scoate afară
+  /// cu mesajul „gazda a plecat" (vezi RoomLobbyScreen — fără asta rămâneau
+  /// blocați într-o cameră care nu mai exista, fără Start și invizibilă pentru
+  /// oricine altcineva); altfel propriul jucător e scos, iar
   /// dacă era ultimul rămas, ștergem și noi camera întreagă (players + chat
   /// + documentul meciului) — altfel meciurile terminate s-ar acumula la
   /// nesfârșit în Firestore, fără niciun cleanup automat (nu avem Cloud
@@ -495,16 +510,14 @@ class MultiplayerService {
 
   // ─── Matchmaking public ─────────────────────────────────────────────────
 
-  /// Pariul intră în coadă odată cu jucătorul: cine formează meciul copiază
-  /// [bet]/[betPercent] din intrarea de coadă direct în documentul de
-  /// jucător al meciului, ca decontarea de la final să aibă aceleași date
-  /// pentru toată lumea (vezi core/betting.dart).
+  /// La Join Online nu există cineva care să creeze camera, deci nu are cine
+  /// alege miza: toată lumea intră cu [publicMatchStake], scrisă aici odată cu
+  /// jucătorul și copiată apoi în documentul de meci de cel care formează
+  /// perechea (vezi [attemptFormMatch]).
   Future<void> joinMatchmakingQueue({
     required String displayName,
     String? photoUrl,
     String avatarStyle = '',
-    int bet = 0,
-    double betPercent = 0,
   }) async {
     await ensureInitialized();
     final me = currentPlayerId;
@@ -514,8 +527,7 @@ class MultiplayerService {
       'photoUrl': photoUrl,
       'avatarStyle': avatarStyle,
       'matchId': null,
-      'bet': bet,
-      'betPercent': betPercent,
+      'bet': publicMatchStake,
       'joinedAt': FieldValue.serverTimestamp(),
     });
   }
@@ -558,7 +570,13 @@ class MultiplayerService {
           }
         }
 
-        final info = MatchInfo(id: matchRef.id, mode: MatchMode.public, status: MatchStatus.playing, hostId: me);
+        final info = MatchInfo(
+          id: matchRef.id,
+          mode: MatchMode.public,
+          status: MatchStatus.playing,
+          hostId: me,
+          stake: publicMatchStake,
+        );
         tx.set(matchRef, info.toMap());
 
         for (final c in candidates) {
@@ -573,8 +591,7 @@ class MultiplayerService {
               avatarStyle: data['avatarStyle'] as String? ?? '',
               score: 0,
               isHost: c.id == me,
-              bet: data['bet'] as int? ?? 0,
-              betPercent: (data['betPercent'] as num?)?.toDouble() ?? 0,
+              bet: data['bet'] as int? ?? publicMatchStake,
             ).toMap(),
           );
           tx.update(c.reference, {'matchId': matchRef.id});

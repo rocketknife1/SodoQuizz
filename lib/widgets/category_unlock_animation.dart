@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 
 /// Animație scurtă (dialog peste ecranul curent) arătată când jucătorul
@@ -180,7 +181,8 @@ class _CategoryUnlockAnimationState extends State<CategoryUnlockAnimation>
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '+${widget.unlockedCount} întrebări deblocate!',
+                          tr('+${widget.unlockedCount} întrebări deblocate!',
+                              '+${widget.unlockedCount} questions unlocked!'),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: AppColors.coin.withAlpha(_alpha(255, isUnlocked ? fadeIn : 0.0).toInt()),

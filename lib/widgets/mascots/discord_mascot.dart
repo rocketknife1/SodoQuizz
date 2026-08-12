@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/audio.dart';
+import '../../core/eco_mode.dart';
 import '../../core/theme.dart';
 import 'googly_eyes.dart';
 import 'mascot_props.dart';
@@ -65,11 +66,11 @@ class _DiscordMascotState extends State<DiscordMascot> with TickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _idle = AnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
+    _idle = EcoAnimationController(vsync: this, duration: const Duration(seconds: 4))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
-    _bubbleCycle = AnimationController(
+    _bubbleCycle = EcoAnimationController(
       vsync: this,
       duration: const Duration(seconds: _bubbleVisibleSeconds + _bubbleHiddenSeconds),
     )..repeat();

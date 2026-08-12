@@ -32,6 +32,11 @@ class StorageService {
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
   static const _hintsKey = 'hints_balance';
+  static const _ecoModeKey = 'eco_mode';
+  static const _musicTrackKey = 'music_track_id';
+  static const _languageKey = 'app_language';
+  static const _notificationsKey = 'notifications_inbox';
+  static const _notificationsReadKey = 'notifications_read_at';
 
   // ─── Zestrea unui jucător nou (vezi reproiectarea economiei v3) ──────────
   // Înainte: 5 vieți, 3 hints, 0 monede, 0 gems — prea puține vieți și
@@ -555,6 +560,12 @@ class StorageService {
     _introSeenKey,
     _multiplayerInfoSeenKey,
     _noAdsForeverKey,
+    // Modul Eco și limba sunt preferințe de afișare, nu progres — un reset de
+    // cont n-are de ce să repună jocul în română unui jucător străin, nici
+    // să-i reaprindă ecranul la maxim.
+    _ecoModeKey,
+    _languageKey,
+    _musicTrackKey,
   ];
 
   /// Aduce contul de pe TELEFONUL ACESTA în starea unui jucător nou: tot
@@ -1079,6 +1090,79 @@ class StorageService {
   static Future<void> setNoBlurMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_noBlurKey, value);
+  }
+
+  // ─── Modul Eco (baterie/încălzire) ────────────────────────────────────────
+
+  static Future<bool> getEcoMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_ecoModeKey) ?? false;
+  }
+
+  static Future<void> setEcoMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_ecoModeKey, value);
+  }
+
+  // ─── Piesa de fundal aleasă (vezi core/music_tracks.dart) ────────────────
+
+  /// Id-ul piesei, nu numele fișierului: fișierul se poate redenumi sau
+  /// reîncoda (mp3 → ogg) fără ca preferința fiecărui jucător să se piardă.
+  /// Șirul gol = piesa implicită.
+  static Future<String> getMusicTrackId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_musicTrackKey) ?? '';
+  }
+
+  static Future<void> setMusicTrackId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_musicTrackKey, id);
+  }
+
+  // ─── Limba interfeței ─────────────────────────────────────────────────────
+
+  /// Codul limbii alese ('ro' / 'en'), sau șirul gol dacă jucătorul n-a ales
+  /// niciodată — caz în care se ia limba telefonului, vezi L10n.load.
+  /// Distincția contează: „n-a ales" nu e același lucru cu „a ales română",
+  /// altfel un telefon setat pe engleză n-ar porni niciodată în engleză.
+  static Future<String> getLanguageCode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_languageKey) ?? '';
+  }
+
+  static Future<void> setLanguageCode(String code) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_languageKey, code);
+  }
+
+  // ─── Cutia de notificări (vezi NotificationService) ───────────────────────
+
+  /// Notificările ținute pe telefon, ca listă de JSON-uri. Sunt salvate aici,
+  /// nu citite de fiecare dată din Firestore, ca panoul să se deschidă instant
+  /// și offline; ce trimite adminul se descarcă o singură dată (vezi
+  /// NotificationService.pullFromCloud) și rămâne local de atunci.
+  static Future<List<String>> getNotifications() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getStringList(_notificationsKey) ?? const [];
+  }
+
+  static Future<void> setNotifications(List<String> raw) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_notificationsKey, raw);
+  }
+
+  /// Momentul (millisecondsSinceEpoch) în care jucătorul a deschis ultima
+  /// oară panoul de notificări. Tot ce a venit după e „necitit" — un singur
+  /// număr în loc de un marcaj per notificare, fiindcă panoul se citește
+  /// oricum întreg dintr-o privire.
+  static Future<int> getNotificationsReadAt() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_notificationsReadKey) ?? 0;
+  }
+
+  static Future<void> setNotificationsReadAt(int millis) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_notificationsReadKey, millis);
   }
 
   // ─── Popup de introducere la prima intrare în joc ─────────────────────────

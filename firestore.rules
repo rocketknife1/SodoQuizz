@@ -145,6 +145,43 @@ service cloud.firestore {
         allow delete: if request.auth != null && (request.auth.uid == uid || request.auth.uid == fromUid);
       }
 
+      // Jucatorii blocati de proprietarul acestui profil (vezi
+      // ModerationService). Lista e STRICT personala: nimeni altcineva nu are
+      // ce cauta in ea, nici macar cel blocat — mai ales el, de fapt. Blocarea
+      // nu-l anunta si nu-l impiedica sa scrie mai departe pentru ceilalti; ii
+      // ascunde mesajele doar celui care a apasat butonul, la afisare.
+      //
+      // Adminul primeste read+delete separat, ca sa poata curata subcolectia
+      // la "Sterge complet" (vezi PlayerProfileService.purgePlayer): in
+      // Firestore documentele-copil NU dispar odata cu parintele, deci fara
+      // regula asta ar fi ramas atarnate sub un profil inexistent.
+      match /blocked/{blockedUid} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+        allow read, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      }
+
+      // "Cutia postala" de anunturi scrise de admin (vezi
+      // NotificationService.pullFromCloud) — acelasi tipar ca admin_grants de
+      // mai jos: adminul scrie, proprietarul citeste si sterge dupa ce le-a
+      // copiat pe telefon.
+      //
+      // DE CE E O SUBCOLECTIE PER JUCATOR, si nu o colectie publica de
+      // anunturi: un anunt e adesea personal ("ti-am dat inapoi monedele
+      // pierdute"), iar o colectie citibila de toata lumea ar fi facut
+      // mesajele fiecaruia vizibile tuturor. Costa mai multe scrieri la un
+      // anunt global (unul per jucator, vezi broadcastNotification), dar nu
+      // deschide nimic la citire.
+      //
+      // Jucatorul NU are voie sa scrie aici: altfel un client modificat si-ar
+      // fi putut fabrica singur "anunturi oficiale".
+      match /notifications/{notificationId} {
+        allow read, delete: if request.auth != null && request.auth.uid == uid;
+        // adminul: scrie anunturile si le curata la "Sterge complet"
+        // (purgePlayer) — in Firestore documentele-copil nu dispar odata cu
+        // profilul parinte.
+        allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      }
+
       // Prieteni acceptați — relație mutuală, câte un doc-oglindă pe fiecare
       // parte (player_profiles/A/friends/B ȘI player_profiles/B/friends/A).
       // La acceptare, oricare din cei doi trebuie să poată scrie AMBELE
@@ -201,6 +238,59 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && (request.auth.token.email == 'dragosssx@gmail.com'
             || (resource.data.expiresAt is timestamp && request.time > resource.data.expiresAt));
+    }
+
+    // Raportarile trimise de jucatori (vezi ModerationService.submitReport).
+    //
+    // Scrie oricine, dar numai in numele lui: conditia pe reporterUid opreste
+    // un client modificat sa fabrice reclamatii semnate cu numele altcuiva —
+    // altfel raportarea ar fi devenit ea insasi o unealta de harassment.
+    //
+    // CITIREA E DOAR A ADMINULUI, si asta conteaza: documentul contine
+    // mesajul reclamat si numele celui care a raportat. Daca l-ar putea citi
+    // oricine, "cine m-a reclamat" ar fi la un tap distanta, iar butonul de
+    // raportare ar deveni periculos de folosit.
+    //
+    // Fara update pentru jucatori: o raportare trimisa nu se mai poate
+    // rescrie, nici de cel care a trimis-o.
+    match /reports/{reportId} {
+      allow create: if request.auth != null && request.resource.data.reporterUid == request.auth.uid;
+      allow read, update, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
+    // Chat privat intre doi prieteni (vezi FriendChatService) — separat de
+    // chatul din camera multiplayer, care ramane sub matches/{matchId}/chat.
+    //
+    // Toata securitatea sta in NUMELE documentului: cele doua uid-uri,
+    // sortate alfabetic, lipite cu "_". Regula despica id-ul inapoi si cere ca
+    // cel care intra sa fie una din cele doua bucati. Merge fiindca uid-urile
+    // Firebase sunt alfanumerice, fara "_" in ele, deci despicarea da exact
+    // doua bucati, iar sortarea face ca acelasi fir sa aiba acelasi nume
+    // indiferent cine scrie primul.
+    //
+    // De ce nu se verifica si prietenia: ar cere un get() in plus la FIECARE
+    // mesaj citit sau scris. Ecranul se deschide oricum doar din lista de
+    // prieteni, iar cel mai rau caz posibil e ca doi oameni care s-au scos din
+    // prieteni sa-si mai poata scrie — firul e tot al lor, nu se scurge nimic
+    // catre altcineva.
+    match /friend_chats/{threadId} {
+      function isParticipant() {
+        return request.auth != null && request.auth.uid in threadId.split('_');
+      }
+
+      allow read, create, update: if isParticipant();
+      // stergerea: participantii (la stergerea propriului cont, vezi
+      // FriendChatService.deleteThreadWith) sau adminul, la "Sterge complet".
+      allow delete: if isParticipant()
+        || (request.auth != null && request.auth.token.email == 'dragosssx@gmail.com');
+
+      match /messages/{messageId} {
+        allow read: if isParticipant();
+        // acelasi tipar ca la chatul din camera: poti scrie doar in numele tau.
+        allow create: if isParticipant() && request.resource.data.senderId == request.auth.uid;
+        allow delete: if isParticipant()
+          || (request.auth != null && request.auth.token.email == 'dragosssx@gmail.com');
+      }
     }
 
     // Conturi banate de admin (vezi PlayerProfileService.banPlayer) — un doc

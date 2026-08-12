@@ -2,7 +2,9 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/betting.dart';
+import '../core/eco_mode.dart';
 import '../core/game_helpers.dart';
+import '../core/lang.dart';
 import '../core/theme.dart';
 
 /// Balonul de vorbă care plutește pe Home, în golul dintre mascota Discord
@@ -29,7 +31,7 @@ class _BetaInfoBalloonState extends State<BetaInfoBalloon>
   @override
   void initState() {
     super.initState();
-    _float = AnimationController(
+    _float = EcoAnimationController(
         vsync: this, duration: const Duration(milliseconds: 3200))
       ..repeat();
   }
@@ -93,10 +95,10 @@ class _BetaInfoBalloonState extends State<BetaInfoBalloon>
                     ),
                   ),
                   const SizedBox(height: 2),
-                  const FittedBox(
+                  FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('citește aici',
-                        style: TextStyle(color: Colors.white54, fontSize: 9.5)),
+                    child: Text(tr('citește aici', 'read this'),
+                        style: const TextStyle(color: Colors.white54, fontSize: 9.5)),
                   ),
                 ],
               ),
@@ -189,10 +191,10 @@ class BetaInfoDialog extends StatelessWidget {
           children: [
             const Text('🚧', style: TextStyle(fontSize: 30)),
             const SizedBox(height: 8),
-            const Text(
-              'SodoQuizz e în BETA',
+            Text(
+              tr('SodoQuizz e în BETA', 'SodoQuizz is in BETA'),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                   color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 16),
@@ -204,19 +206,27 @@ class BetaInfoDialog extends StatelessWidget {
                     _section(
                       icon: Icons.construction_rounded,
                       color: AppColors.orange,
-                      title: 'Ce înseamnă „beta"',
-                      body: 'Jocul e încă în testare. Nu toate pozele sunt '
-                          'încărcate sau editate — unele întrebări arată încă '
-                          'imagini provizorii, altele lipsesc de tot. Îl '
-                          'dezvolt singur, așa că update-urile vin mai greu '
-                          'decât mi-aș dori. Dacă găsești ceva stricat, spune-mi '
-                          'pe Discord (marțianul verde de pe ecranul principal).',
+                      title: tr('Ce înseamnă „beta"', 'What "beta" means'),
+                      body: tr(
+                          'Jocul e încă în testare. Nu toate pozele sunt '
+                              'încărcate sau editate — unele întrebări arată încă '
+                              'imagini provizorii, altele lipsesc de tot. Îl '
+                              'dezvolt singur, așa că update-urile vin mai greu '
+                              'decât mi-aș dori. Dacă găsești ceva stricat, spune-mi '
+                              'pe Discord (marțianul verde de pe ecranul principal).',
+                          'The game is still being tested. Not all the pictures are '
+                              'uploaded or edited — some questions still show '
+                              'placeholder images, others are missing entirely. I build '
+                              'this on my own, so updates come slower than I would like. '
+                              'If you find something broken, tell me on Discord (the '
+                              'green martian on the main screen).'),
                     ),
                     _section(
                       icon: Icons.quiz_rounded,
                       color: AppColors.purple,
-                      title: 'Modul Clasic — cum se joacă',
-                      body: 'PLAY → alegi o categorie → plătești taxa de intrare. '
+                      title: tr('Modul Clasic — cum se joacă', 'Classic mode — how to play'),
+                      body: tr(
+                          'PLAY → alegi o categorie → plătești taxa de intrare. '
                           'Vezi o poză neclară și 4 variante dedesubt: APEȘI PE '
                           'VARIANTA pe care o crezi corectă. Butonul „Hint" '
                           'limpezește poza (al 2-lea hint elimină 2 variante '
@@ -225,12 +235,21 @@ class BetaInfoDialog extends StatelessWidget {
                           'Răspuns greșit = pierzi o viață. La fiecare 10 '
                           'întrebări primești un bonus, iar la ieșire recuperezi '
                           'taxa dacă ai destule răspunsuri corecte.',
+                          'PLAY → pick a category → pay the entry fee. '
+                              'You see a blurred picture and 4 options underneath: TAP THE '
+                              'OPTION you think is right. The "Hint" button sharpens the '
+                              'picture (the 2nd hint removes 2 wrong options, the 3rd gives '
+                              'you a chance percentage) — it costs coins and hints. '
+                              'A wrong answer = you lose a life. Every 10 questions you get '
+                              'a bonus, and on the way out you get the fee back if you had '
+                              'enough correct answers.'),
                     ),
                     _section(
                       icon: Icons.compare_arrows_rounded,
                       color: AppColors.danger,
-                      title: 'Higher or Lower — cum se joacă',
-                      body: 'Vezi două lucruri: „campionul", cu numărul lui deja '
+                      title: tr('Higher or Lower — cum se joacă', 'Higher or Lower — how to play'),
+                      body: tr(
+                          'Vezi două lucruri: „campionul", cu numărul lui deja '
                           'la vedere, și „provocatorul", cu numărul ascuns. '
                           'APEȘI PE „MAI MULT" sau „MAI PUȚIN" ca să spui dacă '
                           'provocatorul e căutat mai mult sau mai puțin decât '
@@ -240,26 +259,52 @@ class BetaInfoDialog extends StatelessWidget {
                           'aceeași rundă, o greșeală îți dă o pâine 🍞, iar la '
                           '$higherLowerMaxBreadsLabel pâini ești eliminat și '
                           'rămâi spectator. Ultimul rămas la masă câștigă.',
+                          'You see two things: the "champion", with its number already '
+                              'visible, and the "challenger", with its number hidden. '
+                              'TAP "HIGHER" or "LOWER" to say whether the challenger is '
+                              'searched more or less than the champion. You have 10 '
+                              'seconds. Correct = the streak continues and you win more at '
+                              'every step; wrong = the streak is over. In multiplayer '
+                              'everyone votes secretly in the same round, a mistake earns '
+                              'you a bread 🍞, and at $higherLowerMaxBreadsLabel breads you '
+                              'are eliminated and become a spectator. The last one left at '
+                              'the table wins.'),
                     ),
                     _section(
                       icon: Icons.casino_rounded,
                       color: AppColors.coin,
-                      title: 'Multiplayer — noul sistem de pariuri',
-                      body: 'Intrarea în orice meci costă $multiplayerEntryFee '
-                          'monede taxă fixă PLUS un pariu ales de tine, între '
-                          '${(minBetPercent * 100).round()}% și ${(maxBetPercent * 100).round()}% '
-                          'din câte monede ai. Toate pariurile formează un pool '
-                          'care se împarte la final: cea mai mare parte după cât '
-                          'ai pariat, cât de bine ai jucat și cât risc ți-ai '
-                          'asumat, iar restul strict după locul în clasament, '
-                          'indiferent de mărimea pariului. Cu cât sunteți mai '
-                          'mulți la masă, cu atât premiul locului 1 e mai mare.',
+                      title: tr('Multiplayer — o singură miză, aceeași pentru toți',
+                          'Multiplayer — one stake, the same for everyone'),
+                      body: tr(
+                          'Fiecare cameră are o miză, aleasă o singură dată de '
+                          'cel care face camera (💰${matchStakeOptions.join(', 💰')}). '
+                          'Toți ceilalți plătesc exact aceeași sumă — cine intră '
+                          'nu are ce alege. La Join Online e mereu '
+                          '💰$publicMatchStake.\n'
+                          'Mizele se strâng într-o grămadă, din care jocul '
+                          'oprește ${(matchRake * 100).round()}%. Restul merge la '
+                          'jumătatea de sus a clasamentului: locul 1 ia dublu '
+                          'față de locul 2, locul 2 dublu față de locul 3, și tot '
+                          'așa. Ceilalți pierd miza. Tabelul exact se vede în '
+                          'cameră, dinainte.',
+                          'Every room has a stake, picked once by whoever creates the '
+                              'room (💰${matchStakeOptions.join(', 💰')}). '
+                              'Everyone else pays exactly the same — joiners have nothing '
+                              'to choose. In Join Online it is always '
+                              '💰$publicMatchStake.\n'
+                              'All stakes go into one pot, from which the game keeps '
+                              '${(matchRake * 100).round()}%. The rest goes to the top '
+                              'half of the standings: 1st takes double 2nd, 2nd double '
+                              '3rd, and so on. The rest lose their stake. The exact table '
+                              'is shown in the room, up front.'),
                     ),
                     _section(
                       icon: Icons.timer_rounded,
                       color: AppColors.play,
-                      title: 'Multiplayer Clasic — un minut, contra tuturor',
-                      body: 'Meciul ține $multiplayerMatchSeconds de secunde, '
+                      title: tr('Multiplayer Clasic — un minut, contra tuturor',
+                          'Classic Multiplayer — one minute, against everyone'),
+                      body: tr(
+                          'Meciul ține $multiplayerMatchSeconds de secunde, '
                           'același cronometru pentru toți. Răspuns corect = '
                           'punctele întrebării; răspuns GREȘIT = pierzi puncte, '
                           'deci nu merită să bați la nimereală. Ai '
@@ -268,32 +313,50 @@ class BetaInfoDialog extends StatelessWidget {
                           'variante și te costă puncte, dar NU se scad din '
                           'hint-urile tale și nu costă monede — la masă toți au '
                           'exact aceleași unelte.',
+                          'The match lasts $multiplayerMatchSeconds seconds, the same '
+                              'clock for everyone. A correct answer = the question\'s '
+                              'points; a WRONG answer = you lose points, so guessing '
+                              'wildly is not worth it. You get '
+                              '$multiplayerHintsPerMatch hints for the whole match (at '
+                              'most one per question): they leave you only two options and '
+                              'cost you points, but they do NOT come out of your own hints '
+                              'and cost no coins — at the table everyone has exactly the '
+                              'same tools.'),
                     ),
                     _section(
                       icon: Icons.balance_rounded,
                       color: AppColors.teal,
-                      title: 'De ce nu te poate „mânca" un jucător bogat',
-                      body: 'Masa are un plafon: nimeni nu poate pune mai mult '
-                          'de ${tableCapMedianMultiple.toStringAsFixed(1).replaceAll('.', ',')}× '
-                          'mediana pariurilor de la masă — surplusul i se '
-                          'returnează, nu intră în joc. Iar partea de pool '
-                          'împărțită după clasament nu ține deloc cont de cât ai '
-                          'pariat. Concret: dacă cineva pariază mult și pierde, '
-                          'banii lui ajung în mare parte la cei care au rezistat '
-                          'până la final — chiar dacă ei au pus foarte puțin. '
-                          'A paria enorm la o masă mică e, matematic, o idee '
-                          'proastă.',
+                      title: tr('De ce nu te poate „mânca" un jucător bogat',
+                          'Why a rich player cannot eat you alive'),
+                      body: tr(
+                          'La aceeași masă toți pun exact aceeași miză, deci '
+                              'nimeni nu poate cumpăra un loc mai bun. Cine are '
+                              'multe monede poate face camere cu mize mari, dar în '
+                              'camera lui plătește la fel ca tine, iar premiile se '
+                              'dau strict după cum ați jucat.',
+                          'At the same table everyone puts in exactly the same stake, so '
+                              'nobody can buy a better place. Someone with a lot of coins '
+                              'can create high-stake rooms, but in their own room they pay '
+                              'the same as you, and prizes are handed out strictly by how '
+                              'you played.'),
                     ),
                     _section(
                       icon: Icons.tips_and_updates_rounded,
                       color: AppColors.hint,
-                      title: 'De unde faci rost de resurse',
-                      body: 'Roata norocului (o dată la 24h) e cel mai mare '
-                          'premiu din joc — nu o rata. Clippy (agrafa) îți dă un '
-                          'bonus de 3 întrebări fără risc la fiecare 5 minute. '
-                          'Cultură Generală merge în runde, cu pauză între ele. '
-                          'Plus quest-urile zilnice, care acum dau gems la '
-                          'fiecare prag — gems-ul deblochează categorii noi.',
+                      title: tr('De unde faci rost de resurse', 'Where to get resources'),
+                      body: tr(
+                          'Roata norocului (o dată la 24h) e cel mai mare '
+                              'premiu din joc — nu o rata. Clippy (agrafa) îți dă un '
+                              'bonus de 3 întrebări fără risc la fiecare 5 minute. '
+                              'Cultură Generală merge în runde, cu pauză între ele. '
+                              'Plus quest-urile zilnice, care acum dau gems la '
+                              'fiecare prag — gems-ul deblochează categorii noi.',
+                          'The lucky wheel (once every 24h) is the biggest prize in the '
+                              'game — do not miss it. Clippy (the paperclip) gives you a '
+                              'risk-free 3-question bonus every 5 minutes. General '
+                              'Knowledge runs in rounds, with a break between them. Plus '
+                              'the daily quests, which now give gems at every threshold — '
+                              'gems unlock new categories.'),
                     ),
                   ],
                 ),
@@ -307,8 +370,8 @@ class BetaInfoDialog extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.orange,
                     padding: const EdgeInsets.symmetric(vertical: 13)),
-                child: const Text('Am înțeles',
-                    style: TextStyle(
+                child: Text(tr('Am înțeles', 'Got it'),
+                    style: const TextStyle(
                         color: Colors.white, fontWeight: FontWeight.w800)),
               ),
             ),

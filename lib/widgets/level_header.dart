@@ -1,8 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/eco_mode.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
 import 'avatar.dart';
+import 'notification_bell.dart';
 
 /// Header cu avatar + nivel + bară de progres XP (stânga) și pastilă de
 /// monede (dreapta) — folosit în capul fiecărui ecran principal.
@@ -27,6 +29,15 @@ class LevelHeader extends StatefulWidget {
   final String? livesUnlimitedLabel;
   final VoidCallback? onCoinsTap;
   final VoidCallback? onClaimLevelRewards;
+
+  /// Arată clopoțelul de notificări deasupra avatarului. Pornit doar în
+  /// meniul principal (vezi HomeScreen): acolo e „acasă" pentru jucător și
+  /// acolo îl caută, iar pe ecranele de joc ar fi doar o distragere.
+  final bool showNotifications;
+
+  /// Chemat după închiderea panoului de notificări — un cadou revendicat
+  /// între timp schimbă balanța de sub header.
+  final VoidCallback? onNotificationsClosed;
   final Key? coinBadgeKey;
   final Key? xpBadgeKey;
   final Key? livesBadgeKey;
@@ -45,6 +56,8 @@ class LevelHeader extends StatefulWidget {
     this.livesUnlimitedLabel,
     this.onCoinsTap,
     this.onClaimLevelRewards,
+    this.showNotifications = false,
+    this.onNotificationsClosed,
     this.coinBadgeKey,
     this.xpBadgeKey,
     this.livesBadgeKey,
@@ -57,14 +70,19 @@ class LevelHeader extends StatefulWidget {
 }
 
 class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin {
-  late final AnimationController _pulse;
-  late final AnimationController _wave;
+  // EcoAnimationController, nu AnimationController: unda de energie din bara
+  // de XP e o buclă infinită care ține telefonul să deseneze cadre non-stop
+  // cât timp ai ceva de revendicat. În Modul Eco se oprește singură, iar bara
+  // rămâne aurie și plină — la fel de vizibilă, doar nemișcată.
+  late final EcoAnimationController _pulse;
+  late final EcoAnimationController _wave;
 
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..repeat(reverse: true);
-    _wave = AnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+    _pulse = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
+      ..repeat(reverse: true);
+    _wave = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
   }
 
   @override
@@ -189,7 +207,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const MyAvatar(size: 44),
+            _avatarWithBell(),
             const SizedBox(width: 10),
             Expanded(child: xpColumn),
           ],
@@ -227,6 +245,38 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
           ),
         ),
       ],
+    );
+  }
+
+  /// Avatarul jucătorului cu clopoțelul de notificări agățat deasupra lui,
+  /// în colțul din dreapta-sus — locul cerut explicit, și oricum cel în care
+  /// îl caută oricine a mai folosit o aplicație cu notificări.
+  ///
+  /// CUTIA E MAI MARE DECÂT AVATARUL (56 în loc de 44) TOCMAI CA SĂ ÎNCAPĂ ȘI
+  /// CLOPOȚELUL. Prima variantă îl scotea în afara cutiei de 44px cu un
+  /// `Positioned` negativ și `Clip.none` — se VEDEA corect, dar aproape nu se
+  /// putea apăsa: în Flutter, o atingere e trimisă unui copil doar dacă pică
+  /// în interiorul cutiei părintelui, oricât ar picta el în afara ei. Deci
+  /// tot ce ieșea din pătratul avatarului era mort la tap.
+  ///
+  /// Cu 56x56, avatarul stă jos-stânga și clopoțelul sus-dreapta, suprapuse
+  /// exact ca înainte vizual, dar amândouă complet înăuntru — deci tapabile
+  /// pe toată suprafața lor.
+  Widget _avatarWithBell() {
+    if (!widget.showNotifications) return const MyAvatar(size: 44);
+    return SizedBox(
+      width: 56,
+      height: 56,
+      child: Stack(
+        children: [
+          const Positioned(left: 0, bottom: 0, child: MyAvatar(size: 44)),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: NotificationBell(onClosed: widget.onNotificationsClosed),
+          ),
+        ],
+      ),
     );
   }
 

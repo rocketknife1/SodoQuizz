@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'audio.dart';
 import 'progression.dart';
 import '../data/storage_service.dart';
+import 'lang.dart';
 import '../screens/achievements_screen.dart';
 import '../screens/quests_screen.dart';
 import '../widgets/in_app_notification.dart';
@@ -60,7 +61,7 @@ Future<void> checkAchievements(BuildContext context) async {
     Sfx.tileSelect();
     InAppNotification.show(
       context,
-      title: 'Realizare deblocată! 🏆',
+      title: tr('Realizare deblocată! 🏆', 'Achievement unlocked! 🏆'),
       message: a.title,
       icon: a.icon,
       color: const Color(0xFFFF7A1A),

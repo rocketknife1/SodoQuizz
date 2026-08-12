@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
@@ -76,7 +77,7 @@ class _PlanetQuestion {
         choices: q.choices,
         answer: q.answer,
         color: color,
-        badge: 'Cultură Generală',
+        badge: tr('Cultură Generală', 'General Knowledge'),
       );
 }
 
@@ -304,12 +305,12 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Nicio întrebare disponibilă.',
+              Text(tr('Nicio întrebare disponibilă.', 'No questions available.'),
                   style: TextStyle(color: Colors.white70)),
               const SizedBox(height: 12),
               ElevatedButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('Înapoi')),
+                  child: Text(tr('Înapoi', 'Back'))),
             ],
           ),
         ),
@@ -603,14 +604,16 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
         children: [
           Text(
             _outOfHearts
-                ? 'Planeta a rămas fără inimi'
-                : (_jackpot ? 'Transmisie completă!' : 'Rulare încheiată'),
+                ? tr('Planeta a rămas fără inimi', 'The planet ran out of hearts')
+                : (_jackpot
+                    ? tr('Transmisie completă!', 'Transmission complete!')
+                    : tr('Rulare încheiată', 'Run finished')),
             textAlign: TextAlign.center,
             style: const TextStyle(
                 color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 6),
-          Text('$_correct din $planetQuestionCount',
+          Text(tr('$_correct din $planetQuestionCount', '$_correct of $planetQuestionCount'),
               style: const TextStyle(
                   color: AppColors.gem,
                   fontSize: 30,
@@ -632,7 +635,9 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: Text(_reward.isEmpty ? 'Închide' : 'Ridică recompensa',
+                child: Text(_reward.isEmpty
+                        ? tr('Închide', 'Close')
+                        : tr('Ridică recompensa', 'Claim the reward'),
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w900)),
               ),
@@ -648,8 +653,8 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                 ),
-                child: const Text('Înapoi la bază',
-                    style: TextStyle(
+                child: Text(tr('Înapoi la bază', 'Back to base'),
+                    style: const TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                         color: Colors.black)),
@@ -664,16 +669,18 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   /// i-a dat o ȘANSĂ, nu o promisiune — altfel un 15/17 fără jackpot pare bug.
   Widget _buildChanceExplainer(double chance) {
     if (_correct >= planetQuestionCount) {
-      return const Text(
-        'Scor perfect — recompensa mare vine garantat.',
+      return Text(
+        tr('Scor perfect — recompensa mare vine garantat.',
+            'Perfect score — the big reward is guaranteed.'),
         textAlign: TextAlign.center,
-        style: TextStyle(
+        style: const TextStyle(
             color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w700),
       );
     }
     if (chance <= 0) {
       return Text(
-        'De la $planetGoodRunCorrect corecte în sus începi să ai șansă la recompensa mare.',
+        tr('De la $planetGoodRunCorrect corecte în sus începi să ai șansă la recompensa mare.',
+            'From $planetGoodRunCorrect correct upwards you start having a shot at the big reward.'),
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.white.withAlpha(140), fontSize: 12.5),
       );
@@ -681,8 +688,10 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
     final percent = (chance * 100).round();
     return Text(
       _jackpot
-          ? 'Aveai $percent% șansă la recompensa mare — și a picat.'
-          : 'Aveai $percent% șansă la recompensa mare. N-a picat de data asta.',
+          ? tr('Aveai $percent% șansă la recompensa mare — și a picat.',
+              'You had a $percent% shot at the big reward — and it landed.')
+          : tr('Aveai $percent% șansă la recompensa mare. N-a picat de data asta.',
+              'You had a $percent% shot at the big reward. It did not land this time.'),
       textAlign: TextAlign.center,
       style: TextStyle(
           color: _jackpot ? AppColors.play : Colors.white.withAlpha(150),
@@ -699,10 +708,11 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
           color: Colors.white.withAlpha(12),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Text(
-          'Fără recompensă de data asta. Planeta te așteaptă la următoarea rulare.',
+        child: Text(
+          tr('Fără recompensă de data asta. Planeta te așteaptă la următoarea rulare.',
+              'No reward this time. The planet will be waiting on your next run.'),
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white60, fontSize: 13),
+          style: const TextStyle(color: Colors.white60, fontSize: 13),
         ),
       );
     }
@@ -739,7 +749,9 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
       child: Column(
         children: [
           Text(
-            _jackpot ? '★ RECOMPENSA MARE ★' : 'Recompensă de consolare',
+            _jackpot
+                ? tr('★ RECOMPENSA MARE ★', '★ THE BIG REWARD ★')
+                : tr('Recompensă de consolare', 'Consolation reward'),
             style: TextStyle(
                 color: _jackpot ? AppColors.coin : Colors.white70,
                 fontSize: 13,

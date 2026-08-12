@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/stable_hash.dart';
+import '../../core/lang.dart';
 import '../../core/theme.dart';
 import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
@@ -153,7 +154,9 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     for (final p in players) {
       if (p.eliminated && _announcedEliminated.add(p.id)) {
         final me = MultiplayerService.instance.currentPlayerId;
-        final text = p.id == me ? 'Ai fost eliminat! Ești spectator.' : '${p.name} a fost eliminat!';
+        final text = p.id == me
+            ? tr('Ai fost eliminat! Ești spectator.', 'You are out! You are now a spectator.')
+            : tr('${p.name} a fost eliminat!', '${p.name} is out!');
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
@@ -214,7 +217,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                         _buildTopBar(),
                         _buildPlayersRow(info, players),
                         const SizedBox(height: 4),
-                        Text('Runda ${info.roundIndex + 1}', style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                        Text(tr('Runda ${info.roundIndex + 1}', 'Round ${info.roundIndex + 1}'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
                         Expanded(
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -377,10 +380,11 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       return Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
         decoration: BoxDecoration(color: Colors.white.withAlpha(14), borderRadius: BorderRadius.circular(16)),
-        child: const Text(
-          '🍞 Ai fost eliminat — ești spectator. Poți urmări meciul până la final.',
+        child: Text(
+          tr('🍞 Ai fost eliminat — ești spectator. Poți urmări meciul până la final.',
+              '🍞 You are out — now a spectator. You can watch the match to the end.'),
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+          style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
         ),
       );
     }
@@ -403,7 +407,9 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
-          winnerNames.isEmpty ? 'Niciun câștigător de data asta!' : 'Câștigători: $winnerNames',
+          winnerNames.isEmpty
+              ? tr('Niciun câștigător de data asta!', 'No winner this time!')
+              : tr('Câștigători: $winnerNames', 'Winners: $winnerNames'),
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
         ),
@@ -420,7 +426,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
     return Row(
       children: [
-        Expanded(child: _arrowButton(label: 'MAI PUȚIN', icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: () => _selectGuess(info, 'lower'))),
+        Expanded(child: _arrowButton(label: tr('MAI PUȚIN', 'LOWER'), icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: () => _selectGuess(info, 'lower'))),
         const SizedBox(width: 12),
         Expanded(child: _arrowButton(label: 'MAI MULT', icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: () => _selectGuess(info, 'higher'))),
       ],

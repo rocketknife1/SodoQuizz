@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/eco_mode.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../screens/home_screen.dart';
@@ -61,6 +62,9 @@ class AppBottomNavBarState extends State<AppBottomNavBar> {
         top: false,
         child: Row(
           children: [
+            // Etichetele erau deja in engleza si raman asa in ambele limbi —
+            // sunt cuvinte intrate in vocabularul oricarui jucator de mobil,
+            // iar "Pravalie" ar fi fost mai greu de recunoscut decat "Shop".
             _NavItem(icon: Icons.home_rounded, label: 'Home', active: widget.current == AppTab.home, onTap: () => _go(context, AppTab.home)),
             _NavItem(icon: Icons.flag_rounded, label: 'Quests', active: widget.current == AppTab.quests, showDot: _questsDot, useChest: true, onTap: () => _go(context, AppTab.quests)),
             _NavItem(icon: Icons.storefront_rounded, label: 'Shop', active: widget.current == AppTab.shop, onTap: () => _go(context, AppTab.shop)),
@@ -149,7 +153,7 @@ class _ChestBadgeState extends State<ChestBadge> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))
+    _pulse = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
       ..repeat(reverse: true);
   }
 

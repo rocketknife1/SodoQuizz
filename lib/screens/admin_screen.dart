@@ -1,13 +1,16 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../core/progression.dart' show levelForXp;
 import '../core/theme.dart';
+import '../data/moderation_service.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';
 import '../data/shop.dart' show starterGemGrant;
 import '../data/storage_service.dart';
+import '../models/moderation.dart';
 import '../models/multiplayer_activity.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
 import '../models/player_profile.dart';
@@ -17,11 +20,12 @@ import '../widgets/coin_reward_overlay.dart';
 import 'test_images_screen.dart';
 
 /// Panou vizibil DOAR pentru contul de admin (vezi profile_screen.dart,
-/// randul care navigheaza aici, ascuns pentru oricine altcineva). Cinci
+/// randul care navigheaza aici, ascuns pentru oricine altcineva). Sase
 /// taburi: gestionare jucatori (interzicere + trimitere de resurse),
-/// jucatorii inregistrati azi, camerele de multiplayer terminate recent,
-/// uneltele de debug/test (mutate din SettingsScreen — acolo erau vizibile
-/// oricui, fara nicio filtrare) si statistici agregate.
+/// jucatorii inregistrati azi, raportarile trimise de jucatori, camerele de
+/// multiplayer terminate recent, uneltele de debug/test (mutate din
+/// SettingsScreen — acolo erau vizibile oricui, fara nicio filtrare) si
+/// statistici agregate.
 ///
 /// Un tap pe randul unui jucator deschide [_PlayerDetailScreen], unde apare
 /// intai id-ul unic si apoi balanta/prietenii — vezi comentariul de acolo
@@ -34,7 +38,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 5, vsync: this);
+  late final TabController _tabController = TabController(length: 6, vsync: this);
 
   @override
   void dispose() {
@@ -65,12 +69,19 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               indicatorColor: AppColors.orange,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white54,
-              tabs: const [Tab(text: 'Jucători'), Tab(text: 'Noi azi'), Tab(text: 'Camere'), Tab(text: 'Debug'), Tab(text: 'Statistici')],
+              tabs: const [
+                Tab(text: 'Jucători'),
+                Tab(text: 'Noi azi'),
+                Tab(text: 'Raportări'),
+                Tab(text: 'Camere'),
+                Tab(text: 'Debug'),
+                Tab(text: 'Statistici'),
+              ],
             ),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_PlayersTab(), _NewTodayTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
+                children: const [_PlayersTab(), _NewTodayTab(), _ReportsTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
               ),
             ),
           ],
@@ -364,9 +375,11 @@ class _PlayersTabState extends State<_PlayersTab> {
           color: AppColors.orange,
           child: ListView.builder(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            itemCount: players.length,
-            itemBuilder: (context, i) {
-              final p = players[i];
+            // +1 pentru butonul de anunț global, primul din listă.
+            itemCount: players.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) return _buildBroadcastButton(context, players.length);
+              final p = players[index - 1];
               return _AdminPlayerRow(
                 profile: p,
                 onChanged: _refresh,
@@ -382,6 +395,50 @@ class _PlayersTabState extends State<_PlayersTab> {
           ),
         );
       },
+    );
+  }
+
+  /// Anunț către toți — stă în capul listei de jucători fiindcă e o acțiune
+  /// asupra listei întregi, nu asupra unui rând anume.
+  Widget _buildBroadcastButton(BuildContext context, int playerCount) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GestureDetector(
+        onTap: () => showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: AppColors.bg,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          builder: (_) => const _MessageSheet(),
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.orange.withAlpha(28),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.orange.withAlpha(110)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.campaign_rounded, color: AppColors.orange, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Anunț pentru toți',
+                        style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800)),
+                    const SizedBox(height: 2),
+                    Text('Ajunge la cei $playerCount jucători din listă',
+                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 14),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -451,6 +508,219 @@ class _NewTodayTabState extends State<_NewTodayTab> {
   }
 }
 
+/// Raportările trimise de jucători din chat (vezi ModerationService).
+///
+/// Aici se închide bucla pornită de butonul „Raportează": mesajul reclamat se
+/// vede ca text, iar de pe card se poate deschide direct fișa celui reclamat,
+/// de unde există deja ban și ștergere completă. Fără pasul ăsta, raportarea
+/// ar fi fost un buton care nu duce nicăieri — adică exact ce nu se poate
+/// declara la Content rating.
+///
+/// Cele rezolvate NU se șterg singure: un jucător reclamat de cinci ori,
+/// fiecare „rezolvată" la timpul ei, arată altfel decât unul reclamat o dată,
+/// și doar istoricul păstrat face diferența vizibilă.
+class _ReportsTab extends StatefulWidget {
+  const _ReportsTab();
+
+  @override
+  State<_ReportsTab> createState() => _ReportsTabState();
+}
+
+class _ReportsTabState extends State<_ReportsTab> {
+  late Future<List<PlayerReport>> _future = ModerationService.instance.fetchReports();
+
+  Future<void> _refresh() async {
+    setState(() => _future = ModerationService.instance.fetchReports());
+    await _future;
+  }
+
+  /// Deschide fișa celui reclamat — profilul se citește după uid, nu se
+  /// reconstruiește din numele copiat în raportare: numele e doar cum se
+  /// chema atunci, uid-ul e cine e.
+  Future<void> _openTarget(PlayerReport report) async {
+    final profile = await PlayerProfileService.instance.getProfile(report.targetUid);
+    if (!mounted) return;
+    if (profile == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Jucătorul nu mai există (cont șters sau banat).')),
+      );
+      return;
+    }
+    final changed = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => _PlayerDetailScreen(profile: profile)),
+    );
+    if (changed == true && mounted) await _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<PlayerReport>>(
+      future: _future,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+        }
+        final reports = snap.data!;
+        if (reports.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.orange,
+            child: ListView(
+              children: const [
+                SizedBox(height: 100),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      'Nicio raportare.\n\nAici ajung reclamațiile trimise de jucători din chatul '
+                      'camerelor sau din firele private de prieteni.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 13, height: 1.5),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.orange,
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            itemCount: reports.length,
+            itemBuilder: (context, i) => _ReportCard(
+              report: reports[i],
+              onOpenTarget: () => _openTarget(reports[i]),
+              onToggleHandled: () async {
+                await ModerationService.instance.markReportHandled(reports[i].id, handled: !reports[i].handled);
+                await _refresh();
+              },
+              onDelete: () async {
+                await ModerationService.instance.deleteReport(reports[i].id);
+                await _refresh();
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _ReportCard extends StatelessWidget {
+  final PlayerReport report;
+  final VoidCallback onOpenTarget;
+  final VoidCallback onToggleHandled;
+  final VoidCallback onDelete;
+
+  const _ReportCard({
+    required this.report,
+    required this.onOpenTarget,
+    required this.onToggleHandled,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final handled = report.handled;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
+      decoration: BoxDecoration(
+        // Nerezolvatele ies în evidență; cele bifate se retrag vizual, dar
+        // rămân în listă ca istoric.
+        color: handled ? Colors.white.withAlpha(8) : AppColors.danger.withAlpha(22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: handled ? Colors.white12 : AppColors.danger.withAlpha(110)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(handled ? Icons.check_circle_rounded : Icons.flag_rounded,
+                  color: handled ? AppColors.play : AppColors.danger, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  report.reason.label,
+                  style: TextStyle(
+                    color: handled ? Colors.white54 : Colors.white,
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              Text(
+                _reportTime(report.createdAt),
+                style: const TextStyle(color: Colors.white38, fontSize: 10.5, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: report.reporterName,
+                  style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+                const TextSpan(text: '  l-a reclamat pe  ', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                TextSpan(
+                  text: report.targetName,
+                  style: const TextStyle(color: AppColors.orange, fontSize: 12, fontWeight: FontWeight.w800),
+                ),
+              ],
+            ),
+          ),
+          if (report.messageText.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(color: Colors.black.withAlpha(60), borderRadius: BorderRadius.circular(10)),
+              child: Text(
+                report.messageText,
+                style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.35, fontStyle: FontStyle.italic),
+              ),
+            ),
+          ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: onOpenTarget,
+                child: const Text('Fișa lui', style: TextStyle(color: AppColors.blue, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              ),
+              TextButton(
+                onPressed: onToggleHandled,
+                child: Text(handled ? 'Redeschide' : 'Rezolvat',
+                    style: const TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w700)),
+              ),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.white38, size: 19),
+                tooltip: 'Șterge raportarea',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+String _reportTime(Timestamp? ts) {
+  if (ts == null) return '';
+  final dt = ts.toDate().toLocal();
+  final time = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  final now = DateTime.now();
+  if (dt.year == now.year && dt.month == now.month && dt.day == now.day) return 'azi $time';
+  return '${dt.day.toString().padLeft(2, '0')}.${dt.month.toString().padLeft(2, '0')} $time';
+}
+
 /// Sheet cu 5 câmpuri numerice (delta cu semn) — scrie în `admin_grants/{uid}`
 /// cu `increment()`, ca grant-uri succesive netransmise încă să se adune,
 /// nu să se suprascrie. Ridicat de telefonul jucătorului la următoarea
@@ -501,6 +771,12 @@ class _GrantSheetState extends State<_GrantSheet> {
         if (coins != 0) 'coins': FieldValue.increment(coins),
         if (gems != 0) 'gems': FieldValue.increment(gems),
         if (xp != 0) 'xp': FieldValue.increment(xp),
+        // Momentul ultimei trimiteri — din el se face id-ul notificării de
+        // „ai primit X" de pe telefonul jucătorului. Fără el, două cadouri
+        // identice trimise la zile distanță ar fi arătat ca același cadou și
+        // al doilea n-ar mai fi produs nicio notificare (vezi
+        // CloudSyncService.consumePendingGrant).
+        'sentAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
       if (!mounted) return;
       Navigator.pop(context);
@@ -569,6 +845,154 @@ class _GrantSheetState extends State<_GrantSheet> {
   }
 }
 
+/// Scrierea unui anunț — către un jucător anume ([profile] dat) sau către
+/// toți ([profile] null, din tab-ul Jucători).
+///
+/// Ajunge la jucător la următoarea deschidere a jocului, nu instant: fără
+/// Cloud Functions (plan gratuit) nu există notificări push, deci anunțul stă
+/// într-o cutie poștală pe care telefonul lui o golește la pornire — vezi
+/// NotificationService.pullFromCloud.
+class _MessageSheet extends StatefulWidget {
+  /// null = anunț pentru toți jucătorii.
+  final PlayerProfile? profile;
+  const _MessageSheet({this.profile});
+
+  @override
+  State<_MessageSheet> createState() => _MessageSheetState();
+}
+
+class _MessageSheetState extends State<_MessageSheet> {
+  final _title = TextEditingController();
+  final _body = TextEditingController();
+  bool _sending = false;
+
+  bool get _isBroadcast => widget.profile == null;
+
+  @override
+  void dispose() {
+    _title.dispose();
+    _body.dispose();
+    super.dispose();
+  }
+
+  Future<void> _send() async {
+    final title = _title.text.trim();
+    final body = _body.text.trim();
+    if (title.isEmpty && body.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
+    // Un anunț către toți scrie un document pentru fiecare jucător și nu se
+    // poate lua înapoi din aplicație — de-aia se confirmă, spre deosebire de
+    // mesajul către o singură persoană.
+    if (_isBroadcast) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => AlertDialog(
+          backgroundColor: AppColors.card,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: const Text('Trimiți către toți?', style: TextStyle(color: Colors.white)),
+          content: const Text(
+            'Anunțul ajunge la toți jucătorii activi (max. 300), la următoarea '
+            'deschidere a jocului. Nu poate fi retras după trimitere.',
+            style: TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Trimite')),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+    }
+
+    setState(() => _sending = true);
+    final String message;
+    if (_isBroadcast) {
+      final count = await PlayerProfileService.instance.broadcastNotification(title: title, body: body);
+      message = count > 0 ? 'Anunț trimis către $count jucători.' : 'Nu am putut trimite anunțul.';
+    } else {
+      final ok = await PlayerProfileService.instance
+          .sendNotification(widget.profile!.uid, title: title, body: body);
+      message = ok
+          ? 'Mesaj trimis către ${widget.profile!.name} — îl vede la următoarea deschidere a jocului.'
+          : 'Nu am putut trimite mesajul.';
+    }
+    if (!mounted) return;
+    Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _isBroadcast ? 'Anunț pentru toți jucătorii' : 'Mesaj pentru ${widget.profile!.name}',
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'Apare în clopoțelul de notificări, la următoarea deschidere a jocului.',
+            style: TextStyle(color: Colors.white38, fontSize: 11),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _title,
+            style: const TextStyle(color: Colors.white),
+            textCapitalization: TextCapitalization.sentences,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.title_rounded, color: AppColors.blue, size: 20),
+              labelText: 'Titlu',
+              labelStyle: const TextStyle(color: Colors.white54),
+              hintText: 'ex: Actualizare nouă',
+              hintStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: AppColors.card,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _body,
+            style: const TextStyle(color: Colors.white),
+            textCapitalization: TextCapitalization.sentences,
+            maxLines: 4,
+            maxLength: 400,
+            decoration: InputDecoration(
+              labelText: 'Mesaj',
+              labelStyle: const TextStyle(color: Colors.white54),
+              hintStyle: const TextStyle(color: Colors.white24),
+              counterStyle: const TextStyle(color: Colors.white24),
+              filled: true,
+              fillColor: AppColors.card,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+            ),
+          ),
+          const SizedBox(height: 6),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _sending ? null : _send,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _isBroadcast ? AppColors.orange : AppColors.blue,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: _sending
+                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Text(_isBroadcast ? 'Trimite tuturor' : 'Trimite'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Unelte de debug/test — mutate 1:1 din SettingsScreen (acolo erau vizibile
 /// oricui, fără nicio filtrare de cont). TEST verifică doar pozele
 /// înlocuite manual (TestImagesScreen.testQuestionIds), fără să afecteze
@@ -586,6 +1010,26 @@ class _DebugTabState extends State<_DebugTab> {
   final _livesPreviewKey = GlobalKey();
   final _hintsPreviewKey = GlobalKey();
   final _gemsPreviewKey = GlobalKey();
+
+  bool _noBlur = false;
+  bool _noBlurLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    StorageService.getNoBlurMode().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _noBlur = value;
+        _noBlurLoaded = true;
+      });
+    });
+  }
+
+  Future<void> _toggleNoBlur(bool value) async {
+    setState(() => _noBlur = value);
+    await StorageService.setNoBlurMode(value);
+  }
 
   /// Rulează, pe rând, aceeași animație de zbor (CoinRewardOverlay) folosită
   /// la colectarea reală de monede/XP/vieți/hints/gems — dar fără să scrie
@@ -735,6 +1179,57 @@ class _DebugTabState extends State<_DebugTab> {
             color: AppColors.teal,
             onTap: () => _previewRewardAnimations(context),
           ),
+          const SizedBox(height: 16),
+          _buildNoBlurCard(),
+        ],
+      ),
+    );
+  }
+
+  /// „Fără blur" — mutat aici din SettingsScreen, unde îl vedea orice
+  /// jucător. Acolo nu era o setare de accesibilitate, ci un buton care
+  /// desființa jocul: pozele apăreau clare din prima, deci nu mai era nimic
+  /// de ghicit. Ca unealtă de verificat pozele adăugate manual, în schimb,
+  /// e exact ce trebuie — de-aia stă lângă TEST.
+  Widget _buildNoBlurCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: AppColors.purple.withAlpha(40),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.blur_off_rounded, color: AppColors.purple, size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Fără blur', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                SizedBox(height: 2),
+                Text('Pozele apar 100% clare, din prima — pentru verificarea lor',
+                    style: TextStyle(color: Colors.white54, fontSize: 11)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _noBlurLoaded
+              ? CupertinoSwitch(
+                  value: _noBlur,
+                  activeTrackColor: AppColors.play,
+                  onChanged: _toggleNoBlur,
+                )
+              : const SizedBox(width: 51, height: 31),
         ],
       ),
     );
@@ -1279,6 +1774,21 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
         onPressed: () => _openGrantSheet(context, p),
       ),
       const SizedBox(height: 10),
+      // Notificarea de „ai primit X" se scrie singură când resursele ajung la
+      // el (vezi CloudSyncService); asta e pentru un mesaj scris de mână.
+      _ActionButton(
+        label: 'Trimite mesaj',
+        icon: Icons.campaign_rounded,
+        color: AppColors.blue,
+        onPressed: () => showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: AppColors.bg,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(22))),
+          builder: (_) => _MessageSheet(profile: p),
+        ),
+      ),
+      const SizedBox(height: 10),
       // Resetul stă lângă ban/ștergere fiindcă e tot ireversibil, dar nu e
       // distructiv la fel: contul rămâne, doar o ia de la capăt — de-aia e
       // portocaliu, nu roșu.
@@ -1714,7 +2224,7 @@ class _RoomDetailScreen extends StatelessWidget {
                       value: room.finishedAt == null ? '—' : _shortDate(room.finishedAt!.toDate())),
                   _DetailRow(label: 'Se șterge', value: _expiryLabel(room)),
                   _DetailRow(label: 'Pot total', value: _grouped(room.pool)),
-                  _DetailRow(label: 'Plafonul mesei', value: _grouped(room.tableCap)),
+                  _DetailRow(label: 'Miza camerei', value: _grouped(room.stake)),
                   const SizedBox(height: 22),
                   _SectionTitle('Jucători (${room.playerCount})'),
                   ...room.players.map((p) => _RoomPlayerCard(player: p)),

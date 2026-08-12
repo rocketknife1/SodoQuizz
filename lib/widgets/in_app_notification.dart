@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/eco_mode.dart';
 
 /// Notificare tip banner (stil Messenger) care alunecă lin de sus în jos,
 /// oriunde ai fi în aplicație — folosită când se completează un quest sau
@@ -62,7 +63,7 @@ class _NotificationBannerState extends State<_NotificationBanner> with TickerPro
   void initState() {
     super.initState();
     _slide = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1300))..repeat();
+    _pulse = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1300))..repeat();
     _slide.forward();
     Future.delayed(const Duration(milliseconds: 3600), _dismiss);
   }

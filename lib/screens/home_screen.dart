@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/lang.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
@@ -142,8 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final best = newMilestones.reduce((a, b) => a > b ? a : b);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-          content: Text(
-              '🔥 $best zile la rând! Bonus: +${best * 5} monede, +${best * 10} XP')),
+          content: Text(tr(
+              '🔥 $best zile la rând! Bonus: +${best * 5} monede, +${best * 10} XP',
+              '🔥 $best days in a row! Bonus: +${best * 5} coins, +${best * 10} XP'))),
     );
     _refresh();
   }
@@ -234,6 +236,10 @@ class _HomeScreenState extends State<HomeScreen> {
             pendingLevelRewards: data?.pendingLevelRewards ?? 0,
             livesUnlimited: data?.livesUnlimited ?? false,
             livesUnlimitedLabel: (data?.livesUnlimited ?? false) ? _formatCountdown(data!.livesUnlimitedRemaining) : null,
+            // clopoțelul de notificări stă deasupra avatarului DOAR aici, în
+            // meniul principal — vezi LevelHeader.showNotifications.
+            showNotifications: true,
+            onNotificationsClosed: _refresh,
             coinBadgeKey: _coinBadgeKey,
             xpBadgeKey: _xpBadgeKey,
             livesBadgeKey: _livesBadgeKey,
@@ -283,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     SolidMenuButton(
                       icon: Icons.emoji_events_rounded,
-                      label: 'CLASAMENT',
+                      label: tr('CLASAMENT', 'LEADERBOARD'),
                       color: AppColors.orange,
                       onTap: () => Navigator.push(
                           context,
@@ -303,7 +309,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     const SizedBox(height: 8),
                     SolidMenuButton(
                       icon: Icons.settings_rounded,
-                      label: 'SETĂRI',
+                      label: tr('SETĂRI', 'SETTINGS'),
                       color: AppColors.gray,
                       onTap: () => Navigator.push(
                           context,
@@ -362,7 +368,8 @@ class _HomeScreenState extends State<HomeScreen> {
             const Text('🔥', style: TextStyle(fontSize: 14)),
             const SizedBox(width: 6),
             Text(
-              '$streak ${streak == 1 ? "zi" : "zile"} la rând',
+              tr('$streak ${streak == 1 ? "zi" : "zile"} la rând',
+                  '$streak ${streak == 1 ? "day" : "days"} in a row'),
               style: const TextStyle(
                   color: AppColors.orange,
                   fontSize: 12,
