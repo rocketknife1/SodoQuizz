@@ -17,6 +17,9 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
+import 'multiplayer_higher_lower_screen.dart';
+import 'multiplayer_match_screen.dart';
+import 'multiplayer_tanks_screen.dart';
 
 /// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
 /// cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).
@@ -62,6 +65,16 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   int _myPlace = 0;
   int _pot = 0;
 
+  /// Masa așa cum era ÎNAINTE ca [leaveMatch] să înceapă să o golească —
+  /// captura de care are nevoie o cerere de revanșă (vezi [_requestRematch]),
+  /// fiindcă `matches/{matchId}` poate fi șters până apuci să apeși butonul.
+  List<MatchPlayer> _originalPlayers = const [];
+  bool _amHost = false;
+  late final Stream<RematchOffer?> _rematchStream =
+      MultiplayerService.instance.watchRematchOffer(widget.matchId);
+  bool _launchingRematch = false;
+  bool _navigatedToRematch = false;
+
   /// Monedele nu vin "din partea casei": la final se împarte grămada de mize
   /// (vezi core/betting.dart) între locurile din jumătatea de sus a
   /// clasamentului. XP-ul rămâne o recompensă normală, acordată de joc.
@@ -74,6 +87,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
     final me = MultiplayerService.instance.currentPlayerId;
     final myIndex = sorted.indexWhere((p) => p.id == me);
+    _originalPlayers = sorted;
+    _amHost = myIndex != -1 && sorted[myIndex].isHost;
     if (myIndex != -1) {
       final myScore = sorted[myIndex].score;
       // egalitate pentru locul 1 (mai mulți cu același scor maxim) numără
@@ -341,10 +356,194 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   }
 
   void _goHome() {
+    // Cea mai bună încercare, nu blocantă: dacă plecăm chiar noi (gazda) cu o
+    // cerere încă în așteptare, o anulăm, ca ceilalți să nu rămână agățați de
+    // un banner care n-o să mai pornească niciodată nimic (fără gazdă în
+    // ecran, nimeni nu mai apelează launchRematch).
+    if (_amHost) {
+      MultiplayerService.instance.cancelRematchOffer(widget.matchId).catchError((_) {});
+    }
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => LoadingScreen(nextBuilder: (_) => const HomeScreen(), duration: const Duration(milliseconds: 900))),
       (route) => false,
+    );
+  }
+
+  Future<void> _requestRematch() async {
+    await MultiplayerService.instance.offerRematch(
+      matchId: widget.matchId,
+      gameMode: widget.gameMode,
+      stake: _tableStake(_originalPlayers),
+      participants: [
+        for (final p in _originalPlayers)
+          RematchParticipant(id: p.id, name: p.name, avatarSeed: p.avatarSeed, photoUrl: p.photoUrl, avatarStyle: p.avatarStyle),
+      ],
+    );
+  }
+
+  /// Rulează pe clientul gazdei la fiecare schimbare a ofertei — pornește
+  /// camera nouă în clipa în care toți foștii participanți au acceptat.
+  /// `_launchingRematch` oprește o a doua pornire dacă mai ajunge un
+  /// eveniment din stream cât timp [launchRematch] e încă în zbor.
+  void _maybeLaunchRematch(RematchOffer offer) {
+    if (!_amHost || offer.status != 'pending' || _launchingRematch) return;
+    final allAccepted = offer.participants.every((p) => offer.acceptedIds.contains(p.id));
+    if (!allAccepted) return;
+    _launchingRematch = true;
+    MultiplayerService.instance.launchRematch(offer).catchError((e) {
+      _launchingRematch = false;
+      debugPrint('MultiplayerResultsScreen: launchRematch a esuat: $e');
+      return '';
+    });
+  }
+
+  void _maybeNavigateToRematch(RematchOffer offer) {
+    if (_navigatedToRematch || offer.status != 'started' || offer.newMatchId == null) return;
+    _navigatedToRematch = true;
+    final newMatchId = offer.newMatchId!;
+    final gameMode = offer.gameMode;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => switch (gameMode) {
+            MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: newMatchId),
+            MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: newMatchId),
+            MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
+          },
+        ),
+      );
+    });
+  }
+
+  /// Banda de revanșă de sub clasament — o singură secțiune, ramificată pe
+  /// stare, ca gazda și ceilalți jucători să nu aibă nevoie de widget-uri
+  /// separate. Vezi [RematchOffer.status] pentru semnificația fiecărei ramuri.
+  Widget _buildRematchSection() {
+    // Sub 2 foști jucători n-are cu cine se relua meciul.
+    if (_originalPlayers.length < 2) return const SizedBox.shrink();
+    final me = MultiplayerService.instance.currentPlayerId;
+    return StreamBuilder<RematchOffer?>(
+      stream: _rematchStream,
+      builder: (context, snap) {
+        final offer = snap.data;
+        if (offer != null) {
+          _maybeLaunchRematch(offer);
+          _maybeNavigateToRematch(offer);
+        }
+        if (offer == null || offer.status == 'cancelled') {
+          if (!_amHost) return const SizedBox.shrink();
+          final declinedName = offer?.declinedBy == null
+              ? null
+              : offer!.participants.firstWhere((p) => p.id == offer.declinedBy, orElse: () => const RematchParticipant(id: '', name: '?', avatarSeed: '')).name;
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Column(
+              children: [
+                if (declinedName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                      tr('$declinedName a refuzat revanșa.', '$declinedName declined the rematch.'),
+                      style: const TextStyle(color: Colors.white54, fontSize: 11.5),
+                    ),
+                  ),
+                _rematchButton(tr('🔁 Cere revanșă', '🔁 Request rematch'), _requestRematch),
+              ],
+            ),
+          );
+        }
+        if (offer.status == 'started') {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 10),
+            child: Center(child: CircularProgressIndicator(color: AppColors.blue)),
+          );
+        }
+        // 'pending'
+        final accepted = offer.acceptedIds.length;
+        final total = offer.participants.length;
+        if (_amHost) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Column(
+              children: [
+                Text(
+                  tr('Aștept jucătorii... $accepted/$total au acceptat', 'Waiting for players... $accepted/$total accepted'),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => MultiplayerService.instance.cancelRematchOffer(widget.matchId),
+                  child: Text(tr('Anulează', 'Cancel'), style: const TextStyle(color: Colors.white54)),
+                ),
+              ],
+            ),
+          );
+        }
+        if (offer.acceptedIds.contains(me)) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+            child: Text(
+              tr('Ai acceptat revanșa — aștept ceilalți jucători ($accepted/$total)', 'Rematch accepted — waiting for the others ($accepted/$total)'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
+            ),
+          );
+        }
+        final hostName = offer.participants.firstWhere((p) => p.id == offer.hostId, orElse: () => const RematchParticipant(id: '', name: '?', avatarSeed: '')).name;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.blue.withAlpha(35),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.blue.withAlpha(130)),
+            ),
+            child: Column(
+              children: [
+                Text(
+                  tr('🔁 $hostName vrea revanșă!', '🔁 $hostName wants a rematch!'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => MultiplayerService.instance.declineRematchOffer(widget.matchId),
+                        child: Text(tr('Refuz', 'Decline'), style: const TextStyle(color: Colors.white70)),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => MultiplayerService.instance.acceptRematchOffer(widget.matchId),
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
+                        child: Text(tr('Accept', 'Accept'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _rematchButton(String label, VoidCallback onPressed) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+        child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
     );
   }
 
@@ -506,8 +705,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                       },
                     ),
                   ),
+                  _buildRematchSection(),
                   Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(

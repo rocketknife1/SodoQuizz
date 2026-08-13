@@ -699,6 +699,103 @@ class MultiplayerService {
     await batch.commit();
   }
 
+  // ─── Revanșă ─────────────────────────────────────────────────────────────
+
+  /// Lansează o cerere de revanșă către EXACT jucătorii de la masa tocmai
+  /// terminată — [participants] vine din clasamentul deja încărcat de
+  /// MultiplayerResultsScreen (masa veche poate fi între timp ștearsă de
+  /// [leaveMatch], vezi [RematchOffer]). Doc id-ul e chiar [matchId], singurul
+  /// id pe care toți foștii participanți îl cunosc deja. `set` (nu `add`) —
+  /// o cerere refuzată/anulată poate fi reîncercată, rescriind același doc.
+  Future<void> offerRematch({
+    required String matchId,
+    required MatchGameMode gameMode,
+    required int stake,
+    required List<RematchParticipant> participants,
+  }) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('rematch_offers').doc(matchId).set(RematchOffer(
+          matchId: matchId,
+          hostId: me,
+          gameMode: gameMode,
+          stake: stake,
+          participants: participants,
+          acceptedIds: [me],
+          status: 'pending',
+        ).toMap()));
+  }
+
+  Stream<RematchOffer?> watchRematchOffer(String matchId) => _db
+      .collection('rematch_offers')
+      .doc(matchId)
+      .snapshots()
+      .map((d) => d.exists ? RematchOffer.fromDoc(d) : null);
+
+  Future<void> acceptRematchOffer(String matchId) => _paced(() => _db
+      .collection('rematch_offers')
+      .doc(matchId)
+      .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+
+  /// Refuzul unui SINGUR jucător anulează cererea pentru toată lumea — gazda
+  /// vede cine a refuzat și poate încerca din nou (vezi [offerRematch]).
+  Future<void> declineRematchOffer(String matchId) => _paced(() => _db
+      .collection('rematch_offers')
+      .doc(matchId)
+      .update({'status': 'cancelled', 'declinedBy': currentPlayerId}));
+
+  Future<void> cancelRematchOffer(String matchId) =>
+      _db.collection('rematch_offers').doc(matchId).delete();
+
+  /// Apelată DOAR de clientul gazdei, în clipa în care vede că toți
+  /// participanții au acceptat — creează camera nouă cu toți jucătorii deja
+  /// așezați (scrise direct, fără să mai treacă unul câte unul prin
+  /// [_joinRoomDoc]) și o pornește imediat, fără să mai aștepte în lobby:
+  /// gazda a cerut deja revanșa, iar toți ceilalți au acceptat-o explicit —
+  /// n-are ce să mai decidă nimeni în plus apăsând START.
+  Future<String> launchRematch(RematchOffer offer) async {
+    final ref = _db.collection('matches').doc();
+    final host = offer.participants.firstWhere(
+      (p) => p.id == offer.hostId,
+      orElse: () => RematchParticipant(id: offer.hostId, name: '?', avatarSeed: offer.hostId),
+    );
+    final info = MatchInfo(
+      id: ref.id,
+      mode: MatchMode.private,
+      code: _randomCode(),
+      status: MatchStatus.lobby,
+      hostId: offer.hostId,
+      hostName: host.name,
+      hostPhotoUrl: host.photoUrl,
+      hostAvatarStyle: host.avatarStyle,
+      gameMode: offer.gameMode,
+      stake: offer.stake,
+    );
+    final batch = _db.batch();
+    batch.set(ref, info.toMap());
+    for (final p in offer.participants) {
+      batch.set(
+        ref.collection('players').doc(p.id),
+        MatchPlayer(
+          id: p.id,
+          name: p.name,
+          avatarSeed: p.avatarSeed,
+          photoUrl: p.photoUrl,
+          score: 0,
+          isHost: p.id == offer.hostId,
+          bet: offer.stake,
+          avatarStyle: p.avatarStyle,
+        ).toMap(),
+      );
+    }
+    await batch.commit();
+    await startMatch(ref.id);
+    await _db.collection('rematch_offers').doc(offer.matchId).update({
+      'status': 'started',
+      'newMatchId': ref.id,
+    });
+    return ref.id;
+  }
+
   // ─── Meci (comun ambelor fluxuri) ───────────────────────────────────────
 
   Stream<MatchInfo> watchMatch(String matchId) => _db.collection('matches').doc(matchId).snapshots().map(MatchInfo.fromDoc);

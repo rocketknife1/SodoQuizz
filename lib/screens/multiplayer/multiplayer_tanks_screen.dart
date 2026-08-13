@@ -12,6 +12,8 @@ import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/tank_art.dart';
+import '../../widgets/tank_defence.dart';
+import '../../widgets/tank_pov.dart';
 import 'multiplayer_results_screen.dart';
 
 /// **Quizz Tanks** — patru tancuri, întrebări de cultură generală, cinci
@@ -55,9 +57,33 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// Coregrafia fazei de foc, în secunde. Prima jumătate de secundă e
   /// pauza în care se citește „FOC!" și se vede cine trage — fără ea,
   /// proiectilele apar înainte ca ochiul să apuce să găsească tunurile.
-  static const double _firstShotAt = 0.45;
-  static const double _shotStagger = 0.10;
-  static const double _drainDuration = 0.6;
+  ///
+  /// Zborul e mai lung decât ar cere arena (un drum de câțiva centimetri pe
+  /// ecran) fiindcă ACELAȘI interval e și durata camerei de pe proiectil,
+  /// unde chiar ai ce vedea — vezi widgets/tank_pov.dart. Toate cifrele de
+  /// aici s-au dublat aproape peste tot (5→9s reveal, vezi
+  /// core/tanks.dart.tanksRevealSeconds) după ce userul a văzut prima
+  /// versiune live pe două ecrane și n-a apucat să citească nimic din ce
+  /// scria pe cadru — nu era o părere, era cronometrată prea strâns.
+  static const double _firstShotAt = 0.6;
+  static const double _shotStagger = 0.22;
+  static const double _flightDuration = 1.3;
+  static const double _drainDuration = 1.0;
+
+  /// Cât de mult se dau în lături, în pixeli, cele două obuze ale unui duel
+  /// care se încrucișează. Merg pe același segment în sensuri opuse, deci
+  /// fără asta s-ar suprapune perfect la mijloc și s-ar citi ca un singur
+  /// proiectil care clipește (vezi [ShotFlight.lateral]).
+  static const double _duelLateral = 7;
+
+  /// Cât se așteaptă, după ULTIMUL impact, înainte ca barele să înceapă să
+  /// scadă. Nu e o pauză de stil: bullet cam-ul ține ecranul până la
+  /// `impactul meu + tankPovAftermath`, iar dacă barele ar scădea sub el,
+  /// țintașul s-ar întoarce în arenă și ar găsi treaba deja făcută — adică
+  /// exact evenimentul pe care lovitura lui l-a provocat i-ar rămâne
+  /// nevăzut. Fiind puțin mai mare decât [tankPovAftermath] (1,7s), acoperă
+  /// orice proiectil al rundei, nu doar pe al meu.
+  static const double _drainDelayAfterImpacts = 1.9;
 
   Timer? _tick;
   Timer? _advanceTimer;
@@ -72,6 +98,33 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   List<ShotFlight> _flights = const [];
   int _flightsBuiltForRound = -1;
+
+  /// Proiectilul propriu al rundei și tancul în care pleacă — doar ele hrănesc
+  /// camera de pe obuz (vezi [TankPovView]). `null` în rundele în care n-am
+  /// răspuns corect, deci n-am tras: atunci plec în camera de apărare
+  /// ([TankDefenceView]) dacă vine ceva spre mine, altfel rămân pe arenă.
+  ShotFlight? _myFlight;
+  MatchPlayer? _myPovTarget;
+  int _myPovTargetHpAtStart = tanksMaxHp;
+
+  /// Duelul rundei, dacă există: ținta mea a tras, în aceeași clipă, chiar în
+  /// mine. [_myDuelIntercepted] e cazul în care amândoi am ratat — atunci
+  /// obuzele se izbesc între ele la mijlocul drumului (vezi
+  /// [ShotFlight.intercepted]).
+  bool _myDuel = false;
+  bool _myDuelIntercepted = false;
+
+  /// Obuzele care vin spre MINE în runda asta și cât încasez din ele. Lista
+  /// hrănește camera de apărare; totalul se scrie și pe camera de pe obuz,
+  /// pentru cel care trage și e lovit în același timp.
+  List<IncomingShell> _myIncoming = const [];
+  int _myDamageTaken = 0;
+
+  /// Cum arăt eu în camera de apărare: culoarea, numele (din care iese partea
+  /// în care smucesc la fereală) și viața de la începutul rundei.
+  Color _myColor = AppColors.blue;
+  String _myName = '';
+  int _myHpAtRoundStart = tanksMaxHp;
   final Set<int> _playedShot = {};
   final Set<int> _playedImpact = {};
   bool _playedAlarm = false;
@@ -227,6 +280,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (t >= f.impactAt && _playedImpact.add(i)) {
         if (f.hit) {
           TankSfx.hit();
+        } else if (f.intercepted) {
+          // Ciocnirea a două obuze e un impact, nu un ricoșeu — dar unul
+          // singur pentru amândouă zborurile ([ShotFlight.meetLead]), altfel
+          // ar porni de două ori exact în aceeași milisecundă.
+          if (f.meetLead) TankSfx.hit();
         } else {
           TankSfx.dodge();
         }
@@ -257,6 +315,12 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         ..addEntries(players.map((p) => MapEntry(p.id, p.hp)));
       _flights = const [];
       _flightsBuiltForRound = -1;
+      _myFlight = null;
+      _myPovTarget = null;
+      _myDuel = false;
+      _myDuelIntercepted = false;
+      _myIncoming = const [];
+      _myDamageTaken = 0;
       _playedShot.clear();
       _playedImpact.clear();
       _playedAlarm = false;
@@ -329,32 +393,126 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// Traduce tragerile citite din Firestore în traiectorii pe ecran. Se
   /// poate face abia când se știe cât de mare e arena, deci se cheamă din
   /// LayoutBuilder-ul ei — dar exact o dată pe rundă ([_flightsBuiltForRound]).
-  void _ensureFlights(MatchInfo info, List<MatchPlayer> players, Map<String, Offset> centers) {
+  ///
+  /// Tot aici se caută **duelurile** — perechile în care doi jucători și-au
+  /// ales țintă unul pe altul. Ele nu schimbă niciun rezultat (zarurile s-au
+  /// aruncat deja, o singură dată, în MultiplayerService.resolveTanksRound),
+  /// dar schimbă punerea în scenă: cei doi trag DEODATĂ, obuzele merg unul pe
+  /// lângă altul, iar dacă amândoi au ratat se izbesc între ele la jumătatea
+  /// drumului în loc să se piardă fiecare pe lângă câte un tanc.
+  void _ensureFlights(MatchInfo info, List<MatchPlayer> players, Map<String, Offset> centers, double arenaWidth) {
     if (_flightsBuiltForRound == info.roundIndex) return;
     if (info.roundPhase != RoundPhase.revealed) return;
     _flightsBuiltForRound = info.roundIndex;
 
+    final shots = info.roundShots;
     final seeds = {for (final p in players) p.id: p.avatarSeed};
+    final names = {for (final p in players) p.id: p.name};
+    final me = MultiplayerService.instance.currentPlayerId;
+
+    // Perechile de duel. Un jucător trage o singură dată pe rundă, deci
+    // partenerul e unic — nu se poate ajunge la un „triunghi" de dueluri.
+    final partner = <int, int>{};
+    for (var i = 0; i < shots.length; i++) {
+      for (var j = i + 1; j < shots.length; j++) {
+        if (shots[i].byId == shots[j].atId && shots[i].atId == shots[j].byId) {
+          partner[i] = j;
+          partner[j] = i;
+        }
+      }
+    }
+
+    // Momentul plecării. Tragerile obișnuite rămân decalate ([_shotStagger]),
+    // ca ochiul să apuce să le urmărească pe rând; cele două ale unui duel
+    // primesc ACELAȘI slot, fiindcă pe ele trebuie să le vezi plecând în
+    // aceeași clipă — altfel „s-au întâlnit la mijloc" n-ar avea cum să iasă.
+    final slot = <int, int>{};
+    var nextSlot = 0;
+    for (var i = 0; i < shots.length; i++) {
+      if (slot.containsKey(i)) continue;
+      slot[i] = nextSlot;
+      final j = partner[i];
+      if (j != null) slot[j] = nextSlot;
+      nextSlot++;
+    }
+
     final flights = <ShotFlight>[];
-    for (var i = 0; i < info.roundShots.length; i++) {
-      final s = info.roundShots[i];
+    // obuzele care vin spre mine, cu poziția atacatorului în arenă („din ce
+    // parte vine"), înainte de a fi așezate pe culoare în camera de apărare
+    final atMe = <({TankShot shot, ShotFlight flight, double lane})>[];
+    var damageTaken = 0;
+    for (var i = 0; i < shots.length; i++) {
+      final s = shots[i];
       final from = centers[s.byId];
       final to = centers[s.atId];
       if (from == null || to == null) continue; // jucător plecat între timp
-      flights.add(ShotFlight(
+      final j = partner[i];
+      final duel = j != null;
+      // Se izbesc între ele doar dacă AMÂNDOUĂ obuzele erau oricum ratate:
+      // altfel am schimba rezultatul rundei dintr-o animație, exact lucrul pe
+      // care modul îl ține strict în tranzacția de rezolvare.
+      final intercepted = duel && !s.hit && !shots[j].hit;
+      final flight = ShotFlight(
         from: from,
         to: to,
         hit: s.hit,
         damage: s.damage,
-        startAt: _firstShotAt + i * _shotStagger,
+        startAt: _firstShotAt + slot[i]! * _shotStagger,
+        flightDuration: _flightDuration,
         color: pickAvatarColor(seeds[s.byId] ?? s.byId),
-      ));
+        lateral: duel && !intercepted ? _duelLateral : 0,
+        intercepted: intercepted,
+        meetLead: intercepted && i < j,
+      );
+      flights.add(flight);
+      if (s.byId == me) {
+        _myFlight = flight;
+        _myDuel = duel;
+        _myDuelIntercepted = intercepted;
+        for (final p in players) {
+          if (p.id == s.atId) {
+            _myPovTarget = p;
+            // viața de la ÎNCEPUTUL rundei: `p.hp` e deja cea de după
+            // lovitura asta, iar camera arată drumul spre ea, nu urmarea.
+            _myPovTargetHpAtStart = _hpAtRoundStart[p.id] ?? p.hp;
+          }
+        }
+      }
+      if (s.atId == me) {
+        if (s.hit) damageTaken += s.damage;
+        atMe.add((shot: s, flight: flight, lane: ((from.dx - to.dx) / (arenaWidth * 0.5)).clamp(-1.0, 1.0)));
+      }
+    }
+    _myDamageTaken = damageTaken;
+    // Culoarele din camera de apărare: unul singur vine exact din partea în
+    // care stă atacatorul în arenă; la doi sau trei, poziția reală se
+    // amestecă cu o desfășurare egală, altfel doi adversari din aceeași
+    // coloană ar trimite obuze pe același culoar, unul peste altul.
+    _myIncoming = [
+      for (var k = 0; k < atMe.length; k++)
+        IncomingShell(
+          launchAt: atMe[k].flight.startAt,
+          impactAt: atMe[k].flight.impactAt,
+          hit: atMe[k].shot.hit,
+          damage: atMe[k].shot.damage,
+          color: atMe[k].flight.color,
+          shooterName: names[atMe[k].shot.byId] ?? '?',
+          lane: atMe.length == 1
+              ? atMe[k].lane
+              : (atMe[k].lane * 0.5 + (k - (atMe.length - 1) / 2) * 0.5).clamp(-0.92, 0.92),
+        ),
+    ];
+    for (final p in players) {
+      if (p.id != me) continue;
+      _myColor = pickAvatarColor(p.avatarSeed);
+      _myName = p.name;
+      _myHpAtRoundStart = _hpAtRoundStart[p.id] ?? p.hp;
     }
     _flights = flights;
     _pendingDestroyed = info.roundDestroyedIds.length;
     _drainStart = flights.isEmpty
         ? _firstShotAt
-        : flights.map((f) => f.impactAt).reduce(max) + 0.15;
+        : flights.map((f) => f.impactAt).reduce(max) + _drainDelayAfterImpacts;
     // Post-frame din același motiv ca resetul din [_onData]: metoda asta e
     // chemată din build. La `from: 0` valoarea nu se schimbă (controlerul e
     // deja resetat), deci cadrul curent desenează corect timpul zero.
@@ -429,11 +587,21 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                         onPick: (id) => _pickTarget(info, id),
                       );
                     }
-                    return Column(
+                    // Camera de pe obuz stă PESTE tot ecranul, nu doar peste
+                    // arenă: în secunda aia întrebarea de jos nu mai are ce
+                    // căuta în cadru, iar o suprapunere care lasă marginile
+                    // vechi la vedere n-ar mai fi un punct de vedere, ci o
+                    // fereastră.
+                    return Stack(
                       children: [
-                        _buildTopBar(info),
-                        Expanded(child: _buildArena(info, players)),
-                        _buildBottomPanel(info, players),
+                        Column(
+                          children: [
+                            _buildTopBar(info),
+                            Expanded(child: _buildArena(info, players)),
+                            _buildBottomPanel(info, players),
+                          ],
+                        ),
+                        Positioned.fill(child: _buildPovOverlay(info)),
                       ],
                     );
                   },
@@ -443,6 +611,63 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
           ),
         ),
       ),
+    );
+  }
+
+  /// Camera cinematică a rundei — una singură, peste tot ecranul, aleasă după
+  /// rolul meu în runda tocmai rezolvată:
+  ///
+  ///  • **am tras** → camera de pe propriul obuz ([TankPovView]), cu tot cu
+  ///    duel, dacă ținta a tras și ea în mine;
+  ///  • **n-am tras, dar vine ceva spre mine** → camera din spatele propriului
+  ///    tanc ([TankDefenceView]);
+  ///  • **nici una, nici alta** → nimic, rămân pe arenă și văd tabloul întreg.
+  ///
+  /// Ordinea nu e negociabilă: dacă am tras, lovitura MEA e singurul lucru pe
+  /// care l-am decis în runda aia, deci ea are ecranul. Ce am încasat între
+  /// timp se scrie mic, în camera de pe obuz (vezi [TankPovView.damageTaken]),
+  /// și se vede oricum pe bare când se retrage camera.
+  ///
+  /// AnimatedBuilder propriu (nu cel al arenei) fiindcă trăiește în afara ei.
+  Widget _buildPovOverlay(MatchInfo info) {
+    return AnimatedBuilder(
+      animation: _fire,
+      builder: (context, _) {
+        if (info.roundPhase != RoundPhase.revealed) return const SizedBox.shrink();
+        final t = _fire.value * tanksRevealSeconds;
+        final flight = _myFlight;
+        final target = _myPovTarget;
+        if (flight != null && target != null) {
+          if (t >= TankPovView.endAtFor(flight.impactAt)) return const SizedBox.shrink();
+          return TankPovView(
+            time: t,
+            launchAt: flight.startAt,
+            impactAt: flight.impactAt,
+            hit: flight.hit,
+            damage: flight.damage,
+            targetColor: pickAvatarColor(target.avatarSeed),
+            targetName: target.name,
+            targetHp: _myPovTargetHpAtStart,
+            targetDamageRatio: 1 - (_myPovTargetHpAtStart / tanksMaxHp),
+            // culoarea proiectilului e chiar a mea: ShotFlight.color e luată
+            // din avatarSeed-ul celui care trage, iar zborul ăsta e al meu.
+            shooterColor: flight.color,
+            duelIncoming: _myDuel,
+            duelIntercepted: _myDuelIntercepted,
+            damageTaken: _myDamageTaken,
+          );
+        }
+        if (_myIncoming.isEmpty || t >= TankDefenceView.endAtFor(_myIncoming)) {
+          return const SizedBox.shrink();
+        }
+        return TankDefenceView(
+          time: t,
+          shells: _myIncoming,
+          myColor: _myColor,
+          myName: _myName,
+          myHp: _myHpAtRoundStart,
+        );
+      },
     );
   }
 
@@ -523,7 +748,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             top + row * (cellH + gap) + cellH / 2,
           );
         }
-        _ensureFlights(info, players, centers);
+        _ensureFlights(info, players, centers, c.maxWidth);
 
         return ClipRect(
           child: Transform.translate(
@@ -534,6 +759,18 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
               child: Stack(
                 children: [
                   const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _BattlefieldPainter()))),
+                  // Locurile nefolosite ale grilei 2×2, la o masă de 2 sau 3.
+                  // Fără ele, colțul gol arăta a ecran care nu s-a încărcat;
+                  // așa se citește ca „aici putea sta cineva", ceea ce e chiar
+                  // adevărul — camera se poate porni și în trei.
+                  for (var i = players.length; i < tanksPlayerCount; i++)
+                    Positioned(
+                      left: sidePad + (i % 2) * (cellW + gap),
+                      top: top + (i ~/ 2) * (cellH + gap),
+                      width: cellW,
+                      height: cellH,
+                      child: const _EmptySlot(),
+                    ),
                   for (var i = 0; i < players.length && i < tanksPlayerCount; i++)
                     Positioned(
                       left: sidePad + (i % 2) * (cellW + gap),
@@ -562,6 +799,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                     ),
                   ),
                   if (info.roundPhase == RoundPhase.revealed) _buildFireBanner(info),
+                  if (info.roundPhase == RoundPhase.revealed) _buildWreckBanner(info, players),
                 ],
               ),
             ),
@@ -594,6 +832,67 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                   fontWeight: FontWeight.w900,
                   letterSpacing: 3,
                   shadows: const [Shadow(color: Colors.black87, blurRadius: 12)],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// „X DISTRUS" — umple secunda și jumătate rămasă după ce s-au așezat
+  /// barele. Fără el, sfârșitul rundei era o pauză moartă: exploziile se
+  /// terminau, iar ecranul rămânea nemișcat până la întrebarea următoare,
+  /// fără ca cineva să apuce să înțeleagă CINE tocmai a ieșit din joc.
+  Widget _buildWreckBanner(MatchInfo info, List<MatchPlayer> players) {
+    if (info.roundDestroyedIds.isEmpty) return const SizedBox.shrink();
+    final t = _fire.value * tanksRevealSeconds;
+    final showAt = _drainStart + _drainDuration + 0.15;
+    if (t < showAt) return const SizedBox.shrink();
+    final me = MultiplayerService.instance.currentPlayerId;
+    final names = <String>[];
+    var iAmWrecked = false;
+    for (final p in players) {
+      if (!info.roundDestroyedIds.contains(p.id)) continue;
+      names.add(p.name);
+      if (p.id == me) iAmWrecked = true;
+    }
+    if (names.isEmpty) return const SizedBox.shrink();
+    final appear = ((t - showAt) / 0.28).clamp(0.0, 1.0);
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: Center(
+          child: Opacity(
+            opacity: appear,
+            child: Transform.scale(
+              scale: 0.85 + appear * 0.15,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(190),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.danger.withAlpha(170), width: 1.6),
+                  boxShadow: [BoxShadow(color: AppColors.danger.withAlpha(90), blurRadius: 22, spreadRadius: -6)],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('💥', style: TextStyle(fontSize: 26)),
+                    const SizedBox(height: 4),
+                    Text(
+                      iAmWrecked && names.length == 1
+                          ? tr('AI FOST DISTRUS', 'YOU ARE WRECKED')
+                          : tr('${names.join(', ')} — DISTRUS', '${names.join(', ')} — WRECKED'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: AppColors.danger,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -801,6 +1100,10 @@ class _TargetingView extends StatelessWidget {
           style: const TextStyle(color: Colors.white54));
     }
     final weakest = enemies.reduce((a, b) => b.hp < a.hp ? b : a);
+    // Cine face cele mai multe daune de la masă — „amenințarea", cifra după
+    // care se decide clasamentul final (vezi core/tanks.dart). Marcată doar
+    // dacă chiar a lovit ceva, altfel la runda 1 ar primi-o toată lumea.
+    final topThreat = enemies.fold<int>(0, (best, p) => p.damageDealt > best ? p.damageDealt : best);
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
       child: Column(
@@ -814,6 +1117,12 @@ class _TargetingView extends StatelessWidget {
                 selected: myTarget == p.id,
                 locked: myTarget != null,
                 isWeakest: enemies.length > 1 && p.id == weakest.id,
+                // „În gardă" = a răspuns și el corect runda asta, deci e în
+                // lista țintașilor și evită mult mai des. Vezi
+                // MultiplayerService.resolveTanksRound, care citește exact
+                // aceeași listă când aruncă zarul.
+                onGuard: info.roundWinnerIds.contains(p.id),
+                isTopThreat: enemies.length > 1 && topThreat > 0 && p.damageDealt == topThreat,
                 onTap: () => onPick(p.id),
               ),
             ),
@@ -939,13 +1248,27 @@ class _TargetingBackdropPainter extends CustomPainter {
   bool shouldRepaint(covariant _TargetingBackdropPainter oldDelegate) => oldDelegate.active != active;
 }
 
-/// O victimă posibilă: tanc mare, viața la vedere, o cruce de ochire care
-/// se aprinde la selecție.
+/// O victimă posibilă — fișa completă pe care se ia decizia rundei.
+///
+/// DE CE ATÂTA INFORMAȚIE PE UN SINGUR CARD: alegerea țintei era, până acum,
+/// aproape o formalitate — vedeai un nume, o bară și trăgeai în cel mai roșu.
+/// Dar cifra care decide de fapt rezultatul e ȘANSA DE LOVIRE, iar ea nu
+/// depinde de viață, ci de dacă ținta a nimerit ea însăși întrebarea rundei
+/// ([onGuard]). Un tanc slăbit „în gardă" evită mai mult de jumătate din
+/// lovituri, pe când unul sănătos care a greșit e practic sigur atins.
+/// Arătând amândouă, alegerea devine o socoteală adevărată: pariez pe o
+/// lovitură ucigașă improbabilă, sau iau daune sigure de la cel sănătos?
+///
+/// Nimic de aici nu e secret: [onGuard] se citește din `roundWinnerIds`, care
+/// e public pe documentul meciului din clipa în care se închide faza de
+/// răspuns (vezi MultiplayerService.closeTanksAnswering).
 class _TargetCard extends StatelessWidget {
   final MatchPlayer player;
   final bool selected;
   final bool locked;
   final bool isWeakest;
+  final bool onGuard;
+  final bool isTopThreat;
   final VoidCallback onTap;
 
   const _TargetCard({
@@ -953,6 +1276,8 @@ class _TargetCard extends StatelessWidget {
     required this.selected,
     required this.locked,
     required this.isWeakest,
+    required this.onGuard,
+    required this.isTopThreat,
     required this.onTap,
   });
 
@@ -960,6 +1285,10 @@ class _TargetCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = pickAvatarColor(player.avatarSeed);
     final hpColor = TankHpBar.hpColor(player.hp);
+    final hitChance = tanksHitChance(targetAnsweredCorrectly: onGuard);
+    final canKill = tanksCanKill(player.hp);
+    final chanceColor = hitChance >= 0.7 ? AppColors.play : AppColors.orange;
+
     return Opacity(
       // dupa ce ai ales, ceilalti se sting — decizia e luata, nu se schimba
       opacity: locked && !selected ? 0.35 : 1,
@@ -970,90 +1299,149 @@ class _TargetCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(13, 11, 13, 11),
             decoration: BoxDecoration(
-              color: selected ? AppColors.danger.withAlpha(38) : Colors.white.withAlpha(14),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: selected
+                    ? [AppColors.danger.withAlpha(60), AppColors.danger.withAlpha(18)]
+                    : [Colors.white.withAlpha(20), Colors.white.withAlpha(8)],
+              ),
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: selected ? AppColors.danger : Colors.white24, width: selected ? 2.2 : 1),
               boxShadow: selected
                   ? [BoxShadow(color: AppColors.danger.withAlpha(120), blurRadius: 18, spreadRadius: -4)]
                   : null,
             ),
-            child: Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Avatar(
-                  size: 40,
-                  label: player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                  accentColor: color,
-                  photoUrl: player.photoUrl,
-                  style: avatarStyleFromId(player.avatarStyle),
+                Row(
+                  children: [
+                    Avatar(
+                      size: 40,
+                      label: player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
+                      accentColor: color,
+                      photoUrl: player.photoUrl,
+                      style: avatarStyleFromId(player.avatarStyle),
+                    ),
+                    const SizedBox(width: 11),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  player.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text('${player.hp}',
+                                  style: TextStyle(color: hpColor, fontSize: 15, fontWeight: FontWeight.w900)),
+                              Text(' HP', style: TextStyle(color: hpColor.withAlpha(160), fontSize: 10, fontWeight: FontWeight.w800)),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          TankHpBar(
+                            hp: player.hp,
+                            previousHp: player.hp,
+                            drainProgress: 1,
+                            color: hpColor,
+                            height: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    TankArt(color: color, width: 58, facingRight: false, damage: 1 - (player.hp / tanksMaxHp)),
+                    const SizedBox(width: 4),
+                    Icon(
+                      selected ? Icons.gps_fixed_rounded : Icons.radio_button_unchecked_rounded,
+                      color: selected ? AppColors.danger : Colors.white24,
+                      size: 22,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
+                const SizedBox(height: 9),
+                // Rândul de citire tactică. Șansa stă prima și cel mai mare:
+                // e singura cifră care schimbă rezultatul aruncării.
+                Row(
+                  children: [
+                    _readout(
+                      icon: Icons.percent_rounded,
+                      label: tr('ȘANSĂ', 'HIT'),
+                      value: '${(hitChance * 100).round()}%',
+                      color: chanceColor,
+                    ),
+                    const SizedBox(width: 7),
+                    _readout(
+                      icon: Icons.whatshot_rounded,
+                      label: tr('DAUNE', 'DEALT'),
+                      value: '${player.damageDealt}',
+                      color: isTopThreat ? AppColors.danger : Colors.white54,
+                    ),
+                    const Spacer(),
+                    if (canKill) _chip(tr('LOVITURĂ MORTALĂ', 'KILL SHOT'), AppColors.danger),
+                  ],
+                ),
+                if (onGuard || isWeakest || isTopThreat) ...[
+                  const SizedBox(height: 7),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 5,
                     children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              player.name,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('${player.hp} HP',
-                              style: TextStyle(color: hpColor, fontSize: 12.5, fontWeight: FontWeight.w900)),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      TankHpBar(
-                        hp: player.hp,
-                        previousHp: player.hp,
-                        drainProgress: 1,
-                        color: hpColor,
-                        height: 7,
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Text(
-                            tr('${player.damageDealt} daune făcute', '${player.damageDealt} damage dealt'),
-                            style: const TextStyle(color: Colors.white38, fontSize: 10.5),
-                          ),
-                          if (isWeakest) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                              decoration: BoxDecoration(
-                                color: AppColors.orange.withAlpha(45),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                tr('CEL MAI SLĂBIT', 'WEAKEST'),
-                                style: const TextStyle(color: AppColors.orange, fontSize: 8.5, fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
+                      if (onGuard) _chip(tr('ÎN GARDĂ · evită des', 'ON GUARD · dodges often'), AppColors.blue),
+                      if (isTopThreat) _chip(tr('CEL MAI PERICULOS', 'BIGGEST THREAT'), AppColors.danger),
+                      if (isWeakest) _chip(tr('ȚINTA IMPLICITĂ', 'DEFAULT TARGET'), AppColors.orange),
                     ],
                   ),
-                ),
-                const SizedBox(width: 10),
-                TankArt(color: color, width: 62, facingRight: false, damage: 1 - (player.hp / tanksMaxHp)),
-                const SizedBox(width: 6),
-                Icon(
-                  selected ? Icons.gps_fixed_rounded : Icons.radio_button_unchecked_rounded,
-                  color: selected ? AppColors.danger : Colors.white24,
-                  size: 22,
-                ),
+                ],
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _readout({required IconData icon, required String label, required String value, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withAlpha(26),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: color.withAlpha(90)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 12),
+          const SizedBox(width: 5),
+          Text(label, style: TextStyle(color: color.withAlpha(180), fontSize: 8.5, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+          const SizedBox(width: 5),
+          Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.w900)),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+      decoration: BoxDecoration(
+        color: color.withAlpha(40),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: color.withAlpha(120)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontSize: 8.5, fontWeight: FontWeight.w900, letterSpacing: 0.4),
       ),
     );
   }
@@ -1162,8 +1550,24 @@ class _TankCard extends StatelessWidget {
       duration: const Duration(milliseconds: 220),
       padding: const EdgeInsets.fromLTRB(9, 7, 9, 6),
       decoration: BoxDecoration(
-        color: destroyed ? Colors.black.withAlpha(90) : Colors.white.withAlpha(isMe ? 22 : 13),
-        borderRadius: BorderRadius.circular(16),
+        // Placă de blindaj, nu o cutie plată: degradeul dinspre colțul din
+        // stânga-sus dă volum, iar la cel care trage lumina vine din tun.
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: destroyed
+              ? [Colors.black.withAlpha(120), Colors.black.withAlpha(70)]
+              : isFiring
+                  ? [AppColors.orange.withAlpha(60), Colors.white.withAlpha(10)]
+                  : [Colors.white.withAlpha(isMe ? 30 : 20), Colors.white.withAlpha(6)],
+        ),
+        borderRadius: const BorderRadius.only(
+          // colț tăiat sus-stânga: siluetă de placă metalică, nu de card
+          topLeft: Radius.circular(5),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+        ),
         border: Border.all(color: border, width: isFiring || isMe ? 1.8 : 1),
         boxShadow: isFiring ? [BoxShadow(color: AppColors.orange.withAlpha(120), blurRadius: 16, spreadRadius: -3)] : null,
       ),
@@ -1232,48 +1636,145 @@ class _TankCard extends StatelessWidget {
             height: 8,
           ),
           const Spacer(),
-          Align(
-            alignment: facingRight ? Alignment.centerLeft : Alignment.centerRight,
-            child: TankArt(
-              color: color,
-              width: tankWidth,
-              facingRight: facingRight,
-              destroyed: destroyed,
-              damage: 1 - (player.hp / tanksMaxHp),
-            ),
+          Row(
+            children: [
+              if (!facingRight) const Spacer(),
+              TankArt(
+                color: color,
+                width: tankWidth,
+                facingRight: facingRight,
+                destroyed: destroyed,
+                damage: 1 - (player.hp / tanksMaxHp),
+              ),
+              if (facingRight) const Spacer(),
+              // Starea din runda curentă, lângă tanc: „ARMAT" cât aștepți
+              // ceilalți, „FOC" cât îți pleacă obuzul, „KO" la epavă. Ocupă
+              // colțul care oricum rămânea gol sub bara de viață.
+              if (destroyed)
+                _statusChip(tr('KO', 'KO'), AppColors.danger)
+              else if (isFiring)
+                _statusChip(tr('FOC', 'FIRE'), AppColors.orange)
+              else if (hasAnswered && showAnswerTicks)
+                _statusChip(tr('ARMAT', 'LOADED'), AppColors.play),
+            ],
           ),
         ],
       ),
     );
   }
+
+  Widget _statusChip(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withAlpha(40),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withAlpha(140)),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: 0.6),
+      ),
+    );
+  }
 }
 
-/// Fundalul arenei: un orizont în perspectivă și un halou cald la bază.
-/// Foarte discret intenționat — tot ce se întâmplă important se desenează
-/// deasupra lui.
+/// Un loc liber din grila 2×2, la o cameră pornită cu mai puțin de patru
+/// jucători. Doar un contur întrerupt — trebuie să se citească drept „gol",
+/// nu drept încă un tanc pe care ai putea trage.
+class _EmptySlot extends StatelessWidget {
+  const _EmptySlot();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withAlpha(18)),
+        ),
+        child: Center(
+          child: Icon(Icons.remove_rounded, color: Colors.white.withAlpha(26), size: 22),
+        ),
+      ),
+    );
+  }
+}
+
+/// Fundalul arenei: un câmp de luptă văzut de sus, cu orizont cald, creste
+/// îndepărtate, cratere și o grilă tactică.
+///
+/// Rămâne DISCRET intenționat — tot ce contează (tancuri, bare, proiectile)
+/// se desenează deasupra, iar un fundal care se bate cu ele ar face runda
+/// ilizibilă tocmai în secundele în care se întâmplă totul. De-aia n-are
+/// nicio animație: singura mișcare din arenă trebuie să fie a jocului.
 class _BattlefieldPainter extends CustomPainter {
   const _BattlefieldPainter();
 
   @override
   void paint(Canvas canvas, Size size) {
-    final glow = Paint()
-      ..shader = RadialGradient(
-        colors: [AppColors.orange.withAlpha(26), Colors.transparent],
-      ).createShader(Rect.fromCircle(center: Offset(size.width / 2, size.height * 0.5), radius: size.width * 0.72));
-    canvas.drawRect(Offset.zero & size, glow);
+    final w = size.width;
+    final h = size.height;
 
+    // creste îndepărtate, două straturi — dau adâncime fără să ceară nimic
+    for (final layer in [(0.20, 34, 0.055), (0.30, 22, 0.085)]) {
+      final (yFrac, alpha, amp) = layer;
+      final path = Path()..moveTo(0, h * yFrac);
+      for (var x = 0.0; x <= w; x += w / 14) {
+        final n = sin(x / w * 7 + yFrac * 21) * 0.5 + cos(x / w * 11 + yFrac * 5) * 0.5;
+        path.lineTo(x, h * (yFrac + n * amp));
+      }
+      path
+        ..lineTo(w, h)
+        ..lineTo(0, h)
+        ..close();
+      canvas.drawPath(path, Paint()..color = const Color(0xFF2A1F3A).withAlpha(alpha));
+    }
+
+    // haloul cald dinspre orizont
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [AppColors.orange.withAlpha(30), Colors.transparent],
+        ).createShader(Rect.fromCircle(center: Offset(w / 2, h * 0.34), radius: w * 0.85)),
+    );
+
+    // cratere — urme de bătălie, împrăștiate determinist (fără Random: fundalul
+    // trebuie să arate la fel la fiecare redesenare)
+    final crater = Paint()..style = PaintingStyle.fill;
+    for (var i = 0; i < 9; i++) {
+      final x = w * (0.08 + ((i * 37) % 100) / 115);
+      final y = h * (0.28 + ((i * 53) % 100) / 145);
+      final r = w * (0.018 + ((i * 17) % 30) / 900);
+      crater.color = Colors.black.withAlpha(40);
+      canvas.drawOval(Rect.fromCenter(center: Offset(x, y), width: r * 2.6, height: r * 1.5), crater);
+      crater.color = Colors.white.withAlpha(9);
+      canvas.drawOval(Rect.fromCenter(center: Offset(x, y - r * 0.22), width: r * 2.2, height: r * 1.2), crater);
+    }
+
+    // grila tactică
     final line = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.8
-      ..color = Colors.white.withAlpha(12);
+      ..color = Colors.white.withAlpha(11);
     for (var i = 1; i < 7; i++) {
-      final y = size.height * (i / 7);
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), line);
+      final y = h * (i / 7);
+      canvas.drawLine(Offset(0, y), Offset(w, y), line);
     }
     for (var i = 1; i < 6; i++) {
-      final x = size.width * (i / 6);
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), line);
+      final x = w * (i / 6);
+      canvas.drawLine(Offset(x, 0), Offset(x, h), line);
     }
+
+    // axa centrală, marcată mai apăsat: împarte vizual masa în două tabere
+    canvas.drawLine(
+      Offset(w / 2, 0),
+      Offset(w / 2, h),
+      Paint()
+        ..strokeWidth = 1
+        ..color = AppColors.orange.withAlpha(26),
+    );
   }
 
   @override

@@ -13,6 +13,44 @@ import 'package:flutter/material.dart';
 import '../core/tanks.dart';
 import '../core/theme.dart';
 
+/// Textul mare de pe camerele cinematice ale modului („-24", „EVITAT!",
+/// „Ha, m-a ratat!"), centrat pe [center] și cu umbră, ca să rămână lizibil
+/// și peste o explozie albă.
+///
+/// Stă aici, la comun, fiindcă îl folosesc amândouă camerele (tank_pov.dart
+/// și tank_defence.dart) și textele lor trebuie să arate IDENTIC: sunt același
+/// eveniment văzut din două părți, iar dacă „MISS"-ul țintașului ar avea alt
+/// corp de literă decât „m-a ratat"-ul țintei, cei doi jucători ar avea
+/// impresia că li s-a întâmplat altceva.
+void paintBattleLabel(
+  Canvas canvas,
+  Offset center,
+  String text,
+  double fontSize,
+  Color color, {
+  double alpha = 1,
+  FontWeight weight = FontWeight.w900,
+  double letterSpacing = 1.5,
+}) {
+  final a = (255 * alpha).round().clamp(0, 255);
+  if (a <= 0) return;
+  final tp = TextPainter(
+    text: TextSpan(
+      text: text,
+      style: TextStyle(
+        color: color.withAlpha(a),
+        fontSize: fontSize,
+        fontWeight: weight,
+        letterSpacing: letterSpacing,
+        shadows: [Shadow(color: Colors.black.withAlpha((a * 0.85).round()), blurRadius: 12)],
+      ),
+    ),
+    textDirection: TextDirection.ltr,
+    textAlign: TextAlign.center,
+  )..layout(maxWidth: 640);
+  tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
+}
+
 /// Un tanc văzut din profil. [facingRight] întoarce țeava spre dreapta —
 /// în arena 2×2 tancurile din stânga se uită spre dreapta și invers, ca
 /// masa să pară o confruntare, nu patru vehicule parcate în aceeași
@@ -53,6 +91,175 @@ class TankArt extends StatelessWidget {
   }
 }
 
+/// Desenează un tanc într-un dreptunghi dat, pe o pânză oarecare.
+///
+/// Extras din [_TankPainter] ca funcție publică fiindcă îl mai folosește un
+/// desen care NU e un widget: camera de pe proiectil (widgets/tank_pov.dart)
+/// are nevoie de exact același tanc, dar desenat la scara dictată de distanță,
+/// în mijlocul unei scene în perspectivă. Un widget n-ar fi încăput acolo, iar
+/// un al doilea desen de tanc s-ar fi depărtat de ăsta la prima modificare.
+void paintTankInto(
+  Canvas canvas,
+  Rect rect, {
+  required Color color,
+  bool facingRight = true,
+  bool destroyed = false,
+  double damage = 0,
+}) {
+  canvas.save();
+  canvas.translate(rect.left, rect.top);
+  _paintTankBody(
+    canvas,
+    rect.size,
+    color: color,
+    facingRight: facingRight,
+    destroyed: destroyed,
+    damage: damage.clamp(0.0, 1.0),
+  );
+  canvas.restore();
+}
+
+/// Același tanc, dar văzut DIN SPATE — silueta din camera de apărare
+/// (widgets/tank_defence.dart), unde jucătorul stă în spatele propriului
+/// blindaj și se uită peste turelă la obuzul care vine spre el.
+///
+/// DE CE UN AL DOILEA DESEN, ȘI NU O ROTIRE A CELUI DIN PROFIL: [paintTankInto]
+/// desenează o siluetă plată, bună pentru arenă și pentru ținta din zare, dar
+/// din spate se văd exact lucrurile pe care profilul nu le are — cele două
+/// șenile în perspectivă, placa din spate, tobele de eșapament — iar țeava
+/// dispare aproape complet, fiindcă arată în direcția în care privim. Un
+/// desen întors pe orizontală ar fi rămas tot un profil.
+///
+/// [rect] e cutia în care intră tancul; raportul bun e o înălțime cam 0,72
+/// din lățime. [damage] 0 = intact, 1 = aproape mort (arsuri pe placă).
+void paintTankRearInto(
+  Canvas canvas,
+  Rect rect, {
+  required Color color,
+  double damage = 0,
+}) {
+  final w = rect.width;
+  final h = rect.height;
+  final d = damage.clamp(0.0, 1.0);
+
+  canvas.save();
+  canvas.translate(rect.left, rect.top);
+
+  final hull = Color.lerp(color, Colors.black, 0.22)!;
+  final deck = Color.lerp(color, Colors.white, 0.10)!;
+  final turret = Color.lerp(color, Colors.white, 0.06)!;
+  const tracks = Color(0xFF232838);
+  final paint = Paint()..style = PaintingStyle.fill;
+
+  // umbra de sub tanc, turtită — fără ea, tancul plutește peste sol
+  paint.color = Colors.black.withAlpha(120);
+  canvas.drawOval(Rect.fromLTRB(w * 0.02, h * 0.88, w * 0.98, h * 1.04), paint);
+
+  // Șenilele, ușor în evantai spre privitor: din spate se văd amândouă, iar
+  // depărtarea dintre ele jos e tot ce dă perspectiva scenei.
+  for (final side in [true, false]) {
+    final path = Path();
+    if (side) {
+      path
+        ..moveTo(w * 0.13, h * 0.44)
+        ..lineTo(w * 0.30, h * 0.44)
+        ..lineTo(w * 0.27, h * 0.99)
+        ..lineTo(w * 0.03, h * 0.99)
+        ..close();
+    } else {
+      path
+        ..moveTo(w * 0.70, h * 0.44)
+        ..lineTo(w * 0.87, h * 0.44)
+        ..lineTo(w * 0.97, h * 0.99)
+        ..lineTo(w * 0.73, h * 0.99)
+        ..close();
+    }
+    paint.color = tracks;
+    canvas.drawPath(path, paint);
+    // zalele: linii orizontale care se răresc spre depărtare
+    final link = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = h * 0.018
+      ..color = Colors.black.withAlpha(150);
+    for (var i = 0; i < 7; i++) {
+      final y = h * (0.48 + i * 0.075);
+      final spread = (y / h - 0.44) * 0.30;
+      if (side) {
+        canvas.drawLine(Offset(w * (0.13 - spread), y), Offset(w * (0.30 - spread * 0.2), y), link);
+      } else {
+        canvas.drawLine(Offset(w * (0.70 + spread * 0.2), y), Offset(w * (0.87 + spread), y), link);
+      }
+    }
+  }
+
+  // placa din spate a corpului, trapez (mai lată jos = privim ușor de sus)
+  paint.color = hull;
+  canvas.drawPath(
+    Path()
+      ..moveTo(w * 0.19, h * 0.46)
+      ..lineTo(w * 0.81, h * 0.46)
+      ..lineTo(w * 0.85, h * 0.92)
+      ..lineTo(w * 0.15, h * 0.92)
+      ..close(),
+    paint,
+  );
+
+  // capacul motorului, luminat — banda care separă corpul de turelă
+  paint.color = deck;
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(Rect.fromLTRB(w * 0.20, h * 0.41, w * 0.80, h * 0.50), Radius.circular(h * 0.03)),
+    paint,
+  );
+
+  // tobe de eșapament + fumul cald de deasupra lor: singurul semn că motorul
+  // merge, adică singurul lucru „viu" dintr-un desen altfel simetric
+  paint.color = const Color(0xFF171B27);
+  for (final x in [0.28, 0.66]) {
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTRB(w * x, h * 0.52, w * (x + 0.06), h * 0.70), Radius.circular(h * 0.03)),
+      paint,
+    );
+  }
+
+  // lumini de poziție în colțurile de jos
+  paint.color = AppColors.orange.withAlpha(150);
+  canvas.drawCircle(Offset(w * 0.21, h * 0.86), h * 0.022, paint);
+  canvas.drawCircle(Offset(w * 0.79, h * 0.86), h * 0.022, paint);
+
+  // turela, văzută din spate: o cutie rotunjită peste corp
+  paint.color = turret;
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(Rect.fromLTRB(w * 0.33, h * 0.14, w * 0.67, h * 0.45), Radius.circular(h * 0.09)),
+    paint,
+  );
+  paint.color = Colors.white.withAlpha(40);
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(Rect.fromLTRB(w * 0.36, h * 0.16, w * 0.64, h * 0.21), Radius.circular(h * 0.025)),
+    paint,
+  );
+
+  // Țeava, puternic scurtată: arată în direcția în care privim, deci din ea
+  // se vede aproape numai gura tunului, peste turelă.
+  paint.color = Color.lerp(color, Colors.black, 0.42)!;
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(Rect.fromLTRB(w * 0.455, h * 0.02, w * 0.545, h * 0.20), Radius.circular(h * 0.03)),
+    paint,
+  );
+  canvas.drawCircle(Offset(w * 0.5, h * 0.045), h * 0.055, paint);
+  paint.color = Colors.black.withAlpha(170);
+  canvas.drawCircle(Offset(w * 0.5, h * 0.045), h * 0.028, paint);
+
+  // arsuri, proporționale cu viața pierdută — tancul se citește avariat și
+  // fără să te uiți la bară
+  if (d > 0.35) {
+    paint.color = Colors.black.withAlpha((90 * ((d - 0.35) / 0.65)).round().clamp(0, 130));
+    canvas.drawCircle(Offset(w * 0.36, h * 0.66), h * 0.11, paint);
+    canvas.drawCircle(Offset(w * 0.62, h * 0.56), h * 0.07, paint);
+  }
+
+  canvas.restore();
+}
+
 class _TankPainter extends CustomPainter {
   final Color color;
   final bool facingRight;
@@ -67,7 +274,32 @@ class _TankPainter extends CustomPainter {
   });
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void paint(Canvas canvas, Size size) => _paintTankBody(
+        canvas,
+        size,
+        color: color,
+        facingRight: facingRight,
+        destroyed: destroyed,
+        damage: damage,
+      );
+
+  @override
+  bool shouldRepaint(covariant _TankPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.facingRight != facingRight ||
+      oldDelegate.destroyed != destroyed ||
+      oldDelegate.damage != damage;
+}
+
+void _paintTankBody(
+  Canvas canvas,
+  Size size, {
+  required Color color,
+  required bool facingRight,
+  required bool destroyed,
+  required double damage,
+}) {
+  {
     final w = size.width;
     final h = size.height;
 
@@ -164,13 +396,6 @@ class _TankPainter extends CustomPainter {
       }
     }
   }
-
-  @override
-  bool shouldRepaint(covariant _TankPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.facingRight != facingRight ||
-      oldDelegate.destroyed != destroyed ||
-      oldDelegate.damage != damage;
 }
 
 /// Bara de viață în stil joc de luptă: sub bara colorată curentă rămâne o
@@ -241,12 +466,40 @@ class TankHpBar extends StatelessWidget {
                   boxShadow: [BoxShadow(color: color.withAlpha(110), blurRadius: 6, spreadRadius: -1)],
                 ),
               ),
+              // Diviziuni din 25 în 25 HP. Nu sunt decor: o bară netedă se
+              // citește doar ca „cam pe jumătate", pe când segmentele spun
+              // dintr-o privire câte lovituri mai suportă tancul — o lovitură
+              // reușită ia cam un segment (vezi tanksDamageMin/Max).
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(painter: _HpTicksPainter(height: height)),
+                ),
+              ),
             ],
           ),
         );
       },
     );
   }
+}
+
+class _HpTicksPainter extends CustomPainter {
+  final double height;
+  const _HpTicksPainter({required this.height});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.black.withAlpha(90)
+      ..strokeWidth = 1;
+    for (var i = 1; i < 4; i++) {
+      final x = size.width * (i / 4);
+      canvas.drawLine(Offset(x, size.height * 0.18), Offset(x, size.height * 0.82), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HpTicksPainter oldDelegate) => oldDelegate.height != height;
 }
 
 /// Un proiectil în drum spre țintă, deja rezolvat (se știe de la început
@@ -261,6 +514,31 @@ class ShotFlight {
   final double flightDuration;
   final Color color;
 
+  /// **Duel** — cei doi și-au ales țintă unul pe altul în aceeași rundă, deci
+  /// pleacă DEODATĂ (același [startAt], vezi
+  /// MultiplayerTanksScreen._ensureFlights).
+  ///
+  /// [lateral] e deplasarea, în pixeli, PERPENDICULAR pe traiectorie. Cele
+  /// două obuze ale unui duel merg pe același segment în sensuri opuse;
+  /// fără ea s-ar suprapune perfect la jumătatea drumului și s-ar citi ca un
+  /// singur proiectil care clipește, nu ca doi care se încrucișează. Normala
+  /// se întoarce odată cu sensul, deci ACEEAȘI valoare pozitivă îi trimite
+  /// pe cei doi în părți opuse — fiecare trece „pe dreapta lui".
+  final double lateral;
+
+  /// Amândoi au ratat, deci niciun obuz n-are unde ajunge: se izbesc între
+  /// ele la jumătatea drumului. NU e o regulă de joc — zarurile rămân cele
+  /// aruncate o singură dată în MultiplayerService.resolveTanksRound, iar
+  /// daunele sunt zero în ambele variante. E doar punerea în scenă a două
+  /// ratări simultane, care altfel s-ar fi terminat în două ricoșeuri fără
+  /// nicio legătură între ele.
+  final bool intercepted;
+
+  /// Care dintre cele două obuze ale unei ciocniri desenează blițul comun și
+  /// scrie „MISS”. Fără el, textul și explozia s-ar desena de două ori peste
+  /// ele însele, ieșind de două ori mai opace decât restul rundei.
+  final bool meetLead;
+
   const ShotFlight({
     required this.from,
     required this.to,
@@ -269,9 +547,40 @@ class ShotFlight {
     required this.startAt,
     required this.color,
     this.flightDuration = 0.42,
+    this.lateral = 0,
+    this.intercepted = false,
+    this.meetLead = false,
   });
 
-  double get impactAt => startAt + flightDuration;
+  /// Cât zboară până se oprește — la o ciocnire în aer, jumătate de drum.
+  double get travelDuration => intercepted ? flightDuration * 0.5 : flightDuration;
+
+  /// Unde se termină drumul: tancul țintă, sau punctul de ciocnire.
+  Offset get landing => intercepted ? pointAt(0.5) : to;
+
+  /// Clipa în care se oprește proiectilul — impact, ricoșeu sau ciocnire.
+  /// Tot restul coregrafiei (sunet, bare care scad, camerele cinematice) se
+  /// leagă de ea, deci ciocnirea trebuie să scurteze chiar valoarea asta, nu
+  /// doar desenul.
+  double get impactAt => startAt + travelDuration;
+
+  /// Poziția pe traiectorie la fracțiunea [t] din drumul COMPLET (0 = tun,
+  /// 1 = țintă). Arc, nu linie: cu tancurile așezate în grilă, o linie
+  /// dreaptă între două cutii de pe același rând ar fi arătat ca un simplu
+  /// chenar mișcător.
+  ///
+  /// Stă pe model, nu în painter, fiindcă din ea se calculează și punctul de
+  /// ciocnire ([landing]) — două formule separate s-ar fi despărțit la prima
+  /// modificare a arcului, iar obuzele s-ar fi „izbit" pe lângă ele.
+  Offset pointAt(double t) {
+    final d = to - from;
+    final dist = d.distance;
+    var p = Offset.lerp(from, to, t)! + Offset(0, -sin(t * pi) * dist * 0.16);
+    if (lateral != 0 && dist > 0.001) {
+      p += Offset(-d.dy, d.dx) / dist * lateral;
+    }
+    return p;
+  }
 }
 
 /// Stratul de deasupra arenei: proiectile, explozii, ricoșeuri și cifrele de
@@ -296,29 +605,26 @@ class TankShotsPainter extends CustomPainter {
     for (final f in flights) {
       final local = time - f.startAt;
       if (local < 0) continue;
-      if (local < f.flightDuration) {
+      if (local < f.travelDuration) {
+        // fracțiunea din drumul COMPLET: un obuz interceptat se oprește la
+        // jumătate, deci parcurge tot 0→0,5 din traiectorie, nu 0→1.
         _paintShell(canvas, f, local / f.flightDuration);
       } else {
-        final since = local - f.flightDuration;
+        final since = local - f.travelDuration;
         if (since < impactDuration) _paintImpact(canvas, f, since / impactDuration);
         if (f.hit && since < damageTextDuration) _paintDamageText(canvas, f, since / damageTextDuration);
-        if (!f.hit && since < damageTextDuration) _paintDodgeText(canvas, f, since / damageTextDuration);
+        // La o ciocnire în aer scrie unul singur pentru amândoi: „MISS” apare
+        // acolo unde s-au izbit obuzele, nu de două ori peste el însuși.
+        if (!f.hit && since < damageTextDuration && (!f.intercepted || f.meetLead)) {
+          _paintDodgeText(canvas, f, since / damageTextDuration);
+        }
       }
     }
   }
 
-  /// Traiectoria e un arc, nu o linie: proiectilul urcă puțin la plecare și
-  /// cade spre țintă. Cu tancurile așezate în grilă, o linie dreaptă între
-  /// două cutii de pe același rând ar fi arătat ca un simplu chenar mișcător.
-  Offset _pointAt(ShotFlight f, double t) {
-    final straight = Offset.lerp(f.from, f.to, t)!;
-    final arc = -sin(t * pi) * (f.from - f.to).distance * 0.16;
-    return straight + Offset(0, arc);
-  }
-
   void _paintShell(Canvas canvas, ShotFlight f, double t) {
-    final pos = _pointAt(f, t);
-    final tail = _pointAt(f, (t - 0.16).clamp(0.0, 1.0));
+    final pos = f.pointAt(t);
+    final tail = f.pointAt((t - 0.16).clamp(0.0, 1.0));
 
     final trail = Paint()
       ..strokeCap = StrokeCap.round
@@ -335,6 +641,10 @@ class TankShotsPainter extends CustomPainter {
 
   void _paintImpact(Canvas canvas, ShotFlight f, double t) {
     final fade = (1 - t);
+    if (f.intercepted) {
+      _paintClash(canvas, f, t, fade);
+      return;
+    }
     if (f.hit) {
       // inel de explozie + schije
       final r = 6 + t * 26;
@@ -372,6 +682,36 @@ class TankShotsPainter extends CustomPainter {
     }
   }
 
+  /// Ciocnirea a două obuze care se ratau oricum amândouă. Fiecare din cele
+  /// două zboruri își desenează inelul în culoarea lui — așa se vede din
+  /// prima că s-au întâlnit DOUĂ proiectile, nu că a explodat unul singur în
+  /// mijlocul câmpului — dar blițul alb și schijele le pune doar unul
+  /// ([ShotFlight.meetLead]), altfel ar ieși de două ori mai aprinse decât
+  /// orice alt impact al rundei.
+  void _paintClash(Canvas canvas, ShotFlight f, double t, double fade) {
+    final at = f.landing;
+    final r = 5 + t * 30;
+    canvas.drawCircle(
+      at,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.2 * fade
+        ..color = f.color.withAlpha((235 * fade).round()),
+    );
+    if (!f.meetLead) return;
+    canvas.drawCircle(at, r * 0.42, Paint()..color = Colors.white.withAlpha((210 * fade * fade).round()));
+    final spark = Paint()
+      ..strokeCap = StrokeCap.round
+      ..strokeWidth = 2.2 * fade
+      ..color = Colors.white.withAlpha((200 * fade).round());
+    for (var i = 0; i < 8; i++) {
+      final a = i * (2 * pi / 8) + 0.4;
+      final d = Offset(cos(a), sin(a));
+      canvas.drawLine(at + d * (r * 0.6), at + d * (r * 1.5), spark);
+    }
+  }
+
   void _paintDamageText(Canvas canvas, ShotFlight f, double t) {
     _paintFloatingText(
       canvas,
@@ -383,8 +723,17 @@ class TankShotsPainter extends CustomPainter {
     );
   }
 
+  /// „MISS” stă unde s-a oprit obuzul: pe tanc la un ricoșeu obișnuit, în
+  /// aer la o ciocnire între două obuze.
   void _paintDodgeText(Canvas canvas, ShotFlight f, double t) {
-    _paintFloatingText(canvas, f.to, 'MISS', t, Colors.white70, fontSize: 12);
+    _paintFloatingText(
+      canvas,
+      f.landing,
+      'MISS',
+      t,
+      f.intercepted ? Colors.white : Colors.white70,
+      fontSize: f.intercepted ? 15 : 12,
+    );
   }
 
   void _paintFloatingText(Canvas canvas, Offset at, String text, double t, Color color, {required double fontSize}) {

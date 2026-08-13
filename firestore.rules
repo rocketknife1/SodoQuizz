@@ -99,6 +99,18 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Cererea de revanșă de la finalul unui meci (vezi
+    // MultiplayerService.offerRematch + RematchOffer) — id-ul documentului e
+    // chiar matchId-ul meciului tocmai încheiat, singurul id pe care toți
+    // foștii participanți îl cunosc deja (fiecare are deschis ecranul de
+    // rezultate cu el), fără niciun canal de invitație separat. Aceeași
+    // observație ca la `matches` mai sus: gazda scrie camera nouă cu jucători
+    // aleși de EA (launchRematch), deci nu se poate restrânge la
+    // request.auth.uid fără Cloud Functions.
+    match /rematch_offers/{matchId} {
+      allow read, write: if request.auth != null;
+    }
+
     // "Cineva tocmai a intrat in Multiplayer" — un document per jucator,
     // rescris la fiecare intrare (vezi MultiplayerPresenceService). Din el
     // se face anuntul scurt care apare pe ecran tuturor, ca cei care ar

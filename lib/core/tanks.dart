@@ -63,18 +63,33 @@ const int tanksMaxHp = 100;
 /// să apuci și să citești întrebarea, nu doar să reacționezi.
 const int tanksRoundSeconds = 12;
 
-/// Cât durează alegerea țintei. Puțin mai lung decât răspunsul, fiindcă aici
-/// chiar ai ce cântări (cine e slăbit? cine mă vânează?), dar tot scurt: o
-/// rundă întreagă trebuie să rămână sub ~15 secunde, altfel un meci de zece
-/// runde devine obositor. Cine nu apucă să aleagă trage automat — vezi
+/// Cât durează alegerea țintei. Urcat de la 6 la 10 secunde la cererea
+/// explicită a userului: cardurile de țintă arată acum șansă de lovire,
+/// daune făcute și etichete tactice (ÎN GARDĂ, CEL MAI PERICULOS, LOVITURĂ
+/// MORTALĂ) — la 6 secunde abia apucai să le citești, darămite să cântărești
+/// între ele. Cine nu apucă să aleagă trage automat — vezi
 /// MultiplayerService.resolveTanksRound.
-const int tanksTargetSeconds = 6;
+const int tanksTargetSeconds = 10;
 
 /// Cât durează spectacolul de după rundă (proiectile în aer, impacturi,
 /// bare care scad, tancuri care explodează) înainte să înceapă runda
 /// următoare. Trebuie să acopere toată coregrafia din
 /// MultiplayerTanksScreen — dacă se scurtează aici, se scurtează și acolo.
-const int tanksRevealSeconds = 4;
+///
+/// Urcat de la 4 la 5, apoi la 9 secunde când s-a adăugat camera de pe
+/// proiectil (vezi widgets/tank_pov.dart): pentru cel care trage, secundele
+/// astea nu mai sunt o pauză de privit, ci propria lovitură văzută de pe
+/// obuz. A doua urcare (5→9) a venit după ce userul a văzut prima versiune
+/// rulând live pe două ecrane și n-a apucat să citească nici traiectoria,
+/// nici textul de deznodământ ("-24"/"EVITAT!") — totul se termina înainte
+/// să se fixeze ochiul pe el.
+///
+/// Bugetul e împărțit așa (secunde de la începutul fazei, vezi și
+/// MultiplayerTanksScreen._firstShotAt/_flightDuration/_drainDelayAfterImpacts
+/// mai jos, care trebuie ținute în pas cu asta): ~0,6 încărcare, ~1,3 zbor,
+/// ~1,7 impact/evitare, apoi barele care scad și epavele care explodează, cu
+/// timp de rămas pentru „cine a fost distrus".
+const int tanksRevealSeconds = 9;
 
 /// Plafon absolut de runde, ca meciul să nu poată rămâne agățat la
 /// nesfârșit. Se atinge doar în cazul patologic în care nimeni nu mai
@@ -111,6 +126,23 @@ TankShotRoll rollTankShot({required bool targetAnsweredCorrectly, required Rando
   final damage = tanksDamageMin + rnd.nextInt(tanksDamageMax - tanksDamageMin + 1);
   return TankShotRoll(hit: true, damage: damage);
 }
+
+/// Șansa ca proiectilul să CHIAR lovească ținta — exact inversul evitării de
+/// mai sus, scoasă separat fiindcă se arată jucătorului pe ecranul de țintire.
+///
+/// DE CE E ARĂTATĂ: cine a răspuns corect în runda curentă e deja public în
+/// documentul meciului (`roundWinnerIds` = lista țintașilor, scrisă de
+/// [MultiplayerService.closeTanksAnswering]), deci cifra asta nu deconspiră
+/// nimic secret. În schimb transformă alegerea victimei într-o decizie
+/// adevărată: tragi în cel slăbit, care e „în gardă" și evită mai des, sau în
+/// cel sănătos, pe care sigur îl atingi?
+double tanksHitChance({required bool targetAnsweredCorrectly}) =>
+    1 - (targetAnsweredCorrectly ? tanksDodgeOnCorrect : tanksDodgeOnWrong);
+
+/// Dacă ținta poate fi DOBORÂTĂ dintr-o singură lovitură reușită — adică
+/// viața ei rămasă intră în intervalul de daune. Marcat explicit pe ecranul
+/// de țintire: e singura informație care schimbă complet ce merită atacat.
+bool tanksCanKill(int targetHp) => targetHp <= tanksDamageMax;
 
 // ─── Prada de la final ──────────────────────────────────────────────────────
 

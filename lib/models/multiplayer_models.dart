@@ -340,6 +340,109 @@ class ChatMessage {
       };
 }
 
+/// Un fost participant la un meci terminat, așa cum trebuie reținut ca să
+/// poată fi reașezat la o masă nouă fără să mai treacă prin `joinRoomByCode`
+/// — vezi [RematchOffer]. Doar câmpurile necesare ca să scrii direct fișa lui
+/// de jucător în camera de revanșă (nume, avatar), nu tot [MatchPlayer].
+class RematchParticipant {
+  final String id;
+  final String name;
+  final String avatarSeed;
+  final String? photoUrl;
+  final String avatarStyle;
+
+  const RematchParticipant({
+    required this.id,
+    required this.name,
+    required this.avatarSeed,
+    this.photoUrl,
+    this.avatarStyle = '',
+  });
+
+  factory RematchParticipant.fromMap(Map<String, dynamic> map) => RematchParticipant(
+        id: map['id'] as String? ?? '',
+        name: map['name'] as String? ?? '?',
+        avatarSeed: map['avatarSeed'] as String? ?? '',
+        photoUrl: map['photoUrl'] as String?,
+        avatarStyle: map['avatarStyle'] as String? ?? '',
+      );
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'name': name,
+        'avatarSeed': avatarSeed,
+        'photoUrl': photoUrl,
+        'avatarStyle': avatarStyle,
+      };
+}
+
+/// Cererea de revanșă lansată de gazda unui meci ABIA TERMINAT, către exact
+/// aceiași jucători care au stat la masa veche — vezi
+/// MultiplayerResultsScreen și MultiplayerService.offerRematch.
+///
+/// Documentul are ID-UL EGAL cu matchId-ul meciului terminat: e singurul id
+/// pe care toți foștii participanți îl cunosc deja (fiecare ecran de
+/// rezultate e deschis cu el), fără să fie nevoie de niciun canal de
+/// invitație separat. Camera VECHE (`matches/{matchId}`) poate dispărea
+/// între timp — vezi MultiplayerService.leaveMatch — dar oferta de revanșă
+/// trăiește independent, într-o colecție proprie.
+class RematchOffer {
+  final String matchId;
+  final String hostId;
+  final MatchGameMode gameMode;
+  final int stake;
+  final List<RematchParticipant> participants;
+  final List<String> acceptedIds;
+  final String status; // 'pending' | 'started' | 'cancelled'
+  final String? newMatchId;
+  final String? declinedBy;
+
+  const RematchOffer({
+    required this.matchId,
+    required this.hostId,
+    required this.gameMode,
+    required this.stake,
+    required this.participants,
+    required this.acceptedIds,
+    required this.status,
+    this.newMatchId,
+    this.declinedBy,
+  });
+
+  factory RematchOffer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? const {};
+    return RematchOffer(
+      matchId: doc.id,
+      hostId: data['hostId'] as String? ?? '',
+      gameMode: MatchGameMode.values.firstWhere(
+        (m) => m.name == data['gameMode'],
+        orElse: () => MatchGameMode.classic,
+      ),
+      stake: data['stake'] as int? ?? 0,
+      participants: [
+        for (final p in (data['participants'] as List? ?? const []))
+          RematchParticipant.fromMap(Map<String, dynamic>.from(p as Map)),
+      ],
+      acceptedIds: List<String>.from(data['acceptedIds'] as List? ?? const []),
+      status: data['status'] as String? ?? 'pending',
+      newMatchId: data['newMatchId'] as String?,
+      declinedBy: data['declinedBy'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'hostId': hostId,
+        'gameMode': gameMode.name,
+        'stake': stake,
+        'participants': [for (final p in participants) p.toMap()],
+        'acceptedIds': acceptedIds,
+        'status': status,
+        'newMatchId': newMatchId,
+        'declinedBy': declinedBy,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+}
+
 /// Culoare deterministă (din paleta existentă a aplicației, nu inventată)
 /// pentru avatarul unui jucător fără poză reală — același [seed] dă mereu
 /// aceeași culoare, ca un jucător să se poată recunoaște vizual pe durata
