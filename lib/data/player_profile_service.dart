@@ -75,8 +75,13 @@ class PlayerProfileService {
       // al lui peste — adică funcția din Admin ar fi părut că merge (numele
       // se schimba în listă) și s-ar fi anulat singură câteva minute mai
       // târziu, fără ca nimeni să înțeleagă de ce.
-      final forced = snap.data()?['forcedName'] as String?;
-      if (forced != null && forced.isNotEmpty && forced != await StorageService.getForcedName()) {
+      // Se compară în AMBELE sensuri, nu doar „există unul nou": dacă adminul
+      // ridică numele impus (vezi [clearForcedNameAsAdmin]), câmpul dispare de
+      // pe server și tot aici trebuie șters și local — altfel jucătorul ar
+      // rămâne pe veci cu numele primit, fiindcă nimeni n-ar mai avea de unde
+      // să-l anunțe că e din nou liber.
+      final forced = snap.data()?['forcedName'] as String? ?? '';
+      if (forced != await StorageService.getForcedName()) {
         await StorageService.setForcedName(forced);
       }
       // identitatea se citește DUPĂ adoptarea numelui impus, ca scrierea de
@@ -528,6 +533,26 @@ class PlayerProfileService {
       return true;
     } catch (e) {
       debugPrint('PlayerProfileService.renamePlayerAsAdmin a esuat: $e');
+      return false;
+    }
+  }
+
+  /// **Ridicarea numelui impus** — jucătorul își poate alege din nou singur
+  /// numele, de la următoarea deschidere a aplicației.
+  ///
+  /// Fără acțiunea asta, o redenimire de moderare ar fi fost o pedeapsă pe
+  /// viață: numele impus bate și contul Google, și îi blochează câmpul de
+  /// editare, deci nimeni — nici el, nici adminul — n-ar mai fi putut da
+  /// înapoi. Numele PUBLIC rămâne cel pus de admin până când telefonul lui
+  /// scrie următorul heartbeat, care îl înlocuiește cu al lui.
+  Future<bool> clearForcedNameAsAdmin(String uid) async {
+    if (uid.isEmpty) return false;
+    try {
+      await _col.doc(uid).set({'forcedName': FieldValue.delete()}, SetOptions(merge: true));
+      if (uid == _uid) await StorageService.setForcedName('');
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.clearForcedNameAsAdmin a esuat: $e');
       return false;
     }
   }

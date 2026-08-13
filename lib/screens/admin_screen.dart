@@ -1492,6 +1492,11 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
   /// listă ([widget.profile] nu se poate schimba, e final).
   String? _renamedTo;
 
+  /// Profilul recitit de pe server (vezi [_load]) — din el se știe dacă
+  /// jucătorul are un nume impus de admin, ceea ce rândul primit de la listă
+  /// n-avea de unde să spună.
+  PlayerProfile? _fresh;
+
   /// Profilul se recitește, nu se folosește cel primit de la listă: după un
   /// reset (sau după orice a mai făcut jucătorul între timp) cifrele din
   /// rândul pe care s-a dat tap sunt deja vechi. Dacă recitirea eșuează,
@@ -1502,10 +1507,12 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       PlayerProfileService.instance.fetchCloudSaveAsAdmin(widget.profile.uid),
       PlayerProfileService.instance.getProfile(widget.profile.uid),
     ]);
+    final fresh = results[2] as PlayerProfile? ?? widget.profile;
+    _fresh = fresh;
     return _PlayerDetail(
       friends: results[0] as List<PlayerProfile>,
       cloudSave: results[1] as Map<String, dynamic>?,
-      profile: results[2] as PlayerProfile? ?? widget.profile,
+      profile: fresh,
     );
   }
 
@@ -1542,7 +1549,10 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
   /// schimbă pe loc, dar propriul lui joc îl adoptă abia la următoarea
   /// deschidere a aplicației (vezi PlayerProfileService.renamePlayerAsAdmin).
   Future<void> _editName(PlayerProfile p) async {
-    final controller = TextEditingController(text: _renamedTo ?? p.name);
+    // profilul proaspăt, dacă a apucat să se încarce: el știe dacă numele e
+    // deja unul impus, deci dacă are rost butonul de deblocare
+    final target = _fresh ?? p;
+    final controller = TextEditingController(text: _renamedTo ?? target.name);
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -1560,15 +1570,28 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
               decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
             ),
             const SizedBox(height: 6),
-            const Text(
-              'Numele public se schimbă imediat. În jocul lui apare la următoarea '
-              'deschidere a aplicației și îi înlocuiește inclusiv numele de Google.',
-              style: TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
+            Text(
+              target.forcedName.isEmpty
+                  ? 'Numele public se schimbă imediat. În jocul lui apare la următoarea '
+                      'deschidere a aplicației și îi înlocuiește inclusiv numele de Google. '
+                      'Cât timp e pus de tine, el nu și-l mai poate schimba.'
+                  : 'Numele lui e acum impus de tine, deci nu și-l poate schimba singur. '
+                      '„Lasă-l liber" ridică blocarea: la următoarea deschidere a aplicației '
+                      'îi revine numele lui și poate alege din nou.',
+              style: const TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
             ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          // Cheia de la lacăt. Fără ea, o redenumire de moderare ar fi fost
+          // definitivă: numele impus bate și contul Google, iar câmpul de
+          // editare al jucătorului rămâne blocat cât timp există.
+          if (target.forcedName.isNotEmpty)
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, _unlockSentinel),
+              child: const Text('Lasă-l liber', style: TextStyle(color: AppColors.orange)),
+            ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
             child: const Text('Salvează'),
@@ -1577,12 +1600,16 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       ),
     );
     if (result == null || result.isEmpty || !mounted) return;
-    final ok = await PlayerProfileService.instance.renamePlayerAsAdmin(p.uid, result);
+
+    final unlock = result == _unlockSentinel;
+    final ok = unlock
+        ? await PlayerProfileService.instance.clearForcedNameAsAdmin(target.uid)
+        : await PlayerProfileService.instance.renamePlayerAsAdmin(target.uid, result);
     if (!mounted) return;
     if (ok) {
       _changed = true;
       setState(() {
-        _renamedTo = result;
+        if (!unlock) _renamedTo = result;
         _future = _load();
       });
     }
@@ -1590,12 +1617,22 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       SnackBar(
         backgroundColor: ok ? AppColors.play : AppColors.danger,
         content: Text(
-          ok ? 'Redenumit în „$result".' : 'Nu am putut schimba numele.',
+          ok
+              ? (unlock
+                  ? 'Își poate alege din nou numele. Îi revine al lui când redeschide jocul.'
+                  : 'Redenumit în „$result".')
+              : 'Nu am putut schimba numele.',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         ),
       ),
     );
   }
+
+  /// Răspunsul butonului „Lasă-l liber", ca dialogul să întoarcă tot un
+  /// String. Nu se poate confunda cu un nume tastat: butonul „Salvează"
+  /// întoarce mereu textul cu `trim()`, deci nimic din câmp nu poate ieși cu
+  /// spații la capete.
+  static const _unlockSentinel = ' ::unlock:: ';
 
   void _copyUid() {
     Clipboard.setData(ClipboardData(text: widget.profile.uid));

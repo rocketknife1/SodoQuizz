@@ -55,6 +55,14 @@ class PlayerProfile {
   /// (vezi PlayerProfileService.guestSweepInactivity).
   final int activityEvents;
 
+  /// Numele pus de administrator (vezi
+  /// PlayerProfileService.renamePlayerAsAdmin). Gol = jucătorul își alege
+  /// singur numele, ca de obicei. Cât timp e setat, telefonul lui îl adoptă la
+  /// fiecare pornire și îi blochează editarea numelui — de-aia ADMINUL trebuie
+  /// să-l poată și șterge, altfel jucătorul rămâne pe veci cu numele primit,
+  /// chiar și după ce motivul redenumirii a dispărut.
+  final String forcedName;
+
   const PlayerProfile({
     required this.uid,
     required this.name,
@@ -73,6 +81,7 @@ class PlayerProfile {
     this.createdAt,
     this.hasGoogleAccount = false,
     this.activityEvents = 0,
+    this.forcedName = '',
   });
 
   double get winrate => matchesPlayed == 0 ? 0 : wins / matchesPlayed;
@@ -97,6 +106,7 @@ class PlayerProfile {
       createdAt: data['createdAt'] as Timestamp?,
       hasGoogleAccount: data['hasGoogleAccount'] as bool? ?? false,
       activityEvents: data['activityEvents'] as int? ?? 0,
+      forcedName: data['forcedName'] as String? ?? '',
     );
   }
 }
