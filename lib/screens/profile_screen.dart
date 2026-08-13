@@ -40,10 +40,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       PlayerProfileService.instance.getMyProfile(),
       PlayerProfileService.instance.pendingFriendRequestCount(),
       AuthService.instance.multiplayerIdentity(),
+      StorageService.getForcedName(),
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
     final identity = results[8] as ({String name, String? photoUrl, String avatarStyle});
+    final forcedName = results[9] as String;
     return _ProfileData(
       xp: results[0] as int,
       coins: results[1] as int,
@@ -54,10 +56,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       multiplayerProfile: results[6] as PlayerProfile?,
       pendingFriendRequests: results[7] as int,
       name: identity.name,
-      // Numele vine din contul Google (sau e impus de administrator) — în
-      // ambele cazuri nu-l poate schimba el de aici. Aceeași regulă ca în
-      // ecranul de Multiplayer, de unde se edita până acum.
-      nameLocked: identity.photoUrl != null,
+      // Numele nu se poate schimba de aici în două cazuri: vine din contul
+      // Google, sau a fost pus de administrator. Al doilea NU e o formalitate
+      // — numele impus bate tot (vezi StorageService.getForcedName), deci
+      // dacă butonul ar rămâne activ, jucătorul ar scrie altceva, ar apăsa
+      // „Salvează" și n-ar vedea nicio schimbare, fără nicio explicație.
+      nameLocked: identity.photoUrl != null || forcedName.isNotEmpty,
+      nameSetByAdmin: forcedName.isNotEmpty,
     );
   }
 
@@ -241,9 +246,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 2),
                 Center(
                   child: Text(
-                    data.nameLocked
-                        ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
-                        : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
+                    data.nameSetByAdmin
+                        ? tr('Numele a fost stabilit de administrator', 'Your name was set by the administrator')
+                        : data.nameLocked
+                            ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
+                            : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
                     style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ),
@@ -715,6 +722,7 @@ class _ProfileData {
   /// (nu poate, dacă vine din contul Google sau e pus de administrator).
   final String name;
   final bool nameLocked;
+  final bool nameSetByAdmin;
 
   _ProfileData({
     required this.xp,
@@ -727,6 +735,7 @@ class _ProfileData {
     this.pendingFriendRequests = 0,
     this.name = '',
     this.nameLocked = false,
+    this.nameSetByAdmin = false,
   });
 }
 

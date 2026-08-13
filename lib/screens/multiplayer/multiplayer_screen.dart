@@ -34,13 +34,22 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
   String? _photoUrl;
   bool _busy = false;
 
+  /// Numele pus de administrator (vezi StorageService.getForcedName) — bate
+  /// tot, inclusiv contul Google, deci blochează și el editarea de aici.
+  bool _nameSetByAdmin = false;
+
   /// Numele/poza sunt legate live de contul Google (dacă e logat) — nu se
-  /// mai pot edita manual în acest caz, vezi [_editName].
-  bool get _isGoogleLinked => _photoUrl != null;
+  /// mai pot edita manual în acest caz, vezi [_editName]. La fel și când
+  /// numele a fost stabilit de administrator: dacă butonul ar rămâne activ,
+  /// jucătorul ar scrie altceva, ar salva și n-ar vedea nicio schimbare.
+  bool get _isGoogleLinked => _photoUrl != null || _nameSetByAdmin;
 
   @override
   void initState() {
     super.initState();
+    StorageService.getForcedName().then((forced) {
+      if (mounted && forced.isNotEmpty) setState(() => _nameSetByAdmin = true);
+    });
     AuthService.instance.multiplayerIdentity().then((identity) {
       if (!mounted) return;
       setState(() {
