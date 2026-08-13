@@ -207,7 +207,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
         Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _avatarWithBell(),
+            const MyAvatar(size: 44),
             const SizedBox(width: 10),
             Expanded(child: xpColumn),
           ],
@@ -217,66 +217,50 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
         // valorile pot ajunge la 4-5 cifre, iar 4 pastile pe un rând nu mai
         // încap pe ecran (overflow); scroll-ul le păstrează pe toate
         // vizibile/citibile în loc să le trunchieze.
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              if (widget.lives != null) ...[
-                _livesPill(),
-                const SizedBox(width: 10),
-              ],
-              if (widget.hints != null) ...[
-                _pill(key: widget.hintsBadgeKey, icon: Icons.lightbulb_rounded, color: AppColors.hint, value: widget.hints!),
-                const SizedBox(width: 10),
-              ],
-              if (widget.gems != null) ...[
-                _pill(key: widget.gemsBadgeKey, icon: Icons.diamond_rounded, color: const Color(0xFF5EC8F2), value: widget.gems!),
-                const SizedBox(width: 10),
-              ],
-              _pill(
-                key: widget.coinBadgeKey,
-                icon: Icons.monetization_on_rounded,
-                color: AppColors.coin,
-                value: widget.coins,
-                onTap: widget.onCoinsTap,
-                trailingIcon: widget.onCoinsTap != null ? Icons.add_circle_rounded : null,
+        Row(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    if (widget.lives != null) ...[
+                      _livesPill(),
+                      const SizedBox(width: 10),
+                    ],
+                    if (widget.hints != null) ...[
+                      _pill(key: widget.hintsBadgeKey, icon: Icons.lightbulb_rounded, color: AppColors.hint, value: widget.hints!),
+                      const SizedBox(width: 10),
+                    ],
+                    if (widget.gems != null) ...[
+                      _pill(key: widget.gemsBadgeKey, icon: Icons.diamond_rounded, color: const Color(0xFF5EC8F2), value: widget.gems!),
+                      const SizedBox(width: 10),
+                    ],
+                    _pill(
+                      key: widget.coinBadgeKey,
+                      icon: Icons.monetization_on_rounded,
+                      color: AppColors.coin,
+                      value: widget.coins,
+                      onTap: widget.onCoinsTap,
+                      trailingIcon: widget.onCoinsTap != null ? Icons.add_circle_rounded : null,
+                    ),
+                  ],
+                ),
               ),
+            ),
+            // Clopoțelul de notificări stă AICI, la dreapta pastilelor, lângă
+            // balanța de monede — cerut explicit, fiindcă deasupra avatarului
+            // se pierdea peste poză. E în afara zonei care derulează: cu
+            // vieți/hints fără plafon, pastilele pot depăși lățimea ecranului,
+            // iar un clopoțel prins de capătul lor ar fi ieșit din cadru exact
+            // când ai mai multe resurse.
+            if (widget.showNotifications) ...[
+              const SizedBox(width: 8),
+              NotificationBell(onClosed: widget.onNotificationsClosed),
             ],
-          ),
+          ],
         ),
       ],
-    );
-  }
-
-  /// Avatarul jucătorului cu clopoțelul de notificări agățat deasupra lui,
-  /// în colțul din dreapta-sus — locul cerut explicit, și oricum cel în care
-  /// îl caută oricine a mai folosit o aplicație cu notificări.
-  ///
-  /// CUTIA E MAI MARE DECÂT AVATARUL (56 în loc de 44) TOCMAI CA SĂ ÎNCAPĂ ȘI
-  /// CLOPOȚELUL. Prima variantă îl scotea în afara cutiei de 44px cu un
-  /// `Positioned` negativ și `Clip.none` — se VEDEA corect, dar aproape nu se
-  /// putea apăsa: în Flutter, o atingere e trimisă unui copil doar dacă pică
-  /// în interiorul cutiei părintelui, oricât ar picta el în afara ei. Deci
-  /// tot ce ieșea din pătratul avatarului era mort la tap.
-  ///
-  /// Cu 56x56, avatarul stă jos-stânga și clopoțelul sus-dreapta, suprapuse
-  /// exact ca înainte vizual, dar amândouă complet înăuntru — deci tapabile
-  /// pe toată suprafața lor.
-  Widget _avatarWithBell() {
-    if (!widget.showNotifications) return const MyAvatar(size: 44);
-    return SizedBox(
-      width: 56,
-      height: 56,
-      child: Stack(
-        children: [
-          const Positioned(left: 0, bottom: 0, child: MyAvatar(size: 44)),
-          Positioned(
-            top: 0,
-            right: 0,
-            child: NotificationBell(onClosed: widget.onNotificationsClosed),
-          ),
-        ],
-      ),
     );
   }
 

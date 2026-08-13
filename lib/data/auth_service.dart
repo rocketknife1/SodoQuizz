@@ -82,6 +82,14 @@ class AuthService {
   Future<({String name, String? photoUrl, String avatarStyle})> multiplayerIdentity() async {
     final avatarStyle = await StorageService.getAvatarStyleId();
     final u = currentUser;
+    // Numele pus de administrator bate tot, inclusiv contul Google — vezi
+    // StorageService.getForcedName pentru de ce. E o decizie de moderare, nu
+    // o preferință a jucătorului, deci nu are voie să fie învinsă de sursa
+    // din care vine în mod normal numele.
+    final forced = await StorageService.getForcedName();
+    if (forced.isNotEmpty) {
+      return (name: forced, photoUrl: u?.photoURL, avatarStyle: avatarStyle);
+    }
     if (u != null) {
       final googleName = u.displayName;
       final name = (googleName != null && googleName.isNotEmpty) ? googleName : await StorageService.getDisplayName();

@@ -62,13 +62,26 @@ class PlayerProfileService {
     final uid = _uid;
     if (uid.isEmpty) return;
     try {
-      final identity = await AuthService.instance.multiplayerIdentity();
       final ref = _col.doc(uid);
-      // Citire prealabilă doar ca sa stim daca documentul e nou - necesar
+      // Citire prealabilă: de aici aflam si daca documentul e nou - necesar
       // pentru createdAt (vezi mai jos), care trebuie scris o SINGURA data,
       // niciodata rescris la heartbeat-urile ulterioare (spre deosebire de
       // restul campurilor din acest merge, care se rescriu mereu).
-      final isNew = !(await ref.get()).exists;
+      final snap = await ref.get();
+      final isNew = !snap.exists;
+      // Redenumirea făcută din panoul de Admin ajunge la jucător CHIAR AICI.
+      // Fără pasul ăsta, un nume schimbat de administrator ar fi trăit exact
+      // până la următorul heartbeat al jucătorului, care l-ar fi rescris pe
+      // al lui peste — adică funcția din Admin ar fi părut că merge (numele
+      // se schimba în listă) și s-ar fi anulat singură câteva minute mai
+      // târziu, fără ca nimeni să înțeleagă de ce.
+      final forced = snap.data()?['forcedName'] as String?;
+      if (forced != null && forced.isNotEmpty && forced != await StorageService.getForcedName()) {
+        await StorageService.setForcedName(forced);
+      }
+      // identitatea se citește DUPĂ adoptarea numelui impus, ca scrierea de
+      // mai jos să plece deja cu el
+      final identity = await AuthService.instance.multiplayerIdentity();
       await ref.set({
         'name': identity.name,
         'photoUrl': identity.photoUrl,
@@ -491,6 +504,34 @@ class PlayerProfileService {
   /// `player_profiles/{uid}` — fără asta, următorul heartbeat al contului
   /// banat și-ar recrea singur profilul. Nu atinge `users/{uid}` (cloud-save
   /// privat) sau meciurile din `matches` — vezi domeniul ales în plan.
+  /// **Redenumirea unui jucător din panoul de Admin.** Scrie două câmpuri:
+  ///
+  ///  • `name` — se vede pe loc, peste tot unde apare jucătorul pentru
+  ///    ceilalți (clasament, listă de prieteni, camere de multiplayer), fiindcă
+  ///    toate citesc profilul public;
+  ///  • `forcedName` — numele impus, pe care telefonul jucătorului îl adoptă la
+  ///    următorul heartbeat de profil (vezi [ensureProfileHeartbeat]) și după
+  ///    care își rescrie și numele local. Fără el, redenumirea ar fi ținut
+  ///    până când jucătorul deschidea aplicația, moment în care propriul lui
+  ///    heartbeat i-ar fi pus numele vechi înapoi.
+  ///
+  /// Adminul are voie să scrie pe orice profil (vezi firestore.rules,
+  /// `player_profiles/{uid}`), deci nu e nevoie de nicio regulă nouă.
+  Future<bool> renamePlayerAsAdmin(String uid, String name) async {
+    final clean = name.trim();
+    if (uid.isEmpty || clean.isEmpty) return false;
+    try {
+      await _col.doc(uid).set({'name': clean, 'forcedName': clean}, SetOptions(merge: true));
+      // Dacă adminul se redenumește pe el însuși, nu așteptăm heartbeat-ul:
+      // suntem chiar pe telefonul ăla.
+      if (uid == _uid) await StorageService.setForcedName(clean);
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.renamePlayerAsAdmin a esuat: $e');
+      return false;
+    }
+  }
+
   Future<bool> banPlayer(String uid, {required String name}) async {
     if (uid.isEmpty) return false;
     try {

@@ -39,9 +39,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       StorageService.hasClaimableAchievements(),
       PlayerProfileService.instance.getMyProfile(),
       PlayerProfileService.instance.pendingFriendRequestCount(),
+      AuthService.instance.multiplayerIdentity(),
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
+    final identity = results[8] as ({String name, String? photoUrl, String avatarStyle});
     return _ProfileData(
       xp: results[0] as int,
       coins: results[1] as int,
@@ -51,7 +53,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
       claimableAchievements: results[5] as bool,
       multiplayerProfile: results[6] as PlayerProfile?,
       pendingFriendRequests: results[7] as int,
+      name: identity.name,
+      // Numele vine din contul Google (sau e impus de administrator) — în
+      // ambele cazuri nu-l poate schimba el de aici. Aceeași regulă ca în
+      // ecranul de Multiplayer, de unde se edita până acum.
+      nameLocked: identity.photoUrl != null,
     );
+  }
+
+  /// Schimbarea numelui, exact ca în ecranul de Multiplayer (de unde a fost
+  /// mutată aici, la cererea userului): același dialog, aceeași salvare, ca
+  /// jucătorul să n-aibă două locuri diferite în care se poate numi altfel.
+  Future<void> _editName(_ProfileData data) async {
+    if (data.nameLocked) return;
+    final controller = TextEditingController(text: data.name);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(tr('Numele tău', 'Your name'),
+            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: controller,
+          maxLength: 16,
+          autofocus: true,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: Text(tr('Salvează', 'Save')),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty || !mounted) return;
+    await StorageService.setDisplayName(result);
+    // fără asta, numele nou ar rămâne doar local — clasamentul și profilul
+    // public ar arăta în continuare numele vechi până la următoarea pornire
+    // a aplicației (vezi același pas în MultiplayerScreen._editName).
+    await PlayerProfileService.instance.ensureProfileHeartbeat();
+    if (mounted) setState(() => _dataFuture = _load());
   }
 
   /// Alegerea avatarului. Se salvează pe loc, la tap — fără buton de
@@ -166,8 +211,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       style: const TextStyle(color: Colors.white38, fontSize: 11)),
                 ),
                 const SizedBox(height: 14),
-                Center(child: Text('Level $level', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800))),
-                const SizedBox(height: 4),
+                // Numele, în locul în care stătea până acum „Level N". Nivelul
+                // nu s-a pierdut: se citește pe rândul de sub el, care oricum
+                // îl scria („... XP către nivelul N+1"). Numele are nevoie de
+                // locul ăsta mai mult decât cifra nivelului — e singurul lucru
+                // de pe ecran pe care îl văd ceilalți jucători.
+                Center(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: data.nameLocked ? null : () => _editName(data),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            data.name.isEmpty ? '...' : data.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                        if (!data.nameLocked) ...[
+                          const SizedBox(width: 8),
+                          const Icon(Icons.edit_rounded, color: Colors.white54, size: 18),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: Text(
+                    data.nameLocked
+                        ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
+                        : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
+                    style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Center(
                   child: Text(
                       tr('${xpIntoCurrentLevel(data.xp)} / ${xpForLevel(level)} XP către nivelul ${level + 1}',
@@ -630,6 +710,12 @@ class _ProfileData {
   /// în UI, nu ca eroare.
   final PlayerProfile? multiplayerProfile;
   final int pendingFriendRequests;
+
+  /// Numele cu care apari pentru ceilalți și dacă poate fi schimbat de aici
+  /// (nu poate, dacă vine din contul Google sau e pus de administrator).
+  final String name;
+  final bool nameLocked;
+
   _ProfileData({
     required this.xp,
     required this.coins,
@@ -639,6 +725,8 @@ class _ProfileData {
     required this.claimableAchievements,
     this.multiplayerProfile,
     this.pendingFriendRequests = 0,
+    this.name = '',
+    this.nameLocked = false,
   });
 }
 

@@ -1488,6 +1488,10 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
   late Future<_PlayerDetail> _future = _load();
   bool _changed = false;
 
+  /// Numele nou, cât timp titlul de sus încă îl arată pe cel primit de la
+  /// listă ([widget.profile] nu se poate schimba, e final).
+  String? _renamedTo;
+
   /// Profilul se recitește, nu se folosește cel primit de la listă: după un
   /// reset (sau după orice a mai făcut jucătorul între timp) cifrele din
   /// rândul pe care s-a dat tap sunt deja vechi. Dacă recitirea eșuează,
@@ -1532,6 +1536,67 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
     );
   }
 
+  /// Redenumirea jucătorului. Singura acțiune din fișa asta care schimbă ceva
+  /// ce vede TOATĂ lumea imediat (clasament, prieteni, camere), de-aia scrie
+  /// pe față și cât durează până ajunge pe telefonul lui: numele public se
+  /// schimbă pe loc, dar propriul lui joc îl adoptă abia la următoarea
+  /// deschidere a aplicației (vezi PlayerProfileService.renamePlayerAsAdmin).
+  Future<void> _editName(PlayerProfile p) async {
+    final controller = TextEditingController(text: _renamedTo ?? p.name);
+    final result = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Schimbă numele', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: controller,
+              maxLength: 16,
+              autofocus: true,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'Numele public se schimbă imediat. În jocul lui apare la următoarea '
+              'deschidere a aplicației și îi înlocuiește inclusiv numele de Google.',
+              style: TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            child: const Text('Salvează'),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result.isEmpty || !mounted) return;
+    final ok = await PlayerProfileService.instance.renamePlayerAsAdmin(p.uid, result);
+    if (!mounted) return;
+    if (ok) {
+      _changed = true;
+      setState(() {
+        _renamedTo = result;
+        _future = _load();
+      });
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: ok ? AppColors.play : AppColors.danger,
+        content: Text(
+          ok ? 'Redenumit în „$result".' : 'Nu am putut schimba numele.',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+
   void _copyUid() {
     Clipboard.setData(ClipboardData(text: widget.profile.uid));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -1561,11 +1626,26 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                       icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
                     ),
                     const SizedBox(width: 4),
+                    // Numele + creionul: tot rândul e apăsabil, nu doar
+                    // iconița — o țintă de 20px lățime, lipită de un text
+                    // lung, se ratează des pe telefon.
                     Expanded(
-                      child: Text(
-                        p.name,
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => _editName(p),
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                _renamedTo ?? p.name,
+                                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.edit_rounded, color: AppColors.orange, size: 19),
+                          ],
+                        ),
                       ),
                     ),
                   ],

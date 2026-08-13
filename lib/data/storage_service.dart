@@ -69,6 +69,7 @@ class StorageService {
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
+  static const _forcedNameKey = 'forced_name';
   static const _avatarStyleKey = 'avatar_style';
   static const _gemsKey = 'gems';
   static const _lastClaimedRewardLevelKey = 'last_claimed_reward_level';
@@ -1656,6 +1657,33 @@ class StorageService {
   static Future<void> setDisplayName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_displayNameKey, name);
+  }
+
+  /// **Numele pus de administrator** din panoul de Admin (vezi
+  /// PlayerProfileService.renamePlayerAsAdmin).
+  ///
+  /// DE CE E O CHEIE SEPARATĂ, ȘI NU O SIMPLĂ SCRIERE PESTE [setDisplayName]:
+  /// numele afișat nu vine mereu de aici. La un cont Google el vine din contul
+  /// Google (vezi AuthService.multiplayerIdentity), iar la un Guest e cel
+  /// local — deci o rescriere a numelui local ar fi fost ștearsă la prima
+  /// pornire pentru jumătate din jucători. Ăsta e singurul nume care bate și
+  /// contul Google, tocmai pentru că e o decizie de moderare (un nickname
+  /// jignitor trebuie să poată fi schimbat inclusiv pe un cont Google).
+  ///
+  /// Ajunge pe telefonul jucătorului la primul heartbeat de profil de după
+  /// redenumire (deschiderea aplicației sau revenirea din fundal), nu instant.
+  static Future<String> getForcedName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_forcedNameKey) ?? '';
+  }
+
+  static Future<void> setForcedName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (name.isEmpty) {
+      await prefs.remove(_forcedNameKey);
+    } else {
+      await prefs.setString(_forcedNameKey, name);
+    }
   }
 
   // ─── Sincronizare cloud (cont Google) ──────────────────────────────────────
