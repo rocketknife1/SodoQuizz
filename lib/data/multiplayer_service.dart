@@ -701,6 +701,20 @@ class MultiplayerService {
 
   // ─── Revanșă ─────────────────────────────────────────────────────────────
 
+  /// Ultimul meci din care jucătorul a IEȘIT — pus de MultiplayerResultsScreen
+  /// când ecranul de rezultate se închide, citit de rădăcina aplicației
+  /// (main.dart) ca să poată asculta mai departe o cerere de revanșă.
+  ///
+  /// DE CE EXISTĂ: [watchRematchOffer] era ascultat exclusiv în ecranul de
+  /// rezultate, deci cine apuca să iasă în meniu înainte ca gazda să apese
+  /// „Cere revanșă" nu mai primea absolut nimic — oferta ajungea într-un ecran
+  /// pe care nu-l mai avea nimeni deschis, iar gazda rămânea să aștepte un
+  /// accept care n-avea cum să vină.
+  ///
+  /// Un `ValueNotifier` de sesiune, nu ceva salvat pe disc: o cerere de
+  /// revanșă are sens minute, nu între două porniri ale aplicației.
+  final ValueNotifier<String?> lastFinishedMatchId = ValueNotifier(null);
+
   /// Lansează o cerere de revanșă către EXACT jucătorii de la masa tocmai
   /// terminată — [participants] vine din clasamentul deja încărcat de
   /// MultiplayerResultsScreen (masa veche poate fi între timp ștearsă de

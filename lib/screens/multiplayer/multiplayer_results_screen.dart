@@ -75,6 +75,21 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   bool _launchingRematch = false;
   bool _navigatedToRematch = false;
 
+  /// Predă mai departe rădăcinii aplicației meciul tocmai părăsit, ca oferta
+  /// de revanșă să fie ascultată și după ce ecranul ăsta dispare — vezi
+  /// [MultiplayerService.lastFinishedMatchId] și main.dart. Fără asta, cine
+  /// ieșea în meniu înainte ca gazda să apese „Cere revanșă" nu mai primea
+  /// nimic, iar gazda aștepta un accept care n-avea de unde să vină.
+  ///
+  /// NU și când plecăm chiar în revanșă ([_navigatedToRematch]): acolo oferta
+  /// veche e deja consumată, iar rădăcina n-are ce urmări în ea.
+  @override
+  void dispose() {
+    MultiplayerService.instance.lastFinishedMatchId.value =
+        _navigatedToRematch ? null : widget.matchId;
+    super.dispose();
+  }
+
   /// Monedele nu vin "din partea casei": la final se împarte grămada de mize
   /// (vezi core/betting.dart) între locurile din jumătatea de sus a
   /// clasamentului. XP-ul rămâne o recompensă normală, acordată de joc.

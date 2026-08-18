@@ -17,8 +17,12 @@ import 'data/notification_service.dart';
 import 'data/player_profile_service.dart';
 import 'data/storage_service.dart';
 import 'firebase_options.dart';
+import 'models/multiplayer_models.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
+import 'screens/multiplayer/multiplayer_higher_lower_screen.dart';
+import 'screens/multiplayer/multiplayer_match_screen.dart';
+import 'screens/multiplayer/multiplayer_tanks_screen.dart';
 import 'widgets/in_app_notification.dart';
 
 void main() async {
@@ -96,19 +100,136 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
 
   StreamSubscription<MultiplayerPresencePing>? _presenceSub;
+  StreamSubscription<RematchOffer?>? _rematchSub;
+  bool _rematchDialogOpen = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _listenForMultiplayerPresence();
+    MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
   }
 
   @override
   void dispose() {
     _presenceSub?.cancel();
+    MultiplayerService.instance.lastFinishedMatchId.removeListener(_watchRematchOffer);
+    _rematchSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // ─── Revanșă cerută după ce ai ieșit deja din meci ──────────────────────
+
+  /// Oferta de revanșă era ascultată DOAR în ecranul de rezultate, deci cine
+  /// apuca să iasă în meniu înainte ca gazda să apese „Cere revanșă" nu mai
+  /// primea nimic — iar gazda aștepta un accept imposibil. Aici o ascultăm de
+  /// la rădăcină, unde suntem oricare ar fi ecranul deschis.
+  ///
+  /// Se urmărește un singur meci: ultimul părăsit (vezi
+  /// [MultiplayerService.lastFinishedMatchId], pus de MultiplayerResultsScreen
+  /// când se închide). Nu e nevoie de nicio interogare pe colecție — id-ul
+  /// documentului de ofertă E chiar matchId-ul, pe care toți foștii
+  /// participanți îl știu deja.
+  void _watchRematchOffer() {
+    _rematchSub?.cancel();
+    _rematchSub = null;
+    final matchId = MultiplayerService.instance.lastFinishedMatchId.value;
+    if (matchId == null || Firebase.apps.isEmpty) return;
+    _rematchSub = MultiplayerService.instance.watchRematchOffer(matchId).listen(
+          _onRematchOffer,
+          onError: (e) => debugPrint('Ascultarea revansei a esuat: $e'),
+        );
+  }
+
+  void _onRematchOffer(RematchOffer? offer) {
+    if (offer == null) return;
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (!offer.participants.any((p) => p.id == me)) return;
+
+    // Gazda a pornit deja camera nouă: intrăm direct, fără să mai întrebăm —
+    // am apăsat „Accept" mai devreme, asta e urmarea lui.
+    if (offer.status == 'started' && offer.newMatchId != null) {
+      MultiplayerService.instance.lastFinishedMatchId.value = null;
+      _enterRematch(offer.newMatchId!, offer.gameMode);
+      return;
+    }
+    if (offer.status != 'pending') return;
+    // Gazda vede oferta în propriul ecran de rezultate; cine a răspuns deja nu
+    // mai e întrebat a doua oară la fiecare eveniment din stream.
+    if (offer.hostId == me || offer.acceptedIds.contains(me)) return;
+    if (_rematchDialogOpen) return;
+    _askRematch(offer);
+  }
+
+  Future<void> _askRematch(RematchOffer offer) async {
+    final context = _navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    final host = offer.participants.firstWhere(
+      (p) => p.id == offer.hostId,
+      orElse: () => const RematchParticipant(id: '', name: '?', avatarSeed: ''),
+    );
+    _rematchDialogOpen = true;
+    // Fără închidere prin tap în afara ferestrei: gazda chiar așteaptă un
+    // răspuns, iar o fereastră închisă din greșeală ar lăsa-o blocată.
+    final accepted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        icon: Icon(Icons.replay_rounded, color: AppColors.play, size: 34),
+        title: Text(tr('${host.name} vrea revanșă', '${host.name} wants a rematch')),
+        content: Text(
+          offer.stake > 0
+              ? tr('Aceiași jucători, aceeași miză: 💰${offer.stake}.',
+                  'Same players, same stake: 💰${offer.stake}.')
+              : tr('Aceiași jucători, fără miză.', 'Same players, no stake.'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(tr('Refuz', 'Decline')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(tr('Accept', 'Accept')),
+          ),
+        ],
+      ),
+    );
+    _rematchDialogOpen = false;
+    try {
+      if (accepted == true) {
+        // Nu navigăm noi: gazda pornește camera când s-au strâns toate
+        // accepturile, iar noi intrăm pe ramura 'started' de mai sus.
+        await MultiplayerService.instance.acceptRematchOffer(offer.matchId);
+        // Între accept și pornirea camerei pot trece secunde bune (se așteaptă
+        // și ceilalți). Fără rândul ăsta, ecranul rămâne exact cum era și pare
+        // că apăsarea n-a făcut nimic.
+        _showRootBanner(
+          title: tr('Ai acceptat revanșa', 'Rematch accepted'),
+          message: tr('Aștepți gazda să pornească meciul.', 'Waiting for the host to start.'),
+          icon: Icons.hourglass_top_rounded,
+        );
+      } else {
+        await MultiplayerService.instance.declineRematchOffer(offer.matchId);
+        MultiplayerService.instance.lastFinishedMatchId.value = null;
+      }
+    } catch (e) {
+      debugPrint('Raspunsul la revansa a esuat: $e');
+    }
+  }
+
+  void _enterRematch(String matchId, MatchGameMode gameMode) {
+    _navigatorKey.currentState?.push(
+      MaterialPageRoute(
+        builder: (_) => switch (gameMode) {
+          MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: matchId),
+          MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: matchId),
+          MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
+        },
+      ),
+    );
   }
 
   /// Ascultarea pornește o singură dată, la lansare, și ține cât ține
@@ -138,22 +259,36 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     }
   }
 
-  void _showPresenceBanner(MultiplayerPresencePing ping) {
-    // Overlay-ul se ia DIRECT din starea Navigator-ului, nu prin
-    // `Overlay.of(context)` — vezi InAppNotification.showInfo pentru de ce
-    // căutarea obișnuită n-are ce găsi de la rădăcina aplicației.
+  /// Banner afișat de la RĂDĂCINA aplicației, deci peste orice ecran ar fi
+  /// deschis în acel moment.
+  ///
+  /// Overlay-ul se ia DIRECT din starea Navigator-ului, nu prin
+  /// `Overlay.of(context)` — vezi InAppNotification.showInfo pentru de ce
+  /// căutarea obișnuită n-are ce găsi de aici.
+  void _showRootBanner({
+    required String title,
+    required String message,
+    required IconData icon,
+    Color color = AppColors.play,
+  }) {
     final overlay = _navigatorKey.currentState?.overlay;
     final context = _navigatorKey.currentContext;
     if (overlay == null || context == null || !context.mounted) return;
     InAppNotification.showInfo(
       context,
       overlay: overlay,
-      title: tr('${ping.name} a intrat în Multiplayer', '${ping.name} just entered Multiplayer'),
-      message: tr('Intră și tu acum dacă vrei să prinzi un meci.', 'Jump in now if you want to catch a match.'),
-      icon: Icons.groups_rounded,
-      color: AppColors.play,
+      title: title,
+      message: message,
+      icon: icon,
+      color: color,
     );
   }
+
+  void _showPresenceBanner(MultiplayerPresencePing ping) => _showRootBanner(
+        title: tr('${ping.name} a intrat în Multiplayer', '${ping.name} just entered Multiplayer'),
+        message: tr('Intră și tu acum dacă vrei să prinzi un meci.', 'Jump in now if you want to catch a match.'),
+        icon: Icons.groups_rounded,
+      );
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
