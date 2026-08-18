@@ -91,6 +91,25 @@ const int tanksTargetSeconds = 10;
 /// timp de rămas pentru „cine a fost distrus".
 const int tanksRevealSeconds = 9;
 
+/// Cât ține faza de după rundă când NU s-a tras niciun foc — nimeni n-a
+/// nimerit răspunsul, sau a mai rămas un singur tanc în viață (vezi
+/// MultiplayerService.closeTanksAnswering, care în cazurile astea sare direct
+/// la `revealed`, cu `roundShots` gol).
+///
+/// Fără constanta asta, toată lumea aștepta [tanksRevealSeconds] întregi
+/// uitându-se la o arenă în care nu zbura nimic: bugetul de 9 secunde e
+/// dimensionat pentru coregrafia completă (încărcare, zbor, impact, bare care
+/// scad, epave care explodează), iar când nu există niciun proiectil, din el
+/// nu se consumă nimic. Rămân doar cât să se citească răspunsul corect.
+const int tanksEmptyRevealSeconds = 3;
+
+/// Cât trebuie ținută faza de reveal a rundei curente. Toți clienții o
+/// calculează din ACELEAȘI date publice (`roundShots` din documentul
+/// meciului), deci ajung la aceeași valoare — important, fiindcă fiecare
+/// client își pornește singur cronometrul de avansare a rundei.
+int tanksRevealSecondsFor({required bool anyShots}) =>
+    anyShots ? tanksRevealSeconds : tanksEmptyRevealSeconds;
+
 /// Plafon absolut de runde, ca meciul să nu poată rămâne agățat la
 /// nesfârșit. Se atinge doar în cazul patologic în care nimeni nu mai
 /// nimerește nimic (fără răspunsuri corecte nu se trage niciun proiectil,

@@ -368,9 +368,16 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       // Doar dacă meciul CONTINUĂ: la ultima rundă, o cerere de avansare ar
       // fi pornit degeaba o rundă nouă într-un meci deja încheiat, exact în
       // clipa în care toată lumea pleacă spre clasament.
-      _advanceTimer ??= Timer(const Duration(seconds: tanksRevealSeconds), () {
-        MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
-      });
+      // Durata se ia din rundă, nu din constantă: o rundă în care n-a tras
+      // nimeni (toți au greșit) n-are nicio animație de acoperit, iar
+      // asteptarea completa era timp mort pentru toată masa — vezi
+      // [tanksRevealSecondsFor].
+      _advanceTimer ??= Timer(
+        Duration(seconds: tanksRevealSecondsFor(anyShots: info.roundShots.isNotEmpty)),
+        () {
+          MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+        },
+      );
     }
 
     if (info.status == MatchStatus.finished && !_navigatedToResults) {
@@ -378,7 +385,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       // Meciul se încheie în aceeași scriere care rezolvă ultima rundă, deci
       // fără pauza asta lovitura decisivă n-ar apuca să fie văzută niciodată:
       // ecranul ar sări la clasament exact când pleacă proiectilul.
-      Future.delayed(const Duration(seconds: tanksRevealSeconds), () {
+      // Aceeași socoteală ca la avansarea rundei: dacă meciul s-a terminat
+      // fără să se tragă (ultimul tanc rămas, sau plafonul de runde atins
+      // într-o rundă ratată de toți), n-are ce lovitură decisivă să apuce
+      // cineva să vadă, deci n-are rost să ținem masa pe loc 9 secunde.
+      Future.delayed(Duration(seconds: tanksRevealSecondsFor(anyShots: info.roundShots.isNotEmpty)), () {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
