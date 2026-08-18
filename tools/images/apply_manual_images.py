@@ -30,6 +30,10 @@ CAT_MAP = {
     "Sport": "sport",
     "Romania": "romania",
     "Pixelat": "pixelat",
+    "Steaguri (Țări din toată lumea)": "steaguri",
+    "Animale (Fauna din toată lumea)": "animale",
+    "Monumente (Minuni ale lumii)": "monumente",
+    "Instrumente (Muzică din toată lumea)": "instrumente",
 }
 
 
@@ -111,7 +115,8 @@ def update_test_screen(replacements):
     """Rescrie lista testQuestionIds din ecranul de TEST, ca sa arate exact
     pozele aduse manual. Tinuta cu mana, lista ramanea mereu in urma."""
     ordine = ["logouri", "jocuri", "medical", "mecanica", "aplicatii",
-              "masini", "celebritati", "sport", "romania", "pixelat"]
+              "masini", "celebritati", "sport", "romania", "pixelat",
+              "steaguri", "animale", "monumente", "instrumente"]
     grupe: dict[str, list[str]] = {}
     for slug, qid, _ in replacements:
         grupe.setdefault(slug, []).append(qid)

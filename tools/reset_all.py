@@ -46,12 +46,26 @@ COLLECTIONS = [
     "users",
     "completed_matches",
     "multiplayer_activity",
+    "multiplayer_presence",
     "matches",
     "matchmaking_queue",
+    "rematch_offers",
+    "friend_chats",
+    "reports",
     "admin_grants",
     "banned_players",
     "pending_auth_deletions",
 ]
+
+# ATENTIE LA ORICE FEATURE NOU CARE SCRIE O COLECTIE NOUA: lista de mai sus e
+# scrisa de mana si nu se auto-descopera (Firestore nu are "listeaza toate
+# colectiile" fara Admin SDK pe radacina). Cele patru de mai jos au fost
+# adaugate pe 13 august 2026, cand s-a observat ca scriptul lasa in urma exact
+# datele adaugate dupa ce a fost scris: prezenta din multiplayer, ofertele de
+# revansa, conversatiile private dintre prieteni si raportarile de moderare.
+# Un reset care spune "gol" si nu e chiar gol e mai rau decat unul care crapa.
+# Verificare rapida a listei:
+#   grep -rho "_db.collection('[a-z_]*')" lib/ | sort -u
 
 
 def session():

@@ -87,7 +87,7 @@
           "hint_3": "Aflată pe o insulă din portul New York",
           "dificultate": "usor",
           "puncte_max": 200,
-          "imagine_cautare": "Statue of Liberty New York",
+          "imagine_cautare": "Statue of Liberty frontal",
           "imagine_sursa": "wikimedia"
         },
         {
@@ -291,7 +291,7 @@
           "hint_3": "Aflată în Barcelona, Spania",
           "dificultate": "usor",
           "puncte_max": 200,
-          "imagine_cautare": "Sagrada Familia Barcelona",
+          "imagine_cautare": "Sagrada Familia exterior facade towers",
           "imagine_sursa": "wikimedia"
         },
         {
@@ -1039,7 +1039,7 @@
           "hint_3": "Are formă futuristă, ca o farfurie zburătoare pe un stâlp",
           "dificultate": "mediu",
           "puncte_max": 200,
-          "imagine_cautare": "Space Needle Seattle",
+          "imagine_cautare": "Space Needle tower exterior Seattle",
           "imagine_sursa": "wikimedia"
         },
         {
@@ -1056,7 +1056,7 @@
           "hint_3": "Privește orașul Lisabona peste råu",
           "dificultate": "mediu",
           "puncte_max": 200,
-          "imagine_cautare": "Cristo Rei Lisbon statue",
+          "imagine_cautare": "Cristo Rei statue exterior Lisbon",
           "imagine_sursa": "wikimedia"
         },
         {
@@ -1140,7 +1140,9 @@
           "hint_2": "Mulți regi, poeți și oameni de știință celebri sunt înmormântați aici",
           "hint_3": "Se află în centrul Londrei, lângă Parlament",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Westminster Abbey exterior west towers",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_068",
@@ -1155,7 +1157,9 @@
           "hint_2": "A fost reședința de weekend preferată a reginei Elisabeta a II-a",
           "hint_3": "Se află lângă Londra, în Anglia",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Windsor Castle",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_069",
@@ -1170,7 +1174,9 @@
           "hint_2": "E ridicat chiar pe malul râului Tejo",
           "hint_3": "Se află în Lisabona, Portugalia",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Belem Tower Lisbon",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_070",
@@ -1185,7 +1191,9 @@
           "hint_2": "Străbate nordul Angliei, aproape de granița cu Scoția",
           "hint_3": "Poartă numele împăratului roman care a ordonat construcția lui",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Hadrian's Wall",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_071",
@@ -1200,7 +1208,9 @@
           "hint_2": "Construcția ei a durat aproape șase secole",
           "hint_3": "Se află în centrul orașului Milano, Italia",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Milan Cathedral",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_072",
@@ -1215,7 +1225,9 @@
           "hint_2": "Aici se aflau piața, templele și clădirile guvernamentale ale orașului",
           "hint_3": "Se află în centrul Romei, lângă Colosseum",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Roman Forum Rome ruins",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_073",
@@ -1230,7 +1242,9 @@
           "hint_2": "A fost inițial un templu dedicat tuturor zeilor romani",
           "hint_3": "Se află în centrul Romei și este folosit azi ca biserică",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Pantheon Rome",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_074",
@@ -1245,7 +1259,9 @@
           "hint_2": "Are o scară dublă în spirală, atribuită unor idei ale lui Leonardo da Vinci",
           "hint_3": "A fost construit ca reședință de vânătoare pentru regele Francisc I",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Chateau de Chambord",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_075",
@@ -1260,7 +1276,9 @@
           "hint_2": "Adăpostește o vastă colecție de bijuterii și relicve",
           "hint_3": "Se află în Istanbul, cu vedere spre Bosfor",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Topkapi Palace exterior gate Istanbul",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_076",
@@ -1275,7 +1293,9 @@
           "hint_2": "Are șase minarete, un număr neobișnuit de mare pentru o moschee",
           "hint_3": "Se află în Istanbul, vizavi de Hagia Sofia",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Blue Mosque Istanbul",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_077",
@@ -1290,7 +1310,9 @@
           "hint_2": "Are peste 1400 de camere și grădini vaste",
           "hint_3": "Se află în Viena, Austria",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Schonbrunn Palace",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_078",
@@ -1305,7 +1327,9 @@
           "hint_2": "Are coloane dorice din marmură, construite acum peste 2400 de ani",
           "hint_3": "Se află pe colina Acropole din Atena",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Parthenon Athens",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_079",
@@ -1320,7 +1344,9 @@
           "hint_2": "A fost cândva adăpostită într-un templu, distrus de un tsunami",
           "hint_3": "Se află în orașul Kamakura, Japonia",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Great Buddha of Kamakura",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_080",
@@ -1335,7 +1361,9 @@
           "hint_2": "A fost reședința de vară a împăraților chinezi",
           "hint_3": "Se află la periferia orașului Beijing",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Summer Palace Beijing",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_081",
@@ -1350,7 +1378,9 @@
           "hint_2": "A fost creată pentru a păzi mormântul primului împărat al Chinei",
           "hint_3": "A fost descoperită întâmplător de niște fermieri, în 1974",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Terracotta Army",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_082",
@@ -1365,7 +1395,9 @@
           "hint_2": "Are o structură circulară impresionantă, simbol al orașului Beijing",
           "hint_3": "Se află în Beijing, China",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Temple of Heaven Beijing",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_083",
@@ -1380,7 +1412,9 @@
           "hint_2": "În vârf are diamante și alte pietre prețioase",
           "hint_3": "E cel mai sacru loc budist din Myanmar",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Shwedagon Pagoda",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_084",
@@ -1395,7 +1429,9 @@
           "hint_2": "E construit pe un deal, la o altitudine de peste 3700 de metri",
           "hint_3": "Se află în Lhasa, Tibet",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Potala Palace",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_085",
@@ -1410,7 +1446,9 @@
           "hint_2": "Are o sală numită „a Oglinzilor”, decorată cu mii de bucăți mici de sticlă",
           "hint_3": "Se află lângă orașul Jaipur, India",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Amber Fort exterior Jaipur",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_086",
@@ -1425,7 +1463,9 @@
           "hint_2": "E construită parțial deasupra apei Oceanului Atlantic",
           "hint_3": "Se află în Casablanca, Maroc",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Hassan II Mosque",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_087",
@@ -1440,7 +1480,9 @@
           "hint_2": "A fost dedicat mai ales sărbătoririi festivalului Opet, în Egiptul antic",
           "hint_3": "Se află pe malul Nilului, în orașul Luxor",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Luxor Temple",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_088",
@@ -1455,7 +1497,9 @@
           "hint_2": "Mormântul lui Tutankhamon a fost descoperit aici, aproape intact",
           "hint_3": "Se află pe malul de vest al Nilului, lângă Luxor",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Valley of the Kings",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_089",
@@ -1470,7 +1514,9 @@
           "hint_2": "Numele orașului înseamnă, în limba nahuatl, „locul unde s-au născut zeii”",
           "hint_3": "Se află lângă Ciudad de Mexico",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Teotihuacan pyramids",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_090",
@@ -1485,7 +1531,9 @@
           "hint_2": "Aici a rostit Martin Luther King Jr. celebrul discurs „I Have a Dream”",
           "hint_3": "Se află la capătul National Mall, în Washington D.C.",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Lincoln Memorial",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_091",
@@ -1500,7 +1548,9 @@
           "hint_2": "Aici se întrunesc cele două camere ale Congresului american",
           "hint_3": "Se află în Washington D.C.",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "United States Capitol",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_092",
@@ -1515,7 +1565,9 @@
           "hint_2": "A fost cea mai înaltă structură din lume la finalizarea sa, în 1884",
           "hint_3": "Se află pe National Mall, în Washington D.C.",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Washington Monument",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_093",
@@ -1530,7 +1582,9 @@
           "hint_2": "A fost singurul pod din oraș nedistrus de naziști în al Doilea Război Mondial",
           "hint_3": "Traversează râul Arno, în Florența",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Ponte Vecchio Florence",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_094",
@@ -1545,7 +1599,9 @@
           "hint_2": "E legat de o închisoare printr-un pod numit „al Suspinelor”",
           "hint_3": "Se află în Piața San Marco, Veneția",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Doge's Palace Venice",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_095",
@@ -1560,7 +1616,9 @@
           "hint_2": "Poartă numele sultanului sub domnia căruia a fost ridicată",
           "hint_3": "Se află pe una dintre colinele Istanbulului",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Suleymaniye Mosque",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_096",
@@ -1575,7 +1633,9 @@
           "hint_2": "A supraviețuit bombardamentelor asupra Londrei din al Doilea Război Mondial",
           "hint_3": "A fost proiectată de arhitectul Christopher Wren",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "St Paul's Cathedral London",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_097",
@@ -1590,7 +1650,9 @@
           "hint_2": "E cel mai bine păstrat castel feudal din Japonia",
           "hint_3": "Se află în orașul Himeji, Japonia",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Himeji Castle",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_098",
@@ -1605,7 +1667,9 @@
           "hint_2": "A fost, secole la rând, cea mai mare clădire din lemn din lume",
           "hint_3": "Se află în orașul Nara, Japonia",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Todai-ji temple Nara",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_099",
@@ -1620,7 +1684,9 @@
           "hint_2": "A fost folosit de-a lungul timpului ca punct de veghe împotriva incendiilor",
           "hint_3": "Se află în cartierul Beyoglu din Istanbul",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Galata Tower exterior Istanbul",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "mon_100",
@@ -1635,7 +1701,9 @@
           "hint_2": "Azi găzduiește o parte din vestitul muzeu Ermitaj",
           "hint_3": "Se află în Sankt Petersburg",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Winter Palace facade Palace Square Saint Petersburg",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

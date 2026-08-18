@@ -1514,7 +1514,9 @@
           "hint_2": "Are frontiere cu Brazilia, Argentina și Bolivia",
           "hint_3": "Capitala e Asuncion",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Paraguay",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_090",
@@ -1529,7 +1531,9 @@
           "hint_2": "Are două capitale: Sucre (constituțională) și La Paz (sediul guvernului)",
           "hint_3": "La Paz e cea mai înaltă capitală de guvern din lume",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Bolivia",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_091",
@@ -1544,7 +1548,9 @@
           "hint_2": "Aici se află ruinele antice ale civilizației maya, la Tikal",
           "hint_3": "Capitala se numește Ciudad de Guatemala",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Guatemala",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_092",
@@ -1559,7 +1565,9 @@
           "hint_2": "Baseball-ul e cel mai popular sport aici",
           "hint_3": "Capitala e Santo Domingo",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of the Dominican Republic",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_093",
@@ -1574,7 +1582,9 @@
           "hint_2": "Este cea mai mare țară din Asia de Sud-Est ca suprafață",
           "hint_3": "Capitala oficială e Naypyidaw, nu fostul oraș principal Rangoon",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Myanmar",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_094",
@@ -1589,7 +1599,9 @@
           "hint_2": "Marea majoritate a teritoriului e formată din delta a două fluvii uriașe, Gange și Brahmaputra",
           "hint_3": "Capitala e Dhaka",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Bangladesh",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_095",
@@ -1604,7 +1616,9 @@
           "hint_2": "Fluviile Tigru și Eufrat traversează această țară",
           "hint_3": "Capitala e Bagdad",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Iraq",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_096",
@@ -1619,7 +1633,9 @@
           "hint_2": "A găzduit Campionatul Mondial de Fotbal în 2022",
           "hint_3": "Capitala e Doha",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Qatar",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_097",
@@ -1634,7 +1650,9 @@
           "hint_2": "Marea parte a teritoriului e acoperită de deșertul Sahara",
           "hint_3": "Capitala e Alger",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Algeria",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_098",
@@ -1649,7 +1667,9 @@
           "hint_2": "Include și arhipelagul Zanzibar, cunoscut pentru mirodenii",
           "hint_3": "Safariurile din Serengeti sunt una dintre atracțiile turistice principale",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Tanzania",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_099",
@@ -1664,7 +1684,9 @@
           "hint_2": "Lupta tradițională senegaleză este un sport național foarte popular",
           "hint_3": "Capitala e Dakar",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Senegal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "stg_100",
@@ -1679,7 +1701,9 @@
           "hint_2": "Rugby-ul e sportul cu cea mai mare popularitate aici",
           "hint_3": "Este cunoscută pentru plaje și recife de corali",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Flag of Fiji",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }
