@@ -39,10 +39,15 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
   bool _nameSetByAdmin = false;
 
   /// Numele/poza sunt legate live de contul Google (dacă e logat) — nu se
-  /// mai pot edita manual în acest caz, vezi [_editName]. La fel și când
-  /// numele a fost stabilit de administrator: dacă butonul ar rămâne activ,
-  /// jucătorul ar scrie altceva, ar salva și n-ar vedea nicio schimbare.
-  bool get _isGoogleLinked => _photoUrl != null || _nameSetByAdmin;
+  /// mai pot edita manual în acest caz, vezi [_editName].
+  ///
+  /// Numele stabilit de administrator blochează editarea DOAR la conturile
+  /// logate, unde e o decizie de moderare. Un Guest redenumit are voie să
+  /// revină oricând, singur, la un nume ales de el — aceeași regulă ca în
+  /// ProfileScreen, ținută în sincron aici ca jucătorul să nu găsească același
+  /// câmp blocat într-un ecran și liber în celălalt.
+  bool get _isGoogleLinked =>
+      _photoUrl != null || (_nameSetByAdmin && AuthService.instance.isSignedIn);
 
   @override
   void initState() {
@@ -101,6 +106,13 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> {
       ),
     );
     if (result == null || result.isEmpty || !mounted) return;
+    // Guest care scapă de numele pus de admin — vezi
+    // PlayerProfileService.releaseMyForcedName pentru de ce trebuie ridicat
+    // ÎNAINTE de salvare (heartbeat-ul de mai jos l-ar readuce de pe server).
+    if (_nameSetByAdmin) {
+      await PlayerProfileService.instance.releaseMyForcedName();
+      if (mounted) setState(() => _nameSetByAdmin = false);
+    }
     await StorageService.setDisplayName(result);
     // fara asta, numele nou ar ramane doar local - leaderboard-ul/profilul
     // public ar afisa in continuare numele vechi pana la urmatoarea

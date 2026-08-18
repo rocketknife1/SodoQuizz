@@ -56,12 +56,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       multiplayerProfile: results[6] as PlayerProfile?,
       pendingFriendRequests: results[7] as int,
       name: identity.name,
-      // Numele nu se poate schimba de aici în două cazuri: vine din contul
-      // Google, sau a fost pus de administrator. Al doilea NU e o formalitate
-      // — numele impus bate tot (vezi StorageService.getForcedName), deci
-      // dacă butonul ar rămâne activ, jucătorul ar scrie altceva, ar apăsa
-      // „Salvează" și n-ar vedea nicio schimbare, fără nicio explicație.
-      nameLocked: identity.photoUrl != null || forcedName.isNotEmpty,
+      // Numele nu se poate schimba de aici când vine din contul Google.
+      //
+      // Numele impus de administrator blochează și el editarea — dar NUMAI la
+      // conturile logate, unde e o decizie de moderare. La un Guest nu:
+      // userul a cerut explicit ca un Guest redenumit să poată reveni oricând,
+      // singur, la un nume ales de el. Editarea lui chiar ridică numele impus
+      // (vezi [_editName] și PlayerProfileService.releaseMyForcedName), deci
+      // butonul activ nu minte: apeși, scrii, și rămâne scris.
+      nameLocked: identity.photoUrl != null || (forcedName.isNotEmpty && AuthService.instance.isSignedIn),
       nameSetByAdmin: forcedName.isNotEmpty,
     );
   }
@@ -96,6 +99,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
     if (result == null || result.isEmpty || !mounted) return;
+    // Un Guest care își schimbă numele după ce i l-a pus adminul ridică prin
+    // chiar gestul ăsta numele impus — altfel primul heartbeat i l-ar fi pus
+    // la loc, iar salvarea ar fi părut că n-a făcut nimic. ÎNAINTE de
+    // setDisplayName, ca heartbeat-ul de mai jos să plece cu terenul curat.
+    // La conturile logate nu se ajunge aici: acolo [nameLocked] oprește
+    // dialogul din capul funcției.
+    if (data.nameSetByAdmin) {
+      await PlayerProfileService.instance.releaseMyForcedName();
+    }
     await StorageService.setDisplayName(result);
     // fără asta, numele nou ar rămâne doar local — clasamentul și profilul
     // public ar arăta în continuare numele vechi până la următoarea pornire
@@ -247,7 +259,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Center(
                   child: Text(
                     data.nameSetByAdmin
-                        ? tr('Numele a fost stabilit de administrator', 'Your name was set by the administrator')
+                        ? data.nameLocked
+                            ? tr('Numele a fost stabilit de administrator', 'Your name was set by the administrator')
+                            // Guest: numele impus e o sugestie, nu o sentință.
+                            // Rândul ăsta e singurul loc din care poate afla
+                            // că are voie să și-l schimbe înapoi.
+                            : tr('Nume pus de administrator — apasă ca să-l schimbi înapoi',
+                                'Name set by the administrator — tap to change it back')
                         : data.nameLocked
                             ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
                             : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),

@@ -1570,14 +1570,29 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
               decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
             ),
             const SizedBox(height: 6),
+            // Textul spune adevărul pentru fiecare tip de cont, fiindcă
+            // regula NU mai e aceeași: la un cont Google redenumirea chiar
+            // blochează câmpul (decizie de moderare), pe când un Guest are
+            // voie să revină singur, oricând, la un nume ales de el — vezi
+            // PlayerProfileService.releaseMyForcedName. Un text care ar
+            // promite blocare și la Guest ar face adminul să creadă că a
+            // rezolvat ceva ce se poate desface în două atingeri.
             Text(
-              target.forcedName.isEmpty
-                  ? 'Numele public se schimbă imediat. În jocul lui apare la următoarea '
-                      'deschidere a aplicației și îi înlocuiește inclusiv numele de Google. '
-                      'Cât timp e pus de tine, el nu și-l mai poate schimba.'
-                  : 'Numele lui e acum impus de tine, deci nu și-l poate schimba singur. '
-                      '„Lasă-l liber" ridică blocarea: la următoarea deschidere a aplicației '
-                      'îi revine numele lui și poate alege din nou.',
+              target.hasGoogleAccount
+                  ? (target.forcedName.isEmpty
+                      ? 'Numele public se schimbă imediat. În jocul lui apare la următoarea '
+                          'deschidere a aplicației și îi înlocuiește inclusiv numele de Google. '
+                          'Cât timp e pus de tine, el nu și-l mai poate schimba.'
+                      : 'Numele lui e acum impus de tine, deci nu și-l poate schimba singur. '
+                          '„Lasă-l liber" ridică blocarea: la următoarea deschidere a aplicației '
+                          'îi revine numele lui și poate alege din nou.')
+                  : (target.forcedName.isEmpty
+                      ? 'E un Guest. Numele public se schimbă imediat, iar în jocul lui apare '
+                          'la următoarea deschidere a aplicației. Nu îi blochează câmpul: '
+                          'poate reveni oricând singur la un nume ales de el.'
+                      : 'E un Guest, deci numele pus de tine nu e definitiv — poate reveni '
+                          'oricând singur la unul ales de el, din Profil. „Lasă-l liber" '
+                          'îi șterge numele impus fără să mai aștepți.'),
               style: const TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
             ),
           ],
