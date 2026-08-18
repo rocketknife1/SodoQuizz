@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
+import 'core/app_check_service.dart';
 import 'core/audio.dart';
 import 'core/eco_mode.dart';
 import 'core/lang.dart';
@@ -40,6 +41,11 @@ void main() async {
   // blocheze restul aplicatiei - single-player merge oricum 100% local.
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // Inainte de prima cerere catre Auth/Firestore, ca tokenul care dovedeste
+    // ca binarul e cel autentic sa plece odata cu ea - vezi
+    // app_check_service.dart, inclusiv de ce activarea singura nu schimba
+    // inca nimic pe server. Nu arunca niciodata, deci nu poate rupe pornirea.
+    await activateAppCheck();
     // identitate (anonima daca nimeni nu e logat cu Google) chiar la pornire,
     // nu doar lazy cand userul deschide multiplayer - altfel un jucator
     // 100% solo n-ar avea niciodata un uid si n-ar putea aparea in

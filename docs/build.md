@@ -32,6 +32,26 @@ Reclamele reale nu vor servi oricum până când aplicația nu e publicată în
 Play, legată de listare în AdMob și trecută prin review-ul lor — vezi
 [../play_store/ghid_consola.md](../play_store/ghid_consola.md).
 
+## App Check (dovada că binarul e cel autentic)
+
+Vezi `lib/core/app_check_service.dart` pentru ce face și, mai ales, pentru
+capcana de la „Enforce". Două flag-uri de compilare:
+
+```
+--dart-define=APPCHECK_DEBUG=true              # doar pentru testele mele pe telefon
+--dart-define=APPCHECK_RECAPTCHA_KEY=6Lc...    # doar pentru build-ul web
+```
+
+`APPCHECK_DEBUG` **nu se pune niciodată pe build-ul de Play** — acolo trebuie
+Play Integrity, altfel App Check nu apără nimic. E doar pentru APK-urile
+construite local: ele sunt semnate cu cheia de upload, nu cu cea cu care Play
+redistribuie, deci Play Integrity le refuză din principiu. Tokenul tipărit în
+logcat la prima pornire se înregistrează o dată în Firebase Console →
+App Check → Apps → Manage debug tokens.
+
+Fără `APPCHECK_RECAPTCHA_KEY`, varianta web pornește normal, doar că sare
+peste App Check (vezi `activateAppCheck`).
+
 ## Publicarea unei versiuni noi
 
 ```

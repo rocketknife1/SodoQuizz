@@ -19,7 +19,13 @@ pluginManagement {
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
     id "com.android.application" version "8.2.2" apply false
-    id "org.jetbrains.kotlin.android" version "1.8.22" apply false
+    // Urcat de la 1.8.22 la 2.1.0 pentru firebase_app_check: build.gradle-ul
+    // lui foloseste DSL-ul `kotlin { compilerOptions { ... } }`, care exista
+    // abia din Kotlin Gradle Plugin 2.0. Pe 1.8.22 build-ul pica la faza de
+    // evaluare cu "Could not find method compilerOptions()", inainte sa
+    // compileze ceva. Celelalte pluginuri Firebase (core, auth, firestore) nu
+    // il folosesc inca, deci pana acum 1.8.22 a fost de ajuns.
+    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
     // Necesar ca google-services.json sa fie procesat la build - fara el,
     // config-ul Firebase real nu ajunge la SDK-urile native (in special
     // pentru client ID-ul implicit de Google Sign-In).
