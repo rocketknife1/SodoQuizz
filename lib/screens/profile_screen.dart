@@ -257,18 +257,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 2),
                 Center(
+                  // Redenumirea făcută de administrator NU se anunță aici,
+                  // deliberat. Motivul cel mai frecvent pentru care un nume e
+                  // schimbat din Admin e că era obscen, iar un rând care spune
+                  // „numele tău a fost stabilit de administrator" transformă o
+                  // curățare discretă într-o notificare de moderare — exact
+                  // ce nu vrei. Guest-ul vede pur și simplu câmpul liber, cu
+                  // îndemnul obișnuit; dacă numele nu-i place, îl schimbă,
+                  // fără să i se explice de ce s-a schimbat.
                   child: Text(
-                    data.nameSetByAdmin
-                        ? data.nameLocked
-                            ? tr('Numele a fost stabilit de administrator', 'Your name was set by the administrator')
-                            // Guest: numele impus e o sugestie, nu o sentință.
-                            // Rândul ăsta e singurul loc din care poate afla
-                            // că are voie să și-l schimbe înapoi.
-                            : tr('Nume pus de administrator — apasă ca să-l schimbi înapoi',
-                                'Name set by the administrator — tap to change it back')
-                        : data.nameLocked
-                            ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
-                            : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
+                    data.nameLocked
+                        ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
+                        : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
                     style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ),
