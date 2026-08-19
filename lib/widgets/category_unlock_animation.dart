@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
+import 'planet_art.dart';
 
 /// Animație scurtă (dialog peste ecranul curent) arătată când jucătorul
 /// deblochează un lot nou de întrebări la o categorie: un lacăt se
@@ -25,16 +26,29 @@ class CategoryUnlockAnimation extends StatefulWidget {
   final String categoryTitle;
   final int unlockedCount;
 
+  /// Culoarea și iconița categoriei deblocate — planeta care se trezește
+  /// trebuie să fie CHIAR planeta ei, nu un lacăt generic. Fără ele animația
+  /// nu spune ce anume s-a deschis.
+  final Color color;
+  final IconData icon;
+  final int seed;
+
   const CategoryUnlockAnimation({
     super.key,
     required this.categoryTitle,
     required this.unlockedCount,
+    required this.color,
+    required this.icon,
+    this.seed = 3,
   });
 
   static Future<void> show(
     BuildContext context, {
     required String categoryTitle,
     required int unlockedCount,
+    required Color color,
+    required IconData icon,
+    int seed = 3,
   }) {
     return showDialog(
       context: context,
@@ -43,6 +57,9 @@ class CategoryUnlockAnimation extends StatefulWidget {
       builder: (_) => CategoryUnlockAnimation(
         categoryTitle: categoryTitle,
         unlockedCount: unlockedCount,
+        color: color,
+        icon: icon,
+        seed: seed,
       ),
     );
   }
@@ -137,8 +154,8 @@ class _CategoryUnlockAnimationState extends State<CategoryUnlockAnimation>
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppColors.coin.withAlpha(_alpha(160, burstOpacity).toInt()),
-                          AppColors.coin.withAlpha(0),
+                          widget.color.withAlpha(_alpha(190, burstOpacity).toInt()),
+                          widget.color.withAlpha(0),
                         ],
                       ),
                     ),
@@ -151,24 +168,7 @@ class _CategoryUnlockAnimationState extends State<CategoryUnlockAnimation>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Container(
-                          width: 96,
-                          height: 96,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: (isUnlocked ? AppColors.coin : AppColors.purple).withAlpha(50),
-                            border: Border.all(
-                              color: (isUnlocked ? AppColors.coin : AppColors.purple).withAlpha(180),
-                              width: 2,
-                            ),
-                          ),
-                          alignment: Alignment.center,
-                          child: Icon(
-                            isUnlocked ? Icons.lock_open_rounded : Icons.lock_rounded,
-                            color: Colors.white,
-                            size: 46,
-                          ),
-                        ),
+                        _buildPlanet(unlockRaw, isUnlocked, t),
                         const SizedBox(height: 18),
                         Text(
                           widget.categoryTitle,
@@ -202,35 +202,145 @@ class _CategoryUnlockAnimationState extends State<CategoryUnlockAnimation>
     );
   }
 
-  /// Câțiva nori simpli (Icons.cloud) care plutesc dinspre margini spre
-  /// centru și apoi se risipesc odată ce lacătul se deschide — acoperă
-  /// lacătul chiar înainte de deblocare, ca să pară că "iese" din spatele
-  /// lor. Traiectoria foloseşte o curbă ease în ambele sensuri, nu
-  /// interpolare liniară, ca mişcarea să nu pară mecanică.
+  /// Planeta care se trezește — miezul animației. Trece prin trei stări, în
+  /// aceeași ordine în care le citește ochiul:
+  ///
+  ///  1. ADORMITĂ: corp stins, sub grilaj de scanare, strâns în două arce de
+  ///     containment care se rotesc (același limbaj ca pe cardul blocat, ca
+  ///     jucătorul să recunoască imediat CE se deschide).
+  ///  2. APRINDERE: culoarea categoriei urcă din interior, benzile de
+  ///     suprafață devin vizibile, glow-ul crește.
+  ///  3. ELIBERARE: arcele se sparg și zboară în afară, rotindu-se.
+  Widget _buildPlanet(double unlockRaw, bool isUnlocked, double t) {
+    const d = 104.0;
+    // cât de „aprinsă" e planeta (0 = stinsă, 1 = culoare plină)
+    final lit = Curves.easeInOut.transform(unlockRaw);
+    // arcele se depărtează după deschidere
+    final shardOut = isUnlocked ? Curves.easeOutCubic.transform(((t - _unlockEnd) / 0.3).clamp(0.0, 1.0)) : 0.0;
+
+    return SizedBox(
+      width: d + 40,
+      height: d + 40,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // corpul: stins dedesubt, culoarea reală desenată peste, cu alfa
+          // care crește — asta face „aprinderea" fără să schimbăm widget-ul.
+          Container(
+            width: d,
+            height: d,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF23283D),
+              boxShadow: [
+                BoxShadow(color: widget.color.withAlpha((160 * lit).round()), blurRadius: 26 * lit, spreadRadius: 2 * lit),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(painter: DormantPlanetPainter(seed: widget.seed, base: widget.color, phase: t * 2)),
+                ),
+                // stratul „viu", cu opacitate crescătoare
+                Positioned.fill(
+                  child: Opacity(
+                    opacity: lit,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          center: const Alignment(-0.4, -0.45),
+                          radius: 1.05,
+                          colors: [
+                            _shade(widget.color, 0.30),
+                            widget.color,
+                            _shade(widget.color, -0.30),
+                          ],
+                          stops: const [0.0, 0.55, 1.0],
+                        ),
+                      ),
+                      child: CustomPaint(painter: PlanetSurfacePainter(seed: widget.seed, base: widget.color, rotation: t)),
+                    ),
+                  ),
+                ),
+                Icon(widget.icon, color: Colors.white.withAlpha((110 + 145 * lit).round()), size: 40),
+              ],
+            ),
+          ),
+          // arcele de containment — se rotesc cât planeta e închisă, apoi
+          // zboară în afară și se sting.
+          for (final (i, spec) in [(0, 1.0), (1, -0.7)].indexed)
+            Transform.scale(
+              scale: 1 + shardOut * (0.6 + i * 0.25),
+              child: Transform.rotate(
+                angle: t * 2 * pi * spec.$2,
+                child: Opacity(
+                  opacity: (1 - shardOut).clamp(0.0, 1.0),
+                  child: CustomPaint(
+                    size: Size(d + 16 - i * 14, d + 16 - i * 14),
+                    painter: ContainmentArcPainter(
+                      color: const Color(0xFF7FE7FF).withAlpha(i == 0 ? 190 : 120),
+                      dashCount: i == 0 ? 12 : 8,
+                      gapFraction: 0.55,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  static Color _shade(Color c, double dl) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl.withLightness((hsl.lightness + dl).clamp(0.0, 1.0)).toColor();
+  }
+
+  /// Resturi orbitale — mici scântei care se strâng în jurul planetei cât e
+  /// încă închisă, apoi sunt împrăștiate afară de eliberare.
+  ///
+  /// Erau NORI (Icons.cloud) pe vremea când animația arăta un lacăt: pe
+  /// lângă o planetă în spațiu, norii se citeau ca o greșeală de decor. Un
+  /// corp ceresc are praf și fragmente în jur, nu vreme.
   List<Widget> _buildClouds(double t) {
     const specs = [
-      (dx: -1.0, dy: -0.35, size: 90.0, delay: 0.0),
-      (dx: 1.0, dy: -0.25, size: 110.0, delay: 0.06),
-      (dx: -0.9, dy: 0.4, size: 100.0, delay: 0.12),
-      (dx: 0.95, dy: 0.45, size: 80.0, delay: 0.09),
+      (angle: 0.6, dist: 150.0, size: 7.0, delay: 0.00),
+      (angle: 2.1, dist: 128.0, size: 5.0, delay: 0.05),
+      (angle: 3.4, dist: 160.0, size: 8.0, delay: 0.10),
+      (angle: 4.6, dist: 134.0, size: 5.5, delay: 0.07),
+      (angle: 5.6, dist: 146.0, size: 6.5, delay: 0.13),
+      (angle: 1.3, dist: 170.0, size: 4.5, delay: 0.16),
     ];
-    // norii intră (0.0-0.34), stau peste lacăt cât acesta se deschide,
-    // apoi se împrăștie spre margini din nou (0.58-0.95).
     return specs.map((s) {
       final inRaw = ((t - s.delay) / 0.34).clamp(0.0, 1.0);
-      final outRaw = ((t - 0.58) / 0.37).clamp(0.0, 1.0);
+      final outRaw = ((t - _unlockEnd) / 0.34).clamp(0.0, 1.0);
       final inT = Curves.easeOutCubic.transform(inRaw);
       final outT = Curves.easeInCubic.transform(outRaw);
-      final travel = inT * (1 - outT);
-      final offsetX = s.dx * (1 - travel) * 140;
-      final offsetY = s.dy * (1 - travel) * 140 - outT * 40;
+      // se apropie până la ~60% din distanță, apoi sunt zvârlite dincolo de
+      // punctul de plecare
+      final dist = s.dist * (1 - inT * 0.4) + outT * 210;
+      // se rotesc ușor în jurul planetei cât se apropie — orbitează, nu cad
+      final a = s.angle + inT * 0.5 + outT * 0.35;
       final opacity = inT * (1 - outT * outT);
       return Transform.translate(
-        offset: Offset(offsetX, offsetY),
-        child: Icon(
-          Icons.cloud_rounded,
-          color: Colors.white.withAlpha(_alpha(60, opacity).toInt()),
-          size: s.size,
+        offset: Offset(cos(a) * dist, sin(a) * dist),
+        child: Container(
+          width: s.size,
+          height: s.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.white.withAlpha(_alpha(210, opacity).toInt()),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withAlpha(_alpha(190, opacity).toInt()),
+                blurRadius: 8,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
         ),
       );
     }).toList();

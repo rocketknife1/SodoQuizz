@@ -571,6 +571,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   context,
                   categoryTitle: mode.title,
                   unlockedCount: batch,
+                  color: mode.accentColor,
+                  icon: mode.icon,
+                  seed: gameModes.indexOf(mode) + 1,
                 );
                 if (!mounted) return;
                 _loadQuestions();

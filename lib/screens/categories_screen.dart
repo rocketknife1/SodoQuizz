@@ -128,6 +128,11 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
       context,
       categoryTitle: mode.title,
       unlockedCount: newUnlocked - stats.unlocked,
+      // planeta care se trezește trebuie să fie CHIAR planeta categoriei —
+      // aceeași culoare, aceeași iconiță, același seed ca pe card.
+      color: mode.accentColor,
+      icon: mode.icon,
+      seed: gameModes.indexOf(mode) + 1,
     );
     if (!mounted) return;
     setState(() => _statsFuture = _loadStats());

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/eco_mode.dart';
 import '../core/gamemodes.dart';
+import 'planet_art.dart';
 import 'planet_entry_dialog.dart';
 
 /// Planetă centrală, cu funcție reală (spre deosebire de vechiul element
@@ -138,40 +139,44 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
                     painter: _RingPainter(),
                   ),
                 ),
-                // sfera — benzile (sweep gradient) rotindu-se fac spinul
-                // vizibil clar, nu doar un cerc static colorat.
-                Transform.rotate(
-                  angle: angle,
-                  child: Container(
-                    width: widget.size,
-                    height: widget.size,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: SweepGradient(
-                        colors: [
-                          Color(0xFFFF7A1A),
-                          Color(0xFFFFC542),
-                          Color(0xFFE24B4A),
-                          Color(0xFF534AB7),
-                          Color(0xFF1D9E75),
-                          Color(0xFFFF7A1A),
-                        ],
-                      ),
-                      boxShadow: [BoxShadow(color: Colors.black38, blurRadius: 10)],
-                    ),
-                  ),
-                ),
-                // highlight fix (nu se rotește), ca sfera să pară rotundă/3D
-                // nu un cerc plat.
+                // SFERA. Înainte era un SweepGradient rotit — adică felii de
+                // culoare ca o roată de tort, care se citeau ca un disc plat
+                // învârtindu-se, nu ca un corp ceresc. Acum e un corp propriu-zis:
+                // gradient radial legat de sursa de lumină, peste care
+                // [PlanetSurfacePainter] pune benzi latitudinale curbate,
+                // terminator și lumină de margine. Rotația nu mai învârte
+                // widget-ul, ci DERULEAZĂ textura — exact ce face o planetă
+                // adevărată care se învârte în jurul axei ei.
                 Container(
                   width: widget.size,
                   height: widget.size,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [Colors.white.withAlpha(80), Colors.white.withAlpha(0)],
-                      center: const Alignment(-0.4, -0.4),
-                      radius: 0.55,
+                    gradient: const RadialGradient(
+                      center: Alignment(-0.4, -0.45),
+                      radius: 1.05,
+                      colors: [
+                        Color(0xFFFFD98A),
+                        Color(0xFFFFA646),
+                        Color(0xFFE8722A),
+                        Color(0xFFB2431F),
+                        Color(0xFF6E2416),
+                      ],
+                      stops: [0.0, 0.28, 0.55, 0.8, 1.0],
+                    ),
+                    boxShadow: [
+                      // aureolă atmosferică — planeta nu se termină brusc în
+                      // fundal, are un halou cald în jur
+                      BoxShadow(color: const Color(0xFFFFA646).withAlpha(90), blurRadius: 22, spreadRadius: 1),
+                      const BoxShadow(color: Colors.black38, blurRadius: 10, offset: Offset(0, 4)),
+                    ],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: CustomPaint(
+                    painter: PlanetSurfacePainter(
+                      seed: 4,
+                      base: const Color(0xFFE8722A),
+                      rotation: _spin.value,
                     ),
                   ),
                 ),
@@ -252,36 +257,65 @@ class _HologramDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Formă HEXAGONALĂ, nu cerc: o proiecție holografică se citește ca
+    // tehnologie când are muchii drepte, iar cercul o făcea să pară o simplă
+    // bulă colorată. Colțurile teșite o leagă și de plăcile HUD din
+    // Multiplayer, deci tot jocul arată ca aceeași lume.
     return Container(
       width: 26,
       height: 26,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
+      decoration: ShapeDecoration(
         gradient: RadialGradient(
-          colors: [mode.accentColor.withAlpha(_a(210)), mode.accentColor.withAlpha(_a(50))],
+          colors: [mode.accentColor.withAlpha(_a(220)), mode.accentColor.withAlpha(_a(40))],
           center: const Alignment(-0.3, -0.3),
         ),
-        border: Border.all(color: mode.accentColor.withAlpha(_a(200))),
-        boxShadow: [BoxShadow(color: mode.accentColor.withAlpha(_a(140)), blurRadius: 10)],
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: mode.accentColor.withAlpha(_a(230))),
+        ),
+        shadows: [BoxShadow(color: mode.accentColor.withAlpha(_a(150)), blurRadius: 12)],
       ),
-      child: Icon(mode.icon, color: Colors.white.withAlpha(_a(255)), size: 14),
+      child: Icon(mode.icon, color: Colors.white.withAlpha(_a(255)), size: 13),
     );
   }
 }
 
+/// Inelul planetei — nu o singură linie gri, ci mai multe benzi concentrice
+/// de grosimi și opacități diferite, cu o despicătură (ca Diviziunea Cassini
+/// a lui Saturn). Un inel adevărat e format din milioane de bucăți, deci se
+/// citește ca STRATURI, nu ca un contur; despicătura e ce-l face să pară
+/// material, nu desenat.
 class _RingPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = const Color(0xFFC9C9E8).withAlpha(170);
+    final outer = size.width / 2 - 2;
+
     canvas.save();
     canvas.translate(center.dx, center.dy);
     canvas.scale(1.0, 0.38); // elipsă înclinată, ca un inel văzut din lateral
-    canvas.drawCircle(Offset.zero, size.width / 2 - 2, paint);
+
+    // (rază relativă, grosime, alfa) — despicătura e golul dintre 0.80 și 0.86
+    const bands = [
+      (0.98, 2.0, 60),
+      (0.93, 3.4, 130),
+      (0.86, 2.2, 90),
+      // — Cassini —
+      (0.78, 4.0, 150),
+      (0.71, 2.6, 100),
+      (0.65, 1.6, 55),
+    ];
+    for (final (rel, width, alpha) in bands) {
+      canvas.drawCircle(
+        Offset.zero,
+        outer * rel,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = width
+          ..color = const Color(0xFFE6DCC8).withAlpha(alpha),
+      );
+    }
     canvas.restore();
   }
 

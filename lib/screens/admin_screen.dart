@@ -1159,7 +1159,13 @@ class _DebugTabState extends State<_DebugTab> {
             icon: Icons.lock_open_rounded,
             label: 'PREVIEW ANIMAȚIE DEBLOCARE',
             color: AppColors.purple,
-            onTap: () => CategoryUnlockAnimation.show(context, categoryTitle: 'Categorie de test', unlockedCount: 15),
+            onTap: () => CategoryUnlockAnimation.show(
+              context,
+              categoryTitle: 'Categorie de test',
+              unlockedCount: 15,
+              color: AppColors.teal,
+              icon: Icons.public_rounded,
+            ),
           ),
           const SizedBox(height: 12),
           Row(

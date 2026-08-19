@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
+import 'planet_art.dart';
 import 'pressable.dart';
 
 /// Card orizontal, lat cât ecranul, pentru o categorie (gamemod) — planetă
@@ -288,36 +289,66 @@ class _Planet extends StatelessWidget {
                 ),
               ),
             ),
+          // CÂMPUL DE CONTAINMENT al unei categorii blocate — două arce
+          // punctate care se rotesc în sensuri opuse. Înlocuiesc lacătul
+          // simplu: o categorie blocată nu e „stricată", e ținută închisă și
+          // se poate deschide, iar asta trebuie să se vadă din desen.
+          if (locked) ...[
+            AnimatedBuilder(
+              animation: pulse,
+              builder: (context, child) => Transform.rotate(angle: pulse.value * 2 * pi, child: child),
+              child: CustomPaint(
+                size: const Size(size + 8, size + 8),
+                painter: const ContainmentArcPainter(color: Color(0x807FE7FF), dashCount: 12, gapFraction: 0.55),
+              ),
+            ),
+            AnimatedBuilder(
+              animation: pulse,
+              builder: (context, child) => Transform.rotate(angle: -pulse.value * 2 * pi * 0.7, child: child),
+              child: CustomPaint(
+                size: const Size(size - 2, size - 2),
+                painter: const ContainmentArcPainter(color: Color(0x5A7FE7FF), dashCount: 8, gapFraction: 0.6),
+              ),
+            ),
+          ],
           // globul propriu-zis, cu textură + luciu, deasupra inelului — glow-ul
           // respiră în ritmul [pulse], nu rămâne fix.
           AnimatedBuilder(
             animation: pulse,
             builder: (context, child) {
-              final breathe = locked ? 0.0 : (sin(pulse.value * 2 * pi) + 1) / 2;
+              final breathe = (sin(pulse.value * 2 * pi) + 1) / 2;
               return Container(
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    center: const Alignment(-0.4, -0.45),
-                    radius: 1.05,
-                    colors: locked
-                        ? [Colors.white.withAlpha(45), Colors.white.withAlpha(22), Colors.white.withAlpha(10)]
-                        : [
+                  gradient: locked
+                      ? null
+                      : RadialGradient(
+                          center: const Alignment(-0.4, -0.45),
+                          radius: 1.05,
+                          colors: [
                             _shade(color, 0.30, 0.05),
                             _shade(color, 0.06),
                             color,
                             _shade(color, -0.20, 0.10),
                             _shade(color, -0.34, 0.10),
                           ],
-                    // stops trebuie să aibă mereu aceeași lungime ca [colors] —
-                    // varianta locked are doar 3 culori, nu 5 (vezi mai sus).
-                    stops: locked ? const [0.0, 0.5, 1.0] : const [0.0, 0.28, 0.55, 0.8, 1.0],
+                          stops: const [0.0, 0.28, 0.55, 0.8, 1.0],
+                        ),
+                  // Conturul e DOAR o separare de fundal, nu un desen: la
+                  // opacitate plină ieșea aproape negru și tăia exact peste
+                  // lumina de margine, adică peste lucrul care dă volumul.
+                  border: Border.all(
+                    color: locked
+                        ? const Color(0xFF7FE7FF).withAlpha(70)
+                        : _shade(color, -0.30, 0.1).withAlpha(120),
+                    width: 1.0,
                   ),
-                  border: Border.all(color: locked ? Colors.white24 : _shade(color, -0.32, 0.1), width: 1.3),
                   boxShadow: locked
-                      ? null
+                      // și planeta stinsă respiră, doar rece și mult mai slab —
+                      // semn că e „în hibernare", nu că lipsește.
+                      ? [BoxShadow(color: const Color(0xFF7FE7FF).withAlpha((25 + breathe * 35).round()), blurRadius: 8 + breathe * 6)]
                       : [
                           BoxShadow(color: color.withAlpha((100 + breathe * 60).round()), blurRadius: 14 + breathe * 8, spreadRadius: 0.5),
                           const BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 3)),
@@ -330,7 +361,18 @@ class _Planet extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                if (!locked) Positioned.fill(child: CustomPaint(painter: _PlanetSurfacePainter(seed: seed, base: color))),
+                if (locked)
+                  // corpul stins + grilajul de scanare, derulat de [pulse]
+                  Positioned.fill(
+                    child: AnimatedBuilder(
+                      animation: pulse,
+                      builder: (context, _) => CustomPaint(
+                        painter: DormantPlanetPainter(seed: seed, base: color, phase: pulse.value),
+                      ),
+                    ),
+                  )
+                else
+                  Positioned.fill(child: CustomPaint(painter: PlanetSurfacePainter(seed: seed, base: color))),
                 // luciu sticlos, colț stânga-sus.
                 if (!locked)
                   Positioned(
@@ -349,12 +391,28 @@ class _Planet extends StatelessWidget {
                       ),
                     ),
                   ),
+                // La blocat se vede ICONIȚA CATEGORIEI, stinsă, nu un lacăt:
+                // jucătorul trebuie să știe CE anume e închis acolo. Lacătul
+                // rămâne, dar mic, într-un colț — indiciu, nu subiect.
                 Icon(
-                  locked ? Icons.lock_rounded : icon,
-                  color: Colors.white.withAlpha(locked ? 150 : 255),
+                  icon,
+                  color: Colors.white.withAlpha(locked ? 90 : 255),
                   size: 22,
                   shadows: const [Shadow(color: Colors.black45, blurRadius: 3)],
                 ),
+                if (locked)
+                  Positioned(
+                    right: size * 0.10,
+                    bottom: size * 0.10,
+                    child: AnimatedBuilder(
+                      animation: pulse,
+                      builder: (context, child) => Opacity(
+                        opacity: 0.55 + (sin(pulse.value * 2 * pi) + 1) / 2 * 0.45,
+                        child: child,
+                      ),
+                      child: const Icon(Icons.lock_rounded, color: Color(0xFF7FE7FF), size: 13),
+                    ),
+                  ),
               ],
             ),
           ),
@@ -362,35 +420,6 @@ class _Planet extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Cratere/pete de suprafață, cu poziții determinate de un seed fix (per
-/// categorie) — desenate o singură dată, nu se re-randomizează la rebuild.
-class _PlanetSurfacePainter extends CustomPainter {
-  final int seed;
-  final Color base;
-  const _PlanetSurfacePainter({required this.seed, required this.base});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rnd = Random(seed * 97 + 13);
-    final dark = HSLColor.fromColor(base).withLightness(0.2).toColor();
-    final light = HSLColor.fromColor(base).withLightness(0.75).toColor();
-    for (var i = 0; i < 6; i++) {
-      final dx = rnd.nextDouble() * size.width;
-      final dy = rnd.nextDouble() * size.height;
-      final r = size.width * (0.06 + rnd.nextDouble() * 0.11);
-      final useDark = rnd.nextBool();
-      canvas.drawCircle(
-        Offset(dx, dy),
-        r,
-        Paint()..color = (useDark ? dark : light).withAlpha(useDark ? 40 : 26),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _PlanetSurfacePainter oldDelegate) => oldDelegate.seed != seed || oldDelegate.base != base;
 }
 
 /// Buton compact "Upgrade" cu preț în Gems — Material+InkWell (nu un simplu
