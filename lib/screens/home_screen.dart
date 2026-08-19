@@ -4,11 +4,13 @@ import '../core/lang.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
+import '../data/auth_service.dart';
 import '../data/cloud_sync_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
+import '../widgets/edit_name_dialog.dart';
 import '../widgets/level_header.dart';
 import '../widgets/lives_countdown_card.dart';
 import '../widgets/mascots/discord_mascot.dart';
@@ -82,6 +84,8 @@ class _HomeScreenState extends State<HomeScreen> {
     ]);
     final livesUnlimited = await StorageService.hasUnlimitedLives();
     final livesUnlimitedRemaining = livesUnlimited ? await StorageService.unlimitedLivesRemaining() : Duration.zero;
+    final identity = await AuthService.instance.multiplayerIdentity();
+    final forcedName = await StorageService.getForcedName();
     return _HomeData(
       xp: results[0],
       coins: results[1],
@@ -92,7 +96,19 @@ class _HomeScreenState extends State<HomeScreen> {
       gems: results[6],
       livesUnlimited: livesUnlimited,
       livesUnlimitedRemaining: livesUnlimitedRemaining,
+      name: identity.name,
+      // Aceeași regulă ca în ProfileScreen/MultiplayerScreen: numele nu se
+      // poate schimba de aici când vine dintr-un cont Google legat, sau când
+      // e impus de administrator pe un cont logat.
+      nameLocked: identity.photoUrl != null || (forcedName.isNotEmpty && AuthService.instance.isSignedIn),
+      nameSetByAdmin: forcedName.isNotEmpty,
     );
+  }
+
+  Future<void> _editName(_HomeData data) async {
+    final result = await editDisplayName(context, currentName: data.name, nameSetByAdmin: data.nameSetByAdmin);
+    if (result == null || !mounted) return;
+    _refresh();
   }
 
   /// "HH:MM:SS" — același format folosit de numărătoarea inversă a RingMascot.
@@ -245,6 +261,8 @@ class _HomeScreenState extends State<HomeScreen> {
             livesBadgeKey: _livesBadgeKey,
             hintsBadgeKey: _hintsBadgeKey,
             gemsBadgeKey: _gemsBadgeKey,
+            displayName: data?.name,
+            onNameTap: (data == null || data.nameLocked) ? null : () => _editName(data),
             onCoinsTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ShopScreen()));
@@ -290,6 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SolidMenuButton(
                       icon: Icons.emoji_events_rounded,
                       label: tr('CLASAMENT', 'LEADERBOARD'),
+                      subtitle: '',
+                      angular: true,
                       color: AppColors.orange,
                       onTap: () => Navigator.push(
                           context,
@@ -300,6 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SolidMenuButton(
                       icon: Icons.groups_rounded,
                       label: 'MULTIPLAYER',
+                      subtitle: '',
+                      angular: true,
                       color: AppColors.teal,
                       onTap: () => Navigator.push(
                           context,
@@ -310,6 +332,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     SolidMenuButton(
                       icon: Icons.settings_rounded,
                       label: tr('SETĂRI', 'SETTINGS'),
+                      subtitle: '',
+                      angular: true,
                       color: AppColors.gray,
                       onTap: () => Navigator.push(
                           context,
@@ -446,6 +470,9 @@ class _HomeData {
   final int gems;
   final bool livesUnlimited;
   final Duration livesUnlimitedRemaining;
+  final String name;
+  final bool nameLocked;
+  final bool nameSetByAdmin;
   _HomeData({
     required this.xp,
     required this.coins,
@@ -455,6 +482,9 @@ class _HomeData {
     required this.pendingLevelRewards,
     required this.gems,
     required this.livesUnlimited,
+    required this.name,
+    required this.nameLocked,
+    required this.nameSetByAdmin,
     required this.livesUnlimitedRemaining,
   });
 }

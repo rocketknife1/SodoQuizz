@@ -9,9 +9,9 @@ import '../../data/multiplayer_service.dart';
 import '../../data/questions.dart';
 import '../../models/multiplayer_models.dart';
 import '../../models/question.dart';
-import '../../widgets/avatar.dart';
 import '../../widgets/blur_image.dart';
 import '../../widgets/next_button.dart';
+import '../../widgets/player_badge.dart';
 import 'multiplayer_results_screen.dart';
 
 /// Meciul live 1 vs 1 (matchmaking public) sau cu prietenii (cameră privată
@@ -280,26 +280,56 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(tr('Întrebarea ${_qIndex + 1}', 'Question ${_qIndex + 1}'),
-                  style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              Text('$_secondsLeft s',
-                  style: TextStyle(
-                      color: color, fontSize: 15, fontWeight: FontWeight.w900)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(60),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(tr('Întrebarea ${_qIndex + 1}', 'Question ${_qIndex + 1}'),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w700)),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(urgent ? 60 : 35),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: color.withAlpha(urgent ? 220 : 130)),
+                  boxShadow: urgent ? [BoxShadow(color: color.withAlpha(140), blurRadius: 10)] : null,
+                ),
+                child: Text('$_secondsLeft s',
+                    style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 6,
-              backgroundColor: Colors.white.withAlpha(28),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+            child: Container(
+              height: 8,
+              decoration: BoxDecoration(color: Colors.black.withAlpha(50), borderRadius: BorderRadius.circular(6)),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: fraction.clamp(0.0, 1.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(6),
+                    gradient: LinearGradient(colors: [color, _lightenColor(color, 0.2)]),
+                    boxShadow: [BoxShadow(color: color.withAlpha(160), blurRadius: 6)],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
+  }
+
+  static Color _lightenColor(Color c, double dl) {
+    final hsl = HSLColor.fromColor(c);
+    return hsl.withLightness((hsl.lightness + dl).clamp(0.0, 1.0)).toColor();
   }
 
   Widget _buildHintButton(Question q) {
@@ -334,37 +364,51 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     );
   }
 
+  static const _rankMedals = ['🥇', '🥈', '🥉'];
+
+  /// Rândul de jucători, în timp real, sortat după scor ca un mini-clasament
+  /// live — liderul se vede din prima privire (medalie + inel auriu), nu
+  /// trebuie citite cifrele una câte una ca înainte. Stilul de „portret" e
+  /// cel comun din [PlayerBadge], ca lobby-ul și meciul să simtă la fel.
   Widget _buildPlayersRow() {
     return SizedBox(
-      height: 92,
+      height: 96,
       child: StreamBuilder<List<MatchPlayer>>(
         stream: MultiplayerService.instance.watchPlayers(widget.matchId),
         builder: (context, snap) {
-          final players = snap.data ?? const <MatchPlayer>[];
+          final players = List.of(snap.data ?? const <MatchPlayer>[]);
           final me = MultiplayerService.instance.currentPlayerId;
+          // propriul scor e mereu cel local (instant), al celorlalți e
+          // ultimul publicat — vezi sincronizarea de la jumătatea meciului
+          int scoreOf(MatchPlayer p) => p.id == me ? _myScore : p.score;
+          players.sort((a, b) => scoreOf(b).compareTo(scoreOf(a)));
           return ListView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: players.map((p) {
-              // propriul scor e mereu cel local (instant), al celorlalți e
-              // ultimul publicat — vezi sincronizarea de la jumătatea meciului
-              final score = p.id == me ? _myScore : p.score;
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl, style: avatarStyleFromId(p.avatarStyle)),
-                    const SizedBox(height: 2),
-                    Text('$score',
+            children: [
+              for (var i = 0; i < players.length; i++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: PlayerBadge(
+                    name: players[i].name,
+                    photoUrl: players[i].photoUrl,
+                    avatarSeed: players[i].avatarSeed,
+                    avatarStyle: players[i].avatarStyle,
+                    size: 48,
+                    ringColor: i == 0
+                        ? AppColors.coin
+                        : (players[i].id == me ? AppColors.blue : null),
+                    topBadge: i < _rankMedals.length
+                        ? PlayerTopBadge(text: _rankMedals[i], color: const Color(0xFF0B1229))
+                        : null,
+                    scoreChip: Text('${scoreOf(players[i])}',
                         style: TextStyle(
-                            color: score < 0 ? AppColors.danger : Colors.white,
+                            color: scoreOf(players[i]) < 0 ? AppColors.danger : Colors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w800)),
-                  ],
+                  ),
                 ),
-              );
-            }).toList(),
+            ],
           );
         },
       ),

@@ -419,9 +419,13 @@ class _StakePickerDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1a1a2e),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(tr('Cu cât se joacă?', 'How high are the stakes?'), style: const TextStyle(color: Colors.white, fontSize: 18)),
+      backgroundColor: const Color(0xFF141B36),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: BorderSide(color: Colors.white.withAlpha(30)),
+      ),
+      title: Text(tr('Cu cât se joacă?', 'How high are the stakes?'),
+          style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

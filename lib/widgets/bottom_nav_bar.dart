@@ -106,29 +106,45 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = active ? AppColors.play : Colors.white38;
+    final color = active ? Colors.white : Colors.white38;
     return Expanded(
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  Icon(icon, color: color, size: 22),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOut,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: active
+                          ? const LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                          : null,
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: active ? [BoxShadow(color: AppColors.play.withAlpha(130), blurRadius: 12, spreadRadius: 0.5)] : null,
+                    ),
+                    child: Icon(icon, color: color, size: 21),
+                  ),
                   if (showDot)
                     Positioned(
-                      right: -10,
-                      top: -8,
+                      right: -4,
+                      top: -6,
                       child: useChest ? const ChestBadge() : const NotificationDot(),
                     ),
                 ],
               ),
-              const SizedBox(height: 3),
-              Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 4),
+              Text(label,
+                  style: TextStyle(
+                      color: active ? AppColors.play : Colors.white38,
+                      fontSize: 11,
+                      fontWeight: active ? FontWeight.w800 : FontWeight.w600)),
             ],
           ),
         ),

@@ -8,10 +8,12 @@ import '../../data/moderation_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
-import '../../widgets/avatar.dart';
+import '../../widgets/entrance_item.dart';
 import '../../widgets/match_stake_dialog.dart';
 import '../../widgets/moderation_sheet.dart';
 import '../../widgets/network_scan_animation.dart';
+import '../../widgets/player_badge.dart';
+import '../../widgets/space_background.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_tanks_screen.dart';
@@ -35,9 +37,14 @@ class RoomLobbyScreen extends StatefulWidget {
   State<RoomLobbyScreen> createState() => _RoomLobbyScreenState();
 }
 
-class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
+class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProviderStateMixin {
   final _chatController = TextEditingController();
   final _scrollController = ScrollController();
+
+  /// Intrarea în lobby, în cascadă — codul camerei, jucătorii, chatul —
+  /// aceeași senzație de „se întâmplă" ca la ecranul de meniu Multiplayer,
+  /// nu doar aici un ecran static în plus.
+  late final AnimationController _introCtrl;
 
   /// Ținute în state, nu chemate din build: [MultiplayerService.watchPlayers]
   /// & co. întorc un stream NOU la fiecare apel, deci un StreamBuilder hrănit
@@ -58,6 +65,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
   @override
   void initState() {
     super.initState();
+    _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
     AuthService.instance.multiplayerIdentity().then((identity) {
       if (mounted) setState(() => _displayName = identity.name);
     });
@@ -67,6 +75,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
   void dispose() {
     _chatController.dispose();
     _scrollController.dispose();
+    _introCtrl.dispose();
     super.dispose();
   }
 
@@ -192,8 +201,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: Container(
-          decoration: const BoxDecoration(gradient: AppColors.bgGradient),
+        body: SpaceBackground(
           child: SafeArea(
             child: Stack(
               children: [
@@ -206,7 +214,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                   child: IgnorePointer(
                     child: Center(
                       child: Opacity(
-                        opacity: 0.28,
+                        opacity: 0.22,
                         child: const NetworkScanAnimation(size: 220),
                       ),
                     ),
@@ -233,20 +241,30 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                         _playerCount = players.length;
                         return Column(
                           children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    onPressed: () => widget.isHost ? _leaveAsHost(players.length - 1) : _leave(),
-                                    icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(tr('Cameră privată', 'Private room'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                                ],
+                            EntranceItem(
+                              controller: _introCtrl,
+                              interval: const Interval(0.0, 0.45, curve: Curves.easeOut),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      onPressed: () => widget.isHost ? _leaveAsHost(players.length - 1) : _leave(),
+                                      icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                                    ),
+                                    const SizedBox(width: 2),
+                                    Text(tr('Cameră privată', 'Private room'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                                    const Spacer(),
+                                    _buildLiveBadge(players.length),
+                                  ],
+                                ),
                               ),
                             ),
-                            _buildCodeBanner(info?.code),
+                            EntranceItem(
+                              controller: _introCtrl,
+                              interval: const Interval(0.08, 0.55, curve: Curves.easeOutBack),
+                              child: _buildCodeBanner(info?.code),
+                            ),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
                             if (info?.gameMode == MatchGameMode.quizzTanks)
                               _buildTanksBanner(players.length)
@@ -255,10 +273,19 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                                 stake: info?.stake ?? widget.stakePaid,
                                 players: players.length,
                               ),
-                            _buildPlayers(players),
+                            EntranceItem(
+                              controller: _introCtrl,
+                              interval: const Interval(0.18, 0.65, curve: Curves.easeOut),
+                              child: _buildPlayers(players),
+                            ),
                             Expanded(child: _buildChat()),
                             _buildChatInput(),
-                            if (widget.isHost) _buildStartButton(players.length),
+                            if (widget.isHost)
+                              EntranceItem(
+                                controller: _introCtrl,
+                                interval: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
+                                child: _buildStartButton(players.length),
+                              ),
                             const SizedBox(height: 8),
                           ],
                         );
@@ -274,23 +301,80 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
     );
   }
 
+  /// Codul camerei, prezentat ca un „bilet" — colțuri teșite, gradient
+  /// albastru, aceeași familie vizuală cu plăcile de pe ecranul de intrare în
+  /// Multiplayer, ca lobby-ul să pară continuarea firească a aceluiași loc,
+  /// nu un ecran croit separat.
   Widget _buildCodeBanner(String? code) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.blue.withAlpha(30),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.blue.withAlpha(120)),
+      margin: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: ShapeDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.blue.withAlpha(60), AppColors.blue.withAlpha(20)],
+        ),
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: AppColors.blue.withAlpha(160), width: 1.2),
+        ),
+        shadows: [BoxShadow(color: AppColors.blue.withAlpha(60), blurRadius: 14, offset: const Offset(0, 5))],
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('Cod: ', style: TextStyle(color: Colors.white70, fontSize: 14)),
-          Text(
-            code ?? '-----',
-            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: 4),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: AppColors.blue.withAlpha(70),
+              borderRadius: BorderRadius.circular(11),
+              border: Border.all(color: Colors.white.withAlpha(70)),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.vpn_key_rounded, color: Colors.white, size: 19),
           ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(tr('CODUL CAMEREI', 'ROOM CODE'),
+                    style: const TextStyle(color: Colors.white60, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                Text(
+                  code ?? '-----',
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 5),
+                ),
+              ],
+            ),
+          ),
+          Text(tr('dă-l unui prieten', 'share it'),
+              style: const TextStyle(color: Colors.white38, fontSize: 10.5, fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  /// Bulina pulsatilă „live" cu numărul de jucători din cameră chiar acum —
+  /// pusă în header, ca lobby-ul să simtă viu chiar dacă nimeni nu a scris
+  /// nimic încă în chat.
+  Widget _buildLiveBadge(int count) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withAlpha(35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _PulsingDot(color: AppColors.play),
+          const SizedBox(width: 6),
+          Text('$count', style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800)),
+          const SizedBox(width: 3),
+          Icon(Icons.groups_rounded, color: Colors.white.withAlpha(180), size: 15),
         ],
       ),
     );
@@ -356,42 +440,36 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
 
   Widget _buildPlayers(List<MatchPlayer> players) {
     return SizedBox(
-      height: 96,
+      height: 100,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: players
             .map((p) => Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: GestureDetector(
-                        // Tap pe un jucător = meniul de raportare/blocare.
-                        // Aici, nu doar pe mesaje, fiindcă cineva se poate
-                        // purta urât și fără să scrie nimic în chat.
-                        onTap: p.id == MultiplayerService.instance.currentPlayerId
-                            ? null
-                            : () => showModerationSheet(
-                                  context,
-                                  targetUid: p.id,
-                                  targetName: p.name,
-                                  contextId: widget.matchId,
-                                ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Avatar(
-                              size: 56,
-                              label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
-                              accentColor: pickAvatarColor(p.avatarSeed),
-                              photoUrl: p.photoUrl,
-                              style: avatarStyleFromId(p.avatarStyle),
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: PlayerBadge(
+                    name: p.name,
+                    photoUrl: p.photoUrl,
+                    avatarSeed: p.avatarSeed,
+                    avatarStyle: p.avatarStyle,
+                    size: 58,
+                    ringColor: p.isHost
+                        ? AppColors.coin
+                        : (p.id == MultiplayerService.instance.currentPlayerId ? AppColors.blue : null),
+                    topBadge: p.isHost ? const PlayerTopBadge.crown() : null,
+                    // Tap pe un jucător = meniul de raportare/blocare. Aici,
+                    // nu doar pe mesaje, fiindcă cineva se poate purta urât
+                    // și fără să scrie nimic în chat.
+                    onTap: p.id == MultiplayerService.instance.currentPlayerId
+                        ? null
+                        : () => showModerationSheet(
+                              context,
+                              targetUid: p.id,
+                              targetName: p.name,
+                              contextId: widget.matchId,
                             ),
-                            const SizedBox(height: 4),
-                            Text(p.isHost ? '${p.name} 👑' : p.name,
-                                style: const TextStyle(color: Colors.white70, fontSize: 11), overflow: TextOverflow.ellipsis),
-                          ],
-                        ),
-                      ),
-                    ))
+                  ),
+                ))
             .toList(),
       ),
     );
@@ -439,11 +517,21 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                             ),
                     child: Container(
                       margin: const EdgeInsets.symmetric(vertical: 3),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
                       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                       decoration: BoxDecoration(
-                        color: me ? AppColors.blue.withAlpha(180) : Colors.white.withAlpha(20),
-                        borderRadius: BorderRadius.circular(14),
+                        gradient: me
+                            ? const LinearGradient(colors: [AppColors.blue, Color(0xFF2563EB)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                            : null,
+                        color: me ? null : Colors.white.withAlpha(20),
+                        border: me ? null : Border.all(color: Colors.white.withAlpha(25)),
+                        borderRadius: BorderRadius.only(
+                          topLeft: const Radius.circular(16),
+                          topRight: const Radius.circular(16),
+                          bottomLeft: Radius.circular(me ? 16 : 4),
+                          bottomRight: Radius.circular(me ? 4 : 16),
+                        ),
+                        boxShadow: me ? [BoxShadow(color: AppColors.blue.withAlpha(70), blurRadius: 8, offset: const Offset(0, 3))] : null,
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +539,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                         children: [
                           if (!me)
                             Text(m.senderName,
-                                style: const TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.bold)),
+                                style: const TextStyle(color: AppColors.teal, fontSize: 10, fontWeight: FontWeight.w800)),
                           Text(m.text, style: const TextStyle(color: Colors.white, fontSize: 13)),
                         ],
                       ),
@@ -482,13 +570,28 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                 hintStyle: const TextStyle(color: Colors.white38),
                 filled: true,
                 fillColor: Colors.white.withAlpha(15),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(20), borderSide: BorderSide.none),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
+                enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: AppColors.blue)),
               ),
               onSubmitted: (_) => _send(),
             ),
           ),
-          IconButton(onPressed: _send, icon: const Icon(Icons.send_rounded, color: AppColors.blue)),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: _send,
+            child: Container(
+              width: 42,
+              height: 42,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(colors: [AppColors.blue, Color(0xFF2563EB)]),
+                boxShadow: [BoxShadow(color: AppColors.blue, blurRadius: 10)],
+              ),
+              child: const Icon(Icons.send_rounded, color: Colors.white, size: 19),
+            ),
+          ),
         ],
       ),
     );
@@ -540,19 +643,78 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> {
                 textAlign: TextAlign.center,
               ),
             ),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: canStart ? () => MultiplayerService.instance.startMatch(widget.matchId) : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.play,
-                disabledBackgroundColor: Colors.white24,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+          GestureDetector(
+            onTap: canStart ? () => MultiplayerService.instance.startMatch(widget.matchId) : null,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              alignment: Alignment.center,
+              decoration: ShapeDecoration(
+                gradient: canStart
+                    ? const LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                    : null,
+                color: canStart ? null : Colors.white.withAlpha(20),
+                shape: BeveledRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                  side: BorderSide(color: canStart ? Colors.white.withAlpha(120) : Colors.white.withAlpha(30), width: 1.2),
+                ),
+                shadows: canStart ? [const BoxShadow(color: AppColors.play, blurRadius: 18, offset: Offset(0, 6))] : null,
               ),
-              child: const Text('START', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: 1)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.play_arrow_rounded, color: canStart ? Colors.white : Colors.white38, size: 22),
+                  const SizedBox(width: 6),
+                  Text('START',
+                      style: TextStyle(
+                          color: canStart ? Colors.white : Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 2, fontSize: 15)),
+                ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bulina verde care pulsează încet — semnul universal de „live" folosit
+/// lângă numărul de jucători din lobby.
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(vsync: this, duration: const Duration(seconds: 1))..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _ctrl,
+      builder: (context, _) => Container(
+        width: 8,
+        height: 8,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: widget.color,
+          boxShadow: [BoxShadow(color: widget.color.withAlpha(120 + (_ctrl.value * 100).round()), blurRadius: 4 + _ctrl.value * 4)],
+        ),
       ),
     );
   }

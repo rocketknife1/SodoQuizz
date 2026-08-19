@@ -111,6 +111,16 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
+    // Oferta de meci formată de sistem la Meci Rapid (vezi
+    // MultiplayerService.attemptFormMatch + QuickMatchOffer) — jucătorii
+    // trebuie să confirme explicit înainte să înceapă meciul, nu mai sunt
+    // aruncați direct în joc. Același motiv ca la `rematch_offers`: unul
+    // dintre cei doi scrie camera nouă (launchQuickMatch) pentru AMÂNDOI,
+    // deci nu se poate restrânge la request.auth.uid fără Cloud Functions.
+    match /quickmatch_offers/{offerId} {
+      allow read, write: if request.auth != null;
+    }
+
     // "Cineva tocmai a intrat in Multiplayer" — un document per jucator,
     // rescris la fiecare intrare (vezi MultiplayerPresenceService). Din el
     // se face anuntul scurt care apare pe ecran tuturor, ca cei care ar
@@ -287,6 +297,14 @@ service cloud.firestore {
     // Fara update pentru jucatori: o raportare trimisa nu se mai poate
     // rescrie, nici de cel care a trimis-o.
     match /reports/{reportId} {
+      allow create: if request.auth != null && request.resource.data.reporterUid == request.auth.uid;
+      allow read, update, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
+    // Raportarile de intrebari (vezi QuestionReportService.submitReport) —
+    // aceleasi reguli ca la /reports: oricine scrie doar in numele lui,
+    // doar adminul citeste/sterge.
+    match /question_reports/{reportId} {
       allow create: if request.auth != null && request.resource.data.reporterUid == request.auth.uid;
       allow read, update, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }

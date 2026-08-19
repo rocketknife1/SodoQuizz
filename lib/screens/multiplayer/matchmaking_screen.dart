@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/betting.dart';
 import '../../core/lang.dart';
@@ -10,7 +11,8 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/match_stake_dialog.dart';
 import '../../widgets/network_scan_animation.dart';
-import 'multiplayer_match_screen.dart';
+import '../../widgets/space_background.dart';
+import 'quickmatch_confirm_screen.dart';
 import 'room_lobby_screen.dart';
 
 /// Matchmaking public: te bagă în coada de așteptare și încearcă periodic să
@@ -28,8 +30,11 @@ class MatchmakingScreen extends StatefulWidget {
   State<MatchmakingScreen> createState() => _MatchmakingScreenState();
 }
 
-class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTickerProviderStateMixin {
+class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProviderStateMixin {
   late final AnimationController _bounceController;
+  /// Fasciculul de radar care se rotește continuu în jurul animației de
+  /// rețea — accentul central de "caut activ", nu doar un cerc static.
+  late final AnimationController _radarController;
   Timer? _formTimer;
   StreamSubscription<String?>? _queueSub;
   bool _matched = false;
@@ -46,6 +51,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
   void initState() {
     super.initState();
     _bounceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..repeat(reverse: true);
+    _radarController = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
     _start();
   }
 
@@ -68,17 +74,21 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     });
   }
 
-  void _onMatched(String matchId) {
+  /// Coada tocmai ne-a găsit un adversar — NU mai sărim direct în meci: mai
+  /// întâi trece prin [QuickMatchConfirmScreen], unde amândoi trebuie să
+  /// apese Accept. Fără pasul ăsta, doi jucători care intrau simultan în
+  /// Meci Rapid se trezeau cuplați între ei "din senin", fără avertisment.
+  void _onMatched(String offerId) {
     if (_matched) return;
     _matched = true;
     _formTimer?.cancel();
     _queueSub?.cancel();
-    // intrarea din coadă nu mai are treabă odată ce am fost cuplați -
+    // intrarea din coadă nu mai are treabă odată ce am primit o ofertă -
     // altfel ar rămâne orfană în matchmaking_queue la nesfârșit.
     MultiplayerService.instance.leaveQueue();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => MultiplayerMatchScreen(matchId: matchId)),
+      MaterialPageRoute(builder: (_) => QuickMatchConfirmScreen(offerId: offerId)),
     );
   }
 
@@ -221,6 +231,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
     _formTimer?.cancel();
     _queueSub?.cancel();
     _bounceController.dispose();
+    _radarController.dispose();
     if (!_matched && !_left) MultiplayerService.instance.leaveQueue();
     super.dispose();
   }
@@ -234,8 +245,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: Container(
-          decoration: const BoxDecoration(gradient: AppColors.bgGradient),
+        body: SpaceBackground(
           child: SafeArea(
             child: Column(
               children: [
@@ -245,7 +255,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
                     children: [
                       IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
                       const SizedBox(width: 4),
-                      const Text('Join Online', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                      Text(tr('Meci rapid', 'Quick match'),
+                          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -254,17 +265,17 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const NetworkScanAnimation(size: 220),
-                        const SizedBox(height: 12),
+                        _buildRadar(),
+                        const SizedBox(height: 16),
                         AnimatedBuilder(
                           animation: _bounceController,
                           builder: (context, child) {
                             final offsetY = -10 * Curves.easeInOut.transform(_bounceController.value);
                             return Transform.translate(offset: Offset(0, offsetY), child: child);
                           },
-                          child: const Text(
-                            'Waiting for players...',
-                            style: TextStyle(
+                          child: Text(
+                            tr('Căutăm un adversar...', 'Searching for an opponent...'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -276,7 +287,46 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
                             ),
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 12),
+                        // Numărul EXACT de jucători din coadă chiar acum, live
+                        // (te include și pe tine) — dacă vezi aici 2, știi
+                        // dinainte că matchmaking-ul o să vă cupleze în
+                        // câteva secunde, nu te mai trezești în meci fără
+                        // veste. Un singur format, mereu, nu o formulare
+                        // specială doar când mai apare cineva.
+                        StreamBuilder<int>(
+                          stream: MultiplayerService.instance.watchQueueCount(),
+                          builder: (context, snap) {
+                            final n = snap.data ?? 1;
+                            return Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                              decoration: BoxDecoration(
+                                color: AppColors.blue.withAlpha(30),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(color: AppColors.blue.withAlpha(130)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  AnimatedBuilder(
+                                    animation: _radarController,
+                                    builder: (context, child) => Opacity(
+                                      opacity: 0.5 + 0.5 * (1 - (_radarController.value - 0.5).abs() * 2),
+                                      child: child,
+                                    ),
+                                    child: const Icon(Icons.search_rounded, color: AppColors.blue, size: 15),
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Text(
+                                    tr('$n în căutare acum', '$n searching right now'),
+                                    style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           tr('Miza ta: 💰$_stakePaid  •  câștigătorul ia 💰${matchPrizes(stake: _stakePaid, players: 2).first}',
                               'Your stake: 💰$_stakePaid  •  the winner takes 💰${matchPrizes(stake: _stakePaid, players: 2).first}'),
@@ -292,6 +342,37 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Harta de rețea + un fascicul de radar care se rotește continuu în jurul
+  /// ei, într-un inel cu glow — accentul central de "caut activ" al
+  /// ecranului, nu doar o animație statică într-un cerc gol.
+  Widget _buildRadar() {
+    return SizedBox(
+      width: 220,
+      height: 220,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.blue.withAlpha(70), width: 1.2),
+              boxShadow: [BoxShadow(color: AppColors.blue.withAlpha(50), blurRadius: 30, spreadRadius: 4)],
+            ),
+          ),
+          ClipOval(
+            child: AnimatedBuilder(
+              animation: _radarController,
+              builder: (context, child) => Transform.rotate(angle: _radarController.value * 2 * pi, child: child),
+              child: CustomPaint(size: const Size(220, 220), painter: _RadarSweepPainter()),
+            ),
+          ),
+          const NetworkScanAnimation(size: 220),
+          Icon(Icons.travel_explore_rounded, color: Colors.white.withAlpha(210), size: 34),
+        ],
       ),
     );
   }
@@ -375,4 +456,24 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with SingleTicker
       ),
     );
   }
+}
+
+/// Un fascicul de radar (gradient circular, transparent → albastru) rotit
+/// continuu de un [AnimationController] extern — desenat o singură dată,
+/// rotația vine din `Transform.rotate` din jurul lui, nu din repictare.
+class _RadarSweepPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = size.width / 2;
+    final gradient = SweepGradient(
+      colors: [AppColors.blue.withAlpha(0), AppColors.blue.withAlpha(0), AppColors.blue.withAlpha(90)],
+      stops: const [0.0, 0.75, 1.0],
+    );
+    final paint = Paint()..shader = gradient.createShader(Rect.fromCircle(center: center, radius: radius));
+    canvas.drawCircle(center, radius, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarSweepPainter oldDelegate) => false;
 }

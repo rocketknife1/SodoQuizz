@@ -30,6 +30,15 @@ class LevelHeader extends StatefulWidget {
   final VoidCallback? onCoinsTap;
   final VoidCallback? onClaimLevelRewards;
 
+  /// Numele afișat lângă avatar, deasupra "Level N" — opțional, pornit doar
+  /// din HomeScreen (ecranul principal). Pe restul ecranelor care refolosesc
+  /// acest header (joc etc.), `null` păstrează exact layout-ul de dinainte.
+  final String? displayName;
+  /// Dacă e dat, numele devine un shortcut direct spre dialogul de schimbare
+  /// a numelui (vezi widgets/edit_name_dialog.dart) — `null` când numele nu
+  /// se poate edita de aici (cont Google legat / impus de administrator).
+  final VoidCallback? onNameTap;
+
   /// Arată clopoțelul de notificări deasupra avatarului. Pornit doar în
   /// meniul principal (vezi HomeScreen): acolo e „acasă" pentru jucător și
   /// acolo îl caută, iar pe ecranele de joc ar fi doar o distragere.
@@ -63,6 +72,8 @@ class LevelHeader extends StatefulWidget {
     this.livesBadgeKey,
     this.hintsBadgeKey,
     this.gemsBadgeKey,
+    this.displayName,
+    this.onNameTap,
   });
 
   @override
@@ -165,12 +176,38 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.displayName != null) ...[
+            GestureDetector(
+              onTap: widget.onNameTap,
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Flexible(
+                    child: Text(
+                      widget.displayName!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 14.5, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  if (widget.onNameTap != null) ...[
+                    const SizedBox(width: 5),
+                    const Icon(Icons.edit_rounded, color: Colors.white54, size: 13),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 2),
+          ],
           Text(
             'Level $level',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             softWrap: false,
-            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+            style: widget.displayName != null
+                ? const TextStyle(color: Colors.white60, fontSize: 11.5, fontWeight: FontWeight.w700)
+                : const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 5),
           bar,

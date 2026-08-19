@@ -71,25 +71,34 @@ class _NotificationBellState extends State<NotificationBell> with SingleTickerPr
             animation: _pulse,
             builder: (context, _) {
               final glow = unread > 0 ? 0.35 + _pulse.value * 0.65 : 0.0;
+              final accent = unread > 0 ? AppColors.coin : AppColors.blue;
               return Container(
-                width: 34,
-                height: 34,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(unread > 0 ? 26 : 15),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [accent.withAlpha(70), accent.withAlpha(28)],
+                  ),
                   shape: BoxShape.circle,
-                  border: Border.all(color: unread > 0 ? AppColors.coin.withAlpha(160) : Colors.white24),
-                  boxShadow: unread > 0
-                      ? [BoxShadow(color: AppColors.coin.withAlpha((90 * glow).round()), blurRadius: 10 * glow, spreadRadius: glow)]
-                      : null,
+                  border: Border.all(color: accent.withAlpha(unread > 0 ? 200 : 130), width: 1.3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withAlpha(unread > 0 ? (90 * glow).round() : 55),
+                      blurRadius: unread > 0 ? 10 * glow : 6,
+                      spreadRadius: unread > 0 ? glow : 0,
+                    ),
+                  ],
                 ),
                 child: Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
                     Icon(
-                      unread > 0 ? Icons.notifications_active_rounded : Icons.notifications_none_rounded,
-                      color: unread > 0 ? AppColors.coin : Colors.white54,
-                      size: 19,
+                      unread > 0 ? Icons.notifications_active_rounded : Icons.notifications_rounded,
+                      color: unread > 0 ? AppColors.coin : Colors.white,
+                      size: 20,
                     ),
                     if (unread > 0)
                       Positioned(

@@ -443,6 +443,73 @@ class RematchOffer {
       };
 }
 
+/// Oferta de meci formată de sistem când matchmaking-ul (Meci Rapid) găsește
+/// doi jucători reali — NU se pornește direct: fiecare trebuie să confirme
+/// explicit (vezi MultiplayerService.acceptQuickMatchOffer), altfel cei doi
+/// se trezeau cuplați "din senin", fără avertisment. Aceeași arhitectură ca
+/// [RematchOffer] (participanți + acceptedIds + status), doar că aici nu
+/// există un "host" care cere — cei doi sunt egali, iar clientul care a
+/// intrat primul în coadă ([participants.first]) e cel care lansează
+/// camera odată ce amândoi au acceptat (vezi [MultiplayerService.launchQuickMatch]).
+///
+/// [gameMode] e ales aleator o SINGURĂ DATĂ, la formarea ofertei — doar
+/// dintre modurile compatibile cu exact 2 jucători ([MatchGameMode.classic]
+/// și [MatchGameMode.higherLower]). [MatchGameMode.quizzTanks] cere exact 4
+/// tancuri într-o arenă fixă (vezi core/tanks.dart), deci nu poate ieși
+/// dintr-o pereche 1 la 1 din matchmaking public.
+class QuickMatchOffer {
+  final String id;
+  final MatchGameMode gameMode;
+  final int stake;
+  final List<RematchParticipant> participants;
+  final List<String> acceptedIds;
+  final String status; // 'pending' | 'started' | 'cancelled'
+  final String? newMatchId;
+  final String? declinedBy;
+
+  const QuickMatchOffer({
+    required this.id,
+    required this.gameMode,
+    required this.stake,
+    required this.participants,
+    required this.acceptedIds,
+    required this.status,
+    this.newMatchId,
+    this.declinedBy,
+  });
+
+  factory QuickMatchOffer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? const {};
+    return QuickMatchOffer(
+      id: doc.id,
+      gameMode: MatchGameMode.values.firstWhere(
+        (m) => m.name == data['gameMode'],
+        orElse: () => MatchGameMode.classic,
+      ),
+      stake: data['stake'] as int? ?? 0,
+      participants: [
+        for (final p in (data['participants'] as List? ?? const []))
+          RematchParticipant.fromMap(Map<String, dynamic>.from(p as Map)),
+      ],
+      acceptedIds: List<String>.from(data['acceptedIds'] as List? ?? const []),
+      status: data['status'] as String? ?? 'pending',
+      newMatchId: data['newMatchId'] as String?,
+      declinedBy: data['declinedBy'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toMap() => {
+        'gameMode': gameMode.name,
+        'stake': stake,
+        'participants': [for (final p in participants) p.toMap()],
+        'acceptedIds': acceptedIds,
+        'status': status,
+        'newMatchId': newMatchId,
+        'declinedBy': declinedBy,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+}
+
 /// Culoare deterministă (din paleta existentă a aplicației, nu inventată)
 /// pentru avatarul unui jucător fără poză reală — același [seed] dă mereu
 /// aceeași culoare, ca un jucător să se poată recunoaște vizual pe durata

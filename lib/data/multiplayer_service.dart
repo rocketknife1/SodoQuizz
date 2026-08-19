@@ -878,12 +878,31 @@ class MultiplayerService {
     await _db.collection('matchmaking_queue').doc(currentPlayerId).delete();
   }
 
+  /// Câți jucători sunt chiar acum în coada de Join Online — afișat înainte
+  /// și în timpul căutării, ca nimeni să nu fie cuplat automat "din senin":
+  /// dacă vezi că mai e cineva în coadă, știi dinainte că matchmaking-ul o să
+  /// vă cupleze pe voi doi în câteva secunde, în loc să te trezești direct în
+  /// meci fără avertisment.
+  Stream<int> watchQueueCount() {
+    return _db.collection('matchmaking_queue').snapshots().map((s) => s.docs.length);
+  }
+
+  /// Cele două moduri pe care matchmaking-ul public le poate alege aleator —
+  /// NU [MatchGameMode.quizzTanks]: acela cere exact 4 tancuri într-o arenă
+  /// fixă (vezi core/tanks.dart), deci n-are cum să iasă dintr-o pereche 1 la
+  /// 1 formată din coada de Meci Rapid.
+  static const _quickMatchModes = [MatchGameMode.classic, MatchGameMode.higherLower];
+
   /// Doar clientul cel mai "vechi" din coadă (primul intrat) încearcă să
-  /// formeze un meci — reduce coliziunile, deși tranzacția de mai jos e
+  /// formeze o ofertă — reduce coliziunile, deși tranzacția de mai jos e
   /// oricum sigură chiar dacă doi clienți ar încerca simultan. Formează
-  /// meciul DOAR când există [matchmakingOpponentCount] jucători reali în
+  /// oferta DOAR când există [matchmakingOpponentCount] jucători reali în
   /// coadă — fără completare cu boți, se așteaptă cât e nevoie de un
   /// adversar real.
+  ///
+  /// NU pornește meciul direct — scrie doar o [QuickMatchOffer], pe care
+  /// AMÂNDOI trebuie s-o confirme explicit (vezi [acceptQuickMatchOffer]) —
+  /// altfel cei doi se trezeau cuplați "din senin", fără avertisment.
   Future<String?> attemptFormMatch() async {
     final me = currentPlayerId;
     final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(matchmakingOpponentCount).get();
@@ -891,51 +910,115 @@ class MultiplayerService {
     if (queueSnap.docs.length < matchmakingOpponentCount) return null;
 
     final candidates = queueSnap.docs;
-    final matchRef = _db.collection('matches').doc();
+    final offerRef = _db.collection('quickmatch_offers').doc();
+    final gameMode = _quickMatchModes[Random().nextInt(_quickMatchModes.length)];
 
     try {
       await _db.runTransaction((tx) async {
         // re-verifica in tranzactie ca niciun candidat n-a fost deja
         // "furat" de o alta tranzactie concurenta intre timp.
+        final fresh = <DocumentSnapshot<Map<String, dynamic>>>[];
         for (final c in candidates) {
-          final fresh = await tx.get(c.reference);
-          if (!fresh.exists || fresh.data()?['matchId'] != null) {
+          final f = await tx.get(c.reference);
+          if (!f.exists || f.data()?['matchId'] != null) {
             throw StateError('candidat deja revendicat');
           }
+          fresh.add(f);
         }
 
-        final info = MatchInfo(
-          id: matchRef.id,
-          mode: MatchMode.public,
-          status: MatchStatus.playing,
-          hostId: me,
+        final offer = QuickMatchOffer(
+          id: offerRef.id,
+          gameMode: gameMode,
           stake: publicMatchStake,
+          participants: [
+            for (final f in fresh)
+              RematchParticipant(
+                id: f.id,
+                name: f.data()?['name'] as String? ?? '?',
+                avatarSeed: f.data()?['avatarSeed'] as String? ?? f.id,
+                photoUrl: f.data()?['photoUrl'] as String?,
+                avatarStyle: f.data()?['avatarStyle'] as String? ?? '',
+              ),
+          ],
+          acceptedIds: const [],
+          status: 'pending',
         );
-        tx.set(matchRef, info.toMap());
-
+        tx.set(offerRef, offer.toMap());
         for (final c in candidates) {
-          final data = c.data();
-          tx.set(
-            matchRef.collection('players').doc(c.id),
-            MatchPlayer(
-              id: c.id,
-              name: data['name'] as String? ?? '?',
-              avatarSeed: data['avatarSeed'] as String? ?? c.id,
-              photoUrl: data['photoUrl'] as String?,
-              avatarStyle: data['avatarStyle'] as String? ?? '',
-              score: 0,
-              isHost: c.id == me,
-              bet: data['bet'] as int? ?? publicMatchStake,
-            ).toMap(),
-          );
-          tx.update(c.reference, {'matchId': matchRef.id});
+          tx.update(c.reference, {'matchId': offerRef.id});
         }
       });
-      return matchRef.id;
-    } catch (_) {
-      // un alt client a format deja meciul intre timp cu acesti candidati -
-      // e ok, ascultatorul propriei intrari din coada va prelua matchId-ul.
+      return offerRef.id;
+    } catch (e) {
+      // De obicei benign: un alt client a format deja oferta intre timp cu
+      // acesti candidati, iar ascultatorul propriei intrari din coada va
+      // prelua id-ul ei. Se logheaza totusi — fara asta, o eroare reala
+      // (ex. reguli Firestore) ramanea complet invizibila, iar ecranul de
+      // cautare parea ca nu face nimic la nesfarsit.
+      debugPrint('MultiplayerService.attemptFormMatch: nu s-a format oferta: $e');
       return null;
     }
+  }
+
+  // ─── Ofertă de Meci Rapid (confirmare explicită înainte de start) ──────
+
+  Stream<QuickMatchOffer?> watchQuickMatchOffer(String offerId) => _db
+      .collection('quickmatch_offers')
+      .doc(offerId)
+      .snapshots()
+      .map((d) => d.exists ? QuickMatchOffer.fromDoc(d) : null);
+
+  Future<void> acceptQuickMatchOffer(String offerId) => _paced(() => _db
+      .collection('quickmatch_offers')
+      .doc(offerId)
+      .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+
+  /// Refuzul unui SINGUR jucător anulează oferta pentru amândoi — fiecare
+  /// client, la rândul lui, reintră singur în coada de căutare (vezi
+  /// MatchmakingScreen), nu rămâne blocat pe un ecran mort.
+  Future<void> declineQuickMatchOffer(String offerId) => _paced(() => _db
+      .collection('quickmatch_offers')
+      .doc(offerId)
+      .update({'status': 'cancelled', 'declinedBy': currentPlayerId}));
+
+  /// Apelată DOAR de clientul primului jucător intrat în coadă
+  /// ([QuickMatchOffer.participants].first), în clipa în care vede că
+  /// AMÂNDOI au acceptat — creează meciul direct în [MatchStatus.playing],
+  /// fără lobby (s-a confirmat deja explicit, n-are ce să mai aleagă
+  /// nimeni). Vezi [launchRematch], aceeași arhitectură.
+  Future<String> launchQuickMatch(QuickMatchOffer offer) async {
+    final ref = _db.collection('matches').doc();
+    final info = MatchInfo(
+      id: ref.id,
+      mode: MatchMode.public,
+      status: MatchStatus.lobby,
+      hostId: offer.participants.first.id,
+      gameMode: offer.gameMode,
+      stake: offer.stake,
+    );
+    final batch = _db.batch();
+    batch.set(ref, info.toMap());
+    for (final p in offer.participants) {
+      batch.set(
+        ref.collection('players').doc(p.id),
+        MatchPlayer(
+          id: p.id,
+          name: p.name,
+          avatarSeed: p.avatarSeed,
+          photoUrl: p.photoUrl,
+          score: 0,
+          isHost: p.id == offer.participants.first.id,
+          bet: offer.stake,
+          avatarStyle: p.avatarStyle,
+        ).toMap(),
+      );
+    }
+    await batch.commit();
+    await startMatch(ref.id);
+    await _db.collection('quickmatch_offers').doc(offer.id).update({
+      'status': 'started',
+      'newMatchId': ref.id,
+    });
+    return ref.id;
   }
 }

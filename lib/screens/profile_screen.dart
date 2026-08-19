@@ -12,6 +12,7 @@ import '../data/storage_service.dart';
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/edit_name_dialog.dart';
 import 'achievements_screen.dart';
 import 'admin_screen.dart';
 import 'friends_screen.dart';
@@ -69,51 +70,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  /// Schimbarea numelui, exact ca în ecranul de Multiplayer (de unde a fost
-  /// mutată aici, la cererea userului): același dialog, aceeași salvare, ca
-  /// jucătorul să n-aibă două locuri diferite în care se poate numi altfel.
+  /// Schimbarea numelui — același dialog folosit peste tot în aplicație
+  /// (vezi widgets/edit_name_dialog.dart), ca jucătorul să n-aibă două
+  /// locuri diferite în care se poate numi altfel.
   Future<void> _editName(_ProfileData data) async {
     if (data.nameLocked) return;
-    final controller = TextEditingController(text: data.name);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(tr('Numele tău', 'Your name'),
-            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
-        content: TextField(
-          controller: controller,
-          maxLength: 16,
-          autofocus: true,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
-            child: Text(tr('Salvează', 'Save')),
-          ),
-        ],
-      ),
-    );
-    if (result == null || result.isEmpty || !mounted) return;
-    // Un Guest care își schimbă numele după ce i l-a pus adminul ridică prin
-    // chiar gestul ăsta numele impus — altfel primul heartbeat i l-ar fi pus
-    // la loc, iar salvarea ar fi părut că n-a făcut nimic. ÎNAINTE de
-    // setDisplayName, ca heartbeat-ul de mai jos să plece cu terenul curat.
-    // La conturile logate nu se ajunge aici: acolo [nameLocked] oprește
-    // dialogul din capul funcției.
-    if (data.nameSetByAdmin) {
-      await PlayerProfileService.instance.releaseMyForcedName();
-    }
-    await StorageService.setDisplayName(result);
-    // fără asta, numele nou ar rămâne doar local — clasamentul și profilul
-    // public ar arăta în continuare numele vechi până la următoarea pornire
-    // a aplicației (vezi același pas în MultiplayerScreen._editName).
-    await PlayerProfileService.instance.ensureProfileHeartbeat();
-    if (mounted) setState(() => _dataFuture = _load());
+    final result = await editDisplayName(context, currentName: data.name, nameSetByAdmin: data.nameSetByAdmin);
+    if (result == null || !mounted) return;
+    setState(() => _dataFuture = _load());
   }
 
   /// Alegerea avatarului. Se salvează pe loc, la tap — fără buton de
