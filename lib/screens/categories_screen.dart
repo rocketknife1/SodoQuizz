@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/gamemodes.dart';
@@ -40,7 +41,7 @@ class CategoriesScreen extends StatefulWidget {
   State<CategoriesScreen> createState() => _CategoriesScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerProviderStateMixin {
+class _CategoriesScreenState extends State<CategoriesScreen> with TickerProviderStateMixin {
   late Future<Map<String, _ModeStats>> _statsFuture;
 
   /// Intrarea în cascadă a listei de categorii — aceeași senzație ca în
@@ -48,16 +49,24 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
   /// dintr-o bucată, static.
   late final AnimationController _introCtrl;
 
+  /// Bucla continuă a planetelor — inelul lui Saturn se rotește încet, iar
+  /// glow-ul din jurul globului respiră. O singură buclă, împărțită de
+  /// TOATE cardurile (nu un controller per card), ca ecranul să nu pară o
+  /// listă statică odată ce intrarea în cascadă s-a terminat.
+  late final AnimationController _liveCtrl;
+
   @override
   void initState() {
     super.initState();
     _statsFuture = _loadStats();
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
+    _liveCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
   }
 
   @override
   void dispose() {
     _introCtrl.dispose();
+    _liveCtrl.dispose();
     super.dispose();
   }
 
@@ -236,20 +245,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
             Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
           },
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(16),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: AppColors.purple.withAlpha(150), width: 1.4),
-              boxShadow: [
-                BoxShadow(
-                    color: AppColors.purple.withAlpha(65),
-                    blurRadius: 16,
-                    spreadRadius: -3)
-              ],
-            ),
+          child: AnimatedBuilder(
+            animation: _liveCtrl,
+            builder: (context, child) {
+              final breathe = (sin(_liveCtrl.value * 2 * pi) + 1) / 2;
+              return Container(
+                padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(16),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                      color: AppColors.purple.withAlpha(150), width: 1.4),
+                  boxShadow: [
+                    BoxShadow(
+                        color: AppColors.purple.withAlpha((50 + breathe * 45).round()),
+                        blurRadius: 14 + breathe * 8,
+                        spreadRadius: -3)
+                  ],
+                ),
+                child: child,
+              );
+            },
             child: Row(
               children: [
                 SizedBox(
@@ -513,6 +529,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerPr
                           interval: _stagger(i),
                           child: CategoryCard(
                           index: i,
+                          pulse: _liveCtrl,
                           icon: mode.icon,
                           title: mode.title,
                           color: mode.accentColor,

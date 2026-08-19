@@ -20,6 +20,12 @@ class CategoryCard extends StatelessWidget {
   final bool locked;
   final VoidCallback onTap;
 
+  /// Bucla continuă (0..1, repetitivă) care ține planeta vie — inelul lui
+  /// Saturn se rotește, glow-ul respiră. Un singur controller, împărțit de
+  /// toate cardurile din listă (vezi CategoriesScreen._liveCtrl), nu unul
+  /// per card.
+  final Animation<double> pulse;
+
   /// Textul de sub titlu — calculat de apelant (categories_screen.dart), nu
   /// aici, fiindcă motivul blocării (conținut inexistent încă vs. blocat cu
   /// Gems) și starea de progres (jucate/deblocate/total) depind de context
@@ -34,6 +40,7 @@ class CategoryCard extends StatelessWidget {
   const CategoryCard({
     super.key,
     required this.index,
+    required this.pulse,
     required this.icon,
     required this.title,
     required this.totalQuestions,
@@ -53,19 +60,34 @@ class CategoryCard extends StatelessWidget {
     final rim = locked ? Colors.white24 : color.withAlpha(150);
     return Pressable(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-        decoration: BoxDecoration(
-          color: Colors.white.withAlpha(locked ? 8 : 16),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: rim, width: 1.4),
-          boxShadow: locked
-              ? null
-              : [BoxShadow(color: color.withAlpha(65), blurRadius: 16, spreadRadius: -3)],
-        ),
+      child: AnimatedBuilder(
+        animation: pulse,
+        builder: (context, child) {
+          // respirație lentă (0..1..0) — nu o rampă liniară 0..1 care sare
+          // înapoi brusc la capăt de buclă.
+          final breathe = (sin(pulse.value * 2 * pi) + 1) / 2;
+          return Container(
+            padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(locked ? 8 : 16),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: rim, width: 1.4),
+              boxShadow: locked
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: color.withAlpha((50 + breathe * 45).round()),
+                        blurRadius: 14 + breathe * 8,
+                        spreadRadius: -3,
+                      ),
+                    ],
+            ),
+            child: child,
+          );
+        },
         child: Row(
           children: [
-            _Planet(color: color, icon: icon, locked: locked, seed: index),
+            _Planet(color: color, icon: icon, locked: locked, seed: index, pulse: pulse),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -138,37 +160,54 @@ class CategoryCard extends StatelessWidget {
         child: const Icon(Icons.lock_outline_rounded, color: Colors.white38, size: 16),
       );
     }
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.black.withAlpha(70),
-        boxShadow: [BoxShadow(color: color.withAlpha(110), blurRadius: 10, spreadRadius: -1)],
-      ),
-      padding: const EdgeInsets.all(5),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          CircularProgressIndicator(
-            value: 1,
-            strokeWidth: 4.5,
-            strokeCap: StrokeCap.round,
-            valueColor: AlwaysStoppedAnimation(Colors.white.withAlpha(28)),
+    return AnimatedBuilder(
+      animation: pulse,
+      builder: (context, _) {
+        final breathe = (sin(pulse.value * 2 * pi) + 1) / 2;
+        return Container(
+          width: 46,
+          height: 46,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withAlpha(70),
+            boxShadow: [BoxShadow(color: color.withAlpha((90 + breathe * 60).round()), blurRadius: 8 + breathe * 6, spreadRadius: -1)],
           ),
-          CircularProgressIndicator(
-            value: _pct == 0 ? 0.012 : _pct,
-            strokeWidth: 4.5,
-            strokeCap: StrokeCap.round,
-            backgroundColor: Colors.transparent,
-            valueColor: AlwaysStoppedAnimation(color),
+          padding: const EdgeInsets.all(5),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CircularProgressIndicator(
+                value: 1,
+                strokeWidth: 4.5,
+                strokeCap: StrokeCap.round,
+                valueColor: AlwaysStoppedAnimation(Colors.white.withAlpha(28)),
+              ),
+              // traseul de progres primește o culoare în gradient (nu plată)
+              // prin ShaderMask — capătul arcului e mai luminos decât baza,
+              // ca un mic accent electric, nu doar o linie colorată uniform.
+              ShaderMask(
+                blendMode: BlendMode.srcIn,
+                shaderCallback: (rect) => SweepGradient(
+                  colors: [color, _Planet._shade(color, 0.35, 0.1)],
+                  startAngle: -pi / 2,
+                  endAngle: -pi / 2 + 2 * pi,
+                ).createShader(rect),
+                child: CircularProgressIndicator(
+                  value: _pct == 0 ? 0.012 : _pct,
+                  strokeWidth: 4.5,
+                  strokeCap: StrokeCap.round,
+                  backgroundColor: Colors.transparent,
+                  valueColor: const AlwaysStoppedAnimation(Colors.white),
+                ),
+              ),
+              Text(
+                '${(_pct * 100).round()}',
+                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, height: 1),
+              ),
+            ],
           ),
-          Text(
-            '${(_pct * 100).round()}',
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, height: 1),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -182,8 +221,9 @@ class _Planet extends StatelessWidget {
   final IconData icon;
   final bool locked;
   final int seed;
+  final Animation<double> pulse;
 
-  const _Planet({required this.color, required this.icon, required this.locked, required this.seed});
+  const _Planet({required this.color, required this.icon, required this.locked, required this.seed, required this.pulse});
 
   static Color _shade(Color c, double dl, [double ds = 0]) {
     final hsl = HSLColor.fromColor(c);
@@ -196,58 +236,97 @@ class _Planet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const size = 58.0;
+    // Inelul e mai lat decât globul, iar cutia planetei trebuie să fie destul
+    // de lată cât să-l CUPRINDĂ. Altfel (cu OverflowBox peste o cutie de
+    // mărimea globului) inelul iese peste coloana de text de lângă și
+    // acoperă începutul subtitlului.
+    const ringWidth = size * 1.3;
     return SizedBox(
-      width: size,
+      width: ringWidth,
       height: size + 6,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.center,
         children: [
-          // inelul (Saturn) — desenat SUB glob, ușor înclinat, colorat pe tema categoriei.
+          // inelul (Saturn) — desenat SUB glob, ușor înclinat, colorat pe tema
+          // categoriei, și rotit ÎNCET, continuu (vezi CategoriesScreen._liveCtrl)
+          // — planeta se simte vie, nu doar desenată static.
+          //
           if (!locked)
-            Transform.rotate(
-              angle: -0.34,
+            AnimatedBuilder(
+              animation: pulse,
+              // LEGĂNARE în jurul înclinării naturale, nu rotație completă:
+              // un inel de Saturn rotit 360° ajunge vertical la jumătatea
+              // buclei și arată ca o toartă de coș, nu ca un inel. ±0.22 rad
+              // (~13°) e destul cât să se vadă că se mișcă, fără să iasă din
+              // silueta recognoscibilă de planetă.
+              builder: (context, child) =>
+                  Transform.rotate(angle: -0.34 + sin(pulse.value * 2 * pi) * 0.22, child: child),
               child: Container(
-                width: size * 1.62,
-                height: size * 0.5,
+                width: ringWidth,
+                height: size * 0.52,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: color.withAlpha(150), width: 2.2),
-                  gradient: LinearGradient(colors: [color.withAlpha(0), color.withAlpha(90), color.withAlpha(0)]),
+                  border: Border.all(color: _shade(color, 0.28), width: 2.6),
+                  boxShadow: [BoxShadow(color: color.withAlpha(140), blurRadius: 8)],
+                ),
+                // un mic "glint" alb, fixat la un capăt al inelului — se
+                // rotește ODATĂ CU el, ca mișcarea să se vadă limpede chiar
+                // și într-o captură statică, nu doar la privire directă.
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Container(
+                    width: 6,
+                    height: 6,
+                    margin: const EdgeInsets.only(right: 2),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                      boxShadow: [BoxShadow(color: Colors.white.withAlpha(200), blurRadius: 6, spreadRadius: 1)],
+                    ),
+                  ),
                 ),
               ),
             ),
-          // globul propriu-zis, cu textură + luciu, deasupra inelului.
-          Container(
-            width: size,
-            height: size,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: RadialGradient(
-                center: const Alignment(-0.4, -0.45),
-                radius: 1.05,
-                colors: locked
-                    ? [Colors.white.withAlpha(45), Colors.white.withAlpha(22), Colors.white.withAlpha(10)]
-                    : [
-                        _shade(color, 0.30, 0.05),
-                        _shade(color, 0.06),
-                        color,
-                        _shade(color, -0.20, 0.10),
-                        _shade(color, -0.34, 0.10),
-                      ],
-                // stops trebuie să aibă mereu aceeași lungime ca [colors] —
-                // varianta locked are doar 3 culori, nu 5 (vezi mai sus).
-                stops: locked ? const [0.0, 0.5, 1.0] : const [0.0, 0.28, 0.55, 0.8, 1.0],
-              ),
-              border: Border.all(color: locked ? Colors.white24 : _shade(color, -0.32, 0.1), width: 1.3),
-              boxShadow: locked
-                  ? null
-                  : [
-                      BoxShadow(color: color.withAlpha(130), blurRadius: 16, spreadRadius: 0.5),
-                      const BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 3)),
-                    ],
-            ),
-            clipBehavior: Clip.antiAlias,
+          // globul propriu-zis, cu textură + luciu, deasupra inelului — glow-ul
+          // respiră în ritmul [pulse], nu rămâne fix.
+          AnimatedBuilder(
+            animation: pulse,
+            builder: (context, child) {
+              final breathe = locked ? 0.0 : (sin(pulse.value * 2 * pi) + 1) / 2;
+              return Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    center: const Alignment(-0.4, -0.45),
+                    radius: 1.05,
+                    colors: locked
+                        ? [Colors.white.withAlpha(45), Colors.white.withAlpha(22), Colors.white.withAlpha(10)]
+                        : [
+                            _shade(color, 0.30, 0.05),
+                            _shade(color, 0.06),
+                            color,
+                            _shade(color, -0.20, 0.10),
+                            _shade(color, -0.34, 0.10),
+                          ],
+                    // stops trebuie să aibă mereu aceeași lungime ca [colors] —
+                    // varianta locked are doar 3 culori, nu 5 (vezi mai sus).
+                    stops: locked ? const [0.0, 0.5, 1.0] : const [0.0, 0.28, 0.55, 0.8, 1.0],
+                  ),
+                  border: Border.all(color: locked ? Colors.white24 : _shade(color, -0.32, 0.1), width: 1.3),
+                  boxShadow: locked
+                      ? null
+                      : [
+                          BoxShadow(color: color.withAlpha((100 + breathe * 60).round()), blurRadius: 14 + breathe * 8, spreadRadius: 0.5),
+                          const BoxShadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 3)),
+                        ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: child,
+              );
+            },
             child: Stack(
               alignment: Alignment.center,
               children: [
