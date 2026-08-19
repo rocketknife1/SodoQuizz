@@ -11,7 +11,7 @@ import sys
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
 FILES = [
-    "assets/continut/pixelat/intrebari.json",
+    "assets/continut/cartoon/intrebari.json",
     "assets/continut/logouri/intrebari.json",
     "assets/continut/jocuri/intrebari.json",
     "assets/continut/medical/intrebari.json",

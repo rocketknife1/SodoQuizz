@@ -1429,7 +1429,9 @@
           "hint_2": "Trăiește în turme mari în savana africană",
           "hint_3": "Este una dintre principalele prăzi ale leilor și leoparzilor",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Impala antelope",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_085",
@@ -1444,7 +1446,9 @@
           "hint_2": "Trăiește aproape exclusiv în copaci, în Borneo și Sumatra",
           "hint_3": "Numele lui înseamnă „om al pădurii” în limba malaeză",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Orangutan",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_086",
@@ -1459,7 +1463,9 @@
           "hint_2": "E înrudit mai degrabă cu caii și rinocerii decât cu porcii, deși seamănă cu aceștia",
           "hint_3": "Trăiește în pădurile tropicale din America de Sud și Asia de Sud-Est",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Tapir animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_087",
@@ -1474,7 +1480,9 @@
           "hint_2": "A fost descoperit oficial de oamenii de știință abia în 1901",
           "hint_3": "Trăiește doar în pădurile din Republica Democrată Congo",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Okapi animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_088",
@@ -1489,7 +1497,9 @@
           "hint_2": "E folosit de localnici drept animal de povară la altitudini mari",
           "hint_3": "Trăiește pe podișul Tibetului și în zonele muntoase din Himalaya",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Yak animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_089",
@@ -1504,7 +1514,9 @@
           "hint_2": "E mai mică decât lama, ruda ei apropiată",
           "hint_3": "E originară din Anzii sud-americani, mai ales din Peru",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Alpaca animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_090",
@@ -1519,7 +1531,9 @@
           "hint_2": "E sălbatică, spre deosebire de ruda ei domesticită, alpaca",
           "hint_3": "Trăiește la altitudini mari, în Anzii din America de Sud",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Vicugna animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_091",
@@ -1534,7 +1548,9 @@
           "hint_2": "Nu poate zbura, dar aleargă foarte repede",
           "hint_3": "E originară din Australia și apare chiar pe stema țării",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Emu bird",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_092",
@@ -1549,7 +1565,9 @@
           "hint_2": "Nu poate zbura, însă are aripi mari folosite pentru echilibru la alergare",
           "hint_3": "Masculul e cel care clocește ouăle și crește puii",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Rhea bird",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_093",
@@ -1564,7 +1582,9 @@
           "hint_2": "Poate stoca mai mulți pești deodată în sacul de sub cioc",
           "hint_3": "Trăiește adesea în colonii mari, lângă apă",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Pelican bird",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_094",
@@ -1579,7 +1599,9 @@
           "hint_2": "Penele lui nu sunt complet impermeabile, așa că stă cu aripile întinse la uscat",
           "hint_3": "În unele țări din Asia a fost folosit tradițional la pescuit dresat",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Cormorant bird",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_095",
@@ -1594,7 +1616,9 @@
           "hint_2": "Formează adesea perechi pe viață",
           "hint_3": "E simbolul eleganței în multe povești și basme",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Swan bird",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_096",
@@ -1609,7 +1633,9 @@
           "hint_2": "Își ucide prada prin sufocare, nu prin venin",
           "hint_3": "Trăiește în mlaștinile și râurile din America de Sud",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Green anaconda",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_097",
@@ -1624,7 +1650,9 @@
           "hint_2": "Se îngroapă în nisip, lăsând la vedere doar ochii și cornițele",
           "hint_3": "Trăiește în deșerturile din Africa de Nord și Orientul Mijlociu",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Saharan horned viper",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_098",
@@ -1639,7 +1667,9 @@
           "hint_2": "Strălucește sub lumină ultravioletă",
           "hint_3": "Cleștele din față este folosit pentru a prinde prada",
           "dificultate": "usor",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Scorpion animal",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_099",
@@ -1654,7 +1684,9 @@
           "hint_2": "Deși arată înfricoșător, veninul ei nu e periculos pentru om",
           "hint_3": "Corpul îi este acoperit cu fire de păr fine",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Tarantula spider",
+          "imagine_sursa": "wikimedia"
         },
         {
           "id": "ani_100",
@@ -1669,7 +1701,9 @@
           "hint_2": "E supranumit „unicornul mărilor”",
           "hint_3": "Trăiește în apele reci din Arctica",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Narwhal animal",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

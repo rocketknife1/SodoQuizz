@@ -31,7 +31,7 @@ TARGET_W, TARGET_H = 800, 600
 
 # (fisier_json, folder_imagini, strategie) — toate intrebarile din fiecare fisier
 SOURCES = [
-    ("assets/continut/pixelat/intrebari.json", "assets/continut/pixelat/poze", "character"),
+    ("assets/continut/cartoon/intrebari.json", "assets/continut/cartoon/poze", "character"),
     ("assets/continut/logouri/intrebari.json", "assets/continut/logouri/poze", "logo"),
     ("assets/continut/jocuri/intrebari.json", "assets/continut/jocuri/poze", "game"),
     ("assets/continut/medical/intrebari.json", "assets/continut/medical/poze", "custom"),

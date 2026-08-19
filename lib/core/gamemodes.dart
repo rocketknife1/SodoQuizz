@@ -53,7 +53,7 @@ class GameMode {
 
 const List<GameMode> gameModes = [
   GameMode(
-    id: 'pixelat',
+    id: 'cartoon',
     title: 'Cartoon',
     titleEn: 'Cartoon',
     subtitle: 'Desene & filme',

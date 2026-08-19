@@ -1701,7 +1701,9 @@
           "hint_2": "Administrează un amestec controlat de gaze pentru a adormi pacientul",
           "hint_3": "Este conectat la pacient printr-o mască sau un tub de intubație",
           "dificultate": "mediu",
-          "puncte_max": 200
+          "puncte_max": 200,
+          "imagine_cautare": "Anesthesia machine",
+          "imagine_sursa": "wikimedia"
         }
       ]
     }

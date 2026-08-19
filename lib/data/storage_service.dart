@@ -75,6 +75,7 @@ class StorageService {
   static const _lastClaimedRewardLevelKey = 'last_claimed_reward_level';
   static const _xpCurveMigratedKey = 'xp_curve_migrated_v2';
   static const _xpCurveV3MigratedKey = 'xp_curve_migrated_v3';
+  static const _pixelatToCartoonMigratedKey = 'pixelat_to_cartoon_migrated';
   static const _maxLives = 6;
   static const ringSpinCooldownHours = 24;
   static const _unlimitedLivesUntilKey = 'unlimited_lives_until';
@@ -471,6 +472,52 @@ class StorageService {
     await prefs.setInt(
         _lastClaimedRewardLevelKey, levelForXp(prefs.getInt(_xpKey) ?? 0));
     await prefs.setBool(_xpCurveV3MigratedKey, true);
+  }
+
+  /// Redenumire 2026-08-19: modul "Cartoon" (desene animate & filme) avea
+  /// id-ul intern 'pixelat', rămas dintr-o vreme când categoria chiar folosea
+  /// imagini pixelate — nu se mai potrivea deloc cu conținutul actual (poze
+  /// reale de personaje). Noul id e 'cartoon' (vezi gamemodes.dart). Fără
+  /// migrarea asta, jucătorii cu progres deja salvat sub cheia veche și-ar
+  /// pierde la următorul update nivelul de întrebări deblocate la această
+  /// categorie, recordul all-time și punctele de clasament din ciclul curent
+  /// — restul contului (monede, gems, alte categorii) nu e atins deloc.
+  static Future<void> migratePixelatIdToCartoon() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_pixelatToCartoonMigratedKey) ?? false) return;
+
+    Future<void> moveInt(String oldKey, String newKey) async {
+      final value = prefs.getInt(oldKey);
+      if (value != null && prefs.getInt(newKey) == null) {
+        await prefs.setInt(newKey, value);
+      }
+    }
+
+    await moveInt('question_unlock_tier_pixelat', 'question_unlock_tier_cartoon');
+    await moveInt('high_score_pixelat', 'high_score_cartoon');
+    await moveInt('leaderboard_pts_pixelat', 'leaderboard_pts_cartoon');
+
+    final starters = prefs.getStringList(_starterCategoriesKey);
+    if (starters != null && starters.contains('pixelat')) {
+      await prefs.setStringList(_starterCategoriesKey,
+          starters.map((m) => m == 'pixelat' ? 'cartoon' : m).toList());
+    }
+
+    final leaderboardModes = prefs.getStringList(_leaderboardModesKey);
+    if (leaderboardModes != null && leaderboardModes.contains('pixelat')) {
+      final updated = leaderboardModes.toSet()
+        ..remove('pixelat')
+        ..add('cartoon');
+      await prefs.setStringList(_leaderboardModesKey, updated.toList());
+    }
+
+    final everPlayed = prefs.getStringList(_modesEverPlayedKey);
+    if (everPlayed != null && everPlayed.contains('pixelat')) {
+      final updated = everPlayed.toSet()..add('cartoon');
+      await prefs.setStringList(_modesEverPlayedKey, updated.toList());
+    }
+
+    await prefs.setBool(_pixelatToCartoonMigratedKey, true);
   }
 
   // ─── Reward-uri de Level Up ─────────────────────────────────────────────

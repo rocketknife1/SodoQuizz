@@ -12,7 +12,7 @@ cu câte un subfolder per gamemod. Aici adaugi/editezi întrebări sau
 
 ```
 assets/continut/
-  pixelat/    intrebari.json + poze/   (desene animate & filme)
+  cartoon/    intrebari.json + poze/   (desene animate & filme)
   logouri/    intrebari.json + poze/   (branduri cunoscute)
   jocuri/     intrebari.json + poze/   (Gamers Cave — trivia Steam)
   medical/    intrebari.json + poze/   (obiecte medicale)

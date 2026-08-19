@@ -32,6 +32,7 @@ void main() async {
   // Inainte de orice sincronizare, ca sa nu se mai urce in cloud contoarele
   // zilnice ale zilelor trecute — vezi StorageService.pruneOldDailyCounters.
   await StorageService.pruneOldDailyCounters();
+  await StorageService.migratePixelatIdToCartoon();
   // Amandoua INAINTE de runApp, ca primul cadru desenat sa fie deja in limba
   // corecta si cu ecranul deja stins daca Modul Eco e pornit — cerinta era
   // explicit ca modul sa fie activ din clipa intrarii in joc, nu sa se aprinda

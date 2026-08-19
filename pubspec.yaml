@@ -38,8 +38,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
-    - assets/continut/pixelat/
-    - assets/continut/pixelat/poze/
+    - assets/continut/cartoon/
+    - assets/continut/cartoon/poze/
     - assets/continut/logouri/
     - assets/continut/logouri/poze/
     - assets/continut/jocuri/

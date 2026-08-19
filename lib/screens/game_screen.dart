@@ -24,7 +24,7 @@ import 'loading_screen.dart';
 
 /// Un singur ecran de joc pentru toate gamemodurile: fiecare întrebare
 /// arată o imagine care se limpezește cu fiecare hint și 4 variante de
-/// răspuns — aceeași mecanică peste tot (pixelat, logo-uri, gamers cave,
+/// răspuns — aceeași mecanică peste tot (cartoon, logo-uri, gamers cave,
 /// medical), doar conținutul (întrebări/poze/culori) diferă.
 class GameScreen extends StatefulWidget {
   final String gameModeId;
@@ -1140,7 +1140,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   }
 
   /// Cele 4 variante ca listă verticală de rânduri cu literă (A/B/C/D) —
-  /// același stil, indiferent de gamemod (pixelat, logo-uri, gamers cave,
+  /// același stil, indiferent de gamemod (cartoon, logo-uri, gamers cave,
   /// medical etc.), doar conținutul (opts) diferă.
   Widget _buildOptionsGrid(Question q, List<String> opts) {
     const letters = ['A', 'B', 'C', 'D'];

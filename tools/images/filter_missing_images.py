@@ -7,7 +7,7 @@ Rulare: python tools/images/filter_missing_images.py
 import json
 import os
 
-MODES = ["pixelat", "logouri", "jocuri", "medical", "mecanica", "aplicatii",
+MODES = ["cartoon", "logouri", "jocuri", "medical", "mecanica", "aplicatii",
          "masini", "celebritati", "sport", "romania"]
 TARGETS = [(f"assets/continut/{m}/intrebari.json", f"assets/continut/{m}/poze") for m in MODES]
 
