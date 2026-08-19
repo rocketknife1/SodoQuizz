@@ -10,6 +10,7 @@ import '../core/theme.dart';
 import '../data/culture_questions.dart';
 import '../data/storage_service.dart';
 import 'countdown_ring.dart';
+import 'report_question_button.dart';
 
 enum _Phase { teaser, cooldown, playing, justFinished }
 
@@ -501,6 +502,11 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('${qIndex + 1}/${_questions.length}', style: const TextStyle(color: Colors.white60, fontSize: 10, fontWeight: FontWeight.w700)),
+            ReportQuestionButton(
+              questionId: q.question,
+              questionText: q.question,
+              category: 'Cultură Generală',
+            ),
             CountdownRing(secondsLeft: secondsLeft, totalSeconds: cultureSecondsPerQuestion, size: 34),
           ],
         ),

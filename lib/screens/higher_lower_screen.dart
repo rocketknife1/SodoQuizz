@@ -8,6 +8,7 @@ import '../core/theme.dart';
 import '../data/higher_lower_data.dart';
 import '../data/storage_service.dart';
 import '../widgets/countdown_ring.dart';
+import '../widgets/report_question_button.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
 
@@ -308,6 +309,12 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
               border: Border.all(color: const Color(0xFFEF9F27).withAlpha(128)),
             ),
             child: Text('🔥 $_streak', style: const TextStyle(color: Color(0xFFEF9F27), fontSize: 13, fontWeight: FontWeight.w800)),
+          ),
+          const SizedBox(width: 8),
+          ReportQuestionButton(
+            questionId: _challenger.name,
+            questionText: _challenger.name,
+            category: 'Higher or Lower',
           ),
         ],
       ),

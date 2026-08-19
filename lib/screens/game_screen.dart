@@ -18,6 +18,7 @@ import '../widgets/blur_image.dart';
 import '../widgets/category_unlock_animation.dart';
 import '../widgets/in_app_notification.dart';
 import '../widgets/next_button.dart';
+import '../widgets/report_question_button.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
@@ -993,6 +994,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   tr('Întrebarea ${qIndex + 1} din ${questions.length}',
                       'Question ${qIndex + 1} of ${questions.length}'),
                   style: const TextStyle(color: Colors.white70, fontSize: 12)),
+              const Spacer(),
+              ReportQuestionButton(
+                questionId: currentQ.id,
+                questionText: currentQ.answer,
+                category: currentQ.category,
+              ),
             ],
           ),
         ],
