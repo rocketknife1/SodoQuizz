@@ -36,6 +36,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
   /// rețea — accentul central de "caut activ", nu doar un cerc static.
   late final AnimationController _radarController;
   Timer? _formTimer;
+  /// „Mai sunt aici" — vezi MultiplayerService.queueHeartbeat. Fără el,
+  /// intrarea proprie ar fi luată drept fantomă după un minut de căutare.
+  Timer? _heartbeatTimer;
   StreamSubscription<String?>? _queueSub;
   bool _matched = false;
   bool _left = false;
@@ -72,6 +75,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     _formTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
       MultiplayerService.instance.attemptFormMatch();
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.queueHeartbeatInterval, (_) {
+      MultiplayerService.instance.queueHeartbeat();
+    });
   }
 
   /// Coada tocmai ne-a găsit un adversar — NU mai sărim direct în meci: mai
@@ -82,6 +88,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     if (_matched) return;
     _matched = true;
     _formTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _queueSub?.cancel();
     // intrarea din coadă nu mai are treabă odată ce am primit o ofertă -
     // altfel ar rămâne orfană în matchmaking_queue la nesfârșit.
@@ -104,6 +111,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     if (_matched || _left || _joiningRoom) return;
     setState(() => _joiningRoom = true);
     _formTimer?.cancel();
+    _heartbeatTimer?.cancel();
     await _queueSub?.cancel();
     try {
       await MultiplayerService.instance.leaveQueue();
@@ -206,12 +214,16 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     _formTimer = Timer.periodic(const Duration(milliseconds: 1500), (_) {
       MultiplayerService.instance.attemptFormMatch();
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.queueHeartbeatInterval, (_) {
+      MultiplayerService.instance.queueHeartbeat();
+    });
   }
 
   Future<void> _leave() async {
     if (_left || _matched) return;
     _left = true;
     _formTimer?.cancel();
+    _heartbeatTimer?.cancel();
     await _queueSub?.cancel();
     try {
       await MultiplayerService.instance.leaveQueue();
@@ -229,6 +241,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
   @override
   void dispose() {
     _formTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _queueSub?.cancel();
     _bounceController.dispose();
     _radarController.dispose();

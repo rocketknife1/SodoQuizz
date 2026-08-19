@@ -10,6 +10,9 @@ import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../models/player_profile.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/entrance_item.dart';
+import '../../widgets/pressable.dart';
+import '../../widgets/space_background.dart';
 
 /// Clasament — 3 taburi: "Toți jucătorii" (roster complet, inclusiv cei
 /// offline de mult, cu ultima oră online — vezi [_AllPlayersTab]) și
@@ -24,12 +27,22 @@ class LeaderboardScreen extends StatefulWidget {
   State<LeaderboardScreen> createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTickerProviderStateMixin {
+class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProviderStateMixin {
   late final TabController _tabController = TabController(length: 3, vsync: this);
+  /// Intrarea în cascadă a antetului + tab bar-ului — aceeași senzație ca în
+  /// Multiplayer, ca ecranul să nu apară dintr-o bucată.
+  late final AnimationController _introCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
+  }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _introCtrl.dispose();
     super.dispose();
   }
 
@@ -37,37 +50,68 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with SingleTicker
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
-              child: Row(
-                children: [
-                  IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
-                  const SizedBox(width: 4),
-                  const Text('Clasament', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
+      body: SpaceBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              EntranceItem(
+                controller: _introCtrl,
+                interval: const Interval(0.0, 0.45, curve: Curves.easeOut),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+                  child: Row(
+                    children: [
+                      IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
+                      const SizedBox(width: 4),
+                      ShaderMask(
+                        shaderCallback: (r) => const LinearGradient(colors: [Colors.white, AppColors.orange]).createShader(r),
+                        child: const Text('CLASAMENT',
+                            style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            TabBar(
-              controller: _tabController,
-              indicatorColor: AppColors.orange,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white54,
-              tabs: [
-                Tab(text: tr('Toți jucătorii', 'All players')),
-                const Tab(text: 'Leaderboard'),
-                Tab(text: tr('Al tău', 'Yours')),
-              ],
-            ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _MyStatsTab()],
+              EntranceItem(
+                controller: _introCtrl,
+                interval: const Interval(0.15, 0.6, curve: Curves.easeOut),
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(14),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withAlpha(30)),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    dividerColor: Colors.transparent,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicator: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFFB020), AppColors.orange]),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: AppColors.orange.withAlpha(120), blurRadius: 10)],
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white54,
+                    labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
+                    unselectedLabelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
+                    tabs: [
+                      Tab(text: tr('Toți', 'All')),
+                      const Tab(text: 'Leaderboard'),
+                      Tab(text: tr('Al tău', 'Yours')),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _MyStatsTab()],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -183,10 +227,13 @@ class _PlayerRow extends StatelessWidget {
 
   const _PlayerRow({required this.rank, required this.profile, required this.isMe, required this.showLastActive, required this.onTap});
 
+  static const _medals = ['🥇', '🥈', '🥉'];
+
   @override
   Widget build(BuildContext context) {
     final league = leagueForPoints(profile.leaguePoints);
-    return GestureDetector(
+    final medalColor = rank == 1 ? AppColors.coin : (rank == 2 ? const Color(0xFFC6D0DA) : const Color(0xFFCD8A4C));
+    return Pressable(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -194,12 +241,24 @@ class _PlayerRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: isMe ? AppColors.blue.withAlpha(40) : Colors.white.withAlpha(12),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isMe ? AppColors.blue : Colors.white24),
+          border: Border.all(color: isMe ? AppColors.blue : (rank <= 3 ? medalColor.withAlpha(140) : Colors.white24)),
+          boxShadow: rank <= 3 ? [BoxShadow(color: medalColor.withAlpha(45), blurRadius: 10, spreadRadius: -2)] : null,
         ),
         child: Row(
           children: [
-            SizedBox(width: 36, child: Text('#$rank', maxLines: 1, softWrap: false, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800))),
-            Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl, style: avatarStyleFromId(profile.avatarStyle)),
+            SizedBox(
+              width: 32,
+              child: rank <= 3
+                  ? Text(_medals[rank - 1], style: const TextStyle(fontSize: 18))
+                  : Text('#$rank', maxLines: 1, softWrap: false, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800)),
+            ),
+            Avatar(
+              size: 36,
+              label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+              accentColor: pickAvatarColor(profile.avatarSeed),
+              photoUrl: profile.photoUrl,
+              style: avatarStyleFromId(profile.avatarStyle),
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

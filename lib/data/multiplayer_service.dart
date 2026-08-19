@@ -863,7 +863,73 @@ class MultiplayerService {
       'matchId': null,
       'bet': publicMatchStake,
       'joinedAt': FieldValue.serverTimestamp(),
+      // vezi [_queueFreshness] — semnul de viață, împrospătat periodic cât
+      // timp ecranul de căutare e deschis.
+      'lastSeenAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Cât de des își împrospătează semnul de viață clientul care caută.
+  static const queueHeartbeatInterval = Duration(seconds: 15);
+
+  /// Peste cât timp fără semn de viață o intrare din coadă e considerată
+  /// moartă. Generos față de [queueHeartbeatInterval] (4×), ca o rețea
+  /// proastă să nu scoată din coadă pe cineva care chiar caută.
+  static const _queueFreshness = Duration(seconds: 60);
+
+  /// „Mai sunt aici" — o singură scriere mică, rară (vezi
+  /// [queueHeartbeatInterval]). Fără ea, o aplicație oprită brusc
+  /// (force-stop, tab de browser închis, baterie moartă) nu apucă niciodată
+  /// să treacă prin [leaveQueue], iar intrarea ei rămâne în coadă la
+  /// nesfârșit — vezi [_liveQueueDocs] pentru ce strica asta.
+  ///
+  /// NU rescrie `joinedAt`: ordinea din coadă e „primul venit, primul
+  /// servit", iar un heartbeat care ar reseta-o ar trimite la coada cozii
+  /// exact pe cine așteaptă de cel mai mult timp.
+  Future<void> queueHeartbeat() async {
+    try {
+      await _db
+          .collection('matchmaking_queue')
+          .doc(currentPlayerId)
+          .update({'lastSeenAt': FieldValue.serverTimestamp()});
+    } catch (e) {
+      // documentul poate fi deja șters (am plecat din coadă) — inofensiv
+      debugPrint('MultiplayerService.queueHeartbeat: $e');
+    }
+  }
+
+  /// Intrările CU ADEVĂRAT active din coadă. Scoate două feluri de fantome,
+  /// care altfel rămân acolo pentru totdeauna:
+  ///
+  /// - intrări fără semn de viață recent — cineva a închis aplicația brusc
+  ///   și n-a apucat să treacă prin [leaveQueue];
+  /// - intrări deja revendicate de o ofertă (au `matchId` scris) — alea nu
+  ///   mai caută, așteaptă confirmarea.
+  ///
+  /// DE CE CONTEAZĂ: [attemptFormMatch] se uită doar la primii din coadă și
+  /// se oprește dacă nu ești tu primul. Două fantome mai vechi decât tine
+  /// blocau matchmaking-ul PERMANENT — nu mai erai cuplat cu nimeni, oricâți
+  /// jucători reali ar fi intrat după tine — iar contorul afișa oameni care
+  /// nu existau.
+  List<QueryDocumentSnapshot<Map<String, dynamic>>> _liveQueueDocs(
+      Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
+    return docs.where((d) => !_isDeadQueueEntry(d.data()) && d.data()['matchId'] == null).toList();
+  }
+
+  /// Doar criteriul de TIMP, folosit acolo unde chiar se șterge documentul.
+  /// Ținut separat de [_liveQueueDocs] intenționat: o intrare revendicată de
+  /// o ofertă (`matchId` scris) nu mai caută, dar NU e de șters — celălalt
+  /// client poate să nu-și fi citit încă `matchId`-ul, iar dacă i se șterge
+  /// documentul de sub el nu mai află niciodată în ce ofertă a intrat și
+  /// rămâne să caute singur, în timp ce adversarul îl așteaptă la confirmare.
+  bool _isDeadQueueEntry(Map<String, dynamic> data) {
+    // `lastSeenAt` lipsește la intrările scrise de versiuni mai vechi ale
+    // jocului — se cade înapoi pe `joinedAt`. Amândouă null înseamnă un
+    // document abia scris, căruia serverul nu i-a confirmat încă
+    // timestamp-ul: ăla e nou, nu vechi.
+    final seen = (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
+    if (seen == null) return false;
+    return seen.toDate().isBefore(DateTime.now().subtract(_queueFreshness));
   }
 
   /// Streamul propriei intrări din coadă — când un alt client (liderul)
@@ -884,7 +950,10 @@ class MultiplayerService {
   /// vă cupleze pe voi doi în câteva secunde, în loc să te trezești direct în
   /// meci fără avertisment.
   Stream<int> watchQueueCount() {
-    return _db.collection('matchmaking_queue').snapshots().map((s) => s.docs.length);
+    return _db
+        .collection('matchmaking_queue')
+        .snapshots()
+        .map((s) => _liveQueueDocs(s.docs).length);
   }
 
   /// Cele două moduri pe care matchmaking-ul public le poate alege aleator —
@@ -905,11 +974,27 @@ class MultiplayerService {
   /// altfel cei doi se trezeau cuplați "din senin", fără avertisment.
   Future<String?> attemptFormMatch() async {
     final me = currentPlayerId;
-    final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(matchmakingOpponentCount).get();
-    if (queueSnap.docs.isEmpty || queueSnap.docs.first.id != me) return null;
-    if (queueSnap.docs.length < matchmakingOpponentCount) return null;
+    // Se citește o fereastră mai largă decât perechea căutată, fiindcă
+    // fantomele (vezi [_liveQueueDocs]) se pot scoate abia după citire, nu
+    // din interogare: Firestore n-are cum să filtreze aici după prospețime
+    // fără un index pe care oricum l-ar strica ordonarea după `joinedAt`.
+    final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(20).get();
+    final live = _liveQueueDocs(queueSnap.docs);
 
-    final candidates = queueSnap.docs;
+    // Curățenie oportunistă, DOAR pe cele moarte de timp (vezi
+    // [_isDeadQueueEntry]): fantomele rămase blochează coada pentru toată
+    // lumea, iar nimeni altcineva nu le mai șterge vreodată.
+    for (final d in queueSnap.docs.where((d) => _isDeadQueueEntry(d.data()))) {
+      // fire-and-forget: dacă eșuează, reîncercăm la următorul tick
+      d.reference.delete().catchError((e) {
+        debugPrint('MultiplayerService.attemptFormMatch: nu s-a putut sterge intrarea moarta ${d.id}: $e');
+      });
+    }
+
+    if (live.isEmpty || live.first.id != me) return null;
+    if (live.length < matchmakingOpponentCount) return null;
+
+    final candidates = live.take(matchmakingOpponentCount).toList();
     final offerRef = _db.collection('quickmatch_offers').doc();
     final gameMode = _quickMatchModes[Random().nextInt(_quickMatchModes.length)];
 

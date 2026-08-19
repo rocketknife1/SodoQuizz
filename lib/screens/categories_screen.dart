@@ -11,6 +11,8 @@ import '../data/shop.dart';
 import '../data/storage_service.dart';
 import '../widgets/category_card.dart';
 import '../widgets/category_unlock_animation.dart';
+import '../widgets/entrance_item.dart';
+import '../widgets/pressable.dart';
 import '../widgets/space_background.dart';
 import 'higher_lower_screen.dart';
 import 'loading_screen.dart';
@@ -38,13 +40,33 @@ class CategoriesScreen extends StatefulWidget {
   State<CategoriesScreen> createState() => _CategoriesScreenState();
 }
 
-class _CategoriesScreenState extends State<CategoriesScreen> {
+class _CategoriesScreenState extends State<CategoriesScreen> with SingleTickerProviderStateMixin {
   late Future<Map<String, _ModeStats>> _statsFuture;
+
+  /// Intrarea în cascadă a listei de categorii — aceeași senzație ca în
+  /// Multiplayer (vezi widgets/entrance_item.dart), ca ecranul să nu apară
+  /// dintr-o bucată, static.
+  late final AnimationController _introCtrl;
 
   @override
   void initState() {
     super.initState();
     _statsFuture = _loadStats();
+    _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
+  }
+
+  @override
+  void dispose() {
+    _introCtrl.dispose();
+    super.dispose();
+  }
+
+  /// Fereastra de timp în care intră cardul de pe poziția [i] — fiecare
+  /// pornește puțin după cel de deasupra, dar toate se termină în prima
+  /// secundă, ca lista să nu pară că se încarcă greu.
+  Interval _stagger(int i) {
+    final start = (0.06 * i).clamp(0.0, 0.55);
+    return Interval(start, (start + 0.45).clamp(0.0, 1.0), curve: Curves.easeOutCubic);
   }
 
   Future<Map<String, _ModeStats>> _loadStats() async {
@@ -115,10 +137,35 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text(tr('Intri în ${mode.title}?', 'Enter ${mode.title}?'),
-            style: const TextStyle(color: Colors.white)),
+        backgroundColor: const Color(0xFF141B36),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: Colors.white.withAlpha(30)),
+        ),
+        title: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [mode.accentColor, mode.accentColor.withAlpha(120)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(70)),
+              ),
+              alignment: Alignment.center,
+              child: Icon(mode.icon, color: Colors.white, size: 19),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(tr('Intri în ${mode.title}?', 'Enter ${mode.title}?'),
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+            ),
+          ],
+        ),
         content: Text(
           tr(
             'Taxă de intrare: $fee monede '
@@ -150,11 +197,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
             onPressed:
                 canAfford ? () => Navigator.pop(dialogContext, true) : null,
             style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.play,
-                disabledBackgroundColor: Colors.white24),
+              backgroundColor: AppColors.play,
+              disabledBackgroundColor: Colors.white24,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
             child: Text('${tr('Intră', 'Enter')}  •  💰$fee',
                 style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+                    color: Colors.white, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -181,7 +230,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       future: StorageService.getModeHighScore(higherLowerModeId),
       builder: (context, snapshot) {
         final best = snapshot.data ?? 0;
-        return GestureDetector(
+        return Pressable(
           onTap: () {
             Sfx.tileSelect();
             Navigator.push(context,
@@ -363,43 +412,47 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
 
               return Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 20, 6),
-                    child: Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back_ios_rounded,
-                              color: Colors.white70),
-                        ),
-                        const SizedBox(width: 4),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ShaderMask(
-                              shaderCallback: (r) => const LinearGradient(
-                                      colors: [Colors.white, Color(0xFFC9B8FF)])
-                                  .createShader(r),
-                              child: Text(
-                                tr('Alege o categorie', 'Pick a category'),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 21,
-                                    fontWeight: FontWeight.w900),
+                  EntranceItem(
+                    controller: _introCtrl,
+                    interval: const Interval(0.0, 0.45, curve: Curves.easeOut),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 20, 6),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back_ios_rounded,
+                                color: Colors.white70),
+                          ),
+                          const SizedBox(width: 4),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ShaderMask(
+                                shaderCallback: (r) => const LinearGradient(
+                                        colors: [Colors.white, Color(0xFFC9B8FF)])
+                                    .createShader(r),
+                                child: Text(
+                                  tr('Alege o categorie', 'Pick a category'),
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w900),
+                                ),
                               ),
-                            ),
-                            if (totalQuestions > 0)
-                              Text(
-                                tr('$totalAnswered/$totalQuestions întrebări cucerite',
-                                    '$totalAnswered/$totalQuestions questions conquered'),
-                                style: const TextStyle(
-                                    color: Colors.white54,
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600),
-                              ),
-                          ],
-                        ),
-                      ],
+                              if (totalQuestions > 0)
+                                Text(
+                                  tr('$totalAnswered/$totalQuestions întrebări cucerite',
+                                      '$totalAnswered/$totalQuestions questions conquered'),
+                                  style: const TextStyle(
+                                      color: Colors.white54,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   _buildStarterGemsBanner(),
@@ -413,7 +466,13 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                         // mecanică total diferită (fără poze/blur), nu face
                         // parte din gameModes, deci nu e afectat de gating cu
                         // Gems / progres pe întrebări ca restul categoriilor.
-                        if (i == 0) return _buildHigherLowerCard();
+                        if (i == 0) {
+                          return EntranceItem(
+                            controller: _introCtrl,
+                            interval: _stagger(0),
+                            child: _buildHigherLowerCard(),
+                          );
+                        }
                         final mode = gameModes[i - 1];
                         final s = stats?[mode.id];
                         final tier = s?.tier ?? 0;
@@ -449,7 +508,10 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                               '${s?.answered ?? 0}/$total questions');
                         }
 
-                        return CategoryCard(
+                        return EntranceItem(
+                          controller: _introCtrl,
+                          interval: _stagger(i),
+                          child: CategoryCard(
                           index: i,
                           icon: mode.icon,
                           title: mode.title,
@@ -478,6 +540,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
                                                 'Unlock it with Gems — see the button on the card.'))),
                                       )
                                   : () => _enterCategory(mode),
+                          ),
                         );
                       },
                     ),

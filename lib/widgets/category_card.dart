@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
+import 'pressable.dart';
 
 /// Card orizontal, lat cât ecranul, pentru o categorie (gamemod) — planetă
 /// texturată în stânga (inel înclinat + luciu + suprafață pictată), titlu +
@@ -50,7 +51,7 @@ class CategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rim = locked ? Colors.white24 : color.withAlpha(150);
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),

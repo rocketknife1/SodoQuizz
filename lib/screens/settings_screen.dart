@@ -7,6 +7,9 @@ import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
 import '../data/storage_service.dart';
+import '../widgets/entrance_item.dart';
+import '../widgets/pressable.dart';
+import '../widgets/space_background.dart';
 import 'blocked_players_screen.dart';
 import 'home_screen.dart';
 import 'language_screen.dart';
@@ -26,16 +29,20 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   bool _musicEnabled = true;
   double _musicVolume = 0.5;
   bool _eco = EcoMode.on;
   bool _loaded = false;
   bool _privacyOptionsRequired = false;
 
+  /// Intrarea în cascadă a rândurilor — aceeași senzație ca în Multiplayer.
+  late final AnimationController _introCtrl;
+
   @override
   void initState() {
     super.initState();
+    _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
     Future.wait([
       StorageService.getMusicEnabled(),
       StorageService.getMusicVolume(),
@@ -52,6 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     AdsService.instance.privacyOptionsRequired().then((required) {
       if (mounted && required) setState(() => _privacyOptionsRequired = true);
     });
+  }
+
+  @override
+  void dispose() {
+    _introCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _toggleMusic(bool value) async {
@@ -179,109 +192,145 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Fereastra de timp în care intră elementul de pe poziția [i] — vezi
+  /// aceeași idee în categories_screen.dart._stagger.
+  Interval _stagger(int i) {
+    final start = (0.07 * i).clamp(0.0, 0.5);
+    return Interval(start, (start + 0.45).clamp(0.0, 1.0), curve: Curves.easeOutCubic);
+  }
+
+  Widget _staggered(int i, Widget child) => EntranceItem(controller: _introCtrl, interval: _stagger(i), child: child);
+
   @override
   Widget build(BuildContext context) {
+    var i = 0;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 20, 12),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+      body: SpaceBackground(
+        child: SafeArea(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _staggered(
+                i++,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 20, 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                      ),
+                      const SizedBox(width: 4),
+                      ShaderMask(
+                        shaderCallback: (r) => const LinearGradient(colors: [Colors.white, AppColors.gray]).createShader(r),
+                        child: Text(tr('SETĂRI', 'SETTINGS'),
+                            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
-                  Text(tr('Setări', 'Settings'),
-                      style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-                ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Limba stă exact unde era înainte „Fără blur" — primul
-                  // rând din Setări. E cea mai importantă setare pentru
-                  // cineva care tocmai a instalat jocul și nu înțelege nimic
-                  // din ecran.
-                  _navRow(
-                    icon: Icons.language_rounded,
-                    color: AppColors.blue,
-                    title: tr('Limbă / Language', 'Language / Limbă'),
-                    subtitle: '${L10n.current.flag}  ${L10n.current.label}',
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
-                  ),
-                  const SizedBox(height: 14),
-                  _navRow(
-                    icon: Icons.library_music_rounded,
-                    color: AppColors.purple,
-                    title: tr('Muzică', 'Music'),
-                    subtitle: '${Music.track.emoji}  ${Music.track.name}',
-                    onTap: () async {
-                      await Navigator.push(context, MaterialPageRoute(builder: (_) => const MusicScreen()));
-                      if (!mounted) return;
-                      // Piesa și comutatorul se pot schimba acolo — rândul de
-                      // aici și cardul de volum de mai jos trebuie să arate
-                      // starea nouă la întoarcere.
-                      setState(() {
-                        _musicEnabled = Music.isEnabled;
-                        _musicVolume = Music.volume;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 14),
-                  _buildEcoCard(),
-                  const SizedBox(height: 14),
-                  _buildMusicCard(context),
-                  if (_privacyOptionsRequired) ...[
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Limba stă exact unde era înainte „Fără blur" — primul
+                    // rând din Setări. E cea mai importantă setare pentru
+                    // cineva care tocmai a instalat jocul și nu înțelege nimic
+                    // din ecran.
+                    _staggered(
+                      i++,
+                      _navRow(
+                        icon: Icons.language_rounded,
+                        color: AppColors.blue,
+                        title: tr('Limbă / Language', 'Language / Limbă'),
+                        subtitle: '${L10n.current.flag}  ${L10n.current.label}',
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
+                      ),
+                    ),
                     const SizedBox(height: 14),
-                    _navRow(
-                      icon: Icons.privacy_tip_rounded,
-                      color: AppColors.purple,
-                      title: tr('Confidențialitate reclame', 'Ad privacy'),
-                      onTap: () => AdsService.instance.showPrivacyOptionsForm(),
+                    _staggered(
+                      i++,
+                      _navRow(
+                        icon: Icons.library_music_rounded,
+                        color: AppColors.purple,
+                        title: tr('Muzică', 'Music'),
+                        subtitle: '${Music.track.emoji}  ${Music.track.name}',
+                        onTap: () async {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const MusicScreen()));
+                          if (!mounted) return;
+                          // Piesa și comutatorul se pot schimba acolo — rândul de
+                          // aici și cardul de volum de mai jos trebuie să arate
+                          // starea nouă la întoarcere.
+                          setState(() {
+                            _musicEnabled = Music.isEnabled;
+                            _musicVolume = Music.volume;
+                          });
+                        },
+                      ),
                     ),
+                    const SizedBox(height: 14),
+                    _staggered(i++, _buildEcoCard()),
+                    const SizedBox(height: 14),
+                    _staggered(i++, _buildMusicCard(context)),
+                    if (_privacyOptionsRequired) ...[
+                      const SizedBox(height: 14),
+                      _staggered(
+                        i++,
+                        _navRow(
+                          icon: Icons.privacy_tip_rounded,
+                          color: AppColors.purple,
+                          title: tr('Confidențialitate reclame', 'Ad privacy'),
+                          onTap: () => AdsService.instance.showPrivacyOptionsForm(),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+                    // Singurul loc din joc de unde se poate DA ÎNAPOI o blocare
+                    // — blocarea în sine se face din chat (vezi
+                    // widgets/moderation_sheet.dart), unde te și deranjează
+                    // cineva, dar acolo nu mai ajungi după ce i-ai ascuns
+                    // mesajele.
+                    _staggered(
+                      i++,
+                      _navRow(
+                        icon: Icons.block_rounded,
+                        color: AppColors.danger,
+                        title: tr('Jucători blocați', 'Blocked players'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BlockedPlayersScreen()),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _staggered(
+                      i++,
+                      _dangerRow(
+                        icon: Icons.restart_alt_rounded,
+                        label: tr('Resetează tot progresul', 'Reset all progress'),
+                        onTap: () => _confirmReset(context),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _staggered(
+                      i++,
+                      _dangerRow(
+                        icon: Icons.person_remove_rounded,
+                        label: tr('Șterge contul definitiv', 'Delete account permanently'),
+                        onTap: () => _confirmDeleteAccount(context),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    const Text('SodoQuizz — v1.0.0', style: TextStyle(color: Colors.white38, fontSize: 12)),
+                    const SizedBox(height: 20),
                   ],
-                  const SizedBox(height: 14),
-                  // Singurul loc din joc de unde se poate DA ÎNAPOI o blocare
-                  // — blocarea în sine se face din chat (vezi
-                  // widgets/moderation_sheet.dart), unde te și deranjează
-                  // cineva, dar acolo nu mai ajungi după ce i-ai ascuns
-                  // mesajele.
-                  _navRow(
-                    icon: Icons.block_rounded,
-                    color: AppColors.danger,
-                    title: tr('Jucători blocați', 'Blocked players'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const BlockedPlayersScreen()),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _dangerRow(
-                    icon: Icons.restart_alt_rounded,
-                    label: tr('Resetează tot progresul', 'Reset all progress'),
-                    onTap: () => _confirmReset(context),
-                  ),
-                  const SizedBox(height: 10),
-                  _dangerRow(
-                    icon: Icons.person_remove_rounded,
-                    label: tr('Șterge contul definitiv', 'Delete account permanently'),
-                    onTap: () => _confirmDeleteAccount(context),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text('SodoQuizz — v1.0.0', style: TextStyle(color: Colors.white38, fontSize: 12)),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -446,25 +495,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? subtitle,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: Colors.white.withAlpha(14),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
+          border: Border.all(color: Colors.white.withAlpha(28)),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(9),
+              width: 38,
+              height: 38,
               decoration: BoxDecoration(
-                color: color.withAlpha(40),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [color, color.withAlpha(140)],
+                ),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withAlpha(60)),
               ),
-              child: Icon(icon, color: color, size: 20),
+              alignment: Alignment.center,
+              child: Icon(icon, color: Colors.white, size: 19),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -487,15 +543,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _dangerRow({required IconData icon, required String label, required VoidCallback onTap}) {
-    return GestureDetector(
+    return Pressable(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.danger.withAlpha(30),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [AppColors.danger.withAlpha(45), AppColors.danger.withAlpha(20)],
+          ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.danger.withAlpha(120)),
+          border: Border.all(color: AppColors.danger.withAlpha(140)),
         ),
         child: Row(
           children: [
