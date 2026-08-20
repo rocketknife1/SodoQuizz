@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/astrosodo.dart';
+import '../../core/obby.dart';
 import '../../core/betting.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
@@ -212,6 +214,24 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                   '4 tanks, $tanksRoundSeconds seconds, no stake'),
               color: AppColors.orange,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.quizzTanks),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.rocket_launch_rounded,
+              label: 'Astro Sodo',
+              subtitle: tr('2-6 nave, cursă cu obstacole, $astroSodoObstacleCount întrebări',
+                  '2-6 ships, obstacle race, $astroSodoObstacleCount questions'),
+              color: AppColors.teal,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.astroSodo),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.directions_run_rounded,
+              label: 'Obby',
+              subtitle: tr('2-6 concurenți, cursă de obstacole, $obbyObstacleCount întrebări',
+                  '2-6 racers, obstacle course, $obbyObstacleCount questions'),
+              color: AppColors.play,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.obby),
             ),
           ],
         ),

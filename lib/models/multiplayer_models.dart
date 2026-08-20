@@ -14,18 +14,27 @@ enum MatchStatus { lobby, playing, finished }
 /// votează în secret, vezi MultiplayerHigherLowerScreen. [quizzTanks] e
 /// lupta cu bare de viață: patru jucători, întrebări de cultură generală,
 /// timp fix de răspuns, iar cine răspunde corect își alege ținta —
-/// vezi core/tanks.dart și MultiplayerTanksScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks }
+/// vezi core/tanks.dart și MultiplayerTanksScreen. [astroSodo] e cursa
+/// spațială: de la 2 la 6 nave, fiecare pe culoarul ei presărat cu
+/// bolovani, iar un răspuns corect trece nava peste bolovanul din față —
+/// vezi core/astrosodo.dart și MultiplayerAstroSodoScreen. [obby] e cursa de
+/// obstacole tip Roblox: de la 2 la 6 personaje pe aceeași pistă, camera
+/// trece la 3rd-person (ca CJ din San Andreas) după fiecare întrebare, iar
+/// un răspuns corect face personajul să sară peste obstacolul din față —
+/// aceeași mecanică de progres ca [astroSodo], vezi core/obby.dart și
+/// MultiplayerObbyScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks, astroSodo, obby }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
-/// ([MatchGameMode.higherLower] și [MatchGameMode.quizzTanks]) —
-/// [answering] cât se așteaptă răspunsurile, [targeting] doar la Quizz
-/// Tanks (cei care au răspuns corect își aleg ținta), [revealed] după ce
-/// runda a fost rezolvată (câștigătorii la Higher & Lower, proiectilele
-/// trase la Quizz Tanks).
+/// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
+/// [MatchGameMode.astroSodo]) — [answering] cât se așteaptă răspunsurile,
+/// [targeting] doar la Quizz Tanks (cei care au răspuns corect își aleg
+/// ținta), [revealed] după ce runda a fost rezolvată (câștigătorii la
+/// Higher & Lower, proiectilele trase la Quizz Tanks, navele avansate la
+/// Astro Sodo).
 ///
-/// Higher & Lower nu trece NICIODATĂ prin [targeting] — sare direct de la
-/// [answering] la [revealed], ca înainte.
+/// Higher & Lower și Astro Sodo nu trec NICIODATĂ prin [targeting] — sar
+/// direct de la [answering] la [revealed], ca înainte.
 ///
 /// Numele valorilor e și ce se scrie în Firestore, deci nu se pot redenumi
 /// fără să rămână în urmă meciurile aflate în desfășurare.
@@ -236,6 +245,18 @@ class MatchPlayer {
   final int hp;
   final int damageDealt;
 
+  /// Doar [MatchGameMode.astroSodo] sau [MatchGameMode.obby]: câte obstacole
+  /// a trecut jucătorul de la începutul meciului — bolovani la Astro Sodo,
+  /// sărituri peste obstacole la Obby — din cele [astroSodoObstacleCount]
+  /// / [obbyObstacleCount] ale pistei lui. Vezi core/astrosodo.dart și
+  /// core/obby.dart. Ținut separat de [score] deși [score] urcă exact în pas
+  /// cu el (vezi MultiplayerService.resolveAstroSodoRound/resolveObbyRound):
+  /// [score] e câmpul citit de restul aplicației (clasament, premii),
+  /// [obstaclesCleared] e cifra proprie modului, folosită să deseneze
+  /// poziția pe pistă. Cele două moduri nu rulează niciodată în același
+  /// meci, deci refolosirea aceluiași câmp nu ambiguizează nimic.
+  final int obstaclesCleared;
+
   /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi
   /// [MatchInfo.stake]). Scrisă o singură dată, la intrare, și citită de TOȚI
   /// clienții la final, ca fiecare să calculeze exact aceeași împărțire.
@@ -271,6 +292,7 @@ class MatchPlayer {
     this.avatarStyle = '',
     this.hp = tanksMaxHp,
     this.damageDealt = 0,
+    this.obstaclesCleared = 0,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -289,6 +311,7 @@ class MatchPlayer {
       avatarStyle: data['avatarStyle'] as String? ?? '',
       hp: data['hp'] as int? ?? tanksMaxHp,
       damageDealt: data['damageDealt'] as int? ?? 0,
+      obstaclesCleared: data['obstaclesCleared'] as int? ?? 0,
     );
   }
 
@@ -305,6 +328,7 @@ class MatchPlayer {
         // formă peste tot; în afara Quizz Tanks nu le citește nimeni.
         'hp': hp,
         'damageDealt': damageDealt,
+        'obstaclesCleared': obstaclesCleared,
         'joinedAt': FieldValue.serverTimestamp(),
       };
 }

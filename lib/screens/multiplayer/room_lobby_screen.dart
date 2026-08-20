@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/astrosodo.dart';
 import '../../core/chat_filter.dart';
 import '../../core/lang.dart';
+import '../../core/obby.dart';
 import '../../core/tanks.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
@@ -14,8 +16,10 @@ import '../../widgets/moderation_sheet.dart';
 import '../../widgets/network_scan_animation.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/space_background.dart';
+import 'multiplayer_astrosodo_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
+import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, premiile mesei
@@ -180,6 +184,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
           builder: (_) => switch (gameMode) {
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: widget.matchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: widget.matchId),
+            MatchGameMode.astroSodo => MultiplayerAstroSodoScreen(matchId: widget.matchId),
+            MatchGameMode.obby => MultiplayerObbyScreen(matchId: widget.matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: widget.matchId),
           },
         ),
@@ -266,6 +272,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                               child: _buildCodeBanner(info?.code),
                             ),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
+                            if (info?.gameMode == MatchGameMode.astroSodo) _buildAstroSodoBanner(players.length),
+                            if (info?.gameMode == MatchGameMode.obby) _buildObbyBanner(players.length),
                             if (info?.gameMode == MatchGameMode.quizzTanks)
                               _buildTanksBanner(players.length)
                             else
@@ -395,6 +403,48 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
           Text('🍞', style: TextStyle(fontSize: 16)),
           SizedBox(width: 8),
           Text('Mod: Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildObbyBanner(int playerCount) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.play.withAlpha(35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.play.withAlpha(140)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🏃', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Text('Mod: Obby • $playerCount/$obbyMaxPlayers',
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAstroSodoBanner(int playerCount) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.teal.withAlpha(35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.teal.withAlpha(140)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('🚀', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Text('Mod: Astro Sodo • $playerCount/$astroSodoMaxPlayers',
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
     );

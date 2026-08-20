@@ -20,8 +20,10 @@ import 'firebase_options.dart';
 import 'models/multiplayer_models.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
+import 'screens/multiplayer/multiplayer_astrosodo_screen.dart';
 import 'screens/multiplayer/multiplayer_higher_lower_screen.dart';
 import 'screens/multiplayer/multiplayer_match_screen.dart';
+import 'screens/multiplayer/multiplayer_obby_screen.dart';
 import 'screens/multiplayer/multiplayer_tanks_screen.dart';
 import 'widgets/in_app_notification.dart';
 
@@ -227,6 +229,8 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
         builder: (_) => switch (gameMode) {
           MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: matchId),
           MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: matchId),
+          MatchGameMode.astroSodo => MultiplayerAstroSodoScreen(matchId: matchId),
+          MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
           MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
         },
       ),

@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../core/astrosodo.dart';
 import '../../core/betting.dart';
+import '../../core/obby.dart';
 import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
@@ -17,8 +19,10 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
+import 'multiplayer_astrosodo_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
+import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
 
 /// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
@@ -426,6 +430,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           builder: (_) => switch (gameMode) {
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: newMatchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: newMatchId),
+            MatchGameMode.astroSodo => MultiplayerAstroSodoScreen(matchId: newMatchId),
+            MatchGameMode.obby => MultiplayerObbyScreen(matchId: newMatchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
           },
         ),
@@ -704,6 +710,22 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                       fontSize: 11.5,
                                       fontWeight: FontWeight.w800,
                                     ),
+                                  ),
+                                ),
+                              if (widget.gameMode == MatchGameMode.astroSodo)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    p.obstaclesCleared >= astroSodoObstacleCount ? '🏁' : '🪨 ${p.obstaclesCleared}/$astroSodoObstacleCount',
+                                    style: const TextStyle(color: AppColors.teal, fontSize: 11.5, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              if (widget.gameMode == MatchGameMode.obby)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    p.obstaclesCleared >= obbyObstacleCount ? '🏁' : '🏃 ${p.obstaclesCleared}/$obbyObstacleCount',
+                                    style: const TextStyle(color: AppColors.play, fontSize: 11.5, fontWeight: FontWeight.w800),
                                   ),
                                 ),
                               // La Quizz Tanks "punctele" chiar SUNT daunele

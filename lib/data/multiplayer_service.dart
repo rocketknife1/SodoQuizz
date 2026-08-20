@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../core/astrosodo.dart';
 import '../core/betting.dart';
 import '../core/lang.dart';
+import '../core/obby.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
 
@@ -32,9 +34,15 @@ const int matchPlayerCount = 11;
 /// Câți jucători încap într-o cameră, după modul ei de joc. Quizz Tanks e
 /// singurul cu limită proprie ([tanksPlayerCount] = 4): acolo numărul nu e o
 /// preferință, ci parte din reguli — „cine răspunde corect trage în ceilalți
-/// trei" și arena desenată 2×2 (vezi core/tanks.dart).
-int maxPlayersForMode(MatchGameMode mode) =>
-    mode == MatchGameMode.quizzTanks ? tanksPlayerCount : matchPlayerCount;
+/// trei" și arena desenată 2×2 (vezi core/tanks.dart). Astro Sodo are limita
+/// lui proprie ([astroSodoMaxPlayers] = 6): atâtea culoare încap lizibil unul
+/// sub altul pe ecranul de cursă, vezi core/astrosodo.dart.
+int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
+      MatchGameMode.quizzTanks => tanksPlayerCount,
+      MatchGameMode.astroSodo => astroSodoMaxPlayers,
+      MatchGameMode.obby => obbyMaxPlayers,
+      MatchGameMode.classic || MatchGameMode.higherLower => matchPlayerCount,
+    };
 
 /// Timp minim garantat între un tap al jucătorului (create/join room, dat
 /// un răspuns, trimis un mesaj) și finalizarea scrierii în Firestore — nu
@@ -436,6 +444,123 @@ class MultiplayerService {
       });
     } catch (e) {
       debugPrint('MultiplayerService.advanceSyncRound a esuat: $e');
+    }
+  }
+
+  // ─── Astro Sodo ─────────────────────────────────────────────────────────
+
+  /// Calculează rezultatul rundei curente de Astro Sodo — aceeași gardă
+  /// anti-cursă, apelabilă de ORICE client, ca la [resolveHigherLowerRound].
+  /// Spre deosebire de Higher & Lower, nu există eliminare: cine greșește
+  /// sau nu apucă să răspundă rămâne pur și simplu pe loc, fără să iasă din
+  /// cursă — mai are șansa la runda următoare.
+  ///
+  /// Meciul se termină fie instant (o navă ajunge la
+  /// [astroSodoObstacleCount] bolovani trecuți — victorie imediată, nu se
+  /// mai așteaptă restul întrebărilor), fie la epuizarea celor
+  /// [astroSodoObstacleCount] runde, caz în care clasamentul rămâne cel dat
+  /// de câți bolovani a trecut fiecare navă.
+  Future<void> resolveAstroSodoRound({
+    required String matchId,
+    required int roundIndex,
+    required String correctAnswer,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja rezolvată de alt client - nimic de facut
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final winnerIds = <String>[];
+        var anyFinished = false;
+        for (final id in playerIds) {
+          final doc = await tx.get(matchRef.collection('players').doc(id));
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          // o navă deja ajunsă la final nu mai avansează - stă acolo,
+          // spectatoare, până se încheie meciul pentru toată lumea.
+          final already = pData['obstaclesCleared'] as int? ?? 0;
+          if (already >= astroSodoObstacleCount) continue;
+          if (answers[id] != correctAnswer) continue;
+          winnerIds.add(id);
+          final cleared = already + 1;
+          tx.update(doc.reference, {
+            'obstaclesCleared': cleared,
+            'score': (pData['score'] as int? ?? 0) + astroSodoPointsPerObstacle,
+          });
+          if (cleared >= astroSodoObstacleCount) anyFinished = true;
+        }
+        final outOfRounds = roundIndex + 1 >= astroSodoObstacleCount;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundWinnerIds': winnerIds,
+          if (anyFinished || outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveAstroSodoRound a esuat: $e');
+    }
+  }
+
+  // ─── Obby ───────────────────────────────────────────────────────────────
+
+  /// Calculează rezultatul rundei curente de Obby — aceeași gardă anti-cursă
+  /// ca [resolveAstroSodoRound], și aceeași mecanică: cine greșește sau nu
+  /// apucă să răspundă rămâne pe loc, fără eliminare.
+  ///
+  /// Meciul se termină fie instant (un personaj trece de
+  /// [obbyObstacleCount] obstacole — victorie imediată), fie la epuizarea
+  /// celor [obbyObstacleCount] runde, caz în care clasamentul final rămâne
+  /// cel dat de câte obstacole a trecut fiecare personaj.
+  Future<void> resolveObbyRound({
+    required String matchId,
+    required int roundIndex,
+    required String correctAnswer,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja rezolvată de alt client - nimic de facut
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final winnerIds = <String>[];
+        var anyFinished = false;
+        for (final id in playerIds) {
+          final doc = await tx.get(matchRef.collection('players').doc(id));
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          // un personaj deja ajuns la final nu mai sare - stă acolo,
+          // spectator, până se încheie meciul pentru toată lumea.
+          final already = pData['obstaclesCleared'] as int? ?? 0;
+          if (already >= obbyObstacleCount) continue;
+          if (answers[id] != correctAnswer) continue;
+          winnerIds.add(id);
+          final cleared = already + 1;
+          tx.update(doc.reference, {
+            'obstaclesCleared': cleared,
+            'score': (pData['score'] as int? ?? 0) + obbyPointsPerObstacle,
+          });
+          if (cleared >= obbyObstacleCount) anyFinished = true;
+        }
+        final outOfRounds = roundIndex + 1 >= obbyObstacleCount;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundWinnerIds': winnerIds,
+          if (anyFinished || outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveObbyRound a esuat: $e');
     }
   }
 
