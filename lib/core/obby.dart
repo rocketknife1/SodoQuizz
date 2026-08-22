@@ -48,7 +48,7 @@ const int obbyChoiceSeconds = 5;
 const int obbyRevealSeconds = 5;
 
 /// Câte plăci apar în fața jucătorului la pasul de alegere — trei, ca să se
-/// mapeze natural pe stânga/centru/dreapta la joystick.
+/// mapeze natural pe stânga/centru/dreapta.
 const int obbyPlatformChoiceCount = 3;
 
 /// Câte din cele [obbyPlatformChoiceCount] plăci sunt false. Cu 1 din 3,

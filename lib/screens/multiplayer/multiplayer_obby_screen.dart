@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flame/game.dart' show GameWidget;
 import 'package:flutter/material.dart';
 import '../../core/lang.dart';
 import '../../core/obby.dart';
@@ -10,6 +11,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/countdown_ring.dart';
+import '../../widgets/obby_game.dart';
 import 'multiplayer_results_screen.dart';
 
 /// **Obby** — cursă de obstacole tip Roblox, de la 2 la 6 personaje pe
@@ -37,6 +39,12 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
 
   late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
+
+  /// Jocul Flame — o singură instanță pentru tot ecranul, creată o dată și
+  /// hrănită cu date noi la fiecare snapshot (vezi [_onData]/[_feedGame]).
+  /// NU importă multiplayer_service.dart, primește doar acest callback.
+  late final ObbyGame _game = ObbyGame(onPlatformChosen: _onPlatformChosenFromGame);
+  MatchInfo? _latestInfo;
 
   int _lastRoundIndex = -1;
   bool _showAdvance = false;
@@ -169,7 +177,39 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     MultiplayerService.instance.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
   }
 
+  void _onPlatformChosenFromGame(int index) {
+    final info = _latestInfo;
+    if (info != null) _choosePlatform(info, index);
+  }
+
+  /// Hrănește jocul Flame cu snapshot-ul curent — apelat din [_onData], deci
+  /// la fiecare rebuild al StreamBuilder-ului. [ObbyGame.applyRoundState] e
+  /// idempotent, deci a-l chema des (inclusiv fără schimbări) e sigur.
+  void _feedGame(MatchInfo info, List<MatchPlayer> players) {
+    final me = MultiplayerService.instance.currentPlayerId;
+    final racers = [
+      for (final p in players)
+        ObbyRacerData(id: p.id, name: p.name, color: pickAvatarColor(p.avatarSeed), progress: (p.obstaclesCleared / obbyObstacleCount).clamp(0.0, 1.0), isMe: p.id == me),
+    ];
+    final phase = switch (info.roundPhase) {
+      RoundPhase.choosing => ObbyPhase.choosing,
+      RoundPhase.revealed => ObbyPhase.revealed,
+      _ => ObbyPhase.idle,
+    };
+    final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
+    final revealT = (elapsed / max(obbyRevealSeconds - 0.6, 0.4)).clamp(0.0, 1.0);
+    _game.applyRoundState(
+      phase: phase,
+      racers: racers,
+      myId: me,
+      myChoice: info.roundPlatformChoices[me],
+      revealAdvancedThisRound: _advancedThisRound(info, me),
+      revealT: revealT,
+    );
+  }
+
   void _onData(MatchInfo info, List<MatchPlayer> players) {
+    _latestInfo = info;
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _showAdvance = false;
@@ -226,6 +266,8 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
         );
       });
     }
+
+    _feedGame(info, players);
   }
 
   @override
@@ -258,15 +300,30 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                       break;
                     }
                   }
+                  final showsGame = info.roundPhase == RoundPhase.revealed ||
+                      (info.roundPhase == RoundPhase.choosing && info.roundWinnerIds.contains(me));
                   return Column(
                     children: [
                       _buildTopBar(info),
                       Expanded(
-                        child: switch (info.roundPhase) {
-                          RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
-                          RoundPhase.choosing => _buildChoosingScene(info),
-                          _ => _buildAnsweringScene(info, myPlayer, players),
-                        },
+                        child: Stack(
+                          children: [
+                            // UN SINGUR GameWidget pentru tot ecranul, montat o
+                            // dată și doar ascuns când nu e nevoie de el. Două
+                            // GameWidget-uri pe aceeași instanță de joc (unul
+                            // per fază) aruncau la fiecare schimbare de fază.
+                            Positioned.fill(
+                              child: Offstage(offstage: !showsGame, child: GameWidget(game: _game)),
+                            ),
+                            Positioned.fill(
+                              child: switch (info.roundPhase) {
+                                RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
+                                RoundPhase.choosing => _buildChoosingScene(info),
+                                _ => _buildAnsweringScene(info, myPlayer, players),
+                              },
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   );
@@ -424,7 +481,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
 
   // ─── Faza de alegere a plăcii ───────────────────────────────────────────
   // PROVIZORIU (etapa 1): butoane simple. Se înlocuiesc cu plăci desenate în
-  // scena Flame + joystick la etapa 3, dar rămân ca variantă de rezervă
+  // scena Flame, dar rămân ca variantă de rezervă
   // (tap direct), nu se aruncă.
 
   Widget _buildChoosingScene(MatchInfo info) {
@@ -432,57 +489,87 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     final amChooser = info.roundWinnerIds.contains(me);
     final myChoice = info.roundPlatformChoices[me];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-      child: Column(
-        children: [
-          CountdownRing(
-            secondsLeft: _choiceSecondsLeftFor(info),
-            totalSeconds: obbyChoiceSeconds,
-            size: 40,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            amChooser
-                ? tr('Ai răspuns corect! Pe ce placă sari?', 'Correct! Which platform do you jump on?')
-                : tr('Ceilalți își aleg placa...', 'The others are picking their platform...'),
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          if (amChooser)
-            Text(
-              tr('Una din ele e falsă și cazi prin ea. Nimerești bine → la întrebarea următoare vezi doar 2 variante.',
-                  'One of them is fake and you fall through. Land safely → next question shows only 2 options.'),
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.white54, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.35),
-            ),
-          const SizedBox(height: 22),
-          if (amChooser)
-            Row(
-              children: [
-                for (var i = 0; i < obbyPlatformChoiceCount; i++) ...[
-                  if (i > 0) const SizedBox(width: 10),
-                  Expanded(
-                    child: _platformButton(
-                      index: i,
-                      selected: myChoice == i,
-                      locked: myChoice != null,
-                      onTap: () => _choosePlatform(info, i),
+    if (!amChooser) {
+      return Center(
+        child: Text(
+          tr('Ceilalți își aleg placa...', 'The others are picking their platform...'),
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        // scena Flame (personajul + cele 3 plăci) e montată o
+        // singură dată, mai sus în build — aici doar suprapunem UI-ul.
+        Positioned(
+          left: 16,
+          right: 16,
+          top: 8,
+          child: Column(
+            children: [
+              CountdownRing(secondsLeft: _choiceSecondsLeftFor(info), totalSeconds: obbyChoiceSeconds, size: 40),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(color: Colors.black.withAlpha(120), borderRadius: BorderRadius.circular(14)),
+                child: Column(
+                  children: [
+                    Text(
+                      tr('Ai răspuns corect! Pe ce placă sari?', 'Correct! Which platform do you jump on?'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                     ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tr('Una din ele e falsă și cazi prin ea. Apasă placa pe care vrei să sari.',
+                          'One of them is fake and you fall through. Tap the platform you want to jump on.'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.white54, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.3),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        // butoane de rezervă — aceeași alegere ca tap-ul direct pe placă din
+        // scenă, pentru accesibilitate și pentru cazul rar în care Flame nu
+        // randează corect pe un device anume.
+        Positioned(
+          left: 16,
+          right: 16,
+          bottom: 220,
+          child: Row(
+            children: [
+              for (var i = 0; i < obbyPlatformChoiceCount; i++) ...[
+                if (i > 0) const SizedBox(width: 10),
+                Expanded(
+                  child: _platformButton(
+                    index: i,
+                    selected: myChoice == i,
+                    locked: myChoice != null,
+                    onTap: () => _choosePlatform(info, i),
                   ),
-                ],
+                ),
               ],
+            ],
+          ),
+        ),
+        if (myChoice != null)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 60,
+            child: Center(
+              child: Text(
+                tr('✓ Ai sărit! Se așteaptă ceilalți...', '✓ You jumped! Waiting for the others...'),
+                style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700),
+              ),
             ),
-          if (amChooser && myChoice != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              tr('✓ Ai sărit! Se așteaptă ceilalți...', '✓ You jumped! Waiting for the others...'),
-              style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700),
-            ),
-          ],
-        ],
-      ),
+          ),
+      ],
     );
   }
 
@@ -559,26 +646,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   }
 
   Widget _buildRaceScene(MatchInfo info, List<MatchPlayer> players, MatchPlayer? myPlayer) {
-    final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
-    final jumpT = (elapsed / max(obbyRevealSeconds - 0.6, 0.4)).clamp(0.0, 1.0);
-    final racers = [
-      for (var i = 0; i < players.length; i++)
-        _Racer(
-          id: players[i].id,
-          name: players[i].name,
-          color: pickAvatarColor(players[i].avatarSeed),
-          progress: (players[i].obstaclesCleared / obbyObstacleCount).clamp(0.0, 1.0),
-          lane: players.length <= 1 ? 0.5 : i / (players.length - 1),
-          justJumped: _advancedThisRound(info, players[i].id),
-          isMe: players[i].id == MultiplayerService.instance.currentPlayerId,
-        ),
-    ];
-
     return Stack(
       children: [
-        Positioned.fill(
-          child: CustomPaint(painter: _ObbyScenePainter(racers: racers, jumpT: jumpT)),
-        ),
+        // camera 3rd-person (ObbyGame._buildRevealScene / camera.follow) e
+        // montată o singură dată mai sus în build.
         Positioned(
           left: 0,
           right: 0,
@@ -602,28 +673,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   }
 }
 
-/// Datele minime necesare ca [_ObbyScenePainter] să deseneze un personaj pe
-/// pistă — extrase din [MatchPlayer] o singură dată per cadru, ca painter-ul
-/// să nu depindă de restul modelului.
-class _Racer {
-  final String id;
-  final String name;
-  final Color color;
-  final double progress; // 0..1, cât din pistă a trecut
-  final double lane; // 0..1, poziția lui pe lățimea pistei
-  final bool justJumped;
-  final bool isMe;
-
-  const _Racer({
-    required this.id,
-    required this.name,
-    required this.color,
-    required this.progress,
-    required this.lane,
-    required this.justJumped,
-    required this.isMe,
-  });
-}
 
 /// Personajul din colțul ecranului, cât timp jucătorul răspunde — o siluetă
 /// simplă (cap + corp), care abia se leagănă (idle), ca ecranul să nu pară
@@ -701,136 +750,4 @@ class _SilhouettePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SilhouettePainter oldDelegate) => oldDelegate.bob != bob || oldDelegate.color != color;
-}
-
-/// Scena de 3rd-person a pistei — o pistă în perspectivă, cu linia de sosire
-/// la orizont, pe care alergătorii avansează dinspre camera (jos, mare) spre
-/// finish (sus, mic). Cine tocmai a răspuns corect ([_Racer.justJumped])
-/// sare, cu un arc simplu, peste obstacolul curent.
-class _ObbyScenePainter extends CustomPainter {
-  final List<_Racer> racers;
-  final double jumpT; // 0..1, cât de avansată e animația de săritură a rundei curente
-
-  const _ObbyScenePainter({required this.racers, required this.jumpT});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final horizon = h * 0.30;
-
-    // cerul
-    final skyRect = Rect.fromLTWH(0, 0, w, horizon);
-    canvas.drawRect(
-      skyRect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0E1330), Color(0xFF232A52), Color(0xFF3E4A82)],
-        ).createShader(skyRect),
-    );
-
-    // pista în perspectivă: două margini care converg spre punctul de fugă
-    final vp = Offset(w / 2, horizon);
-    final groundRect = Rect.fromLTRB(0, horizon, w, h);
-    canvas.drawRect(
-      groundRect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2C6E5B), Color(0xFF163826)],
-        ).createShader(groundRect),
-    );
-
-    final railPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = Colors.white.withAlpha(70);
-    canvas.drawLine(vp, Offset(w * 0.06, h), railPaint);
-    canvas.drawLine(vp, Offset(w * 0.94, h), railPaint);
-
-    // marcaje transversale, una pe fiecare obstacol al pistei
-    final markPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..color = Colors.white.withAlpha(50);
-    for (var i = 1; i <= obbyObstacleCount; i++) {
-      final depth = i / obbyObstacleCount;
-      final y = horizon + (h - horizon) * (1 - depth) * (1 - depth);
-      final spread = 0.06 + (1 - depth) * 0.88;
-      canvas.drawLine(Offset(w * (0.5 - spread / 2), y), Offset(w * (0.5 + spread / 2), y), markPaint);
-    }
-
-    // linia de sosire, chiar la orizont
-    _paintFinishBanner(canvas, size, vp);
-
-    // alergătorii, ordonați ca cei "din spate" (aproape de cameră) să se
-    // deseneze peste cei "din față" (spre orizont) — perspectivă corectă.
-    final sorted = List.of(racers)..sort((a, b) => a.progress.compareTo(b.progress));
-    for (final r in sorted.reversed) {
-      _paintRacer(canvas, size, vp, r);
-    }
-  }
-
-  void _paintFinishBanner(Canvas canvas, Size size, Offset vp) {
-    final w = size.width * 0.22;
-    final rect = Rect.fromCenter(center: vp - const Offset(0, 6), width: w, height: 10);
-    final paint = Paint()..color = Colors.white.withAlpha(230);
-    canvas.drawRect(rect, paint);
-    const stripes = 8;
-    final stripeW = w / stripes;
-    final blackPaint = Paint()..color = Colors.black.withAlpha(220);
-    for (var i = 0; i < stripes; i++) {
-      if (i.isEven) continue;
-      canvas.drawRect(Rect.fromLTWH(rect.left + i * stripeW, rect.top, stripeW, rect.height), blackPaint);
-    }
-  }
-
-  void _paintRacer(Canvas canvas, Size size, Offset vp, _Racer r) {
-    final w = size.width;
-    final h = size.height;
-    // depth: 0 = start (aproape de cameră, jos, mare), 1 = finish (la orizont, mic)
-    final depth = Curves.easeOutCubic.transform(r.progress);
-    final y = vp.dy + (h - vp.dy) * (1 - depth) * (1 - depth) + (h * 0.02);
-    final scale = (1 - depth) * 0.85 + 0.15;
-    final laneSpread = w * 0.30 * scale;
-    final x = w / 2 + (r.lane - 0.5) * laneSpread * 2 + (vp.dx - w / 2) * depth;
-
-    // arcul de săritură: doar cel/cei care tocmai au răspuns corect
-    var jumpLift = 0.0;
-    if (r.justJumped) {
-      jumpLift = sin(jumpT.clamp(0.0, 1.0) * pi) * scale * 46;
-    }
-
-    final bodyW = 40 * scale;
-    final bodyH = 58 * scale;
-    final bounds = Rect.fromCenter(center: Offset(x, y - bodyH / 2 - jumpLift), width: bodyW, height: bodyH);
-
-    // umbra rămâne pe sol, ca săritura să se vadă că e „în aer", nu doar
-    // personajul mutat mai sus.
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset(x, y), width: bodyW * 0.8, height: bodyW * 0.28),
-      Paint()..color = Colors.black.withAlpha((90 * scale).round().clamp(0, 90)),
-    );
-
-    paintObbySilhouette(canvas, bounds, r.color, legSpread: jumpLift > 1 ? 0.6 : 0.15);
-
-    if (scale > 0.35) {
-      final tp = TextPainter(
-        text: TextSpan(
-          text: r.name,
-          style: TextStyle(color: Colors.white, fontSize: (12 * scale).clamp(8, 12), fontWeight: FontWeight.w800),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-        ellipsis: '…',
-      )..layout(maxWidth: 90);
-      tp.paint(canvas, Offset(x - tp.width / 2, bounds.top - tp.height - 2));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _ObbyScenePainter oldDelegate) => true;
 }
