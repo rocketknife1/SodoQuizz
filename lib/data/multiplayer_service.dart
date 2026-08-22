@@ -541,10 +541,17 @@ class MultiplayerService {
           return; // deja închisă de alt client
         }
         final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        // Firestore cere ca TOATE citirile unei tranzacții să se termine
+        // înainte de orice scriere — de-aia colectăm toate documentele
+        // aici, într-o singură trecere, și scriem abia mai jos, într-o a
+        // doua trecere. Exact tiparul din resolveHigherLowerRound.
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
         final winnerIds = <String>[];
         final clearedPerPlayer = <int>[];
-        for (final id in playerIds) {
-          final doc = await tx.get(matchRef.collection('players').doc(id));
+        for (final doc in playerDocs) {
           if (!doc.exists) continue;
           final pData = doc.data()!;
           final already = pData['obstaclesCleared'] as int? ?? 0;
@@ -556,7 +563,7 @@ class MultiplayerService {
           if (pData['nextQuestionBonus'] == true) {
             tx.update(doc.reference, {'nextQuestionBonus': false});
           }
-          if (answers[id] == correctAnswer) winnerIds.add(id);
+          if (answers[doc.id] == correctAnswer) winnerIds.add(doc.id);
         }
 
         // Nimeni n-a răspuns corect: n-are cine alege, sărim direct la
@@ -618,10 +625,15 @@ class MultiplayerService {
         final rawChoices = data['roundPlatformChoices'] as Map? ?? const {};
         final winnerIds = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
 
-        final clearedPerPlayer = <int>[];
+        // Aceeasi regula: toate citirile inainte de orice scriere.
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
         for (final id in playerIds) {
-          final doc = await tx.get(matchRef.collection('players').doc(id));
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
+        final clearedPerPlayer = <int>[];
+        for (final doc in playerDocs) {
           if (!doc.exists) continue;
+          final id = doc.id;
           final pData = doc.data()!;
           final already = pData['obstaclesCleared'] as int? ?? 0;
 
