@@ -87,9 +87,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   Timer? _tick;
   Timer? _advanceTimer;
+  Timer? _heartbeatTimer;
   int _lastRoundIndex = -1;
   bool _resolving = false;
   bool _navigatedToResults = false;
+  bool _left = false;
 
   /// Viața fiecărui tanc la ÎNCEPUTUL rundei curente — reperul din care
   /// coboară „fantoma" barei (vezi TankHpBar). Se ia o singură dată pe
@@ -183,12 +185,16 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     _tick = Timer.periodic(const Duration(milliseconds: 250), (_) {
       if (mounted) setState(() {});
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
   void dispose() {
     _tick?.cancel();
     _advanceTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _fire.removeListener(_onFireTick);
     _fire.dispose();
     super.dispose();
@@ -209,6 +215,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   }
 
   Future<void> _leave() async {
+    if (_left) return;
+    _left = true;
     try {
       await MultiplayerService.instance.leaveMatch(widget.matchId);
     } catch (e) {

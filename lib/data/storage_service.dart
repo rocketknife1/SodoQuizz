@@ -536,8 +536,8 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
     final currentLevel = levelForXp(prefs.getInt(_xpKey) ?? 0);
-    final lastClaimed = prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel;
-    return (currentLevel - lastClaimed).clamp(0, 1000000);
+    final lastClaimed = (prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel).clamp(0, currentLevel);
+    return currentLevel - lastClaimed;
   }
 
   /// Calculează suma recompenselor TUTUROR nivelurilor trecute și încă
@@ -550,7 +550,11 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
     final currentLevel = levelForXp(prefs.getInt(_xpKey) ?? 0);
-    final lastClaimed = prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel;
+    // clamp la [0, currentLevel]: apără de o valoare coruptă/negativă ajunsă
+    // aici prin importAll (sincronizare cloud brută, fără validare de domeniu
+    // — vezi importAll mai jos), care ar face bucla de mai jos sa itereze un
+    // interval enorm.
+    final lastClaimed = (prefs.getInt(_lastClaimedRewardLevelKey) ?? currentLevel).clamp(0, currentLevel);
     if (currentLevel <= lastClaimed) return const LevelReward();
 
     var coins = 0, hints = 0, hearts = 0, gems = 0;

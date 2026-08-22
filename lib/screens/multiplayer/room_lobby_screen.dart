@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../core/astrosodo.dart';
 import '../../core/chat_filter.dart';
@@ -66,6 +68,11 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
   /// are pe cineva de dat afară înainte să închidă camera.
   int _playerCount = 0;
 
+  /// „Mai sunt aici" cât timp lobby-ul e deschis — vezi
+  /// MultiplayerService.matchHeartbeat. Fără el, o aplicație închisă brusc
+  /// din lobby lasă un jucător-fantomă care nu mai pleacă niciodată singur.
+  Timer? _heartbeatTimer;
+
   @override
   void initState() {
     super.initState();
@@ -73,10 +80,14 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
     AuthService.instance.multiplayerIdentity().then((identity) {
       if (mounted) setState(() => _displayName = identity.name);
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
   void dispose() {
+    _heartbeatTimer?.cancel();
     _chatController.dispose();
     _scrollController.dispose();
     _introCtrl.dispose();

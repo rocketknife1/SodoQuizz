@@ -7,6 +7,20 @@ import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 
+/// Unghiul (radiani) cu care trebuie rotită roata ca segmentul
+/// [resultIndex] (din [segmentCount] segmente egale) să ajungă sub ac.
+///
+/// Acul e sus (convenția -pi/2), iar segmentul i e DESENAT cu centrul la
+/// unghiul local -pi/2 + (i+0.5)*segmentAngle (vezi CustomPainter-ul roții)
+/// — deci rotația necesară e doar -(i+0.5)*segmentAngle, FĂRĂ -pi/2
+/// suplimentar. Bug fixat aici: formula veche scădea -pi/2 încă o dată,
+/// ceea ce ateriza segmentul cerut la stânga acului, nu sub el. Extrasă ca
+/// funcție separată (nu inline în _doSpin) exact ca să rămână testabilă.
+double wheelTargetAngle(int resultIndex, int segmentCount) {
+  final segmentAngle = 2 * pi / segmentCount;
+  return -(resultIndex + 0.5) * segmentAngle;
+}
+
 /// Un premiu de la Roata norocului — model flexibil (nu un singur
 /// tip+cantitate) ca să poată reprezenta și pachete combinate (ex. XP+viață).
 /// Toate câmpurile de recompensă sunt opționale (0 = nu se acordă); orice
@@ -151,13 +165,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
   Future<void> _doSpin() async {
     if (_spinning || _done) return;
     final resultIndex = _pickWeightedIndex();
-    final segmentAngle = 2 * pi / _prizes.length;
-    // acul e sus (unghi -pi/2 în convenția noastră). Segmentul i e desenat
-    // cu centrul la unghiul local -pi/2 + (i+0.5)*segmentAngle, așa că
-    // rotația care îl aduce sub ac e doar -(i+0.5)*segmentAngle — fără -pi/2
-    // suplimentar (bug-ul vechi scădea -pi/2 de două ori, ceea ce ateriza
-    // segmentul cerut la stânga acului, nu sub el).
-    final targetAngle = -(resultIndex + 0.5) * segmentAngle;
+    final targetAngle = wheelTargetAngle(resultIndex, _prizes.length);
     // mai multe ture decât înainte (7-9, nu 5-7) — combinat cu durata mai
     // mare, roata se învârte vizibil mai mult timp "plin", fără niciun
     // indiciu, înainte să înceapă să încetinească spre final.

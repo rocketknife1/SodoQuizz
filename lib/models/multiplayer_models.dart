@@ -26,19 +26,26 @@ enum MatchStatus { lobby, playing, finished }
 enum MatchGameMode { classic, higherLower, quizzTanks, astroSodo, obby }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
-/// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
-/// [MatchGameMode.astroSodo]) — [answering] cât se așteaptă răspunsurile,
-/// [targeting] doar la Quizz Tanks (cei care au răspuns corect își aleg
-/// ținta), [revealed] după ce runda a fost rezolvată (câștigătorii la
-/// Higher & Lower, proiectilele trase la Quizz Tanks, navele avansate la
-/// Astro Sodo).
+/// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks],
+/// [MatchGameMode.astroSodo] și [MatchGameMode.obby]) — [answering] cât se
+/// așteaptă răspunsurile, [targeting] doar la Quizz Tanks (cei care au
+/// răspuns corect își aleg ținta), [choosing] doar la Obby (cei care au
+/// răspuns corect își aleg placa pe care sar), [revealed] după ce runda a
+/// fost rezolvată (câștigătorii la Higher & Lower, proiectilele trase la
+/// Quizz Tanks, navele avansate la Astro Sodo, săritura reușită sau căderea
+/// prin placa falsă la Obby).
 ///
-/// Higher & Lower și Astro Sodo nu trec NICIODATĂ prin [targeting] — sar
-/// direct de la [answering] la [revealed], ca înainte.
+/// Fiecare fază intermediară aparține UNUI SINGUR mod: Higher & Lower și
+/// Astro Sodo sar direct de la [answering] la [revealed]; Quizz Tanks trece
+/// doar prin [targeting], niciodată prin [choosing]; Obby doar prin
+/// [choosing], niciodată prin [targeting]. Nicăieri în aplicație nu există un
+/// `switch` exhaustiv pe enum-ul ăsta (doar comparații `== RoundPhase.X` și
+/// `values.firstWhere(orElse:)`), tocmai ca o fază nouă să nu poată strica
+/// modurile care n-o folosesc.
 ///
 /// Numele valorilor e și ce se scrie în Firestore, deci nu se pot redenumi
 /// fără să rămână în urmă meciurile aflate în desfășurare.
-enum RoundPhase { answering, targeting, revealed }
+enum RoundPhase { answering, targeting, choosing, revealed }
 
 /// O tragere dintr-o rundă de Quizz Tanks, așa cum a ieșit din zarurile
 /// aruncate O SINGURĂ DATĂ, în tranzacția care rezolvă runda (vezi
@@ -127,6 +134,18 @@ class MatchInfo {
   /// secunde.
   final Map<String, String> roundTargets;
 
+  /// Doar [MatchGameMode.obby], în faza [RoundPhase.choosing]: uid → indexul
+  /// plăcii pe care a ales să sară (0..[obbyPlatformChoiceCount]-1). Exact ca
+  /// [roundTargets] la Quizz Tanks: cine a răspuns corect apare în
+  /// [roundWinnerIds] de la începutul fazei, iar cine a și apucat să aleagă
+  /// apare și aici.
+  ///
+  /// CARE placă e falsă NU se ține aici — se calculează identic pe fiecare
+  /// client din `obbyFakePlatformIndex` (core/obby.dart), determinist din
+  /// matchId + rundă + jucător. Vezi acolo pentru de ce nu e nevoie de o
+  /// scriere în plus.
+  final Map<String, int> roundPlatformChoices;
+
   const MatchInfo({
     required this.id,
     required this.mode,
@@ -149,6 +168,7 @@ class MatchInfo {
     this.roundShots = const [],
     this.roundDestroyedIds = const [],
     this.roundTargets = const {},
+    this.roundPlatformChoices = const {},
   });
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -187,6 +207,12 @@ class MatchInfo {
       ],
       roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
       roundTargets: Map<String, String>.from(data['roundTargets'] as Map? ?? const {}),
+      // (x as num).toInt() nu `as int`: Firestore poate întoarce un întreg
+      // scris de pe web ca `double`, iar un cast direct ar arunca.
+      roundPlatformChoices: {
+        for (final e in (data['roundPlatformChoices'] as Map? ?? const {}).entries)
+          e.key as String: (e.value as num).toInt(),
+      },
     );
   }
 
@@ -208,6 +234,7 @@ class MatchInfo {
         'roundShots': <Map<String, dynamic>>[],
         'roundDestroyedIds': <String>[],
         'roundTargets': <String, String>{},
+        'roundPlatformChoices': <String, int>{},
       };
 }
 
@@ -278,6 +305,13 @@ class MatchPlayer {
   /// celorlalți și ar ajunge la alte cifre decât ei.
   final bool finished;
 
+  /// Doar [MatchGameMode.obby]: a nimerit placa bună în runda trecută, deci la
+  /// întrebarea URMĂTOARE vede doar 2 variante din 4. Se aprinde în
+  /// `resolveObbyChoices` și se stinge în `closeObbyAnswering` — bonusul se
+  /// consumă la întrebarea la care s-a aplicat, indiferent dacă a nimerit-o
+  /// sau nu (altfel un jucător norocos l-ar păstra la nesfârșit).
+  final bool nextQuestionBonus;
+
   const MatchPlayer({
     required this.id,
     required this.name,
@@ -293,6 +327,7 @@ class MatchPlayer {
     this.hp = tanksMaxHp,
     this.damageDealt = 0,
     this.obstaclesCleared = 0,
+    this.nextQuestionBonus = false,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -312,6 +347,7 @@ class MatchPlayer {
       hp: data['hp'] as int? ?? tanksMaxHp,
       damageDealt: data['damageDealt'] as int? ?? 0,
       obstaclesCleared: data['obstaclesCleared'] as int? ?? 0,
+      nextQuestionBonus: data['nextQuestionBonus'] as bool? ?? false,
     );
   }
 
@@ -329,7 +365,11 @@ class MatchPlayer {
         'hp': hp,
         'damageDealt': damageDealt,
         'obstaclesCleared': obstaclesCleared,
+        'nextQuestionBonus': nextQuestionBonus,
         'joinedAt': FieldValue.serverTimestamp(),
+        // semnul de viață, împrospătat periodic cât timp ecranul e deschis —
+        // vezi MultiplayerService.matchHeartbeat.
+        'lastSeenAt': FieldValue.serverTimestamp(),
       };
 }
 

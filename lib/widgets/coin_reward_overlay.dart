@@ -3,6 +3,17 @@ import 'dart:ui' show PathMetric;
 import 'package:flutter/material.dart';
 import '../core/theme.dart';
 
+/// Câte copii ale iconiței formează șirul, pentru o recompensă de [amount] —
+/// plafonat la [_maxTrailUnits] indiferent cât de mare e recompensa reală
+/// (ex. bonus de sesiune). Extrasă ca funcție separată ca să rămână
+/// testabilă: cauza reală a bug-ului "traseu invizibil" la 6 simboluri a
+/// fost rotația+umbra blur desenate PE FIECARE iconiță (eliminate între
+/// timp, vezi [_CoinRewardAnimationState]), dar plafonul de mai jos e
+/// singura parte din reparație care mai poate regresa silențios — dacă
+/// cineva îl ridică peste ce s-a verificat vizual ca sigur, sau îl scoate.
+int trailUnitCount(int amount) => amount.clamp(1, _maxTrailUnits);
+const _maxTrailUnits = 5;
+
 /// Animația de recompensă: un praf magic (scântei) explodează EXACT din
 /// centrul ecranului, dezvăluie simbolurile recompensei, care apoi zboară în
 /// "șir indian" (vezi [_maxTrailUnits]) pe UN SINGUR traseu de tip slalom
@@ -104,7 +115,6 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
   // cauza reală a bug-ului "traseu invizibil" de mai sus la 6 simboluri) —
   // traseul vizibil vine din dâra desenată cu [_TrailPainter] (UN singur
   // Path desenat per cadru, indiferent câte inimi zboară), nu din umbre.
-  static const _maxTrailUnits = 5;
   static const _trailUnitWindow = 0.5;
   static const _trailBurstEnd = 0.30;
 
@@ -119,7 +129,7 @@ class _CoinRewardAnimationState extends State<_CoinRewardAnimation> with TickerP
   static const _plusFadeInEnd = 0.08;
   static const _plusHoldEnd = 0.62;
 
-  int get _trailUnitCount => widget.amount.clamp(1, _maxTrailUnits);
+  int get _trailUnitCount => trailUnitCount(widget.amount);
 
   double get _staggerStep {
     final n = _trailUnitCount;

@@ -65,17 +65,25 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   bool _midSynced = false;
   bool _finishing = false;
 
+  /// „Mai sunt aici" cât timp meciul e deschis — vezi
+  /// MultiplayerService.matchHeartbeat.
+  Timer? _heartbeatTimer;
+
   Question get _current => _questions[_qIndex];
 
   @override
   void initState() {
     super.initState();
     _load();
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
+    _heartbeatTimer?.cancel();
     super.dispose();
   }
 

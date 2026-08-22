@@ -41,10 +41,13 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   int _lastRoundIndex = -1;
   bool _showAdvance = false;
   bool _resolving = false;
+  bool _resolvingChoices = false;
   bool _navigatedToResults = false;
+  bool _left = false;
   Timer? _revealDelayTimer;
   Timer? _advanceTimer;
   Timer? _tickTimer;
+  Timer? _heartbeatTimer;
   DateTime? _revealedAtLocal;
 
   List<String>? _cachedChoices;
@@ -73,6 +76,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (mounted) setState(() {});
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
@@ -80,6 +86,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     _tickTimer?.cancel();
     _revealDelayTimer?.cancel();
     _advanceTimer?.cancel();
+    _heartbeatTimer?.cancel();
     _anim.dispose();
     super.dispose();
   }
@@ -91,7 +98,20 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     return (obbyRoundSeconds - elapsed).clamp(0, obbyRoundSeconds);
   }
 
+  /// Cronometrul fazei de alegere. `roundStartedAt` e REPORNIT de
+  /// [MultiplayerService.closeObbyAnswering] când începe faza, deci se măsoară
+  /// de acolo, nu de la începutul rundei — la fel ca faza de țintire de la
+  /// Quizz Tanks.
+  int _choiceSecondsLeftFor(MatchInfo info) {
+    final started = info.roundStartedAt?.toDate();
+    if (started == null) return obbyChoiceSeconds;
+    final elapsed = DateTime.now().difference(started).inSeconds;
+    return (obbyChoiceSeconds - elapsed).clamp(0, obbyChoiceSeconds);
+  }
+
   Future<void> _leave() async {
+    if (_left) return;
+    _left = true;
     try {
       await MultiplayerService.instance.leaveMatch(widget.matchId);
     } catch (e) {
@@ -109,11 +129,13 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: answer);
   }
 
+  /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
+  /// corect intră în faza de alegere a plăcii (vezi [_tryResolveChoices]).
   Future<void> _tryResolve(MatchInfo info) async {
     if (_resolving) return;
     _resolving = true;
     try {
-      await MultiplayerService.instance.resolveObbyRound(
+      await MultiplayerService.instance.closeObbyAnswering(
         matchId: widget.matchId,
         roundIndex: info.roundIndex,
         correctAnswer: _questionFor(info.roundIndex).answer,
@@ -121,6 +143,30 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     } finally {
       _resolving = false;
     }
+  }
+
+  /// Închide faza de alegere — abia aici se acordă (sau nu) progresul.
+  Future<void> _tryResolveChoices(MatchInfo info) async {
+    if (_resolvingChoices) return;
+    _resolvingChoices = true;
+    try {
+      await MultiplayerService.instance.resolveObbyChoices(
+        matchId: widget.matchId,
+        roundIndex: info.roundIndex,
+      );
+    } finally {
+      _resolvingChoices = false;
+    }
+  }
+
+  /// Placa aleasă de mine. O singură dată pe rundă — a doua apăsare nu mai
+  /// trimite nimic, la fel ca la alegerea țintei din Quizz Tanks.
+  void _choosePlatform(MatchInfo info, int index) {
+    if (info.roundPhase != RoundPhase.choosing) return;
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (!info.roundWinnerIds.contains(me)) return;
+    if (info.roundPlatformChoices.containsKey(me)) return;
+    MultiplayerService.instance.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
   }
 
   void _onData(MatchInfo info, List<MatchPlayer> players) {
@@ -141,14 +187,31 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       if (allAnswered || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }
+    } else if (info.roundPhase == RoundPhase.choosing) {
+      // Aceeași regulă ca la răspuns: se închide fie când au ales toți cei
+      // care aveau dreptul, fie când li s-a scurs timpul. Cine a plecat din
+      // meci între timp nu blochează runda — se numără doar cei încă la
+      // masă, exact ca la țintirea din Quizz Tanks.
+      final present = players.map((p) => p.id).toSet();
+      final choosers = info.roundWinnerIds.where(present.contains);
+      final allChose = choosers.isNotEmpty && choosers.every(info.roundPlatformChoices.containsKey);
+      if (allChose || _choiceSecondsLeftFor(info) <= 0) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolveChoices(info));
+      }
     } else if (info.roundPhase == RoundPhase.revealed) {
       _revealedAtLocal ??= DateTime.now();
       _revealDelayTimer ??= Timer(const Duration(milliseconds: 500), () {
         if (mounted) setState(() => _showAdvance = true);
       });
-      _advanceTimer ??= Timer(const Duration(seconds: obbyRevealSeconds), () {
-        MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
-      });
+      // Doar dacă meciul CONTINUĂ: la ultima rundă, o cerere de avansare ar
+      // porni degeaba o rundă nouă într-un meci deja încheiat, exact în clipa
+      // în care toată lumea pleacă spre clasament (aceeași gardă ca la Quizz
+      // Tanks).
+      if (info.status != MatchStatus.finished) {
+        _advanceTimer ??= Timer(const Duration(seconds: obbyRevealSeconds), () {
+          MultiplayerService.instance.advanceObbyRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+        });
+      }
     }
 
     if (info.status == MatchStatus.finished && !_navigatedToResults) {
@@ -195,14 +258,15 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                       break;
                     }
                   }
-                  final revealed = info.roundPhase == RoundPhase.revealed;
                   return Column(
                     children: [
                       _buildTopBar(info),
                       Expanded(
-                        child: revealed
-                            ? _buildRaceScene(info, players, myPlayer)
-                            : _buildAnsweringScene(info, myPlayer, players),
+                        child: switch (info.roundPhase) {
+                          RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
+                          RoundPhase.choosing => _buildChoosingScene(info),
+                          _ => _buildAnsweringScene(info, myPlayer, players),
+                        },
                       ),
                     ],
                   );
@@ -358,7 +422,141 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
+  // ─── Faza de alegere a plăcii ───────────────────────────────────────────
+  // PROVIZORIU (etapa 1): butoane simple. Se înlocuiesc cu plăci desenate în
+  // scena Flame + joystick la etapa 3, dar rămân ca variantă de rezervă
+  // (tap direct), nu se aruncă.
+
+  Widget _buildChoosingScene(MatchInfo info) {
+    final me = MultiplayerService.instance.currentPlayerId;
+    final amChooser = info.roundWinnerIds.contains(me);
+    final myChoice = info.roundPlatformChoices[me];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+      child: Column(
+        children: [
+          CountdownRing(
+            secondsLeft: _choiceSecondsLeftFor(info),
+            totalSeconds: obbyChoiceSeconds,
+            size: 40,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            amChooser
+                ? tr('Ai răspuns corect! Pe ce placă sari?', 'Correct! Which platform do you jump on?')
+                : tr('Ceilalți își aleg placa...', 'The others are picking their platform...'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          if (amChooser)
+            Text(
+              tr('Una din ele e falsă și cazi prin ea. Nimerești bine → la întrebarea următoare vezi doar 2 variante.',
+                  'One of them is fake and you fall through. Land safely → next question shows only 2 options.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54, fontSize: 12.5, fontWeight: FontWeight.w600, height: 1.35),
+            ),
+          const SizedBox(height: 22),
+          if (amChooser)
+            Row(
+              children: [
+                for (var i = 0; i < obbyPlatformChoiceCount; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  Expanded(
+                    child: _platformButton(
+                      index: i,
+                      selected: myChoice == i,
+                      locked: myChoice != null,
+                      onTap: () => _choosePlatform(info, i),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          if (amChooser && myChoice != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              tr('✓ Ai sărit! Se așteaptă ceilalți...', '✓ You jumped! Waiting for the others...'),
+              style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _platformButton({
+    required int index,
+    required bool selected,
+    required bool locked,
+    required VoidCallback onTap,
+  }) {
+    // stânga/centru/dreapta, în ordinea în care vor sta și plăcile în scenă
+    const labels = ['◀', '▲', '▶'];
+    final color = selected ? AppColors.play : AppColors.teal;
+    return GestureDetector(
+      onTap: locked ? null : onTap,
+      child: Opacity(
+        opacity: locked && !selected ? 0.35 : 1,
+        child: Container(
+          height: 96,
+          decoration: BoxDecoration(
+            color: color.withAlpha(selected ? 60 : 30),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color, width: selected ? 2.4 : 1.4),
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            labels[index % labels.length],
+            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
+          ),
+        ),
+      ),
+    );
+  }
+
   // ─── Faza de reveal: cameră 3rd-person pe toată pista ───────────────────
+
+  /// A trecut jucătorul [id] obstacolul în runda tocmai încheiată?
+  ///
+  /// NU e totuna cu „e în [MatchInfo.roundWinnerIds]": lista aia înseamnă
+  /// acum doar „a răspuns corect, deci a avut dreptul să aleagă o placă".
+  /// Cine a nimerit placa falsă (sau n-a ales deloc) e tot acolo, dar a
+  /// căzut. Se recalculează local, identic pe toate telefoanele — de-asta nu
+  /// e nevoie de niciun câmp în plus în Firestore, vezi core/obby.dart.
+  bool _advancedThisRound(MatchInfo info, String id) {
+    if (!info.roundWinnerIds.contains(id)) return false;
+    return obbyChoiceIsSafe(
+      chosenIndex: info.roundPlatformChoices[id],
+      fakeIndex: obbyFakePlatformIndex(
+        matchId: widget.matchId,
+        roundIndex: info.roundIndex,
+        playerId: id,
+      ),
+    );
+  }
+
+  /// Textul de sub scenă: întâi ce am pățit EU (ăsta e ce caută ochiul), apoi
+  /// cine a mai trecut obstacolul.
+  String _revealSummary(MatchInfo info, List<MatchPlayer> players) {
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (info.roundWinnerIds.contains(me)) {
+      if (_advancedThisRound(info, me)) {
+        return tr('✓ Placa a ținut! Bonus la întrebarea următoare.',
+            '✓ The platform held! Bonus on the next question.');
+      }
+      return info.roundPlatformChoices.containsKey(me)
+          ? tr('✗ Placa era falsă — ai căzut prin ea.', '✗ That platform was fake — you fell through.')
+          : tr('✗ N-ai ales nicio placă la timp.', "✗ You didn't pick a platform in time.");
+    }
+
+    final advanced = players.where((p) => _advancedThisRound(info, p.id)).map((p) => p.name).toList();
+    if (advanced.isEmpty) {
+      return tr('Niciun obstacol trecut de data asta!', 'No obstacle cleared this time!');
+    }
+    return tr('Au trecut: ${advanced.join(', ')}', 'Cleared it: ${advanced.join(', ')}');
+  }
 
   Widget _buildRaceScene(MatchInfo info, List<MatchPlayer> players, MatchPlayer? myPlayer) {
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
@@ -371,7 +569,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           color: pickAvatarColor(players[i].avatarSeed),
           progress: (players[i].obstaclesCleared / obbyObstacleCount).clamp(0.0, 1.0),
           lane: players.length <= 1 ? 0.5 : i / (players.length - 1),
-          justJumped: info.roundWinnerIds.contains(players[i].id),
+          justJumped: _advancedThisRound(info, players[i].id),
           isMe: players[i].id == MultiplayerService.instance.currentPlayerId,
         ),
     ];
@@ -392,12 +590,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(color: Colors.black.withAlpha(140), borderRadius: BorderRadius.circular(14)),
                     child: Text(
-                      info.roundWinnerIds.isEmpty
-                          ? tr('Niciun obstacol trecut de data asta!', 'No obstacle cleared this time!')
-                          : tr(
-                              'Au sărit: ${players.where((p) => info.roundWinnerIds.contains(p.id)).map((p) => p.name).join(', ')}',
-                              'Jumped: ${players.where((p) => info.roundWinnerIds.contains(p.id)).map((p) => p.name).join(', ')}',
-                            ),
+                      _revealSummary(info, players),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800),
                     ),

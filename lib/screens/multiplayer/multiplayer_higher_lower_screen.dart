@@ -49,9 +49,11 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   bool _showWinners = false;
   bool _resolving = false;
   bool _navigatedToResults = false;
+  bool _left = false;
   Timer? _revealDelayTimer;
   Timer? _advanceTimer;
   Timer? _tickTimer;
+  Timer? _heartbeatTimer;
   final Set<String> _announcedEliminated = {};
 
   HigherLowerItem _championFor(int roundIndex) => _pool[roundIndex % _pool.length];
@@ -66,6 +68,9 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
@@ -73,6 +78,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     _tickTimer?.cancel();
     _revealDelayTimer?.cancel();
     _advanceTimer?.cancel();
+    _heartbeatTimer?.cancel();
     super.dispose();
   }
 
@@ -84,6 +90,8 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   }
 
   Future<void> _leave() async {
+    if (_left) return;
+    _left = true;
     try {
       await MultiplayerService.instance.leaveMatch(widget.matchId);
     } catch (e) {

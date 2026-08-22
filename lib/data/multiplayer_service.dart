@@ -509,58 +509,184 @@ class MultiplayerService {
 
   // ─── Obby ───────────────────────────────────────────────────────────────
 
-  /// Calculează rezultatul rundei curente de Obby — aceeași gardă anti-cursă
-  /// ca [resolveAstroSodoRound], și aceeași mecanică: cine greșește sau nu
-  /// apucă să răspundă rămâne pe loc, fără eliminare.
+  /// Închide faza de răspuns și trece în faza de ALEGERE a plăcii — aceeași
+  /// structură ca [closeTanksAnswering], inclusiv garda anti-cursă: dintre
+  /// clienții care încearcă simultan, exact unul apucă să scrie.
   ///
-  /// Meciul se termină fie instant (un personaj trece de
-  /// [obbyObstacleCount] obstacole — victorie imediată), fie la epuizarea
-  /// celor [obbyObstacleCount] runde, caz în care clasamentul final rămâne
-  /// cel dat de câte obstacole a trecut fiecare personaj.
-  Future<void> resolveObbyRound({
+  /// Spre deosebire de Astro Sodo, un răspuns corect NU mai înseamnă automat
+  /// un obstacol trecut: doar te califică să alegi o placă. Progresul se
+  /// acordă abia în [resolveObbyChoices].
+  ///
+  /// Tot aici se STINGE [MatchPlayer.nextQuestionBonus] pentru toți cei
+  /// evaluați: bonusul se consumă la întrebarea la care s-a aplicat,
+  /// indiferent dacă a fost nimerită sau nu. Se face în aceeași trecere care
+  /// oricum citește fiecare jucător, deci nu costă nicio citire în plus.
+  ///
+  /// Dacă nimeni n-a răspuns corect, faza de alegere se sare complet — exact
+  /// cum [closeTanksAnswering] sare peste țintire când nimeni n-a nimerit
+  /// întrebarea.
+  Future<void> closeObbyAnswering({
     required String matchId,
     required int roundIndex,
     required String correctAnswer,
   }) async {
     final matchRef = _db.collection('matches').doc(matchId);
-    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
     if (playerIds.isEmpty) return;
     try {
       await _db.runTransaction((tx) async {
         final matchDoc = await tx.get(matchRef);
         final data = matchDoc.data();
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
-          return; // deja rezolvată de alt client - nimic de facut
+          return; // deja închisă de alt client
         }
         final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
         final winnerIds = <String>[];
-        var anyFinished = false;
+        final clearedPerPlayer = <int>[];
         for (final id in playerIds) {
           final doc = await tx.get(matchRef.collection('players').doc(id));
           if (!doc.exists) continue;
           final pData = doc.data()!;
-          // un personaj deja ajuns la final nu mai sare - stă acolo,
-          // spectator, până se încheie meciul pentru toată lumea.
           final already = pData['obstaclesCleared'] as int? ?? 0;
+          clearedPerPlayer.add(already);
+          // un personaj deja ajuns la final nu mai joacă runda - stă acolo,
+          // spectator, până se încheie meciul pentru toată lumea.
           if (already >= obbyObstacleCount) continue;
-          if (answers[id] != correctAnswer) continue;
-          winnerIds.add(id);
-          final cleared = already + 1;
-          tx.update(doc.reference, {
-            'obstaclesCleared': cleared,
-            'score': (pData['score'] as int? ?? 0) + obbyPointsPerObstacle,
-          });
-          if (cleared >= obbyObstacleCount) anyFinished = true;
+          // bonusul rundei tocmai încheiate se stinge acum, câștigată sau nu
+          if (pData['nextQuestionBonus'] == true) {
+            tx.update(doc.reference, {'nextQuestionBonus': false});
+          }
+          if (answers[id] == correctAnswer) winnerIds.add(id);
         }
-        final outOfRounds = roundIndex + 1 >= obbyObstacleCount;
+
+        // Nimeni n-a răspuns corect: n-are cine alege, sărim direct la
+        // deznodământ (o rundă în care pur și simplu nu avansează nimeni).
+        if (winnerIds.isEmpty) {
+          tx.update(matchRef, {
+            'roundPhase': RoundPhase.revealed.name,
+            'roundWinnerIds': <String>[],
+            'roundPlatformChoices': <String, int>{},
+            if (obbyMatchIsOver(roundIndex: roundIndex, obstaclesClearedPerPlayer: clearedPerPlayer))
+              'status': MatchStatus.finished.name,
+          });
+          return;
+        }
+
         tx.update(matchRef, {
-          'roundPhase': RoundPhase.revealed.name,
+          'roundPhase': RoundPhase.choosing.name,
           'roundWinnerIds': winnerIds,
-          if (anyFinished || outOfRounds) 'status': MatchStatus.finished.name,
+          'roundPlatformChoices': <String, int>{},
+          // cronometrul de alegere pornește ACUM, nu de la începutul rundei
+          'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
     } catch (e) {
-      debugPrint('MultiplayerService.resolveObbyRound a esuat: $e');
+      debugPrint('MultiplayerService.closeObbyAnswering a esuat: $e');
+    }
+  }
+
+  /// Placa aleasă de jucătorul curent, din faza de alegere.
+  Future<void> submitObbyChoice({required String matchId, required int platformIndex}) {
+    final me = currentPlayerId;
+    return _paced(() =>
+        _db.collection('matches').doc(matchId).update({'roundPlatformChoices.$me': platformIndex}));
+  }
+
+  /// Sare efectiv: pentru fiecare jucător calificat se compară placa aleasă cu
+  /// cea falsă (calculată determinist, vezi [obbyFakePlatformIndex] — nu se
+  /// citește de nicăieri, deci nu costă nicio scriere în plus).
+  ///
+  /// Cine nimerește o placă bună trece obstacolul, ia punctele și pleacă cu
+  /// [MatchPlayer.nextQuestionBonus] aprins pentru runda următoare. Cine
+  /// nimerește placa falsă — sau n-a apucat să aleagă deloc — rămâne pe loc,
+  /// exact ca cine răspunde greșit: fără eliminare, doar fără progres.
+  ///
+  /// [roundWinnerIds] e luat ca sursă de adevăr pentru „cine avea drept să
+  /// aleagă", scris deja de [closeObbyAnswering] — aceeași graniță de
+  /// încredere ca între [closeTanksAnswering] și [resolveTanksRound].
+  Future<void> resolveObbyChoices({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.choosing.name) {
+          return; // deja rezolvată de alt client - nimic de facut
+        }
+        final rawChoices = data['roundPlatformChoices'] as Map? ?? const {};
+        final winnerIds = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
+
+        final clearedPerPlayer = <int>[];
+        for (final id in playerIds) {
+          final doc = await tx.get(matchRef.collection('players').doc(id));
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          final already = pData['obstaclesCleared'] as int? ?? 0;
+
+          if (!winnerIds.contains(id) || already >= obbyObstacleCount) {
+            clearedPerPlayer.add(already);
+            continue;
+          }
+
+          final chosen = (rawChoices[id] as num?)?.toInt();
+          final safe = obbyChoiceIsSafe(
+            chosenIndex: chosen,
+            fakeIndex: obbyFakePlatformIndex(matchId: matchId, roundIndex: roundIndex, playerId: id),
+          );
+          if (!safe) {
+            clearedPerPlayer.add(already);
+            continue;
+          }
+
+          final cleared = already + 1;
+          clearedPerPlayer.add(cleared);
+          tx.update(doc.reference, {
+            'obstaclesCleared': cleared,
+            'score': (pData['score'] as int? ?? 0) + obbyPointsPerObstacle,
+            'nextQuestionBonus': true,
+          });
+        }
+
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          if (obbyMatchIsOver(roundIndex: roundIndex, obstaclesClearedPerPlayer: clearedPerPlayer))
+            'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveObbyChoices a esuat: $e');
+    }
+  }
+
+  /// Trece la runda următoare — varianta proprie a lui Obby, fiindcă runda lui
+  /// are un câmp în plus de golit ([MatchInfo.roundPlatformChoices]) și n-are
+  /// niciun rost să atingă câmpurile de Quizz Tanks.
+  ///
+  /// Ținut separat de [advanceSyncRound] INTENȚIONAT: acela e apelat de Higher
+  /// & Lower, Astro Sodo și Quizz Tanks, iar Obby nu mai are motive să împartă
+  /// aceeași implementare cu ele de când runda lui are trei pași, nu doi.
+  Future<void> advanceObbyRound({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final doc = await tx.get(matchRef);
+        final data = doc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
+          return;
+        }
+        tx.update(matchRef, {
+          'roundIndex': roundIndex + 1,
+          'roundPhase': RoundPhase.answering.name,
+          'roundAnswers': <String, String>{},
+          'roundWinnerIds': <String>[],
+          'roundPlatformChoices': <String, int>{},
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.advanceObbyRound a esuat: $e');
     }
   }
 
@@ -804,8 +930,11 @@ class MultiplayerService {
       return;
     }
     await matchRef.collection('players').doc(me).delete();
-    final remaining = await matchRef.collection('players').limit(1).get();
-    if (remaining.docs.isEmpty) {
+    // Nu doar "mai există vreun document" — o fantomă (aplicație oprită
+    // brusc, fără trecere prin leaveMatch) rămâne la nesfârșit altfel, iar
+    // camera nu se mai șterge niciodată. Vezi [_isDeadMatchPlayer].
+    final remaining = await matchRef.collection('players').get();
+    if (remaining.docs.every((d) => _isDeadMatchPlayer(d.data()))) {
       await _deleteMatch(matchRef);
     }
   }
@@ -1055,6 +1184,40 @@ class MultiplayerService {
     final seen = (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
     if (seen == null) return false;
     return seen.toDate().isBefore(DateTime.now().subtract(_queueFreshness));
+  }
+
+  /// Cât de des își împrospătează semnul de viață un jucător aflat într-un
+  /// meci activ (lobby sau rundă) — aceeași cadență ca [queueHeartbeatInterval].
+  static const matchHeartbeatInterval = Duration(seconds: 15);
+
+  /// Peste cât timp fără semn de viață un jucător dintr-un meci e considerat
+  /// fantomă — vezi [_isDeadMatchPlayer].
+  static const _matchPlayerFreshness = Duration(seconds: 60);
+
+  /// „Mai sunt aici" pentru un jucător dintr-un meci activ — vezi
+  /// [queueHeartbeat], e exact același rol, dar pe `matches/{id}/players`.
+  /// Fără el, o aplicație oprită brusc în timpul unui meci/lobby lasă un
+  /// jucător-fantomă permanent: [leaveMatch] nu șterge camera decât când
+  /// ultimul jucător RĂMAS pleacă explicit, iar o fantomă nu pleacă niciodată
+  /// — vezi [_isDeadMatchPlayer], folosit acolo ca să nu mai conteze fantoma.
+  Future<void> matchHeartbeat(String matchId) async {
+    try {
+      await _db
+          .collection('matches')
+          .doc(matchId)
+          .collection('players')
+          .doc(currentPlayerId)
+          .update({'lastSeenAt': FieldValue.serverTimestamp()});
+    } catch (e) {
+      // documentul poate fi deja șters (am plecat din meci) — inofensiv
+      debugPrint('MultiplayerService.matchHeartbeat: $e');
+    }
+  }
+
+  bool _isDeadMatchPlayer(Map<String, dynamic> data) {
+    final seen = (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
+    if (seen == null) return false;
+    return seen.toDate().isBefore(DateTime.now().subtract(_matchPlayerFreshness));
   }
 
   /// Streamul propriei intrări din coadă — când un alt client (liderul)

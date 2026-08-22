@@ -41,9 +41,11 @@ class _MultiplayerAstroSodoScreenState extends State<MultiplayerAstroSodoScreen>
   bool _showAdvance = false;
   bool _resolving = false;
   bool _navigatedToResults = false;
+  bool _left = false;
   Timer? _revealDelayTimer;
   Timer? _advanceTimer;
   Timer? _tickTimer;
+  Timer? _heartbeatTimer;
 
   List<String>? _cachedChoices;
   int _cachedChoicesRound = -1;
@@ -71,6 +73,9 @@ class _MultiplayerAstroSodoScreenState extends State<MultiplayerAstroSodoScreen>
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
+    _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
+      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+    });
   }
 
   @override
@@ -78,6 +83,7 @@ class _MultiplayerAstroSodoScreenState extends State<MultiplayerAstroSodoScreen>
     _tickTimer?.cancel();
     _revealDelayTimer?.cancel();
     _advanceTimer?.cancel();
+    _heartbeatTimer?.cancel();
     super.dispose();
   }
 
@@ -89,6 +95,8 @@ class _MultiplayerAstroSodoScreenState extends State<MultiplayerAstroSodoScreen>
   }
 
   Future<void> _leave() async {
+    if (_left) return;
+    _left = true;
     try {
       await MultiplayerService.instance.leaveMatch(widget.matchId);
     } catch (e) {
