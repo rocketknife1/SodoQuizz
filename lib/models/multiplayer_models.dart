@@ -14,30 +14,26 @@ enum MatchStatus { lobby, playing, finished }
 /// votează în secret, vezi MultiplayerHigherLowerScreen. [quizzTanks] e
 /// lupta cu bare de viață: patru jucători, întrebări de cultură generală,
 /// timp fix de răspuns, iar cine răspunde corect își alege ținta —
-/// vezi core/tanks.dart și MultiplayerTanksScreen. [astroSodo] e cursa
-/// spațială: de la 2 la 6 nave, fiecare pe culoarul ei presărat cu
-/// bolovani, iar un răspuns corect trece nava peste bolovanul din față —
-/// vezi core/astrosodo.dart și MultiplayerAstroSodoScreen. [obby] e cursa de
+/// vezi core/tanks.dart și MultiplayerTanksScreen. [obby] e cursa de
 /// obstacole tip Roblox: de la 2 la 6 personaje pe aceeași pistă, camera
 /// trece la 3rd-person (ca CJ din San Andreas) după fiecare întrebare, iar
 /// un răspuns corect face personajul să sară peste obstacolul din față —
-/// aceeași mecanică de progres ca [astroSodo], vezi core/obby.dart și
-/// MultiplayerObbyScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks, astroSodo, obby }
+/// vezi core/obby.dart și MultiplayerObbyScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks, obby }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
-/// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks],
-/// [MatchGameMode.astroSodo] și [MatchGameMode.obby]) — [answering] cât se
+/// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
+/// [MatchGameMode.obby]) — [answering] cât se
 /// așteaptă răspunsurile, [targeting] doar la Quizz Tanks (cei care au
 /// răspuns corect își aleg ținta), [choosing] doar la Obby (cei care au
 /// răspuns corect își aleg placa pe care sar), [revealed] după ce runda a
 /// fost rezolvată (câștigătorii la Higher & Lower, proiectilele trase la
-/// Quizz Tanks, navele avansate la Astro Sodo, săritura reușită sau căderea
+/// Quizz Tanks, săritura reușită sau căderea
 /// prin placa falsă la Obby).
 ///
 /// Fiecare fază intermediară aparține UNUI SINGUR mod: Higher & Lower și
-/// Astro Sodo sar direct de la [answering] la [revealed]; Quizz Tanks trece
-/// doar prin [targeting], niciodată prin [choosing]; Obby doar prin
+/// Higher & Lower sare direct de la [answering] la [revealed]; Quizz Tanks
+/// trece doar prin [targeting], niciodată prin [choosing]; Obby doar prin
 /// [choosing], niciodată prin [targeting]. Nicăieri în aplicație nu există un
 /// `switch` exhaustiv pe enum-ul ăsta (doar comparații `== RoundPhase.X` și
 /// `values.firstWhere(orElse:)`), tocmai ca o fază nouă să nu poată strica
@@ -272,16 +268,13 @@ class MatchPlayer {
   final int hp;
   final int damageDealt;
 
-  /// Doar [MatchGameMode.astroSodo] sau [MatchGameMode.obby]: câte obstacole
-  /// a trecut jucătorul de la începutul meciului — bolovani la Astro Sodo,
-  /// sărituri peste obstacole la Obby — din cele [astroSodoObstacleCount]
-  /// / [obbyObstacleCount] ale pistei lui. Vezi core/astrosodo.dart și
-  /// core/obby.dart. Ținut separat de [score] deși [score] urcă exact în pas
-  /// cu el (vezi MultiplayerService.resolveAstroSodoRound/resolveObbyRound):
-  /// [score] e câmpul citit de restul aplicației (clasament, premii),
-  /// [obstaclesCleared] e cifra proprie modului, folosită să deseneze
-  /// poziția pe pistă. Cele două moduri nu rulează niciodată în același
-  /// meci, deci refolosirea aceluiași câmp nu ambiguizează nimic.
+  /// Doar [MatchGameMode.obby]: câte obstacole a trecut jucătorul de la
+  /// începutul meciului — sărituri peste obstacole, din cele
+  /// [obbyObstacleCount] ale pistei lui. Vezi core/obby.dart. Ținut separat
+  /// de [score] deși [score] urcă exact în pas cu el (vezi
+  /// MultiplayerService.resolveObbyRound): [score] e câmpul citit de restul
+  /// aplicației (clasament, premii), [obstaclesCleared] e cifra proprie
+  /// modului, folosită să deseneze poziția pe pistă.
   final int obstaclesCleared;
 
   /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi

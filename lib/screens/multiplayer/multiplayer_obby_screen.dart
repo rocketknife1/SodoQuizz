@@ -18,10 +18,9 @@ import '../../widgets/obby_game.dart';
 import 'multiplayer_results_screen.dart';
 
 /// **Obby** — cursă de obstacole tip Roblox, de la 2 la 6 personaje pe
-/// aceeași pistă. Aceeași arhitectură de sincronizare ca Astro Sodo (vezi
-/// MultiplayerAstroSodoScreen și core/obby.dart): ecranul nu decide nimic,
-/// citește rezultatul rundei din Firestore și îl animează. ORICE client
-/// poate cere rezolvarea rundei.
+/// aceeași pistă (vezi core/obby.dart): ecranul nu decide nimic, citește
+/// rezultatul rundei din Firestore și îl animează. ORICE client poate cere
+/// rezolvarea rundei.
 ///
 /// Diferența e doar vizuală: în [RoundPhase.answering] fiecare jucător își
 /// vede propriul personaj într-un colț, așteptând; în [RoundPhase.revealed]
@@ -841,9 +840,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
 }
 
 
-/// Personajul din colțul ecranului, cât timp jucătorul răspunde — o siluetă
-/// simplă (cap + corp), care abia se leagănă (idle), ca ecranul să nu pară
-/// static în timp ce se așteaptă răspunsul.
+/// Personajul din colțul ecranului, cât timp jucătorul răspunde — un mic
+/// astronaut (vezi [paintObbyAstronaut]), care abia se leagănă (idle), ca
+/// ecranul să nu pară static în timp ce se așteaptă răspunsul.
 class _CornerCharacter extends StatelessWidget {
   final Color color;
   final double bob; // -1..1
@@ -866,44 +865,6 @@ class _CornerCharacter extends StatelessWidget {
   }
 }
 
-/// Desenul unei siluete simple (cap rotund + corp capsulă + două picioare) —
-/// aceeași formă e refolosită atât pentru personajul din colț cât și pentru
-/// alergătorii de pe pistă, doar la scări diferite.
-void paintObbySilhouette(Canvas canvas, Rect bounds, Color color, {double legSpread = 0, double crouch = 0}) {
-  final w = bounds.width;
-  final h = bounds.height;
-  final cx = bounds.center.dx;
-  final top = bounds.top + h * crouch * 0.15;
-
-  final bodyPaint = Paint()..color = color;
-  final headR = w * 0.22;
-  final headCy = top + headR * 1.1;
-  canvas.drawCircle(Offset(cx, headCy), headR, bodyPaint);
-
-  final bodyTop = headCy + headR * 0.75;
-  final bodyBottom = bounds.bottom - h * 0.22 + crouch * h * 0.08;
-  final bodyRect = RRect.fromRectAndRadius(
-    Rect.fromLTRB(cx - w * 0.20, bodyTop, cx + w * 0.20, bodyBottom),
-    Radius.circular(w * 0.16),
-  );
-  canvas.drawRRect(bodyRect, bodyPaint);
-
-  final legPaint = Paint()
-    ..color = color
-    ..strokeWidth = w * 0.13
-    ..strokeCap = StrokeCap.round;
-  canvas.drawLine(
-    Offset(cx - w * 0.06, bodyBottom - h * 0.02),
-    Offset(cx - w * 0.06 - legSpread * w * 0.22, bounds.bottom),
-    legPaint,
-  );
-  canvas.drawLine(
-    Offset(cx + w * 0.06, bodyBottom - h * 0.02),
-    Offset(cx + w * 0.06 + legSpread * w * 0.22, bounds.bottom),
-    legPaint,
-  );
-}
-
 class _SilhouettePainter extends CustomPainter {
   final Color color;
   final double bob;
@@ -912,7 +873,7 @@ class _SilhouettePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final bounds = Rect.fromLTWH(0, bob.abs() * -2, size.width, size.height - 4);
-    paintObbySilhouette(canvas, bounds, color, legSpread: bob * 0.4);
+    paintObbyAstronaut(canvas, bounds, color, legSpread: bob * 0.4);
   }
 
   @override

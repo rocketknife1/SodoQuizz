@@ -1,7 +1,7 @@
 /// Regulile modului multiplayer **Obby** — o cursă de obstacole tip Roblox,
 /// de la 2 la 6 personaje pe aceeași pistă, filmate din spate (3rd-person).
 ///
-/// Runda, în TREI pași (spre deosebire de Astro Sodo, care are doar doi):
+/// Runda, în TREI pași:
 ///   1. **Răspuns** — toți cei care n-au terminat încă văd aceeași întrebare
 ///      de cultură generală și au [obbyRoundSeconds] secunde. Cine are
 ///      [MatchPlayer.nextQuestionBonus] aprins din runda trecută vede doar 2
@@ -31,7 +31,7 @@ import 'stable_hash.dart';
 /// deci numărul a fost ales ca meciul să rămână sub ~2 minute și jumătate.
 const int obbyObstacleCount = 7;
 
-/// Câți jucători încap într-o cameră de Obby — la fel ca Astro Sodo.
+/// Câți jucători încap într-o cameră de Obby.
 const int obbyMaxPlayers = 6;
 
 /// Cât timp are fiecare rundă înainte ca cei ce n-au răspuns încă să fie
@@ -57,8 +57,7 @@ const int obbyPlatformChoiceCount = 3;
 const int obbyFakePlatformCount = 1;
 
 /// Puncte acordate pentru fiecare obstacol trecut — hrănește direct
-/// [MatchPlayer.score] (vezi models/multiplayer_models.dart), la fel ca
-/// [astroSodoPointsPerObstacle].
+/// [MatchPlayer.score] (vezi models/multiplayer_models.dart).
 const int obbyPointsPerObstacle = 10;
 
 /// Monede acordate INSTANT, în telefon, la fiecare răspuns corect — din

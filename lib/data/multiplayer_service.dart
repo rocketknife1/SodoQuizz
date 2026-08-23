@@ -3,7 +3,6 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../core/astrosodo.dart';
 import '../core/betting.dart';
 import '../core/lang.dart';
 import '../core/obby.dart';
@@ -34,12 +33,9 @@ const int matchPlayerCount = 11;
 /// Câți jucători încap într-o cameră, după modul ei de joc. Quizz Tanks e
 /// singurul cu limită proprie ([tanksPlayerCount] = 4): acolo numărul nu e o
 /// preferință, ci parte din reguli — „cine răspunde corect trage în ceilalți
-/// trei" și arena desenată 2×2 (vezi core/tanks.dart). Astro Sodo are limita
-/// lui proprie ([astroSodoMaxPlayers] = 6): atâtea culoare încap lizibil unul
-/// sub altul pe ecranul de cursă, vezi core/astrosodo.dart.
+/// trei" și arena desenată 2×2 (vezi core/tanks.dart).
 int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
       MatchGameMode.quizzTanks => tanksPlayerCount,
-      MatchGameMode.astroSodo => astroSodoMaxPlayers,
       MatchGameMode.obby => obbyMaxPlayers,
       MatchGameMode.classic || MatchGameMode.higherLower => matchPlayerCount,
     };
@@ -447,74 +443,14 @@ class MultiplayerService {
     }
   }
 
-  // ─── Astro Sodo ─────────────────────────────────────────────────────────
-
-  /// Calculează rezultatul rundei curente de Astro Sodo — aceeași gardă
-  /// anti-cursă, apelabilă de ORICE client, ca la [resolveHigherLowerRound].
-  /// Spre deosebire de Higher & Lower, nu există eliminare: cine greșește
-  /// sau nu apucă să răspundă rămâne pur și simplu pe loc, fără să iasă din
-  /// cursă — mai are șansa la runda următoare.
-  ///
-  /// Meciul se termină fie instant (o navă ajunge la
-  /// [astroSodoObstacleCount] bolovani trecuți — victorie imediată, nu se
-  /// mai așteaptă restul întrebărilor), fie la epuizarea celor
-  /// [astroSodoObstacleCount] runde, caz în care clasamentul rămâne cel dat
-  /// de câți bolovani a trecut fiecare navă.
-  Future<void> resolveAstroSodoRound({
-    required String matchId,
-    required int roundIndex,
-    required String correctAnswer,
-  }) async {
-    final matchRef = _db.collection('matches').doc(matchId);
-    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
-    if (playerIds.isEmpty) return;
-    try {
-      await _db.runTransaction((tx) async {
-        final matchDoc = await tx.get(matchRef);
-        final data = matchDoc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
-          return; // deja rezolvată de alt client - nimic de facut
-        }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
-        final winnerIds = <String>[];
-        var anyFinished = false;
-        for (final id in playerIds) {
-          final doc = await tx.get(matchRef.collection('players').doc(id));
-          if (!doc.exists) continue;
-          final pData = doc.data()!;
-          // o navă deja ajunsă la final nu mai avansează - stă acolo,
-          // spectatoare, până se încheie meciul pentru toată lumea.
-          final already = pData['obstaclesCleared'] as int? ?? 0;
-          if (already >= astroSodoObstacleCount) continue;
-          if (answers[id] != correctAnswer) continue;
-          winnerIds.add(id);
-          final cleared = already + 1;
-          tx.update(doc.reference, {
-            'obstaclesCleared': cleared,
-            'score': (pData['score'] as int? ?? 0) + astroSodoPointsPerObstacle,
-          });
-          if (cleared >= astroSodoObstacleCount) anyFinished = true;
-        }
-        final outOfRounds = roundIndex + 1 >= astroSodoObstacleCount;
-        tx.update(matchRef, {
-          'roundPhase': RoundPhase.revealed.name,
-          'roundWinnerIds': winnerIds,
-          if (anyFinished || outOfRounds) 'status': MatchStatus.finished.name,
-        });
-      });
-    } catch (e) {
-      debugPrint('MultiplayerService.resolveAstroSodoRound a esuat: $e');
-    }
-  }
-
   // ─── Obby ───────────────────────────────────────────────────────────────
 
   /// Închide faza de răspuns și trece în faza de ALEGERE a plăcii — aceeași
   /// structură ca [closeTanksAnswering], inclusiv garda anti-cursă: dintre
   /// clienții care încearcă simultan, exact unul apucă să scrie.
   ///
-  /// Spre deosebire de Astro Sodo, un răspuns corect NU mai înseamnă automat
-  /// un obstacol trecut: doar te califică să alegi o placă. Progresul se
+  /// Un răspuns corect NU înseamnă automat un obstacol trecut: doar te
+  /// califică să alegi o placă. Progresul se
   /// acordă abia în [resolveObbyChoices].
   ///
   /// Tot aici se STINGE [MatchPlayer.nextQuestionBonus] pentru toți cei
@@ -712,8 +648,8 @@ class MultiplayerService {
   /// niciun rost să atingă câmpurile de Quizz Tanks.
   ///
   /// Ținut separat de [advanceSyncRound] INTENȚIONAT: acela e apelat de Higher
-  /// & Lower, Astro Sodo și Quizz Tanks, iar Obby nu mai are motive să împartă
-  /// aceeași implementare cu ele de când runda lui are trei pași, nu doi.
+  /// & Lower și Quizz Tanks, iar Obby nu mai are motive să împartă aceeași
+  /// implementare cu ele de când runda lui are trei pași, nu doi.
   Future<void> advanceObbyRound({required String matchId, required int roundIndex}) async {
     final matchRef = _db.collection('matches').doc(matchId);
     try {

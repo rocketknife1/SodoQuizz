@@ -53,10 +53,14 @@ class ObbyRacerData {
 /// doar strat de randare, exact granița pe care restul proiectului o
 /// respectă între ecrane (UI+date) și widget-uri (doar randare).
 ///
+/// Temă: o cursă printre bolovani de asteroid, în spațiu — de la 2 la 6
+/// astronauți sar din stâncă în stâncă, iar cine trece de ultimul obstacol
+/// urcă direct în naveta de scăpare (vezi [_RunnerComponent._paintShuttle]).
+///
 /// Două scene, comutate prin [phase]:
 ///  - [ObbyPhase.choosing] — personajul local stă în fața celor
-///    [obbyPlatformChoiceCount] plăci; alegerea se face prin butoanele din
-///    ecran sau prin tap direct pe placă.
+///    [obbyPlatformChoiceCount] bolovani; alegerea se face prin butoanele din
+///    ecran sau prin tap direct pe bolovan.
 ///  - [ObbyPhase.revealed] — camera trece la 3rd-person, urmărește personajul
 ///    local (`camera.follow`) cât toți alergătorii avansează/cad.
 enum ObbyPhase { idle, choosing, revealed }
@@ -74,7 +78,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
   late final World _world;
   late final CameraComponent _cam;
   final Map<String, _RunnerComponent> _runners = {};
-  _PlayerRigComponent? _rig;
+  _AstronautIdleComponent? _rig;
 
   /// Unde stătea fiecare alergător la sfârșitul deznodământului precedent.
   ///
@@ -91,7 +95,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
   /// Cât din durata deznodământului ocupă săritura, respectiv căderea.
   /// Săritura e scurtă și la început (e o mișcare de reflex); căderea începe
   /// cu o clipă mai târziu — jucătorul trebuie să apuce să vadă că a pășit pe
-  /// placă înainte ca ea să cedeze sub el.
+  /// bolovan înainte ca el să cedeze sub el.
   static const _jumpWindow = 0.35;
   static const _fallDelay = obbyFallDelayFraction;
   static const _fallWindow = 0.55;
@@ -184,7 +188,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
     }
   }
 
-  // ─── Scena de alegere: personajul local + 3 plăci în față ────────────────
+  // ─── Scena de alegere: personajul local + 3 bolovani în față ─────────────
 
   void _buildChoosingScene() {
     _cam.stop();
@@ -195,14 +199,14 @@ class ObbyGame extends FlameGame with TapCallbacks {
     final me = _racers.where((r) => r.isMe).firstOrNull;
     final color = me?.color ?? Colors.blue;
 
-    _world.add(_SkyGroundComponent());
+    _world.add(_SpaceBackdropComponent(starCount: 70));
 
     for (var i = 0; i < obbyPlatformChoiceCount; i++) {
       final dx = (i - (obbyPlatformChoiceCount - 1) / 2) * _laneGap;
-      _world.add(_PlatformComponent(index: i, position: Vector2(dx, -_platformY)));
+      _world.add(_AsteroidComponent(index: i, position: Vector2(dx, -_platformY)));
     }
 
-    _rig = _PlayerRigComponent(color: color, position: Vector2(0, 40))..anchor = Anchor.center;
+    _rig = _AstronautIdleComponent(color: color, position: Vector2(0, 40))..anchor = Anchor.center;
     _world.add(_rig!);
     _choiceSent = false;
 
@@ -212,14 +216,14 @@ class ObbyGame extends FlameGame with TapCallbacks {
   bool _choiceSent = false;
 
   void _updateChoosingHighlight() {
-    for (final c in _world.children.whereType<_PlatformComponent>()) {
+    for (final c in _world.children.whereType<_AsteroidComponent>()) {
       c.selected = false;
       c.locked = _myChoice != null && c.index != _myChoice;
       c.chosen = c.index == _myChoice;
     }
   }
 
-  /// Apelat când jucătorul apasă direct o placă din scenă — echivalent cu
+  /// Apelat când jucătorul apasă direct un bolovan din scenă — echivalent cu
   /// butoanele din ecran (vezi [MultiplayerObbyScreen._platformButton]).
   void tapPlatform(int index) {
     if (phase != ObbyPhase.choosing || _myChoice != null || _choiceSent) return;
@@ -232,7 +236,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
     super.onTapDown(event);
     if (phase != ObbyPhase.choosing) return;
     final local = _cam.globalToLocal(event.devicePosition);
-    for (final p in _world.children.whereType<_PlatformComponent>()) {
+    for (final p in _world.children.whereType<_AsteroidComponent>()) {
       final rect = Rect.fromCenter(center: p.position.toOffset(), width: 70, height: 70);
       if (rect.contains(local.toOffset())) {
         tapPlatform(p.index);
@@ -244,7 +248,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
   // ─── Scena de reveal: pista completă, camera urmărește personajul local ──
 
   void _buildRevealScene() {
-    _world.add(_GroundComponent());
+    _world.add(_SpaceTrackComponent(starCount: 140));
 
     for (final r in _racers) {
       final runner = _RunnerComponent(data: r, startDepth: _lastDepth[r.id] ?? r.progress)
@@ -293,6 +297,10 @@ class ObbyGame extends FlameGame with TapCallbacks {
   void _updateReveal() {
     final jumpT = (_revealT / _jumpWindow).clamp(0.0, 1.0);
     final fallT = ((_revealT - _fallDelay) / _fallWindow).clamp(0.0, 1.0);
+    // Cât de avansată e decolarea navetei DUPĂ ce săritura s-a terminat —
+    // doar cine a terminat cursa (progress == 1) o folosește, vezi
+    // _RunnerComponent._paintShuttle.
+    final liftoffT = ((_revealT - _jumpWindow) / (1 - _jumpWindow)).clamp(0.0, 1.0);
     // Când EU cad, camera se opreșe din urmărit. Altfel se ducea în jos odată
     // cu mine și căderea se vedea aproape deloc: personajul rămânea în
     // mijlocul ecranului, iar singurul indiciu erau rotirea și estomparea.
@@ -309,6 +317,7 @@ class ObbyGame extends FlameGame with TapCallbacks {
         r.progress,
         jumpT: r.outcome == ObbyRoundOutcome.jumped ? jumpT : 0,
         fallT: r.outcome == ObbyRoundOutcome.fell ? fallT : 0,
+        liftoffT: liftoffT,
       );
       // Cine a căzut n-a înaintat, deci [ObbyRacerData.progress] e tot cel
       // vechi (resolverul nu i-a dat obstacolul) — se ține minte la fel,
@@ -324,58 +333,135 @@ extension on Iterable<ObbyRacerData> {
 
 // ─── Componente ──────────────────────────────────────────────────────────
 
-/// Fundal simplu cer/pământ pentru scena de alegere — personajul stă pe loc,
-/// doar plăcile contează.
-class _SkyGroundComponent extends PositionComponent {
+/// Un câmp de stele, generat o singură dată la construcție — NU la fiecare
+/// cadru — ca desenul să coste doar niște `drawCircle`-uri fixe, nu și
+/// calculul pozițiilor. Poziția aleatoare e determinată de un `Random` fără
+/// sămânță fixă: scena se reconstruiește la fiecare schimbare de fază, deci
+/// stelele oricum "sar" vizual atunci, un pic de variație în plus nu se simte.
+class _StarField {
+  final List<Offset> positions;
+  final List<double> radii;
+  final List<int> alphas;
+
+  _StarField(int count, Rect bounds) : positions = [], radii = [], alphas = [] {
+    final rng = Random();
+    for (var i = 0; i < count; i++) {
+      positions.add(Offset(
+        bounds.left + rng.nextDouble() * bounds.width,
+        bounds.top + rng.nextDouble() * bounds.height,
+      ));
+      radii.add(0.6 + rng.nextDouble() * 1.4);
+      alphas.add(70 + rng.nextInt(150));
+    }
+  }
+
+  void paint(Canvas canvas, Paint reusablePaint) {
+    for (var i = 0; i < positions.length; i++) {
+      reusablePaint.color = Colors.white.withAlpha(alphas[i]);
+      canvas.drawCircle(positions[i], radii[i], reusablePaint);
+    }
+  }
+}
+
+/// Fundal de spațiu pentru scena de alegere — personajul stă pe loc, doar
+/// bolovanii contează, dar cerul din spate trebuie să arate ca vidul, nu ca
+/// un teren de fotbal.
+class _SpaceBackdropComponent extends PositionComponent {
+  late final _StarField _stars;
+  final Paint _starPaint = Paint();
+  final Paint _voidPaint = Paint()..color = const Color(0xFF05060F);
+  final Paint _glowPaint = Paint()..color = const Color(0x220C2A6B);
+
+  _SpaceBackdropComponent({required int starCount}) {
+    _stars = _StarField(starCount, const Rect.fromLTWH(-260, -320, 520, 480));
+  }
+
   @override
   void render(Canvas canvas) {
-    final sky = Paint()..color = const Color(0xFF232A52);
-    canvas.drawRect(const Rect.fromLTWH(-2000, -2000, 4000, 2000), sky);
-    final ground = Paint()..color = const Color(0xFF1E4230);
-    canvas.drawRect(const Rect.fromLTWH(-2000, 0, 4000, 2000), ground);
+    canvas.drawRect(const Rect.fromLTWH(-2000, -2000, 4000, 4000), _voidPaint);
+    canvas.drawCircle(const Offset(0, -80), 260, _glowPaint);
+    _stars.paint(canvas, _starPaint);
   }
 
   @override
   int get priority => -10;
 }
 
-/// O placă din faza de alegere — pătrat simplu, colorat după stare (neutru /
-/// ales de mine / blocat fiindcă am ales alta).
-class _PlatformComponent extends PositionComponent {
+/// Un bolovan de asteroid din faza de alegere — formă stâncoasă, colorată
+/// după stare (neutru / ales de mine / blocat fiindcă am ales altul).
+class _AsteroidComponent extends PositionComponent {
   final int index;
   bool selected = false;
   bool locked = false;
   bool chosen = false;
 
-  _PlatformComponent({required this.index, required Vector2 position}) : super(position: position, size: Vector2(70, 24), anchor: Anchor.center);
+  late final Path _rockPath;
+  late final List<Offset> _craters;
+  final Paint _fillPaint = Paint();
+  final Paint _rimPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.4
+    ..color = Colors.white38;
+  final Paint _craterPaint = Paint()..color = const Color(0xFF4A4038);
+
+  _AsteroidComponent({required this.index, required Vector2 position})
+      : super(position: position, size: Vector2(64, 46), anchor: Anchor.center) {
+    final rng = Random(index * 97 + 13);
+    _rockPath = _buildRockPath(rng, size.x, size.y);
+    _craters = List.generate(3, (i) {
+      final a = rng.nextDouble() * pi * 2;
+      final r = size.x * (0.12 + rng.nextDouble() * 0.16);
+      return Offset(cos(a) * r, sin(a) * r * 0.6);
+    });
+  }
+
+  static Path _buildRockPath(Random rng, double w, double h) {
+    const points = 9;
+    final path = Path();
+    for (var i = 0; i < points; i++) {
+      final angle = (i / points) * pi * 2;
+      final jitter = 0.78 + rng.nextDouble() * 0.24;
+      final dx = cos(angle) * (w / 2) * jitter;
+      final dy = sin(angle) * (h / 2) * jitter;
+      if (i == 0) {
+        path.moveTo(dx, dy);
+      } else {
+        path.lineTo(dx, dy);
+      }
+    }
+    path.close();
+    return path;
+  }
 
   @override
   void render(Canvas canvas) {
-    final color = chosen
+    final base = chosen
         ? const Color(0xFF3DDC97)
         : selected
             ? const Color(0xFF5EC8F2)
-            : const Color(0xFFB08D57);
-    final paint = Paint()..color = locked && !chosen ? color.withAlpha(80) : color;
-    final rect = Rect.fromCenter(center: Offset.zero, width: size.x, height: size.y);
-    canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)), paint);
+            : const Color(0xFF9C8A73);
+    _fillPaint.color = locked && !chosen ? base.withAlpha(80) : base;
+    canvas.drawPath(_rockPath, _fillPaint);
+    if (!(locked && !chosen)) {
+      for (final c in _craters) {
+        canvas.drawCircle(c, size.x * 0.07, _craterPaint);
+      }
+    }
     if (selected || chosen) {
-      final border = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..color = Colors.white;
-      canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(6)), border);
+      canvas.drawPath(_rockPath, _rimPaint..color = Colors.white);
+    } else {
+      canvas.drawPath(_rockPath, _rimPaint..color = Colors.white24);
     }
   }
 }
 
-/// Personajul controlat local, în faza de alegere — o siluetă simplă,
-/// desenată procedural (fără sprite-uri), care abia se leagănă (idle).
-class _PlayerRigComponent extends PositionComponent {
+/// Personajul controlat local, în faza de alegere — un mic astronaut desenat
+/// procedural (fără sprite-uri), care abia se leagănă (idle).
+class _AstronautIdleComponent extends PositionComponent {
   final Color color;
   double _t = 0;
 
-  _PlayerRigComponent({required this.color, required Vector2 position}) : super(position: position, size: Vector2(48, 66));
+  _AstronautIdleComponent({required this.color, required Vector2 position}) : super(position: position, size: Vector2(48, 66));
 
   @override
   void update(double dt) {
@@ -387,7 +473,7 @@ class _PlayerRigComponent extends PositionComponent {
   void render(Canvas canvas) {
     final bob = sin(_t * 2.4) * 2;
     final bounds = Rect.fromLTWH(0, bob, size.x, size.y);
-    _paintSilhouette(canvas, bounds, color);
+    paintObbyAstronaut(canvas, bounds, color, legSpread: sin(_t * 2.4) * 0.15);
   }
 }
 
@@ -399,6 +485,13 @@ class _RunnerComponent extends PositionComponent {
   double _depth = 0;
   double _jumpT = 0;
   double _fallT = 0;
+  double _liftoffT = 0;
+  double _time = 0;
+
+  final Paint _bodyPaint = Paint();
+  final Paint _shadowPaint = Paint()..color = Colors.black.withAlpha(90);
+  TextPainter? _nameTp;
+  String? _nameTpFor;
 
   _RunnerComponent({required this.data, required double startDepth}) : super(size: Vector2(46, 62), anchor: Anchor.center) {
     _depth = startDepth;
@@ -408,18 +501,26 @@ class _RunnerComponent extends PositionComponent {
     position.y = -startDepth * 900;
   }
 
+  /// A terminat cursa cu săritura asta? Dacă da, în loc să rămână în picioare
+  /// pe ultimul bolovan, urcă direct în naveta de scăpare — vezi
+  /// [_paintShuttle].
+  bool get _finishedThisJump => data.outcome == ObbyRoundOutcome.jumped && data.progress >= 0.999;
+
   /// [jumpT] și [fallT] sunt 0..1 și se exclud reciproc — o rundă e ori
   /// săritură reușită, ori cădere, niciodată amândouă (vezi
-  /// [ObbyRoundOutcome]).
-  void setDepth(double depth, {double jumpT = 0, double fallT = 0}) {
+  /// [ObbyRoundOutcome]). [liftoffT] avansează pe tot deznodământul, dar
+  /// contează doar pentru [_finishedThisJump].
+  void setDepth(double depth, {double jumpT = 0, double fallT = 0, double liftoffT = 0}) {
     _depth = depth;
     _jumpT = jumpT;
     _fallT = fallT;
+    _liftoffT = liftoffT;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
+    _time += dt;
     // adancimea pe pista = departe pe axa Y (in fata), scara mica departe
     final targetY = -_depth * 900;
     if (_fallT > 0) {
@@ -434,66 +535,182 @@ class _RunnerComponent extends PositionComponent {
     scale.setAll(targetScale);
   }
 
+  TextPainter _buildNameTp() {
+    return TextPainter(
+      text: TextSpan(
+        text: data.name,
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+      ),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+      ellipsis: '…',
+    )..layout(maxWidth: 80);
+  }
+
   @override
   void render(Canvas canvas) {
+    if (_finishedThisJump && _jumpT >= 0.999) {
+      _paintShuttle(canvas);
+      return;
+    }
+
     final lift = sin(_jumpT.clamp(0, 1) * pi) * 44;
     final fade = 1 - _fallT;
     final alpha = (255 * fade).round().clamp(0, 255);
-    final color = _fallT > 0 ? data.color.withAlpha(alpha) : data.color;
+    _bodyPaint.color = _fallT > 0 ? data.color.withAlpha(alpha) : data.color;
 
     // Umbra dispare de îndată ce personajul n-are pe ce s-o mai lase.
     if (_fallT < 0.05) {
-      final shadowPaint = Paint()..color = Colors.black.withAlpha(90);
-      canvas.drawOval(Rect.fromCenter(center: Offset(0, size.y / 2), width: size.x * 0.7, height: size.x * 0.25), shadowPaint);
+      canvas.drawOval(Rect.fromCenter(center: Offset(0, size.y / 2), width: size.x * 0.7, height: size.x * 0.25), _shadowPaint);
     }
 
     canvas.save();
     if (_fallT > 0) canvas.rotate(_fallT * 0.9); // se răsucește cât cade
     final bounds = Rect.fromLTWH(-size.x / 2, -size.y / 2 - lift, size.x, size.y);
-    _paintSilhouette(canvas, bounds, color);
+    paintObbyAstronaut(canvas, bounds, _bodyPaint.color);
     canvas.restore();
 
     if (fade > 0.15) {
-      final tp = TextPainter(
-        text: TextSpan(
-          text: data.name,
-          style: TextStyle(color: Colors.white.withAlpha(alpha), fontSize: 11, fontWeight: FontWeight.w800),
-        ),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-        ellipsis: '…',
-      )..layout(maxWidth: 80);
-      tp.paint(canvas, Offset(-tp.width / 2, -size.y / 2 - lift - tp.height - 2));
+      if (_nameTpFor != data.name) {
+        _nameTp = _buildNameTp();
+        _nameTpFor = data.name;
+      }
+      final tp = _nameTp!;
+      final offset = Offset(-tp.width / 2, -size.y / 2 - lift - tp.height - 2);
+      if (fade < 0.999) {
+        canvas.saveLayer(null, Paint()..color = Colors.white.withAlpha(alpha));
+        tp.paint(canvas, offset);
+        canvas.restore();
+      } else {
+        tp.paint(canvas, offset);
+      }
     }
+  }
+
+  /// Naveta de scăpare — apare exact unde a aterizat ultimul astronaut și se
+  /// ridică din cadru pe măsură ce [_liftoffT] avansează, cu flacăra
+  /// motorului pâlpâind (funcție de [_time], nu de un `Random` per-cadru, ca
+  /// pâlpâirea să rămână fluidă și nu zgomotoasă).
+  void _paintShuttle(Canvas canvas) {
+    final riseDelay = 0.15; // o clipă pe bolovan, ca aterizarea să se vadă, înainte de decolare
+    final riseT = ((_liftoffT - riseDelay) / (1 - riseDelay)).clamp(0.0, 1.0);
+    final riseY = riseT * riseT * 620; // accelerează la fel ca o decolare reală
+    final fadeStart = 0.82;
+    final fade = riseT < fadeStart ? 1.0 : (1 - (riseT - fadeStart) / (1 - fadeStart)).clamp(0.0, 1.0);
+    final alpha = (255 * fade).round().clamp(0, 255);
+
+    final flicker = 0.7 + 0.3 * sin(_time * 26) * sin(_time * 11 + 1.3).abs();
+
+    canvas.save();
+    canvas.translate(0, -riseY);
+    if (fade < 0.05) {
+      canvas.restore();
+      return;
+    }
+
+    if (riseT < 0.9) {
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(0, size.y / 2 - riseY * 0.02), width: size.x * 0.55, height: size.x * 0.2),
+        _shadowPaint..color = Colors.black.withAlpha((70 * (1 - riseT)).round()),
+      );
+    }
+
+    final w = size.x * 0.62;
+    final bodyTop = -size.y * 0.34;
+    final bodyBottom = size.y * 0.22;
+    final bodyRect = RRect.fromRectAndRadius(
+      Rect.fromLTRB(-w / 2, bodyTop + w * 0.5, w / 2, bodyBottom),
+      Radius.circular(w * 0.5),
+    );
+    final hullPaint = Paint()..color = const Color(0xFFDCE3EC).withAlpha(alpha);
+    canvas.drawRRect(bodyRect, hullPaint);
+
+    final nose = Path()
+      ..moveTo(-w / 2, bodyTop + w * 0.5)
+      ..lineTo(0, bodyTop)
+      ..lineTo(w / 2, bodyTop + w * 0.5)
+      ..close();
+    canvas.drawPath(nose, hullPaint);
+
+    final finPaint = Paint()..color = data.color.withAlpha(alpha);
+    final finY = bodyBottom - w * 0.18;
+    canvas.drawPath(
+      Path()
+        ..moveTo(-w / 2, finY)
+        ..lineTo(-w * 0.95, bodyBottom + w * 0.22)
+        ..lineTo(-w * 0.32, bodyBottom)
+        ..close(),
+      finPaint,
+    );
+    canvas.drawPath(
+      Path()
+        ..moveTo(w / 2, finY)
+        ..lineTo(w * 0.95, bodyBottom + w * 0.22)
+        ..lineTo(w * 0.32, bodyBottom)
+        ..close(),
+      finPaint,
+    );
+
+    canvas.drawCircle(Offset(0, bodyTop + w * 0.62), w * 0.18, Paint()..color = const Color(0xFF1B2540).withAlpha(alpha));
+    canvas.drawCircle(Offset(-w * 0.05, bodyTop + w * 0.56), w * 0.06, Paint()..color = Colors.white.withAlpha((alpha * 0.8).round()));
+
+    if (fade > 0.1) {
+      final flameLen = (w * 0.9 * flicker) * fade;
+      final flameOuter = Path()
+        ..moveTo(-w * 0.24, bodyBottom)
+        ..lineTo(0, bodyBottom + flameLen)
+        ..lineTo(w * 0.24, bodyBottom)
+        ..close();
+      canvas.drawPath(flameOuter, Paint()..color = const Color(0xFFFF8A3D).withAlpha((alpha * 0.85).round()));
+      final flameInner = Path()
+        ..moveTo(-w * 0.12, bodyBottom)
+        ..lineTo(0, bodyBottom + flameLen * 0.6)
+        ..lineTo(w * 0.12, bodyBottom)
+        ..close();
+      canvas.drawPath(flameInner, Paint()..color = const Color(0xFFFFE580).withAlpha(alpha));
+    }
+
+    canvas.restore();
   }
 }
 
-/// Solul din scena de reveal — o pistă simplă, cu marcaje la fiecare
-/// obstacol, ca jucătorul să simtă distanța parcursă cât camera îl urmărește.
-class _GroundComponent extends PositionComponent {
+/// Pista din scena de reveal — vid stelar cu un traseu de bolovani de
+/// asteroid marcând fiecare obstacol, ca jucătorul să simtă distanța
+/// parcursă cât camera îl urmărește.
+class _SpaceTrackComponent extends PositionComponent {
+  late final _StarField _stars;
+  final Paint _starPaint = Paint();
+  final Paint _voidPaint = Paint()..color = const Color(0xFF05060F);
+  final Paint _glowPaint = Paint()..color = const Color(0x1A24408F);
+  final Paint _railPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 3
+    ..color = Colors.white24;
+  final Paint _markPaint = Paint()..color = const Color(0xFF9C8A73);
+
+  _SpaceTrackComponent({required int starCount}) {
+    _stars = _StarField(starCount, const Rect.fromLTWH(-1400, -3000, 2800, 3600));
+  }
+
   @override
   void render(Canvas canvas) {
-    final sky = Paint()..color = const Color(0xFF232A52);
-    canvas.drawRect(const Rect.fromLTWH(-3000, -3000, 6000, 3000), sky);
-    final ground = Paint()..color = const Color(0xFF1E4230);
-    canvas.drawRect(const Rect.fromLTWH(-3000, -1200, 6000, 4200), ground);
+    canvas.drawRect(const Rect.fromLTWH(-3000, -3000, 6000, 3000), _voidPaint);
+    canvas.drawRect(const Rect.fromLTWH(-3000, -1200, 6000, 4200), _voidPaint);
+    for (var i = 0; i <= obbyObstacleCount; i++) {
+      final depth = i / obbyObstacleCount;
+      canvas.drawCircle(Offset(0, -depth * 900), 420 * (1 - depth * 0.4), _glowPaint);
+    }
+    _stars.paint(canvas, _starPaint);
 
-    final railPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4
-      ..color = Colors.white.withAlpha(60);
-    canvas.drawLine(const Offset(-90, 0), const Offset(-160, -1000), railPaint);
-    canvas.drawLine(const Offset(90, 0), const Offset(160, -1000), railPaint);
+    canvas.drawLine(const Offset(-90, 0), const Offset(-160, -1000), _railPaint);
+    canvas.drawLine(const Offset(90, 0), const Offset(160, -1000), _railPaint);
 
-    final markPaint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = Colors.white.withAlpha(50);
     for (var i = 1; i <= obbyObstacleCount; i++) {
       final depth = i / obbyObstacleCount;
       final y = -depth * 900;
       final spread = 90 + (1 - depth) * 90;
-      canvas.drawLine(Offset(-spread, y), Offset(spread, y), markPaint);
+      canvas.drawCircle(Offset(-spread, y), 5, _markPaint);
+      canvas.drawCircle(Offset(spread, y), 5, _markPaint);
     }
   }
 
@@ -501,31 +718,63 @@ class _GroundComponent extends PositionComponent {
   int get priority => -10;
 }
 
-/// Desenul comun (cap rotund + corp capsulă + două picioare), la fel pentru
-/// personajul din faza de alegere și pentru fiecare alergător din reveal.
-void _paintSilhouette(Canvas canvas, Rect bounds, Color color) {
+/// Desenul comun al astronautului (cască + vizor + rucsac + corp + picioare)
+/// — folosit atât pentru personajul din scena de alegere/reveal, cât și
+/// pentru cel din colțul ecranului în timpul răspunsului (vezi
+/// MultiplayerObbyScreen._CornerCharacter). [legSpread] mișcă picioarele
+/// (mers/idle), [crouch] coboară puțin corpul (folosit la idle-ul din colț).
+void paintObbyAstronaut(Canvas canvas, Rect bounds, Color suitColor, {double legSpread = 0, double crouch = 0}) {
   final w = bounds.width;
   final h = bounds.height;
   final cx = bounds.center.dx;
-  final top = bounds.top;
+  final top = bounds.top + h * crouch * 0.15;
 
-  final bodyPaint = Paint()..color = color;
-  final headR = w * 0.24;
-  final headCy = top + headR * 1.1;
-  canvas.drawCircle(Offset(cx, headCy), headR, bodyPaint);
+  final backpackPaint = Paint()..color = Color.lerp(suitColor, Colors.black, 0.4)!;
+  final suitPaint = Paint()..color = suitColor;
+  final helmetPaint = Paint()..color = const Color(0xFFE8ECF2);
+  final visorPaint = Paint()..color = const Color(0xFF12141C);
+  final highlightPaint = Paint()..color = Colors.white70;
 
-  final bodyTop = headCy + headR * 0.75;
-  final bodyBottom = bounds.bottom - h * 0.18;
-  final bodyRect = RRect.fromRectAndRadius(
-    Rect.fromLTRB(cx - w * 0.22, bodyTop, cx + w * 0.22, bodyBottom),
-    Radius.circular(w * 0.18),
+  final headR = w * 0.26;
+  final headCy = top + headR * 1.05;
+
+  final bodyTop = headCy + headR * 0.7;
+  final bodyBottom = bounds.bottom - h * 0.2 + crouch * h * 0.08;
+
+  // Rucsacul stă în spatele corpului, deci se desenează primul.
+  final backpackRect = RRect.fromRectAndRadius(
+    Rect.fromLTRB(cx - w * 0.16, bodyTop + h * 0.02, cx + w * 0.16, bodyBottom - h * 0.04),
+    Radius.circular(w * 0.08),
   );
-  canvas.drawRRect(bodyRect, bodyPaint);
+  canvas.drawRRect(backpackRect, backpackPaint);
 
   final legPaint = Paint()
-    ..color = color
-    ..strokeWidth = w * 0.14
+    ..color = suitColor
+    ..strokeWidth = w * 0.15
     ..strokeCap = StrokeCap.round;
-  canvas.drawLine(Offset(cx - w * 0.07, bodyBottom - h * 0.02), Offset(cx - w * 0.09, bounds.bottom), legPaint);
-  canvas.drawLine(Offset(cx + w * 0.07, bodyBottom - h * 0.02), Offset(cx + w * 0.09, bounds.bottom), legPaint);
+  canvas.drawLine(
+    Offset(cx - w * 0.07, bodyBottom - h * 0.02),
+    Offset(cx - w * 0.09 - legSpread * w * 0.2, bounds.bottom),
+    legPaint,
+  );
+  canvas.drawLine(
+    Offset(cx + w * 0.07, bodyBottom - h * 0.02),
+    Offset(cx + w * 0.09 + legSpread * w * 0.2, bounds.bottom),
+    legPaint,
+  );
+
+  final bodyRect = RRect.fromRectAndRadius(
+    Rect.fromLTRB(cx - w * 0.24, bodyTop, cx + w * 0.24, bodyBottom),
+    Radius.circular(w * 0.2),
+  );
+  canvas.drawRRect(bodyRect, suitPaint);
+
+  // Casca acoperă corpul de sus, cu vizorul suprapus și un mic reflex de
+  // sticlă — asta desparte "astronaut" de silueta generică cu cap rotund.
+  canvas.drawCircle(Offset(cx, headCy), headR, helmetPaint);
+  canvas.drawOval(
+    Rect.fromCenter(center: Offset(cx + headR * 0.08, headCy), width: headR * 1.25, height: headR * 1.5),
+    visorPaint,
+  );
+  canvas.drawCircle(Offset(cx - headR * 0.28, headCy - headR * 0.3), headR * 0.16, highlightPaint);
 }
