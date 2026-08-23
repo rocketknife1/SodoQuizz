@@ -52,7 +52,7 @@ assets/continut/
 ## Ce urmează
 
 Ce a rămas deschis după ultima sesiune mare + planuri menționate dar
-neîncepute încă: [docs/TODO.md](docs/TODO.md).
+neîncepute încă: [TODO.md](TODO.md).
 
 ## Verificare locală
 
