@@ -11,22 +11,17 @@ Liga cu sezoane, badge de ligă, evenimente în Obby (rundă dublă + a doua
 șansă), recompensă instant în Obby, categoria zilei — toate au fost
 construite și verificate. Trei lucruri au rămas deschise:
 
-1. **Bug real, preexistent, găsit în timpul testării** — în
-   `lib/screens/multiplayer/multiplayer_results_screen.dart`, la egalitate
-   pe locul 1 între doi jucători, doar cel cu `myIndex == 0` primește
-   `draw = true`; celălalt (același scor, dar afișat pe locul #2) primește
-   `won = false, draw = false` — adică e scris ca **înfrângere**, nu remiză.
-   Afectează toate modurile multiplayer, nu doar Obby. Nu a fost atins —
-   era în afara scopului sesiunii respective.
-2. **Obby cu evenimentele noi — neverificat pe telefon.** Codul a fost
-   verificat solid, de două ori, cap-la-cap, cu doi jucători reali în
-   browser (Playwright), fără nicio excepție. Pe telefon, testul automat a
-   picat din motive de input inconsistent pe device (nu de cod — a dus la
-   crearea unei camere cu modul greșit, Astro Sodo, care n-a fost atins
-   deloc în sesiune). Merită un test manual, cu adevărat pe telefon, la
-   următoarea ocazie.
-3. **Ecranul de Profil — neconfirmat separat pe telefon** (identic
-   verificat pe web: badge de ligă + "puncte sezonul ăsta · pe viață").
+1. ~~Bug de remiză~~ — **REPARAT 2026-08-23**: `matchOutcomeForScore` în
+   `core/betting.dart`, folosit acum din `multiplayer_results_screen.dart`,
+   testat (5 teste noi în `game_logic_test.dart`). Necommitat.
+2. **Obby cu evenimentele noi — tot neverificat pe telefon.** Cod solid
+   (verificat de două ori cap-la-cap cu doi jucători în browser). Pe acest
+   telefon anume, meniul Multiplayer nu răspunde fiabil la tap-uri
+   automate — zona vizuală „Cod cameră" declanșează sistematic „Meci
+   rapid" în loc (verificat: nu e bug de layout în cod, cele trei butoane
+   sunt separate corect). Renunțat la automatizare; rămâne de testat manual.
+3. ~~Ecranul de Profil~~ — **CONFIRMAT pe telefon 2026-08-23** (badge de
+   ligă + „0 puncte sezonul ăsta · 44 pe viață", identic cu web).
 
 ## Planuri menționate în trecut, neîncepute încă
 
@@ -37,12 +32,11 @@ construite și verificate. Trei lucruri au rămas deschise:
   deliberat ascuns în spatele unui văl "În curând"
   (`premiumShopRevealed = false`) — **nu se dezvăluie din proprie
   inițiativă**, userul a zis explicit că anunță el când.
-- **Link de invitație pentru prieteni.** Spec ales, nimic implementat:
-  schemă URI proprie `guessit://addfriend/<cod>` (aleasă în locul unui
-  Android App Link complet, ca să nu ceară `assetlinks.json` găzduit). Ar
-  intra prin pachetul `app_links`, un intent-filter în
-  `AndroidManifest.xml`, plus un buton de "share" lângă cardul de cod din
-  `friends_screen.dart`.
+- ~~Link de invitație pentru prieteni~~ — **CONSTRUIT ȘI VERIFICAT
+  2026-08-23**: `guessit://addfriend/<cod>` prin `app_links`, intent-filter
+  în `AndroidManifest.xml`, buton „share" cu `share_plus` în
+  `friends_screen.dart`. Testat end-to-end pe telefon (cerere reală trimisă
+  și primită între două conturi). Necommitat.
 - **Ecran negru (Impeller) la revenirea dintr-un Activity extern** (ex.
   login Google) — bug confirmat, reproductibil, cauzat de renderer-ul
   Impeller/Vulkan pe acest GPU (Samsung Xclipse). Soluție candidat, NEAPLICATĂ

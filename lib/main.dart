@@ -1,4 +1,5 @@
 ﻿import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -105,6 +106,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   StreamSubscription<MultiplayerPresencePing>? _presenceSub;
   StreamSubscription<RematchOffer?>? _rematchSub;
   bool _rematchDialogOpen = false;
+  StreamSubscription<Uri>? _linkSub;
 
   @override
   void initState() {
@@ -112,6 +114,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _listenForMultiplayerPresence();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
+    _listenForDeepLinks();
   }
 
   @override
@@ -119,8 +122,65 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     _presenceSub?.cancel();
     MultiplayerService.instance.lastFinishedMatchId.removeListener(_watchRematchOffer);
     _rematchSub?.cancel();
+    _linkSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  // ─── Link de invitație prieteni (guessit://addfriend/<cod>) ────────────
+
+  /// Prinde link-ul ATÂT la pornire rece (aplicația era închisă, s-a
+  /// deschis direct din link — [AppLinks.getInitialLink]) CÂT ȘI cu
+  /// aplicația deja pornită în fundal ([AppLinks.uriLinkStream]). Fără
+  /// primul, cineva care apasă link-ul fără să aibă aplicația deja
+  /// deschisă n-ar vedea niciodată cererea de prietenie trimisă.
+  ///
+  /// Aceeași gardă pe `Firebase.apps` ca la [_listenForMultiplayerPresence]:
+  /// testul de widget montează aplicația fără `Firebase.initializeApp`.
+  void _listenForDeepLinks() {
+    if (Firebase.apps.isEmpty) return;
+    final appLinks = AppLinks();
+    appLinks.getInitialLink().then((uri) {
+      if (uri != null) _handleFriendInviteUri(uri);
+    });
+    _linkSub = appLinks.uriLinkStream.listen(
+      _handleFriendInviteUri,
+      onError: (e) => debugPrint('Ascultarea link-urilor de invitatie a esuat: $e'),
+    );
+  }
+
+  /// [uri] arată `guessit://addfriend/<cod>` — codul e primul segment de
+  /// cale. Orice altă schemă/gazdă (n-ar trebui să apară, dar un link scris
+  /// de mână poate greși) e ignorată tăcut.
+  ///
+  /// [MultiplayerService.ensureInitialized] înainte de cerere: cine deschide
+  /// link-ul fără să fi intrat NICIODATĂ în Multiplayer încă n-are cont
+  /// anonim în Firebase Auth, iar [PlayerProfileService.sendFriendRequest]
+  /// citește `currentPlayerId` — fără pasul ăsta, cererea ar eșua tăcut cu
+  /// `notFound` pentru cel dintâi link deschis vreodată.
+  Future<void> _handleFriendInviteUri(Uri uri) async {
+    if (uri.scheme != 'guessit' || uri.host != 'addfriend') return;
+    final code = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
+    if (code.isEmpty) return;
+    try {
+      await MultiplayerService.instance.ensureInitialized();
+      final outcome = await PlayerProfileService.instance.sendFriendRequest(code);
+      final message = switch (outcome) {
+        FriendRequestOutcome.sent => tr('Cerere de prietenie trimisă!', 'Friend request sent!'),
+        FriendRequestOutcome.autoAccepted => tr('V-ați adăugat reciproc!', 'You added each other!'),
+        FriendRequestOutcome.alreadyFriends => tr('Sunteți deja prieteni.', 'You are already friends.'),
+        FriendRequestOutcome.notFound =>
+          tr('Linkul de invitație nu mai e valabil.', "This invite link isn't valid anymore."),
+        FriendRequestOutcome.isSelf => tr('Ăsta e chiar linkul tău de invitație.', "That's your own invite link."),
+      };
+      _showRootBanner(
+        title: tr('Invitație de prieten', 'Friend invite'),
+        message: message,
+        icon: Icons.person_add_alt_1_rounded,
+      );
+    } catch (e) {
+      debugPrint('Deep link addfriend a esuat: $e');
+    }
   }
 
   // ─── Revanșă cerută după ce ai ieșit deja din meci ──────────────────────

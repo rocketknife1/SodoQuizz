@@ -110,12 +110,16 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     _amHost = myIndex != -1 && sorted[myIndex].isHost;
     if (myIndex != -1) {
       final myScore = sorted[myIndex].score;
-      // egalitate pentru locul 1 (mai mulți cu același scor maxim) numără
-      // ca remiză, nu ca victorie NICI ca înfrângere, pentru statisticile
-      // de profil (vezi PlayerProfileService.recordMatchResult) — restul
-      // logicii economice de mai jos rămâne neschimbată.
-      final draw = myIndex == 0 && sorted.length >= 2 && sorted[1].score == myScore;
-      final won = myIndex == 0 && !draw;
+      // BUG REPARAT (2026-08-23): varianta veche verifica doar `myIndex == 0`
+      // comparat cu `sorted[1]`, deci la o remiză pe primul loc între doi
+      // jucători, doar cel de la indexul 0 din lista sortată primea
+      // `draw=true` — celălalt (același scor, dar `myIndex == 1`) cădea pe
+      // `won=false, draw=false`, adică era scris ca ÎNFRÂNGERE. Logica
+      // corectă e în `matchOutcomeForScore` (core/betting.dart), testată
+      // separat de sortare/index.
+      final outcome = matchOutcomeForScore(myScore: myScore, allScores: [for (final p in sorted) p.score]);
+      final draw = outcome.draw;
+      final won = outcome.won;
 
       final stake = _tableStake(sorted);
       final prizes = matchPrizesForRanking(

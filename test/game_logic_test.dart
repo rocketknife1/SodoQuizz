@@ -248,6 +248,50 @@ void main() {
     });
   });
 
+  group('matchOutcomeForScore', () {
+    test('scor strict cel mai mare = victorie', () {
+      final o = matchOutcomeForScore(myScore: 900, allScores: [900, 300, 100]);
+      expect(o.won, isTrue);
+      expect(o.draw, isFalse);
+    });
+
+    test('scor mai mic decat maximul = infrangere, nu remiza', () {
+      final o = matchOutcomeForScore(myScore: 300, allScores: [900, 300, 100]);
+      expect(o.won, isFalse);
+      expect(o.draw, isFalse);
+    });
+
+    test('remiza intre doi jucatori: ambii primesc draw, oriunde ar sta in lista', () {
+      // Bug real gasit 2026-08-23: varianta veche compara doar indexul 0 cu
+      // indexul 1 al listei SORTATE, deci doar unul dintre cei doi egali la
+      // varf ajungea sa fie "eu" pe indexul 0 — celalalt era scris ca
+      // infrangere. Aici verificam cu scorul meu pus pe fiecare pozitie
+      // posibila din lista, ca sa nu poata reveni bug-ul de asimetrie.
+      for (final scores in [
+        [900, 900, 100],
+        [100, 900, 900],
+        [900, 100, 900],
+      ]) {
+        final o = matchOutcomeForScore(myScore: 900, allScores: scores);
+        expect(o.won, isFalse, reason: 'o remiza nu e victorie ($scores)');
+        expect(o.draw, isTrue, reason: 'ambii jucatori egali la varf trebuie sa vada remiza ($scores)');
+      }
+    });
+
+    test('remiza intre trei jucatori sau mai multi ramane remiza pentru toti', () {
+      final o = matchOutcomeForScore(myScore: 500, allScores: [500, 500, 500, 100]);
+      expect(o.won, isFalse);
+      expect(o.draw, isTrue);
+    });
+
+    test('functia nu depinde de ordinea listei de scoruri', () {
+      const scores = [300, 900, 900, 100];
+      final sorted = matchOutcomeForScore(myScore: 900, allScores: List.of(scores)..sort((a, b) => b.compareTo(a)));
+      final unsorted = matchOutcomeForScore(myScore: 900, allScores: scores);
+      expect(sorted, equals(unsorted));
+    });
+  });
+
   group('multiplayer clasic', () {
     test('ghicitul orb pierde puncte, hint-ul plus ghicit nu', () {
       // Calibrarea penalizarilor: bataia la nimereala pe 4 variante trebuie sa

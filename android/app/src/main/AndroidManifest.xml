@@ -26,6 +26,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Link de invitație prieteni: guessit://addfriend/<cod> — schemă
+                 proprie, nu Android App Link, ca să nu ceară assetlinks.json
+                 găzduit pe GH Pages (vezi docs/deploy). Ținta e citită în
+                 main.dart, GuessItApp._listenForDeepLinks, cu pachetul app_links. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="guessit" android:host="addfriend"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

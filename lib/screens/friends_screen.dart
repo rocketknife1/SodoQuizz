@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../core/leagues.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
@@ -118,6 +119,21 @@ class _FriendsScreenState extends State<FriendsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Copiat!')));
   }
 
+  /// Link-ul de invitație e o schemă proprie (`guessit://addfriend/<cod>`),
+  /// nu un Android App Link — vezi comentariul din AndroidManifest.xml
+  /// pentru de ce. Compromisul cunoscut: unele aplicații de chat (WhatsApp,
+  /// SMS) nu-l randează ca link apăsabil, de-aia mesajul include și codul
+  /// simplu, de copiat manual, nu doar link-ul.
+  void _shareCode(String code) {
+    final link = 'guessit://addfriend/$code';
+    Share.share(
+      tr(
+        'Hai să fim prieteni pe SodoQuizz! Apasă linkul (sau intră cu codul $code din Prieteni):\n$link',
+        "Let's be friends on SodoQuizz! Tap the link (or enter code $code under Friends):\n$link",
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -218,8 +234,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
               ],
             ),
           ),
-          if (code != null)
+          if (code != null) ...[
             IconButton(onPressed: () => _copyCode(code), icon: const Icon(Icons.copy_rounded, color: Colors.white70), tooltip: tr('Copiază', 'Copy')),
+            IconButton(
+              onPressed: () => _shareCode(code),
+              icon: const Icon(Icons.share_rounded, color: AppColors.teal),
+              tooltip: tr('Trimite invitație', 'Send invite'),
+            ),
+          ],
         ],
       ),
     );

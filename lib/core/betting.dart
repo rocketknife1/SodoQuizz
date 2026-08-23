@@ -134,6 +134,32 @@ List<int> matchPrizesForRanking({required int stake, required List<int> sortedSc
   return out;
 }
 
+/// Am câștigat sau am ieșit la egalitate pe primul loc, la finalul unui meci?
+///
+/// [myScore] și [allScores] sunt scorurile finale ale tuturor jucătorilor de
+/// la masă (inclusiv al meu). O remiză pe locul 1 (oricâți jucători cu exact
+/// scorul cel mai mare, nu doar doi) NU e nici victorie, nici înfrângere —
+/// pentru statisticile de profil (vezi PlayerProfileService.recordMatchResult
+/// / MultiplayerResultsScreen), o remiză nu trebuie să bifeze quest-ul de
+/// victorii, dar nici nu trebuie scrisă ca înfrângere.
+///
+/// Funcție pură, independentă de ORDINEA în care vine [allScores] — nu
+/// contează la ce index ies eu într-o sortare, doar scorul meu comparat cu cel
+/// mai mare de la masă. Vezi comentariul din `multiplayer_results_screen.dart`
+/// pentru bug-ul real pe care l-a înlocuit: varianta veche compara doar
+/// indexul 0 al listei sortate cu indexul 1, deci la o remiză între doi
+/// jucători doar unul dintre ei ieșea cu `draw=true` — celălalt era scris ca
+/// înfrângere.
+({bool won, bool draw}) matchOutcomeForScore({
+  required int myScore,
+  required List<int> allScores,
+}) {
+  final topScore = allScores.fold<int>(allScores.first, (best, s) => s > best ? s : best);
+  if (myScore != topScore) return (won: false, draw: false);
+  final tiedAtTop = allScores.where((s) => s == topScore).length;
+  return tiedAtTop >= 2 ? (won: false, draw: true) : (won: true, draw: false);
+}
+
 /// Numele mizei ('Mică'/'Medie'/'Mare'), sau șir gol pentru o valoare care nu
 /// e printre opțiuni (camere create de versiuni mai vechi ale aplicației).
 String matchStakeLabel(int stake) {
