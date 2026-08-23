@@ -31,6 +31,14 @@ class _ModeStats {
   double get pct => total > 0 ? answered / total : 0.0;
 }
 
+/// Starea butonului din [_CategoriesScreenState._buildFeaturedCategoryBanner]
+/// — a jucat-o azi categoria evidențiată? A revendicat deja bonusul?
+class _FeaturedClaimState {
+  final bool played;
+  final bool claimed;
+  const _FeaturedClaimState({required this.played, required this.claimed});
+}
+
 /// Ecranul care apare când apeși PLAY: alegi unul dintre cele 4
 /// gamemoduri. Cardurile sunt generate din [gameModes] — nu e nimic
 /// hardcodat aici, un gamemod nou apare automat.
@@ -43,6 +51,13 @@ class CategoriesScreen extends StatefulWidget {
 
 class _CategoriesScreenState extends State<CategoriesScreen> with TickerProviderStateMixin {
   late Future<Map<String, _ModeStats>> _statsFuture;
+
+  /// Categoria evidențiată azi (conținut rotativ, PLAN_DE_VIITOR.md punctul
+  /// 5) — calculată o singură dată la montare, nu la fiecare build: nu se
+  /// schimbă cât timp stai pe ecran, iar `DateTime.now()` direct în build ar
+  /// fi doar zgomot.
+  final GameMode _featured = featuredGameModeToday();
+  late Future<_FeaturedClaimState> _featuredFuture;
 
   /// Intrarea în cascadă a listei de categorii — aceeași senzație ca în
   /// Multiplayer (vezi widgets/entrance_item.dart), ca ecranul să nu apară
@@ -59,6 +74,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
   void initState() {
     super.initState();
     _statsFuture = _loadStats();
+    _featuredFuture = _loadFeaturedClaimState();
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
     _liveCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
   }
@@ -416,6 +432,85 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     );
   }
 
+  Future<_FeaturedClaimState> _loadFeaturedClaimState() async {
+    final results = await Future.wait([
+      StorageService.wasModePlayedToday(_featured.id),
+      StorageService.isFeaturedCategoryClaimed(),
+    ]);
+    return _FeaturedClaimState(played: results[0], claimed: results[1]);
+  }
+
+  /// Aplică efectiv bonusul (StorageService, nu doar marcajul de
+  /// revendicare) — aceeași convenție ca [claimQuest]/[_upgrade]: metoda de
+  /// storage doar ȚINE MINTE că s-a revendicat, apelantul scrie banii.
+  Future<void> _claimFeatured() async {
+    await StorageService.addCoins(featuredCategoryCoinReward);
+    await StorageService.addXp(featuredCategoryXpReward);
+    await StorageService.claimFeaturedCategory();
+    Sfx.rewardPop();
+    if (!mounted) return;
+    setState(() => _featuredFuture = _loadFeaturedClaimState());
+  }
+
+  /// Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — categoria evidențiată
+  /// azi, aceeași pentru toți jucătorii (vezi [_featured] și
+  /// core/gamemodes.dart#featuredGameModeToday). Trei stări: încă nejucată
+  /// azi (doar anunț), jucată dar nerevendicată (buton activ), deja
+  /// revendicată (banner-ul dispare — motivul de a deschide jocul azi s-a
+  /// consumat, nu mai are ce să mai arate).
+  Widget _buildFeaturedCategoryBanner() {
+    return FutureBuilder<_FeaturedClaimState>(
+      future: _featuredFuture,
+      builder: (context, snapshot) {
+        final state = snapshot.data;
+        if (state == null || state.claimed) return const SizedBox.shrink();
+        return Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(colors: [_featured.accentColor.withAlpha(50), _featured.accentColor.withAlpha(18)]),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: _featured.accentColor.withAlpha(150)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.star_rounded, color: _featured.accentColor, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      tr('Categoria zilei: ${_featured.title}', 'Category of the day: ${_featured.title}'),
+                      style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      state.played
+                          ? tr('Ai jucat-o azi — revendică bonusul!', "You've played it today — claim the bonus!")
+                          : tr('Joacă un joc din ea azi și iei bonus.', 'Play a round from it today for a bonus.'),
+                      style: const TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+              if (state.played)
+                ElevatedButton(
+                  onPressed: _claimFeatured,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _featured.accentColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  child: Text('💰+$featuredCategoryCoinReward', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800)),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -477,6 +572,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                     ),
                   ),
                   _buildStarterGemsBanner(),
+                  _buildFeaturedCategoryBanner(),
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
@@ -529,6 +625,17 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                               '${s?.answered ?? 0}/$total questions');
                         }
 
+                        // Evidențiere "categoria zilei" — doar textul (⭐ în
+                        // titlu), fără să atingem randarea proprie a
+                        // CategoryCard: cel mai mic risc pentru un widget
+                        // folosit de toate cele 14 carduri din listă.
+                        //
+                        // Arată steaua INDIFERENT de stare (blocată/tier 0
+                        // inclus): banner-ul de mai sus anunță deja numele
+                        // categoriei — cine dă scroll să o găsească trebuie
+                        // s-o recunoască pe card, nu doar pe cele deja
+                        // deblocate.
+                        final isFeaturedToday = mode.id == _featured.id;
                         return EntranceItem(
                           controller: _introCtrl,
                           interval: _stagger(i),
@@ -536,7 +643,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                           index: i,
                           pulse: _liveCtrl,
                           icon: mode.icon,
-                          title: mode.title,
+                          title: isFeaturedToday ? '⭐ ${mode.title}' : mode.title,
                           color: mode.accentColor,
                           locked: visualLocked,
                           totalQuestions: total,

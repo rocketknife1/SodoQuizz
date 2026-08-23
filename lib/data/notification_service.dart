@@ -160,12 +160,23 @@ class NotificationService {
       for (final doc in snap.docs) {
         final data = doc.data();
         final sentAt = data['sentAt'] as Timestamp?;
+        // Anunțurile de admin (majoritatea) nu scriu un câmp `type` —
+        // rămân `system`, retrocompatibil. De la notificările de depășire
+        // de ligă încoace (scrise de UN PRIETEN, nu de admin — vezi
+        // PlayerProfileService._notifyOvertake), cutia poate conține și alt
+        // tip, deci se citește explicit dacă e prezent.
+        final type = AppNotificationType.values.firstWhere(
+          (t) => t.name == data['type'],
+          orElse: () => AppNotificationType.system,
+        );
         await addLocal(AppNotification(
           id: doc.id,
-          type: AppNotificationType.system,
+          type: type,
           title: data['title'] as String? ?? tr('Anunț', 'Announcement'),
           body: data['body'] as String? ?? '',
           createdAt: sentAt?.toDate() ?? DateTime.now(),
+          peerUid: data['peerUid'] as String? ?? '',
+          peerName: data['peerName'] as String? ?? '',
         ));
         // Ștearsă abia după ce a fost scrisă local — altfel o pică între cele
         // două operații ar fi pierdut anunțul definitiv.

@@ -137,4 +137,136 @@ void main() {
       expect(perRound * obbyObstacleCount, lessThan(180));
     });
   });
+
+  group('obbyBonusChoices', () {
+    const choices = ['Amperul', 'Ohmul', 'Wattul', 'Voltul'];
+
+    test('lasa exact doua variante, una fiind cea corecta', () {
+      final kept = obbyBonusChoices(
+        choices: choices,
+        correctAnswer: 'Amperul',
+        matchId: 'm1',
+        roundIndex: 2,
+        playerId: 'p1',
+      );
+      expect(kept, hasLength(2));
+      expect(kept, contains('Amperul'));
+    });
+
+    test('e determinist: acelasi jucator vede mereu aceleasi doua variante', () {
+      List<String> run() => obbyBonusChoices(
+            choices: choices,
+            correctAnswer: 'Amperul',
+            matchId: 'm1',
+            roundIndex: 2,
+            playerId: 'p1',
+          );
+      expect(run(), equals(run()));
+    });
+
+    test('doi jucatori nu primesc neaparat aceeasi varianta gresita', () {
+      // Ancorarea pe playerId e ce impiedica doi jucatori cu bonus sa afle
+      // raspunsul comparand ecranele. Cu 3 variante gresite si multi jucatori
+      // incercati, macar doi trebuie sa difere.
+      final seen = <String>{};
+      for (var i = 0; i < 12; i++) {
+        final kept = obbyBonusChoices(
+          choices: choices,
+          correctAnswer: 'Amperul',
+          matchId: 'm1',
+          roundIndex: 2,
+          playerId: 'p$i',
+        );
+        seen.add(kept.firstWhere((c) => c != 'Amperul'));
+      }
+      expect(seen.length, greaterThan(1));
+    });
+
+    test('raspunsul corect nu sta mereu pe acelasi loc', () {
+      final positions = <int>{};
+      for (var i = 0; i < 12; i++) {
+        final kept = obbyBonusChoices(
+          choices: choices,
+          correctAnswer: 'Amperul',
+          matchId: 'm$i',
+          roundIndex: 0,
+          playerId: 'p1',
+        );
+        positions.add(kept.indexOf('Amperul'));
+      }
+      expect(positions, containsAll(<int>[0, 1]));
+    });
+
+    test('daca raspunsul corect lipseste din lista, nu se elimina nimic', () {
+      final kept = obbyBonusChoices(
+        choices: choices,
+        correctAnswer: 'Newtonul',
+        matchId: 'm1',
+        roundIndex: 0,
+        playerId: 'p1',
+      );
+      expect(kept, equals(choices));
+    });
+  });
+
+  group('obbyIsDoubleRound', () {
+    test('niciodata pe prima runda, indiferent de meci', () {
+      for (var i = 0; i < 20; i++) {
+        expect(obbyIsDoubleRound(matchId: 'm$i', roundIndex: 0), isFalse);
+      }
+    });
+
+    test('niciodata pe ultimele doua runde (penultima + finala)', () {
+      for (var i = 0; i < 20; i++) {
+        expect(obbyIsDoubleRound(matchId: 'm$i', roundIndex: obbyObstacleCount - 2), isFalse);
+        expect(obbyIsDoubleRound(matchId: 'm$i', roundIndex: obbyObstacleCount - 1), isFalse);
+      }
+    });
+
+    test('e determinist: acelasi meci si runda dau mereu acelasi rezultat', () {
+      for (var round = 1; round < obbyObstacleCount - 2; round++) {
+        final first = obbyIsDoubleRound(matchId: 'meciX', roundIndex: round);
+        final second = obbyIsDoubleRound(matchId: 'meciX', roundIndex: round);
+        expect(second, first);
+      }
+    });
+
+    test('se intampla la unele meciuri, nu la toate — nu e nici mereu true, nici mereu false', () {
+      final results = <bool>{};
+      for (var i = 0; i < 30; i++) {
+        results.add(obbyIsDoubleRound(matchId: 'meci$i', roundIndex: 2));
+      }
+      expect(results, containsAll(<bool>[true, false]));
+    });
+  });
+
+  group('obbyIsComebackRound', () {
+    test('e adevarat DOAR la penultima runda', () {
+      for (var round = 0; round < obbyObstacleCount; round++) {
+        expect(obbyIsComebackRound(roundIndex: round), round == obbyObstacleCount - 2);
+      }
+    });
+  });
+
+  group('obbyLastPlaceIds', () {
+    test('intoarce jucatorul cu cel mai putin progres', () {
+      final ids = obbyLastPlaceIds([('a', 3), ('b', 1), ('c', 5)]);
+      expect(ids, ['b']);
+    });
+
+    test('intoarce toti jucatorii legati la egalitate pe ultimul loc', () {
+      final ids = obbyLastPlaceIds([('a', 2), ('b', 2), ('c', 5)]);
+      expect(ids.toSet(), {'a', 'b'});
+    });
+
+    test('ignora jucatorii deja terminati (obstaclesCleared >= obbyObstacleCount)', () {
+      final ids = obbyLastPlaceIds([('a', obbyObstacleCount), ('b', 3)]);
+      expect(ids, ['b']);
+    });
+
+    test('lista goala daca toata lumea a terminat sau nimeni nu e activ', () {
+      expect(obbyLastPlaceIds([('a', obbyObstacleCount)]), isEmpty);
+      expect(obbyLastPlaceIds(const []), isEmpty);
+    });
+  });
 }

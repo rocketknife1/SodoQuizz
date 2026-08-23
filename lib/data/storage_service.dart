@@ -1374,6 +1374,16 @@ class StorageService {
     return true;
   }
 
+  /// Varianta CITIRE, fără să scrie nimic — folosită de banner-ul "Categoria
+  /// zilei" (vezi CategoriesScreen, PLAN_DE_VIITOR.md punctul 5) ca să știe
+  /// dacă butonul de revendicare poate fi apăsat, fără să afecteze contorul
+  /// real de "moduri jucate azi" pe care se bazează quest-ul.
+  static Future<bool> wasModePlayedToday(String gameModeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'played_modes_${_dateKey(DateTime.now())}';
+    return (prefs.getStringList(key) ?? const []).contains(gameModeId);
+  }
+
   static Future<bool> isQuestClaimed(String questId) async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_questClaimedKey(questId)) ?? false;
@@ -1406,6 +1416,31 @@ class StorageService {
 
   static String _questProgressKey(String id) => 'quest_${id}_${_dateKey(DateTime.now())}';
   static String _questClaimedKey(String id) => 'quest_claimed_${id}_${_dateKey(DateTime.now())}';
+
+  // ─── Categoria zilei ────────────────────────────────────────────────────
+  //
+  // Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — cea mai mică variantă
+  // reală care se putea face: o categorie evidențiată, aleasă determinist pe
+  // zi (vezi core/gamemodes.dart#featuredGameModeToday), cu un bonus mic,
+  // revendicabil O SINGURĂ dată pe zi, DUPĂ ce ai jucat-o măcar o dată azi
+  // (vezi [wasModePlayedToday]). Exact tiparul quest-urilor
+  // (isQuestClaimed/claimQuest de mai sus), dar într-un spațiu de chei
+  // separat — nu e un quest din rotația săptămânală, n-are metricKey/tier.
+
+  static String _featuredClaimedKey() => 'featured_claimed_${_dateKey(DateTime.now())}';
+
+  static Future<bool> isFeaturedCategoryClaimed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_featuredClaimedKey()) ?? false;
+  }
+
+  /// Doar marchează revendicarea — apelantul (CategoriesScreen) e cel care
+  /// scrie efectiv monedele/XP-ul în balanță, aceeași convenție ca
+  /// [claimQuest].
+  static Future<void> claimFeaturedCategory() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_featuredClaimedKey(), true);
+  }
 
   // ─── High Score ───────────────────────────────────────────────────────────
 

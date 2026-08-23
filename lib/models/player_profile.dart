@@ -21,7 +21,32 @@ class PlayerProfile {
   final int losses;
   final int currentStreak;
   final int longestStreak;
+
+  /// Puncte de ligă cumulate PE VIAȚĂ — nu se resetează niciodată. De la
+  /// sezoanele adăugate 2026-08-23 (vezi core/leagues.dart), clasamentul și
+  /// badge-ul de cosmetică NU mai citesc ăsta direct, ci [seasonPoints] prin
+  /// `effectiveSeasonPoints` — acesta rămâne pentru "cel mai bun rezultat
+  /// vreodată" și pentru retrocompatibilitate cu ce s-a scris înainte de
+  /// sezoane.
   final int leaguePoints;
+
+  /// Puncte de ligă în sezonul CURENT — se resetează lazy la începutul
+  /// fiecărei luni calendaristice, vezi [seasonKey] și
+  /// `core/leagues.dart#effectiveSeasonPoints` pentru cum se citește corect
+  /// (NU direct, fără să verifici [seasonKey] mai întâi).
+  final int seasonPoints;
+
+  /// Cheia lunii ("2026-08") în care a fost scris ultima dată
+  /// [seasonPoints] — vezi PlayerProfileService.recordMatchResult pentru
+  /// cine o schimbă și `core/leagues.dart#currentSeasonKey`.
+  final String seasonKey;
+
+  /// Cel mai înalt [LeagueTier.index] atins ÎN SEZONUL CURENT (peak, nu
+  /// valoarea de-acum) — badge-ul cosmetic din listă (vezi
+  /// widgets/league_badge.dart) îl folosește pe ăsta, nu tier-ul calculat
+  /// direct din [seasonPoints], ca o înfrângere de la finalul sezonului să
+  /// nu retrogradeze vizual pe cineva care chiar a atins Gold luna asta.
+  final int seasonBestTierIndex;
 
   /// Puncte de ligă acumulate pe fiecare mod de joc (gameModeId → puncte) —
   /// folosit doar pentru "unde și-a făcut punctajul" la tap pe un rând din
@@ -75,6 +100,9 @@ class PlayerProfile {
     this.currentStreak = 0,
     this.longestStreak = 0,
     this.leaguePoints = 0,
+    this.seasonPoints = 0,
+    this.seasonKey = '',
+    this.seasonBestTierIndex = 0,
     this.modeBreakdown = const {},
     this.lastActive,
     this.friendCode,
@@ -100,6 +128,9 @@ class PlayerProfile {
       currentStreak: data['currentStreak'] as int? ?? 0,
       longestStreak: data['longestStreak'] as int? ?? 0,
       leaguePoints: data['leaguePoints'] as int? ?? 0,
+      seasonPoints: data['seasonPoints'] as int? ?? 0,
+      seasonKey: data['seasonKey'] as String? ?? '',
+      seasonBestTierIndex: data['seasonBestTierIndex'] as int? ?? 0,
       modeBreakdown: Map<String, int>.from(data['modeBreakdown'] as Map? ?? const {}),
       lastActive: data['lastActive'] as Timestamp?,
       friendCode: data['friendCode'] as String?,

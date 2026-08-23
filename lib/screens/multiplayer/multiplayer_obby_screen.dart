@@ -3,13 +3,16 @@ import 'dart:math';
 
 import 'package:flame/game.dart' show GameWidget;
 import 'package:flutter/material.dart';
+import '../../core/audio.dart';
 import '../../core/lang.dart';
 import '../../core/obby.dart';
 import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
 import 'multiplayer_results_screen.dart';
@@ -56,10 +59,20 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Timer? _advanceTimer;
   Timer? _tickTimer;
   Timer? _heartbeatTimer;
+  Timer? _lateSfxTimer;
   DateTime? _revealedAtLocal;
+  bool _playedRevealSfx = false;
 
   List<String>? _cachedChoices;
   int _cachedChoicesRound = -1;
+
+  /// Recompensa imediată din planul de viitor (punctul 4): cât s-a adunat în
+  /// meciul ăsta din monedele instant acordate la fiecare răspuns corect
+  /// (vezi [_selectAnswer]) — separată de miza/premiile meciului, doar
+  /// pentru pastila din bara de sus. Balanța reală (StorageService) e deja
+  /// actualizată în clipa apăsării, nu la final.
+  int _instantCoinsThisMatch = 0;
+  final GlobalKey _coinPillKey = GlobalKey();
 
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
@@ -81,6 +94,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   @override
   void initState() {
     super.initState();
+    // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
+    // vezi ObbySfx pentru de ce.
+    ObbySfx.preload();
     _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       if (mounted) setState(() {});
     });
@@ -95,6 +111,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     _revealDelayTimer?.cancel();
     _advanceTimer?.cancel();
     _heartbeatTimer?.cancel();
+    _lateSfxTimer?.cancel();
     _anim.dispose();
     super.dispose();
   }
@@ -135,6 +152,23 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     final me = MultiplayerService.instance.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
     MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: answer);
+
+    // Recompensa imediată (punctul 4 din planul de viitor): corectitudinea
+    // se știe PE LOC — întrebarea și răspunsul corect sunt deja pe telefon
+    // (vezi _questionFor), nu vin de la server. Nu se așteaptă rezolvarea
+    // rundei (asta poate dura până la [obbyRoundSeconds]s), altfel
+    // recompensa n-ar mai fi "imediată", ar fi tot una cu premiul de final.
+    if (answer == _questionFor(info.roundIndex).answer) {
+      StorageService.addCoins(obbyInstantCoinsPerCorrect);
+      setState(() => _instantCoinsThisMatch += obbyInstantCoinsPerCorrect);
+      if (mounted) {
+        CoinRewardOverlay.show(
+          context,
+          amount: obbyInstantCoinsPerCorrect,
+          targetKey: _coinPillKey,
+        );
+      }
+    }
   }
 
   /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
@@ -174,6 +208,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     final me = MultiplayerService.instance.currentPlayerId;
     if (!info.roundWinnerIds.contains(me)) return;
     if (info.roundPlatformChoices.containsKey(me)) return;
+    // Confirmarea se aude ACUM, nu când vine snapshot-ul înapoi din
+    // Firestore: la o conexiune slabă, un „toc" întârziat cu o secundă se
+    // simte ca o apăsare care n-a fost înregistrată.
+    ObbySfx.pick();
     MultiplayerService.instance.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
   }
 
@@ -187,9 +225,17 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// idempotent, deci a-l chema des (inclusiv fără schimbări) e sigur.
   void _feedGame(MatchInfo info, List<MatchPlayer> players) {
     final me = MultiplayerService.instance.currentPlayerId;
+    final revealing = info.roundPhase == RoundPhase.revealed;
     final racers = [
       for (final p in players)
-        ObbyRacerData(id: p.id, name: p.name, color: pickAvatarColor(p.avatarSeed), progress: (p.obstaclesCleared / obbyObstacleCount).clamp(0.0, 1.0), isMe: p.id == me),
+        ObbyRacerData(
+          id: p.id,
+          name: p.name,
+          color: pickAvatarColor(p.avatarSeed),
+          progress: (p.obstaclesCleared / obbyObstacleCount).clamp(0.0, 1.0),
+          isMe: p.id == me,
+          outcome: revealing ? _outcomeFor(info, p.id) : ObbyRoundOutcome.none,
+        ),
     ];
     final phase = switch (info.roundPhase) {
       RoundPhase.choosing => ObbyPhase.choosing,
@@ -197,15 +243,70 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _ => ObbyPhase.idle,
     };
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
-    final revealT = (elapsed / max(obbyRevealSeconds - 0.6, 0.4)).clamp(0.0, 1.0);
+    final revealT = (elapsed / _revealSpanSeconds).clamp(0.0, 1.0);
     _game.applyRoundState(
       phase: phase,
       racers: racers,
       myId: me,
       myChoice: info.roundPlatformChoices[me],
-      revealAdvancedThisRound: _advancedThisRound(info, me),
       revealT: revealT,
     );
+  }
+
+  /// Sunetele deznodământului — o singură dată pe rundă (garda
+  /// [_playedRevealSfx], resetată la schimbarea rundei), fiindcă metoda e
+  /// chemată din [_onData], adică la fiecare snapshot Firestore.
+  ///
+  /// Se aude DOAR ce mi se întâmplă mie: cu până la șase alergători pe pistă,
+  /// un sunet per personaj ar fi fost o hărmălaie din care n-aș fi înțeles ce
+  /// am pățit eu — exact greșeala evitată și la Quizz Tanks, unde exploziile
+  /// se adună într-una singură.
+  void _playRevealSfx(MatchInfo info, List<MatchPlayer> players) {
+    if (_playedRevealSfx) return;
+    _playedRevealSfx = true;
+    final me = MultiplayerService.instance.currentPlayerId;
+    switch (_outcomeFor(info, me)) {
+      case ObbyRoundOutcome.jumped:
+        var myCleared = 0;
+        for (final p in players) {
+          if (p.id == me) myCleared = p.obstaclesCleared;
+        }
+        // Ultima săritură are propriul sunet, în locul celui obișnuit. Se
+        // pornește pe loc, nu după o pauză: trecerea ultimului obstacol
+        // termină meciul, iar ecranul sare la clasament în aceeași clipă —
+        // un timer ar fi fost anulat de dispose înainte să apuce să sune.
+        // Sunetul deja pornit continuă peste ecranul de clasament, ceea ce e
+        // exact ce trebuie: fanfara aparține momentului, nu ecranului.
+        if (myCleared >= obbyObstacleCount) {
+          ObbySfx.finish();
+        } else {
+          ObbySfx.jump();
+        }
+      case ObbyRoundOutcome.fell:
+        // Sincronizat cu clipa în care placa cedează în scenă, nu cu
+        // începutul deznodământului — vezi [obbyFallDelayFraction].
+        final delayMs = (obbyFallDelayFraction * _revealSpanSeconds * 1000).round();
+        _lateSfxTimer = Timer(Duration(milliseconds: delayMs), ObbySfx.fall);
+      case ObbyRoundOutcome.none:
+        break;
+    }
+  }
+
+  /// Cât durează animația de deznodământ, în secunde — puțin mai scurtă decât
+  /// [obbyRevealSeconds], ca mișcarea să se termine înainte să înceapă runda
+  /// următoare, nu exact odată cu ea.
+  double get _revealSpanSeconds => max(obbyRevealSeconds - 0.6, 0.4);
+
+  /// Ce se vede în scenă pentru jucătorul [id] în deznodământul rundei.
+  ///
+  /// Cine n-a răspuns corect nu apare nici sărind, nici căzând: n-a ajuns
+  /// niciodată în fața plăcilor, deci rămâne pur și simplu pe loc. Cădere
+  /// înseamnă „a avut dreptul să aleagă și n-a ieșit bine" — fie a nimerit
+  /// placa falsă, fie n-a ales nimic la timp (regula din core/obby.dart le
+  /// tratează identic).
+  ObbyRoundOutcome _outcomeFor(MatchInfo info, String id) {
+    if (!info.roundWinnerIds.contains(id)) return ObbyRoundOutcome.none;
+    return _advancedThisRound(info, id) ? ObbyRoundOutcome.jumped : ObbyRoundOutcome.fell;
   }
 
   void _onData(MatchInfo info, List<MatchPlayer> players) {
@@ -214,6 +315,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _lastRoundIndex = info.roundIndex;
       _showAdvance = false;
       _revealedAtLocal = null;
+      _playedRevealSfx = false;
+      _lateSfxTimer?.cancel();
+      _lateSfxTimer = null;
       _revealDelayTimer?.cancel();
       _revealDelayTimer = null;
       _advanceTimer?.cancel();
@@ -240,6 +344,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       }
     } else if (info.roundPhase == RoundPhase.revealed) {
       _revealedAtLocal ??= DateTime.now();
+      _playRevealSfx(info, players);
       _revealDelayTimer ??= Timer(const Duration(milliseconds: 500), () {
         if (mounted) setState(() => _showAdvance = true);
       });
@@ -337,21 +442,62 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   }
 
   Widget _buildTopBar(MatchInfo info) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 6, 20, 4),
-      child: Row(
-        children: [
-          IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
-          const SizedBox(width: 4),
-          const Text('Obby', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
-          const Spacer(),
-          Text(
-            tr('Runda ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount',
-                'Round ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount'),
-            style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w700),
+    final doubleRound = obbyIsDoubleRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 20, 4),
+          child: Row(
+            children: [
+              IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
+              const SizedBox(width: 4),
+              const Text('Obby', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(width: 10),
+              // Pastila de monede instant — ținta zborului de monede din
+              // CoinRewardOverlay (vezi _selectAnswer). Balanța reală s-a
+              // schimbat deja; cifra de-aici e doar contorul VIZIBIL al
+              // meciului curent.
+              Container(
+                key: _coinPillKey,
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(color: AppColors.coin.withAlpha(40), borderRadius: BorderRadius.circular(10)),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.monetization_on_rounded, color: AppColors.coin, size: 13),
+                    const SizedBox(width: 3),
+                    Text('+$_instantCoinsThisMatch', style: const TextStyle(color: AppColors.coin, fontSize: 12, fontWeight: FontWeight.w800)),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              Text(
+                tr('Runda ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount',
+                    'Round ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount'),
+                style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        if (doubleRound)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFFFF6B35), Color(0xFFFFB020)]),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  tr('🔥 Rundă Dublă — placa bună trece DOUĂ obstacole!', '🔥 Double Round — the good platform clears TWO obstacles!'),
+                  style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -437,9 +583,30 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       );
     }
 
-    final choices = _choicesFor(info.roundIndex);
+    // Bonusul câștigat în runda trecută se vede ABIA aici: două variante în
+    // loc de patru. Până acum, câmpul era scris și stins corect în Firestore,
+    // dar niciun ecran nu-l citea, deci mesajul „Bonus la întrebarea
+    // următoare" din deznodământ nu se întâmpla niciodată.
+    final bonus = myPlayer.nextQuestionBonus;
+    final choices = bonus
+        ? obbyBonusChoices(
+            choices: _choicesFor(info.roundIndex),
+            correctAnswer: _questionFor(info.roundIndex).answer,
+            matchId: widget.matchId,
+            roundIndex: info.roundIndex,
+            playerId: me,
+          )
+        : _choicesFor(info.roundIndex);
     return Column(
       children: [
+        if (bonus)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              tr('⚡ Bonus: două variante eliminate', '⚡ Bonus: two options removed'),
+              style: const TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w800),
+            ),
+          ),
         for (var i = 0; i < choices.length; i += 2)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),

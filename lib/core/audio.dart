@@ -326,3 +326,69 @@ class TankSfx {
   static void lock() => _play(_lock, 0.7);
   static void alarm() => _play(_alarm, 0.6);
 }
+
+/// Sunetele modului multiplayer Obby — ținute separat de [Sfx] și de
+/// [TankSfx] pentru exact același motiv ca acolo: patru fișiere folosite de
+/// un singur ecran din toată aplicația, care n-au de ce să fie decodate la
+/// fiecare pornire de joc, inclusiv pornirile în care nimeni nu deschide
+/// multiplayer-ul.
+///
+/// [preload] se cheamă din MultiplayerObbyScreen.initState — prima rundă are
+/// oricum 12 secunde de răspuns înaintea primei sărituri, deci sursele sunt
+/// gata cu mult înainte să fie nevoie de ele.
+///
+/// Player separat per sunet, ca la [TankSfx]: în deznodământ pot porni
+/// aproape simultan o săritură (a mea) și un final de cursă, iar un singur
+/// player le-ar fi tăiat unul pe altul.
+class ObbySfx {
+  static final AudioPlayer _pick = AudioPlayer(playerId: 'obby_pick');
+  static final AudioPlayer _jump = AudioPlayer(playerId: 'obby_jump');
+  static final AudioPlayer _fall = AudioPlayer(playerId: 'obby_fall');
+  static final AudioPlayer _finish = AudioPlayer(playerId: 'obby_finish');
+
+  static Future<void>? _preloadFuture;
+
+  static Future<void> preload() {
+    return _preloadFuture ??= _init();
+  }
+
+  static Future<void> _init() async {
+    await _ensureGlobalAudioContext();
+    await Future.wait([
+      _prepare(_pick, 'obby_pick.wav'),
+      _prepare(_jump, 'obby_jump.wav'),
+      _prepare(_fall, 'obby_fall.wav'),
+      _prepare(_finish, 'obby_finish.wav'),
+    ]);
+  }
+
+  static Future<void> _prepare(AudioPlayer player, String asset) async {
+    try {
+      await player.setPlayerMode(PlayerMode.mediaPlayer);
+      await player.setReleaseMode(ReleaseMode.stop);
+      await player.setVolume(1.0);
+      await player.setSourceAsset('sfx/$asset');
+    } catch (e) {
+      debugPrint('ObbySfx: nu am putut pregăti $asset: $e');
+    }
+  }
+
+  static Future<void> _play(AudioPlayer player, double volume) async {
+    try {
+      await preload();
+      await player.setVolume(volume);
+      await player.seek(Duration.zero);
+      await player.resume();
+    } catch (e) {
+      debugPrint('ObbySfx: nu am putut reda sunetul: $e');
+    }
+  }
+
+  /// Volumele urmăresc cât de important e evenimentul pentru jucător:
+  /// apăsarea unei plăci e doar o confirmare (discretă), căderea și finalul
+  /// cursei sunt deznodăminte (tare).
+  static void pick() => _play(_pick, 0.55);
+  static void jump() => _play(_jump, 0.8);
+  static void fall() => _play(_fall, 0.95);
+  static void finish() => _play(_finish, 1.0);
+}

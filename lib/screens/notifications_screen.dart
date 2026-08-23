@@ -6,6 +6,7 @@ import '../data/player_profile_service.dart';
 import '../models/app_notification.dart';
 import 'friend_chat_screen.dart';
 import 'friends_screen.dart';
+import 'multiplayer/leaderboard_screen.dart';
 
 /// Panoul deschis de clopoțelul de lângă avatarul din meniul principal:
 /// anunțuri de la administrator, cadourile primite și mesajele/cererile
@@ -56,6 +57,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         await Navigator.push<void>(
           context,
           MaterialPageRoute(builder: (_) => const FriendsScreen()),
+        );
+        if (mounted) _reload();
+      case AppNotificationType.overtake:
+        // Duce direct la clasament, ca depășirea să se vadă pe loc — nu
+        // neapărat pe tabul Prieteni (fără un mecanism de "deschide pe tabul
+        // X" din afară), dar tot clasamentul e la un tap distanță de-acolo.
+        await Navigator.push<void>(
+          context,
+          MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
         );
         if (mounted) _reload();
       case AppNotificationType.system:

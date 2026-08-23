@@ -23,6 +23,15 @@ enum AppNotificationType {
 
   /// Cerere de prietenie primită — la fel, stare live.
   friendRequest,
+
+  /// „X te-a depășit în ligă" — scrisă direct de PRIETENUL care tocmai a
+  /// depășit, în cutia poștală a celui depășit (vezi
+  /// PlayerProfileService.recordMatchResult și firestore.rules, regula nouă
+  /// de `create` pe `notifications` care permite asta doar între prieteni).
+  /// Salvată ca [gift]/[system] (cutie cloud, descărcată o dată), nu live —
+  /// spre deosebire de mesaje/cereri, „ai fost depășit" nu se schimbă
+  /// singură dacă nu te uiți la ea.
+  overtake,
 }
 
 /// O intrare din panoul de notificări (clopoțelul de lângă avatarul din
@@ -55,6 +64,7 @@ class AppNotification {
         AppNotificationType.gift => Icons.card_giftcard_rounded,
         AppNotificationType.message => Icons.chat_bubble_rounded,
         AppNotificationType.friendRequest => Icons.person_add_rounded,
+        AppNotificationType.overtake => Icons.trending_up_rounded,
       };
 
   Color get color => switch (type) {
@@ -62,6 +72,7 @@ class AppNotification {
         AppNotificationType.gift => AppColors.coin,
         AppNotificationType.message => AppColors.teal,
         AppNotificationType.friendRequest => AppColors.purple,
+        AppNotificationType.overtake => AppColors.orange,
       };
 
   Map<String, dynamic> toJson() => {

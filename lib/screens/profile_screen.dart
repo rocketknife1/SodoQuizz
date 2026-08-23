@@ -12,6 +12,7 @@ import '../data/storage_service.dart';
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/league_badge.dart';
 import '../widgets/edit_name_dialog.dart';
 import 'achievements_screen.dart';
 import 'admin_screen.dart';
@@ -363,7 +364,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// leaderboard-ul global.
   Widget _buildMultiplayerStats(PlayerProfile? profile) {
     final p = profile ?? const PlayerProfile(uid: '', name: '', avatarSeed: '');
-    final league = leagueForPoints(p.leaguePoints);
+    // Sezon, nu punctaj pe viață — la fel ca în clasament, vezi
+    // core/leagues.dart#effectiveSeasonPoints. [leaguePoints] rămâne
+    // afișat, dar ca linie secundară "cel mai bun rezultat pe viață".
+    final seasonPts = effectiveSeasonPoints(seasonKey: p.seasonKey, seasonPoints: p.seasonPoints);
+    final league = leagueForPoints(seasonPts);
+    final peakTierIdx = p.seasonKey == currentSeasonKey() ? p.seasonBestTierIndex : 0;
+    final peakTier = LeagueTier.values[peakTierIdx.clamp(0, LeagueTier.values.length - 1)];
     final winratePct = (p.winrate * 100).round();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,15 +400,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
             child: Row(
               children: [
-                Icon(league.icon, color: league.color, size: 20),
+                LeagueBadge(tier: peakTier, size: 26),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(tr('Liga ${league.name}', '${league.name} League'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                      Text(tr('${p.leaguePoints} puncte de ligă', '${p.leaguePoints} league points'), style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                      Text(tr('Liga ${league.name} · ${seasonLabel()}', '${league.name} League · ${seasonLabel()}'),
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      Text(
+                        tr('$seasonPts puncte sezonul ăsta · ${p.leaguePoints} pe viață',
+                            '$seasonPts points this season · ${p.leaguePoints} lifetime'),
+                        style: const TextStyle(color: Colors.white54, fontSize: 11),
+                      ),
                     ],
                   ),
                 ),

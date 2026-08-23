@@ -11,6 +11,7 @@ import '../models/friend_chat.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
+import '../widgets/league_badge.dart';
 import 'friend_chat_screen.dart';
 
 /// Ecran de Prieteni — codul propriu (generat lazy, vezi
@@ -336,7 +337,14 @@ class _FriendRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final league = leagueForPoints(profile.leaguePoints);
+    // Sezon, nu punctaj pe viață — la fel ca în clasament (vezi
+    // core/leagues.dart#effectiveSeasonPoints), ca lista de Prieteni și
+    // tab-ul Prieteni din Clasament să arate mereu ACELEAȘI numere pentru
+    // aceeași persoană.
+    final seasonPts = effectiveSeasonPoints(seasonKey: profile.seasonKey, seasonPoints: profile.seasonPoints);
+    final league = leagueForPoints(seasonPts);
+    final peakTierIdx = profile.seasonKey == currentSeasonKey() ? profile.seasonBestTierIndex : 0;
+    final peakTier = LeagueTier.values[peakTierIdx.clamp(0, LeagueTier.values.length - 1)];
     final unread = summary?.hasUnreadFor(MultiplayerService.instance.currentPlayerId) ?? false;
     final preview = summary?.lastText ?? '';
     return GestureDetector(
@@ -351,7 +359,14 @@ class _FriendRow extends StatelessWidget {
         decoration: BoxDecoration(color: Colors.white.withAlpha(12), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
         child: Row(
           children: [
-            Avatar(size: 36, label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(profile.avatarSeed), photoUrl: profile.photoUrl, style: avatarStyleFromId(profile.avatarStyle)),
+            AvatarWithLeagueBadge(
+              size: 36,
+              label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+              accentColor: pickAvatarColor(profile.avatarSeed),
+              photoUrl: profile.photoUrl,
+              style: avatarStyleFromId(profile.avatarStyle),
+              tier: peakTier,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -387,7 +402,7 @@ class _FriendRow extends StatelessWidget {
                       children: [
                         Icon(league.icon, color: league.color, size: 12),
                         const SizedBox(width: 4),
-                        Text('${league.name} · ${profile.leaguePoints} pct', style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
+                        Text('${league.name} · $seasonPts pct', style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   Row(

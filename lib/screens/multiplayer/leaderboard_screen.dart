@@ -11,15 +11,20 @@ import '../../models/multiplayer_models.dart';
 import '../../models/player_profile.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/entrance_item.dart';
+import '../../widgets/league_badge.dart';
 import '../../widgets/pressable.dart';
 import '../../widgets/space_background.dart';
 
-/// Clasament — 3 taburi: "Toți jucătorii" (roster complet, inclusiv cei
-/// offline de mult, cu ultima oră online — vezi [_AllPlayersTab]) și
+/// Clasament — 4 taburi: "Toți jucătorii" (roster complet, inclusiv cei
+/// offline de mult, cu ultima oră online — vezi [_AllPlayersTab]),
 /// "Leaderboard" (doar userii activi recent — vezi [_GlobalLeaderboardTab]),
-/// ambele alimentate de PlayerProfileService/player_profiles din Firestore;
-/// "Al tău" (vezi [_MyStatsTab]) e strict local — punctajul propriu pe
-/// ciclul curent de [StorageService.leaderboardPeriodHours]h, pe categorie.
+/// "Prieteni" (doar lista proprie de prieteni + tu, vezi
+/// [_FriendsLeaderboardTab] — rivalitatea PERSONALĂ din planul de viitor,
+/// punctul 1) — toate trei alimentate de PlayerProfileService/player_profiles
+/// din Firestore, sortate după PUNCTAJUL DE SEZON ([effectiveSeasonPoints]),
+/// nu cel pe viață; "Al tău" (vezi [_MyStatsTab]) e strict local — punctajul
+/// propriu pe ciclul curent de [StorageService.leaderboardPeriodHours]h, pe
+/// categorie.
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
 
@@ -28,7 +33,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 3, vsync: this);
+  late final TabController _tabController = TabController(length: 4, vsync: this);
   /// Intrarea în cascadă a antetului + tab bar-ului — aceeași senzație ca în
   /// Multiplayer, ca ecranul să nu apară dintr-o bucată.
   late final AnimationController _introCtrl;
@@ -99,19 +104,66 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
                     tabs: [
                       Tab(text: tr('Toți', 'All')),
                       const Tab(text: 'Leaderboard'),
+                      Tab(text: tr('Prieteni', 'Friends')),
                       Tab(text: tr('Al tău', 'Yours')),
                     ],
                   ),
                 ),
               ),
+              EntranceItem(
+                controller: _introCtrl,
+                interval: const Interval(0.25, 0.7, curve: Curves.easeOut),
+                child: const _SeasonHeader(),
+              ),
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _MyStatsTab()],
+                  children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _FriendsLeaderboardTab(), _MyStatsTab()],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "🏆 Sezon: August 2026 · se resetează în 7z 3h" — antetul de sezon din
+/// planul de viitor (punctul 1): fără el, "toți suntem Bronze" nu se
+/// explică nicăieri, iar sezoanele cu reset ar fi invizibile — un jucător
+/// activ n-ar avea de unde să știe DE CE punctajul lui a scăzut brusc la
+/// începutul lunii. Static la momentul montării (nu se reactualizează
+/// singur în timp real) — suficient pentru un contor de zile, nu de secunde.
+class _SeasonHeader extends StatelessWidget {
+  const _SeasonHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final remaining = seasonTimeRemaining();
+    final days = remaining.inDays;
+    final hours = remaining.inHours % 24;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(color: Colors.white.withAlpha(10), borderRadius: BorderRadius.circular(12)),
+        child: Row(
+          children: [
+            const Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 15),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                tr('Sezon: ${seasonLabel()}', 'Season: ${seasonLabel()}'),
+                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            Text(
+              tr('resetare în ${days}z ${hours}h', 'resets in ${days}d ${hours}h'),
+              style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600),
+            ),
+          ],
         ),
       ),
     );
@@ -150,7 +202,14 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
           children: [
             Row(
               children: [
-                Avatar(size: 44, label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', accentColor: pickAvatarColor(p.avatarSeed), photoUrl: p.photoUrl, style: avatarStyleFromId(p.avatarStyle)),
+                AvatarWithLeagueBadge(
+                  size: 44,
+                  label: p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
+                  accentColor: pickAvatarColor(p.avatarSeed),
+                  photoUrl: p.photoUrl,
+                  style: avatarStyleFromId(p.avatarStyle),
+                  tier: LeagueTier.values[(p.seasonKey == currentSeasonKey() ? p.seasonBestTierIndex : 0).clamp(0, LeagueTier.values.length - 1)],
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(p.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
@@ -231,7 +290,14 @@ class _PlayerRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final league = leagueForPoints(profile.leaguePoints);
+    // Sezon, nu punctaj pe viață — vezi core/leagues.dart#effectiveSeasonPoints.
+    // Badge-ul cosmetic (peste avatar) folosește PEAK-ul sezonului
+    // ([seasonBestTierIndex]), nu tier-ul de-acum, ca o înfrângere să nu
+    // retrogradeze vizual pe cineva care chiar a atins tier-ul ăla luna asta.
+    final seasonPts = effectiveSeasonPoints(seasonKey: profile.seasonKey, seasonPoints: profile.seasonPoints);
+    final league = leagueForPoints(seasonPts);
+    final peakTierIdx = profile.seasonKey == currentSeasonKey() ? profile.seasonBestTierIndex : 0;
+    final peakTier = LeagueTier.values[peakTierIdx.clamp(0, LeagueTier.values.length - 1)];
     final medalColor = rank == 1 ? AppColors.coin : (rank == 2 ? const Color(0xFFC6D0DA) : const Color(0xFFCD8A4C));
     return Pressable(
       onTap: onTap,
@@ -252,12 +318,13 @@ class _PlayerRow extends StatelessWidget {
                   ? Text(_medals[rank - 1], style: const TextStyle(fontSize: 18))
                   : Text('#$rank', maxLines: 1, softWrap: false, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w800)),
             ),
-            Avatar(
+            AvatarWithLeagueBadge(
               size: 36,
               label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
               accentColor: pickAvatarColor(profile.avatarSeed),
               photoUrl: profile.photoUrl,
               style: avatarStyleFromId(profile.avatarStyle),
+              tier: peakTier,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -285,7 +352,7 @@ class _PlayerRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text('${profile.leaguePoints} pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
+            Text('$seasonPts pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
           ],
         ),
       ),
@@ -396,6 +463,109 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
                 const SizedBox(height: 120),
                 Center(
                   child: Text(tr('Niciun jucător activ momentan.', 'No active players right now.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                ),
+              ],
+            ),
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.orange,
+          child: ListView.builder(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+            itemCount: players.length,
+            itemBuilder: (context, i) {
+              final p = players[i];
+              return _PlayerRow(
+                rank: i + 1,
+                profile: p,
+                isMe: p.uid == me,
+                showLastActive: false,
+                onTap: () => _showBreakdown(context, p),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// Rivalitatea PERSONALĂ din planul de viitor (punctul 1): doar lista
+/// proprie de prieteni + TU, sortați după punctajul de sezon — spre
+/// deosebire de leaderboard-ul global, aici fiecare rând e cineva
+/// recunoscut, nu un nume oarecare. Aceeași sursă de date ca notificarea
+/// "te-a depășit cineva" (vezi PlayerProfileService._notifyOvertakes): dacă
+/// cineva apare aici, poate declanșa/primi acea notificare.
+class _FriendsLeaderboardTab extends StatefulWidget {
+  const _FriendsLeaderboardTab();
+
+  @override
+  State<_FriendsLeaderboardTab> createState() => _FriendsLeaderboardTabState();
+}
+
+class _FriendsLeaderboardTabState extends State<_FriendsLeaderboardTab> {
+  late Future<List<PlayerProfile>> _future = _load();
+
+  static Future<List<PlayerProfile>> _load() async {
+    final me = MultiplayerService.instance.currentPlayerId;
+    final results = await Future.wait([
+      PlayerProfileService.instance.fetchFriends(),
+      PlayerProfileService.instance.getProfile(me),
+    ]);
+    final friends = results[0] as List<PlayerProfile>;
+    final myProfile = results[1] as PlayerProfile?;
+    final all = [...friends, if (myProfile != null) myProfile];
+    // Sortare după punctajul de SEZON, nu cel pe viață — cine n-a jucat încă
+    // în luna asta pică efectiv la 0 (vezi effectiveSeasonPoints), oricât de
+    // sus ar fi rămas [leaguePoints] de anul trecut.
+    all.sort((a, b) {
+      final pa = effectiveSeasonPoints(seasonKey: a.seasonKey, seasonPoints: a.seasonPoints);
+      final pb = effectiveSeasonPoints(seasonKey: b.seasonKey, seasonPoints: b.seasonPoints);
+      return pb.compareTo(pa);
+    });
+    return all;
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _future = _load());
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<PlayerProfile>>(
+      future: _future,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+        }
+        final players = snap.data!;
+        final me = MultiplayerService.instance.currentPlayerId;
+        // Fără prieteni, tot arăt propriul rând (dacă exista) — altfel un
+        // jucător fără niciun prieten adăugat n-ar vedea nimic aici, deși
+        // tehnic are un scor de sezon ca oricine altcineva.
+        if (players.isEmpty) {
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.orange,
+            child: ListView(
+              children: [
+                const SizedBox(height: 100),
+                Center(
+                  child: Text(
+                    tr('Niciun prieten adăugat încă.', "You haven't added any friends yet."),
+                    style: const TextStyle(color: Colors.white38, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(
+                    tr('Adaugă prieteni din ecranul de Prieteni ca să apară aici.',
+                        'Add friends from the Friends screen to see them here.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white24, fontSize: 11.5),
+                  ),
                 ),
               ],
             ),

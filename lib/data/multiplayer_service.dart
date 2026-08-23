@@ -611,10 +611,19 @@ class MultiplayerService {
   /// [roundWinnerIds] e luat ca sursă de adevăr pentru „cine avea drept să
   /// aleagă", scris deja de [closeObbyAnswering] — aceeași graniță de
   /// încredere ca între [closeTanksAnswering] și [resolveTanksRound].
+  ///
+  /// Aici se aplică și cele două evenimente de rundă din PLAN_DE_VIITOR.md
+  /// (punctul 3) — [obbyIsDoubleRound] (cine sare azi trece DOUĂ obstacole)
+  /// și [obbyIsComebackRound] (ultimul din clasament, la penultima rundă,
+  /// pleacă mereu cu bonus la runda finală, indiferent cum îi iese placa
+  /// asta). Ambele determinate client-side, fără niciun câmp nou în
+  /// Firestore — la fel ca placa falsă.
   Future<void> resolveObbyChoices({required String matchId, required int roundIndex}) async {
     final matchRef = _db.collection('matches').doc(matchId);
     final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
     if (playerIds.isEmpty) return;
+    final isDouble = obbyIsDoubleRound(matchId: matchId, roundIndex: roundIndex);
+    final isComeback = obbyIsComebackRound(roundIndex: roundIndex);
     try {
       await _db.runTransaction((tx) async {
         final matchDoc = await tx.get(matchRef);
@@ -630,15 +639,34 @@ class MultiplayerService {
         for (final id in playerIds) {
           playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
         }
+
+        // Cine e pe ultimul loc ÎNAINTE de runda asta — folosit doar dacă
+        // [isComeback], dar calculat oricum (ieftin, câteva perechi în
+        // memorie) ca să nu mai fie nevoie de o a treia trecere prin docs.
+        final lastPlaceIds = isComeback
+            ? obbyLastPlaceIds([
+                for (final doc in playerDocs)
+                  if (doc.exists) (doc.id, doc.data()!['obstaclesCleared'] as int? ?? 0),
+              ]).toSet()
+            : const <String>{};
+
         final clearedPerPlayer = <int>[];
         for (final doc in playerDocs) {
           if (!doc.exists) continue;
           final id = doc.id;
           final pData = doc.data()!;
           final already = pData['obstaclesCleared'] as int? ?? 0;
+          final comebackBonus = lastPlaceIds.contains(id);
 
           if (!winnerIds.contains(id) || already >= obbyObstacleCount) {
             clearedPerPlayer.add(already);
+            // N-a avut dreptul să aleagă runda asta (a răspuns greșit sau a
+            // terminat deja pista), dar tot era ultimul: primește oricum
+            // bonusul pentru runda finală — "a doua șansă" nu depinde de
+            // cum a ieșit runda asta, altfel n-ar mai fi o șansă reală.
+            if (comebackBonus && already < obbyObstacleCount) {
+              tx.update(doc.reference, {'nextQuestionBonus': true});
+            }
             continue;
           }
 
@@ -649,14 +677,21 @@ class MultiplayerService {
           );
           if (!safe) {
             clearedPerPlayer.add(already);
+            if (comebackBonus) tx.update(doc.reference, {'nextQuestionBonus': true});
             continue;
           }
 
-          final cleared = already + 1;
+          // Runda dublă: obstacolul de azi valorează 2, nu 1 — plafonat la
+          // ultimul obstacol, ca să nu treacă "peste" pistă. Punctele
+          // urmează exact câte obstacole s-au acordat efectiv, nu un 2x
+          // orb, altfel cineva aproape de final ar fi fost plătit dublu
+          // pentru un singur obstacol rămas.
+          final gained = min(isDouble ? 2 : 1, obbyObstacleCount - already);
+          final cleared = already + gained;
           clearedPerPlayer.add(cleared);
           tx.update(doc.reference, {
             'obstaclesCleared': cleared,
-            'score': (pData['score'] as int? ?? 0) + obbyPointsPerObstacle,
+            'score': (pData['score'] as int? ?? 0) + obbyPointsPerObstacle * gained,
             'nextQuestionBonus': true,
           });
         }

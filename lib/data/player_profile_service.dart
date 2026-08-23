@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../core/lang.dart';
+import '../core/leagues.dart';
+import '../models/app_notification.dart';
 import '../models/player_profile.dart';
 import 'auth_service.dart';
 import 'friend_chat_service.dart';
@@ -108,8 +111,10 @@ class PlayerProfileService {
         // Firestore EXCLUDE din orderBy('leaguePoints', ...) orice document
         // căruia îi lipsește total acel câmp, deci un jucător care doar a
         // deschis aplicația (fără niciun meci jucat încă) ar rămâne invizibil
-        // în leaderboard fără asta.
+        // în leaderboard fără asta. Același motiv pentru 'seasonPoints', de
+        // când clasamentul sortează după el, nu după leaguePoints direct.
         'leaguePoints': FieldValue.increment(0),
+        'seasonPoints': FieldValue.increment(0),
       }, SetOptions(merge: true));
     } catch (e) {
       debugPrint('PlayerProfileService.ensureProfileHeartbeat a esuat: $e');
@@ -122,6 +127,13 @@ class PlayerProfileService {
   /// își scrie doar rezultatul lui — nu există o singură sursă de adevăr
   /// server-side, fără Cloud Functions în acest proiect, la fel ca restul
   /// multiplayer-ului (ex. attemptFormMatch în multiplayer_service.dart).
+  ///
+  /// De la sezoane încoace (2026-08-23, PLAN_DE_VIITOR.md punctul 1), scrie
+  /// și partea de sezon: [PlayerProfile.seasonPoints]/[PlayerProfile.seasonKey]/
+  /// [PlayerProfile.seasonBestTierIndex] — vezi core/leagues.dart pentru cum
+  /// se resetează lazy, fără job programat. Dacă asta chiar tocmai a
+  /// depășit un prieten în sezonul curent, pornește (fără să aștepte)
+  /// [_notifyOvertakes].
   Future<void> recordMatchResult({
     required String gameModeId,
     required bool won,
@@ -130,15 +142,32 @@ class PlayerProfileService {
     final uid = _uid;
     if (uid.isEmpty) return;
     final delta = won ? winPoints : (draw ? 0 : -lossPoints);
+    final season = currentSeasonKey();
+    var oldSeasonPoints = 0;
+    var newSeasonPoints = 0;
+    var myName = '?';
     try {
       await _db.runTransaction((tx) async {
         final ref = _col.doc(uid);
         final snap = await tx.get(ref);
         final data = snap.data() ?? const <String, dynamic>{};
+        myName = data['name'] as String? ?? '?';
         final prevStreak = data['currentStreak'] as int? ?? 0;
         final currentStreak = won ? prevStreak + 1 : 0;
         final longestStreak = max(data['longestStreak'] as int? ?? 0, currentStreak);
         final leaguePoints = max(0, (data['leaguePoints'] as int? ?? 0) + delta);
+
+        // Reset lazy: dacă ultima scriere a fost în altă lună, sezonul lui
+        // "a expirat" fără să fi jucat încă niciun meci în cel nou — pornim
+        // de la 0 înainte să aplicăm delta-ul de-acum. Vezi
+        // core/leagues.dart#effectiveSeasonPoints pentru aceeași idee
+        // aplicată la CITIRE, pe profilul altcuiva.
+        final storedSeasonKey = data['seasonKey'] as String? ?? '';
+        oldSeasonPoints = storedSeasonKey == season ? (data['seasonPoints'] as int? ?? 0) : 0;
+        newSeasonPoints = max(0, oldSeasonPoints + delta);
+        final storedBestTier = storedSeasonKey == season ? (data['seasonBestTierIndex'] as int? ?? 0) : 0;
+        final seasonBestTierIndex = max(storedBestTier, leagueTierIndexForPoints(newSeasonPoints));
+
         final breakdown = Map<String, int>.from(data['modeBreakdown'] as Map? ?? const {});
         breakdown[gameModeId] = (breakdown[gameModeId] ?? 0) + delta;
         tx.set(ref, {
@@ -148,12 +177,58 @@ class PlayerProfileService {
           'currentStreak': currentStreak,
           'longestStreak': longestStreak,
           'leaguePoints': leaguePoints,
+          'seasonPoints': newSeasonPoints,
+          'seasonKey': season,
+          'seasonBestTierIndex': seasonBestTierIndex,
           'modeBreakdown': breakdown,
           'lastActive': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
       });
     } catch (e) {
       debugPrint('PlayerProfileService.recordMatchResult a esuat: $e');
+      return;
+    }
+
+    // Best-effort, DUPĂ ce meciul e deja înregistrat: o rețea căzută aici
+    // n-are voie să pară că meciul nu s-a scris.
+    if (newSeasonPoints > oldSeasonPoints) {
+      unawaited(_notifyOvertakes(myUid: uid, myName: myName, oldPoints: oldSeasonPoints, newPoints: newSeasonPoints));
+    }
+  }
+
+  /// „X te-a depășit în ligă" — scrie DIRECT în cutia poștală a fiecărui
+  /// PRIETEN pe care tocmai l-am depășit în sezonul curent (vezi
+  /// firestore.rules, regula de `create` pe `notifications` care permite
+  /// asta doar între prieteni acceptați).
+  ///
+  /// Se auto-limitează la o singură notificare per depășire reală:
+  /// [oldPoints] <= punctele prietenului < [newPoints] înseamnă că ACUM
+  /// tocmai am trecut peste el — dacă eram deja peste, o victorie în plus
+  /// nu-l "depășește" a doua oară.
+  Future<void> _notifyOvertakes({
+    required String myUid,
+    required String myName,
+    required int oldPoints,
+    required int newPoints,
+  }) async {
+    try {
+      final friends = await fetchFriends();
+      for (final friend in friends) {
+        final friendPoints = effectiveSeasonPoints(seasonKey: friend.seasonKey, seasonPoints: friend.seasonPoints);
+        final justOvertook = oldPoints <= friendPoints && newPoints > friendPoints;
+        if (!justOvertook) continue;
+        final id = 'overtake_${myUid}_${DateTime.now().millisecondsSinceEpoch}';
+        await _col.doc(friend.uid).collection('notifications').doc(id).set({
+          'type': AppNotificationType.overtake.name,
+          'title': tr('📈 Cineva te-a depășit!', '📈 Someone overtook you!'),
+          'body': tr('$myName te-a depășit în clasamentul de sezon.', '$myName overtook you in the season leaderboard.'),
+          'peerUid': myUid,
+          'peerName': myName,
+          'sentAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      debugPrint('PlayerProfileService._notifyOvertakes a esuat: $e');
     }
   }
 

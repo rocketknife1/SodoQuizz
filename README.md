@@ -49,6 +49,11 @@ assets/continut/
   mascote decorative de pe Home și micul "dispecer" de evenimente comun
   lor (`mascot_sync.dart`).
 
+## Ce urmează
+
+Ce a rămas deschis după ultima sesiune mare + planuri menționate dar
+neîncepute încă: [docs/TODO.md](docs/TODO.md).
+
 ## Verificare locală
 
 ```

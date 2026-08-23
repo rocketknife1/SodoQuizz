@@ -61,6 +61,17 @@ const int obbyFakePlatformCount = 1;
 /// [astroSodoPointsPerObstacle].
 const int obbyPointsPerObstacle = 10;
 
+/// Monede acordate INSTANT, în telefon, la fiecare răspuns corect — din
+/// planul de viitor (punctul 4): recompensa vizibilă DOAR la finalul
+/// meciului nu se simte, la 13-20 ani miza imediată motivează mai mult decât
+/// progresul pe termen lung. Complet separată de miza/premiile meciului
+/// ([MultiplayerService.recordCompletedMatch] etc.) — nu atinge economia
+/// mizelor, doar balanța locală a jucătorului, exact ca o recompensă de
+/// quest. Mică intenționat (nu 10x mai mare ca o monedă de quest ușor):
+/// se adună pe durata unui meci întreg (7 runde), nu e menită să înlocuiască
+/// vreo altă sursă de venit.
+const int obbyInstantCoinsPerCorrect = 2;
+
 /// Care din cele [obbyPlatformChoiceCount] plăci e falsă pentru jucătorul
 /// [playerId], în runda [roundIndex] a meciului [matchId].
 ///
@@ -100,6 +111,38 @@ bool obbyChoiceIsSafe({
   return chosenIndex != fakeIndex;
 }
 
+/// Cele două variante care rămân pe ecran când jucătorul are bonusul aprins
+/// ([MatchPlayer.nextQuestionBonus], câștigat sărind pe o placă bună în runda
+/// precedentă): răspunsul corect plus UNA singură dintre cele greșite.
+///
+/// Se calculează pe client, determinist, la fel ca [obbyFakePlatformIndex] —
+/// nu se scrie nimic în Firestore. Sufixul `#bonus` ține sămânța separată
+/// atât de cea a plăcii false, cât și de cea a amestecării variantelor, ca
+/// din una să nu se poată deduce alta.
+///
+/// Ancorat pe [playerId] dinadins: doi jucători cu bonus în aceeași rundă
+/// rămân, de regulă, cu variante greșite diferite, deci nu-și pot spune unul
+/// altuia care e răspunsul „prin eliminare".
+///
+/// Dacă [correctAnswer] nu e în [choices] (n-ar trebui să se întâmple), se
+/// întorc toate variantele neatinse: mai bine o întrebare fără bonus decât
+/// una din care lipsește răspunsul bun.
+List<String> obbyBonusChoices({
+  required List<String> choices,
+  required String correctAnswer,
+  required String matchId,
+  required int roundIndex,
+  required String playerId,
+}) {
+  if (!choices.contains(correctAnswer)) return List.of(choices);
+  final wrong = choices.where((c) => c != correctAnswer).toList();
+  if (wrong.isEmpty) return List.of(choices);
+  final seed = stableHash('$matchId#$roundIndex#$playerId#bonus');
+  final kept = [correctAnswer, wrong[seed % wrong.length]];
+  stableShuffle(kept, seed);
+  return kept;
+}
+
 /// S-a terminat meciul după runda [roundIndex]?
 ///
 /// Două motive, ambele deja folosite de resolverul de azi: cineva a trecut de
@@ -111,4 +154,61 @@ bool obbyMatchIsOver({
   final anyFinished = obstaclesClearedPerPlayer.any((c) => c >= obbyObstacleCount);
   final outOfRounds = roundIndex + 1 >= obbyObstacleCount;
   return anyFinished || outOfRounds;
+}
+
+// ─── Evenimente de rundă ────────────────────────────────────────────────
+//
+// Din planul de viitor (PLAN_DE_VIITOR.md, punctul 3): bucla "răspunzi →
+// alegi → sari" devine previzibilă după 3-4 meciuri, chiar dacă are trei
+// pași — creierul memorează tiparul, nu evenimentul. Cele două de mai jos
+// sunt pilotul cerut acolo, pe Obby: rup tiparul FĂRĂ niciun câmp nou în
+// Firestore, calculate determinist pe client, la fel ca placa falsă.
+//
+// Nu se pot suprapune pe aceeași rundă: [obbyIsComebackRound] e ancorat pe
+// un singur index fix (penultima rundă), iar [obbyIsDoubleRound] îl
+// exclude explicit, ca ultimele două runde ale unui meci să nu adune două
+// reguli speciale deodată — exact acolo unde jucătorii sunt deja concentrați
+// pe rezultatul final, nu e locul unde vrei să introduci ȘI o mecanică nouă.
+
+/// Runda [roundIndex] a meciului [matchId] e o "rundă dublă"? Cine sare cu
+/// bine trece DOUĂ obstacole deodată, nu unul — vezi
+/// MultiplayerService.resolveObbyChoices, unde se aplică efectiv.
+///
+/// Exclusă din prima rundă (nimeni n-are încă senzația jocului, deci un
+/// bonus dublu ar trece neobservat) și din ultimele două (finalul rămâne
+/// previzibil ca regulă de bază — [obbyIsComebackRound] e evenimentul
+/// special de acolo). Șansă 1 din 3 pe fiecare rundă eligibilă.
+bool obbyIsDoubleRound({
+  required String matchId,
+  required int roundIndex,
+}) {
+  if (roundIndex <= 0 || roundIndex >= obbyObstacleCount - 2) return false;
+  return stableHash('$matchId#$roundIndex#doubleround') % 3 == 0;
+}
+
+/// Penultima rundă a meciului — momentul "a doua șansă" din plan: oricine e
+/// pe ultimul loc la începutul acestei runde primește automat bonusul de
+/// alegere (2 variante din 4, [obbyBonusChoices]) la runda AGL, indiferent
+/// cum a ieșit placa lui în runda asta. Vezi
+/// MultiplayerService.resolveObbyChoices pentru cum se acordă.
+///
+/// Un singur index fix, nu probabilistic: evenimentul trebuie să se întâmple
+/// mereu, ca ultimul din clasament să aibă mereu o șansă reală înainte de
+/// runda finală — o monedă aruncată aici ar fi însemnat că, la ghinion, nimeni
+/// nu-l mai prinde din urmă niciodată.
+bool obbyIsComebackRound({required int roundIndex}) => roundIndex == obbyObstacleCount - 2;
+
+/// Cine e "ultimul din clasament" la [obbyIsComebackRound] — cei cu cel mai
+/// puțin [obstaclesCleared] dintre jucătorii încă activi ([obstaclesCleared]
+/// sub [obbyObstacleCount]). Poate întoarce mai mulți id-uri deodată (toți
+/// legați la egalitate) — niciunul din ei nu are voie să rămână fără șansă
+/// doar fiindcă altcineva a fost tras la sorți primul.
+///
+/// [activePlayers] sunt perechi (id, obstaclesCleared) — funcția nu citește
+/// Firestore, ca să rămână testabilă pur, la fel ca restul fișierului.
+List<String> obbyLastPlaceIds(Iterable<(String, int)> activePlayers) {
+  final active = activePlayers.where((p) => p.$2 < obbyObstacleCount).toList();
+  if (active.isEmpty) return const [];
+  final minCleared = active.map((p) => p.$2).reduce((a, b) => a < b ? a : b);
+  return [for (final p in active) if (p.$2 == minCleared) p.$1];
 }

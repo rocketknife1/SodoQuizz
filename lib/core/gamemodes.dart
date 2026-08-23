@@ -181,3 +181,32 @@ const List<GameMode> gameModes = [
 ];
 
 GameMode gameModeById(String id) => gameModes.firstWhere((m) => m.id == id);
+
+// ─── Categoria zilei ────────────────────────────────────────────────────
+//
+// Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — pilotul cel mai simplu
+// care rămâne totuși REAL: o categorie evidențiată, aleasă determinist pe
+// zi (aceeași pentru toți jucătorii, ca o "temă a zilei"), cu un mic bonus
+// de revendicat DUPĂ ce ai jucat-o (vezi CategoriesScreen și
+// StorageService.claimFeaturedCategory). Recompensa e FLAT, nu crește cu
+// nivelul ca la quest-uri (Quest.coinRewardAt) — n-are voie să intre în
+// niciuna din curbele testate de test/economy_balance_test.dart, e doar un
+// motiv în plus să deschizi jocul azi, nu o sursă de venit calculată.
+
+/// Monede/XP acordate la revendicarea categoriei zilei — pe scara unui
+/// quest ușor de bază (vezi progression.dart, QuestTier.easy: ~11-17
+/// monede), dar FIX, nu scalat cu nivelul.
+const int featuredCategoryCoinReward = 15;
+const int featuredCategoryXpReward = 5;
+
+/// Categoria evidențiată azi — aceeași pentru toată lumea, calculată din
+/// ziua din an (nu din dată completă, ca să nu depindă de fus orar în
+/// moduri ciudate; suficient de stabil pentru o rotație vizuală, nu literă
+/// de lege). Sare peste categoriile [GameMode.locked] — n-are sens să
+/// evidențiezi ceva ce nu se poate încă juca.
+GameMode featuredGameModeToday([DateTime? now]) {
+  final unlocked = gameModes.where((m) => !m.locked).toList();
+  final n = now ?? DateTime.now();
+  final dayOfYear = n.difference(DateTime(n.year, 1, 1)).inDays;
+  return unlocked[dayOfYear % unlocked.length];
+}
