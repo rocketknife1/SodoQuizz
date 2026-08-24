@@ -198,14 +198,11 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
     if (_navigated || info.status != MatchStatus.playing) return;
     _navigated = true;
     final gameMode = info.gameMode;
-    // Camera "e gata" (meciul chiar pornește) — boții de test, dacă existau,
-    // nu mai au ce căuta într-un meci real: n-ar răspunde niciodată la
-    // nimic. Fire-and-forget: navigarea nu are voie să aștepte după asta.
-    if (kDebugMode) {
-      MultiplayerService.instance.removeTestBots(matchId: widget.matchId).catchError((e) {
-        debugPrint('RoomLobbyScreen: removeTestBots a esuat: $e');
-      });
-    }
+    // Boții de test NU mai sunt scoși aici: userul a cerut explicit să
+    // rămână și să joace efectiv meciul (vezi driveTestBotAnswers/
+    // driveTestBotChairAnswers, chemate din ecranele fiecărui mod). Dacă
+    // gazda pleacă brusc din lobby ÎNAINTE de asta, camera întreagă (boți
+    // incluși) se șterge oricum — vezi leaveMatch/_deleteMatch.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.pushReplacement(

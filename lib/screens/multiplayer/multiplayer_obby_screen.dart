@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/game.dart' show GameWidget;
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
@@ -17,8 +18,8 @@ import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
 import 'multiplayer_results_screen.dart';
 
-/// **Obby** — cursă de obstacole tip Roblox, de la 2 la 6 personaje pe
-/// aceeași pistă (vezi core/obby.dart): ecranul nu decide nimic, citește
+/// **Obby** — cursă de obstacole tip Roblox, de la 2 la [obbyMaxPlayers]
+/// personaje pe aceeași pistă (vezi core/obby.dart): ecranul nu decide nimic, citește
 /// rezultatul rundei din Firestore și îl animează. ORICE client poate cere
 /// rezolvarea rundei.
 ///
@@ -52,6 +53,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   bool _showAdvance = false;
   bool _resolving = false;
   bool _resolvingChoices = false;
+
+  /// Boții de test (DOAR debug) răspund o singură dată pe rundă — vezi
+  /// MultiplayerTanksScreen pentru aceeași idee.
+  bool _botsTriggeredThisRound = false;
   bool _navigatedToResults = false;
   bool _left = false;
   Timer? _revealDelayTimer;
@@ -321,12 +326,29 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _revealDelayTimer = null;
       _advanceTimer?.cancel();
       _advanceTimer = null;
+      _botsTriggeredThisRound = false;
     }
 
     if (info.roundPhase == RoundPhase.answering) {
       final activeIds = players.where((p) => p.obstaclesCleared < obbyObstacleCount).map((p) => p.id).toSet();
       final allAnswered = activeIds.isNotEmpty && activeIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
+      // Boții de test (DOAR debug) răspund la întrebarea rundei. Alegerea
+      // plăcii (faza [RoundPhase.choosing]) rămâne pe seama fallback-ului
+      // existent (nicio alegere = placă falsă, fără progres) — n-are rost
+      // să scriem și noi o alegere explicită.
+      if (kDebugMode && !_botsTriggeredThisRound) {
+        final pendingBots = activeIds.where((id) => id.startsWith('testbot_') && !info.roundAnswers.containsKey(id)).toList();
+        if (pendingBots.isNotEmpty) {
+          _botsTriggeredThisRound = true;
+          MultiplayerService.instance.driveTestBotAnswers(
+            matchId: widget.matchId,
+            botIds: pendingBots,
+            correctAnswer: _questionFor(info.roundIndex).answer,
+            choices: _choicesFor(info.roundIndex),
+          );
+        }
+      }
       if (allAnswered || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }

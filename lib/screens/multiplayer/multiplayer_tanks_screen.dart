@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
@@ -143,6 +144,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// nimic (runda e deja rezolvată). Nu e doar un `bool`: dacă o încercare
   /// pică pe rețea, trebuie să existe și o a doua.
   DateTime? _lastResolveAttempt;
+
+  /// Boții de test (DOAR debug) răspund o singură dată pe rundă — fără
+  /// steagul ăsta, fiecare build (de câteva ori pe secundă) ar porni din
+  /// nou scrierea pentru ei, ceea ce ar rescrie mereu alt răspuns aleator.
+  bool _botsTriggeredThisRound = false;
 
   /// Variantele rundei curente, amestecate o singură dată. Amestecarea e
   /// determinist ieftină, dar `build` se execută des — la 60 de cadre pe
@@ -334,6 +340,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _playedAlarm = false;
       _playedExplosions = false;
       _lastResolveAttempt = null;
+      _botsTriggeredThisRound = false;
       _advanceTimer?.cancel();
       _advanceTimer = null;
       // Post-frame, nu aici: [_onData] rulează CHIAR ÎN TIMPUL build-ului, iar
@@ -351,6 +358,21 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       final aliveIds = players.where((p) => !p.eliminated).map((p) => p.id).toSet();
       final allAnswered = aliveIds.isNotEmpty && aliveIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
+      // Boții de test (DOAR debug) răspund la propria întrebare — jumătate
+      // din timp corect, jumătate greșit, cu o mică întârziere aleatoare.
+      // Vezi core/electric_chair.dart și restul modurilor pentru aceeași idee.
+      if (kDebugMode && !_botsTriggeredThisRound) {
+        final pendingBots = aliveIds.where((id) => id.startsWith('testbot_') && !info.roundAnswers.containsKey(id)).toList();
+        if (pendingBots.isNotEmpty) {
+          _botsTriggeredThisRound = true;
+          MultiplayerService.instance.driveTestBotAnswers(
+            matchId: widget.matchId,
+            botIds: pendingBots,
+            correctAnswer: _questionFor(info.roundIndex).answer,
+            choices: _choicesFor(info.roundIndex),
+          );
+        }
+      }
       // Ultimele două secunde: un bip scurt — cine citește variantele nu are
       // cum să se uite în același timp și la cronometru.
       if (!_playedAlarm && !allAnswered && _secondsLeftFor(info) <= 2) {

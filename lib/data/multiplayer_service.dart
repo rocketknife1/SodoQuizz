@@ -1226,6 +1226,69 @@ class MultiplayerService {
     await batch.commit();
   }
 
+  /// Îi face pe boți să răspundă efectiv la întrebarea PROPRIE a rundei —
+  /// jumătate din timp corect, jumătate greșit, cu o mică întârziere
+  /// aleatoare (ca să nu pară că răspund instantaneu).
+  ///
+  /// TOȚI boții scriu într-un SINGUR `.update()`, nu unul separat de
+  /// fiecare — prima variantă (o scriere per bot, fiecare pe temporizatorul
+  /// ei) a lovit exact documentul pe care încearcă să-l citească/scrie și
+  /// tranzacția care închide faza de răspuns (`closeElectricChairAnswering`
+  /// și surorile ei), producând conflicte de concurență optimistă repetate
+  /// până la timeout-ul intern de 30s al Firestore. O singură scriere
+  /// batch, cu o SINGURĂ întârziere aleatoare pentru tot grupul, elimină
+  /// coliziunea fără să piardă senzația de "nu răspund instant".
+  ///
+  /// Apelantul (ecranul modului) garantează că [botIds] conține doar boți
+  /// care NU au răspuns încă runda asta — vezi flagul `_botsTriggeredThisRound`
+  /// din fiecare ecran, altfel `build`-ul ar rescrie răspunsul de mai multe
+  /// ori pe secundă. NICIODATĂ apelată din build-ul de release — vezi
+  /// `kDebugMode` la locul de apel.
+  void driveTestBotAnswers({
+    required String matchId,
+    required List<String> botIds,
+    required String correctAnswer,
+    required List<String> choices,
+  }) {
+    final rnd = Random();
+    final wrongChoices = choices.where((c) => c != correctAnswer).toList();
+    final updates = <String, dynamic>{
+      for (final botId in botIds)
+        'roundAnswers.$botId': (wrongChoices.isEmpty || rnd.nextBool()) ? correctAnswer : wrongChoices[rnd.nextInt(wrongChoices.length)],
+    };
+    Future.delayed(Duration(milliseconds: 400 + rnd.nextInt(2400)), () {
+      _db.collection('matches').doc(matchId).update(updates).catchError((e) {
+        debugPrint('driveTestBotAnswers: scriere esuata: $e');
+      });
+    });
+  }
+
+  /// La fel ca [driveTestBotAnswers] (o singură scriere batch, aceeași
+  /// motivație anti-coliziune), dar pentru boți puși pe scaunul electric —
+  /// fără ea, orice bot ales victimă ar pierde AUTOMAT o viață de fiecare
+  /// dată (timeout = greșit), niciodată n-ar scăpa. [byBotId] mapează
+  /// fiecare bot aflat pe scaun la (răspunsul corect al întrebării LUI,
+  /// variantele ei) — diferite de la un bot la altul, fiindcă fiecare poate
+  /// avea o întrebare aleasă de alt atacator.
+  void driveTestBotChairAnswers({
+    required String matchId,
+    required Map<String, ({String correctAnswer, List<String> choices})> byBotId,
+  }) {
+    final rnd = Random();
+    final updates = <String, dynamic>{
+      for (final entry in byBotId.entries)
+        'roundChairAnswers.${entry.key}': () {
+          final wrong = entry.value.choices.where((c) => c != entry.value.correctAnswer).toList();
+          return (wrong.isEmpty || rnd.nextBool()) ? entry.value.correctAnswer : wrong[rnd.nextInt(wrong.length)];
+        }(),
+    };
+    Future.delayed(Duration(milliseconds: 400 + rnd.nextInt(2000)), () {
+      _db.collection('matches').doc(matchId).update(updates).catchError((e) {
+        debugPrint('driveTestBotChairAnswers: scriere esuata: $e');
+      });
+    });
+  }
+
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {
     final me = currentPlayerId;
     await _paced(() => _db.collection('matches').doc(matchId).collection('chat').add(
