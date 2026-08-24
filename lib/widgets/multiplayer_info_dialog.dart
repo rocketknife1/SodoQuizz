@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../core/betting.dart';
+import '../core/electric_chair.dart';
 import '../core/game_helpers.dart';
 import '../core/lang.dart';
+import '../core/obby.dart';
 import '../core/progression.dart';
 import '../core/tanks.dart';
 import '../core/theme.dart';
@@ -144,24 +146,64 @@ class MultiplayerInfoDialog extends StatelessWidget {
                       title: tr('Quizz Tanks — singurul mod fără miză',
                           'Quizz Tanks — the one mode with no stake'),
                       body: tr(
-                          'Patru tancuri, întrebări de cultură generală, $tanksRoundSeconds secunde de '
-                              'răspuns. Cine nimerește răspunsul primește ecranul de țintire și '
-                              'alege, în $tanksTargetSeconds secunde, PE CINE trage; cine a răspuns '
-                              'corect e și mult mai greu de lovit. Fiecare pornește cu '
-                              '$tanksMaxHp viață și pierde $tanksDamageMin-$tanksDamageMax la o '
-                              'lovitură primită.\n'
+                          'Până la $tanksPlayerCount tancuri, întrebări de cultură generală, '
+                              '$tanksRoundSeconds secunde de răspuns. Cine nimerește răspunsul '
+                              'primește ecranul de țintire și alege, în $tanksTargetSeconds secunde, '
+                              'PE CINE trage; cine a răspuns corect e și mult mai greu de lovit. '
+                              'Fiecare pornește cu $tanksMaxHp viață și pierde '
+                              '$tanksDamageMin-$tanksDamageMax la o lovitură primită.\n'
                               'Aici NU se pune miză și nu pierzi nimic din balanță. La final se '
                               'împarte pradă — monede, inimi, hints și, rar, gems — după cât ai '
                               'lovit. Cine face cele mai multe daune ia cel mai mult.',
-                          'Four tanks, general knowledge questions, $tanksRoundSeconds seconds to '
-                              'answer. Whoever gets it right goes to the targeting screen and picks, '
-                              'in $tanksTargetSeconds seconds, WHO they shoot; answering correctly '
-                              'also makes you much harder to hit. Everyone starts at '
-                              '$tanksMaxHp health and loses $tanksDamageMin-$tanksDamageMax per hit '
-                              'taken.\n'
+                          'Up to $tanksPlayerCount tanks, general knowledge questions, '
+                              '$tanksRoundSeconds seconds to answer. Whoever gets it right goes to '
+                              'the targeting screen and picks, in $tanksTargetSeconds seconds, WHO '
+                              'they shoot; answering correctly also makes you much harder to hit. '
+                              'Everyone starts at $tanksMaxHp health and loses '
+                              '$tanksDamageMin-$tanksDamageMax per hit taken.\n'
                               'There is NO stake here and nothing leaves your balance. At the end '
                               'there is salvage — coins, hearts, hints and, rarely, gems — split by '
                               'how much damage you dealt. The biggest gunner takes the most.'),
+                    ),
+                    _section(
+                      icon: Icons.directions_run_rounded,
+                      color: AppColors.play,
+                      title: 'Obby',
+                      body: tr(
+                          'De la 2 la $obbyMaxPlayers personaje pe aceeași pistă de obstacole, '
+                              'filmate din spate. Răspunzi corect la o întrebare de cultură generală '
+                              '($obbyRoundSeconds secunde), apoi alegi, din $obbyPlatformChoiceCount '
+                              'plăci, pe care sari — una e falsă. Sari cu bine și treci obstacolul; '
+                              'greșești sau nimerești placa falsă și rămâi pe loc, fără eliminare. '
+                              'Primul care trece de toate cele $obbyObstacleCount obstacole câștigă '
+                              'pe loc.',
+                          'From 2 to $obbyMaxPlayers characters on the same obstacle course, filmed '
+                              'from behind. Answer a general-knowledge question correctly '
+                              '($obbyRoundSeconds seconds), then pick, out of $obbyPlatformChoiceCount '
+                              'platforms, which one you jump on — one is fake. Jump safely and you '
+                              'clear the obstacle; get it wrong or land on the fake platform and you '
+                              'stay put, no elimination. First to clear all $obbyObstacleCount '
+                              'obstacles wins instantly.'),
+                    ),
+                    _section(
+                      icon: Icons.electric_bolt_rounded,
+                      color: AppColors.danger,
+                      title: tr('Scaunul Electric', 'Electric Chair'),
+                      body: tr(
+                          'Până la $electricChairPlayerCount jucători, $electricChairMaxLives vieți '
+                              'fiecare. Cine răspunde corect la propria întrebare '
+                              '($electricChairAnswerSeconds secunde) capătă dreptul să aleagă pe '
+                              'cineva pentru scaun ȘI una din patru întrebări pentru el. Victima '
+                              'răspunde corect și scapă neatinsă, sau greșește și pierde o viață. La '
+                              'zero vieți e eliminată, dar rămâne la masă ca spectator. Ultimul rămas '
+                              'în viață iese pe primul loc în clasament.',
+                          'Up to $electricChairPlayerCount players, $electricChairMaxLives lives '
+                              'each. Whoever answers their own question correctly '
+                              '($electricChairAnswerSeconds seconds) earns the right to pick someone '
+                              'for the chair AND one of four questions for them. The victim answers '
+                              'correctly and walks away unharmed, or gets it wrong and loses a life. '
+                              'At zero lives they are eliminated but stay at the table as a '
+                              'spectator. The last one standing takes first place.'),
                     ),
                     _section(
                       icon: Icons.meeting_room_rounded,

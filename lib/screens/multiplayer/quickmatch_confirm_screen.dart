@@ -7,6 +7,7 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/space_background.dart';
 import 'matchmaking_screen.dart';
+import 'multiplayer_electric_chair_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -132,10 +133,11 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
           builder: (_) => switch (gameMode) {
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: matchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: matchId),
-            // matchmaking public nu formează niciodată o ofertă Obby (vezi
-            // MultiplayerService._quickMatchModes) - caz mort, dar switch-ul
-            // trebuie exhaustiv.
+            // matchmaking public nu formează niciodată o ofertă Obby sau
+            // Scaunul Electric (vezi MultiplayerService._quickMatchModes) -
+            // cazuri moarte, dar switch-ul trebuie exhaustiv.
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
+            MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
           },
         ),

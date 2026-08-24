@@ -1,5 +1,6 @@
-/// Regulile modului multiplayer **Quizz Tanks** — patru tancuri, întrebări de
-/// cultură generală și o bară de viață de 100, ca la jocurile de luptă.
+/// Regulile modului multiplayer **Quizz Tanks** — până la [tanksPlayerCount]
+/// tancuri, întrebări de cultură generală și o bară de viață de 100, ca la
+/// jocurile de luptă.
 ///
 /// Runda, în patru pași:
 ///   1. **Răspuns** — toți cei rămași în viață văd aceeași întrebare și au
@@ -35,6 +36,14 @@
 /// tragerea a devenit țintită, un singur proiectil pe țintaș ar fi lungit
 /// meciul la peste 20 de runde, de-aia intervalul a urcat.)
 ///
+/// PLAFONUL DE JUCĂTORI A URCAT DE LA 4 LA 10, DAUNELE NU S-AU RECALIBRAT:
+/// la o masă plină, mai mulți țintași trag în aceeași rundă (proporțional
+/// mai mulți răspunsuri corecte), deci ritmul general al meciului crește —
+/// fiecare lovitură individuală rămâne la fel de „grea" ca înainte, doar că
+/// se întâmplă mai des la masa mare. E o schimbare de ritm cunoscută, nu un
+/// bug; dacă vreodată se simte prea rapid la 8-10 jucători, aici trebuie
+/// coborât intervalul, nu în altă parte.
+///
 /// TOATE ARUNCĂRILE DE ZAR SE FAC ÎNTR-UN SINGUR LOC: în tranzacția care
 /// rezolvă runda (vezi MultiplayerService.resolveTanksRound). Rezultatul
 /// (lista de proiectile, cine a fost lovit, cât) se SCRIE în Firestore, iar
@@ -45,23 +54,23 @@ library;
 
 import 'dart:math';
 
-/// Câți jucători încap într-o cameră de Quizz Tanks. Nu e o cifră
-/// decorativă: cu patru jucători, cel care țintește alege dintre exact trei
-/// adversari — atâtea cutii încap lizibil pe ecranul de țintire — iar arena
-/// e desenată ca o grilă 2×2 (vezi MultiplayerTanksScreen). Camera se poate
-/// porni și cu mai puțini (2 sau 3) — altfel n-ai cum să joci până nu
-/// strângi exact trei prieteni — dar nu primește niciodată al cincilea
-/// jucător.
-const int tanksPlayerCount = 4;
+import 'multiplayer_round.dart';
+
+/// Câți jucători încap într-o cameră de Quizz Tanks. Urcat de la 4 la 10 la
+/// cererea explicită a userului (toate modurile trebuie să accepte 10) —
+/// arena nu mai e o grilă fixă 2×2, ci 2 coloane × câte rânduri sunt
+/// necesare pentru [tanksPlayerCount] (vezi
+/// MultiplayerTanksScreen._buildArenaFrame). Camera se poate porni și cu mai
+/// puțini (de la 2), dar nu primește niciodată al unsprezecelea jucător.
+const int tanksPlayerCount = 10;
 
 /// Viața de start a fiecărui tanc. 100 fix, ca procentele din bară să se
 /// citească direct ca HP.
 const int tanksMaxHp = 100;
 
-/// Cât are fiecare la dispoziție ca să răspundă. Ridicat de la 5 la 12
-/// secunde la cererea explicită a userului — 5 secunde era prea puțin ca
-/// să apuci și să citești întrebarea, nu doar să reacționezi.
-const int tanksRoundSeconds = 12;
+/// Cât are fiecare la dispoziție ca să răspundă — comun tuturor modurilor cu
+/// rundă sincronizată, vezi core/multiplayer_round.dart.
+const int tanksRoundSeconds = sharedRoundAnswerSeconds;
 
 /// Cât durează alegerea țintei. Urcat de la 6 la 10 secunde la cererea
 /// explicită a userului: cardurile de țintă arată acum șansă de lovire,
@@ -127,6 +136,98 @@ const int tanksDamageMax = 30;
 /// runda curentă. Asimetria e toată ideea de echilibru a modului.
 const double tanksDodgeOnCorrect = 0.55;
 const double tanksDodgeOnWrong = 0.12;
+
+// ─── Geometria arenei ───────────────────────────────────────────────────────
+
+/// Rezultatul calculului grilei de tancuri — folosit de
+/// MultiplayerTanksScreen._buildArenaFrame ca să poziționeze cutiile, dar
+/// scos aici, PUR (fără niciun import Flutter), ca să poată fi testat direct
+/// pentru orice [TankArenaLayout.playerCount] fără să monteze ecranul
+/// întreg. Vezi test/tank_arena_layout_test.dart — genul de bug de aici nu e
+/// o eroare de compilare, ci o cutie cu lățime negativă sau un NaN care
+/// apare abia la un anumit număr de jucători, pe un anumit ecran.
+class TankArenaLayout {
+  final double cellWidth;
+  final double cellHeight;
+  final int rows;
+  final int cols;
+
+  /// Câte cutii arată efectiv grila (rânduri × coloane) — poate fi mai mare
+  /// decât [playerCount], ca să completeze ultimul rând (vezi
+  /// [computeTankArenaLayout]); apelantul desenează locurile goale de la
+  /// [playerCount] până la [slots].
+  final int slots;
+
+  /// Câți jucători sunt CHIAR la masă — cifra din care s-a calculat grila.
+  final int playerCount;
+
+  /// Înălțimea totală a conținutului — mai mare decât [viewportHeight] doar
+  /// când [scrolls] e adevărat.
+  final double contentHeight;
+
+  /// Grila nu mai încape întreagă în spațiul disponibil (o masă plină de
+  /// 8-10 jucători, pe un ecran mai mic) — arena trebuie învelită într-un
+  /// container derulabil, altfel cutiile de jos ar rămâne tăiate.
+  final bool scrolls;
+
+  /// Decalajul de sus, ca grila să fie centrată pe verticală când NU
+  /// derulează. Zero când derulează — primul rând trebuie ancorat sus.
+  final double top;
+
+  const TankArenaLayout({
+    required this.cellWidth,
+    required this.cellHeight,
+    required this.rows,
+    required this.cols,
+    required this.slots,
+    required this.playerCount,
+    required this.contentHeight,
+    required this.scrolls,
+    required this.top,
+  });
+}
+
+/// Calculează grila arenei pentru cei [playerCount] jucători CHIAR la masă
+/// (NU plafonul modului, [tanksPlayerCount]) — o cameră de 2-3 prieteni tot
+/// primește o grilă mică, cu cutii mari, exact ca înainte de urcarea
+/// plafonului la 10; doar o masă plină ajunge la grila mare, cu mai multe
+/// rânduri.
+///
+/// Coloanele rămân fixe la 2 — telefoanele sunt înalte, nu late, deci mai
+/// multe RÂNDURI încap mai bine decât mai multe coloane. Cutiile păstrează
+/// un raport lățime/înălțime fix (0.62) și nu coboară niciodată sub
+/// [minCellHeight] — NU se comprimă doar ca să încapă toate în spațiul dat,
+/// ca la o masă plină tancurile să nu devină ilizibil de mici. Dacă grila
+/// completă nu mai încape pe verticală, [TankArenaLayout.scrolls] devine
+/// adevărat, ca apelantul să învelească arena într-un container derulabil —
+/// arena deruleze, nu tancurile se micșorează sub prag.
+TankArenaLayout computeTankArenaLayout({
+  required double viewportWidth,
+  required double viewportHeight,
+  required int playerCount,
+  int cols = 2,
+  double gap = 10,
+  double sidePad = 12,
+  double minCellHeight = 80,
+}) {
+  final clampedCount = playerCount.clamp(1, tanksPlayerCount);
+  final rows = (clampedCount / cols).ceil();
+  final cellWidth = (viewportWidth - sidePad * 2 - gap * (cols - 1)) / cols;
+  final cellHeight = max(cellWidth.clamp(0.0, 168.0) * 0.62, minCellHeight);
+  final gridHeight = cellHeight * rows + gap * (rows - 1);
+  final scrolls = gridHeight > viewportHeight;
+  return TankArenaLayout(
+    cellWidth: cellWidth,
+    cellHeight: cellHeight,
+    rows: rows,
+    cols: cols,
+    slots: rows * cols,
+    playerCount: clampedCount,
+    contentHeight: scrolls ? gridHeight : viewportHeight,
+    scrolls: scrolls,
+    top: scrolls ? 0.0 : ((viewportHeight - gridHeight) / 2).clamp(0.0, double.infinity),
+  );
+}
 
 /// Rezultatul unei singure trageri — ce se scrie în Firestore și ce
 /// animează toți clienții.

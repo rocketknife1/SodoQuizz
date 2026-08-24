@@ -744,24 +744,30 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   Widget _buildArenaFrame(MatchInfo info, List<MatchPlayer> players) {
     return LayoutBuilder(
       builder: (context, c) {
-        const gap = 12.0;
-        const sidePad = 14.0;
-        final cellW = (c.maxWidth - sidePad * 2 - gap) / 2;
-        // Cutiile cresc cât le lasă ecranul, până la o limită peste care
-        // tancurile ar pluti într-o cutie goală. Grila iese aproape mereu mai
-        // scundă decât spațiul primit (bara de jos e mică la o întrebare
-        // scurtă), deci se CENTREAZĂ pe verticală — altfel rămânea lipită de
-        // titlu, cu o bandă goală mare sub ea.
-        final cellH = ((c.maxHeight - gap - 6) / 2).clamp(92.0, 168.0);
-        final gridH = cellH * 2 + gap;
-        final top = ((c.maxHeight - gridH) / 2).clamp(0.0, double.infinity);
+        const gap = 10.0;
+        const sidePad = 12.0;
+        // Geometria grilei e o funcție PURĂ (core/tanks.dart), testată direct
+        // pentru orice număr de jucători — vezi test/tank_arena_layout_test.dart.
+        // Calculată pentru câți sunt CHIAR la masă, nu pentru plafonul
+        // modului: o cameră de 2-3 prieteni tot primește cutii mari, nu o
+        // grilă gândită pentru o masă plină de 10.
+        final layout = computeTankArenaLayout(
+          viewportWidth: c.maxWidth,
+          viewportHeight: c.maxHeight,
+          playerCount: players.length,
+          gap: gap,
+          sidePad: sidePad,
+        );
+        final cellW = layout.cellWidth;
+        final cellH = layout.cellHeight;
+        final top = layout.top;
 
-        // Grila 2×2 e fixă: locul unui jucător e dat de poziția lui în lista
+        // Grila e fixă: locul unui jucător e dat de poziția lui în lista
         // sortată, deci nu se mișcă de la o rundă la alta.
         final centers = <String, Offset>{};
         for (var i = 0; i < players.length && i < tanksPlayerCount; i++) {
-          final col = i % 2;
-          final row = i ~/ 2;
+          final col = i % layout.cols;
+          final row = i ~/ layout.cols;
           centers[players[i].id] = Offset(
             sidePad + col * (cellW + gap) + cellW / 2,
             top + row * (cellH + gap) + cellH / 2,
@@ -769,61 +775,68 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         }
         _ensureFlights(info, players, centers, c.maxWidth);
 
-        return ClipRect(
-          child: Transform.translate(
-            offset: _shake,
-            child: SizedBox(
-              width: c.maxWidth,
-              height: c.maxHeight,
-              child: Stack(
-                children: [
-                  const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _BattlefieldPainter()))),
-                  // Locurile nefolosite ale grilei 2×2, la o masă de 2 sau 3.
-                  // Fără ele, colțul gol arăta a ecran care nu s-a încărcat;
-                  // așa se citește ca „aici putea sta cineva", ceea ce e chiar
-                  // adevărul — camera se poate porni și în trei.
-                  for (var i = players.length; i < tanksPlayerCount; i++)
-                    Positioned(
-                      left: sidePad + (i % 2) * (cellW + gap),
-                      top: top + (i ~/ 2) * (cellH + gap),
-                      width: cellW,
-                      height: cellH,
-                      child: const _EmptySlot(),
-                    ),
-                  for (var i = 0; i < players.length && i < tanksPlayerCount; i++)
-                    Positioned(
-                      left: sidePad + (i % 2) * (cellW + gap),
-                      top: top + (i ~/ 2) * (cellH + gap),
-                      width: cellW,
-                      height: cellH,
-                      child: _TankCard(
-                        player: players[i],
-                        facingRight: i % 2 == 0,
-                        isMe: players[i].id == MultiplayerService.instance.currentPlayerId,
-                        hasAnswered: info.roundAnswers.containsKey(players[i].id),
-                        showAnswerTicks: info.roundPhase == RoundPhase.answering,
-                        isFiring: info.roundPhase == RoundPhase.revealed &&
-                            info.roundShots.any((s) => s.byId == players[i].id) &&
-                            _fire.value * tanksRevealSeconds >= _firstShotAt - 0.3,
-                        previousHp: _hpAtRoundStart[players[i].id] ?? players[i].hp,
-                        drainProgress: _drainProgress,
-                        tankWidth: (cellW * 0.46).clamp(56.0, 96.0),
-                      ),
-                    ),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: CustomPaint(
-                        painter: TankShotsPainter(flights: _flights, time: _fire.value * tanksRevealSeconds),
-                      ),
+        final content = Transform.translate(
+          offset: _shake,
+          child: SizedBox(
+            width: c.maxWidth,
+            height: layout.contentHeight,
+            child: Stack(
+              children: [
+                const Positioned.fill(child: IgnorePointer(child: CustomPaint(painter: _BattlefieldPainter()))),
+                // Locurile nefolosite ale grilei — doar cât să completeze
+                // ultimul rând (vezi [TankArenaLayout.slots]), NU până la
+                // plafonul modului. Fără ele, colțul gol arăta a ecran care
+                // nu s-a încărcat; așa se citește ca „aici putea sta cineva",
+                // ceea ce e chiar adevărul.
+                for (var i = players.length; i < layout.slots; i++)
+                  Positioned(
+                    left: sidePad + (i % layout.cols) * (cellW + gap),
+                    top: top + (i ~/ layout.cols) * (cellH + gap),
+                    width: cellW,
+                    height: cellH,
+                    child: const _EmptySlot(),
+                  ),
+                for (var i = 0; i < players.length && i < tanksPlayerCount; i++)
+                  Positioned(
+                    left: sidePad + (i % layout.cols) * (cellW + gap),
+                    top: top + (i ~/ layout.cols) * (cellH + gap),
+                    width: cellW,
+                    height: cellH,
+                    child: _TankCard(
+                      player: players[i],
+                      facingRight: i % layout.cols == 0,
+                      isMe: players[i].id == MultiplayerService.instance.currentPlayerId,
+                      hasAnswered: info.roundAnswers.containsKey(players[i].id),
+                      showAnswerTicks: info.roundPhase == RoundPhase.answering,
+                      isFiring: info.roundPhase == RoundPhase.revealed &&
+                          info.roundShots.any((s) => s.byId == players[i].id) &&
+                          _fire.value * tanksRevealSeconds >= _firstShotAt - 0.3,
+                      previousHp: _hpAtRoundStart[players[i].id] ?? players[i].hp,
+                      drainProgress: _drainProgress,
+                      tankWidth: (cellW * 0.46).clamp(40.0, 96.0),
                     ),
                   ),
-                  if (info.roundPhase == RoundPhase.revealed) _buildFireBanner(info),
-                  if (info.roundPhase == RoundPhase.revealed) _buildWreckBanner(info, players),
-                ],
-              ),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: CustomPaint(
+                      painter: TankShotsPainter(flights: _flights, time: _fire.value * tanksRevealSeconds),
+                    ),
+                  ),
+                ),
+                if (info.roundPhase == RoundPhase.revealed) _buildFireBanner(info),
+                if (info.roundPhase == RoundPhase.revealed) _buildWreckBanner(info, players),
+              ],
             ),
           ),
         );
+
+        // Sub plafonul de jucători ai unei mese obișnuite (până la 4-6),
+        // grila tot încape fără derulare, exact ca înainte. Doar la o masă
+        // plină de 8-10 arena devine derulabilă vertical — tot ce ține de ea
+        // (fundal, tancuri, proiectile) se mișcă împreună, fiindcă sunt toate
+        // în ACELAȘI Stack dimensionat la [layout.contentHeight], nu
+        // suprapuse din afară.
+        return layout.scrolls ? SingleChildScrollView(child: content) : ClipRect(child: content);
       },
     );
   }

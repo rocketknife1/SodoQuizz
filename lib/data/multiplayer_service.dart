@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../core/betting.dart';
+import '../core/electric_chair.dart';
 import '../core/lang.dart';
+import '../core/multiplayer_round.dart';
 import '../core/obby.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
@@ -19,24 +21,28 @@ class MultiplayerUnavailableException implements Exception {
   String toString() => message;
 }
 
-/// Capacitatea maximă a unei camere private (Create Room / Join with Code).
+/// Capacitatea maximă a unei camere private (Create Room / Join with Code)
+/// pentru [MatchGameMode.classic] și [MatchGameMode.higherLower] — celelalte
+/// moduri au propriul plafon (vezi [maxPlayersForMode]).
 ///
-/// Ridicat de la 5 la 11: 5 oameni nu e "un grup". 11 e mărimea la care
-/// ladder-ul potului de loc are trepte cu valori distincte (vezi
-/// placementShares din core/betting.dart), rândul de avatare de sus rămâne
-/// lizibil fiindcă derulează orizontal, iar traficul spre Firestore rămâne sub
-/// ~250 de citiri pe meci cu sincronizarea rară de scor din
-/// MultiplayerMatchScreen. Matchmaking-ul public rămâne 1 vs 1 — o coadă care
-/// așteaptă 11 străini simultan nu s-ar completa niciodată.
-const int matchPlayerCount = 11;
+/// Coborât de la 11 la 10 la cererea explicită a userului: toate modurile
+/// trebuie să accepte ACELAȘI plafon de 10, ca regula să fie simplă și
+/// unică, nu un număr diferit memorat separat pentru fiecare mod. Rândul de
+/// avatare de sus rămâne lizibil fiindcă derulează orizontal, iar traficul
+/// spre Firestore rămâne sub control cu sincronizarea rară de scor din
+/// MultiplayerMatchScreen. Matchmaking-ul public rămâne 1 vs 1 — o coadă
+/// care așteaptă 10 străini simultan nu s-ar completa niciodată.
+const int matchPlayerCount = 10;
 
-/// Câți jucători încap într-o cameră, după modul ei de joc. Quizz Tanks e
-/// singurul cu limită proprie ([tanksPlayerCount] = 4): acolo numărul nu e o
-/// preferință, ci parte din reguli — „cine răspunde corect trage în ceilalți
-/// trei" și arena desenată 2×2 (vezi core/tanks.dart).
+/// Câți jucători încap într-o cameră, după modul ei de joc. Toate modurile
+/// folosesc ACELAȘI plafon (10, vezi fiecare constantă proprie mai jos) —
+/// funcția rămâne un `switch` pe mod, nu o singură constantă globală, ca
+/// fiecare mod să poată avea în continuare motivul lui documentat separat
+/// (vezi core/tanks.dart, core/obby.dart, core/electric_chair.dart).
 int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
       MatchGameMode.quizzTanks => tanksPlayerCount,
       MatchGameMode.obby => obbyMaxPlayers,
+      MatchGameMode.electricChair => electricChairPlayerCount,
       MatchGameMode.classic || MatchGameMode.higherLower => matchPlayerCount,
     };
 
@@ -63,9 +69,12 @@ const _codeChars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // fara 0/O/1/I - usor de
 const int higherLowerMaxBreads = 5;
 
 /// Cât timp are fiecare rundă înainte ca cei ce n-au votat încă să fie
-/// scorați automat ca greșit — aceeași durată ca la mini-jocul solo
-/// (higher_lower_screen.dart), pentru consecvență.
-const int higherLowerRoundSeconds = 15;
+/// scorați automat ca greșit — comun tuturor modurilor cu rundă
+/// sincronizată, vezi core/multiplayer_round.dart. (Era 15s, diferit de
+/// celelalte trei moduri, deja ajunse la 12s prin ajustări separate — userul
+/// a cerut explicit ACELAȘI timp peste tot; NU mai e legat de mini-jocul
+/// solo, higher_lower_screen.dart, care oricum rulase de mult pe 10s, nu 15.)
+const int higherLowerRoundSeconds = sharedRoundAnswerSeconds;
 
 /// Cât timp rămâne vizibil răspunsul corect + câștigătorii rundei înainte
 /// ca runda următoare să înceapă automat.
@@ -872,6 +881,300 @@ class MultiplayerService {
       }
     }
     return best;
+  }
+
+  // ─── Scaunul Electric ───────────────────────────────────────────────────
+
+  /// Închide faza de răspuns a unei runde de Scaunul Electric: cine a
+  /// răspuns corect la propria întrebare capătă dreptul de a alege o
+  /// victimă și primește [electricChairPointsPerAnswer].
+  ///
+  /// NU se acordă niciun punct de "supraviețuire" aici — `score` rămâne un
+  /// scor mic, de acțiune pură (răspunsuri + șocuri + apărări reușite),
+  /// bun pentru XP; cine a rezistat mai mult se ține separat, în
+  /// [MatchPlayer.eliminatedAtRound] (scris de [resolveElectricChairRound]).
+  /// Clasamentul final combină cele două, vezi core/electric_chair.dart
+  /// `electricChairRankKey` — comentariul de-acolo explică și de ce prima
+  /// variantă (puncte de supraviețuire direct în `score`) era greșită.
+  ///
+  /// Dacă n-a nimerit nimeni, sau a mai rămas un singur jucător, se sare
+  /// direct la deznodământ — exact ca [closeTanksAnswering].
+  Future<void> closeElectricChairAnswering({
+    required String matchId,
+    required int roundIndex,
+    required String correctAnswer,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja închisă de alt client
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+
+        final attackers = <String>[];
+        var aliveCount = 0;
+        final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (final id in playerIds) {
+          final doc = await tx.get(matchRef.collection('players').doc(id));
+          docs[id] = doc;
+          if (!doc.exists || doc.data()!['eliminated'] == true) continue;
+          aliveCount++;
+          if (answers[id] == correctAnswer) attackers.add(id);
+        }
+        for (final id in attackers) {
+          final doc = docs[id]!;
+          final base = doc.data()!['score'] as int? ?? 0;
+          tx.update(doc.reference, {'score': base + electricChairPointsPerAnswer});
+        }
+
+        // Un singur jucător rămas în viață n-are pe cine ținti — ar rămâne
+        // blocat pe ecranul de alegere până la plafonul de runde.
+        if (attackers.isEmpty || aliveCount < 2) {
+          final outOfRounds = roundIndex + 1 >= electricChairMaxRounds;
+          tx.update(matchRef, {
+            'roundPhase': RoundPhase.revealed.name,
+            'roundWinnerIds': attackers,
+            'roundChairAssignments': <String, Map<String, dynamic>>{},
+            'roundChairOutcomes': <String, bool>{},
+            if (aliveCount <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
+          });
+          return;
+        }
+
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.targeting.name,
+          'roundWinnerIds': attackers,
+          'roundChairChoices': <String, Map<String, dynamic>>{},
+          // cronometrul de alegere pornește ACUM, nu de la începutul rundei
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeElectricChairAnswering a esuat: $e');
+    }
+  }
+
+  /// Victima ȘI întrebarea (0..[electricChairCandidateCount]-1) alese de
+  /// atacatorul curent, din ecranul de alegere.
+  Future<void> submitElectricChairChoice({
+    required String matchId,
+    required String targetId,
+    required int questionIndex,
+  }) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundChairChoices.$me': ChairChoice(targetId: targetId, questionIndex: questionIndex).toMap(),
+        }));
+  }
+
+  /// Combină alegerile tuturor atacatorilor în lista efectivă de victime —
+  /// dacă doi (sau mai mulți) au ales aceeași persoană, testul lor se
+  /// combină într-unul singur (vezi core/electric_chair.dart pentru de ce).
+  /// Cine n-a apucat să aleagă în [electricChairTargetSeconds] secunde NU
+  /// pierde alegerea: primește o victimă și o întrebare la întâmplare,
+  /// exact cum un țintaș întârziat trage automat în cel mai slăbit la Quizz
+  /// Tanks.
+  Future<void> resolveElectricChairTargeting({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.targeting.name) {
+          return; // deja închisă de alt client
+        }
+        final rawChoices = Map<String, dynamic>.from(data['roundChairChoices'] as Map? ?? const {});
+        final attackers = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
+
+        final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (final id in playerIds) {
+          docs[id] = await tx.get(matchRef.collection('players').doc(id));
+        }
+        final alive = [
+          for (final id in playerIds)
+            if (docs[id]!.exists && docs[id]!.data()!['eliminated'] != true) id,
+        ];
+
+        final rnd = Random();
+        final picks = <String, ChairChoice>{}; // atacator -> alegerea lui, cu auto-completare
+        for (final attacker in attackers) {
+          if (!alive.contains(attacker)) continue;
+          final raw = rawChoices[attacker];
+          final chosen = raw is Map ? ChairChoice.fromMap(Map<String, dynamic>.from(raw)) : null;
+          final validTarget = chosen != null && chosen.targetId != attacker && alive.contains(chosen.targetId);
+          if (validTarget) {
+            picks[attacker] = chosen;
+          } else {
+            final candidates = alive.where((id) => id != attacker).toList();
+            if (candidates.isEmpty) continue; // n-are pe cine alege
+            picks[attacker] = ChairChoice(
+              targetId: candidates[rnd.nextInt(candidates.length)],
+              questionIndex: rnd.nextInt(electricChairCandidateCount),
+            );
+          }
+        }
+
+        // grupează pe victimă, ca alegerile simultane pe aceeași persoană
+        // să se combine într-un singur test.
+        final byVictim = <String, List<String>>{};
+        for (final entry in picks.entries) {
+          byVictim.putIfAbsent(entry.value.targetId, () => []).add(entry.key);
+        }
+        final assignments = <String, Map<String, dynamic>>{};
+        for (final entry in byVictim.entries) {
+          final attackerIds = entry.value..sort();
+          final source = attackerIds.first; // departajaj determinist
+          assignments[entry.key] = ChairAssignment(
+            attackerIds: attackerIds,
+            sourceAttackerId: source,
+            questionIndex: picks[source]!.questionIndex,
+          ).toMap();
+        }
+
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.chair.name,
+          'roundChairAssignments': assignments,
+          'roundChairAnswers': <String, String>{},
+          // cronometrul scaunului pornește ACUM
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveElectricChairTargeting a esuat: $e');
+    }
+  }
+
+  /// Răspunsul victimei curente la întrebarea aleasă pentru ea.
+  Future<void> submitChairAnswer({required String matchId, required String answer}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundChairAnswers.$me': answer}));
+  }
+
+  /// Rezolvă scaunul: fiecare victimă din [MatchInfo.roundChairAssignments]
+  /// e comparată cu răspunsul corect al întrebării ei (transmis de client,
+  /// vezi [correctAnswers] — la fel cum [closeTanksAnswering] primește
+  /// [correctAnswer] ca parametru, nu-l calculează singur, ca serviciul să
+  /// rămână independent de conținutul întrebărilor).
+  ///
+  /// Cine n-a apucat să răspundă în [electricChairSeconds] secunde e tratat
+  /// exact ca cine a greșit: pierde o viață.
+  Future<void> resolveElectricChairRound({
+    required String matchId,
+    required int roundIndex,
+    required Map<String, String> correctAnswers,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.chair.name) {
+          return; // deja rezolvată de alt client
+        }
+        final assignments = {
+          for (final e in (data['roundChairAssignments'] as Map? ?? const {}).entries)
+            e.key as String: ChairAssignment.fromMap(Map<String, dynamic>.from(e.value as Map)),
+        };
+        final answers = Map<String, dynamic>.from(data['roundChairAnswers'] as Map? ?? const {});
+
+        final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (final id in playerIds) {
+          docs[id] = await tx.get(matchRef.collection('players').doc(id));
+        }
+
+        final outcomes = <String, bool>{};
+        final scoreGain = <String, int>{for (final id in playerIds) id: 0};
+        final newlyEliminated = <String>{};
+        for (final entry in assignments.entries) {
+          final victimId = entry.key;
+          final assignment = entry.value;
+          final victimDoc = docs[victimId];
+          if (victimDoc == null || !victimDoc.exists || victimDoc.data()!['eliminated'] == true) continue;
+          final correct = correctAnswers[victimId];
+          final survived = correct != null && answers[victimId] == correct;
+          outcomes[victimId] = survived;
+          if (survived) {
+            scoreGain[victimId] = (scoreGain[victimId] ?? 0) + electricChairPointsPerDefense;
+          } else {
+            final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) - 1;
+            final eliminated = lives <= 0;
+            if (eliminated) newlyEliminated.add(victimId);
+            tx.update(victimDoc.reference, {
+              'lives': lives < 0 ? 0 : lives,
+              'eliminated': eliminated,
+              // câte runde a rezistat — vezi core/electric_chair.dart
+              // `electricChairRankKey`, care citește exact câmpul ăsta ca să
+              // claseze corect "ultimul rămas în viață" la final.
+              if (eliminated) 'eliminatedAtRound': roundIndex,
+            });
+            for (final attackerId in assignment.attackerIds) {
+              scoreGain[attackerId] = (scoreGain[attackerId] ?? 0) + electricChairPointsPerShock;
+            }
+          }
+        }
+        for (final id in playerIds) {
+          final gained = scoreGain[id] ?? 0;
+          if (gained == 0) continue;
+          final base = docs[id]!.data()?['score'] as int? ?? 0;
+          tx.update(docs[id]!.reference, {'score': base + gained});
+        }
+
+        var aliveCount = 0;
+        for (final id in playerIds) {
+          final wasEliminated = docs[id]!.data()?['eliminated'] == true;
+          if (!wasEliminated && !newlyEliminated.contains(id)) aliveCount++;
+        }
+        final outOfRounds = roundIndex + 1 >= electricChairMaxRounds;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundChairOutcomes': outcomes,
+          if (aliveCount <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveElectricChairRound a esuat: $e');
+    }
+  }
+
+  /// Trece la runda următoare — varianta proprie a Scaunului Electric,
+  /// fiindcă runda lui are câmpuri proprii de golit ([roundChairChoices],
+  /// [roundChairAssignments], [roundChairAnswers], [roundChairOutcomes]) și
+  /// n-are niciun rost să atingă câmpurile celorlalte moduri. Ținut separat
+  /// de [advanceSyncRound] la fel ca [advanceObbyRound] — runda are trei
+  /// pași posibili (răspuns → alegere → scaun), nu doi.
+  Future<void> advanceElectricChairRound({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final doc = await tx.get(matchRef);
+        final data = doc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
+          return;
+        }
+        tx.update(matchRef, {
+          'roundIndex': roundIndex + 1,
+          'roundPhase': RoundPhase.answering.name,
+          'roundAnswers': <String, String>{},
+          'roundWinnerIds': <String>[],
+          'roundChairChoices': <String, Map<String, dynamic>>{},
+          'roundChairAssignments': <String, Map<String, dynamic>>{},
+          'roundChairAnswers': <String, String>{},
+          'roundChairOutcomes': <String, bool>{},
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.advanceElectricChairRound a esuat: $e');
+    }
   }
 
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {

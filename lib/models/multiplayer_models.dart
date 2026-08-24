@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import '../core/electric_chair.dart';
 import '../core/tanks.dart';
 import '../core/theme.dart';
 
@@ -18,8 +19,11 @@ enum MatchStatus { lobby, playing, finished }
 /// obstacole tip Roblox: de la 2 la 6 personaje pe aceeași pistă, camera
 /// trece la 3rd-person (ca CJ din San Andreas) după fiecare întrebare, iar
 /// un răspuns corect face personajul să sară peste obstacolul din față —
-/// vezi core/obby.dart și MultiplayerObbyScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks, obby }
+/// vezi core/obby.dart și MultiplayerObbyScreen. [electricChair] e cinci
+/// jucători cu vieți individuale: cine răspunde corect alege pe cineva ȘI o
+/// întrebare din patru pentru el — victima care greșește pierde o viață —
+/// vezi core/electric_chair.dart și MultiplayerElectricChairScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
 /// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
@@ -34,14 +38,16 @@ enum MatchGameMode { classic, higherLower, quizzTanks, obby }
 /// Fiecare fază intermediară aparține UNUI SINGUR mod: Higher & Lower și
 /// Higher & Lower sare direct de la [answering] la [revealed]; Quizz Tanks
 /// trece doar prin [targeting], niciodată prin [choosing]; Obby doar prin
-/// [choosing], niciodată prin [targeting]. Nicăieri în aplicație nu există un
-/// `switch` exhaustiv pe enum-ul ăsta (doar comparații `== RoundPhase.X` și
-/// `values.firstWhere(orElse:)`), tocmai ca o fază nouă să nu poată strica
-/// modurile care n-o folosesc.
+/// [choosing], niciodată prin [targeting]. Scaunul Electric refolosește
+/// [targeting] (cine a răspuns corect își alege victima ȘI întrebarea) și
+/// mai trece, în plus, prin [chair] (victima răspunde efectiv). Nicăieri în
+/// aplicație nu există un `switch` exhaustiv pe enum-ul ăsta (doar comparații
+/// `== RoundPhase.X` și `values.firstWhere(orElse:)`), tocmai ca o fază nouă
+/// să nu poată strica modurile care n-o folosesc.
 ///
 /// Numele valorilor e și ce se scrie în Firestore, deci nu se pot redenumi
 /// fără să rămână în urmă meciurile aflate în desfășurare.
-enum RoundPhase { answering, targeting, choosing, revealed }
+enum RoundPhase { answering, targeting, choosing, revealed, chair }
 
 /// O tragere dintr-o rundă de Quizz Tanks, așa cum a ieșit din zarurile
 /// aruncate O SINGURĂ DATĂ, în tranzacția care rezolvă runda (vezi
@@ -65,6 +71,55 @@ class TankShot {
   // chei scurte: lista asta se rescrie pe documentul meciului la fiecare
   // rundă și e livrată tuturor ascultătorilor, deci contează cât ocupă.
   Map<String, dynamic> toMap() => {'by': byId, 'at': atId, 'hit': hit, 'dmg': damage};
+}
+
+/// Alegerea unui atacator din faza [RoundPhase.targeting] a Scaunului
+/// Electric: victima ȘI care din cele [electricChairCandidateCount]
+/// întrebări oferite i-a ales-o. Textul întrebării nu se scrie aici — se
+/// derivă determinist din matchId + rundă + uid-ul atacatorului (vezi
+/// MultiplayerElectricChairScreen), la fel cum Quizz Tanks nu scrie
+/// întrebarea rundei, doar indexul ei.
+class ChairChoice {
+  final String targetId;
+  final int questionIndex;
+
+  const ChairChoice({required this.targetId, required this.questionIndex});
+
+  factory ChairChoice.fromMap(Map<String, dynamic> map) => ChairChoice(
+        targetId: map['t'] as String? ?? '',
+        questionIndex: (map['q'] as num?)?.toInt() ?? 0,
+      );
+
+  Map<String, dynamic> toMap() => {'t': targetId, 'q': questionIndex};
+}
+
+/// Cine ajunge efectiv pe scaun într-o rundă de Scaunul Electric, așa cum a
+/// ieșit din combinarea alegerilor tuturor atacatorilor (vezi
+/// MultiplayerService.resolveElectricChairTargeting) — scrisă O SINGURĂ
+/// DATĂ, de tranzacția care închide faza de alegere.
+///
+/// [attackerIds] = TOȚI cei care au ales-o victimă (poate fi mai mult de
+/// unul); [sourceAttackerId] + [questionIndex] = a CUI întrebare se
+/// folosește efectiv, când sunt mai mulți — vezi core/electric_chair.dart
+/// pentru de ce se combină într-un singur test, nu unul per atacator.
+class ChairAssignment {
+  final List<String> attackerIds;
+  final String sourceAttackerId;
+  final int questionIndex;
+
+  const ChairAssignment({
+    required this.attackerIds,
+    required this.sourceAttackerId,
+    required this.questionIndex,
+  });
+
+  factory ChairAssignment.fromMap(Map<String, dynamic> map) => ChairAssignment(
+        attackerIds: List<String>.from(map['a'] as List? ?? const []),
+        sourceAttackerId: map['s'] as String? ?? '',
+        questionIndex: (map['q'] as num?)?.toInt() ?? 0,
+      );
+
+  Map<String, dynamic> toMap() => {'a': attackerIds, 's': sourceAttackerId, 'q': questionIndex};
 }
 
 /// Un meci multiplayer (cameră privată SAU matchmaking public) — un singur
@@ -142,6 +197,29 @@ class MatchInfo {
   /// scriere în plus.
   final Map<String, int> roundPlatformChoices;
 
+  /// Doar [MatchGameMode.electricChair], în faza [RoundPhase.targeting]:
+  /// uid-ul atacatorului → victima și întrebarea aleasă de el (vezi
+  /// [ChairChoice]). Exact ca [roundTargets] la Quizz Tanks: cine a răspuns
+  /// corect apare în [roundWinnerIds] de la începutul fazei, cine a și
+  /// apucat să aleagă apare și aici.
+  final Map<String, ChairChoice> roundChairChoices;
+
+  /// Doar [MatchGameMode.electricChair], din faza [RoundPhase.chair] înainte:
+  /// uid-ul victimei → cine a pus-o pe scaun și cu ce întrebare, combinate
+  /// într-un singur test (vezi [ChairAssignment]). Scrise o singură dată, de
+  /// tranzacția care închide faza de alegere.
+  final Map<String, ChairAssignment> roundChairAssignments;
+
+  /// Doar [MatchGameMode.electricChair], în faza [RoundPhase.chair]: uid-ul
+  /// victimei → răspunsul ei la întrebarea de pe scaun.
+  final Map<String, String> roundChairAnswers;
+
+  /// Doar [MatchGameMode.electricChair], după ce faza [RoundPhase.chair] s-a
+  /// rezolvat: uid-ul victimei → a scăpat (true) sau a picat la scaun
+  /// (false). Scris o singură dată, de tranzacția care rezolvă runda —
+  /// ecranul doar animează, la fel ca [roundShots] la Quizz Tanks.
+  final Map<String, bool> roundChairOutcomes;
+
   const MatchInfo({
     required this.id,
     required this.mode,
@@ -165,6 +243,10 @@ class MatchInfo {
     this.roundDestroyedIds = const [],
     this.roundTargets = const {},
     this.roundPlatformChoices = const {},
+    this.roundChairChoices = const {},
+    this.roundChairAssignments = const {},
+    this.roundChairAnswers = const {},
+    this.roundChairOutcomes = const {},
   });
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -209,6 +291,19 @@ class MatchInfo {
         for (final e in (data['roundPlatformChoices'] as Map? ?? const {}).entries)
           e.key as String: (e.value as num).toInt(),
       },
+      roundChairChoices: {
+        for (final e in (data['roundChairChoices'] as Map? ?? const {}).entries)
+          e.key as String: ChairChoice.fromMap(Map<String, dynamic>.from(e.value as Map)),
+      },
+      roundChairAssignments: {
+        for (final e in (data['roundChairAssignments'] as Map? ?? const {}).entries)
+          e.key as String: ChairAssignment.fromMap(Map<String, dynamic>.from(e.value as Map)),
+      },
+      roundChairAnswers: Map<String, String>.from(data['roundChairAnswers'] as Map? ?? const {}),
+      roundChairOutcomes: {
+        for (final e in (data['roundChairOutcomes'] as Map? ?? const {}).entries)
+          e.key as String: e.value as bool,
+      },
     );
   }
 
@@ -231,6 +326,10 @@ class MatchInfo {
         'roundDestroyedIds': <String>[],
         'roundTargets': <String, String>{},
         'roundPlatformChoices': <String, int>{},
+        'roundChairChoices': <String, Map<String, dynamic>>{},
+        'roundChairAssignments': <String, Map<String, dynamic>>{},
+        'roundChairAnswers': <String, String>{},
+        'roundChairOutcomes': <String, bool>{},
       };
 }
 
@@ -277,6 +376,21 @@ class MatchPlayer {
   /// modului, folosită să deseneze poziția pe pistă.
   final int obstaclesCleared;
 
+  /// Doar [MatchGameMode.electricChair]: vieți rămase (din
+  /// [electricChairMaxLives]). Scade cu una de fiecare dată când jucătorul
+  /// pică la scaun; la zero, [eliminated] devine adevărat, la fel ca la
+  /// celelalte moduri.
+  final int lives;
+
+  /// Doar [MatchGameMode.electricChair]: runda în care jucătorul a fost
+  /// eliminat, sau `-1` dacă încă e în viață. NU e folosit pentru
+  /// clasamentul propriu-zis (care citește `score`, la fel ca toate
+  /// modurile) — e materia primă din care MultiplayerResultsScreen
+  /// calculează [electricChairRankKey], ca "ultimul rămas în viață" să iasă
+  /// GARANTAT pe primul loc, indiferent cât de activ a fost oricine în
+  /// timpul meciului (vezi core/electric_chair.dart).
+  final int eliminatedAtRound;
+
   /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi
   /// [MatchInfo.stake]). Scrisă o singură dată, la intrare, și citită de TOȚI
   /// clienții la final, ca fiecare să calculeze exact aceeași împărțire.
@@ -321,6 +435,8 @@ class MatchPlayer {
     this.damageDealt = 0,
     this.obstaclesCleared = 0,
     this.nextQuestionBonus = false,
+    this.lives = electricChairMaxLives,
+    this.eliminatedAtRound = -1,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -341,6 +457,8 @@ class MatchPlayer {
       damageDealt: data['damageDealt'] as int? ?? 0,
       obstaclesCleared: data['obstaclesCleared'] as int? ?? 0,
       nextQuestionBonus: data['nextQuestionBonus'] as bool? ?? false,
+      lives: data['lives'] as int? ?? electricChairMaxLives,
+      eliminatedAtRound: data['eliminatedAtRound'] as int? ?? -1,
     );
   }
 
@@ -359,6 +477,8 @@ class MatchPlayer {
         'damageDealt': damageDealt,
         'obstaclesCleared': obstaclesCleared,
         'nextQuestionBonus': nextQuestionBonus,
+        'lives': lives,
+        'eliminatedAtRound': eliminatedAtRound,
         'joinedAt': FieldValue.serverTimestamp(),
         // semnul de viață, împrospătat periodic cât timp ecranul e deschis —
         // vezi MultiplayerService.matchHeartbeat.

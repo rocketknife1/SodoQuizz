@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../core/chat_filter.dart';
+import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/obby.dart';
 import '../../core/tanks.dart';
@@ -17,6 +18,7 @@ import '../../widgets/moderation_sheet.dart';
 import '../../widgets/network_scan_animation.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/space_background.dart';
+import 'multiplayer_electric_chair_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -194,6 +196,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: widget.matchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: widget.matchId),
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: widget.matchId),
+            MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: widget.matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: widget.matchId),
           },
         ),
@@ -281,6 +284,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                             ),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
                             if (info?.gameMode == MatchGameMode.obby) _buildObbyBanner(players.length),
+                            if (info?.gameMode == MatchGameMode.electricChair) _buildElectricChairBanner(players.length),
                             if (info?.gameMode == MatchGameMode.quizzTanks)
                               _buildTanksBanner(players.length)
                             else
@@ -469,6 +473,27 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white54, fontSize: 11),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildElectricChairBanner(int playerCount) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withAlpha(35),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.danger.withAlpha(140)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text('⚡', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Text('Mod: Scaunul Electric • $playerCount/$electricChairPlayerCount',
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
     );

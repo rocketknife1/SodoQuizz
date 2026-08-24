@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import '../../core/betting.dart';
+import '../../core/electric_chair.dart';
 import '../../core/obby.dart';
 import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
@@ -18,6 +19,7 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
+import 'multiplayer_electric_chair_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -99,15 +101,28 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// Fiecare client calculează ACELEAȘI plăți din aceleași date publice
   /// (mizele și scorurile tuturor, din Firestore) și își creditează doar
   /// propriul cont — la fel ca la scor, nu există autoritate de server.
+  /// Valoarea după care se sortează/departajează clasamentul — `score` brut
+  /// pentru orice mod, CU EXCEPȚIA Scaunului Electric, unde `score` rămâne
+  /// intenționat mic (bun pentru XP) și nu reflectă cine a rezistat mai mult
+  /// (vezi core/electric_chair.dart `electricChairRankKey` pentru de ce nu
+  /// se poate sorta direct după `score` acolo).
+  int _rankValue(MatchPlayer p) => widget.gameMode == MatchGameMode.electricChair
+      ? electricChairRankKey(eliminated: p.eliminated, eliminatedAtRound: p.eliminatedAtRound, score: p.score)
+      : p.score;
+
   Future<List<MatchPlayer>> _load() async {
     final players = await _awaitFinalScores();
-    final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
+    final sorted = List.of(players)..sort((a, b) => _rankValue(b).compareTo(_rankValue(a)));
     final me = MultiplayerService.instance.currentPlayerId;
     final myIndex = sorted.indexWhere((p) => p.id == me);
     _originalPlayers = sorted;
     _amHost = myIndex != -1 && sorted[myIndex].isHost;
     if (myIndex != -1) {
+      // `score` rămas mic, pentru XP; `myRank` e cifra folosită la
+      // sortare/premii — la orice mod în afară de Scaunul Electric sunt
+      // aceeași valoare.
       final myScore = sorted[myIndex].score;
+      final myRank = _rankValue(sorted[myIndex]);
       // BUG REPARAT (2026-08-23): varianta veche verifica doar `myIndex == 0`
       // comparat cu `sorted[1]`, deci la o remiză pe primul loc între doi
       // jucători, doar cel de la indexul 0 din lista sortată primea
@@ -115,14 +130,14 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       // `won=false, draw=false`, adică era scris ca ÎNFRÂNGERE. Logica
       // corectă e în `matchOutcomeForScore` (core/betting.dart), testată
       // separat de sortare/index.
-      final outcome = matchOutcomeForScore(myScore: myScore, allScores: [for (final p in sorted) p.score]);
+      final outcome = matchOutcomeForScore(myScore: myRank, allScores: [for (final p in sorted) _rankValue(p)]);
       final draw = outcome.draw;
       final won = outcome.won;
 
       final stake = _tableStake(sorted);
       final prizes = matchPrizesForRanking(
         stake: stake,
-        sortedScores: [for (final p in sorted) p.score],
+        sortedScores: [for (final p in sorted) _rankValue(p)],
       );
       _myBet = stake;
       _myPlace = myIndex + 1;
@@ -433,6 +448,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: newMatchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: newMatchId),
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: newMatchId),
+            MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: newMatchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
           },
         ),
@@ -610,6 +626,14 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                         style: const TextStyle(color: Colors.white38, fontSize: 11.5),
                       ),
                     ),
+                  if (widget.gameMode == MatchGameMode.electricChair)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 3),
+                      child: Text(
+                        tr('Ordinea o dă cine a rezistat mai mult', 'Ranked by who lasted longest'),
+                        style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+                      ),
+                    ),
                   if (_coinsEarned > 0 || _xpEarned > 0) ...[
                     const SizedBox(height: 6),
                     // La Quizz Tanks nu există pot, deci monedele de aici sunt
@@ -719,6 +743,18 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                   child: Text(
                                     p.obstaclesCleared >= obbyObstacleCount ? '🏁' : '🏃 ${p.obstaclesCleared}/$obbyObstacleCount',
                                     style: const TextStyle(color: AppColors.play, fontSize: 11.5, fontWeight: FontWeight.w800),
+                                  ),
+                                ),
+                              if (widget.gameMode == MatchGameMode.electricChair)
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: Text(
+                                    p.eliminated ? '💀 ELIMINAT' : '⚡ ${p.lives}',
+                                    style: TextStyle(
+                                      color: p.eliminated ? AppColors.danger : AppColors.coin,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                    ),
                                   ),
                                 ),
                               // La Quizz Tanks "punctele" chiar SUNT daunele

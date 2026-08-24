@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/obby.dart';
 import '../../core/betting.dart';
+import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
 import '../../core/theme.dart';
@@ -209,8 +210,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
             _GameModeOption(
               icon: Icons.military_tech_rounded,
               label: 'Quizz Tanks',
-              subtitle: tr('4 tancuri, $tanksRoundSeconds secunde, fără miză',
-                  '4 tanks, $tanksRoundSeconds seconds, no stake'),
+              subtitle: tr('până la $tanksPlayerCount tancuri, $tanksRoundSeconds secunde, fără miză',
+                  'up to $tanksPlayerCount tanks, $tanksRoundSeconds seconds, no stake'),
               color: AppColors.orange,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.quizzTanks),
             ),
@@ -218,10 +219,19 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
             _GameModeOption(
               icon: Icons.directions_run_rounded,
               label: 'Obby',
-              subtitle: tr('2-6 concurenți, cursă de obstacole, $obbyObstacleCount întrebări',
-                  '2-6 racers, obstacle course, $obbyObstacleCount questions'),
+              subtitle: tr('2-$obbyMaxPlayers concurenți, cursă de obstacole, $obbyObstacleCount întrebări',
+                  '2-$obbyMaxPlayers racers, obstacle course, $obbyObstacleCount questions'),
               color: AppColors.play,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.obby),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.electric_bolt_rounded,
+              label: tr('Scaunul Electric', 'Electric Chair'),
+              subtitle: tr('până la $electricChairPlayerCount jucători, $electricChairMaxLives vieți fiecare, alegi cine merge pe scaun',
+                  'up to $electricChairPlayerCount players, $electricChairMaxLives lives each, pick who goes on the chair'),
+              color: AppColors.danger,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.electricChair),
             ),
           ],
         ),

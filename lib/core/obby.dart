@@ -1,5 +1,6 @@
 /// Regulile modului multiplayer **Obby** — o cursă de obstacole tip Roblox,
-/// de la 2 la 6 personaje pe aceeași pistă, filmate din spate (3rd-person).
+/// de la 2 la [obbyMaxPlayers] personaje pe aceeași pistă, filmate din spate
+/// (3rd-person).
 ///
 /// Runda, în TREI pași:
 ///   1. **Răspuns** — toți cei care n-au terminat încă văd aceeași întrebare
@@ -22,6 +23,7 @@
 /// vezi MultiplayerService.resolveObbyChoices.
 library;
 
+import 'multiplayer_round.dart';
 import 'stable_hash.dart';
 
 /// Câte obstacole are pista — și, deci, câte întrebări are un meci întreg.
@@ -31,12 +33,17 @@ import 'stable_hash.dart';
 /// deci numărul a fost ales ca meciul să rămână sub ~2 minute și jumătate.
 const int obbyObstacleCount = 7;
 
-/// Câți jucători încap într-o cameră de Obby.
-const int obbyMaxPlayers = 6;
+/// Câți jucători încap într-o cameră de Obby. Urcat de la 6 la 10 la
+/// cererea explicită a userului (toate modurile trebuie să accepte 10) —
+/// pista/camera 3rd-person deja urmărea doar personajul propriu, deci
+/// generalizează fără nicio schimbare de cod (vezi widgets/obby_game.dart
+/// `_laneXFor`, calculat din `_racers.length`, nu dintr-un plafon fix).
+const int obbyMaxPlayers = 10;
 
 /// Cât timp are fiecare rundă înainte ca cei ce n-au răspuns încă să fie
-/// scorați automat ca greșit.
-const int obbyRoundSeconds = 12;
+/// scorați automat ca greșit — comun tuturor modurilor cu rundă sincronizată,
+/// vezi core/multiplayer_round.dart.
+const int obbyRoundSeconds = sharedRoundAnswerSeconds;
 
 /// Cât timp au cei care au răspuns corect ca să-și aleagă placa. Cine nu
 /// alege deloc e tratat ca și cum ar fi nimerit placa falsă: fără progres.
