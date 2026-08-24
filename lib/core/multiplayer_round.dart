@@ -8,9 +8,14 @@
 /// nu patru constante care întâmplător coincid și pot diverge din nou la
 /// prima modificare izolată.
 ///
+/// Urcat de la 12 la 15 la cererea explicită a userului — mai ales Quizz
+/// Tanks avea nevoie de puțin mai mult timp de citit întrebarea. [Clasic]
+/// NU folosește constanta asta: are propriul cronometru de meci întreg
+/// (`multiplayerMatchSeconds`, 60s), neschimbat.
+///
 /// NU acoperă fazele secundare (țintire/alegere/scaun) — alea rămân proprii
 /// fiecărui mod, fiindcă fac lucruri diferite (Tanks alege o victimă, Scaunul
 /// Electric alege victimă ȘI întrebare, Obby alege o placă).
 library;
 
-const int sharedRoundAnswerSeconds = 12;
+const int sharedRoundAnswerSeconds = 15;

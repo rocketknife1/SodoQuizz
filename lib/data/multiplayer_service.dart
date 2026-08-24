@@ -1177,6 +1177,55 @@ class MultiplayerService {
     }
   }
 
+  // ─── Boți de test (DOAR debug — vezi RoomLobbyScreen) ──────────────────
+  //
+  // Nu sunt utilizatori Firebase reali: sunt doar fișe de jucător scrise de
+  // clientul curent (regulile Firestore permit orice scriere autentificată
+  // în subcolecția `players`, exact ca la restul multiplayer-ului — vezi
+  // firestore.rules). Id-urile fixe ('testbot_1'...) fac totul idempotent:
+  // reintrarea în același lobby rescrie aceleași documente, nu adaugă
+  // dubluri, iar curățarea știe exact ce să caute, fără să țină o listă
+  // separată. NICIODATĂ apelate din build-ul de release — vezi `kDebugMode`
+  // la locul de apel din RoomLobbyScreen.
+
+  static const _testBotIdPrefix = 'testbot_';
+
+  /// Populează camera curentă cu [count] boți de test, ca developerul să
+  /// vadă imediat un lobby plin fără să aștepte prieteni reali. Boții NU
+  /// răspund niciodată la nimic — de-aia [removeTestBots] trebuie chemată
+  /// chiar înainte ca meciul să pornească efectiv, altfel un meci real ar
+  /// rămâne agățat așteptând răspunsul unor jucători care nu există.
+  Future<void> spawnTestBots({required String matchId, int count = 3}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final batch = _db.batch();
+    for (var i = 1; i <= count; i++) {
+      final botId = '$_testBotIdPrefix$i';
+      batch.set(
+        matchRef.collection('players').doc(botId),
+        MatchPlayer(id: botId, name: 'TestBot $i', avatarSeed: botId, score: 0).toMap(),
+      );
+    }
+    await batch.commit();
+  }
+
+  /// Scoate boții de test dintr-o cameră — apelată chiar înainte ca meciul
+  /// să pornească (vezi RoomLobbyScreen._maybeNavigateToMatch), ca ei să nu
+  /// rămână "jucători" muți într-un meci real. Dacă gazda pleacă brusc din
+  /// lobby în timp ce boții sunt încă acolo, [leaveMatch]/[_deleteMatch]
+  /// șterge oricum toată camera (players + chat), deci boții dispar automat
+  /// odată cu ea — nu mai e nevoie de un caz separat aici pentru asta.
+  Future<void> removeTestBots({required String matchId}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final players = await matchRef.collection('players').get();
+    final bots = players.docs.where((d) => d.id.startsWith(_testBotIdPrefix));
+    if (bots.isEmpty) return;
+    final batch = _db.batch();
+    for (final d in bots) {
+      batch.delete(d.reference);
+    }
+    await batch.commit();
+  }
+
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {
     final me = currentPlayerId;
     await _paced(() => _db.collection('matches').doc(matchId).collection('chat').add(
