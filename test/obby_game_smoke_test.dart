@@ -97,4 +97,52 @@ void main() {
 
     expect(tester.takeException(), isNull);
   });
+
+  /// [ObbyPhase.waiting] — camera pe mine cât aștept rezultatul, cerută
+  /// explicit de user, ca răspunsul propriu să nu mai fie singurul moment
+  /// din meci fără cameră 3rd-person. Reutilizează scena de reveal
+  /// (vezi ObbyGame._rebuildScene), dar cu toți alergătorii pe
+  /// [ObbyRoundOutcome.none] — nimeni n-are voie să sară/cadă aici.
+  testWidgets('scena de asteptare (camera pe mine) se monteaza fara exceptii', (tester) async {
+    final game = ObbyGame(onPlatformChosen: (_) {});
+    await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers, myId: 'a');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+  });
+
+  /// Drumul real al unei runde, din perspectiva userului: n-am răspuns încă
+  /// (idle, ecranul de întrebare) → am răspuns, camera trece pe mine
+  /// (waiting) → runda se rezolvă (revealed). Fiecare tranziție demontează
+  /// și remontează scena Flame (vezi rosterChanged/phase!=this.phase din
+  /// ObbyGame.applyRoundState) — testul păzește exact înlănțuirea asta.
+  testWidgets('idle -> waiting -> revealed nu arunca nimic la tranzitii', (tester) async {
+    final game = ObbyGame(onPlatformChosen: (_) {});
+    await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    game.applyRoundState(phase: ObbyPhase.idle, racers: racers, myId: 'a');
+    await tester.pump(const Duration(milliseconds: 100));
+
+    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers, myId: 'a');
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    const result = [
+      ObbyRacerData(id: 'a', name: 'A', color: Colors.blue, progress: 1 / 7, isMe: true, outcome: ObbyRoundOutcome.jumped),
+      ObbyRacerData(id: 'b', name: 'B', color: Colors.orange, progress: 0.3, isMe: false, outcome: ObbyRoundOutcome.fell),
+    ];
+    for (final t in [0.0, 0.3, 0.7, 1.0]) {
+      game.applyRoundState(phase: ObbyPhase.revealed, racers: result, myId: 'a', revealT: t);
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+
+    expect(tester.takeException(), isNull);
+  });
 }

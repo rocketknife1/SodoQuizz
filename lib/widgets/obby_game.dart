@@ -57,13 +57,24 @@ class ObbyRacerData {
 /// astronauți sar din stâncă în stâncă, iar cine trece de ultimul obstacol
 /// urcă direct în naveta de scăpare (vezi [_RunnerComponent._paintShuttle]).
 ///
-/// Două scene, comutate prin [phase]:
+/// Trei scene, comutate prin [phase]:
 ///  - [ObbyPhase.choosing] — personajul local stă în fața celor
 ///    [obbyPlatformChoiceCount] bolovani; alegerea se face prin butoanele din
 ///    ecran sau prin tap direct pe bolovan.
-///  - [ObbyPhase.revealed] — camera trece la 3rd-person, urmărește personajul
-///    local (`camera.follow`) cât toți alergătorii avansează/cad.
-enum ObbyPhase { idle, choosing, revealed }
+///  - [ObbyPhase.waiting] — camera 3rd-person, personajul local stă nemișcat
+///    (idle) exact pe platforma unde a rămas — folosită cât timp aștept
+///    rezultatul (după ce am răspuns, sau cât aleg ceilalți). Reutilizează
+///    EXACT construcția scenei de [revealed] (vezi [_rebuildScene]): dacă
+///    toți alergătorii au [ObbyRoundOutcome.none], nu se animă nimic — stau
+///    pur și simplu pe loc.
+///  - [ObbyPhase.revealed] — aceeași cameră 3rd-person, dar acum alergătorii
+///    chiar sar/cad, cu rezultatul rundei.
+///
+/// Userul a cerut explicit ca ecranul de întrebare (nu jocul) să fie
+/// SINGURUL moment în care camera 3rd-person nu se vede — de îndată ce am
+/// răspuns, sau cât timp nu sunt eu cel care alege placa, camera rămâne pe
+/// mine, în picioare pe platforma pe care am ajuns.
+enum ObbyPhase { idle, choosing, waiting, revealed }
 
 class ObbyGame extends FlameGame with TapCallbacks {
   final void Function(int platformIndex) onPlatformChosen;
@@ -182,7 +193,12 @@ class ObbyGame extends FlameGame with TapCallbacks {
       case ObbyPhase.choosing:
         _buildChoosingScene();
         break;
+      case ObbyPhase.waiting:
       case ObbyPhase.revealed:
+        // Aceeași construcție de scenă pentru amândouă — diferența e DOAR în
+        // date: [ObbyPhase.waiting] vine mereu cu toți alergătorii pe
+        // [ObbyRoundOutcome.none] (vezi MultiplayerObbyScreen._feedGame),
+        // deci [_updateReveal] nu are ce anima, doar îi ține pe loc.
         _buildRevealScene();
         break;
     }
@@ -407,30 +423,12 @@ class _AsteroidComponent extends PositionComponent {
   _AsteroidComponent({required this.index, required Vector2 position})
       : super(position: position, size: Vector2(64, 46), anchor: Anchor.center) {
     final rng = Random(index * 97 + 13);
-    _rockPath = _buildRockPath(rng, size.x, size.y);
+    _rockPath = buildObbyRockPath(rng, size.x, size.y);
     _craters = List.generate(3, (i) {
       final a = rng.nextDouble() * pi * 2;
       final r = size.x * (0.12 + rng.nextDouble() * 0.16);
       return Offset(cos(a) * r, sin(a) * r * 0.6);
     });
-  }
-
-  static Path _buildRockPath(Random rng, double w, double h) {
-    const points = 9;
-    final path = Path();
-    for (var i = 0; i < points; i++) {
-      final angle = (i / points) * pi * 2;
-      final jitter = 0.78 + rng.nextDouble() * 0.24;
-      final dx = cos(angle) * (w / 2) * jitter;
-      final dy = sin(angle) * (h / 2) * jitter;
-      if (i == 0) {
-        path.moveTo(dx, dy);
-      } else {
-        path.lineTo(dx, dy);
-      }
-    }
-    path.close();
-    return path;
   }
 
   @override
@@ -493,12 +491,27 @@ class _RunnerComponent extends PositionComponent {
   TextPainter? _nameTp;
   String? _nameTpFor;
 
+  /// Platforma de sub picioare — solidă cât timp stau pe ea, spartă în
+  /// cioburi ([_shards]) cât cad. Formă proprie fiecărui jucător (sămânța
+  /// vine din [data.id]), ca pista să nu arate cu bolovani identici,
+  /// copiați, sub fiecare alergător.
+  final Paint _platformFillPaint = Paint()..color = const Color(0xFF9C8A73);
+  final Paint _platformRimPaint = Paint()
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.6
+    ..color = Colors.white24;
+  late final Path _platformPath;
+  late final List<_PlatformShard> _shards;
+
   _RunnerComponent({required this.data, required double startDepth}) : super(size: Vector2(46, 62), anchor: Anchor.center) {
     _depth = startDepth;
     // Poziția de start se pune din constructor, nu lăsată pe seama lerp-ului
     // din [update]: altfel primul cadru al scenei i-ar fi arătat pe toți la
     // linia de start, cu un salt vizibil imediat după.
     position.y = -startDepth * 900;
+    final rng = Random(data.id.hashCode);
+    _platformPath = buildObbyRockPath(rng, 78, 30);
+    _shards = _buildObbyPlatformShards(rng);
   }
 
   /// A terminat cursa cu săritura asta? Dacă da, în loc să rămână în picioare
@@ -547,6 +560,13 @@ class _RunnerComponent extends PositionComponent {
     )..layout(maxWidth: 80);
   }
 
+  /// "Pe pământ" = nu e la mijlocul unui arc de săritură — fie stă pe loc
+  /// (idle/waiting), fie tocmai a aterizat, fie cade (o cădere nu trece
+  /// niciodată prin [_jumpT], vezi [setDepth]). DOAR în starea asta se
+  /// desenează o platformă sub picioare: în plin arc de săritură, personajul
+  /// e în aer, între două platforme, deci n-are pe ce sta.
+  bool get _grounded => _jumpT <= 0.05 || _jumpT >= 0.95;
+
   @override
   void render(Canvas canvas) {
     if (_finishedThisJump && _jumpT >= 0.999) {
@@ -554,7 +574,17 @@ class _RunnerComponent extends PositionComponent {
       return;
     }
 
+    if (_grounded) _paintPlatform(canvas);
+
     final lift = sin(_jumpT.clamp(0, 1) * pi) * 44;
+    // Legănat abia vizibil cât stau pe loc (idle/waiting) — altfel scena de
+    // așteptare pare o fotografie, nu un personaj viu. Se stinge automat de
+    // îndată ce sare sau cade.
+    final idleBob = (_jumpT <= 0 && _fallT <= 0) ? sin(_time * 2.2) * 2.5 : 0.0;
+    // Balans lateral cât cade — o cădere perfect verticală, fără nicio
+    // abatere, se citește ca un obiect țeapăn, nu ca un corp care își pierde
+    // echilibrul.
+    final fallWobble = _fallT > 0 ? sin(_fallT * 9) * (1 - _fallT) * 7 : 0.0;
     final fade = 1 - _fallT;
     final alpha = (255 * fade).round().clamp(0, 255);
     _bodyPaint.color = _fallT > 0 ? data.color.withAlpha(alpha) : data.color;
@@ -565,8 +595,9 @@ class _RunnerComponent extends PositionComponent {
     }
 
     canvas.save();
+    canvas.translate(fallWobble, 0);
     if (_fallT > 0) canvas.rotate(_fallT * 0.9); // se răsucește cât cade
-    final bounds = Rect.fromLTWH(-size.x / 2, -size.y / 2 - lift, size.x, size.y);
+    final bounds = Rect.fromLTWH(-size.x / 2, -size.y / 2 - lift - idleBob, size.x, size.y);
     paintObbyAstronaut(canvas, bounds, _bodyPaint.color);
     canvas.restore();
 
@@ -576,7 +607,7 @@ class _RunnerComponent extends PositionComponent {
         _nameTpFor = data.name;
       }
       final tp = _nameTp!;
-      final offset = Offset(-tp.width / 2, -size.y / 2 - lift - tp.height - 2);
+      final offset = Offset(fallWobble - tp.width / 2, -size.y / 2 - lift - idleBob - tp.height - 2);
       if (fade < 0.999) {
         canvas.saveLayer(null, Paint()..color = Colors.white.withAlpha(alpha));
         tp.paint(canvas, offset);
@@ -584,6 +615,33 @@ class _RunnerComponent extends PositionComponent {
       } else {
         tp.paint(canvas, offset);
       }
+    }
+  }
+
+  /// Platforma de sub picioare — solidă cât timp nu cad ([_fallT] == 0),
+  /// spartă în [_shards] care zboară și se sting pe măsură ce [_fallT]
+  /// crește. Sincronizată cu momentul în care personajul chiar începe să
+  /// cadă (aceeași variabilă, [_fallT]), ca placa să cedeze EXACT când
+  /// personajul dispare prin ea, nu înainte sau după.
+  void _paintPlatform(Canvas canvas) {
+    final platformY = size.y * 0.44;
+    if (_fallT <= 0.001) {
+      canvas.save();
+      canvas.translate(0, platformY);
+      canvas.drawPath(_platformPath, _platformFillPaint);
+      canvas.drawPath(_platformPath, _platformRimPaint);
+      canvas.restore();
+      return;
+    }
+    final t = _fallT.clamp(0.0, 1.0);
+    final alpha = (255 * (1 - t)).round().clamp(0, 255);
+    final shardColor = const Color(0xFF9C8A73).withAlpha(alpha);
+    for (final s in _shards) {
+      canvas.save();
+      canvas.translate(s.dirX * t * 70, platformY + s.dirY * t * 50 + t * t * 90);
+      canvas.rotate(s.rotSpeed * t);
+      canvas.drawPath(s.path, _platformFillPaint..color = shardColor);
+      canvas.restore();
     }
   }
 
@@ -716,6 +774,60 @@ class _SpaceTrackComponent extends PositionComponent {
 
   @override
   int get priority => -10;
+}
+
+/// Conturul stâncos comun oricărui bolovan de asteroid din joc — folosit
+/// atât de bolovanii din scena de alegere ([_AsteroidComponent]), cât și de
+/// platforma de sub picioarele fiecărui alergător din scena de pistă
+/// ([_RunnerComponent]), ca cele două să arate ca aceeași "materie", nu ca
+/// două desene neînrudite.
+Path buildObbyRockPath(Random rng, double w, double h) {
+  const points = 9;
+  final path = Path();
+  for (var i = 0; i < points; i++) {
+    final angle = (i / points) * pi * 2;
+    final jitter = 0.78 + rng.nextDouble() * 0.24;
+    final dx = cos(angle) * (w / 2) * jitter;
+    final dy = sin(angle) * (h / 2) * jitter;
+    if (i == 0) {
+      path.moveTo(dx, dy);
+    } else {
+      path.lineTo(dx, dy);
+    }
+  }
+  path.close();
+  return path;
+}
+
+/// O bucată din platforma care cedează sub un alergător care cade — vezi
+/// [_RunnerComponent._paintPlatform]. [dirX]/[dirY] sunt direcția în care
+/// zboară bucata (normalizată informal, nu strict unitară), [rotSpeed] cât
+/// se rotește pe măsură ce se depărtează.
+class _PlatformShard {
+  final Path path;
+  final double dirX, dirY, rotSpeed;
+  const _PlatformShard(this.path, this.dirX, this.dirY, this.rotSpeed);
+}
+
+/// Sparge platforma în câteva cioburi zimțate, aruncate în direcții
+/// diferite — nu e o simplă tăiere geometrică a formei reale (inutil de
+/// complicat pentru un efect cosmetic local, care n-are nevoie să fie
+/// determinist între clienți, vezi comentariul de mai jos), ci bucăți noi,
+/// mici, care doar SUGEREAZĂ spargerea.
+List<_PlatformShard> _buildObbyPlatformShards(Random rng) {
+  const count = 6;
+  return List.generate(count, (i) {
+    final angle = (i / count) * pi * 2 + rng.nextDouble() * 0.5;
+    final w = 12 + rng.nextDouble() * 10;
+    final h = 8 + rng.nextDouble() * 7;
+    final path = Path()
+      ..moveTo(-w / 2, -h / 2)
+      ..lineTo(w / 2, -h / 3)
+      ..lineTo(w / 3, h / 2)
+      ..lineTo(-w / 3, h / 3)
+      ..close();
+    return _PlatformShard(path, cos(angle), sin(angle) * 0.6, (rng.nextBool() ? 1 : -1) * (2 + rng.nextDouble() * 3));
+  });
 }
 
 /// Desenul comun al astronautului (cască + vizor + rucsac + corp + picioare)

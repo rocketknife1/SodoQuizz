@@ -241,9 +241,15 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           outcome: revealing ? _outcomeFor(info, p.id) : ObbyRoundOutcome.none,
         ),
     ];
+    // Camera 3rd-person stă pe mine în ORICE moment în care nu sunt eu cel
+    // care trebuie să acționeze chiar acum: dacă am răspuns deja (aștept
+    // ceilalți) sau dacă nu sunt eu cel care alege placa runda asta —
+    // [ObbyPhase.waiting] reutilizează exact scena de deznodământ, doar că
+    // toți alergătorii au [ObbyRoundOutcome.none] mai sus, deci stau pe loc.
     final phase = switch (info.roundPhase) {
-      RoundPhase.choosing => ObbyPhase.choosing,
+      RoundPhase.choosing => _iAmChoosing(info) ? ObbyPhase.choosing : ObbyPhase.waiting,
       RoundPhase.revealed => ObbyPhase.revealed,
+      RoundPhase.answering => info.roundAnswers.containsKey(me) ? ObbyPhase.waiting : ObbyPhase.idle,
       _ => ObbyPhase.idle,
     };
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
@@ -255,6 +261,11 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       myChoice: info.roundPlatformChoices[me],
       revealT: revealT,
     );
+  }
+
+  bool _iAmChoosing(MatchInfo info) {
+    final me = MultiplayerService.instance.currentPlayerId;
+    return info.roundPhase == RoundPhase.choosing && info.roundWinnerIds.contains(me);
   }
 
   /// Sunetele deznodământului — o singură dată pe rundă (garda
@@ -426,8 +437,14 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                       break;
                     }
                   }
+                  // Camera 3rd-person e pe ecran în ORICE moment în afară de
+                  // "trebuie să răspund eu chiar acum, n-am răspuns încă" —
+                  // cerința explicită a userului. Vezi [_feedGame] pentru
+                  // aceeași logică, aplicată datelor trimise jocului.
+                  final iAnswered = info.roundAnswers.containsKey(me);
                   final showsGame = info.roundPhase == RoundPhase.revealed ||
-                      (info.roundPhase == RoundPhase.choosing && info.roundWinnerIds.contains(me));
+                      info.roundPhase == RoundPhase.choosing ||
+                      (info.roundPhase == RoundPhase.answering && iAnswered);
                   return Column(
                     children: [
                       _buildTopBar(info),
@@ -444,7 +461,11 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                             Positioned.fill(
                               child: switch (info.roundPhase) {
                                 RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
-                                RoundPhase.choosing => _buildChoosingScene(info),
+                                RoundPhase.choosing when _iAmChoosing(info) => _buildChoosingScene(info),
+                                RoundPhase.choosing => _buildWaitingCaption(
+                                    tr('Ceilalți își aleg placa...', 'The others are picking their platform...')),
+                                RoundPhase.answering when iAnswered => _buildWaitingCaption(
+                                    tr('✓ Ai răspuns! Aștepți ceilalți concurenți...', '✓ You answered! Waiting for the other racers...')),
                                 _ => _buildAnsweringScene(info, myPlayer, players),
                               },
                             ),
@@ -596,13 +617,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       );
     }
 
+    // Odată ce am răspuns, ecranul ăsta nu se mai vede deloc — camera trece
+    // pe scena 3rd-person (vezi switch-ul din [build] + [_buildWaitingCaption]),
+    // deci nu mai e nevoie de un mesaj "ai răspuns" aici.
     final me = MultiplayerService.instance.currentPlayerId;
-    if (info.roundAnswers.containsKey(me)) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Text('✓ Ai răspuns! Se așteaptă ceilalți concurenți...', style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700)),
-      );
-    }
 
     // Bonusul câștigat în runda trecută se vede ABIA aici: două variante în
     // loc de patru. Până acum, câmpul era scris și stins corect în Firestore,
@@ -667,25 +685,35 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
+  /// Legenda mică din partea de sus a ecranului cât camera stă pe mine, dar
+  /// nu sunt eu cel care acționează chiar acum — cerută explicit de user, ca
+  /// să nu mai acopere scena 3rd-person cu un text centrat, opac, pe tot
+  /// ecranul (asta era comportamentul vechi cât alții alegeau placa).
+  Widget _buildWaitingCaption(String text) {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(color: Colors.black.withAlpha(130), borderRadius: BorderRadius.circular(14)),
+          child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+        ),
+      ),
+    );
+  }
+
   // ─── Faza de alegere a plăcii ───────────────────────────────────────────
   // PROVIZORIU (etapa 1): butoane simple. Se înlocuiesc cu plăci desenate în
   // scena Flame, dar rămân ca variantă de rezervă
   // (tap direct), nu se aruncă.
 
+  /// Apelată DOAR când eu sunt cel care alege (vezi switch-ul din [build]) —
+  /// cazul "nu sunt eu cel care alege" arată acum legenda scurtă de sub
+  /// scena 3rd-person, vezi [_buildWaitingCaption].
   Widget _buildChoosingScene(MatchInfo info) {
     final me = MultiplayerService.instance.currentPlayerId;
-    final amChooser = info.roundWinnerIds.contains(me);
     final myChoice = info.roundPlatformChoices[me];
-
-    if (!amChooser) {
-      return Center(
-        child: Text(
-          tr('Ceilalți își aleg placa...', 'The others are picking their platform...'),
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
-        ),
-      );
-    }
 
     return Stack(
       children: [
