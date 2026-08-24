@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/audio.dart';
+import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
 import '../../core/theme.dart';
@@ -8,6 +10,7 @@ import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/countdown_ring.dart';
+import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 
 /// Varianta multiplayer a mini-jocului solo Higher or Lower
@@ -56,6 +59,23 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   Timer? _heartbeatTimer;
   final Set<String> _announcedEliminated = {};
 
+  /// Power-up câștigat pentru runda anterioară — vezi core/powerups.dart.
+  /// [_powerUpRolledRound] ține minte pentru ce rundă s-a tras deja, ca
+  /// rebuild-urile din StreamBuilder (fără schimbare de rundă) să nu tragă
+  /// zarurile din nou.
+  PowerUp _myPowerUp = PowerUp.none;
+  int? _powerUpRolledRound;
+
+  /// Efectul lui [PowerUp.fiftyFifty] aici: arată popularitatea
+  /// provocatorului mai devreme, înainte de reveal — n-are cum să elimine
+  /// variante, sunt doar două (higher/lower).
+  bool _peekActive = false;
+
+  /// Efectul lui [PowerUp.extraTime]: secunde în plus adăugate la runda
+  /// curentă, cerute imediat la apăsarea pastilei (nu la runda viitoare —
+  /// simplificare pentru acest prim pas, rafinată la trecerea de polish).
+  int _extraSecondsThisRound = 0;
+
   HigherLowerItem _championFor(int roundIndex) => _pool[roundIndex % _pool.length];
   HigherLowerItem _challengerFor(int roundIndex) => _pool[(roundIndex + 1) % _pool.length];
 
@@ -82,11 +102,63 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     super.dispose();
   }
 
+  int get _roundTotalSeconds => higherLowerRoundSeconds + _extraSecondsThisRound;
+
   int _secondsLeftFor(MatchInfo info) {
     final started = info.roundStartedAt?.toDate();
-    if (started == null) return higherLowerRoundSeconds;
+    if (started == null) return _roundTotalSeconds;
     final elapsed = DateTime.now().difference(started).inSeconds;
-    return (higherLowerRoundSeconds - elapsed).clamp(0, higherLowerRoundSeconds);
+    return (_roundTotalSeconds - elapsed).clamp(0, _roundTotalSeconds);
+  }
+
+  void _usePowerUp() {
+    final p = _myPowerUp;
+    if (p == PowerUp.none) return;
+    Sfx.tileSelect();
+    setState(() {
+      switch (p) {
+        case PowerUp.fiftyFifty:
+          _peekActive = true;
+          break;
+        case PowerUp.extraTime:
+          _extraSecondsThisRound += extraTimeSeconds;
+          break;
+        default:
+          break;
+      }
+      _myPowerUp = PowerUp.none;
+    });
+  }
+
+  /// Vezi core/powerups.dart — acordat cui a câștigat runda tocmai încheiată,
+  /// cu șansă mai mare pentru cine e mai jos în clasamentul de „pâini".
+  void _maybeGrantPowerUp(MatchInfo info, List<MatchPlayer> players) {
+    if (_powerUpRolledRound == info.roundIndex) return;
+    _powerUpRolledRound = info.roundIndex;
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (!info.roundWinnerIds.contains(me)) return;
+    // Rangul se ia din `score`, NU din `breads`: pâinile sunt greșeli
+    // acumulate spre eliminare (mai multe = mai rău), scorul e cel care
+    // arată cine conduce cu adevărat — vezi resolveHigherLowerRound.
+    final active = List.of(players.where((p) => !p.eliminated))..sort((a, b) => b.score.compareTo(a.score));
+    final total = active.isEmpty ? 1 : active.length;
+    var rank = active.indexWhere((p) => p.id == me);
+    if (rank < 0) rank = 0;
+    final granted = grantsPowerUp(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      wonRound: true,
+      myRank: rank,
+      totalPlayers: total,
+    );
+    if (!granted) return;
+    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'higherLower');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _myPowerUp = picked);
+      Sfx.rewardPop();
+    });
   }
 
   Future<void> _leave() async {
@@ -137,6 +209,8 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _showWinners = false;
+      _peekActive = false;
+      _extraSecondsThisRound = 0;
       _revealDelayTimer?.cancel();
       _revealDelayTimer = null;
       _advanceTimer?.cancel();
@@ -157,6 +231,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       _advanceTimer ??= Timer(const Duration(seconds: higherLowerRevealSeconds), () {
         MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
       });
+      _maybeGrantPowerUp(info, players);
     }
 
     for (final p in players) {
@@ -226,6 +301,10 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                         _buildPlayersRow(info, players),
                         const SizedBox(height: 4),
                         Text(tr('Runda ${info.roundIndex + 1}', 'Round ${info.roundIndex + 1}'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                        RoundEventBanner(
+                          event: roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'higherLower'),
+                          compact: true,
+                        ),
                         Expanded(
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
@@ -235,7 +314,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                                 _buildMiddle(info),
                                 _buildCard(
                                   _challengerFor(info.roundIndex),
-                                  revealedNumber: revealed,
+                                  revealedNumber: revealed || _peekActive,
                                   resultBorder: revealed && participatedThisRound ? info.roundWinnerIds.contains(me) : null,
                                 ),
                                 const SizedBox(height: 16),
@@ -264,6 +343,8 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
           IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
           const SizedBox(width: 4),
           const Text('Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+          const Spacer(),
+          PowerUpChip(powerUp: _myPowerUp, onTap: _usePowerUp),
         ],
       ),
     );
@@ -326,7 +407,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
             child: info.roundPhase == RoundPhase.answering
-                ? CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: higherLowerRoundSeconds, size: 44)
+                ? CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: _roundTotalSeconds, size: 44)
                 : const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 32),
           ),
           const Expanded(child: Divider(color: Colors.white12, height: 1)),

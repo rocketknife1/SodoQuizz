@@ -139,6 +139,12 @@ const int tanksMaxRounds = 32;
 const int tanksDamageMin = 7;
 const int tanksDamageMax = 13;
 
+/// Efectele evenimentelor de rundă specifice Quizz Tanks (core/powerups.dart
+/// `RoundEvent`) — vezi [resolveTanksRound] pentru unde se aplică.
+const double tanksBattleFogDodgeBonus = 0.2;
+const double tanksHeavyShellsMultiplier = 1.5;
+const int tanksFieldRepairsHeal = 15;
+
 /// Șansa ca ținta să EVITE proiectilul, după cum a răspuns ea însăși în
 /// runda curentă. Asimetria e toată ideea de echilibru a modului.
 const double tanksDodgeOnCorrect = 0.55;
@@ -244,11 +250,14 @@ class TankShotRoll {
   const TankShotRoll({required this.hit, required this.damage});
 }
 
-/// Aruncă zarurile pentru un proiectil. [targetAnsweredCorrectly] e singurul
-/// lucru care schimbă șansele — nu contează cine trage, ca să nu existe
-/// jucători „mai tari" decât alții din alte motive decât răspunsurile lor.
-TankShotRoll rollTankShot({required bool targetAnsweredCorrectly, required Random rnd}) {
-  final dodge = targetAnsweredCorrectly ? tanksDodgeOnCorrect : tanksDodgeOnWrong;
+/// Aruncă zarurile pentru un proiectil. [targetAnsweredCorrectly] e
+/// principalul lucru care schimbă șansele — nu contează cine trage, ca să nu
+/// existe jucători „mai tari" decât alții din alte motive decât răspunsurile
+/// lor. [dodgeBonus] e singura excepție, folosită DOAR de evenimentul de
+/// rundă „Ceață de Luptă" ([tanksBattleFogDodgeBonus]), unde șansa crește
+/// pentru TOATĂ masa deodată, nu pentru cineva anume.
+TankShotRoll rollTankShot({required bool targetAnsweredCorrectly, required Random rnd, double dodgeBonus = 0}) {
+  final dodge = (targetAnsweredCorrectly ? tanksDodgeOnCorrect : tanksDodgeOnWrong) + dodgeBonus;
   if (rnd.nextDouble() < dodge) return const TankShotRoll(hit: false, damage: 0);
   final damage = tanksDamageMin + rnd.nextInt(tanksDamageMax - tanksDamageMin + 1);
   return TankShotRoll(hit: true, damage: damage);

@@ -103,6 +103,17 @@ int obbyFakePlatformIndex({
 }) =>
     stableHash('$matchId#$roundIndex#$playerId#platform') % obbyPlatformChoiceCount;
 
+/// Varianta pentru [RoundEvent.asteroidStorm] (core/powerups.dart): DOUĂ din
+/// cele trei plăci sunt false, deci se calculează direct care e SINGURA
+/// sigură, în loc de care e falsă — sămânța `#platform2` ține alegerea
+/// independentă de [obbyFakePlatformIndex], ca să nu coincidă mereu cu ea.
+int obbyStormSafePlatformIndex({
+  required String matchId,
+  required int roundIndex,
+  required String playerId,
+}) =>
+    stableHash('$matchId#$roundIndex#$playerId#platform2') % obbyPlatformChoiceCount;
+
 /// A scăpat jucătorul cu bine de pe placa aleasă?
 ///
 /// [chosenIndex] e `null` când n-a ales deloc (AFK în faza de alegere) —

@@ -91,9 +91,9 @@ enum RoundEvent {
 /// din `MatchGameMode.name` — ținute ca string ca `core/` să nu depindă de
 /// `models/` (aceeași graniță ca în restul fișierelor din core).
 const Map<RoundEvent, Set<String>> roundEventModes = {
-  RoundEvent.doubleOrNothing: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
+  RoundEvent.doubleOrNothing: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
   RoundEvent.firstBloodBonus: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
-  RoundEvent.suddenDeath: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
+  RoundEvent.suddenDeath: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
   RoundEvent.powerUpRain: {'quizzTanks', 'obby', 'electricChair'},
   RoundEvent.battleFog: {'quizzTanks'},
   RoundEvent.heavyShells: {'quizzTanks'},
@@ -193,8 +193,8 @@ const Map<PowerUp, Set<String>> powerUpModes = {
   PowerUp.shield: {'quizzTanks', 'electricChair'},
   PowerUp.allyShield: {'quizzTanks', 'electricChair'},
   PowerUp.reflect: {'quizzTanks', 'electricChair'},
-  PowerUp.fiftyFifty: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
-  PowerUp.extraTime: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
+  PowerUp.fiftyFifty: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
+  PowerUp.extraTime: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
   PowerUp.peek: {'quizzTanks', 'obby', 'electricChair'},
   PowerUp.jetpack: {'obby'},
   PowerUp.repairKit: {'quizzTanks', 'electricChair'},

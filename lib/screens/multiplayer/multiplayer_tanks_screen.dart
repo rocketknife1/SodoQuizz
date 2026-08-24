@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
+import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/tanks.dart';
 import '../../core/theme.dart';
@@ -11,6 +12,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/round_event_banner.dart';
 import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
 import '../../widgets/tank_pov.dart';
@@ -151,6 +153,16 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   List<String>? _cachedChoices;
   int _cachedChoicesRound = -1;
 
+  /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
+  /// celelalte moduri deja cablate. Vezi [_maybeGrantPowerUp]/[_usePowerUp].
+  PowerUp _myPowerUp = PowerUp.none;
+  int? _powerUpRolledRound;
+  Set<String> _hiddenChoices = const {};
+
+  /// Secunde adăugate la runda curentă de [PowerUp.extraTime] — vezi
+  /// [_secondsLeftFor].
+  int _extraSecondsThisRound = 0;
+
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
     stableShuffle(pool, stableHash(widget.matchId));
@@ -200,7 +212,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     super.dispose();
   }
 
-  int _secondsLeftFor(MatchInfo info) => _secondsLeft(info, tanksRoundSeconds);
+  int _secondsLeftFor(MatchInfo info) => _secondsLeft(info, tanksRoundSeconds + _extraSecondsThisRound);
 
   /// Cronometrul fazei de țintire pornește de la zero: [closeTanksAnswering]
   /// rescrie `roundStartedAt` când intră în fază, tocmai ca secundele de aici
@@ -232,6 +244,74 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     if (info.roundAnswers.containsKey(me)) return;
     Sfx.tileSelect();
     MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+  }
+
+  /// Consumă power-up-ul curent.
+  ///
+  ///  - [PowerUp.fiftyFifty]/[PowerUp.extraTime]: efect local, instant.
+  ///  - [PowerUp.repairKit]: scriere directă de viață, instant.
+  ///  - [PowerUp.megaRocket]/[PowerUp.doubleShot]/[PowerUp.shield]: NU au
+  ///    efect local — se scriu pe `roundPowerUps` (vezi
+  ///    [MultiplayerService.submitTanksPowerUp]) și [resolveTanksRound] le
+  ///    citește de acolo la calculul loviturilor, ca orice client care
+  ///    rezolvă runda să aplice exact același rezultat.
+  ///  - [PowerUp.allyShield]/[PowerUp.reflect]/[PowerUp.peek]: rămân doar
+  ///    vizuale în acest pas — ar cere alegerea unui aliat / o fereastră de
+  ///    răspuns partajată, lăsate pentru o trecere ulterioară.
+  void _usePowerUp(MatchInfo info) {
+    final p = _myPowerUp;
+    if (p == PowerUp.none) return;
+    Sfx.tileSelect();
+    switch (p) {
+      case PowerUp.fiftyFifty:
+        final me = MultiplayerService.instance.currentPlayerId;
+        if (info.roundPhase == RoundPhase.answering && !info.roundAnswers.containsKey(me)) {
+          final q = _questionFor(info.roundIndex);
+          final wrong = q.choices.where((c) => c != q.answer).toList();
+          stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
+          setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
+        }
+      case PowerUp.extraTime:
+        setState(() => _extraSecondsThisRound += extraTimeSeconds);
+      case PowerUp.repairKit:
+        MultiplayerService.instance.useTanksRepairKit(matchId: widget.matchId);
+      case PowerUp.megaRocket:
+      case PowerUp.doubleShot:
+      case PowerUp.shield:
+        MultiplayerService.instance.submitTanksPowerUp(matchId: widget.matchId, powerUp: p);
+      default:
+        break;
+    }
+    setState(() => _myPowerUp = PowerUp.none);
+  }
+
+  /// Vezi core/powerups.dart — acordat cui a răspuns corect runda tocmai
+  /// închisă (adică e în `roundWinnerIds`), cu șansă mai mare pentru cine e
+  /// mai jos în clasamentul de daune făcute.
+  void _maybeGrantPowerUp(MatchInfo info, List<MatchPlayer> players) {
+    if (_powerUpRolledRound == info.roundIndex) return;
+    _powerUpRolledRound = info.roundIndex;
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (!info.roundWinnerIds.contains(me)) return;
+    final ranked = List.of(players)..sort((a, b) => b.damageDealt.compareTo(a.damageDealt));
+    final total = ranked.isEmpty ? 1 : ranked.length;
+    var rank = ranked.indexWhere((p) => p.id == me);
+    if (rank < 0) rank = 0;
+    final granted = grantsPowerUp(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      wonRound: true,
+      myRank: rank,
+      totalPlayers: total,
+    );
+    if (!granted) return;
+    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'quizzTanks');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _myPowerUp = picked);
+      Sfx.rewardPop();
+    });
   }
 
   void _pickTarget(MatchInfo info, String targetId) {
@@ -334,6 +414,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _playedAlarm = false;
       _playedExplosions = false;
       _lastResolveAttempt = null;
+      _hiddenChoices = const {};
+      _extraSecondsThisRound = 0;
       _advanceTimer?.cancel();
       _advanceTimer = null;
       // Post-frame, nu aici: [_onData] rulează CHIAR ÎN TIMPUL build-ului, iar
@@ -363,6 +445,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }
     } else if (info.roundPhase == RoundPhase.targeting) {
+      // roundWinnerIds e cunoscut din clipa asta — de-aia power-up-ul se
+      // acordă aici, nu în faza de răspuns.
+      _maybeGrantPowerUp(info, players);
       // Se trage când toți țintașii ȘI-AU ALES victima, sau când li s-a
       // scurs timpul. Un țintaș plecat din meci între timp nu blochează
       // runda: se numără doar cei încă la masă.
@@ -616,6 +701,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                         Column(
                           children: [
                             _buildTopBar(info),
+                            RoundEventBanner(
+                              event: roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'quizzTanks'),
+                              compact: true,
+                            ),
                             Expanded(child: _buildArena(info, players)),
                             _buildBottomPanel(info, players),
                           ],
@@ -715,6 +804,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
               style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1),
             ),
           ),
+          const SizedBox(width: 8),
+          PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
           const SizedBox(width: 10),
           // În faza de foc cronometrul n-are ce număra: acolo se arată o
           // țintă aprinsă, ca să fie limpede că nu mai e nimic de apăsat.
@@ -968,6 +1059,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
               final choices = _choicesFor(info.roundIndex);
               if (i >= choices.length) return const SizedBox.shrink();
               final choice = choices[i];
+              if (_hiddenChoices.contains(choice)) return const SizedBox.shrink();
               return Padding(
                 padding: EdgeInsets.only(bottom: i == 3 ? 0 : 6),
                 child: _AnswerButton(

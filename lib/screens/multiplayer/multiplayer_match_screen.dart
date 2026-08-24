@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/audio.dart';
 import '../../core/game_helpers.dart';
+import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
 import '../../core/theme.dart';
@@ -12,6 +14,7 @@ import '../../models/question.dart';
 import '../../widgets/blur_image.dart';
 import '../../widgets/next_button.dart';
 import '../../widgets/player_badge.dart';
+import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 
 /// Meciul live 1 vs 1 (matchmaking public) sau cu prietenii (cameră privată
@@ -65,6 +68,18 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   bool _midSynced = false;
   bool _finishing = false;
 
+  /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
+  /// celelalte moduri — aici „runda" e chiar întrebarea curentă, fiindcă
+  /// Classic n-are rundă sincronizată prin Firestore (fiecare merge în
+  /// ritmul lui prin același pool amestecat determinist).
+  RoundEvent _event = RoundEvent.none;
+  PowerUp _myPowerUp = PowerUp.none;
+
+  /// Ultima listă de jucători văzută de [_buildPlayersRow] — folosită doar ca
+  /// să calculăm locul curent pentru [catchUpBoostFor] când se acordă un
+  /// power-up; nu declanșează niciun rebuild în plus.
+  List<MatchPlayer> _lastPlayers = const [];
+
   /// „Mai sunt aici" cât timp meciul e deschis — vezi
   /// MultiplayerService.matchHeartbeat.
   Timer? _heartbeatTimer;
@@ -94,6 +109,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     setState(() {
       _questions = all;
       _loading = false;
+      _rollEvent();
     });
     await _startClock();
   }
@@ -176,21 +192,95 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     );
   }
 
+  /// Recalculează evenimentul „rundei" — aici runda e chiar întrebarea
+  /// curentă (`_qIndex`), fiindcă Classic n-are un `roundIndex` sincronizat
+  /// prin Firestore ca celelalte moduri. Toți clienții ajung la același
+  /// eveniment pentru aceeași întrebare fiindcă și `_qIndex` pornește din
+  /// aceeași ordine amestecată determinist din `matchId`.
+  void _rollEvent() {
+    _event = roundEventFor(matchId: widget.matchId, roundIndex: _qIndex, gameModeId: 'classic');
+  }
+
   void _selectAnswer(String opt) {
     if (_answered || _finishing) return;
     final q = _current;
     final correct = opt == q.answer;
+    final mult = _event == RoundEvent.doubleOrNothing ? 2 : 1;
     setState(() {
       _answered = true;
       _selectedAnswer = opt;
-      _myScore += correct ? q.maxPoints : -multiplayerWrongPenalty(q.maxPoints);
+      _myScore += correct ? q.maxPoints * mult : -multiplayerWrongPenalty(q.maxPoints) * mult;
+      if (correct) _maybeGrantPowerUp();
     });
   }
+
+  /// Vezi core/powerups.dart — power-up-ul se acordă doar cui a răspuns
+  /// corect, cu șanse mai mari pentru cine e mai jos în clasament
+  /// ([catchUpBoostFor]). Rangul e calculat din ultima listă de jucători
+  /// văzută de rândul de sus, nu dintr-o interogare nouă.
+  void _maybeGrantPowerUp() {
+    final me = MultiplayerService.instance.currentPlayerId;
+    if (me.isEmpty) return;
+    final players = _lastPlayers;
+    final total = players.isEmpty ? 1 : players.length;
+    var rank = 0;
+    if (players.isNotEmpty) {
+      int scoreOf(MatchPlayer p) => p.id == me ? _myScore : p.score;
+      final sorted = List.of(players)..sort((a, b) => scoreOf(b).compareTo(scoreOf(a)));
+      final i = sorted.indexWhere((p) => p.id == me);
+      if (i >= 0) rank = i;
+    }
+    final granted = grantsPowerUp(
+      matchId: widget.matchId,
+      roundIndex: _qIndex,
+      playerId: me,
+      wonRound: true,
+      myRank: rank,
+      totalPlayers: total,
+    );
+    if (!granted) return;
+    _myPowerUp = powerUpFor(matchId: widget.matchId, roundIndex: _qIndex, playerId: me, gameModeId: 'classic');
+    Sfx.rewardPop();
+  }
+
+  /// Consumă power-up-ul curent. [PowerUp.fiftyFifty] și [PowerUp.extraTime]
+  /// sunt singurele valabile pentru Classic (vezi `powerUpModes` din
+  /// core/powerups.dart), deci au efect real; restul modurilor au propriile
+  /// power-uri, cu efecte proprii.
+  void _usePowerUp() {
+    final p = _myPowerUp;
+    if (p == PowerUp.none) return;
+    Sfx.tileSelect();
+    setState(() {
+      switch (p) {
+        case PowerUp.fiftyFifty:
+          if (!_answered) {
+            final q = _current;
+            final wrong = q.choices.where((c) => c != q.answer).toList();
+            stableShuffle(wrong, stableHash(q.id) + _qIndex + 1);
+            _hiddenOptions = wrong.take(max(0, wrong.length - 1)).toSet();
+          }
+          break;
+        case PowerUp.extraTime:
+          final d = _deadline;
+          if (d != null) _deadline = d.add(const Duration(seconds: extraTimeSeconds));
+          break;
+        default:
+          break;
+      }
+      _myPowerUp = PowerUp.none;
+    });
+  }
+
+  /// Efectul real al [RoundEvent.suddenDeath] în Classic: „fără a doua
+  /// șansă" — hint-ul e blocat la întrebarea asta, chiar dacă mai sunt
+  /// hint-uri disponibile pe meci.
+  bool get _hintBlockedBySuddenDeath => _event == RoundEvent.suddenDeath;
 
   /// Hint-ul din multiplayer NU limpezește poza (ca în modul solo), ci lasă
   /// pe ecran doar două variante: cea corectă și una greșită la întâmplare.
   void _useHint() {
-    if (_answered || _hintUsedHere || _hintsLeft <= 0 || _finishing) return;
+    if (_answered || _hintUsedHere || _hintsLeft <= 0 || _finishing || _hintBlockedBySuddenDeath) return;
     final q = _current;
     final wrong = q.choices.where((c) => c != q.answer).toList();
     stableShuffle(wrong, stableHash(q.id) + _qIndex);
@@ -213,6 +303,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
       _selectedAnswer = null;
       _hintUsedHere = false;
       _hiddenOptions = const {};
+      _rollEvent();
     });
   }
 
@@ -253,6 +344,15 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
               children: [
                 _buildPlayersRow(),
                 _buildTimerBar(),
+                RoundEventBanner(event: _event, compact: true),
+                if (_myPowerUp != PowerUp.none)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: PowerUpChip(powerUp: _myPowerUp, onTap: _usePowerUp),
+                    ),
+                  ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -341,7 +441,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   }
 
   Widget _buildHintButton(Question q) {
-    final available = _hintsLeft > 0 && !_hintUsedHere;
+    final available = _hintsLeft > 0 && !_hintUsedHere && !_hintBlockedBySuddenDeath;
     final cost = multiplayerHintPenalty(q.maxPoints);
     return SizedBox(
       width: double.infinity,
@@ -359,9 +459,11 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           available
               ? tr('HINT 50/50  ·  −$cost pct  ·  $_hintsLeft rămase',
                   'HINT 50/50  ·  −$cost pts  ·  $_hintsLeft left')
-              : (_hintUsedHere
-                  ? tr('Hint folosit la întrebarea asta', 'Hint already used on this question')
-                  : tr('Nu mai ai hint-uri', 'No hints left')),
+              : (_hintBlockedBySuddenDeath
+                  ? tr('💀 Moarte subită — fără hint', '💀 Sudden death — no hint')
+                  : (_hintUsedHere
+                      ? tr('Hint folosit la întrebarea asta', 'Hint already used on this question')
+                      : tr('Nu mai ai hint-uri', 'No hints left'))),
           style: TextStyle(
             color: available ? Colors.white : Colors.white38,
             fontWeight: FontWeight.w800,
@@ -385,6 +487,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
         stream: MultiplayerService.instance.watchPlayers(widget.matchId),
         builder: (context, snap) {
           final players = List.of(snap.data ?? const <MatchPlayer>[]);
+          _lastPlayers = players;
           final me = MultiplayerService.instance.currentPlayerId;
           // propriul scor e mereu cel local (instant), al celorlalți e
           // ultimul publicat — vezi sincronizarea de la jumătatea meciului

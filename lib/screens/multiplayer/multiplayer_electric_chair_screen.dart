@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
+import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/player_badge.dart';
+import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
 import 'multiplayer_results_screen.dart';
 
@@ -72,6 +75,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   /// amestecată determinist o singură dată pe rundă.
   final Map<String, List<String>> _chairChoiceCache = {};
   int _chairChoiceCacheRound = -1;
+
+  /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
+  /// celelalte moduri deja cablate. Vezi [_maybeGrantPowerUp]/[_usePowerUp].
+  PowerUp _myPowerUp = PowerUp.none;
+  int? _powerUpRolledRound;
+  Set<String> _hiddenChoices = const {};
+  int _extraSecondsThisRound = 0;
 
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
@@ -149,7 +159,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     return (total - elapsed).clamp(0, total);
   }
 
-  int _answerSecondsLeftFor(MatchInfo info) => _secondsLeft(info, electricChairAnswerSeconds);
+  int get _answerTotalSeconds => electricChairAnswerSeconds + _extraSecondsThisRound;
+  int _answerSecondsLeftFor(MatchInfo info) => _secondsLeft(info, _answerTotalSeconds);
   int _targetSecondsLeftFor(MatchInfo info) => _secondsLeft(info, electricChairTargetSeconds);
   int _chairSecondsLeftFor(MatchInfo info) => _secondsLeft(info, electricChairSeconds);
 
@@ -190,6 +201,68 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       targetId: target,
       questionIndex: questionIndex,
     );
+  }
+
+  /// Consumă power-up-ul curent. Efectele de scaun (scut, reflect, sabotaj
+  /// pe atac) vin la trecerea de polish — aici doar [PowerUp.fiftyFifty]
+  /// (pe propria întrebare) și [PowerUp.extraTime] au efect local, instant.
+  /// [PowerUp.shield]/[PowerUp.piercingShock] se scriu pe `roundPowerUps` —
+  /// [resolveElectricChairRound] le citește de-acolo la deznodământ, ca la
+  /// mega rachetă/scut din Quizz Tanks. [PowerUp.allyShield] apără automat
+  /// cel mai slăbit coechipier ([MultiplayerService.useElectricChairAllyShield]).
+  /// [PowerUp.reflect]/[PowerUp.peek] rămân doar vizuale în acest pas.
+  void _usePowerUp(MatchInfo info) {
+    final p = _myPowerUp;
+    if (p == PowerUp.none) return;
+    Sfx.tileSelect();
+    switch (p) {
+      case PowerUp.fiftyFifty:
+        if (info.roundPhase == RoundPhase.answering && !info.roundAnswers.containsKey(_myId)) {
+          final q = _questionFor(info.roundIndex);
+          final wrong = q.choices.where((c) => c != q.answer).toList();
+          stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
+          setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
+        }
+      case PowerUp.extraTime:
+        setState(() => _extraSecondsThisRound += extraTimeSeconds);
+      case PowerUp.shield:
+      case PowerUp.piercingShock:
+        MultiplayerService.instance.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
+      case PowerUp.allyShield:
+        MultiplayerService.instance.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+      default:
+        break;
+    }
+    setState(() => _myPowerUp = PowerUp.none);
+  }
+
+  /// Vezi core/powerups.dart — acordat cui a răspuns corect la propria
+  /// întrebare (adică e în `roundWinnerIds`), cu șansă mai mare pentru cine
+  /// are mai puține vieți.
+  void _maybeGrantPowerUp(MatchInfo info, List<MatchPlayer> players) {
+    if (_powerUpRolledRound == info.roundIndex) return;
+    _powerUpRolledRound = info.roundIndex;
+    final me = _myId;
+    if (!info.roundWinnerIds.contains(me)) return;
+    final ranked = List.of(players)..sort((a, b) => b.lives.compareTo(a.lives));
+    final total = ranked.isEmpty ? 1 : ranked.length;
+    var rank = ranked.indexWhere((p) => p.id == me);
+    if (rank < 0) rank = 0;
+    final granted = grantsPowerUp(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      wonRound: true,
+      myRank: rank,
+      totalPlayers: total,
+    );
+    if (!granted) return;
+    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'electricChair');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _myPowerUp = picked);
+      Sfx.rewardPop();
+    });
   }
 
   void _answerChairQuestion(MatchInfo info, String choice) {
@@ -244,6 +317,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       _lastRoundIndex = info.roundIndex;
       _pendingTargetId = null;
       _lastResolveAttempt = null;
+      _hiddenChoices = const {};
+      _extraSecondsThisRound = 0;
       _advanceTimer?.cancel();
       _advanceTimer = null;
     }
@@ -257,6 +332,9 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }
     } else if (info.roundPhase == RoundPhase.targeting) {
+      // roundWinnerIds e cunoscut din clipa asta — de-aia power-up-ul se
+      // acordă aici, nu în faza de răspuns.
+      _maybeGrantPowerUp(info, players);
       final attackers = info.roundWinnerIds.where(present.contains);
       final allPicked = attackers.isNotEmpty && attackers.every(info.roundChairChoices.containsKey);
       if (allPicked || _targetSecondsLeftFor(info) <= 0) {
@@ -333,18 +411,33 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   }
 
   Widget _buildTopBar(MatchInfo info) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(6, 6, 16, 4),
-      child: Row(
-        children: [
-          IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
-          const Icon(Icons.electric_bolt_rounded, color: AppColors.coin, size: 20),
-          const SizedBox(width: 6),
-          const Text('SCAUNUL ELECTRIC', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 14)),
-          const Spacer(),
-          Text('Runda ${info.roundIndex + 1}', style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w700)),
-        ],
-      ),
+    return Column(
+      // Fără mainAxisSize.min, acest Column (necuprins într-un Expanded)
+      // pretinde toată înălțimea disponibilă de la Column-ul din build(),
+      // împingând _buildPlayerStrip și restul ecranului spre zero — exact
+      // bug-ul confirmat live la Obby, evitat aici din start.
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 6, 16, 4),
+          child: Row(
+            children: [
+              IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
+              const Icon(Icons.electric_bolt_rounded, color: AppColors.coin, size: 20),
+              const SizedBox(width: 6),
+              const Text('SCAUNUL ELECTRIC', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 14)),
+              const Spacer(),
+              PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
+              const SizedBox(width: 8),
+              Text('Runda ${info.roundIndex + 1}', style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w700)),
+            ],
+          ),
+        ),
+        RoundEventBanner(
+          event: roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'electricChair'),
+          compact: true,
+        ),
+      ],
     );
   }
 
@@ -427,7 +520,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       );
     }
     final question = _questionFor(info.roundIndex);
-    final choices = _choicesFor(info.roundIndex);
+    final choices = _choicesFor(info.roundIndex).where((c) => !_hiddenChoices.contains(c)).toList();
     final answered = info.roundAnswers.containsKey(me);
     final seconds = _answerSecondsLeftFor(info);
     return Padding(
@@ -435,7 +528,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _CountdownBar(seconds: seconds, total: electricChairAnswerSeconds, color: AppColors.coin),
+          _CountdownBar(seconds: seconds, total: _answerTotalSeconds, color: AppColors.coin),
           const SizedBox(height: 14),
           Text(
             tr('Cine răspunde corect alege pe cineva pentru scaun.', 'Whoever answers right gets to pick someone for the chair.'),

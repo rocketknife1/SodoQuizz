@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
 import '../../core/obby.dart';
+import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
@@ -15,6 +16,7 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
+import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 
 /// **Obby** — cursă de obstacole tip Roblox, de la 2 la [obbyMaxPlayers]
@@ -73,6 +75,15 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   int _instantCoinsThisMatch = 0;
   final GlobalKey _coinPillKey = GlobalKey();
 
+  /// Power-up-ul curent (core/powerups.dart) — acordat direct în
+  /// [_selectAnswer] cu răspuns corect, nu prin [_onData]: apelul e din
+  /// tap-ul jucătorului, deci nu rulează în timpul unui build ca la
+  /// celelalte moduri, iar `info.roundAnswers` deja împiedică o a doua
+  /// acordare pe aceeași rundă.
+  PowerUp _myPowerUp = PowerUp.none;
+  Set<String> _hiddenChoices = const {};
+  int _extraSecondsThisRound = 0;
+
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
     stableShuffle(pool, stableHash(widget.matchId));
@@ -115,11 +126,13 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     super.dispose();
   }
 
+  int get _roundTotalSeconds => obbyRoundSeconds + _extraSecondsThisRound;
+
   int _secondsLeftFor(MatchInfo info) {
     final started = info.roundStartedAt?.toDate();
-    if (started == null) return obbyRoundSeconds;
+    if (started == null) return _roundTotalSeconds;
     final elapsed = DateTime.now().difference(started).inSeconds;
-    return (obbyRoundSeconds - elapsed).clamp(0, obbyRoundSeconds);
+    return (_roundTotalSeconds - elapsed).clamp(0, _roundTotalSeconds);
   }
 
   /// Cronometrul fazei de alegere. `roundStartedAt` e REPORNIT de
@@ -145,7 +158,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     }
   }
 
-  void _selectAnswer(MatchInfo info, MatchPlayer? myPlayer, String answer) {
+  void _selectAnswer(MatchInfo info, MatchPlayer? myPlayer, List<MatchPlayer> players, String answer) {
     if (info.roundPhase != RoundPhase.answering) return;
     if (myPlayer == null || myPlayer.obstaclesCleared >= obbyObstacleCount) return;
     final me = MultiplayerService.instance.currentPlayerId;
@@ -167,7 +180,58 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           targetKey: _coinPillKey,
         );
       }
+      _maybeGrantPowerUp(info, players, me);
     }
+  }
+
+  /// Vezi core/powerups.dart — acordat cui a răspuns corect, cu șansă mai
+  /// mare pentru cine e mai în urmă la obstacole trecute.
+  void _maybeGrantPowerUp(MatchInfo info, List<MatchPlayer> players, String me) {
+    final ranked = List.of(players)..sort((a, b) => b.obstaclesCleared.compareTo(a.obstaclesCleared));
+    final total = ranked.isEmpty ? 1 : ranked.length;
+    var rank = ranked.indexWhere((p) => p.id == me);
+    if (rank < 0) rank = 0;
+    final granted = grantsPowerUp(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      wonRound: true,
+      myRank: rank,
+      totalPlayers: total,
+    );
+    if (!granted) return;
+    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'obby');
+    setState(() => _myPowerUp = picked);
+    Sfx.rewardPop();
+  }
+
+  /// Consumă power-up-ul curent. [PowerUp.jetpack] și [PowerUp.sabotage] se
+  /// scriu pe Firestore ([MultiplayerService.submitObbyPowerUp]/
+  /// [MultiplayerService.useObbySabotage]) — [resolveObbyChoices] le
+  /// citește de-acolo la calculul plăcilor, la fel ca mega rachetă/scut la
+  /// Quizz Tanks și Scaunul Electric.
+  void _usePowerUp(MatchInfo info) {
+    final p = _myPowerUp;
+    if (p == PowerUp.none) return;
+    Sfx.tileSelect();
+    switch (p) {
+      case PowerUp.fiftyFifty:
+        if (info.roundPhase == RoundPhase.answering) {
+          final q = _questionFor(info.roundIndex);
+          final wrong = q.choices.where((c) => c != q.answer).toList();
+          stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
+          setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
+        }
+      case PowerUp.extraTime:
+        setState(() => _extraSecondsThisRound += extraTimeSeconds);
+      case PowerUp.jetpack:
+        MultiplayerService.instance.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
+      case PowerUp.sabotage:
+        MultiplayerService.instance.useObbySabotage(matchId: widget.matchId);
+      default:
+        break;
+    }
+    setState(() => _myPowerUp = PowerUp.none);
   }
 
   /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
@@ -325,6 +389,8 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _showAdvance = false;
       _revealedAtLocal = null;
       _playedRevealSfx = false;
+      _hiddenChoices = const {};
+      _extraSecondsThisRound = 0;
       _lateSfxTimer?.cancel();
       _lateSfxTimer = null;
       _revealDelayTimer?.cancel();
@@ -454,6 +520,11 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Widget _buildTopBar(MatchInfo info) {
     final doubleRound = obbyIsDoubleRound(matchId: widget.matchId, roundIndex: info.roundIndex);
     return Column(
+      // Fără asta, Column-ul ăsta (necuprins într-un Expanded în afara lui)
+      // pretinde TOATĂ înălțimea disponibilă de la Column-ul părinte —
+      // exact bug-ul găsit live: bara de sus (săgeată, „Obby", rundă)
+      // dispărea din ecran, deși codul ei arăta corect.
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
@@ -482,6 +553,8 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                 ),
               ),
               const Spacer(),
+              PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
+              const SizedBox(width: 8),
               Text(
                 tr('Runda ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount',
                     'Round ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount'),
@@ -489,6 +562,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
               ),
             ],
           ),
+        ),
+        RoundEventBanner(
+          event: roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'obby'),
+          compact: true,
         ),
         if (doubleRound)
           Padding(
@@ -550,7 +627,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       ),
       child: Column(
         children: [
-          CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: obbyRoundSeconds, size: 36),
+          CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: _roundTotalSeconds, size: 36),
           const SizedBox(height: 8),
           Text(
             question.question,
@@ -597,6 +674,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
             playerId: me,
           )
         : _choicesFor(info.roundIndex);
+    final visible = choices.where((c) => !_hiddenChoices.contains(c)).toList();
     return Column(
       children: [
         if (bonus)
@@ -607,15 +685,15 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
               style: const TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w800),
             ),
           ),
-        for (var i = 0; i < choices.length; i += 2)
+        for (var i = 0; i < visible.length; i += 2)
           Padding(
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Expanded(child: _choiceButton(choices[i], () => _selectAnswer(info, myPlayer, choices[i]))),
-                if (i + 1 < choices.length) ...[
+                Expanded(child: _choiceButton(visible[i], () => _selectAnswer(info, myPlayer, players, visible[i]))),
+                if (i + 1 < visible.length) ...[
                   const SizedBox(width: 10),
-                  Expanded(child: _choiceButton(choices[i + 1], () => _selectAnswer(info, myPlayer, choices[i + 1]))),
+                  Expanded(child: _choiceButton(visible[i + 1], () => _selectAnswer(info, myPlayer, players, visible[i + 1]))),
                 ],
               ],
             ),

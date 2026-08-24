@@ -8,6 +8,7 @@ import '../core/electric_chair.dart';
 import '../core/lang.dart';
 import '../core/multiplayer_round.dart';
 import '../core/obby.dart';
+import '../core/powerups.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
 
@@ -393,6 +394,13 @@ class MultiplayerService {
         for (final id in playerIds) {
           playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
         }
+        // Evenimentul rundei se recalculează AICI, din aceeași funcție pură
+        // (core/powerups.dart) pe care o citește și ecranul pentru banner —
+        // niciun client nou de scris în Firestore, toți ajung la același
+        // rezultat din matchId+roundIndex. Vezi doc-ul din powerups.dart
+        // pentru de ce modelul ăsta de încredere e deja cel al proiectului.
+        final event = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'higherLower');
+        final pointsThisRound = event == RoundEvent.doubleOrNothing ? higherLowerPointsPerWin * 2 : higherLowerPointsPerWin;
         final winnerIds = <String>[];
         var stillActive = 0;
         for (final doc in playerDocs) {
@@ -402,11 +410,13 @@ class MultiplayerService {
           final correct = correctGuess == null || answers[doc.id] == correctGuess;
           if (correct) {
             winnerIds.add(doc.id);
-            tx.update(doc.reference, {'score': (pData['score'] as int? ?? 0) + higherLowerPointsPerWin});
+            tx.update(doc.reference, {'score': (pData['score'] as int? ?? 0) + pointsThisRound});
             stillActive++;
           } else {
+            // Moarte subită: o greșeală elimină direct, indiferent de câte
+            // pâini avea acumulate până acum — „fără a doua șansă runda asta".
             final breads = (pData['breads'] as int? ?? 0) + 1;
-            final eliminated = breads >= higherLowerMaxBreads;
+            final eliminated = event == RoundEvent.suddenDeath || breads >= higherLowerMaxBreads;
             tx.update(doc.reference, {'breads': breads, 'eliminated': eliminated});
             if (!eliminated) stillActive++;
           }
@@ -444,6 +454,7 @@ class MultiplayerService {
           'roundWinnerIds': <String>[],
           'roundShots': <Map<String, dynamic>>[],
           'roundDestroyedIds': <String>[],
+          'roundPowerUps': <String, String>{},
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
@@ -569,6 +580,7 @@ class MultiplayerService {
     if (playerIds.isEmpty) return;
     final isDouble = obbyIsDoubleRound(matchId: matchId, roundIndex: roundIndex);
     final isComeback = obbyIsComebackRound(roundIndex: roundIndex);
+    final event = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'obby');
     try {
       await _db.runTransaction((tx) async {
         final matchDoc = await tx.get(matchRef);
@@ -578,6 +590,13 @@ class MultiplayerService {
         }
         final rawChoices = data['roundPlatformChoices'] as Map? ?? const {};
         final winnerIds = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
+        final activePowerUps = Map<String, dynamic>.from(data['roundPowerUps'] as Map? ?? const {});
+        final sabotaged = Map<String, dynamic>.from(data['roundSabotage'] as Map? ?? const {});
+        PowerUp powerUpOf(String id) {
+          final raw = activePowerUps[id] as String?;
+          if (raw == null) return PowerUp.none;
+          return PowerUp.values.firstWhere((p) => p.name == raw, orElse: () => PowerUp.none);
+        }
 
         // Aceeasi regula: toate citirile inainte de orice scriere.
         final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
@@ -616,22 +635,35 @@ class MultiplayerService {
           }
 
           final chosen = (rawChoices[id] as num?)?.toInt();
-          final safe = obbyChoiceIsSafe(
-            chosenIndex: chosen,
-            fakeIndex: obbyFakePlatformIndex(matchId: matchId, roundIndex: roundIndex, playerId: id),
-          );
+          // Jetpack-ul sare peste orice altă regulă a plăcilor — „treci
+          // obstacolul automat", indiferent ce a ales sau dacă a fost
+          // sabotat. Altfel, siguranța vine din furtuna de asteroizi (DOUĂ
+          // plăci false) sau din regula normală (UNA falsă), iar sabotajul
+          // unui adversar forțează căderea chiar și pe o placă bună aleasă
+          // corect.
+          final hasJetpack = powerUpOf(id) == PowerUp.jetpack;
+          final safe = hasJetpack ||
+              (!sabotaged.containsKey(id) &&
+                  (event == RoundEvent.asteroidStorm
+                      ? chosen != null &&
+                          chosen == obbyStormSafePlatformIndex(matchId: matchId, roundIndex: roundIndex, playerId: id)
+                      : obbyChoiceIsSafe(
+                          chosenIndex: chosen,
+                          fakeIndex: obbyFakePlatformIndex(matchId: matchId, roundIndex: roundIndex, playerId: id),
+                        )));
           if (!safe) {
             clearedPerPlayer.add(already);
             if (comebackBonus) tx.update(doc.reference, {'nextQuestionBonus': true});
             continue;
           }
 
-          // Runda dublă: obstacolul de azi valorează 2, nu 1 — plafonat la
-          // ultimul obstacol, ca să nu treacă "peste" pistă. Punctele
-          // urmează exact câte obstacole s-au acordat efectiv, nu un 2x
-          // orb, altfel cineva aproape de final ar fi fost plătit dublu
-          // pentru un singur obstacol rămas.
-          final gained = min(isDouble ? 2 : 1, obbyObstacleCount - already);
+          // Runda dublă (sau gravitație mică — același efect, vezi
+          // RoundEvent.lowGravity): obstacolul de azi valorează 2, nu 1 —
+          // plafonat la ultimul obstacol, ca să nu treacă "peste" pistă.
+          // Punctele urmează exact câte obstacole s-au acordat efectiv, nu
+          // un 2x orb, altfel cineva aproape de final ar fi fost plătit
+          // dublu pentru un singur obstacol rămas.
+          final gained = min((isDouble || event == RoundEvent.lowGravity) ? 2 : 1, obbyObstacleCount - already);
           final cleared = already + gained;
           clearedPerPlayer.add(cleared);
           tx.update(doc.reference, {
@@ -674,11 +706,53 @@ class MultiplayerService {
           'roundAnswers': <String, String>{},
           'roundWinnerIds': <String>[],
           'roundPlatformChoices': <String, int>{},
+          'roundPowerUps': <String, String>{},
+          'roundSabotage': <String, bool>{},
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
     } catch (e) {
       debugPrint('MultiplayerService.advanceObbyRound a esuat: $e');
+    }
+  }
+
+  /// Activează [PowerUp.jetpack] pentru runda curentă — [resolveObbyChoices]
+  /// îl citește de pe `roundPowerUps`, la fel ca mega rachetă/scut la Quizz
+  /// Tanks și Scaunul Electric.
+  Future<void> submitObbyPowerUp({required String matchId, required PowerUp powerUp}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
+  }
+
+  /// [PowerUp.sabotage]: „îi muți cuiva o placă bună în placă falsă" —
+  /// ținta se alege AUTOMAT (cine conduce cursa acum, exclus eu însumi),
+  /// nu manual, din același motiv ca [useElectricChairAllyShield]: evită o
+  /// fereastră nouă de alegere doar pentru un power-up, iar liderul e oricum
+  /// ținta evidentă a unui sabotaj. Efectul se anulează dacă victima are ea
+  /// însăși [PowerUp.jetpack] runda asta — vezi [resolveObbyChoices].
+  Future<void> useObbySabotage({required String matchId}) async {
+    final me = currentPlayerId;
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final playersSnap = await matchRef.collection('players').get();
+        String? leaderId;
+        var leaderCleared = -1;
+        for (final doc in playersSnap.docs) {
+          if (doc.id == me) continue;
+          final data = doc.data();
+          final cleared = data['obstaclesCleared'] as int? ?? 0;
+          if (cleared >= obbyObstacleCount) continue; // deja la final - nimic de sabotat
+          if (cleared > leaderCleared || (cleared == leaderCleared && doc.id.compareTo(leaderId ?? '') < 0)) {
+            leaderCleared = cleared;
+            leaderId = doc.id;
+          }
+        }
+        if (leaderId == null) return;
+        tx.update(matchRef, {'roundSabotage.$leaderId': true});
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.useObbySabotage a esuat: $e');
     }
   }
 
@@ -713,14 +787,27 @@ class MultiplayerService {
           return; // deja închisă de alt client
         }
         final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        // „Reparații pe teren": toți cei încă în viață primesc puțin HP
+        // înapoi ÎNAINTE de foc — vezi core/tanks.dart tanksFieldRepairsHeal.
+        final fieldRepairs = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'quizzTanks') == RoundEvent.fieldRepairs;
+
+        // TOATE citirile înaintea oricărei scrieri — cerință Firestore
+        // pentru tranzacții (vezi aceeași notă mai jos, la resolveTanksRound).
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
 
         final shooters = <String>[];
         var aliveCount = 0;
-        for (final id in playerIds) {
-          final doc = await tx.get(matchRef.collection('players').doc(id));
+        for (final doc in playerDocs) {
           if (!doc.exists || doc.data()!['eliminated'] == true) continue;
           aliveCount++;
-          if (answers[id] == correctAnswer) shooters.add(id);
+          if (answers[doc.id] == correctAnswer) shooters.add(doc.id);
+          if (fieldRepairs) {
+            final hp = doc.data()!['hp'] as int? ?? tanksMaxHp;
+            tx.update(doc.reference, {'hp': (hp + tanksFieldRepairsHeal).clamp(0, tanksMaxHp)});
+          }
         }
 
         // Un singur jucător rămas în viață nu are pe cine ținti — ar rămâne
@@ -754,6 +841,31 @@ class MultiplayerService {
   Future<void> submitTanksTarget({required String matchId, required String targetId}) {
     final me = currentPlayerId;
     return _paced(() => _db.collection('matches').doc(matchId).update({'roundTargets.$me': targetId}));
+  }
+
+  /// Activează un power-up pentru runda curentă — citit de [resolveTanksRound]
+  /// la calculul loviturilor (mega rachetă, scut). O singură dată pe rundă,
+  /// scris pe câmp separat de `roundTargets`, ca activarea să nu depindă de
+  /// ordinea în care ajung cele două scrieri.
+  Future<void> submitTanksPowerUp({required String matchId, required PowerUp powerUp}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
+  }
+
+  /// [PowerUp.repairKit] pentru Quizz Tanks: recuperare de viață instant, nu
+  /// depinde de rezolvarea rundei — se scrie direct pe documentul jucătorului,
+  /// la fel ca orice altă acțiune imediată din aplicație.
+  Future<void> useTanksRepairKit({required String matchId}) {
+    final me = currentPlayerId;
+    final ref = _db.collection('matches').doc(matchId).collection('players').doc(me);
+    return _paced(() => _db.runTransaction((tx) async {
+          final doc = await tx.get(ref);
+          if (!doc.exists) return;
+          final data = doc.data()!;
+          if (data['eliminated'] == true) return;
+          final hp = data['hp'] as int? ?? tanksMaxHp;
+          tx.update(ref, {'hp': (hp + repairKitHp).clamp(0, tanksMaxHp)});
+        }));
   }
 
   /// Trage efectiv: fiecare țintaș trimite UN proiectil spre ținta lui, se
@@ -809,6 +921,30 @@ class MultiplayerService {
           hpAtStart[id] = pData['hp'] as int? ?? tanksMaxHp;
         }
 
+        // Evenimentul rundei, din aceeași funcție pură pe care o citește și
+        // banner-ul din ecran (vezi resolveHigherLowerRound mai sus pentru
+        // aceeași idee).
+        final event = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'quizzTanks');
+        final dodgeBonus = event == RoundEvent.battleFog ? tanksBattleFogDodgeBonus : 0.0;
+        final damageMultiplier = event == RoundEvent.heavyShells ? tanksHeavyShellsMultiplier : 1.0;
+
+        // Power-up-urile active runda asta (core/powerups.dart) — scrise de
+        // [submitTanksPowerUp]. Citite direct din documentul brut, nu prin
+        // model, ca acordarea/consumul lor să rămână izolate în tranzacția
+        // asta, fără să mai adauge un câmp în `MatchInfo`.
+        final activePowerUps = Map<String, dynamic>.from(data['roundPowerUps'] as Map? ?? const {});
+        PowerUp powerUpOf(String id) {
+          final raw = activePowerUps[id] as String?;
+          if (raw == null) return PowerUp.none;
+          return PowerUp.values.firstWhere((p) => p.name == raw, orElse: () => PowerUp.none);
+        }
+
+        // Un scut absoarbe O SINGURĂ lovitură, chiar dacă runda aduce mai
+        // multe spre aceeași victimă (double shot, sau doi atacatori diferiți
+        // care aleg același tanc) — de-aia se marchează „consumat" la prima
+        // lovitură care l-ar fi atins, nu se scade de la toate.
+        final shieldConsumed = <String>{};
+
         final rnd = Random();
         final shots = <Map<String, dynamic>>[];
         final incoming = {for (final id in alive) id: 0};
@@ -820,13 +956,42 @@ class MultiplayerService {
               ? chosen
               : _weakestEnemy(alive, hpAtStart, shooter);
           if (target == null) continue; // nu mai are pe cine trage
-          // „În gardă" = a răspuns și el corect, adică e tot în lista
-          // țintașilor — de-aia evită mult mai des.
-          final roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(target), rnd: rnd);
-          shots.add(TankShot(byId: shooter, atId: target, hit: roll.hit, damage: roll.damage).toMap());
-          if (roll.hit) {
-            incoming[target] = incoming[target]! + roll.damage;
-            dealt[shooter] = dealt[shooter]! + roll.damage;
+
+          // Lovitură dublă: al doilea proiectil pleacă spre următorul cel mai
+          // slăbit adversar (diferit de primul), cu daune normale — vezi
+          // [PowerUp.doubleShot].
+          final shooterPower = powerUpOf(shooter);
+          final volley = [target];
+          if (shooterPower == PowerUp.doubleShot) {
+            final second = _weakestEnemy(alive, hpAtStart, shooter, exclude: {target});
+            if (second != null) volley.add(second);
+          }
+
+          for (final t in volley) {
+            // „În gardă" = a răspuns și el corect, adică e tot în lista
+            // țintașilor — de-aia evită mult mai des. `dodgeBonus` vine din
+            // evenimentul rundei (Ceață de Luptă), nu din nimic personal.
+            var roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(t), rnd: rnd, dodgeBonus: dodgeBonus);
+            // Muniție grea: dă mai tare TUTUROR loviturilor rundei.
+            if (roll.hit && damageMultiplier != 1.0) {
+              roll = TankShotRoll(hit: true, damage: (roll.damage * damageMultiplier).round());
+            }
+            // Mega rachetă: imposibil de evitat și daune mult mai mari — vezi
+            // [megaRocketDamageMultiplier].
+            if (shooterPower == PowerUp.megaRocket) {
+              roll = TankShotRoll(hit: true, damage: (roll.damage * megaRocketDamageMultiplier).round());
+            }
+            // Scutul victimei blochează lovitura DOAR dacă chiar ar fi lovit-o
+            // — un scut ținut degeaba pe o lovitură ratată oricum nu se
+            // „consumă" fără rost.
+            if (roll.hit && powerUpOf(t) == PowerUp.shield && shieldConsumed.add(t)) {
+              roll = const TankShotRoll(hit: false, damage: 0);
+            }
+            shots.add(TankShot(byId: shooter, atId: t, hit: roll.hit, damage: roll.damage).toMap());
+            if (roll.hit) {
+              incoming[t] = incoming[t]! + roll.damage;
+              dealt[shooter] = dealt[shooter]! + roll.damage;
+            }
           }
         }
 
@@ -872,10 +1037,10 @@ class MultiplayerService {
   /// Ținta implicită a unui țintaș care n-a apucat să aleagă: adversarul cu
   /// cea mai puțină viață. La egalitate decide uid-ul, ca alegerea să fie
   /// aceeași oricare client ar rezolva runda.
-  static String? _weakestEnemy(List<String> alive, Map<String, int> hp, String shooter) {
+  static String? _weakestEnemy(List<String> alive, Map<String, int> hp, String shooter, {Set<String> exclude = const {}}) {
     String? best;
     for (final id in alive) {
-      if (id == shooter) continue;
+      if (id == shooter || exclude.contains(id)) continue;
       if (best == null || hp[id]! < hp[best]! || (hp[id]! == hp[best]! && id.compareTo(best) < 0)) {
         best = id;
       }
@@ -1085,6 +1250,21 @@ class MultiplayerService {
             e.key as String: ChairAssignment.fromMap(Map<String, dynamic>.from(e.value as Map)),
         };
         final answers = Map<String, dynamic>.from(data['roundChairAnswers'] as Map? ?? const {});
+        // Power-up-uri de-o rundă (scut propriu, șoc perforant) — vezi
+        // [submitElectricChairPowerUp]; scut de aliat separat mai jos,
+        // fiindcă ține 2 runde și nu se resetează la fiecare rundă.
+        final activePowerUps = Map<String, dynamic>.from(data['roundPowerUps'] as Map? ?? const {});
+        PowerUp powerUpOf(String id) {
+          final raw = activePowerUps[id] as String?;
+          if (raw == null) return PowerUp.none;
+          return PowerUp.values.firstWhere((p) => p.name == raw, orElse: () => PowerUp.none);
+        }
+        final shields = Map<String, dynamic>.from(data['shields'] as Map? ?? const {});
+        bool allyShielded(String id) => (shields[id] as int? ?? -1) >= roundIndex;
+
+        // Evenimentul rundei (core/powerups.dart), aceeași funcție pură pe
+        // care o citește și banner-ul din ecran.
+        final event = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'electricChair');
 
         final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
         for (final id in playerIds) {
@@ -1100,12 +1280,27 @@ class MultiplayerService {
           final victimDoc = docs[victimId];
           if (victimDoc == null || !victimDoc.exists || victimDoc.data()!['eliminated'] == true) continue;
           final correct = correctAnswers[victimId];
-          final survived = correct != null && answers[victimId] == correct;
+          var survived = correct != null && answers[victimId] == correct;
+          if (!survived) {
+            // Șocul perforant al ORICĂRUI atacator din testul ăsta trece
+            // direct prin scut — victima nu poate „ascunde" scutul în
+            // spatele unui atac oarecare.
+            final piercing = assignment.attackerIds.any((a) => powerUpOf(a) == PowerUp.piercingShock);
+            final shielded = !piercing && (powerUpOf(victimId) == PowerUp.shield || allyShielded(victimId));
+            if (shielded) survived = true; // scapă datorită scutului, nu răspunsului
+          }
           outcomes[victimId] = survived;
           if (survived) {
             scoreGain[victimId] = (scoreGain[victimId] ?? 0) + electricChairPointsPerDefense;
+            // Siguranță: scapi de pe scaun, primești o viață înapoi.
+            if (event == RoundEvent.groundedFuse) {
+              final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) + 1;
+              tx.update(victimDoc.reference, {'lives': lives.clamp(0, electricChairMaxLives)});
+            }
           } else {
-            final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) - 1;
+            // Supratensiune: scaunul ia DOUĂ vieți, nu una.
+            final livesLost = event == RoundEvent.overcharge ? 2 : 1;
+            final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) - livesLost;
             final eliminated = lives <= 0;
             if (eliminated) newlyEliminated.add(victimId);
             tx.update(victimDoc.reference, {
@@ -1169,11 +1364,58 @@ class MultiplayerService {
           'roundChairAssignments': <String, Map<String, dynamic>>{},
           'roundChairAnswers': <String, String>{},
           'roundChairOutcomes': <String, bool>{},
+          // NU 'shields': scutul de aliat ține 2 runde — vezi
+          // [useElectricChairAllyShield] — deci harta aia trebuie să
+          // supraviețuiască peste granița asta, spre deosebire de
+          // 'roundPowerUps' (scut propriu / șoc perforant, o singură rundă).
+          'roundPowerUps': <String, String>{},
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
     } catch (e) {
       debugPrint('MultiplayerService.advanceElectricChairRound a esuat: $e');
+    }
+  }
+
+  /// Activează [PowerUp.shield] (propriu) sau [PowerUp.piercingShock]
+  /// (pe atac) pentru runda curentă — [resolveElectricChairRound] le citește
+  /// de acolo, la fel ca [submitTanksPowerUp] pentru Quizz Tanks.
+  Future<void> submitElectricChairPowerUp({required String matchId, required PowerUp powerUp}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
+  }
+
+  /// [PowerUp.allyShield]: apără AUTOMAT cel mai slăbit coechipier (mai
+  /// puține vieți), nu unul ales manual — evită o fereastră nouă de alegere
+  /// doar pentru un power-up, iar „cel mai slăbit" e oricum alegerea
+  /// evidentă pentru un scut defensiv. Ține 2 runde (runda curentă +
+  /// următoarea), citite din `shields.<id>` = ultima rundă protejată.
+  Future<void> useElectricChairAllyShield({required String matchId, required int roundIndex}) async {
+    final me = currentPlayerId;
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final playersSnap = await matchRef.collection('players').get();
+        String? weakestId;
+        var weakestLives = 1 << 30;
+        for (final doc in playersSnap.docs) {
+          if (doc.id == me) continue;
+          final data = doc.data();
+          if (data['eliminated'] == true) continue;
+          final lives = data['lives'] as int? ?? electricChairMaxLives;
+          if (lives < weakestLives || (lives == weakestLives && doc.id.compareTo(weakestId ?? '') < 0)) {
+            weakestLives = lives;
+            weakestId = doc.id;
+          }
+        }
+        if (weakestId == null) return; // nimeni de apărat
+        // vezi core/powerups.dart `powerUpDurationRounds` — 2 runde: cea
+        // curentă și următoarea.
+        final rounds = powerUpDurationRounds[PowerUp.allyShield] ?? 2;
+        tx.update(matchRef, {'shields.$weakestId': roundIndex + rounds - 1});
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.useElectricChairAllyShield a esuat: $e');
     }
   }
 
