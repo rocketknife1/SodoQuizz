@@ -36,13 +36,15 @@
 /// tragerea a devenit țintită, un singur proiectil pe țintaș ar fi lungit
 /// meciul la peste 20 de runde, de-aia intervalul a urcat.)
 ///
-/// PLAFONUL DE JUCĂTORI A URCAT DE LA 4 LA 10, DAUNELE NU S-AU RECALIBRAT:
-/// la o masă plină, mai mulți țintași trag în aceeași rundă (proporțional
-/// mai mulți răspunsuri corecte), deci ritmul general al meciului crește —
-/// fiecare lovitură individuală rămâne la fel de „grea" ca înainte, doar că
-/// se întâmplă mai des la masa mare. E o schimbare de ritm cunoscută, nu un
-/// bug; dacă vreodată se simte prea rapid la 8-10 jucători, aici trebuie
-/// coborât intervalul, nu în altă parte.
+/// PLAFONUL DE JUCĂTORI A URCAT DE LA 4 LA 10, IAR DAUNELE AU FOST COBORÂTE
+/// EXACT DIN MOTIVUL PREVĂZUT MAI SUS: la o masă plină trag proporțional mai
+/// mulți țintași în aceeași rundă, deci un meci de 10 se termina mult prea
+/// repede la 18-30 pe lovitură. Userul a cerut explicit „mult mai puțin
+/// damage, să se continue tura mai mult timp" — de-aia intervalul e acum
+/// [tanksDamageMin]–[tanksDamageMax] (vezi valorile de mai jos), cam
+/// jumătate din cât era. Efectul: la 4 jucători meciul devine ceva mai lung
+/// decât înainte, iar la 8-10 rămâne în banda de ~10-14 runde în loc să se
+/// încheie în 4-5.
 ///
 /// TOATE ARUNCĂRILE DE ZAR SE FAC ÎNTR-UN SINGUR LOC: în tranzacția care
 /// rezolvă runda (vezi MultiplayerService.resolveTanksRound). Rezultatul
@@ -124,13 +126,18 @@ int tanksRevealSecondsFor({required bool anyShots}) =>
 /// nimerește nimic (fără răspunsuri corecte nu se trage niciun proiectil,
 /// deci nu scade nicio bară). La atingerea lui meciul se încheie normal,
 /// iar clasamentul rămâne cel dat de daunele făcute.
-const int tanksMaxRounds = 20;
+/// Urcat de la 20 la 32 odată cu coborârea daunelor: cu lovituri de ~10 HP,
+/// un meci echilibrat are nevoie de mai multe runde până cade cineva, iar
+/// vechiul plafon l-ar fi tăiat artificial exact în mijloc.
+const int tanksMaxRounds = 32;
 
 /// Daunele unei lovituri reușite, în HP (= procente din [tanksMaxHp]).
-/// Vezi comentariul din capul fișierului pentru de ce sunt atât de mari:
-/// se trage într-o singură țintă aleasă, nu în toți odată.
-const int tanksDamageMin = 18;
-const int tanksDamageMax = 30;
+/// COBORÂTE de la 18-30 la cererea explicită a userului („tancurile dau
+/// mult mai puțin damage, să se continue tura mai mult timp") — vezi
+/// comentariul din capul fișierului pentru socoteala completă. La ~10 HP
+/// media pe lovitură, un tanc rezistă ~10 lovituri reușite în loc de ~4.
+const int tanksDamageMin = 7;
+const int tanksDamageMax = 13;
 
 /// Șansa ca ținta să EVITE proiectilul, după cum a răspuns ea însăși în
 /// runda curentă. Asimetria e toată ideea de echilibru a modului.

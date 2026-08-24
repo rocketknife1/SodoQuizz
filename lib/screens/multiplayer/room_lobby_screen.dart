@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/chat_filter.dart';
 import '../../core/electric_chair.dart';
@@ -84,16 +83,6 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
       MultiplayerService.instance.matchHeartbeat(widget.matchId);
     });
-    // Boți de test, DOAR în build de debug (niciodată în release, deci
-    // niciodată pentru un jucător real) — populează camera automat, ca să
-    // nu mai fie nevoie de trei prieteni reali doar ca să văd un lobby plin.
-    // Doar gazda îi pornește, ca să nu se scrie de mai multe ori din clienți
-    // diferiți (id-uri fixe, oricum idempotent — vezi spawnTestBots).
-    if (kDebugMode && widget.isHost) {
-      MultiplayerService.instance.spawnTestBots(matchId: widget.matchId).catchError((e) {
-        debugPrint('RoomLobbyScreen: spawnTestBots a esuat: $e');
-      });
-    }
   }
 
   @override
@@ -198,11 +187,6 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
     if (_navigated || info.status != MatchStatus.playing) return;
     _navigated = true;
     final gameMode = info.gameMode;
-    // Boții de test NU mai sunt scoși aici: userul a cerut explicit să
-    // rămână și să joace efectiv meciul (vezi driveTestBotAnswers/
-    // driveTestBotChairAnswers, chemate din ecranele fiecărui mod). Dacă
-    // gazda pleacă brusc din lobby ÎNAINTE de asta, camera întreagă (boți
-    // incluși) se șterge oricum — vezi leaveMatch/_deleteMatch.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.pushReplacement(

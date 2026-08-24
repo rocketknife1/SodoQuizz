@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
@@ -50,10 +49,6 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   bool _showWinners = false;
   bool _resolving = false;
   bool _navigatedToResults = false;
-
-  /// Boții de test (DOAR debug) votează o singură dată pe rundă — vezi
-  /// MultiplayerTanksScreen pentru aceeași idee.
-  bool _botsTriggeredThisRound = false;
   bool _left = false;
   Timer? _revealDelayTimer;
   Timer? _advanceTimer;
@@ -146,29 +141,12 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       _revealDelayTimer = null;
       _advanceTimer?.cancel();
       _advanceTimer = null;
-      _botsTriggeredThisRound = false;
     }
 
     if (info.roundPhase == RoundPhase.answering) {
       final activeIds = players.where((p) => !p.eliminated).map((p) => p.id).toSet();
       final allAnswered = activeIds.isNotEmpty && activeIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
-      // Boții de test (DOAR debug) votează — nu contează care variantă e
-      // "corectă" din perspectiva funcției (poate fi chiar egalitate de
-      // popularitate), doar că jumătate din boți nimeresc pe alegerea reală
-      // și jumătate nu, exact ca un vot chiar aleator.
-      if (kDebugMode && !_botsTriggeredThisRound) {
-        final pendingBots = activeIds.where((id) => id.startsWith('testbot_') && !info.roundAnswers.containsKey(id)).toList();
-        if (pendingBots.isNotEmpty) {
-          _botsTriggeredThisRound = true;
-          MultiplayerService.instance.driveTestBotAnswers(
-            matchId: widget.matchId,
-            botIds: pendingBots,
-            correctAnswer: 'higher',
-            choices: const ['higher', 'lower'],
-          );
-        }
-      }
       if (allAnswered || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }

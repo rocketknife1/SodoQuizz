@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flame/game.dart' show GameWidget;
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
@@ -53,10 +52,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   bool _showAdvance = false;
   bool _resolving = false;
   bool _resolvingChoices = false;
-
-  /// Boții de test (DOAR debug) răspund o singură dată pe rundă — vezi
-  /// MultiplayerTanksScreen pentru aceeași idee.
-  bool _botsTriggeredThisRound = false;
   bool _navigatedToResults = false;
   bool _left = false;
   Timer? _revealDelayTimer;
@@ -241,23 +236,22 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           outcome: revealing ? _outcomeFor(info, p.id) : ObbyRoundOutcome.none,
         ),
     ];
-    // Camera 3rd-person stă pe mine în ORICE moment în care nu sunt eu cel
-    // care trebuie să acționeze chiar acum: dacă am răspuns deja (aștept
-    // ceilalți) sau dacă nu sunt eu cel care alege placa runda asta —
-    // [ObbyPhase.waiting] reutilizează exact scena de deznodământ, doar că
-    // toți alergătorii au [ObbyRoundOutcome.none] mai sus, deci stau pe loc.
+    // Scena de grup se vede TOT TIMPUL (cerință explicită a userului): toți
+    // jucătorii, unul lângă altul în galaxie, în același cadru comun.
+    // Singura excepție e faza de alegere a plăcii, unde fiecare își vede
+    // propriile trei plăci — acolo cadrul chiar TREBUIE să fie individual.
+    // În rest, [ObbyPhase.waiting] reutilizează scena de pistă cu toți pe
+    // [ObbyRoundOutcome.none], deci stau pur și simplu pe loc.
     final phase = switch (info.roundPhase) {
       RoundPhase.choosing => _iAmChoosing(info) ? ObbyPhase.choosing : ObbyPhase.waiting,
       RoundPhase.revealed => ObbyPhase.revealed,
-      RoundPhase.answering => info.roundAnswers.containsKey(me) ? ObbyPhase.waiting : ObbyPhase.idle,
-      _ => ObbyPhase.idle,
+      _ => ObbyPhase.waiting,
     };
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
     final revealT = (elapsed / _revealSpanSeconds).clamp(0.0, 1.0);
     _game.applyRoundState(
       phase: phase,
       racers: racers,
-      myId: me,
       myChoice: info.roundPlatformChoices[me],
       revealT: revealT,
     );
@@ -337,29 +331,12 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _revealDelayTimer = null;
       _advanceTimer?.cancel();
       _advanceTimer = null;
-      _botsTriggeredThisRound = false;
     }
 
     if (info.roundPhase == RoundPhase.answering) {
       final activeIds = players.where((p) => p.obstaclesCleared < obbyObstacleCount).map((p) => p.id).toSet();
       final allAnswered = activeIds.isNotEmpty && activeIds.every(info.roundAnswers.containsKey);
       final timedOut = _secondsLeftFor(info) <= 0;
-      // Boții de test (DOAR debug) răspund la întrebarea rundei. Alegerea
-      // plăcii (faza [RoundPhase.choosing]) rămâne pe seama fallback-ului
-      // existent (nicio alegere = placă falsă, fără progres) — n-are rost
-      // să scriem și noi o alegere explicită.
-      if (kDebugMode && !_botsTriggeredThisRound) {
-        final pendingBots = activeIds.where((id) => id.startsWith('testbot_') && !info.roundAnswers.containsKey(id)).toList();
-        if (pendingBots.isNotEmpty) {
-          _botsTriggeredThisRound = true;
-          MultiplayerService.instance.driveTestBotAnswers(
-            matchId: widget.matchId,
-            botIds: pendingBots,
-            correctAnswer: _questionFor(info.roundIndex).answer,
-            choices: _choicesFor(info.roundIndex),
-          );
-        }
-      }
       if (allAnswered || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }
@@ -437,27 +414,18 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                       break;
                     }
                   }
-                  // Camera 3rd-person e pe ecran în ORICE moment în afară de
-                  // "trebuie să răspund eu chiar acum, n-am răspuns încă" —
-                  // cerința explicită a userului. Vezi [_feedGame] pentru
-                  // aceeași logică, aplicată datelor trimise jocului.
                   final iAnswered = info.roundAnswers.containsKey(me);
-                  final showsGame = info.roundPhase == RoundPhase.revealed ||
-                      info.roundPhase == RoundPhase.choosing ||
-                      (info.roundPhase == RoundPhase.answering && iAnswered);
                   return Column(
                     children: [
                       _buildTopBar(info),
                       Expanded(
+                        // Scena Flame e MEREU vizibilă acum — inclusiv sub
+                        // întrebare. UN SINGUR GameWidget pentru tot ecranul:
+                        // două instanțe pe același joc (una per fază) aruncau
+                        // la fiecare schimbare de fază.
                         child: Stack(
                           children: [
-                            // UN SINGUR GameWidget pentru tot ecranul, montat o
-                            // dată și doar ascuns când nu e nevoie de el. Două
-                            // GameWidget-uri pe aceeași instanță de joc (unul
-                            // per fază) aruncau la fiecare schimbare de fază.
-                            Positioned.fill(
-                              child: Offstage(offstage: !showsGame, child: GameWidget(game: _game)),
-                            ),
+                            Positioned.fill(child: GameWidget(game: _game)),
                             Positioned.fill(
                               child: switch (info.roundPhase) {
                                 RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
@@ -543,37 +511,28 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
-  // ─── Faza de răspuns: întrebare + propriul personaj într-un colț ────────
+  // ─── Faza de răspuns: întrebarea PESTE scena cu toți jucătorii ──────────
+  //
+  // Nu mai ascunde scena (cerință explicită a userului): întrebarea și
+  // variantele plutesc peste imaginea comună, jos, ca personajele să rămână
+  // vizibile deasupra lor. Personajul din colț a dispărut — n-are rost, îți
+  // vezi propriul astronaut chiar în scenă, marcat cu un triunghi alb
+  // deasupra capului (vezi _RunnerComponent.render).
 
   Widget _buildAnsweringScene(MatchInfo info, MatchPlayer? myPlayer, List<MatchPlayer> players) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-            child: Column(
-              children: [
-                const SizedBox(height: 96),
-                _buildQuestion(info),
-                const SizedBox(height: 14),
-                _buildActionArea(info, myPlayer, players),
-              ],
-            ),
-          ),
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildQuestion(info),
+            const SizedBox(height: 10),
+            _buildActionArea(info, myPlayer, players),
+          ],
         ),
-        if (myPlayer != null)
-          Positioned(
-            top: 4,
-            right: 12,
-            child: AnimatedBuilder(
-              animation: _anim,
-              builder: (context, _) => _CornerCharacter(
-                color: pickAvatarColor(myPlayer.avatarSeed),
-                bob: sin(_anim.value * 2 * pi),
-              ),
-            ),
-          ),
-      ],
+      ),
     );
   }
 
@@ -581,20 +540,22 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     final question = _questionFor(info.roundIndex);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withAlpha(16),
-        borderRadius: BorderRadius.circular(22),
+        // Opac ca textul să rămână lizibil peste stele/personaje, dar NU pe
+        // tot ecranul — scena se vede în continuare deasupra panoului.
+        color: Colors.black.withAlpha(170),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white24, width: 1.4),
       ),
       child: Column(
         children: [
-          CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: obbyRoundSeconds, size: 40),
-          const SizedBox(height: 10),
+          CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: obbyRoundSeconds, size: 36),
+          const SizedBox(height: 8),
           Text(
             question.question,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800),
+            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
           ),
         ],
       ),
@@ -890,42 +851,3 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
 }
 
 
-/// Personajul din colțul ecranului, cât timp jucătorul răspunde — un mic
-/// astronaut (vezi [paintObbyAstronaut]), care abia se leagănă (idle), ca
-/// ecranul să nu pară static în timp ce se așteaptă răspunsul.
-class _CornerCharacter extends StatelessWidget {
-  final Color color;
-  final double bob; // -1..1
-
-  const _CornerCharacter({required this.color, required this.bob});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 78,
-      height: 92,
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: Colors.black.withAlpha(90),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white24, width: 1.2),
-      ),
-      child: CustomPaint(painter: _SilhouettePainter(color: color, bob: bob)),
-    );
-  }
-}
-
-class _SilhouettePainter extends CustomPainter {
-  final Color color;
-  final double bob;
-  const _SilhouettePainter({required this.color, required this.bob});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bounds = Rect.fromLTWH(0, bob.abs() * -2, size.width, size.height - 4);
-    paintObbyAstronaut(canvas, bounds, color, legSpread: bob * 0.4);
-  }
-
-  @override
-  bool shouldRepaint(covariant _SilhouettePainter oldDelegate) => oldDelegate.bob != bob || oldDelegate.color != color;
-}

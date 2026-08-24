@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/electric_chair.dart';
@@ -58,13 +57,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   int _lastRoundIndex = -1;
   bool _resolving = false;
   DateTime? _lastResolveAttempt;
-
-  /// Boții de test (DOAR debug) răspund o singură dată pe rundă — fără
-  /// steagurile astea, fiecare build ar rescrie mereu alt răspuns aleator.
-  /// Separate (nu unul singur), fiindcă răspunsul propriu și cel de pe
-  /// scaun se întâmplă în faze diferite ale aceleiași runde.
-  bool _botsAnsweredTriggered = false;
-  bool _botsChairTriggered = false;
   bool _navigatedToResults = false;
   bool _left = false;
 
@@ -252,8 +244,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       _lastRoundIndex = info.roundIndex;
       _pendingTargetId = null;
       _lastResolveAttempt = null;
-      _botsAnsweredTriggered = false;
-      _botsChairTriggered = false;
       _advanceTimer?.cancel();
       _advanceTimer = null;
     }
@@ -263,21 +253,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (info.roundPhase == RoundPhase.answering) {
       final aliveIds = players.where((p) => !p.eliminated).map((p) => p.id).toSet();
       final allAnswered = aliveIds.isNotEmpty && aliveIds.every(info.roundAnswers.containsKey);
-      // Boții de test (DOAR debug) răspund la propria întrebare a rundei.
-      // Targetul lor rămâne pe seama auto-alegerii (resolveElectricChairTargeting,
-      // deja aleatoare) — n-are rost să scriem și noi o alegere explicită.
-      if (kDebugMode && !_botsAnsweredTriggered) {
-        final pendingBots = aliveIds.where((id) => id.startsWith('testbot_') && !info.roundAnswers.containsKey(id)).toList();
-        if (pendingBots.isNotEmpty) {
-          _botsAnsweredTriggered = true;
-          MultiplayerService.instance.driveTestBotAnswers(
-            matchId: widget.matchId,
-            botIds: pendingBots,
-            correctAnswer: _questionFor(info.roundIndex).answer,
-            choices: _choicesFor(info.roundIndex),
-          );
-        }
-      }
       if (allAnswered || _answerSecondsLeftFor(info) <= 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }
@@ -290,28 +265,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     } else if (info.roundPhase == RoundPhase.chair) {
       final victims = info.roundChairAssignments.keys.where(present.contains);
       final allAnswered = victims.isNotEmpty && victims.every(info.roundChairAnswers.containsKey);
-      // Un bot pus pe scaun răspunde și el — altfel ar pierde AUTOMAT o
-      // viață de fiecare dată, niciodată n-ar scăpa.
-      if (kDebugMode && !_botsChairTriggered) {
-        final pendingBots = {
-          for (final id in victims)
-            if (id.startsWith('testbot_') && !info.roundChairAnswers.containsKey(id))
-              id: info.roundChairAssignments[id]!,
-        };
-        if (pendingBots.isNotEmpty) {
-          _botsChairTriggered = true;
-          MultiplayerService.instance.driveTestBotChairAnswers(
-            matchId: widget.matchId,
-            byBotId: {
-              for (final entry in pendingBots.entries)
-                entry.key: (
-                  correctAnswer: _chairQuestionFor(info.roundIndex, entry.value).answer,
-                  choices: _chairChoicesFor(info.roundIndex, entry.key, _chairQuestionFor(info.roundIndex, entry.value)),
-                ),
-            },
-          );
-        }
-      }
       if (allAnswered || _chairSecondsLeftFor(info) <= 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }

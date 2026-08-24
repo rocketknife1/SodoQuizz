@@ -18,7 +18,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    game.applyRoundState(phase: ObbyPhase.choosing, racers: racers, myId: 'a');
+    game.applyRoundState(phase: ObbyPhase.choosing, racers: racers);
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -31,7 +31,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    game.applyRoundState(phase: ObbyPhase.revealed, racers: racers, myId: 'a', revealT: 0.5);
+    game.applyRoundState(phase: ObbyPhase.revealed, racers: racers, revealT: 0.5);
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -55,7 +55,7 @@ void main() {
     // Toată animația, pas cu pas: începutul (încă pe placă), mijlocul
     // căderii și sfârșitul ei, unde personajul e aproape complet estompat.
     for (final t in [0.0, 0.2, 0.5, 0.8, 1.0]) {
-      game.applyRoundState(phase: ObbyPhase.revealed, racers: fallers, myId: 'a', revealT: t);
+      game.applyRoundState(phase: ObbyPhase.revealed, racers: fallers, revealT: t);
       await tester.pump(const Duration(milliseconds: 100));
     }
 
@@ -82,12 +82,12 @@ void main() {
     ];
 
     Future<void> playRound(List<ObbyRacerData> result) async {
-      game.applyRoundState(phase: ObbyPhase.idle, racers: racers, myId: 'a');
+      game.applyRoundState(phase: ObbyPhase.idle, racers: racers);
       await tester.pump(const Duration(milliseconds: 100));
-      game.applyRoundState(phase: ObbyPhase.choosing, racers: racers, myId: 'a', myChoice: 1);
+      game.applyRoundState(phase: ObbyPhase.choosing, racers: racers, myChoice: 1);
       await tester.pump(const Duration(milliseconds: 100));
       for (final t in [0.0, 0.4, 0.4, 1.0]) {
-        game.applyRoundState(phase: ObbyPhase.revealed, racers: result, myId: 'a', revealT: t);
+        game.applyRoundState(phase: ObbyPhase.revealed, racers: result, revealT: t);
         await tester.pump(const Duration(milliseconds: 100));
       }
     }
@@ -96,6 +96,33 @@ void main() {
     await playRound(afterRound2);
 
     expect(tester.takeException(), isNull);
+  });
+
+  /// REGRESIE (ecran negru tot meciul): în aplicația reală, primele
+  /// snapshot-uri Firestore ajung ÎNAINTE ca `onLoad` să termine, deci scena
+  /// nu poate fi construită încă. Varianta veche marca totuși faza și
+  /// roster-ul ca aplicate, așa că apelurile următoare vedeau „nimic
+  /// schimbat" și scena NU se mai construia niciodată.
+  ///
+  /// ATENȚIE: testul de aici NU reproduce fereastra de timp (în
+  /// `flutter_test`, `pumpWidget` termină `onLoad` înainte să apucăm noi să
+  /// chemăm ceva, deci `isLoaded` e deja true). Verifică doar că fluxul
+  /// normal chiar construiește scena — bug-ul propriu-zis a fost prins pe
+  /// build live, cu instrumentare, și e păzit de comentariul din
+  /// ObbyGame.applyRoundState. Ține minte asta dacă vreodată pare că testul
+  /// „acoperă" cazul: nu-l acoperă.
+  testWidgets('fluxul normal chiar construieste scena', (tester) async {
+    final game = ObbyGame(onPlatformChosen: (_) {});
+    await tester.pumpWidget(MaterialApp(home: GameWidget(game: game)));
+    await tester.pump();
+
+    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers);
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(tester.takeException(), isNull);
+    expect(game.sceneBuilds, greaterThan(0),
+        reason: 'scena nu s-a construit niciodata — ecranul ar fi negru tot meciul');
   });
 
   /// [ObbyPhase.waiting] — camera pe mine cât aștept rezultatul, cerută
@@ -109,7 +136,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers, myId: 'a');
+    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers);
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -127,10 +154,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
 
-    game.applyRoundState(phase: ObbyPhase.idle, racers: racers, myId: 'a');
+    game.applyRoundState(phase: ObbyPhase.idle, racers: racers);
     await tester.pump(const Duration(milliseconds: 100));
 
-    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers, myId: 'a');
+    game.applyRoundState(phase: ObbyPhase.waiting, racers: racers);
     await tester.pump(const Duration(milliseconds: 100));
     await tester.pump(const Duration(milliseconds: 100));
 
@@ -139,7 +166,7 @@ void main() {
       ObbyRacerData(id: 'b', name: 'B', color: Colors.orange, progress: 0.3, isMe: false, outcome: ObbyRoundOutcome.fell),
     ];
     for (final t in [0.0, 0.3, 0.7, 1.0]) {
-      game.applyRoundState(phase: ObbyPhase.revealed, racers: result, myId: 'a', revealT: t);
+      game.applyRoundState(phase: ObbyPhase.revealed, racers: result, revealT: t);
       await tester.pump(const Duration(milliseconds: 100));
     }
 
