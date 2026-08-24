@@ -489,21 +489,32 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                         // întrebare. UN SINGUR GameWidget pentru tot ecranul:
                         // două instanțe pe același joc (una per fază) aruncau
                         // la fiecare schimbare de fază.
-                        child: Stack(
-                          children: [
-                            Positioned.fill(child: GameWidget(game: _game)),
-                            Positioned.fill(
-                              child: switch (info.roundPhase) {
-                                RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
-                                RoundPhase.choosing when _iAmChoosing(info) => _buildChoosingScene(info),
-                                RoundPhase.choosing => _buildWaitingCaption(
-                                    tr('Ceilalți își aleg placa...', 'The others are picking their platform...')),
-                                RoundPhase.answering when iAnswered => _buildWaitingCaption(
-                                    tr('✓ Ai răspuns! Aștepți ceilalți concurenți...', '✓ You answered! Waiting for the other racers...')),
-                                _ => _buildAnsweringScene(info, myPlayer, players),
-                              },
-                            ),
-                          ],
+                        //
+                        // ClipRect e OBLIGATORIU aici, nu decorativ: fără el,
+                        // GameWidget pictează în afara dreptunghiului pe care
+                        // i-l dă Expanded (confirmat live — bara de sus
+                        // dispărea complet cât timp GameWidget era pe ecran,
+                        // deși în arborele de widget-uri stă DEDESUBTUL ei).
+                        // Stack.clipBehavior nu ajunge să oprească asta,
+                        // fiindcă Flame nu respectă mereu constrângerile
+                        // normale de layout ale Flutter.
+                        child: ClipRect(
+                          child: Stack(
+                            children: [
+                              Positioned.fill(child: GameWidget(game: _game)),
+                              Positioned.fill(
+                                child: switch (info.roundPhase) {
+                                  RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
+                                  RoundPhase.choosing when _iAmChoosing(info) => _buildChoosingScene(info),
+                                  RoundPhase.choosing => _buildWaitingCaption(
+                                      tr('Ceilalți își aleg placa...', 'The others are picking their platform...')),
+                                  RoundPhase.answering when iAnswered => _buildWaitingCaption(
+                                      tr('✓ Ai răspuns! Aștepți ceilalți concurenți...', '✓ You answered! Waiting for the other racers...')),
+                                  _ => _buildAnsweringScene(info, myPlayer, players),
+                                },
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -520,10 +531,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Widget _buildTopBar(MatchInfo info) {
     final doubleRound = obbyIsDoubleRound(matchId: widget.matchId, roundIndex: info.roundIndex);
     return Column(
-      // Fără asta, Column-ul ăsta (necuprins într-un Expanded în afara lui)
-      // pretinde TOATĂ înălțimea disponibilă de la Column-ul părinte —
-      // exact bug-ul găsit live: bara de sus (săgeată, „Obby", rundă)
-      // dispărea din ecran, deși codul ei arăta corect.
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
