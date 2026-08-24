@@ -168,6 +168,13 @@ class AuthService {
           linked = true;
         } on FirebaseAuthException catch (e) {
           if (e.code != 'credential-already-in-use' && e.code != 'email-already-in-use') rethrow;
+          // Contul Google are deja istoric în altă parte, deci acela câștigă
+          // și identitatea anonimă de pe telefonul ăsta rămâne fără rost.
+          // O aruncăm ÎNAINTE de a comuta pe contul Google — altfel rămâne
+          // în urmă ca un al doilea "cont al meu": profilul ei de Guest
+          // continuă să apară în clasament la nesfârșit, iar userul vede
+          // două intrări cu numele lui și nu înțelege de unde vin.
+          await _discardAnonymousIdentity(anonymous);
           await FirebaseAuth.instance.signInWithCredential(credential);
         }
       } else {
@@ -257,6 +264,8 @@ class AuthService {
           linked = true;
         } on FirebaseAuthException catch (e) {
           if (e.code != 'credential-already-in-use') rethrow;
+          // Aceeași grijă ca la Google — vezi [signInWithGoogle].
+          await _discardAnonymousIdentity(anonymous);
           await FirebaseAuth.instance.signInWithGamesServices();
         }
       } else {
@@ -316,6 +325,39 @@ class AuthService {
   /// `ensureProfileHeartbeat` + prima sincronizare ar reface exact aceleași
   /// documente sub uid-ul nou. Datele ar reapărea în consolă imediat, iar
   /// jucătorul ar rămâne convins că și-a șters contul.
+  /// Aruncă identitatea anonimă rămasă fără rost când login-ul a dus la un
+  /// cont care exista deja în altă parte (vezi [signInWithGoogle]).
+  ///
+  /// ORDINEA CONTEAZĂ, la fel ca în [deleteAccount]: întâi documentele din
+  /// Firestore (cât timp `request.auth.uid` e ÎNCĂ uid-ul anonim, deci
+  /// regulile permit ștergerea), abia apoi contul Auth. Invers, ștergerile
+  /// ar fi respinse.
+  ///
+  /// Progresul local NU se atinge: rămâne pe telefon și e urcat sub contul
+  /// nou dacă e cazul. Aici se aruncă doar identitatea goală, nu ce a jucat
+  /// omul.
+  ///
+  /// Totul e „cea mai bună încercare": dacă vreun pas pică (rețea, reguli),
+  /// login-ul TREBUIE să continue oricum — un cont dublu rămas în clasament
+  /// e mult mai puțin grav decât un login care eșuează.
+  Future<void> _discardAnonymousIdentity(User anonymous) async {
+    try {
+      await PlayerProfileService.instance.deleteMyProfile();
+    } catch (e) {
+      debugPrint('AuthService._discardAnonymousIdentity: profilul nu s-a sters: $e');
+    }
+    try {
+      await CloudSyncService.instance.deleteCloudSave();
+    } catch (e) {
+      debugPrint('AuthService._discardAnonymousIdentity: cloud-save-ul nu s-a sters: $e');
+    }
+    try {
+      await anonymous.delete();
+    } catch (e) {
+      debugPrint('AuthService._discardAnonymousIdentity: contul anonim nu s-a sters: $e');
+    }
+  }
+
   Future<void> deleteAccount() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;

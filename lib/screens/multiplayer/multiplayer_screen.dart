@@ -93,6 +93,82 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) MultiplayerInfoDialog.maybeShow(context);
     });
+    _checkConnection();
+  }
+
+  /// Multiplayer-ul are nevoie de internet — verificat AICI, la intrarea în
+  /// ecran, nu abia când userul apasă un buton.
+  ///
+  /// DE CE ÎN AVANS: fără asta, singurul semn că ești offline venea după ce
+  /// alegeai modul ȘI miza, plăteai, iar abia scrierea în Firestore pica —
+  /// moment în care miza se întoarce (vezi [_createRoom]), dar userul a
+  /// trecut degeaba prin trei dialoguri și rămâne cu senzația că „s-a stricat
+  /// jocul". Așa află din prima, iar butoanele sunt oprite cât timp n-are
+  /// conexiune.
+  ///
+  /// Restul jocului (solo, quest-uri, magazin) merge NEATINS offline —
+  /// progresul se ține local și urcă singur la următoarea conectare, vezi
+  /// CloudSyncService. Doar multiplayer-ul chiar nu poate funcționa fără
+  /// rețea, fiindcă întreaga lui stare stă în Firestore.
+  Future<void> _checkConnection() async {
+    try {
+      await MultiplayerService.instance.ensureInitialized();
+      if (mounted) setState(() => _offlineReason = null);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _offlineReason = e is MultiplayerUnavailableException
+          ? e.message
+          : tr('Ai nevoie de internet ca să joci multiplayer.',
+              'You need an internet connection to play multiplayer.'));
+    }
+  }
+
+  /// `null` = totul e în regulă. Altfel, mesajul de arătat în locul
+  /// butoanelor (vezi [_checkConnection]).
+  String? _offlineReason;
+
+  /// Banda de „n-ai internet" — explică DE CE nu merge și dă un buton de
+  /// reîncercare, ca userul să nu fie nevoit să iasă și să reintre în ecran
+  /// după ce își pornește datele mobile.
+  Widget _buildOfflineBanner() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: AppColors.danger.withAlpha(35),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.danger.withAlpha(140)),
+        ),
+        child: Column(
+          children: [
+            const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 26),
+            const SizedBox(height: 8),
+            Text(
+              _offlineReason ?? '',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700, height: 1.35),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              tr('Restul jocului merge normal fără internet — progresul se salvează pe telefon și urcă singur când te reconectezi.',
+                  'The rest of the game works fine offline — your progress is saved on the phone and uploads itself once you reconnect.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
+            ),
+            const SizedBox(height: 10),
+            ElevatedButton.icon(
+              onPressed: _checkConnection,
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 18),
+              label: Text(tr('Încearcă din nou', 'Try again'),
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -501,6 +577,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                           ),
                         ),
                         const SizedBox(height: 28),
+                        if (_offlineReason != null) _buildOfflineBanner(),
                         EntranceItem(
                           controller: _introCtrl,
                           interval: const Interval(0.3, 0.8, curve: Curves.easeOutBack),
@@ -511,6 +588,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                             subtitle: tr('Tu alegi modul, tu ești gazda', 'You pick the mode, you host'),
                             color: AppColors.blue,
                             onTap: _createRoom,
+                            disabled: _offlineReason != null,
                           ),
                         ),
                         const SizedBox(height: 14),
@@ -534,6 +612,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                                     : tr('Te cuplăm cu un adversar real', 'Matched with a real opponent'),
                                 color: AppColors.play,
                                 onTap: _joinOnline,
+                                disabled: _offlineReason != null,
                               );
                             },
                           ),
@@ -549,6 +628,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                             subtitle: tr('Intri în camera unui prieten', 'Enter a friend\'s room'),
                             color: AppColors.orange,
                             onTap: _joinWithCode,
+                            disabled: _offlineReason != null,
                           ),
                         ),
                         if (_busy) ...[
@@ -580,12 +660,18 @@ class _ActionTile extends StatefulWidget {
   final Color color;
   final VoidCallback onTap;
 
+  /// Fără internet, cele trei acțiuni nu pot face nimic — vezi
+  /// `_MultiplayerScreenState._checkConnection`. Rămân vizibile (ca userul
+  /// să vadă ce l-ar aștepta), dar stinse și fără efect la apăsare.
+  final bool disabled;
+
   const _ActionTile({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.color,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
@@ -603,6 +689,12 @@ class _ActionTileState extends State<_ActionTile> {
   @override
   Widget build(BuildContext context) {
     final color = widget.color;
+    if (widget.disabled) {
+      return Opacity(
+        opacity: 0.4,
+        child: IgnorePointer(child: _buildTile(color)),
+      );
+    }
     return GestureDetector(
       onTap: widget.onTap,
       onTapDown: (_) => setState(() => _pressed = true),
@@ -612,60 +704,64 @@ class _ActionTileState extends State<_ActionTile> {
         scale: _pressed ? 0.97 : 1.0,
         duration: const Duration(milliseconds: 100),
         curve: Curves.easeOut,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: ShapeDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [_lighten(color, 0.04), color, _lighten(color, -0.14)],
-            ),
-            shape: BeveledRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-              side: BorderSide(color: _lighten(color, 0.25).withAlpha(160), width: 1.2),
-            ),
-            shadows: [
-              BoxShadow(color: color.withAlpha(120), blurRadius: 16, offset: const Offset(0, 6)),
-            ],
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [_lighten(color, 0.3), _lighten(color, 0.05)],
-                  ),
-                  borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: Colors.white.withAlpha(70)),
-                ),
-                alignment: Alignment.center,
-                child: Icon(widget.icon, color: Colors.white, size: 24),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(widget.title,
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-                    const SizedBox(height: 2),
-                    Text(widget.subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w500)),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right_rounded, color: Colors.white.withAlpha(200), size: 26),
-            ],
-          ),
+        child: _buildTile(color),
+      ),
+    );
+  }
+
+  Widget _buildTile(Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: ShapeDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_lighten(color, 0.04), color, _lighten(color, -0.14)],
         ),
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: _lighten(color, 0.25).withAlpha(160), width: 1.2),
+        ),
+        shadows: [
+          BoxShadow(color: color.withAlpha(120), blurRadius: 16, offset: const Offset(0, 6)),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [_lighten(color, 0.3), _lighten(color, 0.05)],
+              ),
+              borderRadius: BorderRadius.circular(13),
+              border: Border.all(color: Colors.white.withAlpha(70)),
+            ),
+            alignment: Alignment.center,
+            child: Icon(widget.icon, color: Colors.white, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(widget.title,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                const SizedBox(height: 2),
+                Text(widget.subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right_rounded, color: Colors.white.withAlpha(200), size: 26),
+        ],
       ),
     );
   }

@@ -42,6 +42,22 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- ECRAN NEGRU DUPĂ LOGIN GOOGLE — reparat aici, nu în cod Dart.
+             Simptom: după ce alegi contul în fereastra nativă Google, ecranul
+             rămâne complet negru, dar muzica merge mai departe (deci aplicația
+             trăiește, doar desenul e mort). Doar o repornire completă îl
+             recuperează; backgrounding sau hot-reload NU.
+             Cauza: renderer-ul Impeller (Vulkan) al Flutter, pe GPU-uri Samsung
+             Xclipse, pierde suprafața de desen când aplicația e readusă în
+             față de o Activitate externă (fereastra Google e exact asta).
+             `adb logcat` arată ciclul complet de resume+redraw, fără nicio
+             excepție — Android crede că a desenat, dar nu se vede nimic.
+             Fix: cădem înapoi pe Skia, care n-are acest mod de eșec. Costul e
+             mic (Impeller e ceva mai rapid la animații), iar un ecran negru
+             fără niciun mesaj e mult mai rău decât o pierdere mică de fps. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <!-- AdMob App ID real, din consola AdMob (app "Sodo Quizz"). -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
