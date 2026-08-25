@@ -20,6 +20,7 @@ dependencies:
   cloud_firestore: ^6.7.1
   firebase_auth: ^6.5.6
   google_sign_in: ^7.1.1
+  google_sign_in_web: ^1.0.0
   http: ^1.6.0
   google_mobile_ads: ^5.3.1
   firebase_auth_games_services: ^3.0.1

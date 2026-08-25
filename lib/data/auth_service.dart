@@ -125,82 +125,57 @@ class AuthService {
   /// [GoogleSignInAccount] pentru nume/poză), cât și la reautentificarea
   /// cerută de [deleteAccount] când sesiunea curentă e prea veche pentru
   /// operația sensibilă de ștergere ("requires-recent-login").
+  /// Idempotent — sigur de apelat de mai multe ori (ex. din UI, înainte de a
+  /// randa butonul Google pe web — vezi [googleAuthenticationEvents]).
+  Future<void> ensureGoogleInitialized() async {
+    if (_googleInitialized) return;
+    // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
+    // porneasca fluxul din browser - si NU accepta deloc serverClientId
+    // acolo (assertion: "serverClientId is not supported on Web").
+    // Android e invers: are nevoie de serverClientId (ca sa verifice
+    // id-token-ul), nu de clientId (vine din google-services.json). In
+    // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
+    // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
+    await GoogleSignIn.instance.initialize(
+      clientId: kIsWeb ? googleSignInServerClientId : null,
+      serverClientId: kIsWeb ? null : googleSignInServerClientId,
+    );
+    _googleInitialized = true;
+  }
+
   Future<({AuthCredential credential, GoogleSignInAccount account})> _authenticateGoogle() async {
-    if (!_googleInitialized) {
-      // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
-      // porneasca fluxul din browser - si NU accepta deloc serverClientId
-      // acolo (assertion: "serverClientId is not supported on Web").
-      // Android e invers: are nevoie de serverClientId (ca sa verifice
-      // id-token-ul), nu de clientId (vine din google-services.json). In
-      // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
-      // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
-      await GoogleSignIn.instance.initialize(
-        clientId: kIsWeb ? googleSignInServerClientId : null,
-        serverClientId: kIsWeb ? null : googleSignInServerClientId,
-      );
-      _googleInitialized = true;
-    }
+    await ensureGoogleInitialized();
     final account = await GoogleSignIn.instance.authenticate();
     final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
     return (credential: credential, account: account);
   }
 
+  /// Pe web pluginul refuză explicit [GoogleSignIn.authenticate] (aruncă
+  /// `UnimplementedError: authenticate is not supported on the web` —
+  /// verificat live, e limitare reală a SDK-ului Google, nu bug al nostru).
+  /// Google impune ca userul să apese butonul LOR randat direct în DOM
+  /// (protecție anti-clickjacking), nu unul al nostru care pornește fluxul
+  /// din cod. Fluxul devine deci pasiv: randăm butonul Google (vezi
+  /// data/google_web_signin_button.dart), iar UI-ul ascultă acest stream
+  /// pentru evenimentul de sign-in și apelează [completeWebGoogleSignIn].
+  Stream<GoogleSignInAuthenticationEvent> get googleAuthenticationEvents => GoogleSignIn.instance.authenticationEvents;
+
+  /// Continuarea fluxului de web, apelată de UI după ce
+  /// [googleAuthenticationEvents] a emis un [GoogleSignInAuthenticationEventSignIn].
+  Future<void> completeWebGoogleSignIn(GoogleSignInAccount account) async {
+    final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
+    try {
+      await _finishGoogleSignIn(account, credential);
+    } catch (e) {
+      debugPrint('AuthService.completeWebGoogleSignIn a esuat: $e');
+      throw const AccountUnavailableException();
+    }
+  }
+
   Future<void> signInWithGoogle() async {
     try {
       final auth = await _authenticateGoogle();
-      final credential = auth.credential;
-      final account = auth.account;
-      final anonymous = FirebaseAuth.instance.currentUser;
-      var linked = false;
-      if (anonymous != null && anonymous.isAnonymous) {
-        // LEAGĂ contul Google de identitatea anonimă curentă (păstrează
-        // ACELAȘI uid) în loc de signInWithCredential direct, care ar crea
-        // un uid nou și ar rupe legătura cu tot ce s-a acumulat deja pe
-        // identitatea asta (player_profiles/meciuri — vezi PlayerProfileService)
-        // — jucătorul ar apărea "dublat" în leaderboard, cu istoricul de
-        // Guest orfan sub uid-ul vechi. Eșuează doar dacă acest cont Google
-        // are deja propriul istoric în altă parte (alt telefon/sesiune) —
-        // în acel caz, acela câștigă (standard), iar progresul de Guest de
-        // pe telefonul ăsta rămâne orfan (inevitabil fără Cloud Functions
-        // care să contopească două conturi deja separate).
-        try {
-          await anonymous.linkWithCredential(credential);
-          linked = true;
-        } on FirebaseAuthException catch (e) {
-          if (e.code != 'credential-already-in-use' && e.code != 'email-already-in-use') rethrow;
-          // Contul Google are deja istoric în altă parte, deci acela câștigă
-          // și identitatea anonimă de pe telefonul ăsta rămâne fără rost.
-          // O aruncăm ÎNAINTE de a comuta pe contul Google — altfel rămâne
-          // în urmă ca un al doilea "cont al meu": profilul ei de Guest
-          // continuă să apară în clasament la nesfârșit, iar userul vede
-          // două intrări cu numele lui și nu înțelege de unde vin.
-          await _discardAnonymousIdentity(anonymous);
-          await FirebaseAuth.instance.signInWithCredential(credential);
-        }
-      } else {
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      }
-      final photoUrl = account.photoUrl ?? await _fetchGooglePhotoUrl(account);
-      // FirebaseAuth seteaza displayName/photoURL doar la crearea contului -
-      // le rescriem explicit din contul Google curent, ca sa fie mereu live.
-      await FirebaseAuth.instance.currentUser?.updateProfile(
-        displayName: account.displayName,
-        photoURL: photoUrl,
-      );
-      await FirebaseAuth.instance.currentUser?.reload();
-      // Legarea (link) păstrează ACELAȘI uid, deci singurul cloud-save de sub
-      // el e chiar cel urcat de telefonul ăsta cât era Guest — și poate fi mai
-      // vechi decât ce are pe telefon acum (urcarea se face când aplicația
-      // trece în fundal, vezi CloudSyncService.push). Un pullOrSeed aici ar
-      // aplica regula "cloud-ul câștigă" peste propriul progres proaspăt și ar
-      // da jucătorul cu o sesiune înapoi chiar în momentul în care se
-      // conectează. Deci: la legare urcăm noi, la logarea într-un cont Google
-      // care exista deja în altă parte rămâne cum a fost, cloud-ul câștigă.
-      if (linked) {
-        await CloudSyncService.instance.push();
-      } else {
-        await CloudSyncService.instance.pullOrSeed();
-      }
+      await _finishGoogleSignIn(auth.account, auth.credential);
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return; // userul a renuntat, nu e o eroare
       debugPrint('AuthService.signInWithGoogle a esuat: $e');
@@ -208,6 +183,63 @@ class AuthService {
     } catch (e) {
       debugPrint('AuthService.signInWithGoogle a esuat: $e');
       throw const AccountUnavailableException();
+    }
+  }
+
+  /// Partea comună fluxurilor mobil (authenticate() direct) și web (buton
+  /// randat + [googleAuthenticationEvents]): leagă/loghează în Firebase,
+  /// sincronizează numele/poza și cloud save-ul.
+  Future<void> _finishGoogleSignIn(GoogleSignInAccount account, AuthCredential credential) async {
+    final anonymous = FirebaseAuth.instance.currentUser;
+    var linked = false;
+    if (anonymous != null && anonymous.isAnonymous) {
+      // LEAGĂ contul Google de identitatea anonimă curentă (păstrează
+      // ACELAȘI uid) în loc de signInWithCredential direct, care ar crea
+      // un uid nou și ar rupe legătura cu tot ce s-a acumulat deja pe
+      // identitatea asta (player_profiles/meciuri — vezi PlayerProfileService)
+      // — jucătorul ar apărea "dublat" în leaderboard, cu istoricul de
+      // Guest orfan sub uid-ul vechi. Eșuează doar dacă acest cont Google
+      // are deja propriul istoric în altă parte (alt telefon/sesiune) —
+      // în acel caz, acela câștigă (standard), iar progresul de Guest de
+      // pe telefonul ăsta rămâne orfan (inevitabil fără Cloud Functions
+      // care să contopească două conturi deja separate).
+      try {
+        await anonymous.linkWithCredential(credential);
+        linked = true;
+      } on FirebaseAuthException catch (e) {
+        if (e.code != 'credential-already-in-use' && e.code != 'email-already-in-use') rethrow;
+        // Contul Google are deja istoric în altă parte, deci acela câștigă
+        // și identitatea anonimă de pe telefonul ăsta rămâne fără rost.
+        // O aruncăm ÎNAINTE de a comuta pe contul Google — altfel rămâne
+        // în urmă ca un al doilea "cont al meu": profilul ei de Guest
+        // continuă să apară în clasament la nesfârșit, iar userul vede
+        // două intrări cu numele lui și nu înțelege de unde vin.
+        await _discardAnonymousIdentity(anonymous);
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+    } else {
+      await FirebaseAuth.instance.signInWithCredential(credential);
+    }
+    final photoUrl = account.photoUrl ?? await _fetchGooglePhotoUrl(account);
+    // FirebaseAuth seteaza displayName/photoURL doar la crearea contului -
+    // le rescriem explicit din contul Google curent, ca sa fie mereu live.
+    await FirebaseAuth.instance.currentUser?.updateProfile(
+      displayName: account.displayName,
+      photoURL: photoUrl,
+    );
+    await FirebaseAuth.instance.currentUser?.reload();
+    // Legarea (link) păstrează ACELAȘI uid, deci singurul cloud-save de sub
+    // el e chiar cel urcat de telefonul ăsta cât era Guest — și poate fi mai
+    // vechi decât ce are pe telefon acum (urcarea se face când aplicația
+    // trece în fundal, vezi CloudSyncService.push). Un pullOrSeed aici ar
+    // aplica regula "cloud-ul câștigă" peste propriul progres proaspăt și ar
+    // da jucătorul cu o sesiune înapoi chiar în momentul în care se
+    // conectează. Deci: la legare urcăm noi, la logarea într-un cont Google
+    // care exista deja în altă parte rămâne cum a fost, cloud-ul câștigă.
+    if (linked) {
+      await CloudSyncService.instance.push();
+    } else {
+      await CloudSyncService.instance.pullOrSeed();
     }
   }
 

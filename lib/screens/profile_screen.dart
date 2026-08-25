@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../core/admin.dart';
 import '../core/leagues.dart';
 import '../core/progression.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
+import '../data/google_web_signin_button.dart';
 import '../data/player_profile_service.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
@@ -30,6 +34,54 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late Future<_ProfileData> _dataFuture = _load();
   final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
+
+  // Pe web nu putem porni login-ul Google din cod (vezi AuthService pentru
+  // de ce) - userul apasă butonul randat chiar de Google, iar noi doar
+  // ascultăm rezultatul pe acest stream. Abonare o singură dată la nivel de
+  // ecran (nu la fiecare deschidere a sheet-ului) ca să nu pierdem
+  // evenimentul dacă vine chiar în clipa în care sheet-ul se închide.
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleWebSub;
+
+  @override
+  void initState() {
+    super.initState();
+    if (kIsWeb) {
+      AuthService.instance.ensureGoogleInitialized();
+      _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((event) {
+        if (event is GoogleSignInAuthenticationEventSignIn) {
+          _completeWebGoogleSignIn(event.user);
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _googleWebSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _completeWebGoogleSignIn(GoogleSignInAccount account) async {
+    if (!mounted) return;
+    final sheetContext = _accountSheetContext;
+    if (sheetContext != null && Navigator.canPop(sheetContext)) {
+      Navigator.pop(sheetContext); // inchide sheet-ul "Conectează-te" — userul a apasat butonul Google, nu al nostru
+    }
+    _showSyncingDialog();
+    try {
+      await AuthService.instance.completeWebGoogleSignIn(account);
+      await PlayerProfileService.instance.ensureProfileHeartbeat();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop(); // inchide dialogul de sincronizare
+      setState(() => _dataFuture = _load());
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e is AccountUnavailableException ? e.message : 'Contul e indisponibil momentan.')),
+      );
+    }
+  }
 
   Future<_ProfileData> _load() async {
     final results = await Future.wait([
@@ -511,7 +563,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // fara isScrollControlled nu lasa SingleChildScrollView sa creasca
       // peste inaltimea intrinseca initiala, fara nicio eroare in release.
       isScrollControlled: true,
-      builder: (sheetContext) => SafeArea(
+      builder: (sheetContext) {
+        _accountSheetContext = sheetContext;
+        return SafeArea(
         child: SingleChildScrollView(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -528,18 +582,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 18),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.pop(sheetContext);
-                            _signIn();
-                          },
-                          icon: const Icon(Icons.login_rounded),
-                          label: Text(tr('Conectează-te cu Google', 'Sign in with Google')),
-                          style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                      // Pe web, Google interzice pornirea flow-ului din cod
+                      // (authenticate() aruncă UnimplementedError acolo) -
+                      // userul trebuie să apese butonul lor randat direct în
+                      // DOM. Vezi AuthService.googleAuthenticationEvents și
+                      // _completeWebGoogleSignIn pentru restul fluxului.
+                      if (kIsWeb)
+                        Center(child: buildGoogleWebSignInButton())
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(sheetContext);
+                              _signIn();
+                            },
+                            icon: const Icon(Icons.login_rounded),
+                            label: Text(tr('Conectează-te cu Google', 'Sign in with Google')),
+                            style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+                          ),
                         ),
-                      ),
                       if (AuthService.instance.isPlayGamesAvailable) ...[
                         const SizedBox(height: 10),
                         SizedBox(
@@ -587,9 +649,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-      ),
-    );
+        );
+      },
+    ).whenComplete(() => _accountSheetContext = null);
   }
+
+  BuildContext? _accountSheetContext;
 
   Future<void> _signIn({bool playGames = false}) async {
     _showSyncingDialog();
