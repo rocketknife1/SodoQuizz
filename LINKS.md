@@ -40,7 +40,7 @@ Play. Instalarea durează un minut.
 
 Dacă găsești ceva stricat sau ai o idee, spune-mi pe Discord — citesc tot:
 
-**https://discord.gg/uumq3RRgE**
+**https://discord.gg/d6ekWCGgbh**
 
 ---
 
