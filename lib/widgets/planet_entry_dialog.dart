@@ -122,7 +122,7 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.blur_on_rounded, color: AppColors.gem, size: 44),
+              const Icon(Icons.blur_on_rounded, color: AppColors.gem, size: 44),
               const SizedBox(height: 8),
               const Text(
                 'Planeta hologramelor',
@@ -136,7 +136,7 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
               _buildRules(),
               const SizedBox(height: 14),
               if (_loading)
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
                   child: CircularProgressIndicator(color: AppColors.gem),
                 )
@@ -216,7 +216,7 @@ class _PlanetEntryDialogState extends State<PlanetEntryDialog> {
               ? tr('Mai ai o rulare în ciclul ăsta.', 'You have one run left this cycle.')
               : tr('Mai ai $_runsLeft rulări în ciclul ăsta.', 'You have $_runsLeft runs left this cycle.'),
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
               color: AppColors.play, fontSize: 13, fontWeight: FontWeight.w800),
         ),
       );

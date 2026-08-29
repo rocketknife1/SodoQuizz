@@ -14,7 +14,7 @@ class SpaceBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(gradient: AppColors.spaceGradient),
+      decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
       child: Stack(
         fit: StackFit.expand,
         children: [

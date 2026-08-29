@@ -191,7 +191,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: Text(tr('Gata', 'Done'), style: TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
+            child: Text(tr('Gata', 'Done'), style: const TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
           ),
         ],
       ),
@@ -212,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           builder: (context, snapshot) {
             final data = snapshot.data;
             if (data == null) {
-              return Center(child: CircularProgressIndicator(color: AppColors.purple));
+              return const Center(child: CircularProgressIndicator(color: AppColors.purple));
             }
             final level = levelForXp(data.xp);
             final progress = levelProgress(data.xp);
@@ -223,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Center(
                   child: GestureDetector(
                     onTap: _pickAvatar,
-                    child: Stack(
+                    child: const Stack(
                       alignment: Alignment.bottomRight,
                       children: [
                         MyAvatar(size: 88),
@@ -303,7 +303,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     value: progress,
                     minHeight: 10,
                     backgroundColor: Colors.white12,
-                    valueColor: AlwaysStoppedAnimation(AppColors.purple),
+                    valueColor: const AlwaysStoppedAnimation(AppColors.purple),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -338,12 +338,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
                     child: Row(
                       children: [
-                        Icon(Icons.group_rounded, color: AppColors.teal, size: 20),
+                        const Icon(Icons.group_rounded, color: AppColors.teal, size: 20),
                         const SizedBox(width: 12),
                         Text(tr('Prieteni', 'Friends'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                         if (data.pendingFriendRequests > 0) ...[
                           const SizedBox(width: 8),
-                          NotificationDot(borderColor: AppColors.card),
+                          const NotificationDot(borderColor: AppColors.card),
                         ],
                         const Spacer(),
                         const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
@@ -368,12 +368,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
                     child: Row(
                       children: [
-                        Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 20),
+                        const Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 20),
                         const SizedBox(width: 12),
                         Text(tr('Realizări', 'Achievements'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                         if (data.claimableAchievements) ...[
                           const SizedBox(width: 8),
-                          NotificationDot(borderColor: AppColors.card),
+                          const NotificationDot(borderColor: AppColors.card),
                         ],
                         const Spacer(),
                         const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
@@ -537,7 +537,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                 decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
-                child: Row(
+                child: const Row(
                   children: [
                     Icon(Icons.admin_panel_settings_rounded, color: AppColors.orange, size: 20),
                     SizedBox(width: 12),
@@ -701,7 +701,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           content: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircularProgressIndicator(color: AppColors.blue),
+              const CircularProgressIndicator(color: AppColors.blue),
               const SizedBox(width: 20),
               Flexible(child: Text(tr('Se sincronizează progresul...', 'Syncing your progress...'), style: const TextStyle(color: Colors.white))),
             ],
@@ -737,7 +737,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(dialogContext);
               _deleteAccount();
             },
-            child: Text(tr('Șterge contul', 'Delete account'), style: TextStyle(color: AppColors.danger)),
+            child: Text(tr('Șterge contul', 'Delete account'), style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

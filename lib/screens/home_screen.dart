@@ -394,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Text(
               tr('$streak ${streak == 1 ? "zi" : "zile"} la rând',
                   '$streak ${streak == 1 ? "day" : "days"} in a row'),
-              style: TextStyle(
+              style: const TextStyle(
                   color: AppColors.orange,
                   fontSize: 12,
                   fontWeight: FontWeight.w700),

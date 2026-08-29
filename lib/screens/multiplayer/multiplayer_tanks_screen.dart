@@ -750,14 +750,14 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       child: Scaffold(
         backgroundColor: AppColors.bg,
         body: Container(
-          decoration: BoxDecoration(gradient: AppColors.spaceGradient),
+          decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
             child: StreamBuilder<MatchInfo>(
               stream: _matchStream,
               builder: (context, matchSnap) {
                 final info = matchSnap.data;
                 if (info == null) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.blue));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.blue));
                 }
                 return StreamBuilder<List<MatchPlayer>>(
                   stream: _playersStream,
@@ -905,7 +905,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             scale: answering && seconds <= 2 ? 1.14 : 1.0,
             child: answering
                 ? _CountdownDial(seconds: seconds)
-                : Icon(Icons.gps_fixed_rounded, color: AppColors.orange, size: 30),
+                : const Icon(Icons.gps_fixed_rounded, color: AppColors.orange, size: 30),
           ),
         ],
       ),
@@ -1099,7 +1099,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                           ? tr('AI FOST DISTRUS', 'YOU ARE WRECKED')
                           : tr('${names.join(', ')} — DISTRUS', '${names.join(', ')} — WRECKED'),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.danger,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
@@ -1169,7 +1169,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             const SizedBox(height: 8),
             Text(
               tr('✓ ARMAT — aștept ceilalți jucători', '✓ LOADED — waiting for the others'),
-              style: TextStyle(color: AppColors.play, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
+              style: const TextStyle(color: AppColors.play, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 0.5),
             ),
           ],
         ],
@@ -1386,7 +1386,7 @@ class _TargetingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.crisis_alert_rounded, color: AppColors.orange, size: 54),
+          const Icon(Icons.crisis_alert_rounded, color: AppColors.orange, size: 54),
           const SizedBox(height: 14),
           Text(
             tr('Tunarii te iau la ochi', 'The gunners are taking aim'),
@@ -1430,14 +1430,14 @@ class _TargetingView extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.play, size: 15),
+              const Icon(Icons.check_circle_rounded, color: AppColors.play, size: 15),
               const SizedBox(width: 7),
               Flexible(
                 child: Text(
                   question.answer,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800),
+                  style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800),
                 ),
               ),
             ],
@@ -2105,7 +2105,7 @@ class _AnswerButton extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                 ),
-                if (correct) Icon(Icons.check_circle_rounded, color: AppColors.play, size: 16),
+                if (correct) const Icon(Icons.check_circle_rounded, color: AppColors.play, size: 16),
               ],
             ),
           ),

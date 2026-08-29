@@ -155,7 +155,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
     }
 
     // culorile hologramelor de Cultură Generală, ca să nu fie toate la fel
-    final cultureColors = [
+    const cultureColors = [
       AppColors.teal,
       AppColors.blue,
       AppColors.purple,
@@ -293,7 +293,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.bg,
         body: Center(child: CircularProgressIndicator(color: AppColors.gem)),
       );
@@ -324,7 +324,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
       child: Scaffold(
         backgroundColor: AppColors.bg,
         body: Container(
-          decoration: BoxDecoration(gradient: AppColors.spaceGradient),
+          decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
             child: Column(
               children: [
@@ -614,7 +614,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
           ),
           const SizedBox(height: 6),
           Text(tr('$_correct din $planetQuestionCount', '$_correct of $planetQuestionCount'),
-              style: TextStyle(
+              style: const TextStyle(
                   color: AppColors.gem,
                   fontSize: 30,
                   fontWeight: FontWeight.w900)),
@@ -673,7 +673,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
         tr('Scor perfect — recompensa mare vine garantat.',
             'Perfect score — the big reward is guaranteed.'),
         textAlign: TextAlign.center,
-        style: TextStyle(
+        style: const TextStyle(
             color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w700),
       );
     }

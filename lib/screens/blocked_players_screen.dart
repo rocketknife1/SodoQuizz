@@ -32,7 +32,7 @@ class _BlockedPlayersScreenState extends State<BlockedPlayersScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.bgGradient),
+        decoration: const BoxDecoration(gradient: AppColors.bgGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -56,7 +56,7 @@ class _BlockedPlayersScreenState extends State<BlockedPlayersScreen> {
                   builder: (context, snap) {
                     final players = snap.data;
                     if (players == null) {
-                      return Center(child: CircularProgressIndicator(color: AppColors.teal));
+                      return const Center(child: CircularProgressIndicator(color: AppColors.teal));
                     }
                     if (players.isEmpty) {
                       return Center(
@@ -108,7 +108,7 @@ class _BlockedRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
+          const Icon(Icons.block_rounded, color: AppColors.danger, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -119,7 +119,7 @@ class _BlockedRow extends StatelessWidget {
           ),
           TextButton(
             onPressed: onUnblock,
-            child: Text(tr('Deblochează', 'Unblock'), style: TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700)),
+            child: Text(tr('Deblochează', 'Unblock'), style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700)),
           ),
         ],
       ),

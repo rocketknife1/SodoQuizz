@@ -458,12 +458,12 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.military_tech_rounded, color: AppColors.orange, size: 16),
+              const Icon(Icons.military_tech_rounded, color: AppColors.orange, size: 16),
               const SizedBox(width: 8),
               const Text('Quizz Tanks', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
               const SizedBox(width: 10),
               Text('$playerCount/$tanksPlayerCount',
-                  style: TextStyle(color: AppColors.orange, fontSize: 13, fontWeight: FontWeight.w900)),
+                  style: const TextStyle(color: AppColors.orange, fontSize: 13, fontWeight: FontWeight.w900)),
             ],
           ),
           const SizedBox(height: 3),
@@ -517,7 +517,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                     ringColor: p.isHost
                         ? AppColors.coin
                         : (p.id == MultiplayerService.instance.currentPlayerId ? AppColors.blue : null),
-                    topBadge: p.isHost ? PlayerTopBadge.crown() : null,
+                    topBadge: p.isHost ? const PlayerTopBadge.crown() : null,
                     // Tap pe un jucător = meniul de raportare/blocare. Aici,
                     // nu doar pe mesaje, fiindcă cineva se poate purta urât
                     // și fără să scrie nimic în chat.
@@ -582,7 +582,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                       constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
                       decoration: BoxDecoration(
                         gradient: me
-                            ? LinearGradient(colors: [AppColors.blue, Color(0xFF2563EB)], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                            ? const LinearGradient(colors: [AppColors.blue, Color(0xFF2563EB)], begin: Alignment.topLeft, end: Alignment.bottomRight)
                             : null,
                         color: me ? null : Colors.white.withAlpha(20),
                         border: me ? null : Border.all(color: Colors.white.withAlpha(25)),
@@ -600,7 +600,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                         children: [
                           if (!me)
                             Text(m.senderName,
-                                style: TextStyle(color: AppColors.teal, fontSize: 10, fontWeight: FontWeight.w800)),
+                                style: const TextStyle(color: AppColors.teal, fontSize: 10, fontWeight: FontWeight.w800)),
                           Text(m.text, style: const TextStyle(color: Colors.white, fontSize: 13)),
                         ],
                       ),
@@ -634,7 +634,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
-                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide(color: AppColors.blue)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: const BorderSide(color: AppColors.blue)),
               ),
               onSubmitted: (_) => _send(),
             ),
@@ -645,7 +645,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
             child: Container(
               width: 42,
               height: 42,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 gradient: LinearGradient(colors: [AppColors.blue, Color(0xFF2563EB)]),
                 boxShadow: [BoxShadow(color: AppColors.blue, blurRadius: 10)],
@@ -712,14 +712,14 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
               alignment: Alignment.center,
               decoration: ShapeDecoration(
                 gradient: canStart
-                    ? LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                    ? const LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
                     : null,
                 color: canStart ? null : Colors.white.withAlpha(20),
                 shape: BeveledRectangleBorder(
                   borderRadius: BorderRadius.circular(18),
                   side: BorderSide(color: canStart ? Colors.white.withAlpha(120) : Colors.white.withAlpha(30), width: 1.2),
                 ),
-                shadows: canStart ? [BoxShadow(color: AppColors.play, blurRadius: 18, offset: Offset(0, 6))] : null,
+                shadows: canStart ? [const BoxShadow(color: AppColors.play, blurRadius: 18, offset: Offset(0, 6))] : null,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,

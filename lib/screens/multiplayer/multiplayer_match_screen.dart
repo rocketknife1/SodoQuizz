@@ -310,7 +310,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.blue)));
+      return const Scaffold(body: Center(child: CircularProgressIndicator(color: AppColors.blue)));
     }
     if (_questions.isEmpty) {
       return Scaffold(

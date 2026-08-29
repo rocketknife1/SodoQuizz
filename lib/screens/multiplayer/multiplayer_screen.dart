@@ -143,7 +143,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
         ),
         child: Column(
           children: [
-            Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 26),
+            const Icon(Icons.wifi_off_rounded, color: AppColors.danger, size: 26),
             const SizedBox(height: 8),
             Text(
               _offlineReason ?? '',
@@ -376,7 +376,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
             contentPadding: const EdgeInsets.symmetric(vertical: 14),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Colors.white.withAlpha(30))),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: AppColors.orange)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: AppColors.orange)),
           ),
         ),
         actions: [
@@ -475,7 +475,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                       ),
                       const SizedBox(width: 2),
                       ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
+                        shaderCallback: (bounds) => const LinearGradient(
                           colors: [Colors.white, AppColors.purple],
                         ).createShader(bounds),
                         child: const Text(
@@ -633,7 +633,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                         ),
                         if (_busy) ...[
                           const SizedBox(height: 20),
-                          CircularProgressIndicator(color: AppColors.blue),
+                          const CircularProgressIndicator(color: AppColors.blue),
                         ],
                         const SizedBox(height: 12),
                       ],

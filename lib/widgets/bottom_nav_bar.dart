@@ -124,7 +124,7 @@ class _NavItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(
                       gradient: active
-                          ? LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
+                          ? const LinearGradient(colors: [Color(0xFF34E27A), AppColors.play], begin: Alignment.topLeft, end: Alignment.bottomRight)
                           : null,
                       borderRadius: BorderRadius.circular(14),
                       boxShadow: active ? [BoxShadow(color: AppColors.play.withAlpha(130), blurRadius: 12, spreadRadius: 0.5)] : null,
@@ -208,8 +208,8 @@ class _ChestBadgeState extends State<ChestBadge> with SingleTickerProviderStateM
 /// desprindă bine de orice iconiță peste care e suprapus.
 class NotificationDot extends StatelessWidget {
   final double size;
-  final Color? borderColor;
-  const NotificationDot({super.key, this.size = 10, this.borderColor});
+  final Color borderColor;
+  const NotificationDot({super.key, this.size = 10, this.borderColor = AppColors.card});
 
   @override
   Widget build(BuildContext context) {
@@ -219,7 +219,7 @@ class NotificationDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: const Color(0xFFE24B4A),
         shape: BoxShape.circle,
-        border: Border.all(color: borderColor ?? AppColors.card, width: 2),
+        border: Border.all(color: borderColor, width: 2),
       ),
     );
   }

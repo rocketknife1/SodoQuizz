@@ -271,14 +271,14 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       child: Scaffold(
         backgroundColor: AppColors.bg,
         body: Container(
-          decoration: BoxDecoration(gradient: AppColors.spaceGradient),
+          decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
             child: StreamBuilder<MatchInfo>(
               stream: MultiplayerService.instance.watchMatch(widget.matchId),
               builder: (context, matchSnap) {
                 final info = matchSnap.data;
                 if (info == null) {
-                  return Center(child: CircularProgressIndicator(color: AppColors.blue));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.blue));
                 }
                 return StreamBuilder<List<MatchPlayer>>(
                   stream: MultiplayerService.instance.watchPlayers(widget.matchId),
@@ -375,7 +375,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                           bottom: -2,
                           child: Container(
                             padding: const EdgeInsets.all(2),
-                            decoration: BoxDecoration(color: AppColors.play, shape: BoxShape.circle),
+                            decoration: const BoxDecoration(color: AppColors.play, shape: BoxShape.circle),
                             child: const Icon(Icons.check_rounded, size: 12, color: Colors.white),
                           ),
                         ),
@@ -405,10 +405,10 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
             child: info.roundPhase == RoundPhase.answering
                 ? CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: _roundTotalSeconds, size: 44)
-                : Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 32),
+                : const Icon(Icons.emoji_events_rounded, color: AppColors.coin, size: 32),
           ),
           const Expanded(child: Divider(color: Colors.white12, height: 1)),
         ],
@@ -453,7 +453,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                     key: const ValueKey('revealed'),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.coin.withAlpha(40), borderRadius: BorderRadius.circular(14)),
-                    child: Text(formatSearchVolume(item.popularity), style: TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800)),
+                    child: Text(formatSearchVolume(item.popularity), style: const TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800)),
                   )
                 : const Text('❓ ❓ ❓', key: ValueKey('hidden'), style: TextStyle(color: Colors.white38, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 3)),
           ),
@@ -507,7 +507,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
     final me = MultiplayerService.instance.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) {
-      return Padding(
+      return const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Text('✓ Ai votat! Waiting for opponent response...', style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700)),
       );

@@ -36,10 +36,9 @@ class CoinRewardOverlay {
     VoidCallback? onImpact,
     VoidCallback? onFinished,
     IconData icon = Icons.monetization_on_rounded,
-    Color? color,
+    Color color = AppColors.coin,
     Duration flightDuration = const Duration(milliseconds: 1650),
   }) {
-    final resolvedColor = color ?? AppColors.coin;
     final overlay = Overlay.of(context);
     final renderBox = targetKey.currentContext?.findRenderObject() as RenderBox?;
     final targetOffset = renderBox != null
@@ -52,7 +51,7 @@ class CoinRewardOverlay {
         amount: amount,
         target: targetOffset,
         icon: icon,
-        color: resolvedColor,
+        color: color,
         flightDuration: flightDuration,
         onImpact: onImpact,
         onRemove: () {

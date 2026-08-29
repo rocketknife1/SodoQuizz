@@ -179,14 +179,14 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
                   // singur → caută din nou, la nesfârșit, cu „2 în căutare"
                   // pe ecran și fără să se întâmple nimic.
                   if (snap.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.blue));
+                    return const Center(child: CircularProgressIndicator(color: AppColors.blue));
                   }
                   // aici documentul chiar lipsește (rar) — tratăm ca un refuz
                   if (!_resolved) {
                     _resolved = true;
                     WidgetsBinding.instance.addPostFrameCallback((_) => _backToSearch(null));
                   }
-                  return Center(child: CircularProgressIndicator(color: AppColors.blue));
+                  return const Center(child: CircularProgressIndicator(color: AppColors.blue));
                 }
                 _maybeLaunch(offer);
                 _maybeNavigate(offer);
@@ -228,7 +228,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
                             ] else
                               Column(
                                 children: [
-                                  CircularProgressIndicator(color: AppColors.play),
+                                  const CircularProgressIndicator(color: AppColors.play),
                                   const SizedBox(height: 10),
                                   Text(
                                     opponentAccepted
@@ -261,7 +261,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
         AnimatedBuilder(
           animation: _pulseCtrl,
           builder: (context, child) => Transform.scale(scale: 1 + _pulseCtrl.value * 0.08, child: child),
-          child: Text('VS', style: TextStyle(color: AppColors.orange, fontSize: 22, fontWeight: FontWeight.w900)),
+          child: const Text('VS', style: TextStyle(color: AppColors.orange, fontSize: 22, fontWeight: FontWeight.w900)),
         ),
         const SizedBox(width: 14),
         Stack(
@@ -280,7 +280,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
                 right: -2,
                 child: Container(
                   padding: const EdgeInsets.all(3),
-                  decoration: BoxDecoration(color: AppColors.play, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(color: AppColors.play, shape: BoxShape.circle),
                   child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
                 ),
               ),
@@ -352,7 +352,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
         padding: const EdgeInsets.symmetric(vertical: 15),
         alignment: Alignment.center,
         decoration: ShapeDecoration(
-          gradient: LinearGradient(colors: [AppColors.orange, AppColors.purple]),
+          gradient: const LinearGradient(colors: [AppColors.orange, AppColors.purple]),
           shape: BeveledRectangleBorder(
             borderRadius: BorderRadius.circular(18),
             side: BorderSide(color: Colors.white.withAlpha(120), width: 1.2),
@@ -381,12 +381,12 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
         padding: const EdgeInsets.symmetric(vertical: 15),
         alignment: Alignment.center,
         decoration: ShapeDecoration(
-          gradient: LinearGradient(colors: [Color(0xFF34E27A), AppColors.play]),
+          gradient: const LinearGradient(colors: [Color(0xFF34E27A), AppColors.play]),
           shape: BeveledRectangleBorder(
             borderRadius: BorderRadius.circular(18),
             side: BorderSide(color: Colors.white.withAlpha(120), width: 1.2),
           ),
-          shadows: [BoxShadow(color: AppColors.play, blurRadius: 18, offset: Offset(0, 6))],
+          shadows: const [BoxShadow(color: AppColors.play, blurRadius: 18, offset: Offset(0, 6))],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

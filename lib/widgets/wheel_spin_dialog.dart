@@ -79,7 +79,7 @@ const _wheelOrangeDeep = Color(0xFFC24A00);
 /// singură acțiune: media unei rotiri e ~247 monede + ~15 gems + vieți/hints
 /// (≈490 echivalent-monede), iar chiar și cel mai slab segment (268 monede)
 /// bate orice altceva se poate face cu un singur tap.
-final List<_WheelPrize> _prizes = [
+const List<_WheelPrize> _prizes = [
   _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '268', weight: 18, coins: 268),
   _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '431', weight: 14, xp: 431),
   _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '517', weight: 13, coins: 517),

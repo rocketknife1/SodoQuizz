@@ -302,7 +302,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,
-                        children: [
+                        children: const [
                           Icon(Icons.arrow_upward_rounded,
                               color: AppColors.play, size: 20),
                           Icon(Icons.arrow_downward_rounded,
@@ -365,7 +365,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.emoji_events_rounded,
+                    const Icon(Icons.emoji_events_rounded,
                         color: AppColors.coin, size: 20),
                     const SizedBox(height: 2),
                     Text('$best',

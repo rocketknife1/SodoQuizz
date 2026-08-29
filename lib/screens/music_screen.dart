@@ -108,7 +108,7 @@ class _MusicScreenState extends State<MusicScreen> {
                     future: _tracksFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState != ConnectionState.done) {
-                        return Padding(
+                        return const Padding(
                           padding: EdgeInsets.symmetric(vertical: 24),
                           child: Center(child: CircularProgressIndicator(color: AppColors.purple)),
                         );
@@ -259,9 +259,9 @@ class _TrackRow extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (busy)
-              SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.play))
+              const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.play))
             else if (selected)
-              Icon(Icons.graphic_eq_rounded, color: AppColors.play, size: 22)
+              const Icon(Icons.graphic_eq_rounded, color: AppColors.play, size: 22)
             else
               const Icon(Icons.play_circle_outline_rounded, color: Colors.white24, size: 22),
           ],
