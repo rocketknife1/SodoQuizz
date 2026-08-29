@@ -98,28 +98,18 @@ class AppPalette {
     required this.danger,
   });
 
-  LinearGradient get bgGradient => _gradientCache.putIfAbsent(
-        '$id.bg',
-        () => LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [bg, bgEnd],
-        ),
+  LinearGradient get bgGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [bg, bgEnd],
       );
 
-  LinearGradient get spaceGradient => _gradientCache.putIfAbsent(
-        '$id.space',
-        () => LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [bg, spaceMid, spaceEnd],
-        ),
+  LinearGradient get spaceGradient => LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [bg, spaceMid, spaceEnd],
       );
 }
-
-/// Gradienții sunt aceiași cât timp tema nu se schimbă — construiți o dată,
-/// nu la fiecare `AppColors.bgGradient` din `build`.
-final Map<String, LinearGradient> _gradientCache = {};
 
 /// Cele 6 palete. Ordinea = ordinea din ecranul de alegere.
 const List<AppPalette> kAppPalettes = [

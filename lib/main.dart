@@ -381,17 +381,15 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     }
   }
 
-  /// CHEIA DE PE MaterialApp DEPINDE DE LIMBA SI DE TEMA, nu si de Modul Eco.
+  /// CHEIA DE PE MaterialApp DEPINDE DOAR DE LIMBA, nu si de Modul Eco — si
+  /// diferenta conteaza.
   ///
-  /// La limba si tema e obligatorie: culorile (`AppColors.*`, acum getteri
-  /// spre tema activa) si textele traduse (`tr()`) se citesc in `build`-ul
-  /// fiecarui widget, iar rutele deja impinse pe stiva isi tin pagina
-  /// construita in cache — fara o cheie noua, ecranele de sub cel curent ar
-  /// ramane in limba/tema veche. Cheia le reconstruieste pe toate, cu pretul
-  /// intoarcerii in meniul principal — comportament asteptat dupa "am
-  /// schimbat limba/tema jocului". Ecranul de teme (theme_screen.dart) e
-  /// facut cu previzualizari tocmai ca alegerea sa nu ceara incercari
-  /// repetate.
+  /// La limba e obligatorie: textele traduse se citesc prin `tr()` chiar in
+  /// `build`-ul fiecarui widget, iar rutele deja impinse pe stiva isi tin
+  /// pagina construita in cache, deci fara o cheie noua ecranele de sub cel
+  /// curent ar fi ramas in limba veche. Cheia le reconstruieste pe toate, cu
+  /// pretul intoarcerii in meniul principal — comportamentul asteptat oricum
+  /// dupa "am schimbat limba jocului".
   ///
   /// La Eco ar fi fost stricator: un simplu comutator din Setari ar fi
   /// aruncat jucatorul afara din Setari, inapoi in meniu. Nici nu e nevoie —
@@ -445,24 +443,18 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
 
   /// „Cromul" comun tuturor ecranelor, montat o singură dată în `builder`-ul
   /// lui `MaterialApp`:
-  ///  1. textura temei active ([ThemeTextureOverlay]) — statică (nu ține
-  ///     aplicația trează), dar SĂRITĂ sub Modul Eco: un strat în plus de
-  ///     compus la fiecare cadru e exact ce încearcă Eco să evite;
+  ///  1. textura temei active ([ThemeTextureOverlay]) — statică, discretă;
   ///  2. umbra software a Modului Eco — DOAR unde nu există canalul nativ de
   ///     luminozitate (web, desktop; vezi EcoMode). Pe Android
-  ///     `dimOverlayOpacity` e 0, fiindcă acolo se stinge backlight-ul real.
-  ///
-  /// Când n-are ce adăuga (Eco pornit pe Android) întoarce `child` direct,
-  /// fără `Stack` — la fel ca varianta veche.
+  ///     `dimOverlayOpacity` e 0, fiindcă acolo se stinge backlight-ul real,
+  ///     iar un strat în plus de compus ar lucra exact împotriva scopului.
   static Widget _withThemeChrome(BuildContext context, Widget? child) {
     if (child == null) return const SizedBox.shrink();
     final dim = EcoMode.dimOverlayOpacity;
-    final showTexture = !EcoMode.on;
-    if (!showTexture && dim <= 0) return child;
     return Stack(
       children: [
         child,
-        if (showTexture) const ThemeTextureOverlay(),
+        const ThemeTextureOverlay(),
         if (dim > 0)
           Positioned.fill(
             child: IgnorePointer(
