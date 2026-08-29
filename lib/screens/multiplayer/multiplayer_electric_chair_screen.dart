@@ -448,7 +448,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
               stream: _matchStream,
               builder: (context, matchSnap) {
                 final info = matchSnap.data;
-                if (info == null) return const Center(child: CircularProgressIndicator(color: AppColors.coin));
+                if (info == null) return Center(child: CircularProgressIndicator(color: AppColors.coin));
                 return StreamBuilder<List<MatchPlayer>>(
                   stream: _playersStream,
                   builder: (context, playersSnap) {
@@ -484,7 +484,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
           child: Row(
             children: [
               IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
-              const Icon(Icons.electric_bolt_rounded, color: AppColors.coin, size: 20),
+              Icon(Icons.electric_bolt_rounded, color: AppColors.coin, size: 20),
               const SizedBox(width: 6),
               const Text('SCAUNUL ELECTRIC', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 14)),
               const Spacer(),
@@ -756,7 +756,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
             const SizedBox(height: 10),
             Text('⚡ ${tr('EȘTI PE SCAUN!', 'YOU ARE ON THE CHAIR!')} ⚡',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 0.5)),
+                style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w900, fontSize: 17, letterSpacing: 0.5)),
             const SizedBox(height: 4),
             Text(tr('Răspunde corect ca să scapi.', 'Answer correctly to survive.'),
                 textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
@@ -806,7 +806,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                   padding: const EdgeInsets.symmetric(vertical: 3),
                   child: Text(
                     players.where((p) => p.id == id).firstOrNull?.name ?? '?',
-                    style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w800, fontSize: 14),
+                    style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.w800, fontSize: 14),
                   ),
                 ),
             ],

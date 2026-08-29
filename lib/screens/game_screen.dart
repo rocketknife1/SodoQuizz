@@ -480,11 +480,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.monetization_on_rounded,
+                  Icon(Icons.monetization_on_rounded,
                       color: AppColors.coin, size: 28),
                   const SizedBox(width: 8),
                   Text('+$reward ${tr('monede', 'coins')}',
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: AppColors.coin,
                           fontSize: 22,
                           fontWeight: FontWeight.w900)),
@@ -937,11 +937,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.tips_and_updates_rounded,
+        Icon(Icons.tips_and_updates_rounded,
             color: AppColors.hint, size: 20),
         const SizedBox(width: 4),
         Text('×$hintsBalance',
-            style: const TextStyle(
+            style: TextStyle(
                 color: AppColors.hint,
                 fontWeight: FontWeight.w800,
                 fontSize: 14)),

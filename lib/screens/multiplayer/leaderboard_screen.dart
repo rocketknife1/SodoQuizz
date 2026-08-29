@@ -69,7 +69,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
                       IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
                       const SizedBox(width: 4),
                       ShaderMask(
-                        shaderCallback: (r) => const LinearGradient(colors: [Colors.white, AppColors.orange]).createShader(r),
+                        shaderCallback: (r) => LinearGradient(colors: [Colors.white, AppColors.orange]).createShader(r),
                         child: const Text('CLASAMENT',
                             style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
                       ),
@@ -93,7 +93,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
                     dividerColor: Colors.transparent,
                     indicatorSize: TabBarIndicatorSize.tab,
                     indicator: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFFFFB020), AppColors.orange]),
+                      gradient: LinearGradient(colors: [Color(0xFFFFB020), AppColors.orange]),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [BoxShadow(color: AppColors.orange.withAlpha(120), blurRadius: 10)],
                     ),
@@ -150,7 +150,7 @@ class _SeasonHeader extends StatelessWidget {
         decoration: BoxDecoration(color: Colors.white.withAlpha(10), borderRadius: BorderRadius.circular(12)),
         child: Row(
           children: [
-            const Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 15),
+            Icon(Icons.emoji_events_rounded, color: AppColors.orange, size: 15),
             const SizedBox(width: 6),
             Expanded(
               child: Text(
@@ -352,7 +352,7 @@ class _PlayerRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text('$seasonPts pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
+            Text('$seasonPts pct', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
           ],
         ),
       ),
@@ -384,7 +384,7 @@ class _AllPlayersTabState extends State<_AllPlayersTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!;
         final me = MultiplayerService.instance.currentPlayerId;
@@ -450,7 +450,7 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!;
         final me = MultiplayerService.instance.currentPlayerId;
@@ -538,7 +538,7 @@ class _FriendsLeaderboardTabState extends State<_FriendsLeaderboardTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!;
         final me = MultiplayerService.instance.currentPlayerId;
@@ -632,7 +632,7 @@ class _MyStatsTabState extends State<_MyStatsTab> {
       builder: (context, snap) {
         final data = snap.data;
         if (data == null) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         return RefreshIndicator(
           onRefresh: _refresh,
@@ -643,7 +643,7 @@ class _MyStatsTabState extends State<_MyStatsTab> {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.orange, Color(0xFFFFB020)]),
+                  gradient: LinearGradient(colors: [AppColors.orange, Color(0xFFFFB020)]),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(

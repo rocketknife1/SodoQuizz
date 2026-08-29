@@ -157,7 +157,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                 builder: (context, snap) {
                   final data = snap.data;
                   if (data == null) {
-                    return const Center(child: CircularProgressIndicator(color: AppColors.teal));
+                    return Center(child: CircularProgressIndicator(color: AppColors.teal));
                   }
                   return RefreshIndicator(
                     onRefresh: _reload,
@@ -218,7 +218,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
       decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
       child: Row(
         children: [
-          const Icon(Icons.badge_rounded, color: AppColors.teal, size: 22),
+          Icon(Icons.badge_rounded, color: AppColors.teal, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -238,7 +238,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             IconButton(onPressed: () => _copyCode(code), icon: const Icon(Icons.copy_rounded, color: Colors.white70), tooltip: tr('Copiază', 'Copy')),
             IconButton(
               onPressed: () => _shareCode(code),
-              icon: const Icon(Icons.share_rounded, color: AppColors.teal),
+              icon: Icon(Icons.share_rounded, color: AppColors.teal),
               tooltip: tr('Trimite invitație', 'Send invite'),
             ),
           ],
@@ -336,8 +336,8 @@ class _RequestRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(request.fromName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
-          IconButton(onPressed: onAccept, icon: const Icon(Icons.check_circle_rounded, color: AppColors.play), tooltip: tr('Acceptă', 'Accept')),
-          IconButton(onPressed: onDecline, icon: const Icon(Icons.cancel_rounded, color: AppColors.danger), tooltip: tr('Refuză', 'Decline')),
+          IconButton(onPressed: onAccept, icon: Icon(Icons.check_circle_rounded, color: AppColors.play), tooltip: tr('Acceptă', 'Accept')),
+          IconButton(onPressed: onDecline, icon: Icon(Icons.cancel_rounded, color: AppColors.danger), tooltip: tr('Refuză', 'Decline')),
         ],
       ),
     );
@@ -439,7 +439,7 @@ class _FriendRow extends StatelessWidget {
             ),
             IconButton(
               onPressed: onOpenChat,
-              icon: const Icon(Icons.chat_bubble_rounded, color: AppColors.teal, size: 19),
+              icon: Icon(Icons.chat_bubble_rounded, color: AppColors.teal, size: 19),
               tooltip: 'Scrie-i',
             ),
             IconButton(
@@ -467,7 +467,7 @@ class _FriendRow extends StatelessWidget {
               Navigator.pop(dialogContext);
               onRemove();
             },
-            child: Text(tr('Elimină', 'Remove'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(tr('Elimină', 'Remove'), style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),

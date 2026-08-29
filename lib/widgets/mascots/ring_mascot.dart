@@ -220,7 +220,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   Widget _buildLabel() {
     const labelStyle = TextStyle(color: Colors.white54, fontSize: 7.5, fontWeight: FontWeight.w700, letterSpacing: 0.3);
     if (_ready) {
-      return Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: const TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
+      return Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3));
     }
     if (!_checked) {
       return Text(tr('ROATA NOROCULUI', 'LUCKY WHEEL'), style: labelStyle);

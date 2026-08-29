@@ -409,7 +409,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
                 ),
                 Expanded(
                   child: data == null
-                      ? const Center(child: CircularProgressIndicator(color: AppColors.purple))
+                      ? Center(child: CircularProgressIndicator(color: AppColors.purple))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           itemCount: data.quests.length,
@@ -615,7 +615,7 @@ class _QuestCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (claimed)
-            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
+            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
           else if (done)
             Column(
               mainAxisSize: MainAxisSize.min,
