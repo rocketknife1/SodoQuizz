@@ -57,6 +57,7 @@ library;
 import 'dart:math';
 
 import 'multiplayer_round.dart';
+import 'powerups.dart';
 
 /// Câți jucători încap într-o cameră de Quizz Tanks. Urcat de la 4 la 10 la
 /// cererea explicită a userului (toate modurile trebuie să accepte 10) —
@@ -356,5 +357,172 @@ TanksSalvage tanksSalvageFor({
     hints: (damageDealt ~/ tanksDamagePerHint).clamp(0, tanksMaxScrapHints),
     hearts: (isTopDamage ? tanksMvpHearts : 0) + (survived ? tanksSurvivorHearts : 0),
     gems: isTopDamage && random.nextDouble() < tanksMvpGemChance ? tanksMvpGems : 0,
+  );
+}
+
+// ─── Rezolvarea rundei (logica pură, fără Firestore) ────────────────────────
+
+/// Un proiectil rezolvat: cine a tras, în cine, dacă a lovit și cât.
+/// Echivalentul pur al `TankShot` din models — [MultiplayerService] îl
+/// mapează la ăla când scrie în Firestore.
+class ResolvedTankShot {
+  final String byId;
+  final String atId;
+  final bool hit;
+  final int damage;
+  const ResolvedTankShot({required this.byId, required this.atId, required this.hit, required this.damage});
+}
+
+/// Tot ce iese din rezolvarea unei runde de Quizz Tanks — calculat o singură
+/// dată, de clientul care câștigă tranzacția, apoi scris în Firestore.
+class TanksRoundOutcome {
+  /// Proiectilele, în ordinea tragerii ([alive] sortat), inclusiv cele
+  /// întoarse de [PowerUp.reflect].
+  final List<ResolvedTankShot> shots;
+
+  /// id → HP pierdut runda asta (se scade din HP-ul de la începutul rundei).
+  final Map<String, int> damageTaken;
+
+  /// id → daune CREDITATE runda asta. Include creditul primit de reflector
+  /// pentru lovitura întoarsă, și daunele „în plus" peste viața rămasă a
+  /// țintei (contorul e daune FĂCUTE, iar atacatorul chiar atât a tras).
+  final Map<String, int> damageDealt;
+
+  /// id-urile ajunse la ≤ 0 HP.
+  final List<String> destroyed;
+
+  const TanksRoundOutcome({
+    required this.shots,
+    required this.damageTaken,
+    required this.damageDealt,
+    required this.destroyed,
+  });
+}
+
+/// Adversarul implicit al unui țintaș care n-a ales (sau a ales invalid):
+/// cel cu cea mai puțină viață. La egalitate decide uid-ul, ca oricare
+/// client să ajungă la aceeași alegere.
+String? tanksWeakestEnemy(List<String> alive, Map<String, int> hp, String shooter, {Set<String> exclude = const {}}) {
+  String? best;
+  for (final id in alive) {
+    if (id == shooter || exclude.contains(id)) continue;
+    final h = hp[id] ?? tanksMaxHp;
+    final b = best == null ? null : (hp[best] ?? tanksMaxHp);
+    if (best == null || h < b! || (h == b && id.compareTo(best) < 0)) best = id;
+  }
+  return best;
+}
+
+/// Calculează efectul complet al fazei de foc. PUR: nu atinge Firestore, nu
+/// citește ceasul — [rng] e injectat (în joc: `Random()`; în teste: sămânță
+/// fixă). Vezi MultiplayerService.resolveTanksRound pentru cine îl cheamă și
+/// ce scrie cu rezultatul.
+///
+///  - [alive] — id-urile tancurilor încă în viață, SORTATE (ordinea
+///    proiectilelor).
+///  - [shooters] — cine trage (a răspuns corect ȘI e în viață).
+///  - [rawTargets] — id țintaș → `"tinta"` sau `"tintaA|tintaB"` (lovitură
+///    dublă), exact ce e în `roundTargets`.
+///  - [rawPowerUps] — id → numele power-up-ului activ ([PowerUp.name]).
+///  - [allyShieldedIds] — cine e sub scut de aliat runda asta.
+///  - [event] — evenimentul rundei (Ceață de Luptă / Muniție Grea contează
+///    aici).
+TanksRoundOutcome resolveTanksVolleys({
+  required List<String> alive,
+  required Set<String> shooters,
+  required Map<String, int> hpAtStart,
+  required Map<String, String> rawTargets,
+  required Map<String, String> rawPowerUps,
+  required Set<String> allyShieldedIds,
+  required RoundEvent event,
+  required Random rng,
+}) {
+  PowerUp powerUpOf(String id) {
+    final raw = rawPowerUps[id];
+    if (raw == null) return PowerUp.none;
+    return PowerUp.values.firstWhere((p) => p.name == raw, orElse: () => PowerUp.none);
+  }
+
+  final dodgeBonus = event == RoundEvent.battleFog ? tanksBattleFogDodgeBonus : 0.0;
+  final damageMultiplier = event == RoundEvent.heavyShells ? tanksHeavyShellsMultiplier : 1.0;
+
+  // Un scut (propriu sau de aliat) absoarbe O SINGURĂ lovitură pe rundă,
+  // chiar dacă vin mai multe spre aceeași victimă.
+  final shieldConsumed = <String>{};
+  final shots = <ResolvedTankShot>[];
+  final incoming = {for (final id in alive) id: 0};
+  final dealt = {for (final id in alive) id: 0};
+
+  String? validEnemy(String shooter, String? id) =>
+      (id != null && id != shooter && alive.contains(id)) ? id : null;
+
+  for (final shooter in alive) {
+    if (!shooters.contains(shooter)) continue;
+    final shooterPower = powerUpOf(shooter);
+    final parts = (rawTargets[shooter] ?? '').split(tanksTargetSeparator);
+    final target = validEnemy(shooter, parts.isEmpty ? null : parts.first)
+        ?? tanksWeakestEnemy(alive, hpAtStart, shooter);
+    if (target == null) continue;
+
+    // Lovitură dublă: ținta fiecărui proiectil aleasă de jucător. Aceeași
+    // țintă de două ori ⇒ o lovitură concentrată, cu daune ×
+    // [tanksDoubleShotFocusMultiplier].
+    final volley = <(String, double)>[(target, 1.0)];
+    if (shooterPower == PowerUp.doubleShot) {
+      final second = validEnemy(shooter, parts.length > 1 ? parts[1] : null)
+          ?? tanksWeakestEnemy(alive, hpAtStart, shooter, exclude: {target});
+      if (second == target || second == null) {
+        volley
+          ..clear()
+          ..add((target, tanksDoubleShotFocusMultiplier));
+      } else {
+        volley.add((second, 1.0));
+      }
+    }
+
+    for (final (t, focusMult) in volley) {
+      var roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(t), rnd: rng, dodgeBonus: dodgeBonus);
+      if (roll.hit && damageMultiplier != 1.0) {
+        roll = TankShotRoll(hit: true, damage: (roll.damage * damageMultiplier).round());
+      }
+      if (shooterPower == PowerUp.megaRocket) {
+        roll = TankShotRoll(hit: true, damage: (roll.damage * megaRocketDamageMultiplier).round());
+      }
+      if (roll.hit && focusMult != 1.0) {
+        roll = TankShotRoll(hit: true, damage: (roll.damage * focusMult).round());
+      }
+      // Scut (propriu sau de aliat): blochează doar o lovitură care CHIAR
+      // ar fi atins ținta.
+      if (roll.hit &&
+          (powerUpOf(t) == PowerUp.shield || allyShieldedIds.contains(t)) &&
+          shieldConsumed.add(t)) {
+        roll = const TankShotRoll(hit: false, damage: 0);
+      }
+      // Reflexie: lovitura care ar fi atins un tanc cu [PowerUp.reflect] se
+      // întoarce spre atacator — el încasează, reflectorul ia creditul.
+      if (roll.hit && t != shooter && powerUpOf(t) == PowerUp.reflect && incoming.containsKey(shooter)) {
+        shots.add(ResolvedTankShot(byId: t, atId: shooter, hit: true, damage: roll.damage));
+        incoming[shooter] = incoming[shooter]! + roll.damage;
+        dealt[t] = (dealt[t] ?? 0) + roll.damage;
+        roll = const TankShotRoll(hit: false, damage: 0);
+      }
+      shots.add(ResolvedTankShot(byId: shooter, atId: t, hit: roll.hit, damage: roll.damage));
+      if (roll.hit) {
+        incoming[t] = incoming[t]! + roll.damage;
+        dealt[shooter] = dealt[shooter]! + roll.damage;
+      }
+    }
+  }
+
+  final destroyed = [
+    for (final id in alive)
+      if ((hpAtStart[id] ?? tanksMaxHp) - incoming[id]! <= 0) id,
+  ];
+
+  return TanksRoundOutcome(
+    shots: shots,
+    damageTaken: incoming,
+    damageDealt: dealt,
+    destroyed: destroyed,
   );
 }

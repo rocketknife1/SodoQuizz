@@ -969,124 +969,45 @@ class MultiplayerService {
         // banner-ul din ecran (vezi resolveHigherLowerRound mai sus pentru
         // aceeași idee).
         final event = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'quizzTanks');
-        final dodgeBonus = event == RoundEvent.battleFog ? tanksBattleFogDodgeBonus : 0.0;
-        final damageMultiplier = event == RoundEvent.heavyShells ? tanksHeavyShellsMultiplier : 1.0;
-
-        // Power-up-urile active runda asta (core/powerups.dart) — scrise de
-        // [submitTanksPowerUp]. Citite direct din documentul brut, nu prin
-        // model, ca acordarea/consumul lor să rămână izolate în tranzacția
-        // asta, fără să mai adauge un câmp în `MatchInfo`.
-        final activePowerUps = Map<String, dynamic>.from(data['roundPowerUps'] as Map? ?? const {});
-        PowerUp powerUpOf(String id) {
-          final raw = activePowerUps[id] as String?;
-          if (raw == null) return PowerUp.none;
-          return PowerUp.values.firstWhere((p) => p.name == raw, orElse: () => PowerUp.none);
-        }
-
-        // Un scut absoarbe O SINGURĂ lovitură, chiar dacă runda aduce mai
-        // multe spre aceeași victimă (double shot, sau doi atacatori diferiți
-        // care aleg același tanc) — de-aia se marchează „consumat" la prima
-        // lovitură care l-ar fi atins, nu se scade de la toate.
-        final shieldConsumed = <String>{};
 
         // Scut pe aliat: `shields.<id>` = ultima rundă în care id-ul e
-        // protejat (2 runde, vezi [useTanksAllyShield]). Absoarbe tot o
-        // singură lovitură pe rundă, prin același [shieldConsumed].
+        // protejat (2 runde, vezi [useTanksAllyShield]).
         final allyShields = Map<String, dynamic>.from(data['shields'] as Map? ?? const {});
-        bool allyShielded(String id) => (allyShields[id] as int? ?? -1) >= roundIndex;
 
-        final rnd = Random();
-        final shots = <Map<String, dynamic>>[];
-        final incoming = {for (final id in alive) id: 0};
-        final dealt = {for (final id in alive) id: 0};
-        String? validEnemy(String shooter, String? id) =>
-            (id != null && id != shooter && alive.contains(id)) ? id : null;
+        // Toată logica de foc (zaruri, power-up-uri, scuturi, reflexie,
+        // lovitură dublă) e pură, în core/tanks.dart — testabilă fără
+        // Firestore. Aici doar îi dăm datele citite și scriem rezultatul.
+        final outcome = resolveTanksVolleys(
+          alive: alive,
+          shooters: shooters.where(alive.contains).toSet(),
+          hpAtStart: hpAtStart,
+          rawTargets: {
+            for (final e in targets.entries) e.key: (e.value as String?) ?? '',
+          },
+          rawPowerUps: {
+            for (final e in (data['roundPowerUps'] as Map? ?? const {}).entries)
+              e.key as String: e.value as String,
+          },
+          allyShieldedIds: {
+            for (final id in alive)
+              if ((allyShields[id] as int? ?? -1) >= roundIndex) id,
+          },
+          event: event,
+          rng: Random(),
+        );
 
-        for (final shooter in alive) {
-          if (!shooters.contains(shooter)) continue;
-          final shooterPower = powerUpOf(shooter);
-          final parts = (targets[shooter] as String? ?? '').split(tanksTargetSeparator);
-          final target = validEnemy(shooter, parts.isEmpty ? null : parts.first)
-              ?? _weakestEnemy(alive, hpAtStart, shooter);
-          if (target == null) continue; // nu mai are pe cine trage
-
-          // Lovitură dublă: două proiectile, cu ținta fiecăruia aleasă de
-          // jucător (parts[0], parts[1]). Aceeași țintă de două ori ⇒ o
-          // singură lovitură concentrată, cu daune înmulțite cu
-          // [tanksDoubleShotFocusMultiplier] — vezi [PowerUp.doubleShot].
-          // `volley`: (țintă, multiplicator concentrare) pe proiectil.
-          final volley = <(String, double)>[(target, 1.0)];
-          if (shooterPower == PowerUp.doubleShot) {
-            final second = validEnemy(shooter, parts.length > 1 ? parts[1] : null)
-                ?? _weakestEnemy(alive, hpAtStart, shooter, exclude: {target});
-            if (second == target || second == null) {
-              volley
-                ..clear()
-                ..add((target, tanksDoubleShotFocusMultiplier));
-            } else {
-              volley.add((second, 1.0));
-            }
-          }
-
-          for (final (t, focusMult) in volley) {
-            // „În gardă" = a răspuns și el corect, adică e tot în lista
-            // țintașilor — de-aia evită mult mai des. `dodgeBonus` vine din
-            // evenimentul rundei (Ceață de Luptă), nu din nimic personal.
-            var roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(t), rnd: rnd, dodgeBonus: dodgeBonus);
-            // Muniție grea: dă mai tare TUTUROR loviturilor rundei.
-            if (roll.hit && damageMultiplier != 1.0) {
-              roll = TankShotRoll(hit: true, damage: (roll.damage * damageMultiplier).round());
-            }
-            // Mega rachetă: imposibil de evitat și daune mult mai mari — vezi
-            // [megaRocketDamageMultiplier].
-            if (shooterPower == PowerUp.megaRocket) {
-              roll = TankShotRoll(hit: true, damage: (roll.damage * megaRocketDamageMultiplier).round());
-            }
-            // Lovitură dublă concentrată pe o singură țintă: daune mărite.
-            if (roll.hit && focusMult != 1.0) {
-              roll = TankShotRoll(hit: true, damage: (roll.damage * focusMult).round());
-            }
-            // Scutul victimei (propriu SAU pus de un aliat) blochează
-            // lovitura DOAR dacă chiar ar fi lovit-o — un scut ținut degeaba
-            // pe o lovitură ratată oricum nu se „consumă" fără rost.
-            if (roll.hit &&
-                (powerUpOf(t) == PowerUp.shield || allyShielded(t)) &&
-                shieldConsumed.add(t)) {
-              roll = const TankShotRoll(hit: false, damage: 0);
-            }
-            // Reflexie: dacă lovitura ar fi atins un tanc cu [PowerUp.reflect],
-            // proiectilul se întoarce spre atacator — el încasează, reflectorul
-            // primește creditul de daune.
-            if (roll.hit && t != shooter && powerUpOf(t) == PowerUp.reflect && incoming.containsKey(shooter)) {
-              shots.add(TankShot(byId: t, atId: shooter, hit: true, damage: roll.damage).toMap());
-              incoming[shooter] = incoming[shooter]! + roll.damage;
-              dealt[t] = (dealt[t] ?? 0) + roll.damage;
-              roll = const TankShotRoll(hit: false, damage: 0);
-            }
-            shots.add(TankShot(byId: shooter, atId: t, hit: roll.hit, damage: roll.damage).toMap());
-            if (roll.hit) {
-              incoming[t] = incoming[t]! + roll.damage;
-              dealt[shooter] = dealt[shooter]! + roll.damage;
-            }
-          }
-        }
-
-        final destroyed = <String>[];
+        final shots = [for (final s in outcome.shots) TankShot(byId: s.byId, atId: s.atId, hit: s.hit, damage: s.damage).toMap()];
+        final destroyed = outcome.destroyed;
         var stillAlive = 0;
         for (final id in alive) {
-          final newHp = hpAtStart[id]! - incoming[id]!;
-          final isDestroyed = newHp <= 0;
-          if (isDestroyed) {
-            destroyed.add(id);
-          } else {
-            stillAlive++;
-          }
+          final isDestroyed = destroyed.contains(id);
+          if (!isDestroyed) stillAlive++;
           // scorul E totalul daunelor: restul aplicației (clasament final,
           // XP, statistici) citește `score`, iar cerința modului spune că
           // ordinea o dau daunele făcute. Vezi și MatchPlayer.damageDealt.
-          final totalDealt = (docs[id]!.data()!['damageDealt'] as int? ?? 0) + dealt[id]!;
+          final totalDealt = (docs[id]!.data()!['damageDealt'] as int? ?? 0) + (outcome.damageDealt[id] ?? 0);
           tx.update(docs[id]!.reference, {
-            'hp': isDestroyed ? 0 : newHp,
+            'hp': isDestroyed ? 0 : hpAtStart[id]! - (outcome.damageTaken[id] ?? 0),
             'eliminated': isDestroyed,
             'damageDealt': totalDealt,
             'score': totalDealt,
@@ -1108,20 +1029,6 @@ class MultiplayerService {
     } catch (e) {
       debugPrint('MultiplayerService.resolveTanksRound a esuat: $e');
     }
-  }
-
-  /// Ținta implicită a unui țintaș care n-a apucat să aleagă: adversarul cu
-  /// cea mai puțină viață. La egalitate decide uid-ul, ca alegerea să fie
-  /// aceeași oricare client ar rezolva runda.
-  static String? _weakestEnemy(List<String> alive, Map<String, int> hp, String shooter, {Set<String> exclude = const {}}) {
-    String? best;
-    for (final id in alive) {
-      if (id == shooter || exclude.contains(id)) continue;
-      if (best == null || hp[id]! < hp[best]! || (hp[id]! == hp[best]! && id.compareTo(best) < 0)) {
-        best = id;
-      }
-    }
-    return best;
   }
 
   // ─── Scaunul Electric ───────────────────────────────────────────────────
@@ -1356,23 +1263,17 @@ class MultiplayerService {
           final victimDoc = docs[victimId];
           if (victimDoc == null || !victimDoc.exists || victimDoc.data()!['eliminated'] == true) continue;
           final correct = correctAnswers[victimId];
-          var survived = correct != null && answers[victimId] == correct;
-          var reflected = false;
-          if (!survived) {
-            // Șocul perforant al ORICĂRUI atacator din testul ăsta trece
-            // direct prin scut — victima nu poate „ascunde" scutul în
-            // spatele unui atac oarecare.
-            final piercing = assignment.attackerIds.any((a) => powerUpOf(a) == PowerUp.piercingShock);
-            final shielded = !piercing && (powerUpOf(victimId) == PowerUp.shield || allyShielded(victimId));
-            if (shielded) {
-              survived = true; // scapă datorită scutului, nu răspunsului
-            } else if (powerUpOf(victimId) == PowerUp.reflect) {
-              // Reflexie: victima scapă, dar șocul se întoarce spre atacatori
-              // — fiecare pierde o viață (aplicat mai jos).
-              survived = true;
-              reflected = true;
-            }
-          }
+          // Decizia (răspuns/scut/perforant/reflexie) e pură, în
+          // core/electric_chair.dart `chairVerdict` — testabilă fără Firestore.
+          final verdict = chairVerdict(
+            answeredCorrectly: correct != null && answers[victimId] == correct,
+            hasShield: powerUpOf(victimId) == PowerUp.shield,
+            allyShielded: allyShielded(victimId),
+            anyAttackerPiercing: assignment.attackerIds.any((a) => powerUpOf(a) == PowerUp.piercingShock),
+            hasReflect: powerUpOf(victimId) == PowerUp.reflect,
+          );
+          final survived = verdict != ChairVerdict.shocked;
+          final reflected = verdict == ChairVerdict.reflected;
           outcomes[victimId] = survived;
           if (reflected) {
             for (final attackerId in assignment.attackerIds) {

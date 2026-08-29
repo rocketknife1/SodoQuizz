@@ -43,6 +43,7 @@
 library;
 
 import 'multiplayer_round.dart';
+import 'powerups.dart';
 
 /// Câți jucători încap într-o cameră de Scaunul Electric. Urcat de la 5 la
 /// 10 la cererea explicită a userului (toate modurile trebuie să accepte
@@ -145,4 +146,44 @@ int electricChairRankKey({
 }) {
   final roundsSurvived = eliminated ? eliminatedAtRound : electricChairMaxRounds;
   return roundsSurvived * electricChairRankKeyRoundWeight + score;
+}
+
+// ─── Deznodământul unei victime de pe scaun (logica pură) ───────────────────
+
+/// Ce i se întâmplă unei victime când i se închide testul de pe scaun.
+enum ChairVerdict {
+  /// A răspuns corect (sau a fost apărată de un scut) — scapă neatinsă,
+  /// primește puncte de apărare.
+  survived,
+
+  /// A greșit — pierde viață/vieți (scaunul, [RoundEvent.overcharge]).
+  shocked,
+
+  /// Are [PowerUp.reflect]: scapă, dar șocul se întoarce spre atacatori —
+  /// fiecare pierde o viață, iar victima NU ia puncte de apărare
+  /// (n-a răspuns, doar a avut noroc de power-up).
+  reflected,
+}
+
+/// Decide verdictul unei victime, PUR — vezi
+/// MultiplayerService.resolveElectricChairRound pentru cine aplică efectiv
+/// vieți/puncte pe baza lui.
+///
+///  - [answeredCorrectly] — a nimerit răspunsul de pe scaun.
+///  - [hasShield] — [PowerUp.shield] propriu activ runda asta.
+///  - [allyShielded] — sub [PowerUp.allyShield] pus de altcineva.
+///  - [anyAttackerPiercing] — vreun atacator din test are
+///    [PowerUp.piercingShock] (trece prin orice scut).
+///  - [hasReflect] — [PowerUp.reflect] propriu.
+ChairVerdict chairVerdict({
+  required bool answeredCorrectly,
+  required bool hasShield,
+  required bool allyShielded,
+  required bool anyAttackerPiercing,
+  required bool hasReflect,
+}) {
+  if (answeredCorrectly) return ChairVerdict.survived;
+  if (!anyAttackerPiercing && (hasShield || allyShielded)) return ChairVerdict.survived;
+  if (hasReflect) return ChairVerdict.reflected;
+  return ChairVerdict.shocked;
 }
