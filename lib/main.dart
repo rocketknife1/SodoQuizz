@@ -104,7 +104,13 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
   /// Navigator. Contextul din `build`-ul ăsta e deasupra lui, deci
   /// `Overlay.of(context)` de aici n-ar găsi nimic — cheia dă acces la
   /// contextul corect, oricare ar fi ecranul deschis în acel moment.
-  final _navigatorKey = GlobalKey<NavigatorState>();
+  /// Recreată la fiecare schimbare de temă: un `GlobalKey` stabil ar face
+  /// Flutter să REFOLOSEASCĂ același `Navigator` (cu tot teancul de rute)
+  /// când `MaterialApp` se reconstruiește cu cheie nouă — deci ecranele deja
+  /// deschise ar rămâne în culorile vechi (`AppColors.*` sunt getteri, nu se
+  /// reconstruiesc singuri). Cheie nouă = `Navigator` nou = jocul reapare
+  /// din meniu, complet recolorat. Vezi [_onThemeChanged].
+  GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   StreamSubscription<MultiplayerPresencePing>? _presenceSub;
   StreamSubscription<RematchOffer?>? _rematchSub;
@@ -118,6 +124,15 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     _listenForMultiplayerPresence();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
+    AppTheme.id.addListener(_onThemeChanged);
+  }
+
+  /// Schimbarea temei aruncă `Navigator`-ul curent și repornește din meniu,
+  /// în tema nouă (vezi [_navigatorKey]). Ecranul de teme are previzualizări
+  /// tocmai ca alegerea să nu ceară încercări repetate pe viu.
+  void _onThemeChanged() {
+    if (!mounted) return;
+    setState(() => _navigatorKey = GlobalKey<NavigatorState>());
   }
 
   @override
@@ -126,6 +141,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     MultiplayerService.instance.lastFinishedMatchId.removeListener(_watchRematchOffer);
     _rematchSub?.cancel();
     _linkSub?.cancel();
+    AppTheme.id.removeListener(_onThemeChanged);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
