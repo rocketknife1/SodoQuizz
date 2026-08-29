@@ -235,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                         icon: Icons.palette_rounded,
                         color: AppColors.teal,
                         title: tr('Temă', 'Theme'),
-                        subtitle: '${AppTheme.palette.nameRo}  ·  ${tr('doar aspectul', 'looks only')}',
+                        subtitle: '${tr(AppTheme.palette.nameRo, AppTheme.palette.nameEn)}  ·  ${tr('doar aspectul', 'looks only')}',
                         onTap: () async {
                           await Navigator.push(context, MaterialPageRoute(builder: (_) => const ThemeScreen()));
                           if (mounted) setState(() {});

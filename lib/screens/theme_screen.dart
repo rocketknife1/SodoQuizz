@@ -4,7 +4,6 @@ import '../core/app_theme.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../widgets/pressable.dart';
-import '../widgets/theme_texture.dart';
 
 /// Alegerea temei vizuale. Fiecare card e o previzualizare mică a paletei;
 /// la atingere se aplică imediat — `MaterialApp` se reconstruiește (cheie
@@ -17,7 +16,10 @@ class ThemeScreen extends StatelessWidget {
     final current = AppTheme.id.value;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      body: ThemedBackground(
+      // Fără textură proprie aici: overlay-ul global (main.dart `_withThemeChrome`)
+      // o pune deja peste tot ecranul.
+      body: DecoratedBox(
+        decoration: BoxDecoration(gradient: AppColors.bgGradient),
         child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
