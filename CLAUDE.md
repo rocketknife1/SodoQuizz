@@ -42,8 +42,11 @@ Calea adb pe mașina asta: `C:\Users\drago\AppData\Local\Android\Sdk\platform-to
 ```bash
 ADB="/c/Users/drago/AppData/Local/Android/Sdk/platform-tools/adb.exe"
 
-# instalează păstrând datele existente (NU flutter install, care dezinstalează întâi)
-MSYS_NO_PATHCONV=1 "$ADB" install -r build/app/outputs/flutter-apk/app-release.apk
+# instalează CLEAN — progresul din joc e consumabil până la lansarea oficială,
+# nu-l proteja (decizie explicită a userului, 2026-08-29). Fără `-r`.
+MSYS_NO_PATHCONV=1 "$ADB" install -d build/app/outputs/flutter-apk/app-release.apk
+# dacă telefonul are build-ul din Play (altă semnătură), întâi:
+#   MSYS_NO_PATHCONV=1 "$ADB" uninstall com.dragosssx.guessit
 
 # captură de ecran ca dovadă vizuală
 MSYS_NO_PATHCONV=1 "$ADB" shell screencap -p /sdcard/s.png
