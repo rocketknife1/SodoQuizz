@@ -32,7 +32,6 @@ class StorageService {
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
   static const _hintsKey = 'hints_balance';
-  static const _ecoModeKey = 'eco_mode';
   static const _musicTrackKey = 'music_track_id';
   static const _languageKey = 'app_language';
   static const _notificationsKey = 'notifications_inbox';
@@ -612,10 +611,8 @@ class StorageService {
     _introSeenKey,
     _multiplayerInfoSeenKey,
     _noAdsForeverKey,
-    // Modul Eco și limba sunt preferințe de afișare, nu progres — un reset de
-    // cont n-are de ce să repună jocul în română unui jucător străin, nici
-    // să-i reaprindă ecranul la maxim.
-    _ecoModeKey,
+    // Limba e preferință de afișare, nu progres — un reset de cont n-are de ce
+    // să repună jocul în română unui jucător străin.
     _languageKey,
     _musicTrackKey,
   ];
@@ -1142,18 +1139,6 @@ class StorageService {
   static Future<void> setNoBlurMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_noBlurKey, value);
-  }
-
-  // ─── Modul Eco (baterie/încălzire) ────────────────────────────────────────
-
-  static Future<bool> getEcoMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_ecoModeKey) ?? false;
-  }
-
-  static Future<void> setEcoMode(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_ecoModeKey, value);
   }
 
   // ─── Piesa de fundal aleasă (vezi core/music_tracks.dart) ────────────────

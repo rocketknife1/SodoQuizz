@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/eco_mode.dart';
+import '../core/repeating_animation.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../screens/home_screen.dart';
@@ -169,7 +169,7 @@ class _ChestBadgeState extends State<ChestBadge> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _pulse = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
+    _pulse = RepeatingAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
       ..repeat(reverse: true);
   }
 

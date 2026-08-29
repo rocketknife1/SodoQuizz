@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
-import '../../core/eco_mode.dart';
+import '../../core/repeating_animation.dart';
 import '../../core/theme.dart';
 import '../../data/storage_service.dart';
 import '../wheel_spin_dialog.dart';
@@ -59,7 +59,7 @@ class _RingMascotState extends State<RingMascot> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    _idle = EcoAnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+    _idle = RepeatingAnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 850));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1000));
     _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));

@@ -1,6 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../core/eco_mode.dart';
+import '../core/repeating_animation.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
 import 'avatar.dart';
@@ -81,19 +81,15 @@ class LevelHeader extends StatefulWidget {
 }
 
 class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin {
-  // EcoAnimationController, nu AnimationController: unda de energie din bara
-  // de XP e o buclă infinită care ține telefonul să deseneze cadre non-stop
-  // cât timp ai ceva de revendicat. În Modul Eco se oprește singură, iar bara
-  // rămâne aurie și plină — la fel de vizibilă, doar nemișcată.
-  late final EcoAnimationController _pulse;
-  late final EcoAnimationController _wave;
+  late final RepeatingAnimationController _pulse;
+  late final RepeatingAnimationController _wave;
 
   @override
   void initState() {
     super.initState();
-    _pulse = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
+    _pulse = RepeatingAnimationController(vsync: this, duration: const Duration(milliseconds: 1100), restValue: 0.5)
       ..repeat(reverse: true);
-    _wave = EcoAnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
+    _wave = RepeatingAnimationController(vsync: this, duration: const Duration(milliseconds: 1400))..repeat();
   }
 
   @override

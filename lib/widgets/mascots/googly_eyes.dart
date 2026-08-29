@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../../core/eco_mode.dart';
 
 /// Doi ochi jucăuși (cerc alb + pupilă neagră) care își mută privirea din
 /// când în când, aleatoriu — folosiți de mascotele decorative de pe Home
@@ -24,25 +23,7 @@ class _GooglyEyesState extends State<GooglyEyes> {
   @override
   void initState() {
     super.initState();
-    // În Modul Eco pupilele rămân fixe, privind înainte. Sunt 6 perechi de
-    // ochi pe meniul principal (câte una per mascotă, plus cele din brațe),
-    // fiecare cu propriul timer la 1,4-3,6 secunde — împreună repictau
-    // banda de jos a ecranului la câteva zeci de ori pe minut, adică exact
-    // felul de trezire pe care modul îl elimină. Mascotele rămân desenate
-    // întregi, doar nu se mai uită în jur.
-    EcoMode.enabled.addListener(_applyEco);
-    if (!EcoMode.on) _scheduleLook();
-  }
-
-  void _applyEco() {
-    if (!mounted) return;
-    if (EcoMode.on) {
-      _lookTimer?.cancel();
-      _lookTimer = null;
-      setState(() => _pupil = Offset.zero);
-    } else if (_lookTimer == null) {
-      _scheduleLook();
-    }
+    _scheduleLook();
   }
 
   void _scheduleLook() {
@@ -57,7 +38,6 @@ class _GooglyEyesState extends State<GooglyEyes> {
 
   @override
   void dispose() {
-    EcoMode.enabled.removeListener(_applyEco);
     _lookTimer?.cancel();
     super.dispose();
   }

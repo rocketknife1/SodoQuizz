@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../core/eco_mode.dart';
+import '../core/repeating_animation.dart';
 import '../core/theme.dart';
 import '../data/notification_service.dart';
 import '../screens/notifications_screen.dart';
@@ -12,9 +12,8 @@ import '../screens/notifications_screen.dart';
 /// actualizează singur din orice ecran, fără ca meniul să fie reconstruit:
 /// un mesaj primit cât stai pe Home aprinde bulina pe loc.
 ///
-/// Cât timp există ceva necitit, clopoțelul pulsează discret — dar prin
-/// [EcoAnimationController], adică se oprește singur în Modul Eco și rămâne
-/// doar bulina roșie, care oricum e semnalul care contează.
+/// Cât timp există ceva necitit, clopoțelul pulsează discret; bulina roșie e
+/// oricum semnalul care contează.
 class NotificationBell extends StatefulWidget {
   /// Chemat după închiderea panoului — meniul își reîncarcă balanța, fiindcă
   /// un cadou revendicat între timp îi schimbă cifrele.
@@ -27,12 +26,12 @@ class NotificationBell extends StatefulWidget {
 }
 
 class _NotificationBellState extends State<NotificationBell> with SingleTickerProviderStateMixin {
-  late final EcoAnimationController _pulse;
+  late final RepeatingAnimationController _pulse;
 
   @override
   void initState() {
     super.initState();
-    _pulse = EcoAnimationController(
+    _pulse = RepeatingAnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
       restValue: 0.5,

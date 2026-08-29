@@ -6,7 +6,6 @@ import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/app_check_service.dart';
 import 'core/audio.dart';
-import 'core/eco_mode.dart';
 import 'core/lang.dart';
 import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
@@ -36,13 +35,8 @@ void main() async {
   // zilnice ale zilelor trecute — vezi StorageService.pruneOldDailyCounters.
   await StorageService.pruneOldDailyCounters();
   await StorageService.migratePixelatIdToCartoon();
-  // Amandoua INAINTE de runApp, ca primul cadru desenat sa fie deja in limba
-  // corecta si cu ecranul deja stins daca Modul Eco e pornit — cerinta era
-  // explicit ca modul sa fie activ din clipa intrarii in joc, nu sa se aprinda
-  // vizibil dupa o secunda. Sunt doua citiri din SharedPreferences, deci nu
-  // intarzie pornirea in vreun fel simtit.
+  // INAINTE de runApp, ca primul cadru desenat sa fie deja in limba corecta.
   await L10n.load();
-  await EcoMode.load();
   // O singura initializare, la pornire - restul (login Google) ramane lazy,
   // declansat doar cand userul chiar foloseste acele functii. Esec aici
   // (ex. platforma neconfigurata inca in Firebase Console) nu trebuie sa
@@ -367,87 +361,44 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       // Gratis daca uid-ul n-a schimbat; reincarca doar dupa o logare care a
       // schimbat contul - vezi ModerationService.loadBlocked.
       ModerationService.instance.loadBlocked();
-      // Android reseteaza atributele ferestrei cand Activity-ul e recreat,
-      // deci luminozitatea redusa trebuie ceruta din nou la fiecare revenire
-      // — altfel modul ramanea "pornit" in setari, dar fara efect. Exact
-      // cazul cerut: se reintra in joc, ecranul e deja mai stins.
-      EcoMode.reapply();
       NotificationService.instance.pullFromCloud().then((_) {
         return NotificationService.instance.refreshUnread();
       });
     }
   }
 
-  /// CHEIA DE PE MaterialApp DEPINDE DOAR DE LIMBA, nu si de Modul Eco — si
-  /// diferenta conteaza.
+  /// CHEIA DE PE MaterialApp DEPINDE DOAR DE LIMBA.
   ///
-  /// La limba e obligatorie: textele traduse se citesc prin `tr()` chiar in
-  /// `build`-ul fiecarui widget, iar rutele deja impinse pe stiva isi tin
-  /// pagina construita in cache, deci fara o cheie noua ecranele de sub cel
-  /// curent ar fi ramas in limba veche. Cheia le reconstruieste pe toate, cu
-  /// pretul intoarcerii in meniul principal — comportamentul asteptat oricum
-  /// dupa "am schimbat limba jocului".
-  ///
-  /// La Eco ar fi fost stricator: un simplu comutator din Setari ar fi
-  /// aruncat jucatorul afara din Setari, inapoi in meniu. Nici nu e nevoie —
-  /// animatiile se opresc singure (asculta EcoMode.enabled, vezi
-  /// EcoAnimationController), luminozitatea e nativa, iar tranzitiile si
-  /// umbra software se recitesc oricum la reconstructia asta de MaterialApp.
+  /// Textele traduse se citesc prin `tr()` chiar in `build`-ul fiecarui
+  /// widget, iar rutele deja impinse pe stiva isi tin pagina construita in
+  /// cache, deci fara o cheie noua ecranele de sub cel curent ar ramane in
+  /// limba veche. Cheia le reconstruieste pe toate, cu pretul intoarcerii in
+  /// meniul principal — comportamentul asteptat dupa "am schimbat limba".
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: L10n.language,
       builder: (context, language, _) {
-        return ValueListenableBuilder<bool>(
-          valueListenable: EcoMode.enabled,
-          builder: (context, eco, __) {
-            return MaterialApp(
-              key: ValueKey(language.code),
-              navigatorKey: _navigatorKey,
-              title: 'SodoQuizz',
-              debugShowCheckedModeBanner: false,
-              theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(
-                  seedColor: const Color(0xFF534AB7),
-                  brightness: Brightness.dark,
-                ),
-                useMaterial3: true,
-                fontFamily: 'Roboto',
-                scaffoldBackgroundColor: const Color(0xFF0F172A),
-                textTheme: const TextTheme(
-                  bodyMedium: TextStyle(color: Colors.white),
-                ),
-                // null cat timp Eco e oprit = tranzitiile obisnuite ale
-                // platformei, neatinse.
-                pageTransitionsTheme: EcoMode.pageTransitionsTheme(),
-              ),
-              builder: _withEcoDim,
-              home: const LoadingScreen(nextBuilder: _homeBuilder, duration: Duration(milliseconds: 1400)),
-            );
-          },
+        return MaterialApp(
+          key: ValueKey(language.code),
+          navigatorKey: _navigatorKey,
+          title: 'SodoQuizz',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF534AB7),
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            fontFamily: 'Roboto',
+            scaffoldBackgroundColor: const Color(0xFF0F172A),
+            textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: Colors.white),
+            ),
+          ),
+          home: const LoadingScreen(nextBuilder: _homeBuilder, duration: Duration(milliseconds: 1400)),
         );
       },
-    );
-  }
-
-  /// Umbra software a Modului Eco — folosita DOAR unde nu exista canalul
-  /// nativ de luminozitate (web, desktop; vezi EcoMode). Pe Android
-  /// `dimOverlayOpacity` e 0, fiindca acolo se stinge backlight-ul real, iar
-  /// un strat suplimentar de compus la fiecare cadru ar fi lucrat exact
-  /// impotriva scopului.
-  static Widget _withEcoDim(BuildContext context, Widget? child) {
-    final dim = EcoMode.dimOverlayOpacity;
-    if (child == null) return const SizedBox.shrink();
-    if (dim <= 0) return child;
-    return Stack(
-      children: [
-        child,
-        Positioned.fill(
-          child: IgnorePointer(
-            child: ColoredBox(color: Colors.black.withAlpha((255 * dim).round())),
-          ),
-        ),
-      ],
     );
   }
 

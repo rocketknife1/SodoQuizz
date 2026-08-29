@@ -2,7 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/betting.dart';
-import '../core/eco_mode.dart';
+import '../core/repeating_animation.dart';
 import '../core/game_helpers.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
@@ -31,7 +31,7 @@ class _BetaInfoBalloonState extends State<BetaInfoBalloon>
   @override
   void initState() {
     super.initState();
-    _float = EcoAnimationController(
+    _float = RepeatingAnimationController(
         vsync: this, duration: const Duration(milliseconds: 3200))
       ..repeat();
   }

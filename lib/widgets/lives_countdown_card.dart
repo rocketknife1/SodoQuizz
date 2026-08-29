@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../core/eco_mode.dart';
+import '../core/repeating_animation.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
@@ -34,7 +34,7 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
   @override
   void initState() {
     super.initState();
-    _pulse = EcoAnimationController(
+    _pulse = RepeatingAnimationController(
         vsync: this, duration: const Duration(milliseconds: 1100))
       ..repeat(reverse: true);
     _refresh();

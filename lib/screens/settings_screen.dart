@@ -2,7 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/audio.dart';
-import '../core/eco_mode.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
@@ -32,7 +31,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
   bool _musicEnabled = true;
   double _musicVolume = 0.5;
-  bool _eco = EcoMode.on;
   bool _loaded = false;
   bool _privacyOptionsRequired = false;
 
@@ -75,11 +73,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   Future<void> _changeMusicVolume(double value) async {
     setState(() => _musicVolume = value);
     await Music.setVolume(value);
-  }
-
-  Future<void> _toggleEco(bool value) async {
-    setState(() => _eco = value);
-    await EcoMode.setEnabled(value);
   }
 
   Future<void> _confirmReset(BuildContext context) async {
@@ -272,8 +265,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                       ),
                     ),
                     const SizedBox(height: 14),
-                    _staggered(i++, _buildEcoCard()),
-                    const SizedBox(height: 14),
                     _staggered(i++, _buildMusicCard(context)),
                     if (_privacyOptionsRequired) ...[
                       const SizedBox(height: 14),
@@ -336,78 +327,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     );
   }
 
-  /// Cardul Modului Eco. Textul spune ce face CONCRET (animații oprite,
-  /// ecran mai stins), nu „optimizează performanța" — jucătorul trebuie să
-  /// poată prevedea ce se schimbă înainte să apese, altfel primul lui gând la
-  /// vederea meniului nemișcat e că s-a stricat jocul.
-  Widget _buildEcoCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _eco ? AppColors.play.withAlpha(120) : Colors.white10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: AppColors.play.withAlpha(40),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.eco_rounded, color: AppColors.play, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(tr('Mod Eco', 'Eco mode'),
-                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(
-                      tr('Mai puțină baterie, telefon mai rece', 'Less battery, cooler phone'),
-                      style: const TextStyle(color: Colors.white54, fontSize: 11),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              CupertinoSwitch(
-                value: _eco,
-                activeTrackColor: AppColors.play,
-                onChanged: _toggleEco,
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              color: Colors.white.withAlpha(10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              tr(
-                'Cât e pornit: ecranul jocului stă mai stins, animațiile de fundal '
-                '(mascote, planetă, sclipiri) se opresc, iar trecerea dintre ecrane e instantanee. '
-                'Se aplică din clipa în care intri în joc, de fiecare dată.',
-                'While it is on: the game screen stays dimmer, background animations '
-                '(mascots, planet, glows) stop, and screen transitions are instant. '
-                'It applies from the moment you open the game, every time.',
-              ),
-              style: const TextStyle(color: Colors.white60, fontSize: 11.5, height: 1.45),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildMusicCard(BuildContext context) {
     return Container(

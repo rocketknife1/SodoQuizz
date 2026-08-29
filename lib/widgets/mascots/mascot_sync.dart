@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import '../../core/eco_mode.dart';
 import '../../core/lang.dart';
 
 /// Cele trei mascote decorative de pe Home (inelul, Clippy și marțianul de
@@ -62,32 +61,10 @@ class MascotSync {
   static MascotId? _lastGreetTarget;
   static String? _lastGreetMessage;
 
-  /// Pornește dispecerul — dar NU în Modul Eco, unde gesturile și replicile
-  /// mascotelor sunt exact genul de mișcare pe care modul o oprește: pur
-  /// decorative, la câteva zeci de secunde, fiecare cu 3-4 secunde de cadre
-  /// desenate la 60 fps. Fără oprirea asta, meniul principal tot se trezea
-  /// periodic din repaus, chiar cu buclele infinite oprite.
-  ///
-  /// Ascultă comutatorul, deci pornirea/oprirea modului se aplică pe loc, fără
-  /// repornirea jocului.
+  /// Pornește dispecerul de gesturi/replici ale mascotelor.
   static void ensureStarted() {
-    EcoMode.enabled.removeListener(_applyEco);
-    EcoMode.enabled.addListener(_applyEco);
-    if (EcoMode.on) return;
     _clockTimer ??= _scheduleClock();
     _greetTimer ??= _scheduleGreet();
-  }
-
-  static void _applyEco() {
-    if (EcoMode.on) {
-      _clockTimer?.cancel();
-      _clockTimer = null;
-      _greetTimer?.cancel();
-      _greetTimer = null;
-    } else {
-      _clockTimer ??= _scheduleClock();
-      _greetTimer ??= _scheduleGreet();
-    }
   }
 
   /// Doar pentru teste widget: MascotSync e un dispecer global, pornit o

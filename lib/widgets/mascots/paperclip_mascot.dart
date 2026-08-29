@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
-import '../../core/eco_mode.dart';
+import '../../core/repeating_animation.dart';
 import '../../core/game_helpers.dart';
 import '../../core/lang.dart';
 import '../../core/theme.dart';
@@ -78,7 +78,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
   @override
   void initState() {
     super.initState();
-    _idle = EcoAnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
+    _idle = RepeatingAnimationController(vsync: this, duration: const Duration(seconds: 7))..repeat();
     _excite = AnimationController(vsync: this, duration: const Duration(milliseconds: 750));
     _gesture = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100));
     _speech = AnimationController(vsync: this, duration: const Duration(milliseconds: 3800));
