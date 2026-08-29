@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter test)",
+      "Bash(flutter test 2>&1:*)",
+      "Bash(adb devices:*)"
+    ]
+  }
+}
