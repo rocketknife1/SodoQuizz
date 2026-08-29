@@ -148,7 +148,7 @@ class MatchPrizeStrip extends StatelessWidget {
                   ? tr('Premiile apar când intră al doilea jucător',
                       'Prizes appear when a second player joins')
                   : '🥇 $first   🥈 $second   •   ${tr('apasă pentru tot tabelul', 'tap for the full table')}',
-              style: TextStyle(color: AppColors.coin, fontSize: 11.5, fontWeight: FontWeight.w700),
+              style: const TextStyle(color: AppColors.coin, fontSize: 11.5, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -303,7 +303,7 @@ Future<bool> confirmMatchStake(
                             'You already paid exactly this — nothing more is taken.')
                         : tr('Ai plătit deja 💰$alreadyPaid, deci îți dăm înapoi 💰${-due}.',
                             'You already paid 💰$alreadyPaid, so we give you 💰${-due} back.'),
-                style: TextStyle(color: AppColors.coin, fontSize: 12.5, fontWeight: FontWeight.w700),
+                style: const TextStyle(color: AppColors.coin, fontSize: 12.5, fontWeight: FontWeight.w700),
               ),
             ],
             if (subtitle != null) ...[
@@ -359,7 +359,7 @@ Future<bool> confirmTanksRoom(BuildContext context, {required String title}) asy
         children: [
           Text(
             tr('Quizz Tanks • intrare gratuită', 'Quizz Tanks • free entry'),
-            style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800),
+            style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 8),
           Text(

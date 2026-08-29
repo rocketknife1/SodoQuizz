@@ -190,11 +190,11 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
             if (_coinsEarned > 0) ...[
               const SizedBox(height: 8),
               Text('+$_coinsEarned monede  •  +$_xpEarned XP',
-                  style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 13)),
+                  style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 13)),
             ],
             const SizedBox(height: 8),
             if (isNewBest)
-              Text('🏆 Record nou!', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800))
+              const Text('🏆 Record nou!', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800))
             else
               Text(tr('Recordul tău rămâne $_bestScore.', 'Your best stays at $_bestScore.'), style: const TextStyle(color: Colors.white38, fontSize: 12.5)),
           ],
@@ -245,7 +245,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.spaceGradient),
+        decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -330,7 +330,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 10),
             padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
+            decoration: const BoxDecoration(color: AppColors.bg, shape: BoxShape.circle),
             child: CountdownRing(secondsLeft: _secondsLeft, totalSeconds: _roundSeconds, size: 44),
           ),
           const Expanded(child: Divider(color: Colors.white12, height: 1)),
@@ -387,7 +387,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
                       decoration: BoxDecoration(color: AppColors.coin.withAlpha(40), borderRadius: BorderRadius.circular(14)),
                       child: Text(
                         formatSearchVolume(item.popularity),
-                        style: TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800),
+                        style: const TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800),
                       ),
                     )
                   : const Text('❓ ❓ ❓', key: ValueKey('hidden'), style: TextStyle(color: Colors.white38, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 3)),

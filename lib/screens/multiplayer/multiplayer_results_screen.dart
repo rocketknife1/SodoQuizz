@@ -317,7 +317,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             _salvageTopDamage
                 ? tr('🔧 PRADĂ DIN EPAVE • cele mai multe daune', '🔧 SALVAGE • most damage dealt')
                 : tr('🔧 PRADĂ DIN EPAVE', '🔧 SALVAGE'),
-            style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5),
+            style: const TextStyle(color: AppColors.orange, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5),
           ),
           const SizedBox(height: 8),
           Row(
@@ -494,7 +494,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           );
         }
         if (offer.status == 'started') {
-          return Padding(
+          return const Padding(
             padding: EdgeInsets.only(bottom: 10),
             child: Center(child: CircularProgressIndicator(color: AppColors.blue)),
           );
@@ -599,7 +599,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             future: _future,
             builder: (context, snap) {
               if (!snap.hasData) {
-                return Center(child: CircularProgressIndicator(color: AppColors.blue));
+                return const Center(child: CircularProgressIndicator(color: AppColors.blue));
               }
               if (_firstWinBonus || !_salvage.isEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) => _playRewardAnimations());
@@ -641,7 +641,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                     // regulă. Monedele modului vin din pradă, mai jos.
                     Text(
                       _coinsEarned > 0 ? '+$_coinsEarned monede  •  +$_xpEarned XP' : '+$_xpEarned XP',
-                      style: TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
+                      style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
                     ),
                   ],
                   if (_myBet > 0) ...[
@@ -676,7 +676,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('🎁 Prima victorie a zilei', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 12)),
+                          const Text('🎁 Prima victorie a zilei', style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 12)),
                           const SizedBox(width: 10),
                           _bonusBadge(_coinBadgeKey, Icons.monetization_on_rounded, AppColors.coin),
                           const SizedBox(width: 6),
@@ -715,7 +715,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                               ),
                               if (widget.gameMode == MatchGameMode.higherLower) ...[
                                 if (p.eliminated)
-                                  Padding(
+                                  const Padding(
                                     padding: EdgeInsets.only(right: 8),
                                     child: Text('ELIMINAT', style: TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w800)),
                                   )
@@ -742,7 +742,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                   padding: const EdgeInsets.only(right: 8),
                                   child: Text(
                                     p.obstaclesCleared >= obbyObstacleCount ? '🏁' : '🏃 ${p.obstaclesCleared}/$obbyObstacleCount',
-                                    style: TextStyle(color: AppColors.play, fontSize: 11.5, fontWeight: FontWeight.w800),
+                                    style: const TextStyle(color: AppColors.play, fontSize: 11.5, fontWeight: FontWeight.w800),
                                   ),
                                 ),
                               if (widget.gameMode == MatchGameMode.electricChair)
@@ -763,7 +763,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                               // s-a întâmplat în meci.
                               Text(
                                 widget.gameMode == MatchGameMode.quizzTanks ? '${p.damageDealt} dmg' : '${p.score} pct',
-                                style: TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),
+                                style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),
                               ),
                             ],
                           ),

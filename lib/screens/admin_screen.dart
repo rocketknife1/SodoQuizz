@@ -107,7 +107,7 @@ Future<bool> _confirmBan(BuildContext context, PlayerProfile p) async {
       ),
       actions: [
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
-        TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Interzice', style: TextStyle(color: AppColors.danger))),
+        TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Interzice', style: TextStyle(color: AppColors.danger))),
       ],
     ),
   );
@@ -156,7 +156,7 @@ Future<bool> _confirmAndPurge(BuildContext context, PlayerProfile p) async {
             style: TextStyle(color: Colors.white38, fontSize: 11.5, height: 1.35),
           ),
           const SizedBox(height: 10),
-          Text('Nu poate fi anulat.',
+          const Text('Nu poate fi anulat.',
               style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w700)),
         ],
       ),
@@ -164,7 +164,7 @@ Future<bool> _confirmAndPurge(BuildContext context, PlayerProfile p) async {
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
         TextButton(
           onPressed: () => Navigator.pop(context, true),
-          child: Text('Șterge tot', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
+          child: const Text('Șterge tot', style: TextStyle(color: AppColors.danger, fontWeight: FontWeight.bold)),
         ),
       ],
     ),
@@ -199,7 +199,7 @@ Future<bool> _confirmReset(BuildContext context, PlayerProfile p) async {
           Text('${p.name} o ia de la capăt, ca un jucător nou.',
               style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 10),
-          Text('PE LOC:',
+          const Text('PE LOC:',
               style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
           const SizedBox(height: 4),
           const Text(
@@ -207,7 +207,7 @@ Future<bool> _confirmReset(BuildContext context, PlayerProfile p) async {
             style: TextStyle(color: Colors.white60, fontSize: 12.5, height: 1.5),
           ),
           const SizedBox(height: 10),
-          Text('LA URMĂTOAREA LUI DESCHIDERE A JOCULUI:',
+          const Text('LA URMĂTOAREA LUI DESCHIDERE A JOCULUI:',
               style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
           const SizedBox(height: 4),
           Text(
@@ -225,7 +225,7 @@ Future<bool> _confirmReset(BuildContext context, PlayerProfile p) async {
             style: TextStyle(color: Colors.white38, fontSize: 11.5, height: 1.35),
           ),
           const SizedBox(height: 10),
-          Text('Nu poate fi anulat.',
+          const Text('Nu poate fi anulat.',
               style: TextStyle(color: AppColors.danger, fontSize: 12.5, fontWeight: FontWeight.w700)),
         ],
       ),
@@ -233,7 +233,7 @@ Future<bool> _confirmReset(BuildContext context, PlayerProfile p) async {
         TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
         TextButton(
           onPressed: () => Navigator.pop(context, true),
-          child: Text('Resetează', style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold)),
+          child: const Text('Resetează', style: TextStyle(color: AppColors.orange, fontWeight: FontWeight.bold)),
         ),
       ],
     ),
@@ -316,13 +316,13 @@ class _AdminPlayerRow extends StatelessWidget {
           ),
           IconButton(
             onPressed: onGrant,
-            icon: Icon(Icons.card_giftcard_rounded, color: AppColors.teal, size: 20),
+            icon: const Icon(Icons.card_giftcard_rounded, color: AppColors.teal, size: 20),
             tooltip: 'Trimite resurse',
           ),
-          IconButton(onPressed: onBan, icon: Icon(Icons.block_rounded, color: AppColors.danger, size: 20), tooltip: 'Interzice'),
+          IconButton(onPressed: onBan, icon: const Icon(Icons.block_rounded, color: AppColors.danger, size: 20), tooltip: 'Interzice'),
           IconButton(
             onPressed: onPurge,
-            icon: Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 21),
+            icon: const Icon(Icons.delete_forever_rounded, color: AppColors.danger, size: 21),
             tooltip: 'Șterge complet',
           ),
         ],
@@ -355,7 +355,7 @@ class _PlayersTabState extends State<_PlayersTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!;
         if (players.isEmpty) {
@@ -420,7 +420,7 @@ class _PlayersTabState extends State<_PlayersTab> {
           ),
           child: Row(
             children: [
-              Icon(Icons.campaign_rounded, color: AppColors.orange, size: 20),
+              const Icon(Icons.campaign_rounded, color: AppColors.orange, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -466,7 +466,7 @@ class _NewTodayTabState extends State<_NewTodayTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!;
         if (players.isEmpty) {
@@ -559,7 +559,7 @@ class _ReportsTabState extends State<_ReportsTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final reports = snap.data!;
         if (reports.isEmpty) {
@@ -670,7 +670,7 @@ class _ReportCard extends StatelessWidget {
                 const TextSpan(text: '  l-a reclamat pe  ', style: TextStyle(color: Colors.white38, fontSize: 12)),
                 TextSpan(
                   text: report.targetName,
-                  style: TextStyle(color: AppColors.orange, fontSize: 12, fontWeight: FontWeight.w800),
+                  style: const TextStyle(color: AppColors.orange, fontSize: 12, fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -692,12 +692,12 @@ class _ReportCard extends StatelessWidget {
             children: [
               TextButton(
                 onPressed: onOpenTarget,
-                child: Text('Fișa lui', style: TextStyle(color: AppColors.blue, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                child: const Text('Fișa lui', style: TextStyle(color: AppColors.blue, fontSize: 12.5, fontWeight: FontWeight.w700)),
               ),
               TextButton(
                 onPressed: onToggleHandled,
                 child: Text(handled ? 'Redeschide' : 'Rezolvat',
-                    style: TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w700)),
               ),
               IconButton(
                 onPressed: onDelete,
@@ -946,7 +946,7 @@ class _MessageSheetState extends State<_MessageSheet> {
             style: const TextStyle(color: Colors.white),
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-              prefixIcon: Icon(Icons.title_rounded, color: AppColors.blue, size: 20),
+              prefixIcon: const Icon(Icons.title_rounded, color: AppColors.blue, size: 20),
               labelText: 'Titlu',
               labelStyle: const TextStyle(color: Colors.white54),
               hintText: 'ex: Actualizare nouă',
@@ -1214,7 +1214,7 @@ class _DebugTabState extends State<_DebugTab> {
               color: AppColors.purple.withAlpha(40),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(Icons.blur_off_rounded, color: AppColors.purple, size: 20),
+            child: const Icon(Icons.blur_off_rounded, color: AppColors.purple, size: 20),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -1293,7 +1293,7 @@ class _StatsTabState extends State<_StatsTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final players = snap.data!.players;
         final total = players.length;
@@ -1335,7 +1335,7 @@ class _StatsTabState extends State<_StatsTab> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.delete_sweep_rounded, color: AppColors.danger, size: 18),
+                        const Icon(Icons.delete_sweep_rounded, color: AppColors.danger, size: 18),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -1611,7 +1611,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
           if (target.forcedName.isNotEmpty)
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, _unlockSentinel),
-              child: Text('Lasă-l liber', style: TextStyle(color: AppColors.orange)),
+              child: const Text('Lasă-l liber', style: TextStyle(color: AppColors.orange)),
             ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
@@ -1701,7 +1701,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                               ),
                             ),
                             const SizedBox(width: 8),
-                            Icon(Icons.edit_rounded, color: AppColors.orange, size: 19),
+                            const Icon(Icons.edit_rounded, color: AppColors.orange, size: 19),
                           ],
                         ),
                       ),
@@ -1714,7 +1714,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                   future: _future,
                   builder: (context, snap) {
                     if (!snap.hasData) {
-                      return Center(child: CircularProgressIndicator(color: AppColors.orange));
+                      return const Center(child: CircularProgressIndicator(color: AppColors.orange));
                     }
                     return RefreshIndicator(
                       onRefresh: _refresh,
@@ -1780,7 +1780,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
               ],
             ),
             const SizedBox(height: 14),
-            Text('ID UNIC',
+            const Text('ID UNIC',
                 style: TextStyle(color: AppColors.teal, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.1)),
             const SizedBox(height: 6),
             Row(
@@ -1793,7 +1793,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                 ),
                 IconButton(
                   onPressed: _copyUid,
-                  icon: Icon(Icons.copy_rounded, color: AppColors.teal, size: 20),
+                  icon: const Icon(Icons.copy_rounded, color: AppColors.teal, size: 20),
                   tooltip: 'Copiază ID-ul',
                 ),
               ],
@@ -2207,7 +2207,7 @@ class _RoomsTabState extends State<_RoomsTab> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: AppColors.orange));
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
         final rooms = snap.data!;
         if (rooms.isEmpty) {
@@ -2279,7 +2279,7 @@ class _RoomCard extends StatelessWidget {
                 color: AppColors.purple.withAlpha(40),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(Icons.meeting_room_rounded, color: AppColors.purple, size: 21),
+              child: const Icon(Icons.meeting_room_rounded, color: AppColors.purple, size: 21),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -2299,7 +2299,7 @@ class _RoomCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     _expiryLabel(room),
-                    style: TextStyle(color: AppColors.orange, fontSize: 10.5, fontWeight: FontWeight.w700),
+                    style: const TextStyle(color: AppColors.orange, fontSize: 10.5, fontWeight: FontWeight.w700),
                   ),
                 ],
               ),
@@ -2355,7 +2355,7 @@ class _RoomDetailScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('ID CAMERĂ',
+                        const Text('ID CAMERĂ',
                             style: TextStyle(
                                 color: AppColors.purple,
                                 fontSize: 11,
@@ -2379,7 +2379,7 @@ class _RoomDetailScreen extends StatelessWidget {
                                       content: Text('ID cameră copiat.'), duration: Duration(seconds: 2)),
                                 );
                               },
-                              icon: Icon(Icons.copy_rounded, color: AppColors.purple, size: 20),
+                              icon: const Icon(Icons.copy_rounded, color: AppColors.purple, size: 20),
                               tooltip: 'Copiază ID-ul camerei',
                             ),
                           ],
@@ -2479,7 +2479,7 @@ class _RoomPlayerCard extends StatelessWidget {
                   children: [
                     const Text('Intrat cu', style: TextStyle(color: Colors.white38, fontSize: 10.5)),
                     Text('−${_grouped(player.entry)}',
-                        style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w800)),
+                        style: const TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -2489,7 +2489,7 @@ class _RoomPlayerCard extends StatelessWidget {
                   children: [
                     const Text('Ieșit cu', style: TextStyle(color: Colors.white38, fontSize: 10.5)),
                     Text('+${_grouped(player.exit)}',
-                        style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800)),
+                        style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),

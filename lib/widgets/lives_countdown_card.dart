@@ -122,12 +122,12 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
                   value: progress,
                   strokeWidth: 3,
                   backgroundColor: Colors.white12,
-                  valueColor: AlwaysStoppedAnimation(AppColors.life),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.life),
                 ),
                 ScaleTransition(
                   scale: Tween<double>(begin: 0.82, end: 1.0).animate(
                       CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
-                  child: Icon(Icons.favorite_rounded,
+                  child: const Icon(Icons.favorite_rounded,
                       color: AppColors.life, size: 16),
                 ),
               ],
@@ -159,7 +159,7 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
           ),
           Text(
             _format(_remaining),
-            style: TextStyle(
+            style: const TextStyle(
               color: AppColors.life,
               fontSize: 19,
               fontWeight: FontWeight.w900,

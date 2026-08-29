@@ -94,7 +94,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Renunță', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('Golește', 'Clear'), style: TextStyle(color: AppColors.danger)),
+            child: Text(tr('Golește', 'Clear'), style: const TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -136,7 +136,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 future: _future,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState != ConnectionState.done) {
-                    return Center(child: CircularProgressIndicator(color: AppColors.purple));
+                    return const Center(child: CircularProgressIndicator(color: AppColors.purple));
                   }
                   final items = snapshot.data ?? const <AppNotification>[];
                   if (items.isEmpty) return _empty();

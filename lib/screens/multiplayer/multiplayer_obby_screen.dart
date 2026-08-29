@@ -523,7 +523,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
             builder: (context, matchSnap) {
               final info = matchSnap.data;
               if (info == null) {
-                return Center(child: CircularProgressIndicator(color: AppColors.teal));
+                return const Center(child: CircularProgressIndicator(color: AppColors.teal));
               }
               return StreamBuilder<List<MatchPlayer>>(
                 stream: _playersStream,
@@ -611,9 +611,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.monetization_on_rounded, color: AppColors.coin, size: 13),
+                    const Icon(Icons.monetization_on_rounded, color: AppColors.coin, size: 13),
                     const SizedBox(width: 3),
-                    Text('+$_instantCoinsThisMatch', style: TextStyle(color: AppColors.coin, fontSize: 12, fontWeight: FontWeight.w800)),
+                    Text('+$_instantCoinsThisMatch', style: const TextStyle(color: AppColors.coin, fontSize: 12, fontWeight: FontWeight.w800)),
                   ],
                 ),
               ),
@@ -747,7 +747,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
               tr('⚡ Bonus: două variante eliminate', '⚡ Bonus: two options removed'),
-              style: TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w800),
+              style: const TextStyle(color: AppColors.play, fontSize: 12.5, fontWeight: FontWeight.w800),
             ),
           ),
         for (var i = 0; i < visible.length; i += 2)
@@ -885,7 +885,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
             child: Center(
               child: Text(
                 tr('✓ Ai sărit! Se așteaptă ceilalți...', '✓ You jumped! Waiting for the others...'),
-                style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700),
+                style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700),
               ),
             ),
           ),

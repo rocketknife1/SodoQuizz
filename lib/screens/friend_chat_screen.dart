@@ -69,7 +69,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.bgGradient),
+        decoration: const BoxDecoration(gradient: AppColors.bgGradient),
         child: SafeArea(
           child: Column(
             children: [
@@ -139,7 +139,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.block_rounded, color: AppColors.danger, size: 34),
+            const Icon(Icons.block_rounded, color: AppColors.danger, size: 34),
             const SizedBox(height: 12),
             Text(
               tr('L-ai blocat pe ${widget.friend.name}.\nNu vezi mesajele lui cât timp e blocat.',
@@ -176,7 +176,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
       builder: (context, snap) {
         final messages = snap.data;
         if (messages == null) {
-          return Center(child: CircularProgressIndicator(color: AppColors.teal));
+          return const Center(child: CircularProgressIndicator(color: AppColors.teal));
         }
         if (messages.isEmpty) {
           return Center(
@@ -262,7 +262,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
           ),
           IconButton(
             onPressed: _sending ? null : _send,
-            icon: Icon(Icons.send_rounded, color: AppColors.teal),
+            icon: const Icon(Icons.send_rounded, color: AppColors.teal),
           ),
         ],
       ),
@@ -279,7 +279,7 @@ class UnreadDot extends StatelessWidget {
     return Container(
       width: 9,
       height: 9,
-      decoration: BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+      decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
     );
   }
 }

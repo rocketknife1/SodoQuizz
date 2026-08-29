@@ -446,7 +446,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
+        const Icon(Icons.public_rounded, color: AppColors.coin, size: 34),
         const SizedBox(height: 8),
         Text(
           tr('Cultură Generală', 'General Knowledge'),
@@ -573,7 +573,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
+          const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
           const SizedBox(height: 8),
           Text(
             tr('Runda $_roundNumber/$_totalRounds terminată — $correctCount/${_questions.length} corecte',
@@ -602,7 +602,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
+        const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 26),
         const SizedBox(height: 8),
         Text(
           tr('Runda finală terminată!', 'Final round done!'),

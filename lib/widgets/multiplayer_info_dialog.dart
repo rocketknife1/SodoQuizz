@@ -73,7 +73,7 @@ class MultiplayerInfoDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.groups_rounded, color: AppColors.blue, size: 36),
+            const Icon(Icons.groups_rounded, color: AppColors.blue, size: 36),
             const SizedBox(height: 8),
             Text(
               tr('Cum funcționează Multiplayer', 'How Multiplayer works'),

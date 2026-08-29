@@ -56,18 +56,17 @@ class _WheelPrize {
   });
 }
 
-Color get _gemColor => AppColors.gem;
-Color get _jackpotColor => AppColors.coin;
+const _gemColor = Color(0xFF5EC8F2);
+const _jackpotColor = Color(0xFFFFD700);
 
-// ─── Tema caldă a roții ─────────────────────────────────────────────────────
-// Cadranele roții nu iau culoarea fiecărui premiu (curcubeu) — sunt de o
-// singură culoare caldă, alternând două nuanțe, ca roata să citească vizual
-// "un obiect", nu o colecție de resurse. Culoarea vine din tema activă
-// (`AppColors.orange`), ca roata să se potrivească cu restul jocului în
-// loc să rămână portocaliu-fix pe o temă rece sau luminoasă.
-Color get _wheelOrange => AppColors.orange;
-Color get _wheelOrangeLight => Color.lerp(AppColors.orange, Colors.white, 0.30)!;
-Color get _wheelOrangeDeep => Color.lerp(AppColors.orange, Colors.black, 0.38)!;
+// ─── Tema portocalie a roții ────────────────────────────────────────────────
+// Cadranele roții nu mai iau culoarea fiecărui premiu (curcubeu) — sunt
+// portocalii, alternând două nuanțe, ca roata să citească vizual "un obiect",
+// nu o colecție de resurse; iconițele rămân colorate pe tipul de resursă,
+// pentru lizibilitate, dar pe fundal portocaliu.
+const _wheelOrange = Color(0xFFFF7A1A);
+const _wheelOrangeLight = Color(0xFFFFA94D);
+const _wheelOrangeDeep = Color(0xFFC24A00);
 
 /// 11 premii — orice resursă (monede, XP, hints, viață, gems) sau pachet
 /// combinat (mai rar) poate ieși la o rotire, plus premiul special ultra-rar:
@@ -80,7 +79,7 @@ Color get _wheelOrangeDeep => Color.lerp(AppColors.orange, Colors.black, 0.38)!;
 /// singură acțiune: media unei rotiri e ~247 monede + ~15 gems + vieți/hints
 /// (≈490 echivalent-monede), iar chiar și cel mai slab segment (268 monede)
 /// bate orice altceva se poate face cu un singur tap.
-final List<_WheelPrize> _prizes = [
+const List<_WheelPrize> _prizes = [
   _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '268', weight: 18, coins: 268),
   _WheelPrize(icon: Icons.star_rounded, color: AppColors.purple, wheelLabel: '431', weight: 14, xp: 431),
   _WheelPrize(icon: Icons.monetization_on_rounded, color: AppColors.coin, wheelLabel: '517', weight: 13, coins: 517),
@@ -206,7 +205,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: _wheelOrange.withAlpha(140)),
           boxShadow: [BoxShadow(color: _wheelOrange.withAlpha(50), blurRadius: 28, spreadRadius: -6)],
@@ -257,7 +256,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.card,
+                        color: const Color(0xFF1A1A2E),
                         shape: BoxShape.circle,
                         border: Border.all(color: _wheelOrangeLight, width: 3),
                       ),
@@ -314,9 +313,9 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       rows.add(Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
+          const Icon(Icons.all_inclusive_rounded, color: _jackpotColor, size: 30),
           const SizedBox(width: 10),
-          Text(tr('Vieți nelimitate\n24 de ore!', 'Unlimited lives\nfor 24 hours!'), textAlign: TextAlign.center, style: TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(tr('Vieți nelimitate\n24 de ore!', 'Unlimited lives\nfor 24 hours!'), textAlign: TextAlign.center, style: const TextStyle(color: _jackpotColor, fontSize: 18, fontWeight: FontWeight.w900)),
         ],
       ));
     }

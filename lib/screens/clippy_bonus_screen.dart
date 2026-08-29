@@ -200,7 +200,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
               Expanded(
                 child: switch (_phase) {
                   _ClippyPhase.intro => _buildIntro(),
-                  _ClippyPhase.loading => Center(child: CircularProgressIndicator(color: AppColors.purple)),
+                  _ClippyPhase.loading => const Center(child: CircularProgressIndicator(color: AppColors.purple)),
                   _ClippyPhase.playing => _buildPlaying(),
                   _ClippyPhase.finished => _buildFinished(),
                 },
@@ -244,7 +244,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
                 Text(
                   tr('Fără risc — un răspuns greșit nu pierde nimic!', 'No risk — a wrong answer costs you nothing!'),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
+                  style: const TextStyle(color: AppColors.coin, fontSize: 13, fontWeight: FontWeight.w700),
                 ),
               ],
             ),
@@ -312,7 +312,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.celebration_rounded, color: AppColors.coin, size: 40),
+          const Icon(Icons.celebration_rounded, color: AppColors.coin, size: 40),
           const SizedBox(height: 10),
           Text(tr('$correctCount/${_questions.length} corecte', '$correctCount/${_questions.length} correct'), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),

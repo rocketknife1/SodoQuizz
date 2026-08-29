@@ -190,7 +190,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
                 Expanded(
                   child: data == null
-                      ? Center(child: CircularProgressIndicator(color: AppColors.purple))
+                      ? const Center(child: CircularProgressIndicator(color: AppColors.purple))
                       : ListView.builder(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
                           itemCount: achievements.length,
@@ -310,7 +310,7 @@ class _AchievementCard extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           if (claimed)
-            Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
+            const Icon(Icons.check_circle_rounded, color: AppColors.success, size: 26)
           else if (done)
             Column(
               mainAxisSize: MainAxisSize.min,

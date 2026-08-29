@@ -262,7 +262,7 @@ class _PaperclipMascotState extends State<PaperclipMascot> with TickerProviderSt
         Text(
           'CLIPPY',
           style: _questionReady
-              ? TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)
+              ? const TextStyle(color: AppColors.hint, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.3)
               : labelStyle,
         ),
         const SizedBox(height: 2),

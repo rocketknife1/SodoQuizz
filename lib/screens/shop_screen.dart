@@ -227,7 +227,7 @@ class _ShopScreenState extends State<ShopScreen> {
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Renunță', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('Cumpără', 'Buy'), style: TextStyle(color: AppColors.play, fontWeight: FontWeight.bold)),
+            child: Text(tr('Cumpără', 'Buy'), style: const TextStyle(color: AppColors.play, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -640,7 +640,7 @@ class _PremiumVeil extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppColors.coin.withAlpha(140)),
                         ),
-                        child: Icon(Icons.lock_rounded, color: AppColors.coin, size: 26),
+                        child: const Icon(Icons.lock_rounded, color: AppColors.coin, size: 26),
                       ),
                       const SizedBox(height: 14),
                       Text(
@@ -872,7 +872,7 @@ class _BundleItem extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(color: AppColors.play.withAlpha(50), borderRadius: BorderRadius.circular(6)),
-                            child: Text(tr('O SINGURĂ DATĂ', 'ONE TIME ONLY'), style: TextStyle(color: AppColors.play, fontSize: 8, fontWeight: FontWeight.w800)),
+                            child: Text(tr('O SINGURĂ DATĂ', 'ONE TIME ONLY'), style: const TextStyle(color: AppColors.play, fontSize: 8, fontWeight: FontWeight.w800)),
                           ),
                         ],
                       ],
@@ -952,7 +952,7 @@ class _NoAdsHeroCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.workspace_premium_rounded, color: AppColors.coin, size: 22),
+              const Icon(Icons.workspace_premium_rounded, color: AppColors.coin, size: 22),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
