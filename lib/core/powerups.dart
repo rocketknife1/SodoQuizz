@@ -145,7 +145,9 @@ enum PowerUp {
   /// evitată.
   megaRocket,
 
-  /// Quizz Tanks: lovești DOI adversari deodată, cu daune normale.
+  /// Quizz Tanks (meciuri de 3+): tragi DOUĂ proiectile și alegi separat
+  /// unde merge fiecare. Aleargă aceeași țintă de două ori ⇒ o singură
+  /// lovitură, dar cu daune mai mari ([tanksDoubleShotFocusMultiplier]).
   doubleShot,
 
   /// Scaunul Electric: victima aleasă de tine nu poate fi apărată de scut.
@@ -200,6 +202,42 @@ const Map<PowerUp, Set<String>> powerUpModes = {
   PowerUp.repairKit: {'quizzTanks', 'electricChair'},
 };
 
+/// În ce FAZE de rundă mai are efect real folosirea fiecărui power-up
+/// „de luptă". Cheile sunt `RoundPhase.name` (ținute ca string ca `core/` să
+/// nu depindă de `models/`, aceeași graniță ca [powerUpModes]).
+///
+/// Bug raportat live pe telefon (2026-08-25): puterile astea se scriu pe
+/// `roundPowerUps` și sunt citite abia la rezolvarea rundei
+/// ([MultiplayerService.resolveTanksRound] / `resolveElectricChairRound` /
+/// `resolveObbyChoices`). Dacă jucătorul apasă după ce runda s-a rezolvat
+/// deja (faza [RoundPhase]`.revealed`), scrierea ajunge prea târziu și
+/// puterea se pierde în tăcere. Ecranele verifică lista asta prin
+/// [powerUpUsableInPhase] înainte s-o consume și, dacă nu se poate, o
+/// păstrează și îi spun jucătorului.
+///
+/// Power-up-urile care NU apar aici (50/50, timp în plus, trusă de
+/// reparații) au efect local instant sau pe runda următoare — se pot folosi
+/// oricând, n-au fereastră.
+const Map<PowerUp, Set<String>> powerUpUsablePhases = {
+  PowerUp.megaRocket: {'answering', 'targeting'},
+  PowerUp.doubleShot: {'answering', 'targeting'},
+  PowerUp.shield: {'answering', 'targeting', 'chair'},
+  PowerUp.piercingShock: {'answering', 'targeting'},
+  PowerUp.allyShield: {'answering', 'targeting', 'chair'},
+  PowerUp.reflect: {'answering', 'targeting', 'chair'},
+  PowerUp.peek: {'answering', 'targeting', 'choosing', 'chair'},
+  PowerUp.sabotage: {'answering', 'choosing'},
+  PowerUp.jetpack: {'answering', 'choosing'},
+};
+
+/// Poate fi folosit [p] acum, în faza [phaseName] (= `RoundPhase.name`)?
+/// Vezi [powerUpUsablePhases]. Necunoscut/neangajat în listă ⇒ oricând.
+bool powerUpUsableInPhase(PowerUp p, String phaseName) {
+  final allowed = powerUpUsablePhases[p];
+  if (allowed == null) return true;
+  return allowed.contains(phaseName);
+}
+
 const Map<PowerUp, (String, String)> powerUpTitles = {
   PowerUp.megaRocket: ('🚀 Mega Rachetă', '🚀 Mega Rocket'),
   PowerUp.doubleShot: ('🎯 Lovitură Dublă', '🎯 Double Shot'),
@@ -217,7 +255,7 @@ const Map<PowerUp, (String, String)> powerUpTitles = {
 
 const Map<PowerUp, (String, String)> powerUpDescriptions = {
   PowerUp.megaRocket: ('Lovitură uriașă, imposibil de evitat.', 'Huge hit, impossible to dodge.'),
-  PowerUp.doubleShot: ('Lovești doi adversari deodată.', 'Hit two opponents at once.'),
+  PowerUp.doubleShot: ('Două proiectile — alege ținta fiecăruia.', 'Two shots — aim each one.'),
   PowerUp.piercingShock: ('Trece prin scutul victimei.', 'Goes through the victim shield.'),
   PowerUp.sabotage: ('Strici placa bună a cuiva.', "Ruin someone's good platform."),
   PowerUp.shield: ('Blochezi următoarea lovitură.', 'Block the next hit.'),
@@ -241,6 +279,18 @@ const Map<PowerUp, int> powerUpDurationRounds = {
 /// o lovitură obișnuită. La 3.5× din maximul normal, o mega rachetă ia cam
 /// jumătate din viața unui tanc dintr-o singură lovitură.
 const double megaRocketDamageMultiplier = 3.5;
+
+/// [PowerUp.doubleShot] cu ambele proiectile pe aceeași țintă: în loc de două
+/// lovituri normale (care s-ar putea rata separat), o singură lovitură cu
+/// daune înmulțite cu asta. Sub 2× intenționat — concentrarea pe o țintă
+/// schimbă un „poate lovesc de două ori" într-un „sigur lovesc o dată tare".
+const double tanksDoubleShotFocusMultiplier = 1.8;
+
+/// Separatorul dintre cele două ținte ale unei lovituri duble, în valoarea
+/// din `roundTargets[shooter]` (`"tintaA|tintaB"`). Un uid Firebase nu
+/// conține niciodată `|`, deci despărțirea e fără ambiguitate. Ținta simplă
+/// rămâne un uid gol, fără separator — compatibil cu ce era înainte.
+const String tanksTargetSeparator = '|';
 
 /// Câte secunde în plus dă [PowerUp.extraTime].
 const int extraTimeSeconds = 6;

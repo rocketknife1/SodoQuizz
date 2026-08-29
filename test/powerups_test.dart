@@ -90,6 +90,33 @@ void main() {
       }
     });
 
+    test('puterile de lupta nu se mai pot folosi dupa ce runda s-a rezolvat', () {
+      // Bug live 2026-08-25: scrierea pe roundPowerUps ajunge prea tarziu in
+      // faza revealed si se pierde in tacere.
+      for (final p in [PowerUp.megaRocket, PowerUp.doubleShot, PowerUp.shield,
+          PowerUp.piercingShock, PowerUp.allyShield, PowerUp.sabotage, PowerUp.jetpack]) {
+        expect(powerUpUsableInPhase(p, 'revealed'), isFalse, reason: '$p in revealed');
+        expect(powerUpUsableInPhase(p, 'answering'), isTrue, reason: '$p in answering');
+      }
+    });
+
+    test('puterile instant/locale se pot folosi in orice faza', () {
+      for (final p in [PowerUp.fiftyFifty, PowerUp.extraTime, PowerUp.repairKit]) {
+        for (final phase in ['answering', 'targeting', 'choosing', 'chair', 'revealed']) {
+          expect(powerUpUsableInPhase(p, phase), isTrue, reason: '$p in $phase');
+        }
+      }
+    });
+
+    test('fereastra de folosire e mereu un subset de faze reale', () {
+      const realPhases = {'answering', 'targeting', 'choosing', 'revealed', 'chair'};
+      for (final entry in powerUpUsablePhases.entries) {
+        expect(entry.value, isNotEmpty, reason: '${entry.key} nu are nicio faza');
+        expect(realPhases.containsAll(entry.value), isTrue,
+            reason: '${entry.key} listeaza o faza inexistenta: ${entry.value}');
+      }
+    });
+
     test('fiecare power-up are titlu si descriere in ambele limbi', () {
       for (final p in PowerUp.values) {
         if (p == PowerUp.none) continue;

@@ -185,6 +185,14 @@ class MatchInfo {
   /// secunde.
   final Map<String, String> roundTargets;
 
+  /// Quizz Tanks / Scaunul Electric / Obby: uid → numele power-up-ului
+  /// activat de jucătorul ăla pentru runda curentă (vezi
+  /// core/powerups.dart `PowerUp.name`). Se golește la începutul fiecărei
+  /// runde. Ecranul îl citește ca să știe, în faza de țintire, dacă
+  /// țintașul are lovitură dublă (are nevoie de două alegeri, nu una).
+  /// Rezolvarea rundei îl citește oricum direct din documentul brut.
+  final Map<String, String> roundPowerUps;
+
   /// Doar [MatchGameMode.obby], în faza [RoundPhase.choosing]: uid → indexul
   /// plăcii pe care a ales să sară (0..[obbyPlatformChoiceCount]-1). Exact ca
   /// [roundTargets] la Quizz Tanks: cine a răspuns corect apare în
@@ -242,6 +250,7 @@ class MatchInfo {
     this.roundShots = const [],
     this.roundDestroyedIds = const [],
     this.roundTargets = const {},
+    this.roundPowerUps = const {},
     this.roundPlatformChoices = const {},
     this.roundChairChoices = const {},
     this.roundChairAssignments = const {},
@@ -285,6 +294,7 @@ class MatchInfo {
       ],
       roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
       roundTargets: Map<String, String>.from(data['roundTargets'] as Map? ?? const {}),
+      roundPowerUps: Map<String, String>.from(data['roundPowerUps'] as Map? ?? const {}),
       // (x as num).toInt() nu `as int`: Firestore poate întoarce un întreg
       // scris de pe web ca `double`, iar un cast direct ar arunca.
       roundPlatformChoices: {
@@ -325,6 +335,7 @@ class MatchInfo {
         'roundShots': <Map<String, dynamic>>[],
         'roundDestroyedIds': <String>[],
         'roundTargets': <String, String>{},
+        'roundPowerUps': <String, String>{},
         'roundPlatformChoices': <String, int>{},
         'roundChairChoices': <String, Map<String, dynamic>>{},
         'roundChairAssignments': <String, Map<String, dynamic>>{},

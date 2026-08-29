@@ -259,7 +259,18 @@ service cloud.firestore {
     // merge:true, nu se dublează) — doar admin-ul citește/agregă.
     match /completed_matches/{matchId} {
       allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
-      allow write: if request.auth != null;
+      // Scrierea ramane deschisa oricui e autentificat (id-ul doc = matchId,
+      // deci scrierile jucatorilor de la aceeasi masa converg, merge:true),
+      // DAR continutul e verificat: exact cele 3 campuri asteptate, cu
+      // tipurile lor si playerCount >= 2 (vezi recordCompletedMatch). Fara
+      // asta, oricine putea scrie un doc fals sub un matchId inventat si
+      // umfla numaratoarea din AdminScreen. Fara delete: statistica e
+      // definitiva, nimeni n-o poate subtia.
+      allow create, update: if request.auth != null
+        && request.resource.data.keys().hasOnly(['gameModeId', 'playerCount', 'finishedAt'])
+        && request.resource.data.gameModeId is string
+        && request.resource.data.playerCount is int
+        && request.resource.data.playerCount >= 2;
     }
 
     // Jurnalul camerelor terminate, cu tabloul complet al mesei (cine a jucat,

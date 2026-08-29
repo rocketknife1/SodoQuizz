@@ -15,6 +15,7 @@ import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
+import '../../widgets/in_app_notification.dart';
 import '../../widgets/obby_game.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
@@ -83,6 +84,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   PowerUp _myPowerUp = PowerUp.none;
   Set<String> _hiddenChoices = const {};
   int _extraSecondsThisRound = 0;
+
+  /// uid → nume, reîmprospătat la fiecare [_onData] — pentru [PowerUp.peek].
+  final Map<String, String> _playerNames = {};
 
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
@@ -203,6 +207,33 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'obby');
     setState(() => _myPowerUp = picked);
     Sfx.rewardPop();
+    _announcePowerUp(picked);
+  }
+
+  void _notifyPowerUpTooLate() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text(tr(
+          'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
+          'Too late for that power-up — use it at the start of the round.',
+        )),
+      ));
+  }
+
+  void _announcePowerUp(PowerUp p) {
+    if (!mounted) return;
+    final t = powerUpTitles[p];
+    if (t == null) return;
+    InAppNotification.showInfo(
+      context,
+      title: tr('Ai primit o putere!', 'Power-up received!'),
+      message: '${tr(t.$1, t.$2)} — ${tr('apasă pastila din bară ca s-o folosești', 'tap the chip up top to use it')}',
+      icon: Icons.bolt_rounded,
+      color: AppColors.purple,
+    );
   }
 
   /// Consumă power-up-ul curent. [PowerUp.jetpack] și [PowerUp.sabotage] se
@@ -213,6 +244,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   void _usePowerUp(MatchInfo info) {
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
+    if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
+      _notifyPowerUpTooLate();
+      return; // păstrează puterea — nu o consuma pe o scriere care se pierde
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
@@ -228,10 +263,30 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
         MultiplayerService.instance.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.sabotage:
         MultiplayerService.instance.useObbySabotage(matchId: widget.matchId);
+      case PowerUp.peek:
+        _showPeek(info);
       default:
         break;
     }
     setState(() => _myPowerUp = PowerUp.none);
+  }
+
+  /// [PowerUp.peek]: banner cu ce au răspuns ceilalți până acum. Pur local.
+  void _showPeek(MatchInfo info) {
+    if (!mounted) return;
+    final me = MultiplayerService.instance.currentPlayerId;
+    final others = info.roundAnswers.entries.where((e) => e.key != me).toList();
+    final line = others.isEmpty
+        ? tr('Nimeni n-a răspuns încă.', 'Nobody has answered yet.')
+        : others.map((e) => '${_playerNames[e.key] ?? '?'}: ${e.value}').join('  ·  ');
+    InAppNotification.showInfo(
+      context,
+      title: tr('👁️ Spionaj', '👁️ Peek'),
+      message: line,
+      icon: Icons.visibility_rounded,
+      color: AppColors.purple,
+      duration: const Duration(seconds: 4),
+    );
   }
 
   /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
@@ -384,6 +439,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
 
   void _onData(MatchInfo info, List<MatchPlayer> players) {
     _latestInfo = info;
+    for (final p in players) {
+      _playerNames[p.id] = p.name;
+    }
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _showAdvance = false;

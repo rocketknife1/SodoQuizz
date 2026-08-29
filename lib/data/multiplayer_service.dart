@@ -838,9 +838,20 @@ class MultiplayerService {
   }
 
   /// Ținta aleasă de jucătorul curent, din ecranul de țintire.
-  Future<void> submitTanksTarget({required String matchId, required String targetId}) {
+  ///
+  /// [secondTargetId] se dă doar la [PowerUp.doubleShot]: cele două ținte se
+  /// scriu împreună, despărțite prin [tanksTargetSeparator]
+  /// (`"tintaA|tintaB"`), ca [resolveTanksRound] să le poată despărți. Poate
+  /// fi egal cu [targetId] — atunci ambele proiectile lovesc aceeași țintă,
+  /// o singură lovitură cu daune mărite.
+  Future<void> submitTanksTarget({
+    required String matchId,
+    required String targetId,
+    String? secondTargetId,
+  }) {
     final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundTargets.$me': targetId}));
+    final value = secondTargetId == null ? targetId : '$targetId$tanksTargetSeparator$secondTargetId';
+    return _paced(() => _db.collection('matches').doc(matchId).update({'roundTargets.$me': value}));
   }
 
   /// Activează un power-up pentru runda curentă — citit de [resolveTanksRound]
@@ -850,6 +861,39 @@ class MultiplayerService {
   Future<void> submitTanksPowerUp({required String matchId, required PowerUp powerUp}) {
     final me = currentPlayerId;
     return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
+  }
+
+  /// [PowerUp.allyShield] la Quizz Tanks: apără AUTOMAT tancul cel mai
+  /// slăbit (cel mai puțin HP), nu unul ales manual — exact convenția de la
+  /// [useElectricChairAllyShield] (fără fereastră nouă de alegere doar
+  /// pentru un power-up). Ține 2 runde ([powerUpDurationRounds]); citit din
+  /// `shields.<id>` de [resolveTanksRound], care blochează prima lovitură ca
+  /// scutul propriu.
+  Future<void> useTanksAllyShield({required String matchId, required int roundIndex}) async {
+    final me = currentPlayerId;
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final playersSnap = await matchRef.collection('players').get();
+        String? weakestId;
+        var weakestHp = 1 << 30;
+        for (final doc in playersSnap.docs) {
+          if (doc.id == me) continue;
+          final data = doc.data();
+          if (data['eliminated'] == true) continue;
+          final hp = data['hp'] as int? ?? tanksMaxHp;
+          if (hp < weakestHp || (hp == weakestHp && doc.id.compareTo(weakestId ?? '') < 0)) {
+            weakestHp = hp;
+            weakestId = doc.id;
+          }
+        }
+        if (weakestId == null) return; // nimeni de apărat
+        final rounds = powerUpDurationRounds[PowerUp.allyShield] ?? 2;
+        tx.update(matchRef, {'shields.$weakestId': roundIndex + rounds - 1});
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.useTanksAllyShield a esuat: $e');
+    }
   }
 
   /// [PowerUp.repairKit] pentru Quizz Tanks: recuperare de viață instant, nu
@@ -945,29 +989,46 @@ class MultiplayerService {
         // lovitură care l-ar fi atins, nu se scade de la toate.
         final shieldConsumed = <String>{};
 
+        // Scut pe aliat: `shields.<id>` = ultima rundă în care id-ul e
+        // protejat (2 runde, vezi [useTanksAllyShield]). Absoarbe tot o
+        // singură lovitură pe rundă, prin același [shieldConsumed].
+        final allyShields = Map<String, dynamic>.from(data['shields'] as Map? ?? const {});
+        bool allyShielded(String id) => (allyShields[id] as int? ?? -1) >= roundIndex;
+
         final rnd = Random();
         final shots = <Map<String, dynamic>>[];
         final incoming = {for (final id in alive) id: 0};
         final dealt = {for (final id in alive) id: 0};
+        String? validEnemy(String shooter, String? id) =>
+            (id != null && id != shooter && alive.contains(id)) ? id : null;
+
         for (final shooter in alive) {
           if (!shooters.contains(shooter)) continue;
-          final chosen = targets[shooter] as String?;
-          final target = (chosen != null && chosen != shooter && alive.contains(chosen))
-              ? chosen
-              : _weakestEnemy(alive, hpAtStart, shooter);
+          final shooterPower = powerUpOf(shooter);
+          final parts = (targets[shooter] as String? ?? '').split(tanksTargetSeparator);
+          final target = validEnemy(shooter, parts.isEmpty ? null : parts.first)
+              ?? _weakestEnemy(alive, hpAtStart, shooter);
           if (target == null) continue; // nu mai are pe cine trage
 
-          // Lovitură dublă: al doilea proiectil pleacă spre următorul cel mai
-          // slăbit adversar (diferit de primul), cu daune normale — vezi
-          // [PowerUp.doubleShot].
-          final shooterPower = powerUpOf(shooter);
-          final volley = [target];
+          // Lovitură dublă: două proiectile, cu ținta fiecăruia aleasă de
+          // jucător (parts[0], parts[1]). Aceeași țintă de două ori ⇒ o
+          // singură lovitură concentrată, cu daune înmulțite cu
+          // [tanksDoubleShotFocusMultiplier] — vezi [PowerUp.doubleShot].
+          // `volley`: (țintă, multiplicator concentrare) pe proiectil.
+          final volley = <(String, double)>[(target, 1.0)];
           if (shooterPower == PowerUp.doubleShot) {
-            final second = _weakestEnemy(alive, hpAtStart, shooter, exclude: {target});
-            if (second != null) volley.add(second);
+            final second = validEnemy(shooter, parts.length > 1 ? parts[1] : null)
+                ?? _weakestEnemy(alive, hpAtStart, shooter, exclude: {target});
+            if (second == target || second == null) {
+              volley
+                ..clear()
+                ..add((target, tanksDoubleShotFocusMultiplier));
+            } else {
+              volley.add((second, 1.0));
+            }
           }
 
-          for (final t in volley) {
+          for (final (t, focusMult) in volley) {
             // „În gardă" = a răspuns și el corect, adică e tot în lista
             // țintașilor — de-aia evită mult mai des. `dodgeBonus` vine din
             // evenimentul rundei (Ceață de Luptă), nu din nimic personal.
@@ -981,10 +1042,25 @@ class MultiplayerService {
             if (shooterPower == PowerUp.megaRocket) {
               roll = TankShotRoll(hit: true, damage: (roll.damage * megaRocketDamageMultiplier).round());
             }
-            // Scutul victimei blochează lovitura DOAR dacă chiar ar fi lovit-o
-            // — un scut ținut degeaba pe o lovitură ratată oricum nu se
-            // „consumă" fără rost.
-            if (roll.hit && powerUpOf(t) == PowerUp.shield && shieldConsumed.add(t)) {
+            // Lovitură dublă concentrată pe o singură țintă: daune mărite.
+            if (roll.hit && focusMult != 1.0) {
+              roll = TankShotRoll(hit: true, damage: (roll.damage * focusMult).round());
+            }
+            // Scutul victimei (propriu SAU pus de un aliat) blochează
+            // lovitura DOAR dacă chiar ar fi lovit-o — un scut ținut degeaba
+            // pe o lovitură ratată oricum nu se „consumă" fără rost.
+            if (roll.hit &&
+                (powerUpOf(t) == PowerUp.shield || allyShielded(t)) &&
+                shieldConsumed.add(t)) {
+              roll = const TankShotRoll(hit: false, damage: 0);
+            }
+            // Reflexie: dacă lovitura ar fi atins un tanc cu [PowerUp.reflect],
+            // proiectilul se întoarce spre atacator — el încasează, reflectorul
+            // primește creditul de daune.
+            if (roll.hit && t != shooter && powerUpOf(t) == PowerUp.reflect && incoming.containsKey(shooter)) {
+              shots.add(TankShot(byId: t, atId: shooter, hit: true, damage: roll.damage).toMap());
+              incoming[shooter] = incoming[shooter]! + roll.damage;
+              dealt[t] = (dealt[t] ?? 0) + roll.damage;
               roll = const TankShotRoll(hit: false, damage: 0);
             }
             shots.add(TankShot(byId: shooter, atId: t, hit: roll.hit, damage: roll.damage).toMap());
@@ -1281,15 +1357,38 @@ class MultiplayerService {
           if (victimDoc == null || !victimDoc.exists || victimDoc.data()!['eliminated'] == true) continue;
           final correct = correctAnswers[victimId];
           var survived = correct != null && answers[victimId] == correct;
+          var reflected = false;
           if (!survived) {
             // Șocul perforant al ORICĂRUI atacator din testul ăsta trece
             // direct prin scut — victima nu poate „ascunde" scutul în
             // spatele unui atac oarecare.
             final piercing = assignment.attackerIds.any((a) => powerUpOf(a) == PowerUp.piercingShock);
             final shielded = !piercing && (powerUpOf(victimId) == PowerUp.shield || allyShielded(victimId));
-            if (shielded) survived = true; // scapă datorită scutului, nu răspunsului
+            if (shielded) {
+              survived = true; // scapă datorită scutului, nu răspunsului
+            } else if (powerUpOf(victimId) == PowerUp.reflect) {
+              // Reflexie: victima scapă, dar șocul se întoarce spre atacatori
+              // — fiecare pierde o viață (aplicat mai jos).
+              survived = true;
+              reflected = true;
+            }
           }
           outcomes[victimId] = survived;
+          if (reflected) {
+            for (final attackerId in assignment.attackerIds) {
+              final aDoc = docs[attackerId];
+              if (aDoc == null || !aDoc.exists || aDoc.data()!['eliminated'] == true) continue;
+              final lives = (aDoc.data()!['lives'] as int? ?? electricChairMaxLives) - 1;
+              final eliminated = lives <= 0;
+              if (eliminated) newlyEliminated.add(attackerId);
+              tx.update(aDoc.reference, {
+                'lives': lives < 0 ? 0 : lives,
+                'eliminated': eliminated,
+                if (eliminated) 'eliminatedAtRound': roundIndex,
+              });
+            }
+            continue; // victima nu ia puncte de apărare pentru un scut-noroc
+          }
           if (survived) {
             scoreGain[victimId] = (scoreGain[victimId] ?? 0) + electricChairPointsPerDefense;
             // Siguranță: scapi de pe scaun, primești o viață înapoi.

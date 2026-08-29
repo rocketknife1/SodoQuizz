@@ -160,9 +160,29 @@ class CloudSyncService {
     _consumingGrant = true;
     try {
       final ref = FirebaseFirestore.instance.collection('admin_grants').doc(uid);
-      final doc = await ref.get();
-      if (!doc.exists) return;
-      final data = doc.data() ?? const <String, dynamic>{};
+
+      // REVENDICĂ grantul înainte să-l aplici: citește + șterge documentul
+      // într-o singură tranzacție, abia apoi umblă la balanța locală. Garda
+      // `_consumingGrant` protejează doar în cadrul aceluiași proces; dacă
+      // aplicația era omorâtă între „aplică local" și „șterge documentul"
+      // (frecvent pe Android), grantul rămânea în cutia poștală și se aplica
+      // din nou la următoarea pornire — jucătorul primea de două ori. Acum,
+      // dacă tranzacția reușește, documentul e deja șters când începe
+      // aplicarea; dacă procesul moare după aceea, grantul se pierde (rar,
+      // și preferabil unei dublări de monede reale).
+      final Map<String, dynamic> data;
+      try {
+        data = await FirebaseFirestore.instance.runTransaction((tx) async {
+          final snap = await tx.get(ref);
+          if (!snap.exists) return const <String, dynamic>{};
+          tx.delete(ref);
+          return snap.data() ?? const <String, dynamic>{};
+        });
+      } catch (e) {
+        debugPrint('CloudSyncService.consumePendingGrant: revendicarea a esuat: $e');
+        return;
+      }
+      if (data.isEmpty) return;
 
       // ÎNTÂI resetul, abia apoi resursele: dacă adminul a resetat contul și
       // i-a trimis apoi și ceva de pornire, jucătorul trebuie să rămână cu
@@ -186,10 +206,8 @@ class CloudSyncService {
       if (xp != 0) await StorageService.adjustXp(xp);
 
       // „Felicitări, ai primit..." — compusă din ce s-a aplicat EFECTIV, nu
-      // din ce a apăsat adminul, și scrisă înainte de ștergerea cutiei
-      // poștale: dacă pică ceva între ele, grant-ul se reia la următoarea
-      // deschidere, iar id-ul stabil (uid + momentul cererii) împiedică
-      // notificarea să apară de două ori pentru același cadou.
+      // din ce a apăsat adminul. Id-ul stabil (uid + momentul cererii)
+      // împiedică notificarea să apară de două ori pentru același cadou.
       //
       // Fără ea, resursele intrau în cont în tăcere: jucătorul vedea altă
       // balanță decât și-o amintea și n-avea de unde să afle de ce.
@@ -212,7 +230,8 @@ class CloudSyncService {
         wasReset: reset,
       );
 
-      await ref.delete();
+      // (documentul admin_grants a fost deja șters în tranzacția de
+      // revendicare de la începutul funcției)
 
       // Ecranele deschise nu știu că balanța de sub ele s-a schimbat.
       grantsApplied.value++;

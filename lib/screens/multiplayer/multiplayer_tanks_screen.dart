@@ -12,6 +12,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/in_app_notification.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
@@ -159,6 +160,15 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   int? _powerUpRolledRound;
   Set<String> _hiddenChoices = const {};
 
+  /// uid → nume, reîmprospătat la fiecare [_onData] — folosit de banner-ul
+  /// de la [PowerUp.peek], care n-are lista de jucători la îndemână.
+  final Map<String, String> _playerNames = {};
+
+  /// Prima țintă apăsată în faza de țintire când am [PowerUp.doubleShot]:
+  /// mai aștept a doua apăsare înainte de a trimite ambele. `null` = n-am
+  /// lovitură dublă, sau încă n-am apăsat nimic. Se golește la runda nouă.
+  String? _firstDoubleTarget;
+
   /// Secunde adăugate la runda curentă de [PowerUp.extraTime] — vezi
   /// [_secondsLeftFor].
   int _extraSecondsThisRound = 0;
@@ -250,17 +260,23 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   ///
   ///  - [PowerUp.fiftyFifty]/[PowerUp.extraTime]: efect local, instant.
   ///  - [PowerUp.repairKit]: scriere directă de viață, instant.
-  ///  - [PowerUp.megaRocket]/[PowerUp.doubleShot]/[PowerUp.shield]: NU au
-  ///    efect local — se scriu pe `roundPowerUps` (vezi
-  ///    [MultiplayerService.submitTanksPowerUp]) și [resolveTanksRound] le
-  ///    citește de acolo la calculul loviturilor, ca orice client care
+  ///  - [PowerUp.megaRocket]/[PowerUp.doubleShot]/[PowerUp.shield]/
+  ///    [PowerUp.reflect]: NU au efect local — se scriu pe `roundPowerUps`
+  ///    (vezi [MultiplayerService.submitTanksPowerUp]) și [resolveTanksRound]
+  ///    le citește de acolo la calculul loviturilor, ca orice client care
   ///    rezolvă runda să aplice exact același rezultat.
-  ///  - [PowerUp.allyShield]/[PowerUp.reflect]/[PowerUp.peek]: rămân doar
-  ///    vizuale în acest pas — ar cere alegerea unui aliat / o fereastră de
-  ///    răspuns partajată, lăsate pentru o trecere ulterioară.
+  ///  - [PowerUp.allyShield]: apără automat tancul cel mai slăbit, 2 runde
+  ///    ([MultiplayerService.useTanksAllyShield]).
+  ///  - [PowerUp.reflect]: se scrie pe `roundPowerUps`, întoarce lovitura la
+  ///    rezolvare.
+  ///  - [PowerUp.peek]: efect local — arată ce au răspuns ceilalți acum.
   void _usePowerUp(MatchInfo info) {
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
+    if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
+      _notifyPowerUpTooLate();
+      return; // păstrează puterea — nu o consuma pe o scriere care se pierde
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
@@ -278,11 +294,62 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       case PowerUp.megaRocket:
       case PowerUp.doubleShot:
       case PowerUp.shield:
+      case PowerUp.reflect:
         MultiplayerService.instance.submitTanksPowerUp(matchId: widget.matchId, powerUp: p);
+      case PowerUp.allyShield:
+        MultiplayerService.instance.useTanksAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+      case PowerUp.peek:
+        _showPeek(info);
       default:
         break;
     }
     setState(() => _myPowerUp = PowerUp.none);
+  }
+
+  /// [PowerUp.peek]: banner informativ cu ce au ales ceilalți până acum.
+  /// Efect pur local — nu scrie nimic, nu schimbă rezolvarea.
+  void _showPeek(MatchInfo info) {
+    if (!mounted) return;
+    final me = MultiplayerService.instance.currentPlayerId;
+    final others = info.roundAnswers.entries.where((e) => e.key != me).toList();
+    final names = _playerNames;
+    final line = others.isEmpty
+        ? tr('Nimeni n-a răspuns încă.', 'Nobody has answered yet.')
+        : others.map((e) => '${names[e.key] ?? '?'}: ${e.value}').join('  ·  ');
+    InAppNotification.showInfo(
+      context,
+      title: tr('👁️ Spionaj', '👁️ Peek'),
+      message: line,
+      icon: Icons.visibility_rounded,
+      color: AppColors.purple,
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _notifyPowerUpTooLate() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text(tr(
+          'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
+          'Too late for that power-up — use it at the start of the round.',
+        )),
+      ));
+  }
+
+  void _announcePowerUp(PowerUp p) {
+    if (!mounted) return;
+    final t = powerUpTitles[p];
+    if (t == null) return;
+    InAppNotification.showInfo(
+      context,
+      title: tr('Ai primit o putere!', 'Power-up received!'),
+      message: '${tr(t.$1, t.$2)} — ${tr('apasă pastila din bară ca s-o folosești', 'tap the chip up top to use it')}',
+      icon: Icons.bolt_rounded,
+      color: AppColors.purple,
+    );
   }
 
   /// Vezi core/powerups.dart — acordat cui a răspuns corect runda tocmai
@@ -311,6 +378,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (!mounted) return;
       setState(() => _myPowerUp = picked);
       Sfx.rewardPop();
+      _announcePowerUp(picked);
     });
   }
 
@@ -318,6 +386,24 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     if (info.roundPhase != RoundPhase.targeting) return;
     final me = MultiplayerService.instance.currentPlayerId;
     if (!info.roundWinnerIds.contains(me) || info.roundTargets.containsKey(me)) return;
+
+    // Lovitură dublă: prima apăsare doar reține ținta, a doua trimite ambele
+    // (pot fi aceeași — atunci lovitura e concentrată, vezi resolveTanksRound).
+    if (info.roundPowerUps[me] == PowerUp.doubleShot.name) {
+      if (_firstDoubleTarget == null) {
+        TankSfx.lock();
+        setState(() => _firstDoubleTarget = targetId);
+        return;
+      }
+      TankSfx.lock();
+      MultiplayerService.instance.submitTanksTarget(
+        matchId: widget.matchId,
+        targetId: _firstDoubleTarget!,
+        secondTargetId: targetId,
+      );
+      return;
+    }
+
     TankSfx.lock();
     MultiplayerService.instance.submitTanksTarget(matchId: widget.matchId, targetId: targetId);
   }
@@ -396,6 +482,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// MultiplayerHigherLowerScreen._onData: pornește/oprește animații,
   /// cere rezolvarea rundei, navighează la rezultate.
   void _onData(MatchInfo info, List<MatchPlayer> players) {
+    for (final p in players) {
+      _playerNames[p.id] = p.name;
+    }
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _hpAtRoundStart
@@ -415,6 +504,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _playedExplosions = false;
       _lastResolveAttempt = null;
       _hiddenChoices = const {};
+      _firstDoubleTarget = null;
       _extraSecondsThisRound = 0;
       _advanceTimer?.cancel();
       _advanceTimer = null;
@@ -688,6 +778,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                         players: players,
                         question: _questionFor(info.roundIndex),
                         secondsLeft: _targetSecondsLeftFor(info),
+                        firstDoubleTarget: _firstDoubleTarget,
                         onPick: (id) => _pickTarget(info, id),
                       );
                     }
@@ -1125,6 +1216,10 @@ class _TargetingView extends StatelessWidget {
   final List<MatchPlayer> players;
   final CultureQuestion question;
   final int secondsLeft;
+
+  /// Prima țintă apăsată la [PowerUp.doubleShot], cât timp încă se așteaptă
+  /// a doua apăsare (vezi `_MultiplayerTanksScreenState._firstDoubleTarget`).
+  final String? firstDoubleTarget;
   final void Function(String targetId) onPick;
 
   const _TargetingView({
@@ -1132,6 +1227,7 @@ class _TargetingView extends StatelessWidget {
     required this.players,
     required this.question,
     required this.secondsLeft,
+    required this.firstDoubleTarget,
     required this.onPick,
   });
 
@@ -1139,7 +1235,17 @@ class _TargetingView extends StatelessWidget {
   Widget build(BuildContext context) {
     final me = MultiplayerService.instance.currentPlayerId;
     final iAmShooter = info.roundWinnerIds.contains(me);
-    final myTarget = info.roundTargets[me];
+    final submitted = info.roundTargets[me];
+    final iHaveDoubleShot = info.roundPowerUps[me] == PowerUp.doubleShot.name;
+    // Țintele de evidențiat: după trimitere, ambele (despărțite de „|"); în
+    // timpul unei lovituri duble, prima apăsată; altfel niciuna.
+    final Set<String> chosen = submitted != null
+        ? submitted.split(tanksTargetSeparator).toSet()
+        : {if (firstDoubleTarget != null) firstDoubleTarget!};
+    final locked = submitted != null;
+    // La lovitura dublă mai e o apăsare de făcut dacă am reținut prima dar
+    // n-am trimis încă.
+    final awaitingSecond = iHaveDoubleShot && !locked && firstDoubleTarget != null;
     final enemies = players.where((p) => p.id != me && !p.eliminated).toList();
 
     return Container(
@@ -1165,12 +1271,12 @@ class _TargetingView extends StatelessWidget {
           Column(
             children: [
               const SizedBox(height: 14),
-              _header(iAmShooter, myTarget != null),
+              _header(iAmShooter, locked, iHaveDoubleShot, awaitingSecond),
               // Conținutul stă CENTRAT pe verticală: la patru jucători sunt
               // trei cutii și se umple ecranul, dar spre finalul meciului
               // rămâne una singură, iar lipită de titlu arăta a pagină
               // neterminată.
-              Expanded(child: Center(child: iAmShooter ? _targets(enemies, myTarget) : _waitingRoom())),
+              Expanded(child: Center(child: iAmShooter ? _targets(enemies, chosen, locked) : _waitingRoom())),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
                 child: _answerReveal(),
@@ -1182,8 +1288,34 @@ class _TargetingView extends StatelessWidget {
     );
   }
 
-  Widget _header(bool iAmShooter, bool alreadyPicked) {
+  Widget _header(bool iAmShooter, bool alreadyPicked, bool doubleShot, bool awaitingSecond) {
     final color = iAmShooter ? AppColors.danger : AppColors.blue;
+    final String titleText;
+    if (!iAmShooter) {
+      titleText = tr('LA ADĂPOST!', 'BRACE!');
+    } else if (doubleShot && !alreadyPicked) {
+      titleText = awaitingSecond
+          ? tr('ȚINTA 2 DIN 2', 'TARGET 2 OF 2')
+          : tr('ȚINTA 1 DIN 2', 'TARGET 1 OF 2');
+    } else {
+      titleText = tr('ALEGE ȚINTA', 'PICK YOUR TARGET');
+    }
+    final String subText;
+    if (!iAmShooter) {
+      subText = tr('Ai greșit runda asta: nu tragi și eviți mult mai greu.',
+          'You missed this round: you do not fire, and you dodge much worse.');
+    } else if (alreadyPicked) {
+      subText = tr('Țintă blocată. Aștept ceilalți tunari...', 'Target locked. Waiting for the other gunners...');
+    } else if (doubleShot) {
+      subText = awaitingSecond
+          ? tr('Apasă din nou — aceeași țintă = o lovitură mai puternică.',
+              'Tap again — same target = one stronger hit.')
+          : tr('Lovitură dublă: alege ținta fiecărui proiectil.',
+              'Double shot: aim each of your two shots.');
+    } else {
+      subText = tr('Ai nimerit răspunsul — ai dreptul la o lovitură.',
+          'You got it right — you have earned one shot.');
+    }
     return Column(
       children: [
         Row(
@@ -1192,7 +1324,7 @@ class _TargetingView extends StatelessWidget {
             Icon(iAmShooter ? Icons.gps_fixed_rounded : Icons.shield_rounded, color: color, size: 22),
             const SizedBox(width: 10),
             Text(
-              iAmShooter ? tr('ALEGE ȚINTA', 'PICK YOUR TARGET') : tr('LA ADĂPOST!', 'BRACE!'),
+              titleText,
               style: TextStyle(color: color, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 3),
             ),
             const SizedBox(width: 10),
@@ -1201,13 +1333,7 @@ class _TargetingView extends StatelessWidget {
         ),
         const SizedBox(height: 5),
         Text(
-          iAmShooter
-              ? (alreadyPicked
-                  ? tr('Țintă blocată. Aștept ceilalți tunari...', 'Target locked. Waiting for the other gunners...')
-                  : tr('Ai nimerit răspunsul — ai dreptul la o lovitură.',
-                      'You got it right — you have earned one shot.'))
-              : tr('Ai greșit runda asta: nu tragi și eviți mult mai greu.',
-                  'You missed this round: you do not fire, and you dodge much worse.'),
+          subText,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white54, fontSize: 12),
         ),
@@ -1218,7 +1344,7 @@ class _TargetingView extends StatelessWidget {
   /// Cutiile adversarilor. Cel mai slăbit e marcat explicit, fiindcă ăsta e
   /// și cel pe care tragi automat dacă nu apuci să alegi — jucătorul trebuie
   /// să vadă dinainte ce se întâmplă dacă ezită.
-  Widget _targets(List<MatchPlayer> enemies, String? myTarget) {
+  Widget _targets(List<MatchPlayer> enemies, Set<String> chosen, bool locked) {
     if (enemies.isEmpty) {
       return Text(tr('Nu mai are cine să fie țintă.', 'Nobody left to target.'),
           style: const TextStyle(color: Colors.white54));
@@ -1238,8 +1364,8 @@ class _TargetingView extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 12),
               child: _TargetCard(
                 player: p,
-                selected: myTarget == p.id,
-                locked: myTarget != null,
+                selected: chosen.contains(p.id),
+                locked: locked,
                 isWeakest: enemies.length > 1 && p.id == weakest.id,
                 // „În gardă" = a răspuns și el corect runda asta, deci e în
                 // lista țintașilor și evită mult mai des. Vezi

@@ -11,6 +11,7 @@ import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../../widgets/in_app_notification.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
@@ -82,6 +83,10 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   int? _powerUpRolledRound;
   Set<String> _hiddenChoices = const {};
   int _extraSecondsThisRound = 0;
+
+  /// uid → nume, reîmprospătat la fiecare [_onData] — pentru banner-ul de la
+  /// [PowerUp.peek].
+  final Map<String, String> _playerNames = {};
 
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
@@ -210,10 +215,16 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   /// [resolveElectricChairRound] le citește de-acolo la deznodământ, ca la
   /// mega rachetă/scut din Quizz Tanks. [PowerUp.allyShield] apără automat
   /// cel mai slăbit coechipier ([MultiplayerService.useElectricChairAllyShield]).
-  /// [PowerUp.reflect]/[PowerUp.peek] rămân doar vizuale în acest pas.
+  /// [PowerUp.reflect] se scrie pe `roundPowerUps` și întoarce șocul spre
+  /// atacatori la [MultiplayerService.resolveElectricChairRound].
+  /// [PowerUp.peek] e efect local — arată ce au răspuns ceilalți.
   void _usePowerUp(MatchInfo info) {
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
+    if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
+      _notifyPowerUpTooLate();
+      return; // păstrează puterea — nu o consuma pe o scriere care se pierde
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
@@ -227,13 +238,59 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         setState(() => _extraSecondsThisRound += extraTimeSeconds);
       case PowerUp.shield:
       case PowerUp.piercingShock:
+      case PowerUp.reflect:
         MultiplayerService.instance.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.allyShield:
         MultiplayerService.instance.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+      case PowerUp.peek:
+        _showPeek(info);
       default:
         break;
     }
     setState(() => _myPowerUp = PowerUp.none);
+  }
+
+  /// [PowerUp.peek]: banner cu ce au răspuns ceilalți până acum. Pur local.
+  void _showPeek(MatchInfo info) {
+    if (!mounted) return;
+    final others = info.roundAnswers.entries.where((e) => e.key != _myId).toList();
+    final line = others.isEmpty
+        ? tr('Nimeni n-a răspuns încă.', 'Nobody has answered yet.')
+        : others.map((e) => '${_playerNames[e.key] ?? '?'}: ${e.value}').join('  ·  ');
+    InAppNotification.showInfo(
+      context,
+      title: tr('👁️ Spionaj', '👁️ Peek'),
+      message: line,
+      icon: Icons.visibility_rounded,
+      color: AppColors.purple,
+      duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _notifyPowerUpTooLate() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2),
+        content: Text(tr(
+          'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
+          'Too late for that power-up — use it at the start of the round.',
+        )),
+      ));
+  }
+
+  void _announcePowerUp(PowerUp p) {
+    if (!mounted) return;
+    final t = powerUpTitles[p];
+    if (t == null) return;
+    InAppNotification.showInfo(
+      context,
+      title: tr('Ai primit o putere!', 'Power-up received!'),
+      message: '${tr(t.$1, t.$2)} — ${tr('apasă pastila din bară ca s-o folosești', 'tap the chip up top to use it')}',
+      icon: Icons.bolt_rounded,
+      color: AppColors.purple,
+    );
   }
 
   /// Vezi core/powerups.dart — acordat cui a răspuns corect la propria
@@ -262,6 +319,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       if (!mounted) return;
       setState(() => _myPowerUp = picked);
       Sfx.rewardPop();
+      _announcePowerUp(picked);
     });
   }
 
@@ -313,6 +371,9 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   }
 
   void _onData(MatchInfo info, List<MatchPlayer> players) {
+    for (final p in players) {
+      _playerNames[p.id] = p.name;
+    }
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _pendingTargetId = null;
