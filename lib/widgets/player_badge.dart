@@ -89,7 +89,7 @@ class PlayerTopBadge extends StatelessWidget {
 
   const PlayerTopBadge({super.key, required this.text, required this.color});
 
-  const PlayerTopBadge.crown({super.key})
+  PlayerTopBadge.crown({super.key})
       : text = '👑',
         color = AppColors.coin;
 

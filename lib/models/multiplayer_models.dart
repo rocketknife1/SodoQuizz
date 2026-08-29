@@ -703,7 +703,7 @@ class QuickMatchOffer {
 /// aceeași culoare, ca un jucător să se poată recunoaște vizual pe durata
 /// unui meci.
 Color pickAvatarColor(String seed) {
-  const palette = [
+  final palette = [
     AppColors.purple,
     AppColors.blue,
     AppColors.orange,

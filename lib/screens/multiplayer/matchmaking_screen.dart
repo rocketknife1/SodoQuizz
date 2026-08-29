@@ -288,7 +288,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                           },
                           child: Text(
                             tr('Căutăm un adversar...', 'Searching for an opponent...'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -327,7 +327,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                                       opacity: 0.5 + 0.5 * (1 - (_radarController.value - 0.5).abs() * 2),
                                       child: child,
                                     ),
-                                    child: const Icon(Icons.search_rounded, color: AppColors.blue, size: 15),
+                                    child: Icon(Icons.search_rounded, color: AppColors.blue, size: 15),
                                   ),
                                   const SizedBox(width: 7),
                                   Text(
@@ -343,7 +343,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                         Text(
                           tr('Miza ta: 💰$_stakePaid  •  câștigătorul ia 💰${matchPrizes(stake: _stakePaid, players: 2).first}',
                               'Your stake: 💰$_stakePaid  •  the winner takes 💰${matchPrizes(stake: _stakePaid, players: 2).first}'),
-                          style: const TextStyle(color: AppColors.coin, fontSize: 12.5, fontWeight: FontWeight.w700),
+                          style: TextStyle(color: AppColors.coin, fontSize: 12.5, fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: 16),
                         _buildOpenRooms(),
@@ -460,9 +460,9 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
               // există miză, iar „💰0" ar fi arătat ca o cameră stricată.
               room.gameMode == MatchGameMode.quizzTanks
                   ? Text(tr('gratis', 'free'),
-                      style: const TextStyle(color: AppColors.play, fontSize: 10, fontWeight: FontWeight.w800))
+                      style: TextStyle(color: AppColors.play, fontSize: 10, fontWeight: FontWeight.w800))
                   : Text('💰${room.stake}',
-                      style: const TextStyle(color: AppColors.coin, fontSize: 10, fontWeight: FontWeight.w800)),
+                      style: TextStyle(color: AppColors.coin, fontSize: 10, fontWeight: FontWeight.w800)),
             ],
           ),
         ),

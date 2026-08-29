@@ -27,6 +27,7 @@ class StorageService {
   static const _xpKey = 'xp';
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
+  static const _appThemeKey = 'app_theme';
   static const _introSeenKey = 'intro_tutorial_seen';
   static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
@@ -1130,6 +1131,18 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('question_unlock_tier_$gameModeId', tier + 1);
     return true;
+  }
+
+  // ─── Tema vizuală (core/app_theme.dart) ──────────────────────────────────
+
+  static Future<String?> getAppThemeId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_appThemeKey);
+  }
+
+  static Future<void> setAppThemeId(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_appThemeKey, id);
   }
 
   // ─── Modul "fără blur" (accesibilitate / preview) ─────────────────────────

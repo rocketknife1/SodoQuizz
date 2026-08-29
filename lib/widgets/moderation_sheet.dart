@@ -155,7 +155,7 @@ Future<void> _confirmBlock(BuildContext context, {required String targetUid, req
         TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(tr('Renunță', 'Cancel'))),
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, true),
-          child: Text(tr('Blochează', 'Block'), style: const TextStyle(color: AppColors.danger)),
+          child: Text(tr('Blochează', 'Block'), style: TextStyle(color: AppColors.danger)),
         ),
       ],
     ),

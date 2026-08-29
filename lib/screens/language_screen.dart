@@ -83,7 +83,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: AppColors.blue, size: 18),
+                        Icon(Icons.info_outline_rounded, color: AppColors.blue, size: 18),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
@@ -139,7 +139,7 @@ class _LanguageRow extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle_rounded, color: AppColors.play, size: 22)
+              Icon(Icons.check_circle_rounded, color: AppColors.play, size: 22)
             else
               const Icon(Icons.circle_outlined, color: Colors.white24, size: 22),
           ],

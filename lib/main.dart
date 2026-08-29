@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/app_check_service.dart';
+import 'core/app_theme.dart';
 import 'core/audio.dart';
 import 'core/eco_mode.dart';
 import 'core/lang.dart';
@@ -27,6 +28,7 @@ import 'screens/multiplayer/multiplayer_match_screen.dart';
 import 'screens/multiplayer/multiplayer_obby_screen.dart';
 import 'screens/multiplayer/multiplayer_tanks_screen.dart';
 import 'widgets/in_app_notification.dart';
+import 'widgets/theme_texture.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +45,7 @@ void main() async {
   // intarzie pornirea in vreun fel simtit.
   await L10n.load();
   await EcoMode.load();
+  await AppTheme.load();
   // O singura initializare, la pornire - restul (login Google) ramane lazy,
   // declansat doar cand userul chiar foloseste acele functii. Esec aici
   // (ex. platforma neconfigurata inca in Firebase Console) nu trebuie sa
@@ -334,7 +337,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     required String title,
     required String message,
     required IconData icon,
-    Color color = AppColors.play,
+    Color? color,
   }) {
     final overlay = _navigatorKey.currentState?.overlay;
     final context = _navigatorKey.currentContext;
@@ -345,7 +348,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       title: title,
       message: message,
       icon: icon,
-      color: color,
+      color: color ?? AppColors.play,
     );
   }
 
@@ -398,11 +401,17 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     return ValueListenableBuilder<AppLanguage>(
       valueListenable: L10n.language,
       builder: (context, language, _) {
+        return ValueListenableBuilder<AppThemeId>(
+          valueListenable: AppTheme.id,
+          builder: (context, themeId, ___) {
         return ValueListenableBuilder<bool>(
           valueListenable: EcoMode.enabled,
           builder: (context, eco, __) {
             return MaterialApp(
-              key: ValueKey(language.code),
+              // Cheia include tema, la fel ca limba: schimbarea temei
+              // reconstruiește tot, deci și ecranele deja pe stivă se
+              // recolorează (vezi nota lungă de mai jos).
+              key: ValueKey('${language.code}-${themeId.name}'),
               navigatorKey: _navigatorKey,
               title: 'SodoQuizz',
               debugShowCheckedModeBanner: false,
@@ -421,32 +430,37 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
                 // platformei, neatinse.
                 pageTransitionsTheme: EcoMode.pageTransitionsTheme(),
               ),
-              builder: _withEcoDim,
+              builder: _withThemeChrome,
               home: const LoadingScreen(nextBuilder: _homeBuilder, duration: Duration(milliseconds: 1400)),
             );
+          },
+        );
           },
         );
       },
     );
   }
 
-  /// Umbra software a Modului Eco — folosita DOAR unde nu exista canalul
-  /// nativ de luminozitate (web, desktop; vezi EcoMode). Pe Android
-  /// `dimOverlayOpacity` e 0, fiindca acolo se stinge backlight-ul real, iar
-  /// un strat suplimentar de compus la fiecare cadru ar fi lucrat exact
-  /// impotriva scopului.
-  static Widget _withEcoDim(BuildContext context, Widget? child) {
-    final dim = EcoMode.dimOverlayOpacity;
+  /// „Cromul" comun tuturor ecranelor, montat o singură dată în `builder`-ul
+  /// lui `MaterialApp`:
+  ///  1. textura temei active ([ThemeTextureOverlay]) — statică, discretă;
+  ///  2. umbra software a Modului Eco — DOAR unde nu există canalul nativ de
+  ///     luminozitate (web, desktop; vezi EcoMode). Pe Android
+  ///     `dimOverlayOpacity` e 0, fiindcă acolo se stinge backlight-ul real,
+  ///     iar un strat în plus de compus ar lucra exact împotriva scopului.
+  static Widget _withThemeChrome(BuildContext context, Widget? child) {
     if (child == null) return const SizedBox.shrink();
-    if (dim <= 0) return child;
+    final dim = EcoMode.dimOverlayOpacity;
     return Stack(
       children: [
         child,
-        Positioned.fill(
-          child: IgnorePointer(
-            child: ColoredBox(color: Colors.black.withAlpha((255 * dim).round())),
+        const ThemeTextureOverlay(),
+        if (dim > 0)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: ColoredBox(color: Colors.black.withAlpha((255 * dim).round())),
+            ),
           ),
-        ),
       ],
     );
   }

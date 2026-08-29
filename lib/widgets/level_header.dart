@@ -316,7 +316,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.all_inclusive_rounded, color: AppColors.life, size: 16),
+          Icon(Icons.all_inclusive_rounded, color: AppColors.life, size: 16),
           if (widget.livesUnlimitedLabel != null) ...[
             const SizedBox(width: 6),
             Text(widget.livesUnlimitedLabel!, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),

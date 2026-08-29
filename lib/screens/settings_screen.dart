@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
+import '../core/app_theme.dart';
 import '../core/audio.dart';
 import '../core/eco_mode.dart';
 import '../core/lang.dart';
@@ -15,6 +16,7 @@ import 'home_screen.dart';
 import 'language_screen.dart';
 import 'loading_screen.dart';
 import 'music_screen.dart';
+import 'theme_screen.dart';
 
 /// Setările vizibile oricui.
 ///
@@ -30,10 +32,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
-  bool _musicEnabled = true;
-  double _musicVolume = 0.5;
   bool _eco = EcoMode.on;
-  bool _loaded = false;
   bool _privacyOptionsRequired = false;
 
   /// Intrarea în cascadă a rândurilor — aceeași senzație ca în Multiplayer.
@@ -43,17 +42,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   void initState() {
     super.initState();
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
-    Future.wait([
-      StorageService.getMusicEnabled(),
-      StorageService.getMusicVolume(),
-    ]).then((values) {
-      if (!mounted) return;
-      setState(() {
-        _musicEnabled = values[0] as bool;
-        _musicVolume = values[1] as double;
-        _loaded = true;
-      });
-    });
     // separat de restul (nu tine incarcarea ecranului) - vizibil doar pentru
     // useri din UE/UK/state americane reglementate, vezi AdsService.
     AdsService.instance.privacyOptionsRequired().then((required) {
@@ -65,16 +53,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   void dispose() {
     _introCtrl.dispose();
     super.dispose();
-  }
-
-  Future<void> _toggleMusic(bool value) async {
-    setState(() => _musicEnabled = value);
-    await Music.setEnabled(value);
-  }
-
-  Future<void> _changeMusicVolume(double value) async {
-    setState(() => _musicVolume = value);
-    await Music.setVolume(value);
   }
 
   Future<void> _toggleEco(bool value) async {
@@ -101,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Renunță', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('Resetează', 'Reset'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(tr('Resetează', 'Reset'), style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -157,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           TextButton(onPressed: () => Navigator.pop(context, false), child: Text(tr('Anulează', 'Cancel'))),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(tr('Șterge contul', 'Delete account'), style: const TextStyle(color: AppColors.danger)),
+            child: Text(tr('Șterge contul', 'Delete account'), style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -167,7 +145,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     showDialog<void>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: AppColors.purple)),
+      builder: (_) => Center(child: CircularProgressIndicator(color: AppColors.purple)),
     );
     try {
       await AuthService.instance.deleteAccount();
@@ -223,7 +201,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                       ),
                       const SizedBox(width: 4),
                       ShaderMask(
-                        shaderCallback: (r) => const LinearGradient(colors: [Colors.white, AppColors.gray]).createShader(r),
+                        shaderCallback: (r) => LinearGradient(colors: [Colors.white, AppColors.gray]).createShader(r),
                         child: Text(tr('SETĂRI', 'SETTINGS'),
                             style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
                       ),
@@ -254,27 +232,34 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     _staggered(
                       i++,
                       _navRow(
+                        icon: Icons.palette_rounded,
+                        color: AppColors.teal,
+                        title: tr('Temă', 'Theme'),
+                        subtitle: '${AppTheme.palette.nameRo}  ·  ${tr('doar aspectul', 'looks only')}',
+                        onTap: () async {
+                          await Navigator.push(context, MaterialPageRoute(builder: (_) => const ThemeScreen()));
+                          if (mounted) setState(() {});
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _staggered(
+                      i++,
+                      _navRow(
                         icon: Icons.library_music_rounded,
                         color: AppColors.purple,
                         title: tr('Muzică', 'Music'),
                         subtitle: '${Music.track.emoji}  ${Music.track.name}',
                         onTap: () async {
                           await Navigator.push(context, MaterialPageRoute(builder: (_) => const MusicScreen()));
-                          if (!mounted) return;
-                          // Piesa și comutatorul se pot schimba acolo — rândul de
-                          // aici și cardul de volum de mai jos trebuie să arate
-                          // starea nouă la întoarcere.
-                          setState(() {
-                            _musicEnabled = Music.isEnabled;
-                            _musicVolume = Music.volume;
-                          });
+                          // Piesa se poate schimba acolo — subtitlul rândului
+                          // trebuie să arate starea nouă la întoarcere.
+                          if (mounted) setState(() {});
                         },
                       ),
                     ),
                     const SizedBox(height: 14),
                     _staggered(i++, _buildEcoCard()),
-                    const SizedBox(height: 14),
-                    _staggered(i++, _buildMusicCard(context)),
                     if (_privacyOptionsRequired) ...[
                       const SizedBox(height: 14),
                       _staggered(
@@ -360,7 +345,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                   color: AppColors.play.withAlpha(40),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.eco_rounded, color: AppColors.play, size: 20),
+                child: Icon(Icons.eco_rounded, color: AppColors.play, size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -404,84 +389,6 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
               style: const TextStyle(color: Colors.white60, fontSize: 11.5, height: 1.45),
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMusicCard(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: AppColors.play.withAlpha(40),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  _musicEnabled ? Icons.music_note_rounded : Icons.music_off_rounded,
-                  color: AppColors.play,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(tr('Muzică de fundal', 'Background music'),
-                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(tr('Separată de sunetele de buton', 'Separate from button sounds'),
-                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              _loaded
-                  ? CupertinoSwitch(
-                      value: _musicEnabled,
-                      activeTrackColor: AppColors.play,
-                      onChanged: _toggleMusic,
-                    )
-                  : const SizedBox(width: 51, height: 31),
-            ],
-          ),
-          if (_loaded) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(Icons.volume_down_rounded, color: Colors.white38, size: 18),
-                Expanded(
-                  child: SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: AppColors.play,
-                      inactiveTrackColor: Colors.white12,
-                      thumbColor: AppColors.play,
-                      overlayColor: AppColors.play.withAlpha(40),
-                      trackHeight: 3,
-                    ),
-                    child: Slider(
-                      value: _musicVolume,
-                      onChanged: _musicEnabled ? _changeMusicVolume : null,
-                    ),
-                  ),
-                ),
-                const Icon(Icons.volume_up_rounded, color: Colors.white38, size: 18),
-              ],
-            ),
-          ],
         ],
       ),
     );
@@ -563,7 +470,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             const SizedBox(width: 12),
             Expanded(
               child: Text(label,
-                  style: const TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w700)),
+                  style: TextStyle(color: AppColors.danger, fontSize: 14, fontWeight: FontWeight.w700)),
             ),
           ],
         ),
