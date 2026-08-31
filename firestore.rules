@@ -159,16 +159,24 @@ service cloud.firestore {
       // profil - foloseste pentru actiunea de ban din AdminScreen
       // (PlayerProfileService.banPlayer) si pentru grant-urile de resurse.
       //
-      // ORDINEA CONTEAZA: garda `!exists(banned_players/{uid})` sta INAUNTRUL
-      // ramurii de owner, nu inaintea disjunctiei. Pusa inainte, se aplica si
-      // adminului, iar `purgePlayer` (batch atomic care sterge inclusiv
-      // `player_profiles/{uid}`) era refuzat pentru un cont BANAT — adica
-      // exact contul pe care adminul voia sa-l curete. Un ban dat din greseala
-      // devenea permanent, nereparabil decat din consola Firebase.
+      // ORDINEA CONTEAZA, in doua feluri:
+      //
+      // 1. Garda `!exists(banned_players/{uid})` sta INAUNTRUL ramurii de
+      //    owner, nu inaintea disjunctiei. Pusa inainte, se aplica si
+      //    adminului, iar `purgePlayer` (batch atomic care sterge inclusiv
+      //    `player_profiles/{uid}`) era refuzat pentru un cont BANAT — adica
+      //    exact contul pe care adminul voia sa-l curete. Un ban dat din
+      //    greseala devenea permanent, nereparabil decat din consola Firebase.
+      //
+      // 2. Ramura de OWNER e prima in disjunctie, ca `||` sa scurtcircuiteze:
+      //    un Guest (cont anonim) satisface `uid == uid` si nu mai ajunge
+      //    niciodata la `request.auth.token.email`, claim care la conturile
+      //    anonime LIPSESTE din token. Adminul scrie pe profilul altcuiva,
+      //    deci pica pe ramura a doua — dar el are claim-ul.
       allow write: if request.auth != null
-        && (request.auth.token.email == 'dragosssx@gmail.com'
-            || (request.auth.uid == uid
-                && !exists(/databases/$(database)/documents/banned_players/$(uid))));
+        && ((request.auth.uid == uid
+             && !exists(/databases/$(database)/documents/banned_players/$(uid)))
+            || request.auth.token.email == 'dragosssx@gmail.com');
 
       // Curatare Guest abandonati (vezi PlayerProfileService._sweepStaleGuests
       // - fara Cloud Functions in acest proiect, orice client autentificat

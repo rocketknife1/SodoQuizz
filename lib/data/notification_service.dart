@@ -387,9 +387,13 @@ class NotificationService {
     }
   }
 
-  /// Doar partea locală a bulinei — fără nicio citire Firestore. Folosită la
-  /// pornire, ca meniul să arate imediat un număr corect-ish, înainte ca
-  /// [refreshUnread] să apuce să întrebe rețeaua.
+  /// Doar partea locală a bulinei — fără nicio citire Firestore. E calea
+  /// NORMALĂ de recalculare: la pornire, la revenirea din fundal și în
+  /// `initState`-ul clopoțelului. Partea live ([_liveUnread]) e păstrată așa
+  /// cum au lăsat-o abonamentele din `LiveSync`, care o împing prin
+  /// [setLiveUnread] fără nicio citire. [refreshUnread] (care chiar întreabă
+  /// rețeaua) a rămas doar pe acțiuni rare, inițiate de utilizator —
+  /// închiderea panoului de notificări.
   Future<void> refreshUnreadLocalOnly() async {
     try {
       final readAt = await StorageService.getNotificationsReadAt();
