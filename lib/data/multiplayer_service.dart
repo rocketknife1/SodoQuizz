@@ -11,6 +11,7 @@ import '../core/obby.dart';
 import '../core/powerups.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
+import 'player_profile_service.dart';
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
 /// are valori placeholder până userul pune un proiect real. UI-ul o prinde și
@@ -1503,14 +1504,29 @@ class MultiplayerService {
   /// [leaveMatch], vezi [RematchOffer]). Doc id-ul e chiar [matchId], singurul
   /// id pe care toți foștii participanți îl cunosc deja. `set` (nu `add`) —
   /// o cerere refuzată/anulată poate fi reîncercată, rescriind același doc.
-  Future<void> offerRematch({
+  /// Poarta de ban, pusa la SURSA (nu in ecranul de rezultate): revansa e
+  /// singura cale prin care un cont banat ar continua sa joace la nesfarsit cu
+  /// aceiasi oameni fara sa treaca vreodata prin ecranul de Multiplayer, care
+  /// are deja poarta lui. Daca maine alt buton cheama aceste metode, e acoperit
+  /// din start.
+  ///
+  /// ATENTIE: `amIBanned` e alimentat de un abonament Firestore, deci e `false`
+  /// cat timp primul snapshot n-a sosit (imediat dupa pornire, sau offline).
+  /// Verificarea asta NU e o garantie de securitate — e o poarta de interfata.
+  /// Securitatea reala pentru multiplayer vine din regulile Firestore si, mai
+  /// incolo, din validarea pe server (partea B, cu Cloud Functions).
+  ///
+  /// Intoarce `false` daca cererea a fost refuzata (cont banat), ca apelantul
+  /// sa poata arata mesajul — acelasi tipar ca `acceptFriendRequest`.
+  Future<bool> offerRematch({
     required String matchId,
     required MatchGameMode gameMode,
     required int stake,
     required List<RematchParticipant> participants,
-  }) {
+  }) async {
+    if (PlayerProfileService.instance.amIBanned.value) return false;
     final me = currentPlayerId;
-    return _paced(() => _db.collection('rematch_offers').doc(matchId).set(RematchOffer(
+    await _paced(() => _db.collection('rematch_offers').doc(matchId).set(RematchOffer(
           matchId: matchId,
           hostId: me,
           gameMode: gameMode,
@@ -1519,6 +1535,7 @@ class MultiplayerService {
           acceptedIds: [me],
           status: 'pending',
         ).toMap()));
+    return true;
   }
 
   Stream<RematchOffer?> watchRematchOffer(String matchId) => _db
@@ -1527,10 +1544,16 @@ class MultiplayerService {
       .snapshots()
       .map((d) => d.exists ? RematchOffer.fromDoc(d) : null);
 
-  Future<void> acceptRematchOffer(String matchId) => _paced(() => _db
-      .collection('rematch_offers')
-      .doc(matchId)
-      .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+  /// Vezi nota de ban de la [offerRematch] — aceeasi poarta de interfata, la
+  /// sursa. Intoarce `false` daca a fost refuzata (cont banat).
+  Future<bool> acceptRematchOffer(String matchId) async {
+    if (PlayerProfileService.instance.amIBanned.value) return false;
+    await _paced(() => _db
+        .collection('rematch_offers')
+        .doc(matchId)
+        .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+    return true;
+  }
 
   /// Refuzul unui SINGUR jucător anulează cererea pentru toată lumea — gazda
   /// vede cine a refuzat și poate încerca din nou (vezi [offerRematch]).
