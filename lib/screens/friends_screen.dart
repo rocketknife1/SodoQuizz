@@ -101,6 +101,16 @@ class _FriendsScreenState extends State<FriendsScreen> {
     super.initState();
     LiveSync.instance.friendSummaries.addListener(_onSummariesChanged);
     LiveSync.instance.incomingRequestUids.addListener(_onRequestsChanged);
+    // După ce ramura asta a închis toate celelalte canale prin care un blocat
+    // ajungea pe ecran (bulina de notificări, cererile, fetchLive), rândul de
+    // prieten cu previzualizarea de chat + bulina de necitit a rămas singurul.
+    // Ascultăm lista de blocați ca rândul lui să se cureţe pe loc la blocare/
+    // deblocare din altă parte, fără o reîncărcare Firestore.
+    ModerationService.instance.blockedIds.addListener(_onBlockedChanged);
+  }
+
+  void _onBlockedChanged() {
+    if (mounted) setState(() {});
   }
 
   /// Un fir s-a schimbat (mesaj nou, marcaj de citit, prieten adăugat/șters).
@@ -121,6 +131,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void dispose() {
     LiveSync.instance.friendSummaries.removeListener(_onSummariesChanged);
     LiveSync.instance.incomingRequestUids.removeListener(_onRequestsChanged);
+    ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
     super.dispose();
   }
@@ -277,7 +288,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           for (final f in data.friends)
                             _FriendRow(
                               profile: f,
-                              summary: _summaries[f.uid],
+                              // Prietenul rămâne în listă (îl poţi elimina), dar
+                              // dacă e blocat nu-şi mai arată ultimul mesaj şi
+                              // nici bulina de necitit.
+                              summary: ModerationService.instance.isBlocked(f.uid)
+                                  ? null
+                                  : _summaries[f.uid],
                               onRemove: () => _remove(f.uid),
                               onOpenChat: () => _openChat(f),
                             ),
