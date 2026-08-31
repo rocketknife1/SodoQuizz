@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'cloud_sync_service.dart';
+import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'notification_service.dart';
 import 'player_profile_service.dart';
@@ -65,12 +66,14 @@ class LiveSync {
     CloudSyncService.instance.startLive();
     PlayerProfileService.instance.startLive();
     NotificationService.instance.startLive();
+    ModerationService.instance.startLive();
   }
 
   static void _stopAllServices() {
     CloudSyncService.instance.stopLive();
     PlayerProfileService.instance.stopLive();
     NotificationService.instance.stopLive();
+    ModerationService.instance.stopLive();
   }
 
   static String _currentUidFromSingleton() {
