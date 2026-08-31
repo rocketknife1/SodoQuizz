@@ -64,6 +64,17 @@ void main() {
       expect(await StorageService.getNoAdsForever(), true);
       expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);
     });
+
+    test('resetul de admin nu redenumeste jucatorul', () async {
+      SharedPreferences.setMockInitialValues({});
+      await StorageService.setChosenDisplayName('NumeleMeu');
+      expect(await StorageService.getChosenDisplayName(), 'NumeleMeu');
+
+      await StorageService.resetToStartingBalance();
+
+      expect(await StorageService.getChosenDisplayName(), 'NumeleMeu',
+          reason: 'un reset de balanta nu are voie sa schimbe numele ales');
+    });
   });
 
   group('semne de activitate', () {

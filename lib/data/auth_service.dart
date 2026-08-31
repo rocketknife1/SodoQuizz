@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import '../firebase_options.dart';
+import '../core/display_name.dart';
 import 'cloud_sync_service.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
@@ -82,20 +83,17 @@ class AuthService {
   Future<({String name, String? photoUrl, String avatarStyle})> multiplayerIdentity() async {
     final avatarStyle = await StorageService.getAvatarStyleId();
     final u = currentUser;
-    // Numele pus de administrator bate tot, inclusiv contul Google — vezi
-    // StorageService.getForcedName pentru de ce. E o decizie de moderare, nu
-    // o preferință a jucătorului, deci nu are voie să fie învinsă de sursa
-    // din care vine în mod normal numele.
-    final forced = await StorageService.getForcedName();
-    if (forced.isNotEmpty) {
-      return (name: forced, photoUrl: u?.photoURL, avatarStyle: avatarStyle);
-    }
-    if (u != null) {
-      final googleName = u.displayName;
-      final name = (googleName != null && googleName.isNotEmpty) ? googleName : await StorageService.getDisplayName();
-      return (name: name, photoUrl: u.photoURL, avatarStyle: avatarStyle);
-    }
-    return (name: await StorageService.getDisplayName(), photoUrl: null, avatarStyle: avatarStyle);
+    // Ordinea numelor stă într-un singur loc, testabil: core/display_name.dart.
+    final resolved = resolveDisplayName(
+      forcedName: await StorageService.getForcedName(),
+      chosenName: await StorageService.getChosenDisplayName(),
+      googleName: u?.displayName ?? '',
+    );
+    // Gol înseamnă „nicio sursă": Guest care nu și-a ales încă nimic. Abia
+    // aici se cade pe numele local generat — [getDisplayName] îl și creează
+    // dacă lipsește, deci nu are voie să fie chemat pe calea de mai sus.
+    final name = resolved.isNotEmpty ? resolved : await StorageService.getDisplayName();
+    return (name: name, photoUrl: u?.photoURL, avatarStyle: avatarStyle);
   }
 
   /// Cere autorizare pentru scope-ul de profil și ia poza direct de la

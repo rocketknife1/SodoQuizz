@@ -89,6 +89,7 @@ class StorageService {
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
+  static const _displayNameChosenKey = 'display_name_chosen';
   static const _forcedNameKey = 'forced_name';
   static const _avatarStyleKey = 'avatar_style';
   static const _gemsKey = 'gems';
@@ -629,6 +630,11 @@ class StorageService {
   /// din admin n-ar mai fi reparabil).
   static const _resetPreservedKeys = <String>[
     _displayNameKey,
+    // Fără ea, un reset de admin ar păstra numele ales (e chiar deasupra) dar
+    // ar pierde marcajul că a fost ales — iar jucătorul ar cădea înapoi pe
+    // numele din contul Google, adică ar fi REDENUMIT în tăcere de o simplă
+    // apăsare pe „Reset". Cele două chei trebuie să călătorească împreună.
+    _displayNameChosenKey,
     _avatarStyleKey,
     _musicEnabledKey,
     _musicVolumeKey,
@@ -1756,6 +1762,32 @@ class StorageService {
   static Future<void> setDisplayName(String name) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_displayNameKey, name);
+  }
+
+  /// Numele pe care jucătorul chiar și l-a ales, sau `''` dacă n-a ales
+  /// niciodată unul.
+  ///
+  /// DE CE NU SE FOLOSEȘTE [getDisplayName] pentru asta: acela GENEREAZĂ și
+  /// SALVEAZĂ un nume („JucatorNNN") când cheia lipsește. Sub noua ordine a
+  /// numelor, întrebarea „și-a ales un nume?" se pune la fiecare rezolvare de
+  /// identitate, inclusiv pentru conturi Google — deci [getDisplayName] ar
+  /// scrie acel nume generat în contul fiecărui jucător Google care n-avea
+  /// unul. Ar intra apoi în cloud-save (exportAll), ar strica amprenta din
+  /// CloudSyncService.push și ar produce o scriere Firestore în plus la
+  /// fiecare pornire — pe lângă că ar crea exact numele-gunoi pe care noua
+  /// ordine încearcă să-l evite.
+  static Future<String> getChosenDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_displayNameChosenKey) ?? false)) return '';
+    return prefs.getString(_displayNameKey) ?? '';
+  }
+
+  /// Jucătorul și-a ales singur numele — de acum al lui bate numele din
+  /// contul Google (vezi core/display_name.dart).
+  static Future<void> setChosenDisplayName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_displayNameKey, name);
+    await prefs.setBool(_displayNameChosenKey, true);
   }
 
   /// **Numele pus de administrator** din panoul de Admin (vezi
