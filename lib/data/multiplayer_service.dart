@@ -512,7 +512,15 @@ class MultiplayerService {
           if (add > 0) winnerIds.add(doc.id);
           if (add != 0) tx.update(doc.reference, {'score': total});
         }
-        final matchOver = rpsWinnerReached(newScores);
+        // Meciul se termina cand: cineva atinge pragul (rpsTargetScore), SAU
+        // a mai ramas cel mult un jucator (ceilalti au plecat) — fara asta
+        // ultimul ramas ar fi blocat pe ecran la infinit, cu miza pierduta —
+        // SAU s-a atins plafonul de runde (toti aleg mereu la fel = 0 puncte
+        // pe runda, deci fara plafon meciul n-ar avea nicio garantie de
+        // terminare, spre deosebire de HL unde painile forteaza eliminare).
+        final activePlayers = playerDocs.where((d) => d.exists).length;
+        final outOfRounds = roundIndex + 1 >= rpsMaxRounds;
+        final matchOver = rpsWinnerReached(newScores) || activePlayers <= 1 || outOfRounds;
         tx.update(matchRef, {
           'roundPhase': RoundPhase.revealed.name,
           'roundWinnerIds': winnerIds,

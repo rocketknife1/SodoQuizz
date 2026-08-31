@@ -61,6 +61,10 @@ void main() {
     });
   });
 
+  test('rpsMaxRounds e un plafon rezonabil', () {
+    expect(rpsMaxRounds, greaterThan(rpsTargetScore));
+  });
+
   group('rpsWinnerReached', () {
     test('nimeni sub prag', () {
       expect(rpsWinnerReached({'a': 8, 'b': 5}), isFalse);

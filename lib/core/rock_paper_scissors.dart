@@ -32,6 +32,13 @@ const int rpsRevealSeconds = 3;
 /// Primul jucător care ajunge la scorul ăsta câștigă meciul.
 const int rpsTargetScore = 10;
 
+/// Plafon de runde: dacă nimeni n-a atins [rpsTargetScore] până aici, meciul
+/// se încheie și câștigă cine are scorul cel mai mare (departajare în
+/// [MultiplayerResultsScreen], ca la Tanks/Obby). Fără plafon, o masă în care
+/// toți aleg mereu la fel ar rula la nesfârșit — RPS n-are eliminare care să
+/// forțeze un final ca la Higher & Lower.
+const int rpsMaxRounds = 30;
+
 /// `true` dacă [a] bate [b] la piatră-hârtie-foarfecă. Alegerea goală (`''`,
 /// jucătorul n-a apăsat la timp) nu bate nimic și e bătută de orice alegere
 /// validă.
