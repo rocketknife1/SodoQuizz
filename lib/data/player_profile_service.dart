@@ -63,6 +63,13 @@ class PlayerProfileService {
   /// [StorageService.balanceRevision].
   final ValueNotifier<int> profileChanged = ValueNotifier<int>(0);
 
+  /// Sunt banat? Ascultat live, ca ridicarea unui ban sa ajunga la fel de
+  /// repede ca punerea lui — poarta din multiplayer_screen.dart asculta acest
+  /// notifier si se deschide singura cand documentul de ban dispare.
+  final ValueNotifier<bool> amIBanned = ValueNotifier<bool>(false);
+
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _banSub;
+
   /// Ascultă propriul profil public, ca o redenumire făcută din panoul de
   /// Admin să apară pe ecran imediat, nu la următoarea pornire.
   ///
@@ -100,6 +107,19 @@ class PlayerProfileService {
       }, onError: (Object e) {
         debugPrint('PlayerProfileService._profileSub a esuat: $e');
       });
+      // Starea de ban, live: `snap.exists` e adevarat cat timp adminul tine
+      // documentul in `banned_players/{uid}`. try/catch in corpul handler-ului
+      // pentru simetrie cu _profileSub (o exceptie in corp NU ajunge la
+      // `onError`).
+      _banSub = _db.collection('banned_players').doc(uid).snapshots().listen((snap) {
+        try {
+          amIBanned.value = snap.exists;
+        } catch (e) {
+          debugPrint('PlayerProfileService._banSub a esuat: $e');
+        }
+      }, onError: (Object e) {
+        debugPrint('PlayerProfileService._banSub a esuat: $e');
+      });
     } catch (e) {
       debugPrint('PlayerProfileService.startLive a esuat: $e');
     }
@@ -108,6 +128,8 @@ class PlayerProfileService {
   void stopLive() {
     _profileSub?.cancel();
     _profileSub = null;
+    _banSub?.cancel();
+    _banSub = null;
   }
 
   /// Scrie/actualizează identitatea publică + "ultima activitate" — apelată

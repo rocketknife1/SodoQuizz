@@ -369,6 +369,11 @@ service cloud.firestore {
     // altcineva nu are nevoie sa acceseze asta direct (verificarea exists()
     // din regula de mai sus are acces implicit, indiferent de allow read).
     match /banned_players/{uid} {
+      // Proprietarul poate citi DOAR propriul document, ca aplicatia sa stie
+      // sa-i spuna de ce nu mai poate intra in multiplayer. Nu poate scrie
+      // nimic (un ban nu se ridica singur) si nu poate citi documentul
+      // altcuiva (ar afla cine e banat) — conditia e strict uid == uid.
+      allow read: if request.auth != null && request.auth.uid == uid;
       allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 

@@ -464,6 +464,64 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Poarta de ban: cat timp `amIBanned` e adevarat, in locul continutului de
+    // multiplayer se arata mesajul. Notifier-ul e alimentat de abonamentul din
+    // PlayerProfileService, deci ridicarea unui ban ajunge instant — daca
+    // jucatorul e deblocat cat sta pe ecran, ecranul se deschide singur.
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlayerProfileService.instance.amIBanned,
+      builder: (context, banned, _) {
+        if (banned) return _buildBannedScreen(context);
+        return _buildMultiplayerScreen(context);
+      },
+    );
+  }
+
+  Widget _buildBannedScreen(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: SpaceBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 0, 0),
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.block_rounded, color: Colors.white54, size: 72),
+                        const SizedBox(height: 20),
+                        Text(
+                          tr('Contul tău a fost restricționat de administrator. Nu poți juca online.',
+                             'Your account has been restricted by an administrator. You cannot play online.'),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMultiplayerScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SpaceBackground(
