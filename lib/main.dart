@@ -9,6 +9,7 @@ import 'core/audio.dart';
 import 'core/lang.dart';
 import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
+import 'data/live_sync.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
 import 'data/multiplayer_presence_service.dart';
@@ -107,6 +108,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _listenForMultiplayerPresence();
+    LiveSync.instance.attachToIdentity();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
   }
@@ -351,15 +353,25 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        // Pe web `paused` poate să nu vină niciodată — se primește `hidden`.
+        // Verificarea cu doi jucători rulează în Chrome, deci fără ramura
+        // asta abonamentele n-ar fi oprite niciodată chiar acolo unde se
+        // măsoară costul lor.
+        state == AppLifecycleState.hidden) {
+      LiveSync.instance.stop();
       CloudSyncService.instance.push();
       Music.pauseForBackground();
     } else if (state == AppLifecycleState.resumed) {
+      LiveSync.instance.start();
       Music.resumeFromBackground();
       PlayerProfileService.instance.ensureProfileHeartbeat();
-      CloudSyncService.instance.consumePendingGrant();
-      // Gratis daca uid-ul n-a schimbat; reincarca doar dupa o logare care a
-      // schimbat contul - vezi ModerationService.loadBlocked.
+      // `consumePendingGrant` NU se mai cheamă aici: abonamentul din LiveSync
+      // îl declanșează singur, iar reatașarea aduce oricum un snapshot
+      // proaspăt cu tot ce s-a schimbat cât aplicația era în fundal.
+      // `loadBlocked` e gratis dacă uid-ul n-a schimbat; reîncarcă doar după o
+      // logare care a schimbat contul — vezi ModerationService.loadBlocked.
       ModerationService.instance.loadBlocked();
       NotificationService.instance.pullFromCloud().then((_) {
         return NotificationService.instance.refreshUnread();
