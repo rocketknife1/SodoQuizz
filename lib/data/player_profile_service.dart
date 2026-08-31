@@ -56,6 +56,51 @@ class PlayerProfileService {
 
   String get _uid => MultiplayerService.instance.currentPlayerId;
 
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  /// Crește când numele afișat s-a schimbat din exterior. Ecranele care arată
+  /// numele ascultă asta, la fel cum cele cu resurse ascultă
+  /// [StorageService.balanceRevision].
+  final ValueNotifier<int> profileChanged = ValueNotifier<int>(0);
+
+  /// Ascultă propriul profil public, ca o redenumire făcută din panoul de
+  /// Admin să apară pe ecran imediat, nu la următoarea pornire.
+  ///
+  /// CAPCANA: documentul ăsta e chiar cel în care scrie
+  /// [ensureProfileHeartbeat], deci ascultătorul se aprinde și la scrierile
+  /// noastre. Se ignoră snapshot-urile cu scrieri locale în așteptare, iar
+  /// `forcedName` se compară cu valoarea locală înainte de orice scriere —
+  /// fără ambele, se închide bucla scriere → notificare → scriere, care ar
+  /// consuma cotă Firestore cu aplicația nefolosită.
+  ///
+  /// Comparația e în AMBELE sensuri, ca și în heartbeat: dacă adminul anulează
+  /// redenumirea, câmpul dispare de pe server și trebuie șters și local —
+  /// altfel jucătorul ar rămâne cu numele primit fără ca nimeni să-l poată
+  /// anunța că e din nou liber.
+  void startLive() {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    stopLive();
+    try {
+      _profileSub = _col.doc(uid).snapshots().listen((snap) async {
+        if (snap.metadata.hasPendingWrites) return;
+        final forced = snap.data()?['forcedName'] as String? ?? '';
+        if (forced == await StorageService.getForcedName()) return;
+        await StorageService.setForcedName(forced);
+        profileChanged.value++;
+      }, onError: (Object e) {
+        debugPrint('PlayerProfileService._profileSub a esuat: $e');
+      });
+    } catch (e) {
+      debugPrint('PlayerProfileService.startLive a esuat: $e');
+    }
+  }
+
+  void stopLive() {
+    _profileSub?.cancel();
+    _profileSub = null;
+  }
+
   /// Scrie/actualizează identitatea publică + "ultima activitate" — apelată
   /// la pornirea aplicației (după ce identitatea anonimă/Google există deja,
   /// vezi main.dart) și la fiecare revenire din fundal. `merge: true` ca să

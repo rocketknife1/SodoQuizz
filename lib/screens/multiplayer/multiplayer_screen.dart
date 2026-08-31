@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_presence_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
@@ -81,7 +82,21 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) MultiplayerInfoDialog.maybeShow(context);
     });
+    // Redenumirea făcută din panoul de Admin ajunge live pe telefon (vezi
+    // PlayerProfileService.startLive) — reciteste numele afișat și starea
+    // „nume impus din Admin" fără să aștepte repornirea ecranului.
+    PlayerProfileService.instance.profileChanged.addListener(_onProfileChanged);
     _checkConnection();
+  }
+
+  void _onProfileChanged() {
+    if (!mounted) return;
+    StorageService.getForcedName().then((forced) {
+      if (mounted) setState(() => _nameSetByAdmin = forced.isNotEmpty);
+    });
+    AuthService.instance.multiplayerIdentity().then((identity) {
+      if (mounted) setState(() => _displayName = identity.name);
+    });
   }
 
   /// Multiplayer-ul are nevoie de internet — verificat AICI, la intrarea în
@@ -161,6 +176,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
 
   @override
   void dispose() {
+    PlayerProfileService.instance.profileChanged.removeListener(_onProfileChanged);
     _introCtrl.dispose();
     _pulseCtrl.dispose();
     _ringCtrl.dispose();

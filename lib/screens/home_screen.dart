@@ -5,6 +5,7 @@ import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
+import '../data/player_profile_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -57,6 +58,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // pornire și la revenirea din fundal — momente în care ecranul ăsta poate
     // fi deja construit, cu cifrele de dinainte. Vezi CloudSyncService.
     StorageService.balanceRevision.addListener(_refresh);
+    // Redenumirea din panoul de Admin ajunge live (vezi
+    // PlayerProfileService.startLive) — reîmprospătăm ca numele nou să apară pe loc.
+    PlayerProfileService.instance.profileChanged.addListener(_refresh);
     // Dezactivat temporar - popup-ul cerea prea multe apasari (o pagina pe
     // rand) la prima intrare. Codul (IntroTutorialDialog) ramane neatins,
     // doar apelul e oprit.
@@ -68,6 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     StorageService.balanceRevision.removeListener(_refresh);
+    PlayerProfileService.instance.profileChanged.removeListener(_refresh);
     super.dispose();
   }
 

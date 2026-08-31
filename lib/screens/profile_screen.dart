@@ -49,6 +49,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
     // StorageService.balanceRevision.
     StorageService.balanceRevision.addListener(_refreshBalances);
+    // Redenumirea făcută din panoul de Admin ajunge live pe telefon (vezi
+    // PlayerProfileService.startLive) — reîncărcăm ca numele nou să apară pe loc.
+    PlayerProfileService.instance.profileChanged.addListener(_refreshBalances);
     if (kIsWeb) {
       AuthService.instance.ensureGoogleInitialized();
       _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((event) {
@@ -62,6 +65,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     StorageService.balanceRevision.removeListener(_refreshBalances);
+    PlayerProfileService.instance.profileChanged.removeListener(_refreshBalances);
     _googleWebSub?.cancel();
     super.dispose();
   }

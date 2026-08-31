@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'cloud_sync_service.dart';
 import 'multiplayer_service.dart';
+import 'player_profile_service.dart';
 
 /// Pornește și oprește, dintr-un singur loc, toate abonamentele care aduc
 /// schimbări din exterior cât timp jocul e deschis (resurse de la admin,
@@ -53,9 +54,21 @@ class LiveSync {
   // Implicit: serviciile reale. `test/live_sync_test.dart` le înlocuiește prin
   // [resetForTest] ca să verifice mașina de stări fără Firebase. API-ul public
   // (attachToIdentity / start / stop) rămâne neschimbat.
-  void Function() _onStartSubs = CloudSyncService.instance.startLive;
-  void Function() _onStopSubs = CloudSyncService.instance.stopLive;
+  void Function() _onStartSubs = _startAllServices;
+  void Function() _onStopSubs = _stopAllServices;
   String Function() _readUid = _currentUidFromSingleton;
+
+  /// Toate abonamentele live, într-un singur loc. Serviciile noi se adaugă
+  /// aici, nu în [start]/[stop] — acelea sunt mașina de stări, asta e lista.
+  static void _startAllServices() {
+    CloudSyncService.instance.startLive();
+    PlayerProfileService.instance.startLive();
+  }
+
+  static void _stopAllServices() {
+    CloudSyncService.instance.stopLive();
+    PlayerProfileService.instance.stopLive();
+  }
 
   static String _currentUidFromSingleton() {
     // Aceeași cale ca `CloudSyncService._uid`. `currentPlayerId` atinge
@@ -165,8 +178,8 @@ class LiveSync {
     _running = false;
     _foreground = true;
     _startedForUid = null;
-    _onStartSubs = onStartSubs ?? CloudSyncService.instance.startLive;
-    _onStopSubs = onStopSubs ?? CloudSyncService.instance.stopLive;
+    _onStartSubs = onStartSubs ?? _startAllServices;
+    _onStopSubs = onStopSubs ?? _stopAllServices;
     _readUid = readUid ?? _currentUidFromSingleton;
   }
 }
