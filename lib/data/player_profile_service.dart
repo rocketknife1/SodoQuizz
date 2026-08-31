@@ -82,12 +82,21 @@ class PlayerProfileService {
     if (uid.isEmpty) return;
     stopLive();
     try {
+      // Sunt nevoie DOUĂ tratări de eroare, nu una: `onError:` prinde erorile
+      // stream-ului Firestore, iar `try/catch` din corpul callback-ului prinde
+      // eșecurile din `StorageService` (SharedPreferences) — o excepție aruncată
+      // în corpul `async` NU ajunge la `onError`, ci ar scăpa ca Future error
+      // neprins în handler-ul global de zonă.
       _profileSub = _col.doc(uid).snapshots().listen((snap) async {
-        if (snap.metadata.hasPendingWrites) return;
-        final forced = snap.data()?['forcedName'] as String? ?? '';
-        if (forced == await StorageService.getForcedName()) return;
-        await StorageService.setForcedName(forced);
-        profileChanged.value++;
+        try {
+          if (snap.metadata.hasPendingWrites) return;
+          final forced = snap.data()?['forcedName'] as String? ?? '';
+          if (forced == await StorageService.getForcedName()) return;
+          await StorageService.setForcedName(forced);
+          profileChanged.value++;
+        } catch (e) {
+          debugPrint('PlayerProfileService._profileSub a esuat: $e');
+        }
       }, onError: (Object e) {
         debugPrint('PlayerProfileService._profileSub a esuat: $e');
       });

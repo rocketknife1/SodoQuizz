@@ -89,14 +89,19 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     _checkConnection();
   }
 
-  void _onProfileChanged() {
+  Future<void> _onProfileChanged() async {
     if (!mounted) return;
-    StorageService.getForcedName().then((forced) {
-      if (mounted) setState(() => _nameSetByAdmin = forced.isNotEmpty);
-    });
-    AuthService.instance.multiplayerIdentity().then((identity) {
-      if (mounted) setState(() => _displayName = identity.name);
-    });
+    try {
+      final forced = await StorageService.getForcedName();
+      final identity = await AuthService.instance.multiplayerIdentity();
+      if (!mounted) return;
+      setState(() {
+        _nameSetByAdmin = forced.isNotEmpty;
+        _displayName = identity.name;
+      });
+    } catch (e) {
+      debugPrint('MultiplayerScreen._onProfileChanged a esuat: $e');
+    }
   }
 
   /// Multiplayer-ul are nevoie de internet — verificat AICI, la intrarea în
