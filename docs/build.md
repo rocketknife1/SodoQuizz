@@ -56,13 +56,17 @@ peste App Check (vezi `activateAppCheck`).
 
 ```
 gh release create vX.Y.Z build/app/outputs/flutter-apk/app-release.apk \
-                          build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
    --title "..." --notes "..."
 ```
 
 Linkurile din LINKS.md folosesc `/releases/latest/download/<fisier>`, deci
 **nu trebuie actualizate la fiecare versiune** — cât timp numele fișierelor
 rămân aceleași, ele arată automat spre ultima versiune.
+
+UN SINGUR fișier în release: `app-release.apk` (universal, merge pe orice
+arhitectură). Variantele `--split-per-abi` sunt mai mici, dar LINKS.md
+trimite doar spre cel universal — restul ar fi fișiere pe care nu le
+descarcă nimeni.
 
 ## Pagina web
 
