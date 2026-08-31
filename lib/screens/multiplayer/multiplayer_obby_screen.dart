@@ -245,7 +245,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     setState(() => _myPowerUp = PowerUp.none);
   }
 
-  /// [PowerUp.peek]: banner cu ce au răspuns ceilalți până acum. Pur local.
   /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
   /// corect intră în faza de alegere a plăcii (vezi [_tryResolveChoices]).
   Future<void> _tryResolve(MatchInfo info) async {

@@ -306,8 +306,6 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     setState(() => _myPowerUp = PowerUp.none);
   }
 
-  /// [PowerUp.peek]: banner informativ cu ce au ales ceilalți până acum.
-  /// Efect pur local — nu scrie nimic, nu schimbă rezolvarea.
   /// Vezi core/powerups.dart — acordat cui a răspuns corect runda tocmai
   /// închisă (adică e în `roundWinnerIds`), cu șansă mai mare pentru cine e
   /// mai jos în clasamentul de daune făcute.

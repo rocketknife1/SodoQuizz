@@ -250,7 +250,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     setState(() => _myPowerUp = PowerUp.none);
   }
 
-  /// [PowerUp.peek]: banner cu ce au răspuns ceilalți până acum. Pur local.
   /// Vezi core/powerups.dart — acordat cui a răspuns corect la propria
   /// întrebare (adică e în `roundWinnerIds`), cu șansă mai mare pentru cine
   /// are mai puține vieți.
