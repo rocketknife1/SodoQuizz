@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
@@ -37,6 +38,26 @@ class StorageService {
   static const _notificationsKey = 'notifications_inbox';
   static const _notificationsReadKey = 'notifications_read_at';
 
+  /// Crește la FIECARE schimbare de balanță (monede, gems, vieți, hint-uri,
+  /// XP), indiferent de cauză: cumpărătură, premiu, roată, grant de la admin,
+  /// reset, sau salvarea coborâtă din cloud. Ecranele care afișează resurse
+  /// ascultă direct valoarea asta.
+  ///
+  /// A înlocuit `CloudSyncService.grantsApplied`, care anunța doar
+  /// grant-urile de la admin și era ascultat doar de HomeScreen — un jucător
+  /// aflat în Magazin rămânea cu cifrele vechi și primea „n-ai destui bani"
+  /// pentru bani pe care îi avea deja.
+  static final ValueNotifier<int> balanceRevision = ValueNotifier<int>(0);
+
+  /// SINGURA cale prin care se scrie o cheie de balanță. Regula, pe termen
+  /// lung: `prefs.setInt` pe `_coinsKey`/`_gemsKey`/`_livesKey`/`_hintsKey`/
+  /// `_xpKey` nu se mai folosește nicăieri. Așa nu poate exista o funcție
+  /// nouă care schimbă balanța și uită să anunțe ecranele.
+  static Future<void> _writeBalance(SharedPreferences prefs, String key, int value) async {
+    await prefs.setInt(key, value);
+    balanceRevision.value++;
+  }
+
   // ─── Zestrea unui jucător nou (vezi reproiectarea economiei v3) ──────────
   // Înainte: 5 vieți, 3 hints, 0 monede, 0 gems — prea puține vieți și
   // hint-uri pentru primul playthrough. Monedele de start acoperă taxa de
@@ -68,6 +89,7 @@ class StorageService {
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
+  static const _displayNameChosenKey = 'display_name_chosen';
   static const _forcedNameKey = 'forced_name';
   static const _avatarStyleKey = 'avatar_style';
   static const _gemsKey = 'gems';
@@ -157,7 +179,7 @@ class StorageService {
   static Future<void> setLives(int lives) async {
     final prefs = await SharedPreferences.getInstance();
     final clamped = lives < 0 ? 0 : lives;
-    await prefs.setInt(_livesKey, clamped);
+    await _writeBalance(prefs, _livesKey, clamped);
     // salvează timestamp-ul când vieților scad
     if (clamped < _maxLives) {
       prefs.setInt(_livesTimestampKey, DateTime.now().millisecondsSinceEpoch);
@@ -188,7 +210,7 @@ class StorageService {
 
     if (livesToAdd > 0) {
       final newLives = (current + livesToAdd).clamp(0, _maxLives);
-      await prefs.setInt(_livesKey, newLives);
+      await _writeBalance(prefs, _livesKey, newLives);
       if (newLives < _maxLives) {
         // actualizează timestamp-ul cu restul de timp
         final remainder = minutesPassed % livesRechargeMinutes;
@@ -262,7 +284,7 @@ class StorageService {
     if (amount == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_coinsKey) ?? _startingCoins;
-    await prefs.setInt(_coinsKey, current + amount);
+    await _writeBalance(prefs, _coinsKey, current + amount);
     await _recordActivity(prefs);
   }
 
@@ -270,7 +292,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_coinsKey) ?? _startingCoins;
     if (current < amount) return false;
-    await prefs.setInt(_coinsKey, current - amount);
+    await _writeBalance(prefs, _coinsKey, current - amount);
     await _recordActivity(prefs);
     return true;
   }
@@ -286,7 +308,7 @@ class StorageService {
     if (delta == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final updated = (prefs.getInt(_coinsKey) ?? _startingCoins) + delta;
-    await prefs.setInt(_coinsKey, updated < 0 ? 0 : updated);
+    await _writeBalance(prefs, _coinsKey, updated < 0 ? 0 : updated);
     await _recordActivity(prefs);
   }
 
@@ -302,7 +324,7 @@ class StorageService {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
-    await prefs.setInt(_gemsKey, current + amount);
+    await _writeBalance(prefs, _gemsKey, current + amount);
     await _recordActivity(prefs);
   }
 
@@ -310,7 +332,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_gemsKey) ?? starterGemGrant;
     if (current < amount) return false;
-    await prefs.setInt(_gemsKey, current - amount);
+    await _writeBalance(prefs, _gemsKey, current - amount);
     await _recordActivity(prefs);
     return true;
   }
@@ -320,7 +342,7 @@ class StorageService {
     if (delta == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final updated = (prefs.getInt(_gemsKey) ?? starterGemGrant) + delta;
-    await prefs.setInt(_gemsKey, updated < 0 ? 0 : updated);
+    await _writeBalance(prefs, _gemsKey, updated < 0 ? 0 : updated);
     await _recordActivity(prefs);
   }
 
@@ -372,7 +394,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
     final updated = current >= _hintsCap ? current + amount : (current + amount).clamp(0, _hintsCap);
-    await prefs.setInt(_hintsKey, updated);
+    await _writeBalance(prefs, _hintsKey, updated);
   }
 
   /// Fără plafon — folosit DOAR pentru achiziții cu bani reali (vezi Shop).
@@ -382,7 +404,7 @@ class StorageService {
     if (amount <= 0) return;
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
-    await prefs.setInt(_hintsKey, current + amount);
+    await _writeBalance(prefs, _hintsKey, current + amount);
   }
 
   /// Vezi [adjustCoins] — același tipar, pentru hint-uri (fără plafonul
@@ -391,7 +413,7 @@ class StorageService {
     if (delta == 0) return;
     final prefs = await SharedPreferences.getInstance();
     final updated = (prefs.getInt(_hintsKey) ?? _startingHints) + delta;
-    await prefs.setInt(_hintsKey, updated < 0 ? 0 : updated);
+    await _writeBalance(prefs, _hintsKey, updated < 0 ? 0 : updated);
   }
 
   /// Consumă 1 hint din balanța persistată — întoarce false dacă nu mai ai.
@@ -399,7 +421,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final current = prefs.getInt(_hintsKey) ?? _startingHints;
     if (current <= 0) return false;
-    await prefs.setInt(_hintsKey, current - 1);
+    await _writeBalance(prefs, _hintsKey, current - 1);
     return true;
   }
 
@@ -416,7 +438,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
     final current = prefs.getInt(_xpKey) ?? 0;
-    await prefs.setInt(_xpKey, current + amount);
+    await _writeBalance(prefs, _xpKey, current + amount);
   }
 
   /// Vezi [adjustCoins] — același tipar, pentru XP (deci poate scădea și
@@ -427,7 +449,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
     final updated = (prefs.getInt(_xpKey) ?? 0) + delta;
-    await prefs.setInt(_xpKey, updated < 0 ? 0 : updated);
+    await _writeBalance(prefs, _xpKey, updated < 0 ? 0 : updated);
   }
 
   /// Curba de XP/nivel s-a schimbat (de la liniar 1000/nivel, la o curbă
@@ -446,7 +468,7 @@ class StorageService {
       final newFloor = cumulativeXpForLevel(oldLevel);
       final migratedXp = xp < newFloor ? newFloor : xp;
       if (migratedXp != xp) {
-        await prefs.setInt(_xpKey, migratedXp);
+        await _writeBalance(prefs, _xpKey, migratedXp);
       }
       await prefs.setInt(_lastClaimedRewardLevelKey, levelForXp(migratedXp));
       await prefs.setBool(_xpCurveMigratedKey, true);
@@ -466,7 +488,7 @@ class StorageService {
     if (prefs.getBool(_xpCurveV3MigratedKey) ?? false) return;
     final xp = prefs.getInt(_xpKey) ?? 0;
     if (xp > 0) {
-      await prefs.setInt(_xpKey, (xp / _xpRateV3Divisor).round());
+      await _writeBalance(prefs, _xpKey, (xp / _xpRateV3Divisor).round());
     }
     await prefs.setInt(
         _lastClaimedRewardLevelKey, levelForXp(prefs.getInt(_xpKey) ?? 0));
@@ -525,12 +547,6 @@ class StorageService {
   // se pierde dacă treci mai multe niveluri fără să colectezi: se ține minte
   // doar ultimul nivel revendicat, restul se calculează la cerere.
 
-  static Future<int> getLastClaimedRewardLevel() async {
-    final prefs = await SharedPreferences.getInstance();
-    await _migrateXpCurveIfNeeded(prefs);
-    return prefs.getInt(_lastClaimedRewardLevelKey) ?? levelForXp(prefs.getInt(_xpKey) ?? 0);
-  }
-
   static Future<int> getPendingLevelRewardsCount() async {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
@@ -584,15 +600,14 @@ class StorageService {
     }
   }
 
-  static Future<void> resetProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_answeredKey);
-  }
-
   /// Șterge tot progresul salvat (folosit din ecranul de profil).
   static Future<void> resetAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    // `prefs.clear()` nu trece prin [_writeBalance] — nu scrie nicio cheie,
+    // le șterge. Balanța se schimbă totuși (getterele cad pe valorile de
+    // start), deci ecranele trebuie anunțate explicit.
+    balanceRevision.value++;
   }
 
   /// Cheile care SUPRAVIEȚUIESC unui reset pornit de admin (vezi
@@ -604,6 +619,11 @@ class StorageService {
   /// din admin n-ar mai fi reparabil).
   static const _resetPreservedKeys = <String>[
     _displayNameKey,
+    // Fără ea, un reset de admin ar păstra numele ales (e chiar deasupra) dar
+    // ar pierde marcajul că a fost ales — iar jucătorul ar cădea înapoi pe
+    // numele din contul Google, adică ar fi REDENUMIT în tăcere de o simplă
+    // apăsare pe „Reset". Cele două chei trebuie să călătorească împreună.
+    _displayNameChosenKey,
     _avatarStyleKey,
     _musicEnabledKey,
     _musicVolumeKey,
@@ -640,6 +660,9 @@ class StorageService {
     }
     await prefs.clear();
     await importAll(preserved);
+    // Vezi nota din [resetAll]: ștergerea de chei nu produce nicio scriere
+    // de balanță, dar schimbă tot ce se vede pe ecran.
+    balanceRevision.value++;
   }
 
   // ─── Recompensă zilnică gratuită (vieți) ───────────────────────────────────
@@ -763,12 +786,6 @@ class StorageService {
   }
 
   // ─── Daily Challenge (mini-quiz special, o dată pe zi) ─────────────────────
-
-  static Future<bool> canPlayDailyChallenge() async {
-    final prefs = await SharedPreferences.getInstance();
-    final last = prefs.getString(_dailyChallengeKey);
-    return last != _dateKey(DateTime.now());
-  }
 
   static Future<void> markDailyChallengeDone() async {
     final prefs = await SharedPreferences.getInstance();
@@ -1499,12 +1516,6 @@ class StorageService {
     }
   }
 
-  static Future<int> getLeaderboardPoints(String gameModeId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await _ensureLeaderboardPeriod(prefs);
-    return prefs.getInt('leaderboard_pts_$gameModeId') ?? 0;
-  }
-
   /// Punctele din ciclul curent pentru toate modurile care au primit măcar
   /// un punct — modurile fără puncte încă pur și simplu lipsesc din hartă.
   static Future<Map<String, int>> getAllLeaderboardPoints() async {
@@ -1526,24 +1537,9 @@ class StorageService {
 
   // ─── Contoare permanente (folosite de Achievements) ───────────────────────
 
-  static Future<int> getHintsUsedTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_hintsUsedTotalKey) ?? 0;
-  }
-
   static Future<void> incrementHintsUsedTotal() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_hintsUsedTotalKey, (prefs.getInt(_hintsUsedTotalKey) ?? 0) + 1);
-  }
-
-  static Future<int> getQuestsClaimedTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_questsClaimedTotalKey) ?? 0;
-  }
-
-  static Future<int> getDailyChallengesTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_dailyChallengesTotalKey) ?? 0;
   }
 
   static Future<Set<String>> getModesEverPlayed() async {
@@ -1730,6 +1726,32 @@ class StorageService {
     await prefs.setString(_displayNameKey, name);
   }
 
+  /// Numele pe care jucătorul chiar și l-a ales, sau `''` dacă n-a ales
+  /// niciodată unul.
+  ///
+  /// DE CE NU SE FOLOSEȘTE [getDisplayName] pentru asta: acela GENEREAZĂ și
+  /// SALVEAZĂ un nume („JucatorNNN") când cheia lipsește. Sub noua ordine a
+  /// numelor, întrebarea „și-a ales un nume?" se pune la fiecare rezolvare de
+  /// identitate, inclusiv pentru conturi Google — deci [getDisplayName] ar
+  /// scrie acel nume generat în contul fiecărui jucător Google care n-avea
+  /// unul. Ar intra apoi în cloud-save (exportAll), ar strica amprenta din
+  /// CloudSyncService.push și ar produce o scriere Firestore în plus la
+  /// fiecare pornire — pe lângă că ar crea exact numele-gunoi pe care noua
+  /// ordine încearcă să-l evite.
+  static Future<String> getChosenDisplayName() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool(_displayNameChosenKey) ?? false)) return '';
+    return prefs.getString(_displayNameKey) ?? '';
+  }
+
+  /// Jucătorul și-a ales singur numele — de acum al lui bate numele din
+  /// contul Google (vezi core/display_name.dart).
+  static Future<void> setChosenDisplayName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_displayNameKey, name);
+    await prefs.setBool(_displayNameChosenKey, true);
+  }
+
   /// **Numele pus de administrator** din panoul de Admin (vezi
   /// PlayerProfileService.renamePlayerAsAdmin).
   ///
@@ -1800,5 +1822,9 @@ class StorageService {
         await prefs.setStringList(entry.key, value.cast<String>());
       }
     }
+    // Cheia scrisă aici e variabilă la runtime, deci nu se poate ști static
+    // dacă a fost una de balanță. Salvarea coborâtă din cloud la logare
+    // schimbă aproape sigur balanța, deci se anunță necondiționat.
+    balanceRevision.value++;
   }
 }

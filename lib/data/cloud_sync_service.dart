@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -25,19 +26,20 @@ class CloudSyncService {
 
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) => FirebaseFirestore.instance.collection('users').doc(uid);
 
-  /// Crește de fiecare dată când chiar s-a aplicat ceva primit de la admin
-  /// (resurse sau reset) pe telefonul ăsta. Ecranele deschise ascultă și își
-  /// reîncarcă balanța — vezi HomeScreen. Fără el, un jucător care primește
-  /// monede cât stă în joc le vede abia după ce navighează altundeva, iar un
-  /// cont resetat ar arăta în continuare cifrele vechi.
-  final ValueNotifier<int> grantsApplied = ValueNotifier<int>(0);
-
   /// Blochează consumarea simultană a aceleiași cutii poștale. Pornirea
   /// aplicației și revenirea din fundal pot declanșa amândouă [consumePendingGrant]
   /// aproape în același timp (vezi main.dart); fără garda asta, ambele apucă să
   /// citească documentul înainte ca vreuna să-l șteargă, iar grant-ul se aplică
   /// de două ori — jucătorul primea dublu, iar un reset se aplica de două ori.
   bool _consumingGrant = false;
+
+  /// Vezi [_consumingGrant] — același tipar. O trecere în fundal pe Android
+  /// livrează `hidden` și `paused` sincron, una după alta (vezi main.dart), deci
+  /// [push] era chemat de două ori: primul apel stătea în rețea când al doilea
+  /// citea aceeași amprentă veche, și amândouă scriau documentul.
+  bool _pushing = false;
+
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _grantSub;
 
   /// Uid-ul identității curente — Google dacă e logat, altfel cel anonim
   /// creat la pornire (vezi main.dart). Gol dacă Firebase n-a pornit deloc pe
@@ -103,7 +105,12 @@ class CloudSyncService {
   /// jucătorii, de câteva ori pe zi, pe planul gratuit.
   Future<void> push() async {
     final uid = _uid;
-    if (uid.isEmpty) return;
+    // `_pushing`: o trecere în fundal pe Android livrează `hidden` apoi `paused`
+    // sincron (vezi main.dart), amândouă chemând `push()` fără `await`. Fără
+    // zăvorul ăsta, primul apel stă în rețea când al doilea citește aceeași
+    // amprentă veche, și amândouă scriu `users/{uid}`.
+    if (uid.isEmpty || _pushing) return;
+    _pushing = true;
     try {
       final data = await StorageService.exportAll();
       final snapshot = _snapshotOf(uid, data);
@@ -114,6 +121,8 @@ class CloudSyncService {
       await StorageService.setCloudPushSnapshot(snapshot);
     } catch (e) {
       debugPrint('CloudSyncService.push a esuat: $e');
+    } finally {
+      _pushing = false;
     }
   }
 
@@ -142,6 +151,38 @@ class CloudSyncService {
     } catch (e) {
       debugPrint('CloudSyncService.deleteCloudSave a esuat: $e');
     }
+  }
+
+  /// Ascultă cutia poștală a acestui cont, ca resursele trimise de admin să
+  /// intre în cont CÂT timp jucătorul e în joc — nu abia la următoarea
+  /// pornire, cum era înainte.
+  ///
+  /// Se ignoră două feluri de snapshot-uri, amândouă produse de noi înșine:
+  /// cele cu scrieri locale în așteptare, și cele în care documentul nu mai
+  /// există — tranzacția de revendicare din [consumePendingGrant] tocmai l-a
+  /// șters, deci ascultătorul se aprinde imediat după fiecare consum.
+  void startLive() {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    stopLive();
+    try {
+      _grantSub = FirebaseFirestore.instance
+          .collection('admin_grants')
+          .doc(uid)
+          .snapshots()
+          .listen((snap) {
+        if (snap.metadata.hasPendingWrites) return;
+        if (!snap.exists) return;
+        consumePendingGrant();
+      });
+    } catch (e) {
+      debugPrint('CloudSyncService.startLive a esuat: $e');
+    }
+  }
+
+  void stopLive() {
+    _grantSub?.cancel();
+    _grantSub = null;
   }
 
   /// "Ridică" ce a lăsat adminul în cutia poștală a acestui cont (vezi
@@ -233,8 +274,10 @@ class CloudSyncService {
       // (documentul admin_grants a fost deja șters în tranzacția de
       // revendicare de la începutul funcției)
 
-      // Ecranele deschise nu știu că balanța de sub ele s-a schimbat.
-      grantsApplied.value++;
+      // Balanța se anunță acum singură din StorageService: consumePendingGrant
+      // trece prin adjustCoins/adjustGems/setLives/adjustHints/adjustXp și
+      // resetToStartingBalance, toate cu bump pe balanceRevision — ecranele
+      // deschise ascultă direct acolo.
 
       if (reset) {
         // Profilul public a fost deja pus la zero de admin; heartbeat-ul de

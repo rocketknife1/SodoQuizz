@@ -36,10 +36,15 @@ class _NotificationBellState extends State<NotificationBell> with SingleTickerPr
       duration: const Duration(milliseconds: 1600),
       restValue: 0.5,
     )..repeat(reverse: true);
-    // Bulina trebuie să fie corectă din primul cadru (partea locală, fără
-    // rețea), apoi completată cu ce se află abia întrebând Firestore.
+    // Bulina trebuie să fie corectă din primul cadru — partea locală, fără
+    // rețea. Partea LIVE (cereri de prietenie, fire cu mesaj necitit) NU se
+    // mai cere aici cu `refreshUnread`: `LiveSync.attachToIdentity()` rulează
+    // din `initState`-ul rădăcinii aplicației (main.dart), deci abonamentele
+    // sunt atașate înainte ca vreun ecran cu clopoțel să se construiască, iar
+    // ele împing cifrele prin `setLiveUnread`, fără nicio citire. Cu
+    // `refreshUnread` aici, FIECARE intrare pe un ecran cu clopoțel plătea
+    // `fetchLive()` = `2 + 2N` citiri Firestore pentru date deja sosite.
     NotificationService.instance.refreshUnreadLocalOnly();
-    NotificationService.instance.refreshUnread();
   }
 
   @override

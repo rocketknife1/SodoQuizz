@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guess_it/core/display_name.dart';
 import 'package:guess_it/data/shop.dart' show starterGemGrant;
 import 'package:guess_it/data/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -63,6 +64,37 @@ void main() {
       expect(await StorageService.getMultiplayerInfoSeen(), true);
       expect(await StorageService.getNoAdsForever(), true);
       expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);
+    });
+
+    test('resetul de admin nu redenumeste jucatorul', () async {
+      SharedPreferences.setMockInitialValues({});
+      await StorageService.setChosenDisplayName('NumeleMeu');
+      expect(await StorageService.getChosenDisplayName(), 'NumeleMeu');
+
+      await StorageService.resetToStartingBalance();
+
+      expect(await StorageService.getChosenDisplayName(), 'NumeleMeu',
+          reason: 'un reset de balanta nu are voie sa schimbe numele ales');
+    });
+
+    test('un jucator Google vechi nu e redenumit de trecerea la noua ordine', () async {
+      // Exact starea unui cont Google de dinaintea acestei schimbari: are un nume
+      // auto-generat in prefs, care nu s-a folosit niciodata fiindca numele din
+      // Google avea prioritate. Marcajul `display_name_chosen` nu exista.
+      SharedPreferences.setMockInitialValues({'display_name': 'Jucator123'});
+
+      expect(await StorageService.getChosenDisplayName(), '',
+          reason: 'fara marcaj, numele vechi din prefs NU conteaza ca nume ales');
+
+      expect(
+        resolveDisplayName(
+          forcedName: '',
+          chosenName: await StorageService.getChosenDisplayName(),
+          googleName: 'Nume Google',
+        ),
+        'Nume Google',
+        reason: 'jucatorul isi pastreaza numele din Google, nu se trezeste cu Jucator123',
+      );
     });
   });
 

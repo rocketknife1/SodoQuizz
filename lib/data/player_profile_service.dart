@@ -5,12 +5,20 @@ import 'package:flutter/foundation.dart';
 import '../core/lang.dart';
 import '../core/leagues.dart';
 import '../models/app_notification.dart';
+import '../models/moderation.dart' show BannedPlayer;
 import '../models/player_profile.dart';
 import 'auth_service.dart';
 import 'friend_chat_service.dart';
 import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'storage_service.dart';
+
+/// Mesajul unic "esti banat, nu poti juca online", folosit IDENTIC de toate
+/// portile de UI (Multiplayer, Clasament, dialogul de revansa din main.dart).
+/// Un singur loc, ca cele trei formulari sa nu se desincronizeze.
+String bannedFromOnlineMessage() => tr(
+    'Contul tău a fost restricționat de administrator. Nu poți juca online.',
+    'Your account has been restricted by an administrator. You cannot play online.');
 
 /// Rezultatul unei [PlayerProfileService.sendFriendRequest] — UI-ul arată un
 /// mesaj diferit pentru fiecare caz.
@@ -55,6 +63,107 @@ class PlayerProfileService {
   bool _sweptStaleGuestsThisSession = false;
 
   String get _uid => MultiplayerService.instance.currentPlayerId;
+
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _profileSub;
+
+  /// Crește când numele afișat s-a schimbat din exterior. Ecranele care arată
+  /// numele ascultă asta, la fel cum cele cu resurse ascultă
+  /// [StorageService.balanceRevision].
+  final ValueNotifier<int> profileChanged = ValueNotifier<int>(0);
+
+  /// Sunt banat? Ascultat live, ca ridicarea unui ban sa ajunga la fel de
+  /// repede ca punerea lui — portile de UI (multiplayer_screen.dart,
+  /// leaderboard_screen.dart, dialogul de revansa din main.dart) asculta acest
+  /// notifier si se deschid singure cand documentul de ban dispare.
+  ///
+  /// ATENTIE: e alimentat de un abonament Firestore, deci `false` cat timp
+  /// primul snapshot n-a sosit (imediat dupa pornire, sau offline). Fiecare
+  /// verificare pe el e o POARTA DE INTERFATA, nu o garantie de securitate —
+  /// aceea vine din firestore.rules si, mai incolo, din validarea pe server
+  /// (partea B, Cloud Functions). Vezi si nota de la [MultiplayerService.offerRematch].
+  final ValueNotifier<bool> amIBanned = ValueNotifier<bool>(false);
+
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _banSub;
+
+  /// Ascultă propriul profil public, ca o redenumire făcută din panoul de
+  /// Admin să apară pe ecran imediat, nu la următoarea pornire.
+  ///
+  /// CAPCANA: documentul ăsta e chiar cel în care scrie
+  /// [ensureProfileHeartbeat], deci ascultătorul se aprinde și la scrierile
+  /// noastre. Se ignoră snapshot-urile cu scrieri locale în așteptare, iar
+  /// `forcedName` se compară cu valoarea locală înainte de orice scriere —
+  /// fără ambele, se închide bucla scriere → notificare → scriere, care ar
+  /// consuma cotă Firestore cu aplicația nefolosită.
+  ///
+  /// Comparația e în AMBELE sensuri, ca și în heartbeat: dacă adminul anulează
+  /// redenumirea, câmpul dispare de pe server și trebuie șters și local —
+  /// altfel jucătorul ar rămâne cu numele primit fără ca nimeni să-l poată
+  /// anunța că e din nou liber.
+  void startLive() {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    stopLive();
+    try {
+      // Sunt nevoie DOUĂ tratări de eroare, nu una: `onError:` prinde erorile
+      // stream-ului Firestore, iar `try/catch` din corpul callback-ului prinde
+      // eșecurile din `StorageService` (SharedPreferences) — o excepție aruncată
+      // în corpul `async` NU ajunge la `onError`, ci ar scăpa ca Future error
+      // neprins în handler-ul global de zonă.
+      _profileSub = _col.doc(uid).snapshots().listen((snap) async {
+        try {
+          if (snap.metadata.hasPendingWrites) return;
+          final forced = snap.data()?['forcedName'] as String? ?? '';
+          if (forced == await StorageService.getForcedName()) return;
+          await StorageService.setForcedName(forced);
+          profileChanged.value++;
+        } catch (e) {
+          debugPrint('PlayerProfileService._profileSub a esuat: $e');
+        }
+      }, onError: (Object e) {
+        debugPrint('PlayerProfileService._profileSub a esuat: $e');
+      });
+      // Starea de ban, live: `snap.exists` e adevarat cat timp adminul tine
+      // documentul in `banned_players/{uid}`. try/catch in corpul handler-ului
+      // pentru simetrie cu _profileSub (o exceptie in corp NU ajunge la
+      // `onError`).
+      _banSub = _db.collection('banned_players').doc(uid).snapshots().listen((snap) {
+        try {
+          amIBanned.value = snap.exists;
+        } catch (e) {
+          debugPrint('PlayerProfileService._banSub a esuat: $e');
+        }
+      }, onError: (Object e) {
+        debugPrint('PlayerProfileService._banSub a esuat: $e');
+      });
+    } catch (e) {
+      debugPrint('PlayerProfileService.startLive a esuat: $e');
+    }
+  }
+
+  /// [stopLive] NU golește [amIBanned] — e chemată și la trecerea în FUNDAL
+  /// (`LiveSync.stop()` → `_stopAllServices`), unde golirea ar fi însemnat o
+  /// clipă de „nebanat" la fiecare revenire. Vezi [clearIdentityState].
+  void stopLive() {
+    _profileSub?.cancel();
+    _profileSub = null;
+    _banSub?.cancel();
+    _banSub = null;
+  }
+
+  /// Starea legată de CONTUL anterior, golită la schimbarea de identitate
+  /// (`LiveSync._applyIdentity`, ramura `!sameIdentity`).
+  ///
+  /// Fără asta, [amIBanned] rămânea pe valoarea contului dinainte până sosea
+  /// primul snapshot al identității noi: un Guest banat care se loga cu un
+  /// cont Google curat vedea, pentru o clipă, ecranul de interdicție peste un
+  /// cont nevinovat — iar invers, porțile de Multiplayer/Clasament stăteau
+  /// deschise o clipă pe un cont banat.
+  ///
+  /// Deliberat NU în [stopLive]: aceea e și calea de fundal (vezi mai sus),
+  /// aceeași distincție pe care o face `LiveSync` pentru `friendSummaries`.
+  void clearIdentityState() {
+    amIBanned.value = false;
+  }
 
   /// Scrie/actualizează identitatea publică + "ultima activitate" — apelată
   /// la pornirea aplicației (după ce identitatea anonimă/Google există deja,
@@ -408,27 +517,39 @@ class PlayerProfileService {
   /// Acceptă o cerere primită de la [fromUid] — scrie ambele documente
   /// "oglindă" din `friends` (pe profilul propriu ȘI pe al celuilalt) și
   /// șterge cererea, într-un singur batch.
-  Future<void> acceptFriendRequest(String fromUid) async {
+  ///
+  /// Întoarce `true` doar dacă scrierea a ajuns efectiv în Firestore. Apelantul
+  /// are nevoie de asta: ecranul de Prieteni nu mai reîncarcă singur după
+  /// accept (se bazează pe abonamentul care vede ștergerea cererii), iar dacă
+  /// scrierea eșuează nu vine niciun snapshot — fără răspunsul ăsta, un eșec
+  /// (fără rețea, permisiuni) ar arăta exact ca o reușită.
+  Future<bool> acceptFriendRequest(String fromUid) async {
     final me = _uid;
-    if (me.isEmpty) return;
+    if (me.isEmpty) return false;
     try {
       final batch = _db.batch();
       batch.set(_friendsCol(me).doc(fromUid), {'addedAt': FieldValue.serverTimestamp()});
       batch.set(_friendsCol(fromUid).doc(me), {'addedAt': FieldValue.serverTimestamp()});
       batch.delete(_requestsCol(me).doc(fromUid));
       await batch.commit();
+      return true;
     } catch (e) {
       debugPrint('PlayerProfileService.acceptFriendRequest a esuat: $e');
+      return false;
     }
   }
 
-  Future<void> declineFriendRequest(String fromUid) async {
+  /// `true` doar dacă ștergerea a reușit — vezi [acceptFriendRequest] pentru
+  /// de ce contează răspunsul.
+  Future<bool> declineFriendRequest(String fromUid) async {
     final me = _uid;
-    if (me.isEmpty) return;
+    if (me.isEmpty) return false;
     try {
       await _requestsCol(me).doc(fromUid).delete();
+      return true;
     } catch (e) {
       debugPrint('PlayerProfileService.declineFriendRequest a esuat: $e');
+      return false;
     }
   }
 
@@ -459,6 +580,31 @@ class PlayerProfileService {
       debugPrint('PlayerProfileService.fetchFriends a esuat: $e');
       return [];
     }
+  }
+
+  /// Uid-urile prietenilor accepți, live. Doar id-urile (numele documentelor
+  /// din subcolecția `friends`), fără [getProfile] per prieten — LiveSync are
+  /// nevoie doar de lista de uid-uri ca să știe pe ce fire să se aboneze, iar
+  /// citirea profilelor ar fi N citiri Firestore la fiecare schimbare a listei.
+  /// `list` pe `friends` e deja permis oricui autentificat (vezi
+  /// [fetchFriends]).
+  Stream<List<String>> watchFriendUids() {
+    final me = _uid;
+    if (me.isEmpty) return Stream.value(const []);
+    return _friendsCol(me).snapshots().map((s) => s.docs.map((d) => d.id).toList());
+  }
+
+  /// Uid-urile expeditorilor cererilor de prietenie primite, live (id-ul
+  /// documentului din `friend_requests` E fromUid — vezi [FriendRequest.fromDoc]).
+  /// LiveSync are nevoie de uid-uri, nu de un simplu număr, ca să poată sări
+  /// peste expeditorii blocați — exact ca [NotificationService.fetchLive]. E o
+  /// subcolecție sub `player_profiles/{uid}`, deci wildcard-ul părinte e fixat
+  /// de calea interogării și regula existentă o acoperă ([fetchIncomingRequests]
+  /// face deja exact acest `list` azi).
+  Stream<List<String>> watchIncomingRequestFromUids() {
+    final uid = _uid;
+    if (uid.isEmpty) return Stream.value(const []);
+    return _requestsCol(uid).snapshots().map((s) => s.docs.map((d) => d.id).toList());
   }
 
   /// Prietenii ORICUI, nu doar ai contului curent — pentru ecranul de detaliu
@@ -612,14 +758,13 @@ class PlayerProfileService {
     }
   }
 
-  /// **Ridicarea numelui impus** — jucătorul își poate alege din nou singur
-  /// numele, de la următoarea deschidere a aplicației.
+  /// **Anulează o redenumire făcută din Admin.**
   ///
-  /// Fără acțiunea asta, o redenimire de moderare ar fi fost o pedeapsă pe
-  /// viață: numele impus bate și contul Google, și îi blochează câmpul de
-  /// editare, deci nimeni — nici el, nici adminul — n-ar mai fi putut da
-  /// înapoi. Numele PUBLIC rămâne cel pus de admin până când telefonul lui
-  /// scrie următorul heartbeat, care îl înlocuiește cu al lui.
+  /// Oricine își poate schimba singur numele din Profil/Multiplayer, deci
+  /// asta nu mai e o „ridicare de pedeapsă". Rămâne totuși singura cale de a
+  /// da înapoi o redenumire fără să știi numele original al jucătorului.
+  /// Numele PUBLIC rămâne cel pus de admin până când telefonul lui scrie
+  /// următorul heartbeat, care îl înlocuiește cu al lui.
   Future<bool> clearForcedNameAsAdmin(String uid) async {
     if (uid.isEmpty) return false;
     try {
@@ -632,35 +777,28 @@ class PlayerProfileService {
     }
   }
 
-  /// **Un Guest își ia numele înapoi, singur.**
+  /// **Jucătorul își ia numele impus din Admin înapoi, singur.**
   ///
-  /// Redenumirea din Admin rămâne definitivă pentru conturile Google — acolo e
-  /// unealtă de moderare și doar adminul o poate ridica
-  /// ([clearForcedNameAsAdmin]). Pentru un Guest însă, userul a cerut explicit
-  /// să NU fie definitivă: dacă îi schimbi numele unui Guest, el trebuie să
-  /// poată reveni oricând la unul ales de el, fără să depindă de nimeni.
-  ///
-  /// Se șterge ÎNTÂI de pe server și abia apoi local, iar ordinea nu e
-  /// cosmetică: [ensureProfileHeartbeat] citește `forcedName` de pe server și
-  /// îl adoptă înapoi. Dacă am fi curățat doar local, primul heartbeat de după
-  /// redenumire i-ar fi pus la loc numele impus — exact felul în care
-  /// funcționalitatea asta a mai părut odată că merge și s-a anulat singură
-  /// câteva minute mai târziu.
+  /// Chemată de dialogul de schimbare a numelui înainte de salvare, ca primul
+  /// heartbeat de după să nu repună numele impus. [ensureProfileHeartbeat]
+  /// citește `forcedName` de pe server și îl adoptă înapoi — de aceea se
+  /// șterge și de pe server, nu doar local. Scrierea pe server NU se
+  /// așteaptă: offline nu s-ar încheia niciodată și dialogul ar rămâne
+  /// blocat; Firestore o ține în coadă și o trimite la reconectare. Partea
+  /// locală se aplică imediat.
   ///
   /// Jucătorul are voie să-și scrie propriul profil (vezi firestore.rules,
   /// `player_profiles/{uid}`), deci nu e nevoie de nicio regulă nouă.
   Future<void> releaseMyForcedName() async {
     final uid = _uid;
     if (uid.isNotEmpty) {
-      try {
-        await _col.doc(uid).set({'forcedName': FieldValue.delete()}, SetOptions(merge: true));
-      } catch (e) {
+      // Fără `await`: offline, scrierea nu se încheie până la reconectare, iar
+      // dialogul de schimbare a numelui ar rămâne blocat. Firestore o ține în
+      // coadă și o trimite singur. Eșecul se doar loghează.
+      unawaited(_col.doc(uid).set({'forcedName': FieldValue.delete()}, SetOptions(merge: true)).catchError((e) {
         debugPrint('PlayerProfileService.releaseMyForcedName a esuat: $e');
-      }
+      }));
     }
-    // Și dacă scrierea pe server a picat (fără net): local îl eliberăm oricum,
-    // ca editarea să meargă pe loc. Scrierea rămâne în coada Firestore și
-    // pleacă singură la reconectare.
     await StorageService.setForcedName('');
   }
 
@@ -678,6 +816,46 @@ class PlayerProfileService {
     } catch (e) {
       debugPrint('PlayerProfileService.banPlayer a esuat: $e');
       return false;
+    }
+  }
+
+  /// Ridică interdicția: șterge `banned_players/{uid}`, singurul document care
+  /// ține contul blocat. După asta jucătorul își recreează singur profilul
+  /// public la primul heartbeat (vezi [ensureProfileHeartbeat]) și porțile de
+  /// UI se deschid live prin `_banSub` din [startLive], fără repornire.
+  ///
+  /// Fără metoda asta un ban era IREVERSIBIL din aplicație: se scria în
+  /// [banPlayer] și se ștergea doar în [purgePlayer], adică singura ieșire
+  /// dintr-un ban dat din greșeală era ștergerea totală a contului.
+  ///
+  /// Adminul are `allow read, write` pe `banned_players` (vezi
+  /// firestore.rules), iar `write` include ștergerea.
+  Future<bool> unbanPlayer(String uid) async {
+    if (uid.isEmpty) return false;
+    try {
+      await _db.collection('banned_players').doc(uid).delete();
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.unbanPlayer a esuat: $e');
+      return false;
+    }
+  }
+
+  /// Lista conturilor interzise, pentru tab-ul „Banați" din Admin. Există ca
+  /// tab separat fiindcă banul ȘTERGE profilul public, deci un cont banat nu
+  /// mai apare NICĂIERI în lista normală de jucători — fără ecranul ăsta,
+  /// adminul n-ar avea de unde să apese „Ridică interdicția".
+  Future<List<BannedPlayer>> fetchBannedPlayers({int limit = 200}) async {
+    try {
+      final snap = await _db
+          .collection('banned_players')
+          .orderBy('bannedAt', descending: true)
+          .limit(limit)
+          .get();
+      return snap.docs.map(BannedPlayer.fromDoc).toList();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchBannedPlayers a esuat: $e');
+      return const [];
     }
   }
 

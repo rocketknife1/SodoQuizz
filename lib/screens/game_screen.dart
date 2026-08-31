@@ -91,12 +91,33 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _shakeController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 400));
     _loadQuestions();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision. Aici NU reîncărcăm întrebările (ar
+    // reamesteca runda) — sincronizăm doar cifrele afișate.
+    StorageService.balanceRevision.addListener(_syncBalances);
   }
 
   @override
   void dispose() {
+    StorageService.balanceRevision.removeListener(_syncBalances);
     _shakeController.dispose();
     super.dispose();
+  }
+
+  Future<void> _syncBalances() async {
+    if (!mounted) return;
+    final results = await Future.wait([
+      StorageService.getLives(),
+      StorageService.getHints(),
+      StorageService.getCoins(),
+    ]);
+    if (!mounted) return;
+    setState(() {
+      lives = results[0];
+      hintsBalance = results[1];
+      coinsBalance = results[2];
+    });
   }
 
   Future<void> _loadQuestions() async {

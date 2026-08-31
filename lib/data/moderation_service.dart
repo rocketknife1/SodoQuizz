@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../models/moderation.dart';
@@ -45,6 +47,50 @@ class ModerationService {
   String _loadedForUid = '';
 
   bool isBlocked(String uid) => blockedIds.value.contains(uid);
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _blockedSub;
+
+  /// Ține lista de blocați aliniată cu serverul cât timp jocul e deschis —
+  /// altfel o blocare făcută de pe alt telefon, cu același cont, s-ar aplica
+  /// abia la următoarea pornire (vezi [loadBlocked], care iese devreme
+  /// intenționat când lista e deja încărcată pentru uid-ul curent).
+  ///
+  /// Nu se bate cap în cap cu actualizările optimiste din [blockPlayer] /
+  /// [unblockPlayer]: compensarea de latență a Firestore emite imediat un
+  /// snapshot local care reflectă chiar scrierea tocmai făcută, deci setul pus
+  /// de ascultător coincide cu cel pus optimist — fără pâlpâire.
+  void startLive() {
+    final me = _uid;
+    if (me.isEmpty) return;
+    stopLive();
+    try {
+      _blockedSub = _blockedCol(me).snapshots().listen((snap) {
+        blockedIds.value = snap.docs.map((d) => d.id).toSet();
+      }, onError: (Object e) {
+        debugPrint('ModerationService._blockedSub a esuat: $e');
+      });
+    } catch (e) {
+      debugPrint('ModerationService.startLive a esuat: $e');
+    }
+  }
+
+  /// [stopLive] NU golește [blockedIds] — e chemată și la trecerea în FUNDAL
+  /// (`LiveSync.stop()`), unde golirea ar fi lăsat chatul nefiltrat pentru
+  /// câteva cadre la revenire. Vezi [clearIdentityState].
+  void stopLive() {
+    _blockedSub?.cancel();
+    _blockedSub = null;
+  }
+
+  /// Lista de blocați a contului anterior, golită la schimbarea de identitate
+  /// (`LiveSync._applyIdentity`, ramura `!sameIdentity`). Fără asta, noul cont
+  /// moștenea filtrarea vechiului până la primul snapshot. `_loadedForUid` se
+  /// resetează odată cu ea, altfel [loadBlocked] ar fi ieșit devreme și pe
+  /// identitatea nouă dacă uid-ul s-ar repeta.
+  void clearIdentityState() {
+    blockedIds.value = const {};
+    _loadedForUid = '';
+  }
 
   /// Încărcată la pornire (vezi main.dart) și la fiecare revenire din fundal,
   /// unde e gratis: dacă e deja încărcată pentru uid-ul curent, nu face nimic.

@@ -4,7 +4,7 @@ import 'package:share_plus/share_plus.dart';
 import '../core/leagues.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
-import '../data/friend_chat_service.dart';
+import '../data/live_sync.dart';
 import '../data/moderation_service.dart';
 import '../data/multiplayer_service.dart';
 import '../data/player_profile_service.dart';
@@ -27,9 +27,20 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  late Future<_FriendsData> _dataFuture = _load();
+  late Future<_FriendsData> _dataFuture = _runLoad();
   final _codeController = TextEditingController();
   bool _sending = false;
+
+  /// Un `_load()` e în zbor acum. A doua cerere de reîncărcare cât asta rulează
+  /// nu pornește un `_load()` paralel — se pliază prin [_reloadQueued].
+  bool _loadInFlight = false;
+  bool _reloadQueued = false;
+
+  /// Capurile de fir, în timp real, din LiveSync — NU recitite aici. Ecranul
+  /// era o poză făcută la intrare: stăteai cu el deschis, prietenul îți scria
+  /// (sau îți scria al doilea mesaj), și nu apărea nimic. Acum rândurile de
+  /// chat se iau direct de aici și se mișcă la orice schimbare de fir.
+  Map<String, FriendChatSummary> _summaries = LiveSync.instance.friendSummaries.value;
 
   Future<_FriendsData> _load() async {
     // No-op dacă e deja încărcată pentru contul curent — e aici pentru cazul
@@ -41,10 +52,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
       PlayerProfileService.instance.fetchFriends(),
     ]);
     final friends = results[2] as List<PlayerProfile>;
-    // Rezumatele firelor private se cer DUPĂ ce se știe lista de prieteni
-    // (una pe fir), nu în paralel cu ea. Sunt ce alimentează bulina de mesaj
-    // nou și începutul ultimului mesaj de pe fiecare rând.
-    final summaries = await FriendChatService.instance.fetchSummaries(friends.map((f) => f.uid).toList());
+    // Rezumatele firelor NU se mai cer aici (erau N citiri la fiecare
+    // reîncărcare) — vin live prin [_summaries] din LiveSync.
     return _FriendsData(
       myCode: results[0] as String?,
       // Cererile de la cineva blocat nu se mai arată deloc — altfel blocarea
@@ -53,17 +62,76 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .where((r) => !ModerationService.instance.isBlocked(r.fromUid))
           .toList(),
       friends: friends,
-      summaries: summaries,
     );
   }
 
+  /// `_load()` înfășurat cu coalescere: dacă o schimbare mai sosește cât asta
+  /// rulează, se marchează [_reloadQueued] și se face O SINGURĂ reîncărcare la
+  /// final — nu se înghite (starea chiar s-a schimbat), dar nici nu se lansează
+  /// două `_load()` suprapuse.
+  Future<_FriendsData> _runLoad() async {
+    _loadInFlight = true;
+    try {
+      return await _load();
+    } finally {
+      _loadInFlight = false;
+      if (_reloadQueued && mounted) {
+        _reloadQueued = false;
+        setState(() => _dataFuture = _runLoad());
+      }
+    }
+  }
+
+  void _scheduleReload() {
+    if (!mounted) return;
+    if (_loadInFlight) {
+      _reloadQueued = true;
+      return;
+    }
+    setState(() => _dataFuture = _runLoad());
+  }
+
   Future<void> _reload() async {
-    setState(() => _dataFuture = _load());
+    _scheduleReload();
     await _dataFuture;
   }
 
   @override
+  void initState() {
+    super.initState();
+    LiveSync.instance.friendSummaries.addListener(_onSummariesChanged);
+    LiveSync.instance.incomingRequestUids.addListener(_onRequestsChanged);
+    // După ce ramura asta a închis toate celelalte canale prin care un blocat
+    // ajungea pe ecran (bulina de notificări, cererile, fetchLive), rândul de
+    // prieten cu previzualizarea de chat + bulina de necitit a rămas singurul.
+    // Ascultăm lista de blocați ca rândul lui să se cureţe pe loc la blocare/
+    // deblocare din altă parte, fără o reîncărcare Firestore.
+    ModerationService.instance.blockedIds.addListener(_onBlockedChanged);
+  }
+
+  void _onBlockedChanged() {
+    if (mounted) setState(() {});
+  }
+
+  /// Un fir s-a schimbat (mesaj nou, marcaj de citit, prieten adăugat/șters).
+  /// Doar `setState` cu ce e deja în memorie — zero citiri Firestore.
+  void _onSummariesChanged() {
+    if (!mounted) return;
+    setState(() => _summaries = LiveSync.instance.friendSummaries.value);
+  }
+
+  /// O cerere de prietenie a sosit/dispărut cât stăteai pe ecran. Reîncărcăm
+  /// tot prin [_load] — la fel ca accept/refuz/adăugare, care deja cheamă
+  /// [_reload]. `_load` e ieftin acum (nu mai cheamă `fetchSummaries`), iar
+  /// cererile sunt evenimente rare, deci nu merită o cale separată doar pentru
+  /// `fetchIncomingRequests`.
+  void _onRequestsChanged() => _scheduleReload();
+
+  @override
   void dispose() {
+    LiveSync.instance.friendSummaries.removeListener(_onSummariesChanged);
+    LiveSync.instance.incomingRequestUids.removeListener(_onRequestsChanged);
+    ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
     super.dispose();
   }
@@ -85,17 +153,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     if (outcome == FriendRequestOutcome.sent || outcome == FriendRequestOutcome.autoAccepted) {
       _codeController.clear();
+      // A treia cale care reîncarcă după o acțiune pe cereri. Rămâne explicită,
+      // spre deosebire de [_accept]/[_decline]: pe `sent` nu se șterge nicio
+      // cerere de-a mea, deci abonamentul NU emite nimic, iar pe `autoAccepted`
+      // `sendFriendRequest` nu poate spune dacă acceptarea din interior a reușit
+      // (întoarce `autoAccepted` și când scrierea a eșuat). Fără reîncărcare aici
+      // ar rămâne ecranul nemișcat.
       await _reload();
     }
   }
 
+  /// Accept/refuz: O SINGURĂ cale de reîncărcare. Amândouă șterg documentul
+  /// cererii, deci abonamentul din LiveSync emite oricum → [_onRequestsChanged]
+  /// → o reîncărcare. Un `_reload()` explicit aici ar fi însemnat două `_load()`
+  /// (~2N citiri fiecare) la un singur tap.
+  ///
+  /// Calea de EȘEC e singura care mai reîncarcă: dacă scrierea n-a ajuns în
+  /// Firestore (fără rețea, permisiuni) nu vine niciun snapshot, deci ecranul
+  /// ar fi rămas neschimbat fără nicio explicație. Atunci arătăm mesajul și
+  /// reîncărcăm ca lista să arate adevărul de pe server.
   Future<void> _accept(String fromUid) async {
-    await PlayerProfileService.instance.acceptFriendRequest(fromUid);
-    await _reload();
+    final ok = await PlayerProfileService.instance.acceptFriendRequest(fromUid);
+    if (!ok) await _onActionFailed();
   }
 
   Future<void> _decline(String fromUid) async {
-    await PlayerProfileService.instance.declineFriendRequest(fromUid);
+    final ok = await PlayerProfileService.instance.declineFriendRequest(fromUid);
+    if (!ok) await _onActionFailed();
+  }
+
+  Future<void> _onActionFailed() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(tr('Nu am reușit. Verifică internetul și încearcă din nou.',
+          'That failed. Check your connection and try again.')),
+    ));
     await _reload();
   }
 
@@ -196,7 +288,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           for (final f in data.friends)
                             _FriendRow(
                               profile: f,
-                              summary: data.summaries[f.uid],
+                              // Prietenul rămâne în listă (îl poţi elimina), dar
+                              // dacă e blocat nu-şi mai arată ultimul mesaj şi
+                              // nici bulina de necitit.
+                              summary: ModerationService.instance.isBlocked(f.uid)
+                                  ? null
+                                  : _summaries[f.uid],
                               onRemove: () => _remove(f.uid),
                               onOpenChat: () => _openChat(f),
                             ),
@@ -301,15 +398,10 @@ class _FriendsData {
   final List<FriendRequest> requests;
   final List<PlayerProfile> friends;
 
-  /// uid-ul prietenului → capul firului privat cu el. Lipsește pentru
-  /// prietenii cu care nu s-a schimbat niciun mesaj.
-  final Map<String, FriendChatSummary> summaries;
-
   const _FriendsData({
     required this.myCode,
     required this.requests,
     required this.friends,
-    this.summaries = const {},
   });
 }
 

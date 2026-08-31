@@ -112,6 +112,22 @@ class FriendChatService {
     }
   }
 
+  /// Rezumatul unui fir anume, live. Un abonament pe DOCUMENT, nu o
+  /// interogare pe colecție — o interogare `friend_chats.where(...)` ar fi
+  /// respinsă de reguli (firestore.rules despică numele documentului ca să
+  /// verifice apartenența, iar un query pe colecție nu-i dă motorului nicio
+  /// cale s-o demonstreze).
+  ///
+  /// Întoarce același [FriendChatSummary] pe care îl dă [fetchSummaries], ca
+  /// ecranul de Prieteni să nu aibă două forme de rezumat de ținut în sincron.
+  Stream<FriendChatSummary?> watchSummary(String otherUid) {
+    final threadId = _myThreadWith(otherUid);
+    if (threadId == null) return Stream.value(null);
+    return _thread(threadId).snapshots().map(
+          (snap) => snap.exists ? FriendChatSummary.fromDoc(snap) : null,
+        );
+  }
+
   /// Rezumatele firelor cu prietenii dați, pentru ecranul de Prieteni.
   /// Cheia din rezultat e uid-ul prietenului, nu id-ul firului. Firele care
   /// nu există încă (n-au vorbit niciodată) pur și simplu lipsesc.

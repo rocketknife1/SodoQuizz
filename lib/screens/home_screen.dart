@@ -5,7 +5,7 @@ import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
-import '../data/cloud_sync_service.dart';
+import '../data/player_profile_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
@@ -57,7 +57,10 @@ class _HomeScreenState extends State<HomeScreen> {
     // Resursele trimise de admin (și resetul de cont) se aplică în fundal, la
     // pornire și la revenirea din fundal — momente în care ecranul ăsta poate
     // fi deja construit, cu cifrele de dinainte. Vezi CloudSyncService.
-    CloudSyncService.instance.grantsApplied.addListener(_refresh);
+    StorageService.balanceRevision.addListener(_refresh);
+    // Redenumirea din panoul de Admin ajunge live (vezi
+    // PlayerProfileService.startLive) — reîmprospătăm ca numele nou să apară pe loc.
+    PlayerProfileService.instance.profileChanged.addListener(_refresh);
     // Dezactivat temporar - popup-ul cerea prea multe apasari (o pagina pe
     // rand) la prima intrare. Codul (IntroTutorialDialog) ramane neatins,
     // doar apelul e oprit.
@@ -68,7 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    CloudSyncService.instance.grantsApplied.removeListener(_refresh);
+    StorageService.balanceRevision.removeListener(_refresh);
+    PlayerProfileService.instance.profileChanged.removeListener(_refresh);
     super.dispose();
   }
 
@@ -97,10 +101,6 @@ class _HomeScreenState extends State<HomeScreen> {
       livesUnlimited: livesUnlimited,
       livesUnlimitedRemaining: livesUnlimitedRemaining,
       name: identity.name,
-      // Aceeași regulă ca în ProfileScreen/MultiplayerScreen: numele nu se
-      // poate schimba de aici când vine dintr-un cont Google legat, sau când
-      // e impus de administrator pe un cont logat.
-      nameLocked: identity.photoUrl != null || (forcedName.isNotEmpty && AuthService.instance.isSignedIn),
       nameSetByAdmin: forcedName.isNotEmpty,
     );
   }
@@ -262,7 +262,7 @@ class _HomeScreenState extends State<HomeScreen> {
             hintsBadgeKey: _hintsBadgeKey,
             gemsBadgeKey: _gemsBadgeKey,
             displayName: data?.name,
-            onNameTap: (data == null || data.nameLocked) ? null : () => _editName(data),
+            onNameTap: data == null ? null : () => _editName(data),
             onCoinsTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ShopScreen()));
@@ -471,7 +471,9 @@ class _HomeData {
   final bool livesUnlimited;
   final Duration livesUnlimitedRemaining;
   final String name;
-  final bool nameLocked;
+
+  /// `true` dacă numele curent a fost impus din Admin — dialogul îl ridică
+  /// înainte de salvare ca primul heartbeat să nu-l pună la loc.
   final bool nameSetByAdmin;
   _HomeData({
     required this.xp,
@@ -483,7 +485,6 @@ class _HomeData {
     required this.gems,
     required this.livesUnlimited,
     required this.name,
-    required this.nameLocked,
     required this.nameSetByAdmin,
     required this.livesUnlimitedRemaining,
   });

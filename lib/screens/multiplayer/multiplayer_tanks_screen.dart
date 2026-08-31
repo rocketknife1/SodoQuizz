@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
+import '../../core/powerup_ui.dart';
 import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/tanks.dart';
@@ -12,7 +13,6 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
-import '../../widgets/in_app_notification.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
@@ -274,7 +274,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
     if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
-      _notifyPowerUpTooLate();
+      notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
     }
     Sfx.tileSelect();
@@ -299,57 +299,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       case PowerUp.allyShield:
         MultiplayerService.instance.useTanksAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
       case PowerUp.peek:
-        _showPeek(info);
+        showPeekResults(context, info, myId: MultiplayerService.instance.currentPlayerId, playerNames: _playerNames);
       default:
         break;
     }
     setState(() => _myPowerUp = PowerUp.none);
-  }
-
-  /// [PowerUp.peek]: banner informativ cu ce au ales ceilalți până acum.
-  /// Efect pur local — nu scrie nimic, nu schimbă rezolvarea.
-  void _showPeek(MatchInfo info) {
-    if (!mounted) return;
-    final me = MultiplayerService.instance.currentPlayerId;
-    final others = info.roundAnswers.entries.where((e) => e.key != me).toList();
-    final names = _playerNames;
-    final line = others.isEmpty
-        ? tr('Nimeni n-a răspuns încă.', 'Nobody has answered yet.')
-        : others.map((e) => '${names[e.key] ?? '?'}: ${e.value}').join('  ·  ');
-    InAppNotification.showInfo(
-      context,
-      title: tr('👁️ Spionaj', '👁️ Peek'),
-      message: line,
-      icon: Icons.visibility_rounded,
-      color: AppColors.purple,
-      duration: const Duration(seconds: 4),
-    );
-  }
-
-  void _notifyPowerUpTooLate() {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        duration: const Duration(seconds: 2),
-        content: Text(tr(
-          'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
-          'Too late for that power-up — use it at the start of the round.',
-        )),
-      ));
-  }
-
-  void _announcePowerUp(PowerUp p) {
-    if (!mounted) return;
-    final t = powerUpTitles[p];
-    if (t == null) return;
-    InAppNotification.showInfo(
-      context,
-      title: tr('Ai primit o putere!', 'Power-up received!'),
-      message: '${tr(t.$1, t.$2)} — ${tr('apasă pastila din bară ca s-o folosești', 'tap the chip up top to use it')}',
-      icon: Icons.bolt_rounded,
-      color: AppColors.purple,
-    );
   }
 
   /// Vezi core/powerups.dart — acordat cui a răspuns corect runda tocmai
@@ -378,7 +332,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (!mounted) return;
       setState(() => _myPowerUp = picked);
       Sfx.rewardPop();
-      _announcePowerUp(picked);
+      announcePowerUp(context, picked);
     });
   }
 

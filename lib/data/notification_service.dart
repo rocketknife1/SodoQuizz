@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../core/lang.dart';
@@ -46,6 +48,12 @@ class NotificationService {
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
 
+  /// Vezi CloudSyncService._consumingGrant — același tipar, același motiv.
+  /// Fără ea, două descărcări suprapuse pot pierde o notificare: [addLocal]
+  /// citește lista, o modifică și o scrie înapoi, deci a doua rulare ar
+  /// suprascrie ce tocmai a adăugat prima.
+  bool _pulling = false;
+
   String get _uid {
     try {
       return MultiplayerService.instance.currentPlayerId;
@@ -71,12 +79,18 @@ class NotificationService {
   /// Adaugă o notificare locală. [AppNotification.id] e și cheia de
   /// dedublare: aceeași notificare ajunsă de două ori (o descărcare reluată
   /// după o pică de rețea) nu se dublează în panou.
-  Future<void> addLocal(AppNotification notification) async {
+  ///
+  /// [refreshBadge] false: nu recalcula bulina acum. Folosit de
+  /// [_pullFromCloud], care adaugă mai multe anunțuri în buclă și recalculează
+  /// O SINGURĂ DATĂ la final — altfel fiecare anunț sosit ar fi costat `2 + N`
+  /// citiri Firestore prin `refreshUnread` -> `fetchLive`, adică descărcarea a
+  /// k anunțuri ar fi costat `k × (2 + N)`.
+  Future<void> addLocal(AppNotification notification, {bool refreshBadge = true}) async {
     final current = await loadStored();
     if (current.any((n) => n.id == notification.id)) return;
     final updated = [notification, ...current].take(_maxStored).toList();
     await StorageService.setNotifications(updated.map((n) => n.encode()).toList());
-    await refreshUnread();
+    if (refreshBadge) await refreshUnread();
   }
 
   /// Compune și salvează notificarea de cadou din ce a intrat EFECTIV în cont.
@@ -131,13 +145,22 @@ class NotificationService {
       );
     }
 
+    // `refreshBadge: false` + `refreshUnreadLocalOnly` la final, NU
+    // `refreshUnread`: notificarea tocmai a fost scrisă LOCAL, deci bulina se
+    // poate recalcula din ce e deja pe telefon. `refreshUnread` ar fi chemat
+    // `fetchLive()` = `2 + 2N` citiri Firestore (cereri + prieteni + rezumate)
+    // pentru fiecare grant trimis de admin — iar exact acele cifre vin oricum
+    // din abonamentele LiveSync. Calea e live: admin → `admin_grants` →
+    // `consumePendingGrant` → aici, deci runda de rețea s-ar fi plătit la
+    // FIECARE cadou.
     await addLocal(AppNotification(
       id: 'grant_$grantId',
       type: AppNotificationType.gift,
       title: title,
       body: body,
       createdAt: DateTime.now(),
-    ));
+    ), refreshBadge: false);
+    await refreshUnreadLocalOnly();
   }
 
   /// „a, b și c" — lista de resurse, citibilă, nu înșiruire cu virgule.
@@ -152,6 +175,16 @@ class NotificationService {
   /// sigur fără identitate sau fără nimic în așteptare. Chemată la pornire și
   /// la revenirea din fundal, ca grant-urile.
   Future<void> pullFromCloud() async {
+    if (_pulling) return;
+    _pulling = true;
+    try {
+      await _pullFromCloud();
+    } finally {
+      _pulling = false;
+    }
+  }
+
+  Future<void> _pullFromCloud() async {
     final uid = _uid;
     if (uid.isEmpty) return;
     try {
@@ -177,14 +210,57 @@ class NotificationService {
           createdAt: sentAt?.toDate() ?? DateTime.now(),
           peerUid: data['peerUid'] as String? ?? '',
           peerName: data['peerName'] as String? ?? '',
-        ));
+        ), refreshBadge: false);
         // Ștearsă abia după ce a fost scrisă local — altfel o pică între cele
         // două operații ar fi pierdut anunțul definitiv.
         await doc.reference.delete();
       }
+      // Recalcularea bulinei se face AICI, o singură dată după buclă — nu în
+      // `addLocal` per anunț. `refreshUnreadLocalOnly` (nu `refreshUnread`):
+      // anunțurile sunt deja locale acum, deci partea locală ajunge și nu
+      // atinge `fetchLive`. Apelantul (abonamentul din [startLive]) NU mai
+      // recalculează separat.
+      await refreshUnreadLocalOnly();
     } catch (e) {
       debugPrint('NotificationService.pullFromCloud a esuat: $e');
     }
+  }
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _inboxSub;
+
+  /// Anunțurile lăsate de admin ajung acum cât jucătorul e în joc.
+  ///
+  /// Se cheamă [pullFromCloud], nu se procesează snapshot-ul direct: aceea
+  /// știe deja să copieze anunțurile local ȘI să le șteargă din cloud, iar
+  /// duplicarea acelei logici aici ar fi însemnat două căi care trebuie ținute
+  /// în sincron. Garda `_pulling` face apelurile suprapuse inofensive.
+  ///
+  /// Se cheamă [refreshUnreadLocalOnly], nu [refreshUnread]: al doilea
+  /// declanșează [fetchLive], adică `2 + N` citiri Firestore (N = numărul de
+  /// prieteni) pentru un singur anunț sosit. Anunțurile sunt deja salvate local
+  /// în acel moment, deci partea locală ajunge.
+  void startLive() {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    stopLive();
+    try {
+      _inboxSub = _cloudBox(uid).snapshots().listen((snap) {
+        if (snap.metadata.hasPendingWrites) return;
+        if (snap.docs.isEmpty) return;
+        // `pullFromCloud` recalculează singură bulina la final (local-only) —
+        // nu se mai adaugă un `refreshUnread*` aici.
+        unawaited(pullFromCloud());
+      }, onError: (Object e) {
+        debugPrint('NotificationService._inboxSub a esuat: $e');
+      });
+    } catch (e) {
+      debugPrint('NotificationService.startLive a esuat: $e');
+    }
+  }
+
+  void stopLive() {
+    _inboxSub?.cancel();
+    _inboxSub = null;
   }
 
   // ─── Stările live (mesaje necitite, cereri de prietenie) ──────────────────
@@ -247,6 +323,45 @@ class NotificationService {
     return all;
   }
 
+  // ─── Partea live a bulinei, ținută de abonamente ─────────────────────────
+
+  /// Cea mai recentă cifră „live" (cereri în așteptare + fire cu mesaj
+  /// necitit) primită de la abonamentele din LiveSync. Ținută separat ca
+  /// [_recomputeUnread] s-o poată aduna cu partea locală fără nicio citire
+  /// nouă. [refreshUnread] o resincronizează când chiar întreabă rețeaua.
+  int _liveUnread = 0;
+
+  /// Partea locală a bulinei, memorată din ultima citire de pe telefon
+  /// (SharedPreferences). Ținută în cache ca [setLiveUnread] să poată actualiza
+  /// [unreadCount] SINCRON — altfel un snapshot sosit ar mișca bulina abia
+  /// după un `await` pe disc, iar testele n-ar avea de ce să se agațe.
+  int _storedUnread = 0;
+
+  /// Anunțat de abonamentele din LiveSync: câte cereri în așteptare și câte
+  /// fire cu mesaj necitit există ACUM. Nu produce nicio citire în plus —
+  /// cifrele vin din snapshot-urile deja primite. NU cheamă [refreshUnread]
+  /// (aceea declanșează [fetchLive] = `2 + N` citiri per eveniment).
+  void setLiveUnread({required int pendingRequests, required int unreadThreads}) {
+    _liveUnread = pendingRequests + unreadThreads;
+    // Sincron, din cifre deja în memorie: bulina reflectă imediat schimbarea.
+    unreadCount.value = _storedUnread + _liveUnread;
+    // Async, fără citiri de rețea: doar reîmprospătează partea locală de pe disc.
+    unawaited(_recomputeUnread());
+  }
+
+  /// Reface [unreadCount] din partea locală (deja pe telefon) + [_liveUnread]
+  /// (deja primit prin snapshot). Zero citiri Firestore.
+  Future<void> _recomputeUnread() async {
+    try {
+      final readAt = await StorageService.getNotificationsReadAt();
+      final stored = await loadStored();
+      _storedUnread = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      unreadCount.value = _storedUnread + _liveUnread;
+    } catch (e) {
+      debugPrint('NotificationService._recomputeUnread a esuat: $e');
+    }
+  }
+
   // ─── Bulina ───────────────────────────────────────────────────────────────
 
   /// Recalculează bulina: notificările salvate venite după ultima deschidere
@@ -261,20 +376,30 @@ class NotificationService {
       final stored = await loadStored();
       final unreadStored = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
       final live = await fetchLive();
+      // Resincronizează ambele jumătăți cu ce tocmai a întors rețeaua, ca un
+      // [_recomputeUnread] ulterior (declanșat de un snapshot) să pornească de
+      // la cifrele corecte.
+      _storedUnread = unreadStored;
+      _liveUnread = live.length;
       unreadCount.value = unreadStored + live.length;
     } catch (e) {
       debugPrint('NotificationService.refreshUnread a esuat: $e');
     }
   }
 
-  /// Doar partea locală a bulinei — fără nicio citire Firestore. Folosită la
-  /// pornire, ca meniul să arate imediat un număr corect-ish, înainte ca
-  /// [refreshUnread] să apuce să întrebe rețeaua.
+  /// Doar partea locală a bulinei — fără nicio citire Firestore. E calea
+  /// NORMALĂ de recalculare: la pornire, la revenirea din fundal și în
+  /// `initState`-ul clopoțelului. Partea live ([_liveUnread]) e păstrată așa
+  /// cum au lăsat-o abonamentele din `LiveSync`, care o împing prin
+  /// [setLiveUnread] fără nicio citire. [refreshUnread] (care chiar întreabă
+  /// rețeaua) a rămas doar pe acțiuni rare, inițiate de utilizator —
+  /// închiderea panoului de notificări.
   Future<void> refreshUnreadLocalOnly() async {
     try {
       final readAt = await StorageService.getNotificationsReadAt();
       final stored = await loadStored();
-      unreadCount.value = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      _storedUnread = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      unreadCount.value = _storedUnread + _liveUnread;
     } catch (e) {
       debugPrint('NotificationService.refreshUnreadLocalOnly a esuat: $e');
     }

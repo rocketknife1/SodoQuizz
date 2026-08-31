@@ -45,6 +45,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
+    // Redenumirea făcută din panoul de Admin ajunge live pe telefon (vezi
+    // PlayerProfileService.startLive) — reîncărcăm ca numele nou să apară pe loc.
+    PlayerProfileService.instance.profileChanged.addListener(_refreshBalances);
     if (kIsWeb) {
       AuthService.instance.ensureGoogleInitialized();
       _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((event) {
@@ -57,8 +64,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
+    PlayerProfileService.instance.profileChanged.removeListener(_refreshBalances);
     _googleWebSub?.cancel();
     super.dispose();
+  }
+
+  void _refreshBalances() {
+    if (!mounted) return;
+    setState(() => _dataFuture = _load());
   }
 
   Future<void> _completeWebGoogleSignIn(GoogleSignInAccount account) async {
@@ -110,15 +124,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       multiplayerProfile: results[6] as PlayerProfile?,
       pendingFriendRequests: results[7] as int,
       name: identity.name,
-      // Numele nu se poate schimba de aici când vine din contul Google.
-      //
-      // Numele impus de administrator blochează și el editarea — dar NUMAI la
-      // conturile logate, unde e o decizie de moderare. La un Guest nu:
-      // userul a cerut explicit ca un Guest redenumit să poată reveni oricând,
-      // singur, la un nume ales de el. Editarea lui chiar ridică numele impus
-      // (vezi [_editName] și PlayerProfileService.releaseMyForcedName), deci
-      // butonul activ nu minte: apeși, scrii, și rămâne scris.
-      nameLocked: identity.photoUrl != null || (forcedName.isNotEmpty && AuthService.instance.isSignedIn),
       nameSetByAdmin: forcedName.isNotEmpty,
     );
   }
@@ -127,7 +132,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// (vezi widgets/edit_name_dialog.dart), ca jucătorul să n-aibă două
   /// locuri diferite în care se poate numi altfel.
   Future<void> _editName(_ProfileData data) async {
-    if (data.nameLocked) return;
     final result = await editDisplayName(context, currentName: data.name, nameSetByAdmin: data.nameSetByAdmin);
     if (result == null || !mounted) return;
     setState(() => _dataFuture = _load());
@@ -253,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Center(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
-                    onTap: data.nameLocked ? null : () => _editName(data),
+                    onTap: () => _editName(data),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -264,28 +268,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
                           ),
                         ),
-                        if (!data.nameLocked) ...[
-                          const SizedBox(width: 8),
-                          const Icon(Icons.edit_rounded, color: Colors.white54, size: 18),
-                        ],
+                        const SizedBox(width: 8),
+                        const Icon(Icons.edit_rounded, color: Colors.white54, size: 18),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Center(
-                  // Redenumirea făcută de administrator NU se anunță aici,
-                  // deliberat. Motivul cel mai frecvent pentru care un nume e
-                  // schimbat din Admin e că era obscen, iar un rând care spune
-                  // „numele tău a fost stabilit de administrator" transformă o
-                  // curățare discretă într-o notificare de moderare — exact
-                  // ce nu vrei. Guest-ul vede pur și simplu câmpul liber, cu
-                  // îndemnul obișnuit; dacă numele nu-i place, îl schimbă,
-                  // fără să i se explice de ce s-a schimbat.
                   child: Text(
-                    data.nameLocked
-                        ? tr('Numele vine din contul tău Google', 'Your name comes from your Google account')
-                        : tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
+                    tr('Apasă pe nume ca să-l schimbi', 'Tap your name to change it'),
                     style: const TextStyle(color: Colors.white38, fontSize: 11),
                   ),
                 ),
@@ -777,10 +769,11 @@ class _ProfileData {
   final PlayerProfile? multiplayerProfile;
   final int pendingFriendRequests;
 
-  /// Numele cu care apari pentru ceilalți și dacă poate fi schimbat de aici
-  /// (nu poate, dacă vine din contul Google sau e pus de administrator).
+  /// Numele cu care apari pentru ceilalți jucători.
   final String name;
-  final bool nameLocked;
+
+  /// `true` dacă numele curent a fost impus din Admin — dialogul îl ridică
+  /// înainte de salvare ca primul heartbeat să nu-l pună la loc.
   final bool nameSetByAdmin;
 
   _ProfileData({
@@ -793,7 +786,6 @@ class _ProfileData {
     this.multiplayerProfile,
     this.pendingFriendRequests = 0,
     this.name = '',
-    this.nameLocked = false,
     this.nameSetByAdmin = false,
   });
 }

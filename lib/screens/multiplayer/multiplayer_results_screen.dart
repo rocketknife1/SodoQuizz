@@ -407,7 +407,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   }
 
   Future<void> _requestRematch() async {
-    await MultiplayerService.instance.offerRematch(
+    final ok = await MultiplayerService.instance.offerRematch(
       matchId: widget.matchId,
       gameMode: widget.gameMode,
       stake: _tableStake(_originalPlayers),
@@ -416,6 +416,21 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           RematchParticipant(id: p.id, name: p.name, avatarSeed: p.avatarSeed, photoUrl: p.photoUrl, avatarStyle: p.avatarStyle),
       ],
     );
+    if (!ok) _showBanBlocked();
+  }
+
+  Future<void> _acceptRematch() async {
+    final ok = await MultiplayerService.instance.acceptRematchOffer(widget.matchId);
+    if (!ok) _showBanBlocked();
+  }
+
+  /// Cont banat: acelasi mesaj ca poarta din ecranul de Multiplayer, ca
+  /// jucatorul sa afle DE CE nu merge butonul, nu doar ca nu merge.
+  void _showBanBlocked() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(bannedFromOnlineMessage()),
+    ));
   }
 
   /// Rulează pe clientul gazdei la fiecare schimbare a ofertei — pornește
@@ -559,7 +574,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => MultiplayerService.instance.acceptRematchOffer(widget.matchId),
+                        onPressed: _acceptRematch,
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.play),
                         child: Text(tr('Accept', 'Accept'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                       ),

@@ -8,6 +8,7 @@ import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_presence_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
@@ -34,7 +35,6 @@ class MultiplayerScreen extends StatefulWidget {
 
 class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProviderStateMixin {
   String _displayName = '';
-  String? _photoUrl;
   bool _busy = false;
 
   /// Intrarea pe ecran: avatarul, numele și cele 3 plăci apar în cascadă,
@@ -48,20 +48,10 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// în sensuri opuse — accentul central de „wow" al ecranului.
   late final AnimationController _ringCtrl;
 
-  /// Numele pus de administrator (vezi StorageService.getForcedName) — bate
-  /// tot, inclusiv contul Google, deci blochează și el editarea de aici.
+  /// `true` dacă numele curent a fost impus din Admin — dialogul de schimbare
+  /// a numelui îl ridică înainte de salvare ca primul heartbeat să nu-l pună
+  /// la loc.
   bool _nameSetByAdmin = false;
-
-  /// Numele/poza sunt legate live de contul Google (dacă e logat) — nu se
-  /// mai pot edita manual în acest caz, vezi [_editName].
-  ///
-  /// Numele stabilit de administrator blochează editarea DOAR la conturile
-  /// logate, unde e o decizie de moderare. Un Guest redenumit are voie să
-  /// revină oricând, singur, la un nume ales de el — aceeași regulă ca în
-  /// ProfileScreen, ținută în sincron aici ca jucătorul să nu găsească același
-  /// câmp blocat într-un ecran și liber în celălalt.
-  bool get _isGoogleLinked =>
-      _photoUrl != null || (_nameSetByAdmin && AuthService.instance.isSignedIn);
 
   @override
   void initState() {
@@ -76,7 +66,6 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
       if (!mounted) return;
       setState(() {
         _displayName = identity.name;
-        _photoUrl = identity.photoUrl;
       });
       // „Am intrat în Multiplayer" — anunțul scurt care le apare celorlalți
       // oriunde ar fi în joc (vezi MultiplayerPresenceService pentru de ce
@@ -84,6 +73,12 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
       // să se adune lume în același interval de timp, iar pentru asta
       // trebuie anunțat momentul în care CAUȚI un meci, nu cel în care ai
       // deschis deja o cameră.
+      // Un cont BANAT nu anunță nimic: poarta de ban e abia în `build`, deci
+      // fără linia asta jucătorul vedea ecranul de interdicție, dar apucase
+      // deja să scrie în `multiplayer_presence` — adică tuturor celorlalți le
+      // apărea „X a intrat în Multiplayer". Era singurul canal prin care un
+      // client nemodificat, banat, mai ajungea la ceilalți jucători.
+      if (PlayerProfileService.instance.amIBanned.value) return;
       MultiplayerPresenceService.instance.announceEntered(
         name: identity.name,
         photoUrl: identity.photoUrl,
@@ -93,7 +88,26 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) MultiplayerInfoDialog.maybeShow(context);
     });
+    // Redenumirea făcută din panoul de Admin ajunge live pe telefon (vezi
+    // PlayerProfileService.startLive) — reciteste numele afișat și starea
+    // „nume impus din Admin" fără să aștepte repornirea ecranului.
+    PlayerProfileService.instance.profileChanged.addListener(_onProfileChanged);
     _checkConnection();
+  }
+
+  Future<void> _onProfileChanged() async {
+    if (!mounted) return;
+    try {
+      final forced = await StorageService.getForcedName();
+      final identity = await AuthService.instance.multiplayerIdentity();
+      if (!mounted) return;
+      setState(() {
+        _nameSetByAdmin = forced.isNotEmpty;
+        _displayName = identity.name;
+      });
+    } catch (e) {
+      debugPrint('MultiplayerScreen._onProfileChanged a esuat: $e');
+    }
   }
 
   /// Multiplayer-ul are nevoie de internet — verificat AICI, la intrarea în
@@ -173,6 +187,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
 
   @override
   void dispose() {
+    PlayerProfileService.instance.profileChanged.removeListener(_onProfileChanged);
     _introCtrl.dispose();
     _pulseCtrl.dispose();
     _ringCtrl.dispose();
@@ -187,7 +202,6 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   }
 
   Future<void> _editName() async {
-    if (_isGoogleLinked) return; // numele vine din contul Google, nu e editabil aici
     final result = await editDisplayName(context, currentName: _displayName, nameSetByAdmin: _nameSetByAdmin);
     if (result == null || !mounted) return;
     setState(() {
@@ -223,7 +237,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     }
     try {
       // identitate proaspătă, nu starea din câmp — dacă userul apasă chiar
-      // la deschiderea ecranului, `_photoUrl`/`_displayName` pot fi încă
+      // la deschiderea ecranului, `_displayName` poate fi încă
       // valorile inițiale goale (fetch-ul din initState nu a apucat să
       // răspundă), iar camera ar rămâne PERMANENT fără poza reală în
       // Firestore (scrisă o singură dată, la creare — vezi bug-ul cu poza
@@ -456,6 +470,63 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Poarta de ban: cat timp `amIBanned` e adevarat, in locul continutului de
+    // multiplayer se arata mesajul. Notifier-ul e alimentat de abonamentul din
+    // PlayerProfileService, deci ridicarea unui ban ajunge instant — daca
+    // jucatorul e deblocat cat sta pe ecran, ecranul se deschide singur.
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlayerProfileService.instance.amIBanned,
+      builder: (context, banned, _) {
+        if (banned) return _buildBannedScreen(context);
+        return _buildMultiplayerScreen(context);
+      },
+    );
+  }
+
+  Widget _buildBannedScreen(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: SpaceBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(4, 8, 0, 0),
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.block_rounded, color: Colors.white54, size: 72),
+                        const SizedBox(height: 20),
+                        Text(
+                          bannedFromOnlineMessage(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMultiplayerScreen(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SpaceBackground(
@@ -567,10 +638,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                                 children: [
                                   Text(_displayName.isEmpty ? '...' : _displayName,
                                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                                  if (!_isGoogleLinked) ...[
-                                    const SizedBox(width: 6),
-                                    const Icon(Icons.edit_rounded, color: Colors.white54, size: 15),
-                                  ],
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.edit_rounded, color: Colors.white54, size: 15),
                                 ],
                               ),
                             ),

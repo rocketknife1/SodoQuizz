@@ -117,8 +117,6 @@ class AdsService {
     );
   }
 
-  bool get isRewardedReady => _rewardedAd != null;
-
   /// Arată reclama recompensată dacă e încărcată — [onReward] se apelează
   /// doar dacă userul a văzut reclama până la capăt. Reîncarcă automat
   /// următoarea reclamă după ce cea curentă se închide. Future-ul returnat

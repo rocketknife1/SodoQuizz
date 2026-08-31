@@ -101,3 +101,24 @@ class BlockedPlayer {
     );
   }
 }
+
+/// Un cont interzis, așa cum stă în `banned_players/{uid}` (scris de
+/// [PlayerProfileService.banPlayer]). Numele e copiat la ban fiindcă banul
+/// ȘTERGE profilul public — fără copie, lista de banați din Admin ar fi fost
+/// o înșiruire de uid-uri fără nicio identitate în spate.
+class BannedPlayer {
+  final String uid;
+  final String name;
+  final Timestamp? bannedAt;
+
+  const BannedPlayer({required this.uid, required this.name, this.bannedAt});
+
+  factory BannedPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data() ?? const {};
+    return BannedPlayer(
+      uid: doc.id,
+      name: data['bannedName'] as String? ?? '?',
+      bannedAt: data['bannedAt'] as Timestamp?,
+    );
+  }
+}

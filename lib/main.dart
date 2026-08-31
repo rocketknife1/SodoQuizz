@@ -9,6 +9,7 @@ import 'core/audio.dart';
 import 'core/lang.dart';
 import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
+import 'data/live_sync.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
 import 'data/multiplayer_presence_service.dart';
@@ -57,12 +58,22 @@ void main() async {
     // Lista de jucatori blocati, adusa in memorie o data pe sesiune, ca
     // filtrarea chatului sa fie sincrona - vezi ModerationService.blockedIds.
     unawaited(ModerationService.instance.loadBlocked());
-    unawaited(CloudSyncService.instance.consumePendingGrant());
+    // `consumePendingGrant` NU se mai cheamă aici: `LiveSync.attachToIdentity()`
+    // (din initState) atașează ascultătorul pe `admin_grants/{uid}`, iar primul
+    // lui snapshot face exact același consum câteva milisecunde mai târziu.
+    // Tranzacția de revendicare + `_consumingGrant` fac dublarea imposibilă.
     // Anunturile lasate de admin, descarcate o data si tinute apoi local —
     // vezi NotificationService. Bulina de pe clopotel se aprinde imediat ce
     // ajung, chiar daca jucatorul e deja in meniu.
+    // `pullFromCloud` rămâne (aduce anunțurile lăsate de admin în cloud), dar
+    // recalcularea bulinei e LOCAL-ONLY, ca pe calea de `resumed`:
+    // `LiveSync.attachToIdentity()` (din initState, câteva ms mai târziu)
+    // atașează abonamentele care aduc EXACT aceleași cifre prin snapshot-uri.
+    // `refreshUnread` ar fi însemnat `2 + 2N` citiri Firestore la fiecare
+    // pornire la rece, pentru date care sosesc oricum gratis. NU pune
+    // `refreshUnread` înapoi aici.
     unawaited(NotificationService.instance.pullFromCloud().then((_) {
-      return NotificationService.instance.refreshUnread();
+      return NotificationService.instance.refreshUnreadLocalOnly();
     }));
     // Sterge camerele de multiplayer scrise de telefonul asta carora le-a
     // expirat termenul de 10 minute. Aici, la pornire, si nu doar la finalul
@@ -107,6 +118,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _listenForMultiplayerPresence();
+    LiveSync.instance.attachToIdentity();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
   }
@@ -213,6 +225,12 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       return;
     }
     if (offer.status != 'pending') return;
+    // Cont banat: nu-i arătăm deloc dialogul. Poarta din
+    // MultiplayerService.acceptRematchOffer i-ar refuza oricum acceptul (întoarce
+    // false), dar atunci ar rămâne cu bannerul fals „Ai acceptat revanșa" la
+    // nesfârșit. Fără acțiune oferită, fără banner fals — decizia „banatul AFLĂ"
+    // e servită de porțile din ecranele de Multiplayer și Clasament.
+    if (PlayerProfileService.instance.amIBanned.value) return;
     // Gazda vede oferta în propriul ecran de rezultate; cine a răspuns deja nu
     // mai e întrebat a doua oară la fiecare eveniment din stream.
     if (offer.hostId == me || offer.acceptedIds.contains(me)) return;
@@ -351,18 +369,36 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.detached) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        // Pe web `paused` poate să nu vină niciodată — se primește `hidden`.
+        // Verificarea cu doi jucători rulează în Chrome, deci fără ramura
+        // asta abonamentele n-ar fi oprite niciodată chiar acolo unde se
+        // măsoară costul lor.
+        state == AppLifecycleState.hidden) {
+      LiveSync.instance.stop();
       CloudSyncService.instance.push();
       Music.pauseForBackground();
     } else if (state == AppLifecycleState.resumed) {
+      LiveSync.instance.start();
       Music.resumeFromBackground();
       PlayerProfileService.instance.ensureProfileHeartbeat();
-      CloudSyncService.instance.consumePendingGrant();
-      // Gratis daca uid-ul n-a schimbat; reincarca doar dupa o logare care a
-      // schimbat contul - vezi ModerationService.loadBlocked.
-      ModerationService.instance.loadBlocked();
+      // `consumePendingGrant` NU se mai cheamă aici: abonamentul din LiveSync
+      // îl declanșează singur, iar reatașarea aduce oricum un snapshot
+      // proaspăt cu tot ce s-a schimbat cât aplicația era în fundal.
+      // `loadBlocked` NU se mai cheamă aici: `LiveSync.start()` de mai sus
+      // reatașează `ModerationService.startLive()`, al cărui prim snapshot
+      // rescrie oricum `blockedIds` cu lista de pe server. Apelul rămăsese un
+      // `.get()` în plus pe exact aceleași documente, la fiecare revenire din
+      // fundal.
+      // `pullFromCloud` rămâne (aduce anunțurile lăsate de admin). Recalcularea
+      // bulinei folosește varianta LOCAL-ONLY, nu `refreshUnread`: partea live
+      // (mesaje necitite, cereri) vine acum din abonamentele reatașate de
+      // `LiveSync.start()` de mai sus, prin snapshot-uri. `refreshUnread` ar
+      // reface `fetchLive()` = încă `2 + N` citiri Firestore pentru exact
+      // aceleași date. NU pune `refreshUnread` înapoi aici.
       NotificationService.instance.pullFromCloud().then((_) {
-        return NotificationService.instance.refreshUnread();
+        return NotificationService.instance.refreshUnreadLocalOnly();
       });
     }
   }
