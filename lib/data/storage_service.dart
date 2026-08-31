@@ -49,12 +49,46 @@ class StorageService {
   /// pentru bani pe care îi avea deja.
   static final ValueNotifier<int> balanceRevision = ValueNotifier<int>(0);
 
+  /// Cât timp e > 0, scrierile de balanță NU declanșează [balanceRevision] —
+  /// marchează doar un bump în așteptare, eliberat la [releaseBalanceNotifications].
+  ///
+  /// De ce: animația de colectare a recompenselor (core/reward_collector.dart)
+  /// scrie în storage ÎNAINTE de animație, intenționat (ca recompensa să nu se
+  /// piardă dacă jucătorul iese din ecran). Fără pauza asta, badge-ul sărea la
+  /// valoarea nouă imediat, cu ~1-2s înainte ca jetoanele animate să atingă
+  /// pastila — colectarea părea ruptă („moneda n-a crescut", de fapt sărise
+  /// deja când privirea era pe jetoane). Cu pauza, fiecare etapă a animației
+  /// declanșează bump-ul explicit la IMPACT, prin [notifyBalanceChanged].
+  static int _notifyHold = 0;
+  static bool _bumpPending = false;
+
+  static void holdBalanceNotifications() => _notifyHold++;
+
+  static void releaseBalanceNotifications() {
+    if (_notifyHold > 0) _notifyHold--;
+    if (_notifyHold == 0 && _bumpPending) {
+      _bumpPending = false;
+      balanceRevision.value++;
+    }
+  }
+
+  /// Bump forțat, ignoră pauza — folosit la IMPACTUL fiecărei etape de
+  /// colectare, ca badge-ul să se miște exact când jetonul aterizează.
+  static void notifyBalanceChanged() {
+    _bumpPending = false;
+    balanceRevision.value++;
+  }
+
   /// SINGURA cale prin care se scrie o cheie de balanță. Regula, pe termen
   /// lung: `prefs.setInt` pe `_coinsKey`/`_gemsKey`/`_livesKey`/`_hintsKey`/
   /// `_xpKey` nu se mai folosește nicăieri. Așa nu poate exista o funcție
   /// nouă care schimbă balanța și uită să anunțe ecranele.
   static Future<void> _writeBalance(SharedPreferences prefs, String key, int value) async {
     await prefs.setInt(key, value);
+    if (_notifyHold > 0) {
+      _bumpPending = true;
+      return;
+    }
     balanceRevision.value++;
   }
 
@@ -210,7 +244,14 @@ class StorageService {
 
     if (livesToAdd > 0) {
       final newLives = (current + livesToAdd).clamp(0, _maxLives);
-      await _writeBalance(prefs, _livesKey, newLives);
+      // NU prin [_writeBalance]: regenerarea pasivă e declanșată din CITIRI
+      // (getLives / livesRechargeRemaining), iar un `balanceRevision++` sincron
+      // acolo face ca un ecran care tocmai recitea balanța (ca reacție la o
+      // notificare anterioară) să reintre și să-și arunce propria încărcare.
+      // Scriem direct și marcăm bump-ul; îl culege următoarea notificare reală
+      // sau următoarea încărcare de ecran.
+      await prefs.setInt(_livesKey, newLives);
+      _bumpPending = true;
       if (newLives < _maxLives) {
         // actualizează timestamp-ul cu restul de timp
         final remainder = minutesPassed % livesRechargeMinutes;

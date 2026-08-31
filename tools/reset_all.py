@@ -25,6 +25,7 @@ Are nevoie de tools/service-account.json (vezi tools/purge_accounts.py).
 """
 import io
 import os
+import urllib.parse
 import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
@@ -70,6 +71,18 @@ COLLECTIONS = [
 #   grep -rho "_db.collection('[a-z_]*')" lib/ | sort -u
 
 
+def _url(resource_name):
+    """Percent-encodeaza numele unui document/colectie Firestore pentru URL.
+
+    Id-urile de documente pot contine orice (question_reports foloseste chiar
+    textul intrebarii ca id: `Ce animal e "regele junglei"?_123`). Fara
+    encodare, DELETE-ul primeste 400 si scriptul lasa in urma exact
+    documentele cu id-uri "urate" — un reset care spune "gol" si nu e.
+    Pastram `/` (structura de path) si `:` (`:listCollectionIds`).
+    """
+    return urllib.parse.quote(resource_name, safe="/:")
+
+
 def session():
     try:
         from google.oauth2 import service_account
@@ -91,7 +104,7 @@ def list_docs(s, path):
         params = {"pageSize": 300}
         if token:
             params["pageToken"] = token
-        r = s.get(f"{FIRESTORE}/{path}", params=params, timeout=90)
+        r = s.get(f"{FIRESTORE}/{_url(path)}", params=params, timeout=90)
         if r.status_code != 200:
             return docs
         body = r.json()
@@ -103,7 +116,7 @@ def list_docs(s, path):
 
 def sub_collections(s, doc_name):
     """Id-urile subcolectiilor unui document (ex. friends, friend_requests)."""
-    r = s.post(f"https://firestore.googleapis.com/v1/{doc_name}:listCollectionIds",
+    r = s.post(f"https://firestore.googleapis.com/v1/{_url(doc_name)}:listCollectionIds",
                json={"pageSize": 100}, timeout=90)
     if r.status_code != 200:
         return []
@@ -187,7 +200,7 @@ def main():
     print("\nSterg documentele...")
     failed = 0
     for name in targets:
-        r = s.delete(f"https://firestore.googleapis.com/v1/{name}", timeout=90)
+        r = s.delete(f"https://firestore.googleapis.com/v1/{_url(name)}", timeout=90)
         if r.status_code not in (200, 204):
             failed += 1
             print(f"  ESUAT {name.split('/documents/')[-1]}: HTTP {r.status_code}")

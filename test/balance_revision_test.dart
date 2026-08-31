@@ -44,4 +44,35 @@ void main() {
     expect(StorageService.balanceRevision.value, greaterThan(before),
         reason: 'cloud-ul care coboara la logare schimba balanta');
   });
+
+  test('pauza pe notificari: scrierile nu bump-uie pana la release, apoi UNA singura', () async {
+    var seen = 0;
+    void bump() => seen++;
+    StorageService.balanceRevision.addListener(bump);
+    addTearDown(() => StorageService.balanceRevision.removeListener(bump));
+
+    StorageService.holdBalanceNotifications();
+    await StorageService.addCoins(10);
+    await StorageService.addXp(5);
+    await StorageService.addHints(1);
+    expect(seen, 0, reason: 'cat tine pauza, niciun bump');
+
+    StorageService.releaseBalanceNotifications();
+    expect(seen, 1, reason: 'la release, exact UN bump pentru tot ce s-a acumulat');
+  });
+
+  test('notifyBalanceChanged forteaza bump chiar si sub pauza', () async {
+    var seen = 0;
+    void bump() => seen++;
+    StorageService.balanceRevision.addListener(bump);
+    addTearDown(() => StorageService.balanceRevision.removeListener(bump));
+
+    StorageService.holdBalanceNotifications();
+    await StorageService.addCoins(10);
+    StorageService.notifyBalanceChanged();
+    expect(seen, 1, reason: 'bump fortat la impact, chiar sub pauza');
+    StorageService.releaseBalanceNotifications();
+    expect(seen, 1, reason: 'release nu mai are ce bump-ui, notifyBalanceChanged a golit pending');
+  });
+
 }

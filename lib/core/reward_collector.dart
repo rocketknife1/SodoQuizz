@@ -52,6 +52,10 @@ Future<void> collectRewards(
       color: color,
       onImpact: () {
         impactSound();
+        // Badge-ul se mișcă EXACT acum, când jetonul aterizează — nu la
+        // scrierea din `applyReward`, care s-a făcut deja. Vezi
+        // StorageService.holdBalanceNotifications.
+        StorageService.notifyBalanceChanged();
         onEachImpact?.call();
         if (!impactCompleter.isCompleted) impactCompleter.complete();
       },
@@ -64,6 +68,13 @@ Future<void> collectRewards(
   // rămână identică cu ordinea chip-urilor din _RewardChips
   // (quests_screen.dart/achievements_screen.dart) — altfel jucătorul vede o
   // ordine pe card și alta la colectare, ceea ce pare haotic.
+  //
+  // Pauza pe notificări: scrierile din `applyReward` (care se fac ÎNAINTE de
+  // fiecare animație) nu mai sar badge-ul devreme; fiecare etapă îl mișcă la
+  // impact, prin `notifyBalanceChanged`. `finally` garantează eliberarea chiar
+  // dacă ecranul se demontează la mijloc.
+  StorageService.holdBalanceNotifications();
+  try {
   await stage(
     amount: xp,
     icon: Icons.star_rounded,
@@ -110,5 +121,8 @@ Future<void> collectRewards(
       // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
       impactSound: Sfx.xpHit,
     );
+  }
+  } finally {
+    StorageService.releaseBalanceNotifications();
   }
 }
