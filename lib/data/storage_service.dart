@@ -547,12 +547,6 @@ class StorageService {
   // se pierde dacă treci mai multe niveluri fără să colectezi: se ține minte
   // doar ultimul nivel revendicat, restul se calculează la cerere.
 
-  static Future<int> getLastClaimedRewardLevel() async {
-    final prefs = await SharedPreferences.getInstance();
-    await _migrateXpCurveIfNeeded(prefs);
-    return prefs.getInt(_lastClaimedRewardLevelKey) ?? levelForXp(prefs.getInt(_xpKey) ?? 0);
-  }
-
   static Future<int> getPendingLevelRewardsCount() async {
     final prefs = await SharedPreferences.getInstance();
     await _migrateXpCurveIfNeeded(prefs);
@@ -604,11 +598,6 @@ class StorageService {
       current.add(id);
       await prefs.setStringList(_answeredKey, current);
     }
-  }
-
-  static Future<void> resetProgress() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_answeredKey);
   }
 
   /// Șterge tot progresul salvat (folosit din ecranul de profil).
@@ -797,12 +786,6 @@ class StorageService {
   }
 
   // ─── Daily Challenge (mini-quiz special, o dată pe zi) ─────────────────────
-
-  static Future<bool> canPlayDailyChallenge() async {
-    final prefs = await SharedPreferences.getInstance();
-    final last = prefs.getString(_dailyChallengeKey);
-    return last != _dateKey(DateTime.now());
-  }
 
   static Future<void> markDailyChallengeDone() async {
     final prefs = await SharedPreferences.getInstance();
@@ -1533,12 +1516,6 @@ class StorageService {
     }
   }
 
-  static Future<int> getLeaderboardPoints(String gameModeId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await _ensureLeaderboardPeriod(prefs);
-    return prefs.getInt('leaderboard_pts_$gameModeId') ?? 0;
-  }
-
   /// Punctele din ciclul curent pentru toate modurile care au primit măcar
   /// un punct — modurile fără puncte încă pur și simplu lipsesc din hartă.
   static Future<Map<String, int>> getAllLeaderboardPoints() async {
@@ -1560,24 +1537,9 @@ class StorageService {
 
   // ─── Contoare permanente (folosite de Achievements) ───────────────────────
 
-  static Future<int> getHintsUsedTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_hintsUsedTotalKey) ?? 0;
-  }
-
   static Future<void> incrementHintsUsedTotal() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_hintsUsedTotalKey, (prefs.getInt(_hintsUsedTotalKey) ?? 0) + 1);
-  }
-
-  static Future<int> getQuestsClaimedTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_questsClaimedTotalKey) ?? 0;
-  }
-
-  static Future<int> getDailyChallengesTotal() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_dailyChallengesTotalKey) ?? 0;
   }
 
   static Future<Set<String>> getModesEverPlayed() async {
