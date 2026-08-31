@@ -8,6 +8,9 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     StorageService.balanceRevision.value = 0;
+    // Fara asta, un test care pica in mijlocul unui hold lasa pauza activa si
+    // toate testele urmatoare pica in cascada (vezi recenzia).
+    StorageService.resetBalanceNotificationsForTest();
   });
 
   test('fiecare scriere de balanta creste contorul', () async {
@@ -51,6 +54,7 @@ void main() {
     StorageService.balanceRevision.addListener(bump);
     addTearDown(() => StorageService.balanceRevision.removeListener(bump));
 
+    addTearDown(StorageService.resetBalanceNotificationsForTest);
     StorageService.holdBalanceNotifications();
     await StorageService.addCoins(10);
     await StorageService.addXp(5);
@@ -67,6 +71,7 @@ void main() {
     StorageService.balanceRevision.addListener(bump);
     addTearDown(() => StorageService.balanceRevision.removeListener(bump));
 
+    addTearDown(StorageService.resetBalanceNotificationsForTest);
     StorageService.holdBalanceNotifications();
     await StorageService.addCoins(10);
     StorageService.notifyBalanceChanged();

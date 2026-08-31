@@ -204,8 +204,19 @@ class _QuestsScreenState extends State<QuestsScreen> {
     // Pauza pe notificarile de balanta: scrierile de mai jos se fac ACUM, dar
     // fiecare pastila din header se misca abia la impactul propriei animatii
     // (vezi onImpact-urile de mai jos si StorageService.holdBalanceNotifications).
-    // Eliberata la ultimul impact, cu gard de siguranta pe caile de iesire.
+    //
+    // Eliberarea e IDEMPOTENTA si are trei declansatoare, oricare vine primul:
+    // ultimul impact de animatie (calea fericita), o iesire timpurie prin
+    // demontare, si un cronometru de siguranta. Fara toate trei, o navigatie
+    // in timpul animatiei putea lasa pauza blocata la infinit -> toate
+    // badge-urile din joc ingheata pana la restart (bug real prins in recenzie).
     StorageService.holdBalanceNotifications();
+    var holdReleased = false;
+    void releaseHold() {
+      if (holdReleased) return;
+      holdReleased = true;
+      StorageService.releaseBalanceNotifications();
+    }
     if (xp > 0) await StorageService.addXp(xp);
     if (coins > 0) await StorageService.addCoins(coins);
     if (gems > 0) await StorageService.addGems(gems);
@@ -215,7 +226,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
     // plafonat corect) în loc să adunăm optimist current.hints + hints.
     if (hints > 0) await StorageService.addHints(hints);
     if (!mounted) {
-      StorageService.releaseBalanceNotifications();
+      releaseHold();
       return;
     }
     _navBarKey.currentState?.refreshDots();
@@ -232,13 +243,13 @@ class _QuestsScreenState extends State<QuestsScreen> {
     final finalLives = hearts > 0 ? await StorageService.getLives() : current.lives;
     final finalHints = hints > 0 ? await StorageService.getHints() : current.hints;
     if (!mounted) {
-      StorageService.releaseBalanceNotifications();
+      releaseHold();
       return;
     }
-    // Contor de impacturi: ultimul elibereaza pauza pe notificari.
+    // Contor de impacturi: ultimul cheama releaseHold (idempotent).
     var pendingImpacts = [xp, coins, gems, hearts, hints].where((v) => v > 0).length;
     void releaseAfterImpact() {
-      if (--pendingImpacts <= 0) StorageService.releaseBalanceNotifications();
+      if (--pendingImpacts <= 0) releaseHold();
     }
 
     final claimedUpdated = Map<String, bool>.of(current.claimed);
@@ -322,9 +333,15 @@ class _QuestsScreenState extends State<QuestsScreen> {
     ];
     await CollectAllOverlay.show(context, entries: entries, questCount: claimable.length);
 
-    if (!mounted) return;
+    if (!mounted) {
+      releaseHold();
+      return;
+    }
     setState(() => _claiming = false);
     _launchCollectAllFlights(entries);
+    // Plasa de siguranta: daca vreun impact nu se mai declanseaza (navigatie
+    // in timpul zborului, overlay distrus), pauza se elibereaza oricum.
+    Future.delayed(const Duration(seconds: 6), releaseHold);
   }
 
   /// Aplică o singură schimbare punctuală (vezi apelurile din [_collectAll])

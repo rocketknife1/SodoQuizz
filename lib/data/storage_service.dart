@@ -72,6 +72,16 @@ class StorageService {
     }
   }
 
+  /// Doar pentru teste: golește pauza, oricâte `hold`-uri ar fi rămase.
+  /// Fără ea, un test care pică în mijlocul unui hold lasă `_notifyHold > 0`
+  /// și TOATE testele ulterioare din același proces care se bazează pe
+  /// `balanceRevision` pică în cascadă, mascând cauza reală.
+  @visibleForTesting
+  static void resetBalanceNotificationsForTest() {
+    _notifyHold = 0;
+    _bumpPending = false;
+  }
+
   /// Bump forțat, ignoră pauza — folosit la IMPACTUL fiecărei etape de
   /// colectare, ca badge-ul să se miște exact când jetonul aterizează.
   static void notifyBalanceChanged() {
