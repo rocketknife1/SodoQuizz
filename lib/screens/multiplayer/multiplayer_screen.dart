@@ -73,6 +73,12 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
       // să se adune lume în același interval de timp, iar pentru asta
       // trebuie anunțat momentul în care CAUȚI un meci, nu cel în care ai
       // deschis deja o cameră.
+      // Un cont BANAT nu anunță nimic: poarta de ban e abia în `build`, deci
+      // fără linia asta jucătorul vedea ecranul de interdicție, dar apucase
+      // deja să scrie în `multiplayer_presence` — adică tuturor celorlalți le
+      // apărea „X a intrat în Multiplayer". Era singurul canal prin care un
+      // client nemodificat, banat, mai ajungea la ceilalți jucători.
+      if (PlayerProfileService.instance.amIBanned.value) return;
       MultiplayerPresenceService.instance.announceEntered(
         name: identity.name,
         photoUrl: identity.photoUrl,

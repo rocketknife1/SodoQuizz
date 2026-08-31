@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../core/lang.dart';
 import '../core/leagues.dart';
 import '../models/app_notification.dart';
+import '../models/moderation.dart' show BannedPlayer;
 import '../models/player_profile.dart';
 import 'auth_service.dart';
 import 'friend_chat_service.dart';
@@ -139,11 +140,29 @@ class PlayerProfileService {
     }
   }
 
+  /// [stopLive] NU golește [amIBanned] — e chemată și la trecerea în FUNDAL
+  /// (`LiveSync.stop()` → `_stopAllServices`), unde golirea ar fi însemnat o
+  /// clipă de „nebanat" la fiecare revenire. Vezi [clearIdentityState].
   void stopLive() {
     _profileSub?.cancel();
     _profileSub = null;
     _banSub?.cancel();
     _banSub = null;
+  }
+
+  /// Starea legată de CONTUL anterior, golită la schimbarea de identitate
+  /// (`LiveSync._applyIdentity`, ramura `!sameIdentity`).
+  ///
+  /// Fără asta, [amIBanned] rămânea pe valoarea contului dinainte până sosea
+  /// primul snapshot al identității noi: un Guest banat care se loga cu un
+  /// cont Google curat vedea, pentru o clipă, ecranul de interdicție peste un
+  /// cont nevinovat — iar invers, porțile de Multiplayer/Clasament stăteau
+  /// deschise o clipă pe un cont banat.
+  ///
+  /// Deliberat NU în [stopLive]: aceea e și calea de fundal (vezi mai sus),
+  /// aceeași distincție pe care o face `LiveSync` pentru `friendSummaries`.
+  void clearIdentityState() {
+    amIBanned.value = false;
   }
 
   /// Scrie/actualizează identitatea publică + "ultima activitate" — apelată
@@ -797,6 +816,46 @@ class PlayerProfileService {
     } catch (e) {
       debugPrint('PlayerProfileService.banPlayer a esuat: $e');
       return false;
+    }
+  }
+
+  /// Ridică interdicția: șterge `banned_players/{uid}`, singurul document care
+  /// ține contul blocat. După asta jucătorul își recreează singur profilul
+  /// public la primul heartbeat (vezi [ensureProfileHeartbeat]) și porțile de
+  /// UI se deschid live prin `_banSub` din [startLive], fără repornire.
+  ///
+  /// Fără metoda asta un ban era IREVERSIBIL din aplicație: se scria în
+  /// [banPlayer] și se ștergea doar în [purgePlayer], adică singura ieșire
+  /// dintr-un ban dat din greșeală era ștergerea totală a contului.
+  ///
+  /// Adminul are `allow read, write` pe `banned_players` (vezi
+  /// firestore.rules), iar `write` include ștergerea.
+  Future<bool> unbanPlayer(String uid) async {
+    if (uid.isEmpty) return false;
+    try {
+      await _db.collection('banned_players').doc(uid).delete();
+      return true;
+    } catch (e) {
+      debugPrint('PlayerProfileService.unbanPlayer a esuat: $e');
+      return false;
+    }
+  }
+
+  /// Lista conturilor interzise, pentru tab-ul „Banați" din Admin. Există ca
+  /// tab separat fiindcă banul ȘTERGE profilul public, deci un cont banat nu
+  /// mai apare NICĂIERI în lista normală de jucători — fără ecranul ăsta,
+  /// adminul n-ar avea de unde să apese „Ridică interdicția".
+  Future<List<BannedPlayer>> fetchBannedPlayers({int limit = 200}) async {
+    try {
+      final snap = await _db
+          .collection('banned_players')
+          .orderBy('bannedAt', descending: true)
+          .limit(limit)
+          .get();
+      return snap.docs.map(BannedPlayer.fromDoc).toList();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchBannedPlayers a esuat: $e');
+      return const [];
     }
   }
 

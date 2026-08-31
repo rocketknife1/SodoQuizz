@@ -74,9 +74,22 @@ class ModerationService {
     }
   }
 
+  /// [stopLive] NU golește [blockedIds] — e chemată și la trecerea în FUNDAL
+  /// (`LiveSync.stop()`), unde golirea ar fi lăsat chatul nefiltrat pentru
+  /// câteva cadre la revenire. Vezi [clearIdentityState].
   void stopLive() {
     _blockedSub?.cancel();
     _blockedSub = null;
+  }
+
+  /// Lista de blocați a contului anterior, golită la schimbarea de identitate
+  /// (`LiveSync._applyIdentity`, ramura `!sameIdentity`). Fără asta, noul cont
+  /// moștenea filtrarea vechiului până la primul snapshot. `_loadedForUid` se
+  /// resetează odată cu ea, altfel [loadBlocked] ar fi ieșit devreme și pe
+  /// identitatea nouă dacă uid-ul s-ar repeta.
+  void clearIdentityState() {
+    blockedIds.value = const {};
+    _loadedForUid = '';
   }
 
   /// Încărcată la pornire (vezi main.dart) și la fiecare revenire din fundal,

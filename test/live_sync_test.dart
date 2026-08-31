@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/data/live_sync.dart';
+import 'package:guess_it/data/moderation_service.dart';
+import 'package:guess_it/data/player_profile_service.dart';
 import 'package:guess_it/models/friend_chat.dart';
 
 /// Mașina de stări din [LiveSync], verificată fără Firebase prin cusăturile de
@@ -377,5 +379,48 @@ void main() {
     expect(pushes.last, (0, 0), reason: 'delogarea goleste bulina');
     expect(sync.friendSummaries.value, isEmpty, reason: 'schimbarea de identitate goleste rezumatele');
     expect(sync.incomingRequestUids.value, isEmpty, reason: 'schimbarea de identitate goleste cererile');
+  });
+
+  /// I5: starea per-cont (`amIBanned`, lista de blocați) trebuie să dispară la
+  /// SCHIMBAREA de identitate, dar NU la trecerea în fundal.
+  ///
+  /// Fără asta: un Guest banat care se loghează cu un cont Google curat vedea
+  /// ecranul de interdicție peste contul nou până sosea primul snapshot al
+  /// noii identități — și invers, porțile stăteau deschise o clipă pe un cont
+  /// banat. Golirea NU se poate face în `stopLive`, fiindcă `LiveSync.stop()`
+  /// (fundal) trece tot pe acolo.
+  test('13. schimbarea de identitate goleste amIBanned si lista de blocati; fundalul NU', () {
+    final banned = PlayerProfileService.instance.amIBanned;
+    final blocked = ModerationService.instance.blockedIds;
+
+    uid = 'banned-1';
+    sync.applyIdentityForTest('banned-1');
+    banned.value = true;
+    blocked.value = const {'cineva'};
+
+    // FUNDAL: starea contului curent rămâne — altfel, la revenire, chatul ar fi
+    // nefiltrat și porțile de ban deschise pentru câteva cadre.
+    sync.stop();
+    expect(banned.value, isTrue, reason: 'fundalul nu sterge starea de ban');
+    expect(blocked.value, isNotEmpty, reason: 'fundalul nu sterge lista de blocati');
+
+    // Acelasi uid (token reinnoit): tot nu goleste.
+    sync.applyIdentityForTest('banned-1');
+    expect(banned.value, isTrue, reason: 'acelasi uid nu goleste starea de ban');
+    expect(blocked.value, isNotEmpty, reason: 'acelasi uid nu goleste lista de blocati');
+
+    // ALT CONT: aici starea contului vechi n-are ce cauta.
+    uid = 'curat-1';
+    sync.applyIdentityForTest('curat-1');
+    expect(banned.value, isFalse, reason: 'contul nou nu mosteneste banul celui vechi');
+    expect(blocked.value, isEmpty, reason: 'contul nou nu mosteneste lista de blocati');
+
+    // DELOGARE: la fel.
+    banned.value = true;
+    blocked.value = const {'altcineva'};
+    uid = '';
+    sync.applyIdentityForTest('');
+    expect(banned.value, isFalse, reason: 'delogarea goleste starea de ban');
+    expect(blocked.value, isEmpty, reason: 'delogarea goleste lista de blocati');
   });
 }

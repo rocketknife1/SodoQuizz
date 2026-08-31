@@ -158,9 +158,17 @@ service cloud.firestore {
       // (emailul de admin) da acces total de scriere/stergere pe ORICE
       // profil - foloseste pentru actiunea de ban din AdminScreen
       // (PlayerProfileService.banPlayer) si pentru grant-urile de resurse.
+      //
+      // ORDINEA CONTEAZA: garda `!exists(banned_players/{uid})` sta INAUNTRUL
+      // ramurii de owner, nu inaintea disjunctiei. Pusa inainte, se aplica si
+      // adminului, iar `purgePlayer` (batch atomic care sterge inclusiv
+      // `player_profiles/{uid}`) era refuzat pentru un cont BANAT — adica
+      // exact contul pe care adminul voia sa-l curete. Un ban dat din greseala
+      // devenea permanent, nereparabil decat din consola Firebase.
       allow write: if request.auth != null
-        && !exists(/databases/$(database)/documents/banned_players/$(uid))
-        && (request.auth.uid == uid || request.auth.token.email == 'dragosssx@gmail.com');
+        && (request.auth.token.email == 'dragosssx@gmail.com'
+            || (request.auth.uid == uid
+                && !exists(/databases/$(database)/documents/banned_players/$(uid))));
 
       // Curatare Guest abandonati (vezi PlayerProfileService._sweepStaleGuests
       // - fara Cloud Functions in acest proiect, orice client autentificat

@@ -20,9 +20,11 @@ import '../widgets/coin_reward_overlay.dart';
 import 'test_images_screen.dart';
 
 /// Panou vizibil DOAR pentru contul de admin (vezi profile_screen.dart,
-/// randul care navigheaza aici, ascuns pentru oricine altcineva). Sase
+/// randul care navigheaza aici, ascuns pentru oricine altcineva). Sapte
 /// taburi: gestionare jucatori (interzicere + trimitere de resurse),
-/// jucatorii inregistrati azi, raportarile trimise de jucatori, camerele de
+/// jucatorii inregistrati azi, raportarile trimise de jucatori, conturile interzise (singurul loc de unde
+/// se poate RIDICA o interdictie — un cont banat nu mai apare in lista
+/// normala, fiindca banul ii sterge profilul public), camerele de
 /// multiplayer terminate recent, uneltele de debug/test (mutate din
 /// SettingsScreen — acolo erau vizibile oricui, fara nicio filtrare) si
 /// statistici agregate.
@@ -38,7 +40,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 6, vsync: this);
+  late final TabController _tabController = TabController(length: 7, vsync: this);
 
   @override
   void dispose() {
@@ -73,6 +75,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 Tab(text: 'Jucători'),
                 Tab(text: 'Noi azi'),
                 Tab(text: 'Raportări'),
+                Tab(text: 'Banați'),
                 Tab(text: 'Camere'),
                 Tab(text: 'Debug'),
                 Tab(text: 'Statistici'),
@@ -81,7 +84,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_PlayersTab(), _NewTodayTab(), _ReportsTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
+                children: const [_PlayersTab(), _NewTodayTab(), _ReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
               ),
             ),
           ],
@@ -102,7 +105,7 @@ Future<bool> _confirmBan(BuildContext context, PlayerProfile p) async {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       title: const Text('Interzici acest cont?', style: TextStyle(color: Colors.white)),
       content: Text(
-        '${p.name} dispare din leaderboard și din listele de prieteni ale altora și nu-și mai poate recrea profilul. Nu poate fi anulat.',
+        '${p.name} dispare din leaderboard și din listele de prieteni ale altora și nu-și mai poate recrea profilul. Se poate anula din tab-ul „Banați".',
         style: const TextStyle(color: Colors.white70),
       ),
       actions: [
@@ -119,6 +122,136 @@ Future<bool> _confirmBan(BuildContext context, PlayerProfile p) async {
     );
   }
   return ok;
+}
+
+/// Conturile interzise (`banned_players`) — SINGURUL loc din aplicație de
+/// unde o interdicție se poate ridica.
+///
+/// De ce un tab separat și nu un buton în fișa jucătorului: banul șterge
+/// profilul public (vezi [PlayerProfileService.banPlayer]), deci contul banat
+/// nu mai apare în tab-ul Jucători, în „Noi azi", în leaderboard sau în
+/// căutare. Fără lista asta, un ban dat din greșeală n-avea nicio cale de
+/// întoarcere din aplicație.
+class _BannedTab extends StatefulWidget {
+  const _BannedTab();
+
+  @override
+  State<_BannedTab> createState() => _BannedTabState();
+}
+
+class _BannedTabState extends State<_BannedTab> {
+  late Future<List<BannedPlayer>> _future = PlayerProfileService.instance.fetchBannedPlayers();
+
+  Future<void> _refresh() async {
+    setState(() => _future = PlayerProfileService.instance.fetchBannedPlayers());
+    await _future;
+  }
+
+  Future<void> _unban(BannedPlayer b) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        title: const Text('Ridici interdicția?', style: TextStyle(color: Colors.white)),
+        content: Text(
+          '${b.name} va putea intra din nou în multiplayer și în clasament. '
+          'Profilul public i se recreează singur la următoarea pornire a jocului '
+          '(statisticile vechi nu se întorc — au fost șterse la ban).',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Renunță')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Ridică interdicția', style: TextStyle(color: AppColors.orange)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    final ok = await PlayerProfileService.instance.unbanPlayer(b.uid);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? 'Interdicția pentru ${b.name} a fost ridicată.' : 'Nu am putut ridica interdicția.')),
+    );
+    if (ok) await _refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<BannedPlayer>>(
+      future: _future,
+      builder: (context, snap) {
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+        }
+        final banned = snap.data!;
+        return RefreshIndicator(
+          onRefresh: _refresh,
+          color: AppColors.orange,
+          child: banned.isEmpty
+              ? ListView(
+                  children: const [
+                    SizedBox(height: 100),
+                    Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 40),
+                        child: Text(
+                          'Niciun cont interzis.\n\nAici ajung conturile interzise din tab-ul Jucători '
+                          'și tot de aici li se poate ridica interdicția.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Colors.white38, fontSize: 13, height: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                  itemCount: banned.length,
+                  itemBuilder: (context, i) {
+                    final b = banned[i];
+                    final at = b.bannedAt?.toDate();
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(b.name,
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 2),
+                                Text(
+                                  at == null
+                                      ? b.uid
+                                      : 'Interzis la ${at.day}.${at.month}.${at.year}  ·  ${b.uid}',
+                                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => _unban(b),
+                            child: const Text('Ridică interdicția',
+                                style: TextStyle(color: AppColors.orange, fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        );
+      },
+    );
+  }
 }
 
 /// Ștergere totală a unui cont, din tab-ul Jucători. Spre deosebire de ban

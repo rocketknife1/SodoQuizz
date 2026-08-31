@@ -65,8 +65,15 @@ void main() async {
     // Anunturile lasate de admin, descarcate o data si tinute apoi local —
     // vezi NotificationService. Bulina de pe clopotel se aprinde imediat ce
     // ajung, chiar daca jucatorul e deja in meniu.
+    // `pullFromCloud` rămâne (aduce anunțurile lăsate de admin în cloud), dar
+    // recalcularea bulinei e LOCAL-ONLY, ca pe calea de `resumed`:
+    // `LiveSync.attachToIdentity()` (din initState, câteva ms mai târziu)
+    // atașează abonamentele care aduc EXACT aceleași cifre prin snapshot-uri.
+    // `refreshUnread` ar fi însemnat `2 + 2N` citiri Firestore la fiecare
+    // pornire la rece, pentru date care sosesc oricum gratis. NU pune
+    // `refreshUnread` înapoi aici.
     unawaited(NotificationService.instance.pullFromCloud().then((_) {
-      return NotificationService.instance.refreshUnread();
+      return NotificationService.instance.refreshUnreadLocalOnly();
     }));
     // Sterge camerele de multiplayer scrise de telefonul asta carora le-a
     // expirat termenul de 10 minute. Aici, la pornire, si nu doar la finalul
@@ -379,9 +386,11 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       // `consumePendingGrant` NU se mai cheamă aici: abonamentul din LiveSync
       // îl declanșează singur, iar reatașarea aduce oricum un snapshot
       // proaspăt cu tot ce s-a schimbat cât aplicația era în fundal.
-      // `loadBlocked` e gratis dacă uid-ul n-a schimbat; reîncarcă doar după o
-      // logare care a schimbat contul — vezi ModerationService.loadBlocked.
-      ModerationService.instance.loadBlocked();
+      // `loadBlocked` NU se mai cheamă aici: `LiveSync.start()` de mai sus
+      // reatașează `ModerationService.startLive()`, al cărui prim snapshot
+      // rescrie oricum `blockedIds` cu lista de pe server. Apelul rămăsese un
+      // `.get()` în plus pe exact aceleași documente, la fiecare revenire din
+      // fundal.
       // `pullFromCloud` rămâne (aduce anunțurile lăsate de admin). Recalcularea
       // bulinei folosește varianta LOCAL-ONLY, nu `refreshUnread`: partea live
       // (mesaje necitite, cereri) vine acum din abonamentele reatașate de

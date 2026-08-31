@@ -327,6 +327,13 @@ class LiveSync {
     if (!sameIdentity) {
       friendSummaries.value = const {};
       incomingRequestUids.value = const [];
+      // Aceeași regulă pentru starea per-cont ținută de servicii: `amIBanned`
+      // și lista de blocați. Golirea stă AICI, nu în `stopLive`-urile lor —
+      // acelea sunt și calea de fundal, unde ștergerea ar fi produs o clipă de
+      // stare goală la fiecare revenire (porți de ban deschise pe un cont
+      // banat, chat nefiltrat).
+      PlayerProfileService.instance.clearIdentityState();
+      ModerationService.instance.clearIdentityState();
     }
     // Curățat mereu: un uid rămas de la un cont delogat făcea ca relogarea pe
     // ACELAȘI cont să cadă pe ieșirea scurtă de mai sus și să nu mai pornească

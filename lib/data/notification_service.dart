@@ -145,13 +145,22 @@ class NotificationService {
       );
     }
 
+    // `refreshBadge: false` + `refreshUnreadLocalOnly` la final, NU
+    // `refreshUnread`: notificarea tocmai a fost scrisă LOCAL, deci bulina se
+    // poate recalcula din ce e deja pe telefon. `refreshUnread` ar fi chemat
+    // `fetchLive()` = `2 + 2N` citiri Firestore (cereri + prieteni + rezumate)
+    // pentru fiecare grant trimis de admin — iar exact acele cifre vin oricum
+    // din abonamentele LiveSync. Calea e live: admin → `admin_grants` →
+    // `consumePendingGrant` → aici, deci runda de rețea s-ar fi plătit la
+    // FIECARE cadou.
     await addLocal(AppNotification(
       id: 'grant_$grantId',
       type: AppNotificationType.gift,
       title: title,
       body: body,
       createdAt: DateTime.now(),
-    ));
+    ), refreshBadge: false);
+    await refreshUnreadLocalOnly();
   }
 
   /// „a, b și c" — lista de resurse, citibilă, nu înșiruire cu virgule.
