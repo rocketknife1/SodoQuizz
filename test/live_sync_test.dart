@@ -43,6 +43,9 @@ void main() {
         stopCalls++;
         attached = false;
       },
+      // Fara Firebase; altfel golirea bulinei la delogare (calea reala) ar
+      // atinge NotificationService -> StorageService si ar zgomotui log-ul.
+      liveUnreadSink: (_, __) {},
     );
   });
 
@@ -243,25 +246,79 @@ void main() {
 
       expect(pushes.last, (1, 1), reason: 'firul cu "bad" nu se numara, doar "good"');
     });
+
+    test('11. lista de blocati se schimba in sesiune => recalcul prin cusatura _blockedChangesSource', () async {
+      var blocked = <String>{};
+      void Function()? fireBlockedChange;
+      sync.resetForTest(
+        readUid: () => 'me',
+        onStartSubs: () {},
+        onStopSubs: () {},
+        friendUidsSource: () => friendsCtrl.stream,
+        requestUidsSource: () => requestsCtrl.stream,
+        summarySource: (uid) => threadCtrlFor(uid).stream,
+        isBlocked: (uid) => blocked.contains(uid),
+        liveUnreadSink: (p, u) => pushes.add((p, u)),
+        // `blockedIds` e un ValueNotifier care se schimba sub noi; aici captam
+        // callback-ul pe care `_startFriendWatchers` il inregistreaza, ca sa-l
+        // putem declansa. Fara acest test, scoaterea liniei
+        // `_stopBlockedWatch = _blockedChangesSource(_pushUnread)` ar trece verde.
+        blockedChangesSource: (cb) {
+          fireBlockedChange = cb;
+          return () {};
+        },
+      );
+      sync.startFriendWatchersForTest();
+
+      requestsCtrl.add(['x', 'y']);
+      friendsCtrl.add(['x', 'y']);
+      await pumpEventQueue();
+      threadCtrlFor('x').add(unreadFrom('x'));
+      await pumpEventQueue();
+      expect(pushes.last, (2, 1));
+      expect(sync.incomingRequestUids.value, ['x', 'y']);
+
+      blocked = {'x'};
+      fireBlockedChange!();
+
+      expect(pushes.last, (1, 0), reason: 'recalcul fara alt snapshot Firestore');
+      expect(sync.incomingRequestUids.value, ['y'], reason: 'cererea de la cel blocat dispare');
+    });
   });
 
-  test('9. delogare goleste bulina live; trecerea in fundal NU', () {
+  test('9. identitate schimbata goleste rezumatele+cererile; FUNDALUL nu (calea reala de oprire)', () {
     final pushes = <(int, int)>[];
     uid = 'user-9';
     sync.resetForTest(
       readUid: () => uid,
-      onStartSubs: () {},
-      onStopSubs: () {},
+      // Calea REALA de oprire/pornire, nu un stub gol — altfel `_stopFriendWatchers`
+      // nu s-ar executa si afirmatia "fundalul nu goleste" ar fi vida.
+      onStartSubs: () => sync.startFriendWatchersForTest(),
+      onStopSubs: () => sync.stopFriendWatchersForTest(),
+      friendUidsSource: () => Stream<List<String>>.empty(),
+      requestUidsSource: () => Stream<List<String>>.empty(),
+      summarySource: (_) => Stream<FriendChatSummary?>.empty(),
+      isBlocked: (_) => false,
       liveUnreadSink: (p, u) => pushes.add((p, u)),
+      blockedChangesSource: (_) => () {},
     );
 
-    sync.applyIdentityForTest('user-9');
-    sync.stop(); // fundal
-    expect(pushes, isEmpty, reason: 'trecerea in fundal nu are voie sa stinga bulina');
+    sync.applyIdentityForTest('user-9'); // porneste abonamentele (calea reala)
+    sync.friendSummaries.value = {
+      'f': FriendChatSummary(lastMessageAt: Timestamp.now(), lastSenderId: 'f', lastText: 'hi'),
+    };
+    sync.incomingRequestUids.value = ['r'];
+
+    sync.stop(); // FUNDAL
+    expect(pushes, isEmpty, reason: 'fundalul nu are voie sa stinga bulina');
+    expect(sync.friendSummaries.value, isNotEmpty, reason: 'fundalul pastreaza previzualizarile de chat');
+    expect(sync.incomingRequestUids.value, isNotEmpty, reason: 'fundalul pastreaza lista de cereri');
 
     sync.start();
     uid = '';
-    sync.applyIdentityForTest(''); // delogare
-    expect(pushes.last, (0, 0), reason: 'delogarea trebuie sa goleasca bulina live');
+    sync.applyIdentityForTest(''); // DELOGARE (schimbare de identitate)
+    expect(pushes.last, (0, 0), reason: 'delogarea goleste bulina');
+    expect(sync.friendSummaries.value, isEmpty, reason: 'schimbarea de identitate goleste rezumatele');
+    expect(sync.incomingRequestUids.value, isEmpty, reason: 'schimbarea de identitate goleste cererile');
   });
 }

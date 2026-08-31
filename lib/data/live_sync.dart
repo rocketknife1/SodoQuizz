@@ -245,8 +245,12 @@ class LiveSync {
     _threadSubs.clear();
     _unreadThreadUids.clear();
     _requestFromUids = const [];
-    if (friendSummaries.value.isNotEmpty) friendSummaries.value = const {};
-    if (incomingRequestUids.value.isNotEmpty) incomingRequestUids.value = const [];
+    // [friendSummaries] și [incomingRequestUids] NU se golesc aici: la trecerea
+    // în FUNDAL (singurul alt apelant în afară de o schimbare de identitate)
+    // ecranul de Prieteni, dacă e montat, ar face un `_load()` întreg (~2N
+    // citiri) fix în clipa în care aplicația pleacă, iar previzualizările ar
+    // dispărea vizibil ca să reapară la revenire. Golirea aparține schimbării
+    // de identitate — se face în [_applyIdentity].
   }
 
   /// Recalculează, din starea BRUTĂ deja adunată din snapshot-uri, tot ce
@@ -306,16 +310,21 @@ class LiveSync {
     // schimbat sau a dispărut, abonamentele vechi n-au voie să supraviețuiască
     // nicio clipă (vezi doc-ul clasei — `_discardAnonymousIdentity`).
     _stopSubs();
+    // SCHIMBARE DE IDENTITATE (delogare sau alt cont): datele afișate aparțineau
+    // identității de dinainte, n-au ce căuta pe ecran. Trecerea în FUNDAL NU
+    // trece pe aici (o face [stop]), deci acolo previzualizările și cererile
+    // rămân afișate — corect din punctul de vedere al utilizatorului: minimizezi
+    // și revii, ecranul arată ce arăta.
+    friendSummaries.value = const {};
+    incomingRequestUids.value = const [];
     // Curățat mereu: un uid rămas de la un cont delogat făcea ca relogarea pe
     // ACELAȘI cont să cadă pe ieșirea scurtă de mai sus și să nu mai pornească
     // niciodată abonamentele.
     _startedForUid = uid.isEmpty ? null : uid;
     if (uid.isEmpty) {
       // DELOGARE: bulina nu mai are voie să arate numărul contului anterior.
-      // `_stopFriendWatchers` (chemat de `_stopSubs` de mai sus) curăță starea
-      // internă dar NU împinge — ca trecerea în FUNDAL, care merge prin [stop],
-      // să lase bulina pe ecran (dezirabil). Delogarea trece DOAR pe aici, deci
-      // împingerea explicită a lui zero aici distinge cele două cazuri.
+      // Fundalul lasă bulina pe ecran (dezirabil); împingerea explicită a lui
+      // zero DOAR aici distinge cele două cazuri.
       _liveUnreadSink(0, 0);
     }
     // În fundal doar reținem noul uid; reatașarea o face [start] la revenire.

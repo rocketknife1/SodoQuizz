@@ -27,9 +27,14 @@ class FriendsScreen extends StatefulWidget {
 }
 
 class _FriendsScreenState extends State<FriendsScreen> {
-  late Future<_FriendsData> _dataFuture = _load();
+  late Future<_FriendsData> _dataFuture = _runLoad();
   final _codeController = TextEditingController();
   bool _sending = false;
+
+  /// Un `_load()` e în zbor acum. A doua cerere de reîncărcare cât asta rulează
+  /// nu pornește un `_load()` paralel — se pliază prin [_reloadQueued].
+  bool _loadInFlight = false;
+  bool _reloadQueued = false;
 
   /// Capurile de fir, în timp real, din LiveSync — NU recitite aici. Ecranul
   /// era o poză făcută la intrare: stăteai cu el deschis, prietenul îți scria
@@ -60,8 +65,34 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
+  /// `_load()` înfășurat cu coalescere: dacă o schimbare mai sosește cât asta
+  /// rulează, se marchează [_reloadQueued] și se face O SINGURĂ reîncărcare la
+  /// final — nu se înghite (starea chiar s-a schimbat), dar nici nu se lansează
+  /// două `_load()` suprapuse.
+  Future<_FriendsData> _runLoad() async {
+    _loadInFlight = true;
+    try {
+      return await _load();
+    } finally {
+      _loadInFlight = false;
+      if (_reloadQueued && mounted) {
+        _reloadQueued = false;
+        setState(() => _dataFuture = _runLoad());
+      }
+    }
+  }
+
+  void _scheduleReload() {
+    if (!mounted) return;
+    if (_loadInFlight) {
+      _reloadQueued = true;
+      return;
+    }
+    setState(() => _dataFuture = _runLoad());
+  }
+
   Future<void> _reload() async {
-    setState(() => _dataFuture = _load());
+    _scheduleReload();
     await _dataFuture;
   }
 
@@ -84,10 +115,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   /// [_reload]. `_load` e ieftin acum (nu mai cheamă `fetchSummaries`), iar
   /// cererile sunt evenimente rare, deci nu merită o cale separată doar pentru
   /// `fetchIncomingRequests`.
-  void _onRequestsChanged() {
-    if (!mounted) return;
-    setState(() => _dataFuture = _load());
-  }
+  void _onRequestsChanged() => _scheduleReload();
 
   @override
   void dispose() {
