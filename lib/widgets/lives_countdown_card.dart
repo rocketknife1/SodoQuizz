@@ -39,10 +39,15 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
       ..repeat(reverse: true);
     _refresh();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
+    // Viețile se pot schimba sub cardul afișat: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refresh);
   }
 
   @override
   void dispose() {
+    StorageService.balanceRevision.removeListener(_refresh);
     _ticker?.cancel();
     _pulse.dispose();
     super.dispose();

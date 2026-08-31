@@ -25,13 +25,6 @@ class CloudSyncService {
 
   DocumentReference<Map<String, dynamic>> _userDoc(String uid) => FirebaseFirestore.instance.collection('users').doc(uid);
 
-  /// Crește de fiecare dată când chiar s-a aplicat ceva primit de la admin
-  /// (resurse sau reset) pe telefonul ăsta. Ecranele deschise ascultă și își
-  /// reîncarcă balanța — vezi HomeScreen. Fără el, un jucător care primește
-  /// monede cât stă în joc le vede abia după ce navighează altundeva, iar un
-  /// cont resetat ar arăta în continuare cifrele vechi.
-  final ValueNotifier<int> grantsApplied = ValueNotifier<int>(0);
-
   /// Blochează consumarea simultană a aceleiași cutii poștale. Pornirea
   /// aplicației și revenirea din fundal pot declanșa amândouă [consumePendingGrant]
   /// aproape în același timp (vezi main.dart); fără garda asta, ambele apucă să
@@ -233,8 +226,10 @@ class CloudSyncService {
       // (documentul admin_grants a fost deja șters în tranzacția de
       // revendicare de la începutul funcției)
 
-      // Ecranele deschise nu știu că balanța de sub ele s-a schimbat.
-      grantsApplied.value++;
+      // Balanța se anunță acum singură din StorageService: consumePendingGrant
+      // trece prin adjustCoins/adjustGems/setLives/adjustHints/adjustXp și
+      // resetToStartingBalance, toate cu bump pe balanceRevision — ecranele
+      // deschise ascultă direct acolo.
 
       if (reset) {
         // Profilul public a fost deja pus la zero de admin; heartbeat-ul de

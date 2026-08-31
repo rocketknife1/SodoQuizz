@@ -45,6 +45,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
     if (kIsWeb) {
       AuthService.instance.ensureGoogleInitialized();
       _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((event) {
@@ -57,8 +61,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
     _googleWebSub?.cancel();
     super.dispose();
+  }
+
+  void _refreshBalances() {
+    if (!mounted) return;
+    setState(() => _dataFuture = _load());
   }
 
   Future<void> _completeWebGoogleSignIn(GoogleSignInAccount account) async {

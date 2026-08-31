@@ -38,6 +38,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   void initState() {
     super.initState();
     _dataFuture = _load();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
+  }
+
+  @override
+  void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
+    super.dispose();
   }
 
   Future<_AchievementsData> _load() async {
@@ -132,6 +142,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   /// vechi ajuns ultimul ar suprascrie unul mai nou și balanța ar părea
   /// "înghețată" până la următoarea colectare.
   void _refreshBalances() {
+    if (!mounted) return;
     final seq = ++_loadSeq;
     _load().then((refreshed) {
       if (!mounted || seq != _loadSeq) return;

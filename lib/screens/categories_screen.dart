@@ -77,13 +77,26 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     _featuredFuture = _loadFeaturedClaimState();
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
     _liveCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
   }
 
   @override
   void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
     _introCtrl.dispose();
     _liveCtrl.dispose();
     super.dispose();
+  }
+
+  void _refreshBalances() {
+    if (!mounted) return;
+    setState(() {
+      _statsFuture = _loadStats();
+      _featuredFuture = _loadFeaturedClaimState();
+    });
   }
 
   /// Fereastra de timp în care intră cardul de pe poziția [i] — fiecare

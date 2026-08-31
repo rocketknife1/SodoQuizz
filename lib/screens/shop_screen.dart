@@ -41,6 +41,16 @@ class _ShopScreenState extends State<ShopScreen> {
   void initState() {
     super.initState();
     _loadState();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_loadState);
+  }
+
+  @override
+  void dispose() {
+    StorageService.balanceRevision.removeListener(_loadState);
+    super.dispose();
   }
 
   Future<void> _loadState() async {

@@ -48,6 +48,16 @@ class _QuestsScreenState extends State<QuestsScreen> {
   void initState() {
     super.initState();
     _dataFuture = _load();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
+  }
+
+  @override
+  void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
+    super.dispose();
   }
 
   Future<_QuestsData> _load() async {
@@ -153,6 +163,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
   /// balanța ar părea "înghețată" (bug-ul semnalat: se actualizează abia la
   /// al doilea claim).
   void _refreshBalances() {
+    if (!mounted) return;
     final seq = ++_loadSeq;
     _load().then((refreshed) {
       if (!mounted || seq != _loadSeq) return;

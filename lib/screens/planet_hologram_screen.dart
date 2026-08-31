@@ -115,6 +115,16 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   void initState() {
     super.initState();
     _load();
+    // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
+    // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
+    // StorageService.balanceRevision.
+    StorageService.balanceRevision.addListener(_refreshBalances);
+  }
+
+  @override
+  void dispose() {
+    StorageService.balanceRevision.removeListener(_refreshBalances);
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -173,6 +183,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   }
 
   Future<void> _refreshBalances() async {
+    if (!mounted) return;
     final results = await Future.wait([
       StorageService.getXp(),
       StorageService.getCoins(),
