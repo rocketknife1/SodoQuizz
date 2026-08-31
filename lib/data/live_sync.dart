@@ -142,6 +142,14 @@ class LiveSync {
   final ValueNotifier<Map<String, FriendChatSummary>> friendSummaries =
       ValueNotifier<Map<String, FriendChatSummary>>(const {});
 
+  /// Uid-urile cererilor de prietenie primite, deja filtrate de blocare.
+  /// Ecranul de Prieteni ascultă asta ca să-și reîncarce lista de cereri când
+  /// una nouă sosește cât stai pe ecran — înainte, semnalul venea indirect
+  /// prin `unreadCount`; de când ecranul ascultă doar rezumatele firelor,
+  /// cererile aveau nevoie de un canal propriu.
+  final ValueNotifier<List<String>> incomingRequestUids =
+      ValueNotifier<List<String>>(const []);
+
   void _startFriendWatchers() {
     // Aliniat cu `NotificationService.startLive` etc.: curăță întâi, ca un al
     // doilea apelant să nu lase abonamente agățate.
@@ -238,17 +246,23 @@ class LiveSync {
     _unreadThreadUids.clear();
     _requestFromUids = const [];
     if (friendSummaries.value.isNotEmpty) friendSummaries.value = const {};
+    if (incomingRequestUids.value.isNotEmpty) incomingRequestUids.value = const [];
   }
 
-  /// Împinge cifrele curente în bulină — fără nicio citire Firestore, doar din
-  /// starea deja adunată din snapshot-uri. Jucătorii blocați sunt săriți din
-  /// AMBELE surse, la fel ca [NotificationService.fetchLive]: altfel cineva
-  /// blocat ar putea aprinde clopoțelul, exact canalul pe care blocarea trebuie
-  /// să-l închidă.
+  /// Recalculează, din starea BRUTĂ deja adunată din snapshot-uri, tot ce
+  /// depinde de ea: uid-urile cererilor filtrate (pentru ecranul de Prieteni)
+  /// și cele două cifre ale bulinei. Fără nicio citire Firestore. Jucătorii
+  /// blocați sunt săriți din AMBELE surse, la fel ca [NotificationService.fetchLive]:
+  /// altfel cineva blocat ar putea aprinde clopoțelul sau apărea în lista de
+  /// cereri, exact canalul pe care blocarea trebuie să-l închidă. Filtrarea e
+  /// aici, nu la primire, ca o schimbare a listei de blocați să recalculeze.
   void _pushUnread() {
-    final pending = _requestFromUids.where((u) => !_isBlocked(u)).length;
+    final pendingUids = _requestFromUids.where((u) => !_isBlocked(u)).toList();
     final unread = _unreadThreadUids.where((u) => !_isBlocked(u)).length;
-    _liveUnreadSink(pending, unread);
+    if (!listEquals(incomingRequestUids.value, pendingUids)) {
+      incomingRequestUids.value = pendingUids;
+    }
+    _liveUnreadSink(pendingUids.length, unread);
   }
 
   static String _currentUidFromSingleton() {

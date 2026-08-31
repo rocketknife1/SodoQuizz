@@ -69,6 +69,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
   void initState() {
     super.initState();
     LiveSync.instance.friendSummaries.addListener(_onSummariesChanged);
+    LiveSync.instance.incomingRequestUids.addListener(_onRequestsChanged);
   }
 
   /// Un fir s-a schimbat (mesaj nou, marcaj de citit, prieten adăugat/șters).
@@ -78,9 +79,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
     setState(() => _summaries = LiveSync.instance.friendSummaries.value);
   }
 
+  /// O cerere de prietenie a sosit/dispărut cât stăteai pe ecran. Reîncărcăm
+  /// tot prin [_load] — la fel ca accept/refuz/adăugare, care deja cheamă
+  /// [_reload]. `_load` e ieftin acum (nu mai cheamă `fetchSummaries`), iar
+  /// cererile sunt evenimente rare, deci nu merită o cale separată doar pentru
+  /// `fetchIncomingRequests`.
+  void _onRequestsChanged() {
+    if (!mounted) return;
+    setState(() => _dataFuture = _load());
+  }
+
   @override
   void dispose() {
     LiveSync.instance.friendSummaries.removeListener(_onSummariesChanged);
+    LiveSync.instance.incomingRequestUids.removeListener(_onRequestsChanged);
     _codeController.dispose();
     super.dispose();
   }

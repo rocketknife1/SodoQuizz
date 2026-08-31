@@ -214,6 +214,20 @@ void main() {
       }
     });
 
+    test('10. cerere noua cat ecranul e deschis => incomingRequestUids se schimba; blocatele excluse', () async {
+      sync.startFriendWatchersForTest();
+      expect(sync.incomingRequestUids.value, isEmpty);
+
+      requestsCtrl.add(['bad', 'good']);
+      await pumpEventQueue();
+      expect(sync.incomingRequestUids.value, ['good'],
+          reason: 'expeditorul blocat nu are voie sa apara in semnalul catre ecranul de Prieteni');
+
+      requestsCtrl.add(const []); // cererea a fost acceptata/refuzata de pe alt telefon
+      await pumpEventQueue();
+      expect(sync.incomingRequestUids.value, isEmpty);
+    });
+
     test('8. un prieten/expeditor blocat NU intra in numaratoarea bulinei', () async {
       sync.startFriendWatchersForTest();
 
