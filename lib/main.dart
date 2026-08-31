@@ -218,6 +218,12 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       return;
     }
     if (offer.status != 'pending') return;
+    // Cont banat: nu-i arătăm deloc dialogul. Poarta din
+    // MultiplayerService.acceptRematchOffer i-ar refuza oricum acceptul (întoarce
+    // false), dar atunci ar rămâne cu bannerul fals „Ai acceptat revanșa" la
+    // nesfârșit. Fără acțiune oferită, fără banner fals — decizia „banatul AFLĂ"
+    // e servită de porțile din ecranele de Multiplayer și Clasament.
+    if (PlayerProfileService.instance.amIBanned.value) return;
     // Gazda vede oferta în propriul ecran de rezultate; cine a răspuns deja nu
     // mai e întrebat a doua oară la fiecare eveniment din stream.
     if (offer.hostId == me || offer.acceptedIds.contains(me)) return;

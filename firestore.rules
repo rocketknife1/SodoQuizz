@@ -365,9 +365,10 @@ service cloud.firestore {
 
     // Conturi banate de admin (vezi PlayerProfileService.banPlayer) — un doc
     // = uid-ul nu mai are voie sa scrie player_profiles/{uid} (vezi
-    // conditia exists() de mai sus). Doar admin-ul citeste/scrie; nimeni
-    // altcineva nu are nevoie sa acceseze asta direct (verificarea exists()
-    // din regula de mai sus are acces implicit, indiferent de allow read).
+    // conditia exists() de mai sus). Adminul citeste/scrie orice; jucatorul
+    // isi poate CITI (doar) propriul document, ca aplicatia sa-i spuna de ce
+    // nu mai poate juca online (porti de UI in multiplayer/leaderboard). Nu
+    // poate scrie nimic si nu poate citi documentul altcuiva.
     match /banned_players/{uid} {
       // Proprietarul poate citi DOAR propriul document, ca aplicatia sa stie
       // sa-i spuna de ce nu mai poate intra in multiplayer. Nu poate scrie

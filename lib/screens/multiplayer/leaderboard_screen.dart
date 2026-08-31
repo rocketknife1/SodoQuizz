@@ -53,6 +53,60 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Poarta de ban: decizia proprietarului inchide Multiplayer SI Clasament
+    // pentru cel banat. Acelasi tipar ca multiplayer_screen.dart — notifier
+    // alimentat de abonament, deci ridicarea banului redeschide ecranul singur.
+    return ValueListenableBuilder<bool>(
+      valueListenable: PlayerProfileService.instance.amIBanned,
+      builder: (context, banned, _) =>
+          banned ? _buildBanned(context) : _buildLeaderboard(context),
+    );
+  }
+
+  Widget _buildBanned(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      body: SpaceBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 0, 0),
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.block_rounded, color: Colors.white54, size: 72),
+                        const SizedBox(height: 20),
+                        Text(
+                          bannedFromOnlineMessage(),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.4),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLeaderboard(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
       body: SpaceBackground(

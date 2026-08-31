@@ -12,6 +12,13 @@ import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'storage_service.dart';
 
+/// Mesajul unic "esti banat, nu poti juca online", folosit IDENTIC de toate
+/// portile de UI (Multiplayer, Clasament, dialogul de revansa din main.dart).
+/// Un singur loc, ca cele trei formulari sa nu se desincronizeze.
+String bannedFromOnlineMessage() => tr(
+    'Contul tău a fost restricționat de administrator. Nu poți juca online.',
+    'Your account has been restricted by an administrator. You cannot play online.');
+
 /// Rezultatul unei [PlayerProfileService.sendFriendRequest] — UI-ul arată un
 /// mesaj diferit pentru fiecare caz.
 enum FriendRequestOutcome { sent, autoAccepted, alreadyFriends, notFound, isSelf }
@@ -64,8 +71,15 @@ class PlayerProfileService {
   final ValueNotifier<int> profileChanged = ValueNotifier<int>(0);
 
   /// Sunt banat? Ascultat live, ca ridicarea unui ban sa ajunga la fel de
-  /// repede ca punerea lui — poarta din multiplayer_screen.dart asculta acest
-  /// notifier si se deschide singura cand documentul de ban dispare.
+  /// repede ca punerea lui — portile de UI (multiplayer_screen.dart,
+  /// leaderboard_screen.dart, dialogul de revansa din main.dart) asculta acest
+  /// notifier si se deschid singure cand documentul de ban dispare.
+  ///
+  /// ATENTIE: e alimentat de un abonament Firestore, deci `false` cat timp
+  /// primul snapshot n-a sosit (imediat dupa pornire, sau offline). Fiecare
+  /// verificare pe el e o POARTA DE INTERFATA, nu o garantie de securitate —
+  /// aceea vine din firestore.rules si, mai incolo, din validarea pe server
+  /// (partea B, Cloud Functions). Vezi si nota de la [MultiplayerService.offerRematch].
   final ValueNotifier<bool> amIBanned = ValueNotifier<bool>(false);
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _banSub;

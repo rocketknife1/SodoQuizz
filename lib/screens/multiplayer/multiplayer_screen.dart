@@ -504,8 +504,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                         const Icon(Icons.block_rounded, color: Colors.white54, size: 72),
                         const SizedBox(height: 20),
                         Text(
-                          tr('Contul tău a fost restricționat de administrator. Nu poți juca online.',
-                             'Your account has been restricted by an administrator. You cannot play online.'),
+                          bannedFromOnlineMessage(),
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.white70, fontSize: 16, height: 1.4),
                         ),

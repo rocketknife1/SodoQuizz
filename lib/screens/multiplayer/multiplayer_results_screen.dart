@@ -429,9 +429,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   void _showBanBlocked() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(tr(
-        'Contul tău a fost restricționat de administrator. Nu poți juca online.',
-        'Your account has been restricted by an administrator. You cannot play online.')),
+      content: Text(bannedFromOnlineMessage()),
     ));
   }
 
