@@ -1,0 +1,87 @@
+COMENZI SODO QUIZZ
+==================
+
+Dublu-click pe fisierul care iti trebuie. Fiecare deschide o fereastra
+neagra, face treaba, si asteapta la final ca sa poti citi ce a iesit.
+
+Numerele dau ordinea obisnuita, nu o obligatie — folosesti doar ce ai nevoie.
+Cele periculoase (7 si 9) intreaba INTAI si arata ce ar sterge; nu fac nimic
+pana nu confirmi.
+
+
+1 - INSTALEAZA JOCUL PE TELEFON
+   Cand: dupa ce s-a construit o versiune noua (APK).
+   Cere: telefonul conectat prin USB, cu depanare USB pornita.
+   Ce face: pune APK-ul din build/ pe telefon.
+   Daca da eroare de semnatura, ruleaza intai numarul 2.
+
+
+2 - STERGE JOCUL DE PE TELEFON
+   Cand: inainte de un RESET TOTAL (numarul 9), sau cand instalarea
+   refuza din cauza semnaturii.
+   Ce face: dezinstaleaza jocul CU TOT CU datele lui locale.
+   De ce inainte de reset: daca lasi jocul pe telefon si golesti baza de
+   date, la urmatoarea deschidere telefonul isi RE-URCA progresul si
+   golirea se anuleaza singura.
+
+
+3 - PUBLICA VERSIUNE NOUA PE GITHUB
+   Cand: vrei ca prietenii sa descarce versiunea noua.
+   Cere: sa fi construit APK-urile inainte.
+   Ce face: creeaza un "Release" pe GitHub cu cele doua APK-uri. Iti cere
+   un numar de versiune (ex. v1.0.3). Linkul public de descarcare arata
+   automat spre ultima versiune — nu trebuie schimbat nicaieri.
+
+
+4 - TRIMITE REGULILE FIRESTORE IN PRODUCTIE
+   Cand: dupa ce s-a modificat fisierul firestore.rules.
+   Ce face: publica regulile de securitate. Pana nu rulezi asta, regulile
+   noi exista doar pe calculator, nu si in Firebase.
+   Prima data iti poate cere sa te loghezi cu Google in browser.
+
+
+5 - CURATA CAMERELE BLOCATE
+   Cand: se aduna camere vechi in consola Firebase.
+   Ce face: sterge camerele de multiplayer ramase agatate.
+   Nu strica nimic in joc — camerele alea nu apar nicaieri jucatorilor si
+   nu intra in matchmaking. E doar curatenie.
+
+
+6 - CURATA JURNALUL DE MECIURI
+   Cand: intretinere, daca s-au adunat prea multe meciuri terminate.
+   ATENTIE: contorul "cate meciuri s-au jucat" din panoul de Admin pica
+   la zero. Jucatorii, monedele, clasamentul si statisticile lor NU sunt
+   atinse.
+
+
+7 - CURATA CONTURILE ABANDONATE
+   Cand: intretinere, cand s-au strans conturi de Guest fara activitate.
+   Ce face: arata intai lista, apoi cere confirmare. Sterge doar conturile
+   anonime fara nicio activitate — nu atinge conturile Google.
+
+
+9 - RESET TOTAL — STERGE ABSOLUT TOT
+   Cand: vrei sa pornesti de la zero, ca inainte de lansare.
+   ASTA E CEL MAI DISTRUCTIV. Sterge fiecare profil, cont, meci,
+   prietenie, mesaj, raport si cadou din Firebase. Inclusiv contul TAU de
+   Authentication (ramai admin la relogare — regula verifica emailul).
+   Arata intai numerele si cere sa scrii DA. Nu se poate anula.
+
+   ORDINEA CORECTA pentru un reset care ramane curat:
+     a) numarul 2  (scoate jocul de pe telefon)
+     b) inchide orice fereastra de browser cu jocul deschis
+     c) numarul 9  (scrie DA)
+     d) numarul 1  (pune versiunea noua, curata, inapoi pe telefon)
+
+   Fara pasii a) si b), telefonul sau browserul isi re-urca datele si
+   baza nu ramane goala.
+
+
+DACA CEVA NU MERGE
+------------------
+"python nu e recunoscut"      -> Python nu e instalat sau nu e in PATH.
+"lipseste service-account.json" -> cheia trebuie pusa in folderul tools\.
+"adb nu e recunoscut"          -> lipseste Android SDK platform-tools.
+"gh nu e recunoscut"           -> lipseste GitHub CLI.
+Fereastra se inchide instant   -> ruleaza-l din nou; toate au "pause" la
+                                  final, deci ar trebui sa astepte.
