@@ -515,6 +515,28 @@ class PlayerProfileService {
     }
   }
 
+  /// Uid-urile prietenilor accepți, live. Doar id-urile (numele documentelor
+  /// din subcolecția `friends`), fără [getProfile] per prieten — LiveSync are
+  /// nevoie doar de lista de uid-uri ca să știe pe ce fire să se aboneze, iar
+  /// citirea profilelor ar fi N citiri Firestore la fiecare schimbare a listei.
+  /// `list` pe `friends` e deja permis oricui autentificat (vezi
+  /// [fetchFriends]).
+  Stream<List<String>> watchFriendUids() {
+    final me = _uid;
+    if (me.isEmpty) return Stream.value(const []);
+    return _friendsCol(me).snapshots().map((s) => s.docs.map((d) => d.id).toList());
+  }
+
+  /// Câte cereri de prietenie primite sunt în așteptare, live. E o subcolecție
+  /// sub `player_profiles/{uid}`, deci wildcard-ul părinte e fixat de calea
+  /// interogării și regula existentă o acoperă — [fetchIncomingRequests] face
+  /// deja exact acest `list` azi.
+  Stream<int> watchPendingRequestCount() {
+    final uid = _uid;
+    if (uid.isEmpty) return Stream.value(0);
+    return _requestsCol(uid).snapshots().map((s) => s.docs.length);
+  }
+
   /// Prietenii ORICUI, nu doar ai contului curent — pentru ecranul de detaliu
   /// din AdminScreen. Citirea subcolecției `friends` e permisă oricui e
   /// autentificat (vezi firestore.rules), deci nu cere drepturi speciale.

@@ -314,6 +314,36 @@ class NotificationService {
     return all;
   }
 
+  // ─── Partea live a bulinei, ținută de abonamente ─────────────────────────
+
+  /// Cea mai recentă cifră „live" (cereri în așteptare + fire cu mesaj
+  /// necitit) primită de la abonamentele din LiveSync. Ținută separat ca
+  /// [_recomputeUnread] s-o poată aduna cu partea locală fără nicio citire
+  /// nouă. [refreshUnread] o resincronizează când chiar întreabă rețeaua.
+  int _liveUnread = 0;
+
+  /// Anunțat de abonamentele din LiveSync: câte cereri în așteptare și câte
+  /// fire cu mesaj necitit există ACUM. Nu produce nicio citire în plus —
+  /// cifrele vin din snapshot-urile deja primite. NU cheamă [refreshUnread]
+  /// (aceea declanșează [fetchLive] = `2 + N` citiri per eveniment).
+  void setLiveUnread({required int pendingRequests, required int unreadThreads}) {
+    _liveUnread = pendingRequests + unreadThreads;
+    unawaited(_recomputeUnread());
+  }
+
+  /// Reface [unreadCount] din partea locală (deja pe telefon) + [_liveUnread]
+  /// (deja primit prin snapshot). Zero citiri Firestore.
+  Future<void> _recomputeUnread() async {
+    try {
+      final readAt = await StorageService.getNotificationsReadAt();
+      final stored = await loadStored();
+      final unreadStored = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      unreadCount.value = unreadStored + _liveUnread;
+    } catch (e) {
+      debugPrint('NotificationService._recomputeUnread a esuat: $e');
+    }
+  }
+
   // ─── Bulina ───────────────────────────────────────────────────────────────
 
   /// Recalculează bulina: notificările salvate venite după ultima deschidere
@@ -328,6 +358,10 @@ class NotificationService {
       final stored = await loadStored();
       final unreadStored = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
       final live = await fetchLive();
+      // Resincronizează partea live cu ce tocmai a întors rețeaua, ca un
+      // [_recomputeUnread] ulterior (declanșat de un snapshot) să pornească de
+      // la cifra corectă.
+      _liveUnread = live.length;
       unreadCount.value = unreadStored + live.length;
     } catch (e) {
       debugPrint('NotificationService.refreshUnread a esuat: $e');

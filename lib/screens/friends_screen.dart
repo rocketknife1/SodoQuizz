@@ -6,6 +6,7 @@ import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/friend_chat_service.dart';
 import '../data/moderation_service.dart';
+import '../data/notification_service.dart';
 import '../data/multiplayer_service.dart';
 import '../data/player_profile_service.dart';
 import '../models/friend_chat.dart';
@@ -63,7 +64,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    // Ecranul era o poză făcută la intrare: stăteai cu el deschis, prietenul
+    // îți scria, și nu apărea nimic. Abonamentele din LiveSync mișcă bulina
+    // globală; când se mișcă, rândurile de aici se recitesc.
+    NotificationService.instance.unreadCount.addListener(_reloadFromLive);
+  }
+
+  void _reloadFromLive() {
+    if (!mounted) return;
+    setState(() => _dataFuture = _load());
+  }
+
+  @override
   void dispose() {
+    NotificationService.instance.unreadCount.removeListener(_reloadFromLive);
     _codeController.dispose();
     super.dispose();
   }

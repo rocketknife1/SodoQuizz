@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'cloud_sync_service.dart';
+import 'friend_chat_service.dart';
 import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'notification_service.dart';
@@ -67,6 +68,7 @@ class LiveSync {
     PlayerProfileService.instance.startLive();
     NotificationService.instance.startLive();
     ModerationService.instance.startLive();
+    instance._startFriendWatchers();
   }
 
   static void _stopAllServices() {
@@ -74,7 +76,107 @@ class LiveSync {
     PlayerProfileService.instance.stopLive();
     NotificationService.instance.stopLive();
     ModerationService.instance.stopLive();
+    instance._stopFriendWatchers();
   }
+
+  // ─── Mesajele necitite și cererile de prietenie, live ────────────────────
+  //
+  // Bulina de pe clopoțel nu se aprindea niciodată cât stăteai în meniu, iar
+  // ecranul de Prieteni era o poză făcută la intrare. Aici stau abonamentele
+  // care le mișcă live.
+  //
+  // COSTUL E O CONDIȚIE, NU UN DETALIU: niciun eveniment de aici nu ajunge la
+  // `NotificationService.refreshUnread()` (aceea cheamă `fetchLive()` =
+  // `2 + N` citiri Firestore pentru un singur mesaj). Se folosește
+  // [NotificationService.setLiveUnread], care actualizează bulina din
+  // snapshot-urile deja primite, fără nicio citire nouă.
+
+  StreamSubscription<int>? _requestsSub;
+  StreamSubscription<List<String>>? _friendsListSub;
+
+  /// uid prieten → abonamentul pe firul lui. Un abonament pe DOCUMENT per fir,
+  /// nu o interogare pe colecție (ar fi respinsă de reguli — vezi
+  /// `FriendChatService.watchSummary`).
+  final Map<String, StreamSubscription<dynamic>> _threadSubs = {};
+
+  int _pendingRequests = 0;
+  final Set<String> _unreadThreads = {};
+
+  void _startFriendWatchers() {
+    final me = _readUid();
+    if (me.isEmpty) return;
+    // Handler `async`/sincron: `onError:` prinde doar erorile stream-ului
+    // Firestore; corpul are propriul try/catch unde poate arunca altceva.
+    _requestsSub = PlayerProfileService.instance.watchPendingRequestCount().listen(
+      (count) {
+        _pendingRequests = count;
+        _pushUnread();
+      },
+      onError: (Object e) => debugPrint('LiveSync._requestsSub a esuat: $e'),
+    );
+    // Lista de prieteni se schimbă (prieten adăugat/șters) → abonamentele per
+    // fir se refac. Aflăm prin acest abonament pe subcolecția `friends`, nu
+    // recitind-o periodic.
+    _friendsListSub = PlayerProfileService.instance.watchFriendUids().listen(
+      (uids) {
+        try {
+          _resyncThreadSubs(uids.toSet(), me);
+        } catch (e) {
+          debugPrint('LiveSync._friendsListSub a esuat: $e');
+        }
+      },
+      onError: (Object e) => debugPrint('LiveSync._friendsListSub a esuat: $e'),
+    );
+  }
+
+  void _resyncThreadSubs(Set<String> friendUids, String me) {
+    // Prieteni dispăruți: anulează firul și curăță starea de necitit.
+    for (final uid in _threadSubs.keys.toList()) {
+      if (!friendUids.contains(uid)) {
+        _threadSubs.remove(uid)?.cancel();
+        _unreadThreads.remove(uid);
+      }
+    }
+    // Prieteni noi: un abonament pe firul fiecăruia.
+    for (final uid in friendUids) {
+      if (_threadSubs.containsKey(uid)) continue;
+      _threadSubs[uid] = FriendChatService.instance.watchSummary(uid).listen(
+        (summary) {
+          // `hasUnreadFor` e deja scrisă și testată (friend_chat.dart:65) —
+          // știe că lipsa lui readAt[me] NU înseamnă „citit".
+          if (summary != null && summary.hasUnreadFor(me)) {
+            _unreadThreads.add(uid);
+          } else {
+            _unreadThreads.remove(uid);
+          }
+          _pushUnread();
+        },
+        onError: (Object e) => debugPrint('LiveSync.watchSummary a esuat: $e'),
+      );
+    }
+    _pushUnread();
+  }
+
+  void _stopFriendWatchers() {
+    _requestsSub?.cancel();
+    _requestsSub = null;
+    _friendsListSub?.cancel();
+    _friendsListSub = null;
+    // Sunt N abonamente pe fire, nu unul — se anulează toate.
+    for (final sub in _threadSubs.values) {
+      sub.cancel();
+    }
+    _threadSubs.clear();
+    _unreadThreads.clear();
+    _pendingRequests = 0;
+  }
+
+  /// Împinge cifrele curente în bulină — fără nicio citire Firestore, doar
+  /// din starea deja adunată din snapshot-uri.
+  void _pushUnread() => NotificationService.instance.setLiveUnread(
+        pendingRequests: _pendingRequests,
+        unreadThreads: _unreadThreads.length,
+      );
 
   static String _currentUidFromSingleton() {
     // Aceeași cale ca `CloudSyncService._uid`. `currentPlayerId` atinge
