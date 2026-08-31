@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../core/lang.dart';
@@ -45,6 +47,12 @@ class NotificationService {
   static const _maxStored = 40;
 
   FirebaseFirestore get _db => FirebaseFirestore.instance;
+
+  /// Vezi CloudSyncService._consumingGrant — același tipar, același motiv.
+  /// Fără ea, două descărcări suprapuse pot pierde o notificare: [addLocal]
+  /// citește lista, o modifică și o scrie înapoi, deci a doua rulare ar
+  /// suprascrie ce tocmai a adăugat prima.
+  bool _pulling = false;
 
   String get _uid {
     try {
@@ -152,6 +160,16 @@ class NotificationService {
   /// sigur fără identitate sau fără nimic în așteptare. Chemată la pornire și
   /// la revenirea din fundal, ca grant-urile.
   Future<void> pullFromCloud() async {
+    if (_pulling) return;
+    _pulling = true;
+    try {
+      await _pullFromCloud();
+    } finally {
+      _pulling = false;
+    }
+  }
+
+  Future<void> _pullFromCloud() async {
     final uid = _uid;
     if (uid.isEmpty) return;
     try {
@@ -185,6 +203,41 @@ class NotificationService {
     } catch (e) {
       debugPrint('NotificationService.pullFromCloud a esuat: $e');
     }
+  }
+
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _inboxSub;
+
+  /// Anunțurile lăsate de admin ajung acum cât jucătorul e în joc.
+  ///
+  /// Se cheamă [pullFromCloud], nu se procesează snapshot-ul direct: aceea
+  /// știe deja să copieze anunțurile local ȘI să le șteargă din cloud, iar
+  /// duplicarea acelei logici aici ar fi însemnat două căi care trebuie ținute
+  /// în sincron. Garda `_pulling` face apelurile suprapuse inofensive.
+  ///
+  /// Se cheamă [refreshUnreadLocalOnly], nu [refreshUnread]: al doilea
+  /// declanșează [fetchLive], adică `2 + N` citiri Firestore (N = numărul de
+  /// prieteni) pentru un singur anunț sosit. Anunțurile sunt deja salvate local
+  /// în acel moment, deci partea locală ajunge.
+  void startLive() {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    stopLive();
+    try {
+      _inboxSub = _cloudBox(uid).snapshots().listen((snap) {
+        if (snap.metadata.hasPendingWrites) return;
+        if (snap.docs.isEmpty) return;
+        pullFromCloud().then((_) => refreshUnreadLocalOnly());
+      }, onError: (Object e) {
+        debugPrint('NotificationService._inboxSub a esuat: $e');
+      });
+    } catch (e) {
+      debugPrint('NotificationService.startLive a esuat: $e');
+    }
+  }
+
+  void stopLive() {
+    _inboxSub?.cancel();
+    _inboxSub = null;
   }
 
   // ─── Stările live (mesaje necitite, cereri de prietenie) ──────────────────

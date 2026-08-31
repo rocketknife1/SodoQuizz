@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'cloud_sync_service.dart';
 import 'multiplayer_service.dart';
+import 'notification_service.dart';
 import 'player_profile_service.dart';
 
 /// Pornește și oprește, dintr-un singur loc, toate abonamentele care aduc
@@ -63,11 +64,13 @@ class LiveSync {
   static void _startAllServices() {
     CloudSyncService.instance.startLive();
     PlayerProfileService.instance.startLive();
+    NotificationService.instance.startLive();
   }
 
   static void _stopAllServices() {
     CloudSyncService.instance.stopLive();
     PlayerProfileService.instance.stopLive();
+    NotificationService.instance.stopLive();
   }
 
   static String _currentUidFromSingleton() {
