@@ -33,6 +33,12 @@ class CloudSyncService {
   /// de două ori — jucătorul primea dublu, iar un reset se aplica de două ori.
   bool _consumingGrant = false;
 
+  /// Vezi [_consumingGrant] — același tipar. O trecere în fundal pe Android
+  /// livrează `hidden` și `paused` sincron, una după alta (vezi main.dart), deci
+  /// [push] era chemat de două ori: primul apel stătea în rețea când al doilea
+  /// citea aceeași amprentă veche, și amândouă scriau documentul.
+  bool _pushing = false;
+
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _grantSub;
 
   /// Uid-ul identității curente — Google dacă e logat, altfel cel anonim
@@ -99,7 +105,12 @@ class CloudSyncService {
   /// jucătorii, de câteva ori pe zi, pe planul gratuit.
   Future<void> push() async {
     final uid = _uid;
-    if (uid.isEmpty) return;
+    // `_pushing`: o trecere în fundal pe Android livrează `hidden` apoi `paused`
+    // sincron (vezi main.dart), amândouă chemând `push()` fără `await`. Fără
+    // zăvorul ăsta, primul apel stă în rețea când al doilea citește aceeași
+    // amprentă veche, și amândouă scriu `users/{uid}`.
+    if (uid.isEmpty || _pushing) return;
+    _pushing = true;
     try {
       final data = await StorageService.exportAll();
       final snapshot = _snapshotOf(uid, data);
@@ -110,6 +121,8 @@ class CloudSyncService {
       await StorageService.setCloudPushSnapshot(snapshot);
     } catch (e) {
       debugPrint('CloudSyncService.push a esuat: $e');
+    } finally {
+      _pushing = false;
     }
   }
 

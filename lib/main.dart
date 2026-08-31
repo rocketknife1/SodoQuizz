@@ -58,7 +58,10 @@ void main() async {
     // Lista de jucatori blocati, adusa in memorie o data pe sesiune, ca
     // filtrarea chatului sa fie sincrona - vezi ModerationService.blockedIds.
     unawaited(ModerationService.instance.loadBlocked());
-    unawaited(CloudSyncService.instance.consumePendingGrant());
+    // `consumePendingGrant` NU se mai cheamă aici: `LiveSync.attachToIdentity()`
+    // (din initState) atașează ascultătorul pe `admin_grants/{uid}`, iar primul
+    // lui snapshot face exact același consum câteva milisecunde mai târziu.
+    // Tranzacția de revendicare + `_consumingGrant` fac dublarea imposibilă.
     // Anunturile lasate de admin, descarcate o data si tinute apoi local —
     // vezi NotificationService. Bulina de pe clopotel se aprinde imediat ce
     // ajung, chiar daca jucatorul e deja in meniu.
