@@ -302,10 +302,18 @@ class LiveSync {
   void _onIdentityChanged(User? user) => _applyIdentity(user?.uid ?? '');
 
   void _applyIdentity(String uid) {
-    // Eveniment care nu schimbă nimic (ex. `updateProfile` după legarea unui
-    // cont Google, sau reîmprospătarea tokenului): abonamentele deja atașate
-    // pe acest uid rămân cum sunt.
-    if (_running && uid.isNotEmpty && uid == _startedForUid) return;
+    // ACEEAȘI identitate? Nu e o schimbare de cont, e doar un eveniment de la
+    // Firebase pe același uid (ex. `updateProfile` după legarea unui cont
+    // Google, sau reîmprospătarea tokenului — aceea vine la ~55 min, garantat).
+    //
+    // Se calculează SEPARAT de `_running`: în FUNDAL `_running` e false (l-a
+    // stins [stop]), așa că un eveniment de token pe același uid nu ieșea pe
+    // scurtătura de mai jos, ajungea până la goliri și ștergea rezumatele +
+    // cererile fix cât aplicația era minimizată. Un `FriendsScreen` montat
+    // vedea previzualizările dispărând și pornea un `_load()` de ~2N citiri.
+    final sameIdentity = uid.isNotEmpty && uid == _startedForUid;
+    // Abonamentele sunt deja atașate pe exact acest uid: nimic de făcut.
+    if (_running && sameIdentity) return;
     // NECONDIȚIONAT, înainte de orice altă decizie: dacă identitatea s-a
     // schimbat sau a dispărut, abonamentele vechi n-au voie să supraviețuiască
     // nicio clipă (vezi doc-ul clasei — `_discardAnonymousIdentity`).
@@ -314,9 +322,12 @@ class LiveSync {
     // identității de dinainte, n-au ce căuta pe ecran. Trecerea în FUNDAL NU
     // trece pe aici (o face [stop]), deci acolo previzualizările și cererile
     // rămân afișate — corect din punctul de vedere al utilizatorului: minimizezi
-    // și revii, ecranul arată ce arăta.
-    friendSummaries.value = const {};
-    incomingRequestUids.value = const [];
+    // și revii, ecranul arată ce arăta. Nici un eveniment pe ACELAȘI uid nu
+    // golește (de asta e condiția pe [sameIdentity], nu pe `_running`).
+    if (!sameIdentity) {
+      friendSummaries.value = const {};
+      incomingRequestUids.value = const [];
+    }
     // Curățat mereu: un uid rămas de la un cont delogat făcea ca relogarea pe
     // ACELAȘI cont să cadă pe ieșirea scurtă de mai sus și să nu mai pornească
     // niciodată abonamentele.

@@ -462,27 +462,39 @@ class PlayerProfileService {
   /// Acceptă o cerere primită de la [fromUid] — scrie ambele documente
   /// "oglindă" din `friends` (pe profilul propriu ȘI pe al celuilalt) și
   /// șterge cererea, într-un singur batch.
-  Future<void> acceptFriendRequest(String fromUid) async {
+  ///
+  /// Întoarce `true` doar dacă scrierea a ajuns efectiv în Firestore. Apelantul
+  /// are nevoie de asta: ecranul de Prieteni nu mai reîncarcă singur după
+  /// accept (se bazează pe abonamentul care vede ștergerea cererii), iar dacă
+  /// scrierea eșuează nu vine niciun snapshot — fără răspunsul ăsta, un eșec
+  /// (fără rețea, permisiuni) ar arăta exact ca o reușită.
+  Future<bool> acceptFriendRequest(String fromUid) async {
     final me = _uid;
-    if (me.isEmpty) return;
+    if (me.isEmpty) return false;
     try {
       final batch = _db.batch();
       batch.set(_friendsCol(me).doc(fromUid), {'addedAt': FieldValue.serverTimestamp()});
       batch.set(_friendsCol(fromUid).doc(me), {'addedAt': FieldValue.serverTimestamp()});
       batch.delete(_requestsCol(me).doc(fromUid));
       await batch.commit();
+      return true;
     } catch (e) {
       debugPrint('PlayerProfileService.acceptFriendRequest a esuat: $e');
+      return false;
     }
   }
 
-  Future<void> declineFriendRequest(String fromUid) async {
+  /// `true` doar dacă ștergerea a reușit — vezi [acceptFriendRequest] pentru
+  /// de ce contează răspunsul.
+  Future<bool> declineFriendRequest(String fromUid) async {
     final me = _uid;
-    if (me.isEmpty) return;
+    if (me.isEmpty) return false;
     try {
       await _requestsCol(me).doc(fromUid).delete();
+      return true;
     } catch (e) {
       debugPrint('PlayerProfileService.declineFriendRequest a esuat: $e');
+      return false;
     }
   }
 

@@ -286,6 +286,63 @@ void main() {
     });
   });
 
+  /// Reînnoirea tokenului (`userChanges()` la ~55 min, garantat) emite un
+  /// eveniment cu ACELAȘI uid. În FUNDAL `_running` e false, deci vechea gardă
+  /// `_running && uid == _startedForUid` nu-l oprea: evenimentul ajungea la
+  /// goliri și ștergea rezumatele + cererile cât aplicația era minimizată.
+  test('12. token reinnoit in FUNDAL (acelasi uid) NU goleste; alt uid / delogare golesc', () {
+    final pushes = <(int, int)>[];
+    uid = 'user-12';
+    sync.resetForTest(
+      readUid: () => uid,
+      // Calea REALA de pornire/oprire — ca la testul 9, altfel afirmatiile ar fi vide.
+      onStartSubs: () => sync.startFriendWatchersForTest(),
+      onStopSubs: () => sync.stopFriendWatchersForTest(),
+      friendUidsSource: () => Stream<List<String>>.empty(),
+      requestUidsSource: () => Stream<List<String>>.empty(),
+      summarySource: (_) => Stream<FriendChatSummary?>.empty(),
+      isBlocked: (_) => false,
+      liveUnreadSink: (p, u) => pushes.add((p, u)),
+      blockedChangesSource: (_) => () {},
+    );
+
+    FriendChatSummary summary() =>
+        FriendChatSummary(lastMessageAt: Timestamp.now(), lastSenderId: 'f', lastText: 'hi');
+
+    sync.applyIdentityForTest('user-12');
+    sync.friendSummaries.value = {'f': summary()};
+    sync.incomingRequestUids.value = ['r'];
+
+    sync.stop(); // FUNDAL: `_running` devine false
+    expect(sync.subscriptionsAttachedForTest, isFalse);
+
+    // Reinnoirea tokenului: acelasi uid, aplicatia tot in fundal.
+    sync.applyIdentityForTest('user-12');
+    expect(sync.subscriptionsAttachedForTest, isFalse, reason: 'fundalul nu reataseaza');
+    expect(sync.startedForUidForTest, 'user-12');
+    expect(pushes, isEmpty, reason: 'un token reinnoit nu stinge bulina');
+    expect(sync.friendSummaries.value, isNotEmpty,
+        reason: 'token reinnoit pe acelasi uid: previzualizarile raman');
+    expect(sync.incomingRequestUids.value, isNotEmpty,
+        reason: 'token reinnoit pe acelasi uid: cererile raman');
+
+    // ALT CONT, tot in fundal: acolo golirea TREBUIE sa se faca.
+    uid = 'user-99';
+    sync.applyIdentityForTest('user-99');
+    expect(sync.friendSummaries.value, isEmpty, reason: 'alt cont goleste rezumatele');
+    expect(sync.incomingRequestUids.value, isEmpty, reason: 'alt cont goleste cererile');
+
+    // DELOGARE: goleste si stinge bulina, chiar daca tot in fundal suntem.
+    sync.friendSummaries.value = {'f': summary()};
+    sync.incomingRequestUids.value = ['r'];
+    uid = '';
+    sync.applyIdentityForTest('');
+    expect(sync.friendSummaries.value, isEmpty, reason: 'delogarea goleste rezumatele');
+    expect(sync.incomingRequestUids.value, isEmpty, reason: 'delogarea goleste cererile');
+    expect(pushes.last, (0, 0), reason: 'delogarea stinge bulina');
+    expect(sync.startedForUidForTest, isNull);
+  });
+
   test('9. identitate schimbata goleste rezumatele+cererile; FUNDALUL nu (calea reala de oprire)', () {
     final pushes = <(int, int)>[];
     uid = 'user-9';

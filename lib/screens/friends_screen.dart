@@ -142,17 +142,41 @@ class _FriendsScreenState extends State<FriendsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     if (outcome == FriendRequestOutcome.sent || outcome == FriendRequestOutcome.autoAccepted) {
       _codeController.clear();
+      // A treia cale care reîncarcă după o acțiune pe cereri. Rămâne explicită,
+      // spre deosebire de [_accept]/[_decline]: pe `sent` nu se șterge nicio
+      // cerere de-a mea, deci abonamentul NU emite nimic, iar pe `autoAccepted`
+      // `sendFriendRequest` nu poate spune dacă acceptarea din interior a reușit
+      // (întoarce `autoAccepted` și când scrierea a eșuat). Fără reîncărcare aici
+      // ar rămâne ecranul nemișcat.
       await _reload();
     }
   }
 
+  /// Accept/refuz: O SINGURĂ cale de reîncărcare. Amândouă șterg documentul
+  /// cererii, deci abonamentul din LiveSync emite oricum → [_onRequestsChanged]
+  /// → o reîncărcare. Un `_reload()` explicit aici ar fi însemnat două `_load()`
+  /// (~2N citiri fiecare) la un singur tap.
+  ///
+  /// Calea de EȘEC e singura care mai reîncarcă: dacă scrierea n-a ajuns în
+  /// Firestore (fără rețea, permisiuni) nu vine niciun snapshot, deci ecranul
+  /// ar fi rămas neschimbat fără nicio explicație. Atunci arătăm mesajul și
+  /// reîncărcăm ca lista să arate adevărul de pe server.
   Future<void> _accept(String fromUid) async {
-    await PlayerProfileService.instance.acceptFriendRequest(fromUid);
-    await _reload();
+    final ok = await PlayerProfileService.instance.acceptFriendRequest(fromUid);
+    if (!ok) await _onActionFailed();
   }
 
   Future<void> _decline(String fromUid) async {
-    await PlayerProfileService.instance.declineFriendRequest(fromUid);
+    final ok = await PlayerProfileService.instance.declineFriendRequest(fromUid);
+    if (!ok) await _onActionFailed();
+  }
+
+  Future<void> _onActionFailed() async {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(tr('Nu am reușit. Verifică internetul și încearcă din nou.',
+          'That failed. Check your connection and try again.')),
+    ));
     await _reload();
   }
 
