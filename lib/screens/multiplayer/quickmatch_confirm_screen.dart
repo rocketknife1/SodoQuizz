@@ -8,6 +8,7 @@ import '../../widgets/avatar.dart';
 import '../../widgets/space_background.dart';
 import 'matchmaking_screen.dart';
 import 'multiplayer_electric_chair_screen.dart';
+import 'multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -138,6 +139,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
             // cazuri moarte, dar switch-ul trebuie exhaustiv.
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
+            MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
           },
         ),

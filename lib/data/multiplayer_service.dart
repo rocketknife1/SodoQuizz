@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../core/betting.dart';
 import '../core/electric_chair.dart';
+import '../core/rock_paper_scissors.dart';
 import '../core/lang.dart';
 import '../core/multiplayer_round.dart';
 import '../core/obby.dart';
@@ -45,7 +46,7 @@ int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
       MatchGameMode.quizzTanks => tanksPlayerCount,
       MatchGameMode.obby => obbyMaxPlayers,
       MatchGameMode.electricChair => electricChairPlayerCount,
-      MatchGameMode.classic || MatchGameMode.higherLower => matchPlayerCount,
+      MatchGameMode.classic || MatchGameMode.higherLower || MatchGameMode.rockPaperScissors => matchPlayerCount,
     };
 
 /// Timp minim garantat între un tap al jucătorului (create/join room, dat
@@ -461,6 +462,73 @@ class MultiplayerService {
       });
     } catch (e) {
       debugPrint('MultiplayerService.advanceSyncRound a esuat: $e');
+    }
+  }
+
+  // ─── Piatră-Hârtie-Foarfecă ─────────────────────────────────────────────
+
+  /// Rezolvă runda de piatră-hârtie-foarfecă — poate fi apelată de ORICE
+  /// client, cu aceeași gardă anti-cursă ca [resolveHigherLowerRound].
+  ///
+  /// Fără eliminare, fără „pâini": toți joacă fiecare rundă. Fiecare jucător
+  /// primește `+1` pentru fiecare adversar pe care îl bate (vezi
+  /// core/rock_paper_scissors.dart `rpsRoundScores`). Meciul se termină când
+  /// cineva atinge [rpsTargetScore] — restul clasamentului se face după scor
+  /// în [MultiplayerResultsScreen], la fel ca la celelalte moduri cu miză.
+  ///
+  /// Jucătorii care n-au apucat să aleagă (AFK) au alegerea goală: nu bat pe
+  /// nimeni și sunt bătuți de toți — la fel ca un răspuns greșit la
+  /// Higher & Lower, doar fără eliminare.
+  Future<void> resolveRockPaperScissorsRound({
+    required String matchId,
+    required int roundIndex,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja rezolvată de alt client
+        }
+        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final choices = {for (final id in playerIds) id: (answers[id] as String?) ?? ''};
+        final gained = rpsRoundScores(choices);
+
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
+        final newScores = <String, int>{};
+        final winnerIds = <String>[];
+        for (final doc in playerDocs) {
+          if (!doc.exists) continue;
+          final pData = doc.data()!;
+          final add = gained[doc.id] ?? 0;
+          final total = (pData['score'] as int? ?? 0) + add;
+          newScores[doc.id] = total;
+          if (add > 0) winnerIds.add(doc.id);
+          if (add != 0) tx.update(doc.reference, {'score': total});
+        }
+        // Meciul se termina cand: cineva atinge pragul (rpsTargetScore), SAU
+        // a mai ramas cel mult un jucator (ceilalti au plecat) — fara asta
+        // ultimul ramas ar fi blocat pe ecran la infinit, cu miza pierduta —
+        // SAU s-a atins plafonul de runde (toti aleg mereu la fel = 0 puncte
+        // pe runda, deci fara plafon meciul n-ar avea nicio garantie de
+        // terminare, spre deosebire de HL unde painile forteaza eliminare).
+        final activePlayers = playerDocs.where((d) => d.exists).length;
+        final outOfRounds = roundIndex + 1 >= rpsMaxRounds;
+        final matchOver = rpsWinnerReached(newScores) || activePlayers <= 1 || outOfRounds;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundWinnerIds': winnerIds,
+          if (matchOver) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.resolveRockPaperScissorsRound a esuat: $e');
     }
   }
 
