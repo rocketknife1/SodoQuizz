@@ -79,12 +79,18 @@ class NotificationService {
   /// Adaugă o notificare locală. [AppNotification.id] e și cheia de
   /// dedublare: aceeași notificare ajunsă de două ori (o descărcare reluată
   /// după o pică de rețea) nu se dublează în panou.
-  Future<void> addLocal(AppNotification notification) async {
+  ///
+  /// [refreshBadge] false: nu recalcula bulina acum. Folosit de
+  /// [_pullFromCloud], care adaugă mai multe anunțuri în buclă și recalculează
+  /// O SINGURĂ DATĂ la final — altfel fiecare anunț sosit ar fi costat `2 + N`
+  /// citiri Firestore prin `refreshUnread` -> `fetchLive`, adică descărcarea a
+  /// k anunțuri ar fi costat `k × (2 + N)`.
+  Future<void> addLocal(AppNotification notification, {bool refreshBadge = true}) async {
     final current = await loadStored();
     if (current.any((n) => n.id == notification.id)) return;
     final updated = [notification, ...current].take(_maxStored).toList();
     await StorageService.setNotifications(updated.map((n) => n.encode()).toList());
-    await refreshUnread();
+    if (refreshBadge) await refreshUnread();
   }
 
   /// Compune și salvează notificarea de cadou din ce a intrat EFECTIV în cont.
@@ -195,11 +201,17 @@ class NotificationService {
           createdAt: sentAt?.toDate() ?? DateTime.now(),
           peerUid: data['peerUid'] as String? ?? '',
           peerName: data['peerName'] as String? ?? '',
-        ));
+        ), refreshBadge: false);
         // Ștearsă abia după ce a fost scrisă local — altfel o pică între cele
         // două operații ar fi pierdut anunțul definitiv.
         await doc.reference.delete();
       }
+      // Recalcularea bulinei se face AICI, o singură dată după buclă — nu în
+      // `addLocal` per anunț. `refreshUnreadLocalOnly` (nu `refreshUnread`):
+      // anunțurile sunt deja locale acum, deci partea locală ajunge și nu
+      // atinge `fetchLive`. Apelantul (abonamentul din [startLive]) NU mai
+      // recalculează separat.
+      await refreshUnreadLocalOnly();
     } catch (e) {
       debugPrint('NotificationService.pullFromCloud a esuat: $e');
     }
@@ -226,7 +238,9 @@ class NotificationService {
       _inboxSub = _cloudBox(uid).snapshots().listen((snap) {
         if (snap.metadata.hasPendingWrites) return;
         if (snap.docs.isEmpty) return;
-        pullFromCloud().then((_) => refreshUnreadLocalOnly());
+        // `pullFromCloud` recalculează singură bulina la final (local-only) —
+        // nu se mai adaugă un `refreshUnread*` aici.
+        unawaited(pullFromCloud());
       }, onError: (Object e) {
         debugPrint('NotificationService._inboxSub a esuat: $e');
       });
