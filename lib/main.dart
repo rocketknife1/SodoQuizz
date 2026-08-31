@@ -376,8 +376,14 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       // `loadBlocked` e gratis dacă uid-ul n-a schimbat; reîncarcă doar după o
       // logare care a schimbat contul — vezi ModerationService.loadBlocked.
       ModerationService.instance.loadBlocked();
+      // `pullFromCloud` rămâne (aduce anunțurile lăsate de admin). Recalcularea
+      // bulinei folosește varianta LOCAL-ONLY, nu `refreshUnread`: partea live
+      // (mesaje necitite, cereri) vine acum din abonamentele reatașate de
+      // `LiveSync.start()` de mai sus, prin snapshot-uri. `refreshUnread` ar
+      // reface `fetchLive()` = încă `2 + N` citiri Firestore pentru exact
+      // aceleași date. NU pune `refreshUnread` înapoi aici.
       NotificationService.instance.pullFromCloud().then((_) {
-        return NotificationService.instance.refreshUnread();
+        return NotificationService.instance.refreshUnreadLocalOnly();
       });
     }
   }

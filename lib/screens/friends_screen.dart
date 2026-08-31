@@ -4,9 +4,8 @@ import 'package:share_plus/share_plus.dart';
 import '../core/leagues.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
-import '../data/friend_chat_service.dart';
+import '../data/live_sync.dart';
 import '../data/moderation_service.dart';
-import '../data/notification_service.dart';
 import '../data/multiplayer_service.dart';
 import '../data/player_profile_service.dart';
 import '../models/friend_chat.dart';
@@ -32,6 +31,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
   final _codeController = TextEditingController();
   bool _sending = false;
 
+  /// Capurile de fir, în timp real, din LiveSync — NU recitite aici. Ecranul
+  /// era o poză făcută la intrare: stăteai cu el deschis, prietenul îți scria
+  /// (sau îți scria al doilea mesaj), și nu apărea nimic. Acum rândurile de
+  /// chat se iau direct de aici și se mișcă la orice schimbare de fir.
+  Map<String, FriendChatSummary> _summaries = LiveSync.instance.friendSummaries.value;
+
   Future<_FriendsData> _load() async {
     // No-op dacă e deja încărcată pentru contul curent — e aici pentru cazul
     // în care userul tocmai s-a logat cu Google și uid-ul s-a schimbat.
@@ -42,10 +47,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
       PlayerProfileService.instance.fetchFriends(),
     ]);
     final friends = results[2] as List<PlayerProfile>;
-    // Rezumatele firelor private se cer DUPĂ ce se știe lista de prieteni
-    // (una pe fir), nu în paralel cu ea. Sunt ce alimentează bulina de mesaj
-    // nou și începutul ultimului mesaj de pe fiecare rând.
-    final summaries = await FriendChatService.instance.fetchSummaries(friends.map((f) => f.uid).toList());
+    // Rezumatele firelor NU se mai cer aici (erau N citiri la fiecare
+    // reîncărcare) — vin live prin [_summaries] din LiveSync.
     return _FriendsData(
       myCode: results[0] as String?,
       // Cererile de la cineva blocat nu se mai arată deloc — altfel blocarea
@@ -54,7 +57,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .where((r) => !ModerationService.instance.isBlocked(r.fromUid))
           .toList(),
       friends: friends,
-      summaries: summaries,
     );
   }
 
@@ -66,20 +68,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
   @override
   void initState() {
     super.initState();
-    // Ecranul era o poză făcută la intrare: stăteai cu el deschis, prietenul
-    // îți scria, și nu apărea nimic. Abonamentele din LiveSync mișcă bulina
-    // globală; când se mișcă, rândurile de aici se recitesc.
-    NotificationService.instance.unreadCount.addListener(_reloadFromLive);
+    LiveSync.instance.friendSummaries.addListener(_onSummariesChanged);
   }
 
-  void _reloadFromLive() {
+  /// Un fir s-a schimbat (mesaj nou, marcaj de citit, prieten adăugat/șters).
+  /// Doar `setState` cu ce e deja în memorie — zero citiri Firestore.
+  void _onSummariesChanged() {
     if (!mounted) return;
-    setState(() => _dataFuture = _load());
+    setState(() => _summaries = LiveSync.instance.friendSummaries.value);
   }
 
   @override
   void dispose() {
-    NotificationService.instance.unreadCount.removeListener(_reloadFromLive);
+    LiveSync.instance.friendSummaries.removeListener(_onSummariesChanged);
     _codeController.dispose();
     super.dispose();
   }
@@ -212,7 +213,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                           for (final f in data.friends)
                             _FriendRow(
                               profile: f,
-                              summary: data.summaries[f.uid],
+                              summary: _summaries[f.uid],
                               onRemove: () => _remove(f.uid),
                               onOpenChat: () => _openChat(f),
                             ),
@@ -317,15 +318,10 @@ class _FriendsData {
   final List<FriendRequest> requests;
   final List<PlayerProfile> friends;
 
-  /// uid-ul prietenului → capul firului privat cu el. Lipsește pentru
-  /// prietenii cu care nu s-a schimbat niciun mesaj.
-  final Map<String, FriendChatSummary> summaries;
-
   const _FriendsData({
     required this.myCode,
     required this.requests,
     required this.friends,
-    this.summaries = const {},
   });
 }
 

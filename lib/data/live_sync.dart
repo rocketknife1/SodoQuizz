@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import '../models/friend_chat.dart';
 import 'cloud_sync_service.dart';
 import 'friend_chat_service.dart';
 import 'moderation_service.dart';
@@ -90,34 +91,82 @@ class LiveSync {
   // `2 + N` citiri Firestore pentru un singur mesaj). Se folosește
   // [NotificationService.setLiveUnread], care actualizează bulina din
   // snapshot-urile deja primite, fără nicio citire nouă.
+  //
+  // Sursele sunt injectabile (cusături de test) ca resincronizarea, anularea
+  // și filtrarea de blocare să fie verificabile fără Firebase — vezi
+  // `test/live_sync_test.dart`.
 
-  StreamSubscription<int>? _requestsSub;
+  Stream<List<String>> Function() _friendUidsSource = _realFriendUids;
+  Stream<List<String>> Function() _requestUidsSource = _realRequestUids;
+  Stream<FriendChatSummary?> Function(String uid) _summarySource = _realSummary;
+  bool Function(String uid) _isBlocked = _realIsBlocked;
+  void Function(int pending, int unread) _liveUnreadSink = _realLiveUnreadSink;
+  void Function() Function(VoidCallback onChange) _blockedChangesSource = _realBlockedChanges;
+
+  static Stream<List<String>> _realFriendUids() => PlayerProfileService.instance.watchFriendUids();
+  static Stream<List<String>> _realRequestUids() =>
+      PlayerProfileService.instance.watchIncomingRequestFromUids();
+  static Stream<FriendChatSummary?> _realSummary(String uid) =>
+      FriendChatService.instance.watchSummary(uid);
+  static bool _realIsBlocked(String uid) => ModerationService.instance.isBlocked(uid);
+  static void _realLiveUnreadSink(int pending, int unread) =>
+      NotificationService.instance.setLiveUnread(pendingRequests: pending, unreadThreads: unread);
+  static void Function() _realBlockedChanges(VoidCallback onChange) {
+    final n = ModerationService.instance.blockedIds;
+    n.addListener(onChange);
+    return () => n.removeListener(onChange);
+  }
+
+  StreamSubscription<List<String>>? _requestsSub;
   StreamSubscription<List<String>>? _friendsListSub;
 
   /// uid prieten → abonamentul pe firul lui. Un abonament pe DOCUMENT per fir,
   /// nu o interogare pe colecție (ar fi respinsă de reguli — vezi
   /// `FriendChatService.watchSummary`).
-  final Map<String, StreamSubscription<dynamic>> _threadSubs = {};
+  final Map<String, StreamSubscription<FriendChatSummary?>> _threadSubs = {};
 
-  int _pendingRequests = 0;
-  final Set<String> _unreadThreads = {};
+  /// Cum se opresc abonamentele pe lista de blocați (`blockedIds` e un
+  /// `ValueNotifier` care se schimbă sub noi când cineva blochează pe cineva).
+  void Function()? _stopBlockedWatch;
+
+  /// Stare BRUTĂ, nefiltrată: expeditorii cererilor primite și prietenii cu
+  /// mesaj necitit. Filtrarea de blocare se aplică la împingere ([_pushUnread]),
+  /// nu aici — altfel o schimbare a listei de blocați n-ar recalcula bulina.
+  List<String> _requestFromUids = const [];
+  final Set<String> _unreadThreadUids = {};
+
+  /// uid prieten → capul firului lui, cel mai recent snapshot. Ecranul de
+  /// Prieteni ascultă asta ca să-și miște rândurile de chat la ORICE schimbare
+  /// de fir — inclusiv al doilea mesaj de la același prieten, care nu mișcă
+  /// numărul agregat din bulină — fără să recitească nimic din Firestore.
+  final ValueNotifier<Map<String, FriendChatSummary>> friendSummaries =
+      ValueNotifier<Map<String, FriendChatSummary>>(const {});
 
   void _startFriendWatchers() {
+    // Aliniat cu `NotificationService.startLive` etc.: curăță întâi, ca un al
+    // doilea apelant să nu lase abonamente agățate.
+    _stopFriendWatchers();
     final me = _readUid();
     if (me.isEmpty) return;
-    // Handler `async`/sincron: `onError:` prinde doar erorile stream-ului
-    // Firestore; corpul are propriul try/catch unde poate arunca altceva.
-    _requestsSub = PlayerProfileService.instance.watchPendingRequestCount().listen(
-      (count) {
-        _pendingRequests = count;
-        _pushUnread();
+    _stopBlockedWatch = _blockedChangesSource(_pushUnread);
+    // `onError:` prinde doar erorile stream-ului Firestore; corpul `listen` are
+    // propriul try/catch pentru orice altceva (tiparul din
+    // `PlayerProfileService.startLive`).
+    _requestsSub = _requestUidsSource().listen(
+      (uids) {
+        try {
+          _requestFromUids = uids;
+          _pushUnread();
+        } catch (e) {
+          debugPrint('LiveSync._requestsSub a esuat: $e');
+        }
       },
       onError: (Object e) => debugPrint('LiveSync._requestsSub a esuat: $e'),
     );
     // Lista de prieteni se schimbă (prieten adăugat/șters) → abonamentele per
     // fir se refac. Aflăm prin acest abonament pe subcolecția `friends`, nu
     // recitind-o periodic.
-    _friendsListSub = PlayerProfileService.instance.watchFriendUids().listen(
+    _friendsListSub = _friendUidsSource().listen(
       (uids) {
         try {
           _resyncThreadSubs(uids.toSet(), me);
@@ -130,26 +179,33 @@ class LiveSync {
   }
 
   void _resyncThreadSubs(Set<String> friendUids, String me) {
-    // Prieteni dispăruți: anulează firul și curăță starea de necitit.
+    // Prieteni dispăruți: ANULEAZĂ firul (nu doar scoate-l din hartă) și curăță
+    // starea de necitit + rezumatul.
     for (final uid in _threadSubs.keys.toList()) {
       if (!friendUids.contains(uid)) {
         _threadSubs.remove(uid)?.cancel();
-        _unreadThreads.remove(uid);
+        _unreadThreadUids.remove(uid);
+        _writeSummary(uid, null);
       }
     }
     // Prieteni noi: un abonament pe firul fiecăruia.
     for (final uid in friendUids) {
       if (_threadSubs.containsKey(uid)) continue;
-      _threadSubs[uid] = FriendChatService.instance.watchSummary(uid).listen(
+      _threadSubs[uid] = _summarySource(uid).listen(
         (summary) {
-          // `hasUnreadFor` e deja scrisă și testată (friend_chat.dart:65) —
-          // știe că lipsa lui readAt[me] NU înseamnă „citit".
-          if (summary != null && summary.hasUnreadFor(me)) {
-            _unreadThreads.add(uid);
-          } else {
-            _unreadThreads.remove(uid);
+          try {
+            // `hasUnreadFor` e deja scrisă și testată (friend_chat.dart:65) —
+            // știe că lipsa lui readAt[me] NU înseamnă „citit".
+            if (summary != null && summary.hasUnreadFor(me)) {
+              _unreadThreadUids.add(uid);
+            } else {
+              _unreadThreadUids.remove(uid);
+            }
+            _writeSummary(uid, summary);
+            _pushUnread();
+          } catch (e) {
+            debugPrint('LiveSync.watchSummary a esuat: $e');
           }
-          _pushUnread();
         },
         onError: (Object e) => debugPrint('LiveSync.watchSummary a esuat: $e'),
       );
@@ -157,7 +213,19 @@ class LiveSync {
     _pushUnread();
   }
 
+  void _writeSummary(String uid, FriendChatSummary? summary) {
+    final next = Map<String, FriendChatSummary>.from(friendSummaries.value);
+    if (summary == null) {
+      if (next.remove(uid) == null) return;
+    } else {
+      next[uid] = summary;
+    }
+    friendSummaries.value = next;
+  }
+
   void _stopFriendWatchers() {
+    _stopBlockedWatch?.call();
+    _stopBlockedWatch = null;
     _requestsSub?.cancel();
     _requestsSub = null;
     _friendsListSub?.cancel();
@@ -167,16 +235,21 @@ class LiveSync {
       sub.cancel();
     }
     _threadSubs.clear();
-    _unreadThreads.clear();
-    _pendingRequests = 0;
+    _unreadThreadUids.clear();
+    _requestFromUids = const [];
+    if (friendSummaries.value.isNotEmpty) friendSummaries.value = const {};
   }
 
-  /// Împinge cifrele curente în bulină — fără nicio citire Firestore, doar
-  /// din starea deja adunată din snapshot-uri.
-  void _pushUnread() => NotificationService.instance.setLiveUnread(
-        pendingRequests: _pendingRequests,
-        unreadThreads: _unreadThreads.length,
-      );
+  /// Împinge cifrele curente în bulină — fără nicio citire Firestore, doar din
+  /// starea deja adunată din snapshot-uri. Jucătorii blocați sunt săriți din
+  /// AMBELE surse, la fel ca [NotificationService.fetchLive]: altfel cineva
+  /// blocat ar putea aprinde clopoțelul, exact canalul pe care blocarea trebuie
+  /// să-l închidă.
+  void _pushUnread() {
+    final pending = _requestFromUids.where((u) => !_isBlocked(u)).length;
+    final unread = _unreadThreadUids.where((u) => !_isBlocked(u)).length;
+    _liveUnreadSink(pending, unread);
+  }
 
   static String _currentUidFromSingleton() {
     // Aceeași cale ca `CloudSyncService._uid`. `currentPlayerId` atinge
@@ -223,6 +296,14 @@ class LiveSync {
     // ACELAȘI cont să cadă pe ieșirea scurtă de mai sus și să nu mai pornească
     // niciodată abonamentele.
     _startedForUid = uid.isEmpty ? null : uid;
+    if (uid.isEmpty) {
+      // DELOGARE: bulina nu mai are voie să arate numărul contului anterior.
+      // `_stopFriendWatchers` (chemat de `_stopSubs` de mai sus) curăță starea
+      // internă dar NU împinge — ca trecerea în FUNDAL, care merge prin [stop],
+      // să lase bulina pe ecran (dezirabil). Delogarea trece DOAR pe aici, deci
+      // împingerea explicită a lui zero aici distinge cele două cazuri.
+      _liveUnreadSink(0, 0);
+    }
     // În fundal doar reținem noul uid; reatașarea o face [start] la revenire.
     if (uid.isEmpty || !_foreground) return;
     _startSubs();
@@ -280,14 +361,36 @@ class LiveSync {
     void Function()? onStartSubs,
     void Function()? onStopSubs,
     String Function()? readUid,
+    Stream<List<String>> Function()? friendUidsSource,
+    Stream<List<String>> Function()? requestUidsSource,
+    Stream<FriendChatSummary?> Function(String uid)? summarySource,
+    bool Function(String uid)? isBlocked,
+    void Function(int pending, int unread)? liveUnreadSink,
+    void Function() Function(VoidCallback onChange)? blockedChangesSource,
   }) {
     _identitySub?.cancel();
     _identitySub = null;
+    _stopFriendWatchers();
     _running = false;
     _foreground = true;
     _startedForUid = null;
     _onStartSubs = onStartSubs ?? _startAllServices;
     _onStopSubs = onStopSubs ?? _stopAllServices;
     _readUid = readUid ?? _currentUidFromSingleton;
+    _friendUidsSource = friendUidsSource ?? _realFriendUids;
+    _requestUidsSource = requestUidsSource ?? _realRequestUids;
+    _summarySource = summarySource ?? _realSummary;
+    _isBlocked = isBlocked ?? _realIsBlocked;
+    _liveUnreadSink = liveUnreadSink ?? _realLiveUnreadSink;
+    _blockedChangesSource = blockedChangesSource ?? _realBlockedChanges;
   }
+
+  @visibleForTesting
+  void startFriendWatchersForTest() => _startFriendWatchers();
+
+  @visibleForTesting
+  void stopFriendWatchersForTest() => _stopFriendWatchers();
+
+  @visibleForTesting
+  int get threadWatcherCountForTest => _threadSubs.length;
 }

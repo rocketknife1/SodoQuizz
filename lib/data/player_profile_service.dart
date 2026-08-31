@@ -527,14 +527,17 @@ class PlayerProfileService {
     return _friendsCol(me).snapshots().map((s) => s.docs.map((d) => d.id).toList());
   }
 
-  /// Câte cereri de prietenie primite sunt în așteptare, live. E o subcolecție
-  /// sub `player_profiles/{uid}`, deci wildcard-ul părinte e fixat de calea
-  /// interogării și regula existentă o acoperă — [fetchIncomingRequests] face
-  /// deja exact acest `list` azi.
-  Stream<int> watchPendingRequestCount() {
+  /// Uid-urile expeditorilor cererilor de prietenie primite, live (id-ul
+  /// documentului din `friend_requests` E fromUid — vezi [FriendRequest.fromDoc]).
+  /// LiveSync are nevoie de uid-uri, nu de un simplu număr, ca să poată sări
+  /// peste expeditorii blocați — exact ca [NotificationService.fetchLive]. E o
+  /// subcolecție sub `player_profiles/{uid}`, deci wildcard-ul părinte e fixat
+  /// de calea interogării și regula existentă o acoperă ([fetchIncomingRequests]
+  /// face deja exact acest `list` azi).
+  Stream<List<String>> watchIncomingRequestFromUids() {
     final uid = _uid;
-    if (uid.isEmpty) return Stream.value(0);
-    return _requestsCol(uid).snapshots().map((s) => s.docs.length);
+    if (uid.isEmpty) return Stream.value(const []);
+    return _requestsCol(uid).snapshots().map((s) => s.docs.map((d) => d.id).toList());
   }
 
   /// Prietenii ORICUI, nu doar ai contului curent — pentru ecranul de detaliu

@@ -322,12 +322,21 @@ class NotificationService {
   /// nouă. [refreshUnread] o resincronizează când chiar întreabă rețeaua.
   int _liveUnread = 0;
 
+  /// Partea locală a bulinei, memorată din ultima citire de pe telefon
+  /// (SharedPreferences). Ținută în cache ca [setLiveUnread] să poată actualiza
+  /// [unreadCount] SINCRON — altfel un snapshot sosit ar mișca bulina abia
+  /// după un `await` pe disc, iar testele n-ar avea de ce să se agațe.
+  int _storedUnread = 0;
+
   /// Anunțat de abonamentele din LiveSync: câte cereri în așteptare și câte
   /// fire cu mesaj necitit există ACUM. Nu produce nicio citire în plus —
   /// cifrele vin din snapshot-urile deja primite. NU cheamă [refreshUnread]
   /// (aceea declanșează [fetchLive] = `2 + N` citiri per eveniment).
   void setLiveUnread({required int pendingRequests, required int unreadThreads}) {
     _liveUnread = pendingRequests + unreadThreads;
+    // Sincron, din cifre deja în memorie: bulina reflectă imediat schimbarea.
+    unreadCount.value = _storedUnread + _liveUnread;
+    // Async, fără citiri de rețea: doar reîmprospătează partea locală de pe disc.
     unawaited(_recomputeUnread());
   }
 
@@ -337,8 +346,8 @@ class NotificationService {
     try {
       final readAt = await StorageService.getNotificationsReadAt();
       final stored = await loadStored();
-      final unreadStored = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
-      unreadCount.value = unreadStored + _liveUnread;
+      _storedUnread = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      unreadCount.value = _storedUnread + _liveUnread;
     } catch (e) {
       debugPrint('NotificationService._recomputeUnread a esuat: $e');
     }
@@ -358,9 +367,10 @@ class NotificationService {
       final stored = await loadStored();
       final unreadStored = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
       final live = await fetchLive();
-      // Resincronizează partea live cu ce tocmai a întors rețeaua, ca un
+      // Resincronizează ambele jumătăți cu ce tocmai a întors rețeaua, ca un
       // [_recomputeUnread] ulterior (declanșat de un snapshot) să pornească de
-      // la cifra corectă.
+      // la cifrele corecte.
+      _storedUnread = unreadStored;
       _liveUnread = live.length;
       unreadCount.value = unreadStored + live.length;
     } catch (e) {
@@ -375,7 +385,8 @@ class NotificationService {
     try {
       final readAt = await StorageService.getNotificationsReadAt();
       final stored = await loadStored();
-      unreadCount.value = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      _storedUnread = stored.where((n) => n.createdAt.millisecondsSinceEpoch > readAt).length;
+      unreadCount.value = _storedUnread + _liveUnread;
     } catch (e) {
       debugPrint('NotificationService.refreshUnreadLocalOnly a esuat: $e');
     }
