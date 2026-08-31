@@ -20,6 +20,7 @@ import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
 import 'multiplayer_electric_chair_screen.dart';
+import 'multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -465,6 +466,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: newMatchId),
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: newMatchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
+            MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: newMatchId),
           },
         ),
       );

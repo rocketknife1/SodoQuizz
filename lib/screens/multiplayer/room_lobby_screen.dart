@@ -19,6 +19,7 @@ import '../../widgets/network_scan_animation.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/space_background.dart';
 import 'multiplayer_electric_chair_screen.dart';
+import 'multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
@@ -198,6 +199,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: widget.matchId),
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: widget.matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: widget.matchId),
+            MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: widget.matchId),
           },
         ),
       );

@@ -4,6 +4,7 @@ import '../../core/betting.dart';
 import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
+import '../../core/rock_paper_scissors.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/multiplayer_presence_service.dart';
@@ -313,6 +314,15 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                   '2-$obbyMaxPlayers racers, obstacle course, $obbyObstacleCount questions'),
               color: AppColors.play,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.obby),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.back_hand_rounded,
+              label: tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
+              subtitle: tr('alegere secretă, primul la $rpsTargetScore puncte câștigă',
+                  'secret pick, first to $rpsTargetScore points wins'),
+              color: AppColors.play,
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.rockPaperScissors),
             ),
             const SizedBox(height: 10),
             _GameModeOption(

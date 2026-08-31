@@ -23,7 +23,7 @@ enum MatchStatus { lobby, playing, finished }
 /// jucători cu vieți individuale: cine răspunde corect alege pe cineva ȘI o
 /// întrebare din patru pentru el — victima care greșește pierde o viață —
 /// vezi core/electric_chair.dart și MultiplayerElectricChairScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair }
+enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rockPaperScissors }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
 /// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
