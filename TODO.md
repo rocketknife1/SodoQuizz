@@ -51,6 +51,31 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   scriptul construiește un path de document dintr-un id venit din date).
   Aceeași grijă pentru `question_reports` la scanarea subcolecțiilor.
 
+## REGRESIE de reparat — animația de colectare vs. balanceRevision
+
+Găsită pe viu 2026-09-01, introdusă de Sarcina 2 din timp-real (ecranele
+ascultă `StorageService.balanceRevision`).
+
+Simptome la revendicarea unui quest:
+  - bara de XP crește ÎNAINTE ca jetoanele de XP să atingă badge-ul
+  - balanța de inimi se actualizează ÎNAINTE ca jetoanele să ajungă în căsuță
+  - balanța de MONEDE nu crește deloc
+
+Cauză: `balanceRevision` se incrementează în `_writeBalance` (la scrierea în
+SharedPreferences), care se face din start. Ascultătorii de pe Home fac
+`setState` imediat și recitesc balanța, deci badge-ul sare la valoarea nouă
+înainte ca `reward_collector` să "livreze" vizual jetoanele. Monedele probabil
+merg pe o cale de aplicare amânată (după animație) care acum nu mai
+declanșează un refresh corect, sau scrie într-un moment în care Home a
+recitit deja.
+
+Direcție de fix: `reward_collector` / ecranul de quest trebuie fie să aplice
+TOATE resursele la finalul animației (nu unele înainte), fie badge-urile de
+pe Home să ignore `balanceRevision` cât timp o animație de colectare e în
+curs și să se sincronizeze la final. Prima variantă e mai curată. Verifică
+`lib/core/reward_collector.dart` + `lib/screens/quests_screen.dart` +
+handlerele de balanță din `home_screen.dart`.
+
 ## Rezolvat în 2026-08-31 / 09-01 (se șterge din listă data viitoare)
 
 - **Timp real** (`13efb6b`, 27 commit-uri): tot ce vine din exterior — grant
