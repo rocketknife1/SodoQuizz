@@ -62,7 +62,7 @@ Future<String?> editDisplayName(
   if (nameSetByAdmin) {
     await PlayerProfileService.instance.releaseMyForcedName();
   }
-  await StorageService.setDisplayName(result);
+  await StorageService.setChosenDisplayName(result);
   // fără asta, numele nou ar rămâne doar local — clasamentul și profilul
   // public ar arăta în continuare numele vechi până la următoarea pornire a
   // aplicației.

@@ -612,14 +612,13 @@ class PlayerProfileService {
     }
   }
 
-  /// **Ridicarea numelui impus** — jucătorul își poate alege din nou singur
-  /// numele, de la următoarea deschidere a aplicației.
+  /// **Anulează o redenumire făcută din Admin.**
   ///
-  /// Fără acțiunea asta, o redenimire de moderare ar fi fost o pedeapsă pe
-  /// viață: numele impus bate și contul Google, și îi blochează câmpul de
-  /// editare, deci nimeni — nici el, nici adminul — n-ar mai fi putut da
-  /// înapoi. Numele PUBLIC rămâne cel pus de admin până când telefonul lui
-  /// scrie următorul heartbeat, care îl înlocuiește cu al lui.
+  /// Oricine își poate schimba singur numele din Profil/Multiplayer, deci
+  /// asta nu mai e o „ridicare de pedeapsă". Rămâne totuși singura cale de a
+  /// da înapoi o redenumire fără să știi numele original al jucătorului.
+  /// Numele PUBLIC rămâne cel pus de admin până când telefonul lui scrie
+  /// următorul heartbeat, care îl înlocuiește cu al lui.
   Future<bool> clearForcedNameAsAdmin(String uid) async {
     if (uid.isEmpty) return false;
     try {
@@ -632,35 +631,28 @@ class PlayerProfileService {
     }
   }
 
-  /// **Un Guest își ia numele înapoi, singur.**
+  /// **Jucătorul își ia numele impus din Admin înapoi, singur.**
   ///
-  /// Redenumirea din Admin rămâne definitivă pentru conturile Google — acolo e
-  /// unealtă de moderare și doar adminul o poate ridica
-  /// ([clearForcedNameAsAdmin]). Pentru un Guest însă, userul a cerut explicit
-  /// să NU fie definitivă: dacă îi schimbi numele unui Guest, el trebuie să
-  /// poată reveni oricând la unul ales de el, fără să depindă de nimeni.
-  ///
-  /// Se șterge ÎNTÂI de pe server și abia apoi local, iar ordinea nu e
-  /// cosmetică: [ensureProfileHeartbeat] citește `forcedName` de pe server și
-  /// îl adoptă înapoi. Dacă am fi curățat doar local, primul heartbeat de după
-  /// redenumire i-ar fi pus la loc numele impus — exact felul în care
-  /// funcționalitatea asta a mai părut odată că merge și s-a anulat singură
-  /// câteva minute mai târziu.
+  /// Chemată de dialogul de schimbare a numelui înainte de salvare, ca primul
+  /// heartbeat de după să nu repună numele impus. [ensureProfileHeartbeat]
+  /// citește `forcedName` de pe server și îl adoptă înapoi — de aceea se
+  /// șterge și de pe server, nu doar local. Scrierea pe server NU se
+  /// așteaptă: offline nu s-ar încheia niciodată și dialogul ar rămâne
+  /// blocat; Firestore o ține în coadă și o trimite la reconectare. Partea
+  /// locală se aplică imediat.
   ///
   /// Jucătorul are voie să-și scrie propriul profil (vezi firestore.rules,
   /// `player_profiles/{uid}`), deci nu e nevoie de nicio regulă nouă.
   Future<void> releaseMyForcedName() async {
     final uid = _uid;
     if (uid.isNotEmpty) {
-      try {
-        await _col.doc(uid).set({'forcedName': FieldValue.delete()}, SetOptions(merge: true));
-      } catch (e) {
+      // Fără `await`: offline, scrierea nu se încheie până la reconectare, iar
+      // dialogul de schimbare a numelui ar rămâne blocat. Firestore o ține în
+      // coadă și o trimite singur. Eșecul se doar loghează.
+      unawaited(_col.doc(uid).set({'forcedName': FieldValue.delete()}, SetOptions(merge: true)).catchError((e) {
         debugPrint('PlayerProfileService.releaseMyForcedName a esuat: $e');
-      }
+      }));
     }
-    // Și dacă scrierea pe server a picat (fără net): local îl eliberăm oricum,
-    // ca editarea să meargă pe loc. Scrierea rămâne în coada Firestore și
-    // pleacă singură la reconectare.
     await StorageService.setForcedName('');
   }
 

@@ -1576,42 +1576,28 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
               decoration: const InputDecoration(counterStyle: TextStyle(color: Colors.white54)),
             ),
             const SizedBox(height: 6),
-            // Textul spune adevărul pentru fiecare tip de cont, fiindcă
-            // regula NU mai e aceeași: la un cont Google redenumirea chiar
-            // blochează câmpul (decizie de moderare), pe când un Guest are
-            // voie să revină singur, oricând, la un nume ales de el — vezi
-            // PlayerProfileService.releaseMyForcedName. Un text care ar
-            // promite blocare și la Guest ar face adminul să creadă că a
-            // rezolvat ceva ce se poate desface în două atingeri.
+            // Redenumirea NU mai blochează nimic: oricine își poate schimba
+            // singur numele din Profil/Multiplayer. Textul spune doar ce se
+            // întâmplă acum și că jucătorul poate reveni oricând.
             Text(
-              target.hasGoogleAccount
-                  ? (target.forcedName.isEmpty
-                      ? 'Numele public se schimbă imediat. În jocul lui apare la următoarea '
-                          'deschidere a aplicației și îi înlocuiește inclusiv numele de Google. '
-                          'Cât timp e pus de tine, el nu și-l mai poate schimba.'
-                      : 'Numele lui e acum impus de tine, deci nu și-l poate schimba singur. '
-                          '„Lasă-l liber" ridică blocarea: la următoarea deschidere a aplicației '
-                          'îi revine numele lui și poate alege din nou.')
-                  : (target.forcedName.isEmpty
-                      ? 'E un Guest. Numele public se schimbă imediat, iar în jocul lui apare '
-                          'la următoarea deschidere a aplicației. Nu îi blochează câmpul: '
-                          'poate reveni oricând singur la un nume ales de el.'
-                      : 'E un Guest, deci numele pus de tine nu e definitiv — poate reveni '
-                          'oricând singur la unul ales de el, din Profil. „Lasă-l liber" '
-                          'îi șterge numele impus fără să mai aștepți.'),
+              target.forcedName.isEmpty
+                  ? 'Numele public se schimbă imediat. În jocul lui apare la următoarea '
+                      'deschidere a aplicației. Poate reveni oricând singur la un nume ales de el.'
+                  : 'Numele lui e acum pus de tine. Poate reveni oricând singur la unul ales de '
+                      'el, din Profil. „Anulează redenumirea" îi șterge numele impus fără să mai aștepți.',
               style: const TextStyle(color: Colors.white54, fontSize: 11.5, height: 1.3),
             ),
           ],
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('Anulează')),
-          // Cheia de la lacăt. Fără ea, o redenumire de moderare ar fi fost
-          // definitivă: numele impus bate și contul Google, iar câmpul de
-          // editare al jucătorului rămâne blocat cât timp există.
+          // Singura cale de a anula o redenumire fără să știi numele original
+          // al jucătorului. Numele impus rămâne public până la primul
+          // heartbeat al telefonului lui, care îl înlocuiește cu al lui.
           if (target.forcedName.isNotEmpty)
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, _unlockSentinel),
-              child: const Text('Lasă-l liber', style: TextStyle(color: AppColors.orange)),
+              child: const Text('Anulează redenumirea', style: TextStyle(color: AppColors.orange)),
             ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
@@ -1649,7 +1635,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
     );
   }
 
-  /// Răspunsul butonului „Lasă-l liber", ca dialogul să întoarcă tot un
+  /// Răspunsul butonului „Anulează redenumirea", ca dialogul să întoarcă tot un
   /// String. Nu se poate confunda cu un nume tastat: butonul „Salvează"
   /// întoarce mereu textul cu `trim()`, deci nimic din câmp nu poate ieși cu
   /// spații la capete.

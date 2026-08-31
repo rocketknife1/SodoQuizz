@@ -96,10 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
       livesUnlimited: livesUnlimited,
       livesUnlimitedRemaining: livesUnlimitedRemaining,
       name: identity.name,
-      // Aceeași regulă ca în ProfileScreen/MultiplayerScreen: numele nu se
-      // poate schimba de aici când vine dintr-un cont Google legat, sau când
-      // e impus de administrator pe un cont logat.
-      nameLocked: identity.photoUrl != null || (forcedName.isNotEmpty && AuthService.instance.isSignedIn),
       nameSetByAdmin: forcedName.isNotEmpty,
     );
   }
@@ -261,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
             hintsBadgeKey: _hintsBadgeKey,
             gemsBadgeKey: _gemsBadgeKey,
             displayName: data?.name,
-            onNameTap: (data == null || data.nameLocked) ? null : () => _editName(data),
+            onNameTap: data == null ? null : () => _editName(data),
             onCoinsTap: () async {
               await Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const ShopScreen()));
@@ -470,7 +466,9 @@ class _HomeData {
   final bool livesUnlimited;
   final Duration livesUnlimitedRemaining;
   final String name;
-  final bool nameLocked;
+
+  /// `true` dacă numele curent a fost impus din Admin — dialogul îl ridică
+  /// înainte de salvare ca primul heartbeat să nu-l pună la loc.
   final bool nameSetByAdmin;
   _HomeData({
     required this.xp,
@@ -482,7 +480,6 @@ class _HomeData {
     required this.gems,
     required this.livesUnlimited,
     required this.name,
-    required this.nameLocked,
     required this.nameSetByAdmin,
     required this.livesUnlimitedRemaining,
   });

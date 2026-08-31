@@ -34,7 +34,6 @@ class MultiplayerScreen extends StatefulWidget {
 
 class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProviderStateMixin {
   String _displayName = '';
-  String? _photoUrl;
   bool _busy = false;
 
   /// Intrarea pe ecran: avatarul, numele și cele 3 plăci apar în cascadă,
@@ -48,20 +47,10 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// în sensuri opuse — accentul central de „wow" al ecranului.
   late final AnimationController _ringCtrl;
 
-  /// Numele pus de administrator (vezi StorageService.getForcedName) — bate
-  /// tot, inclusiv contul Google, deci blochează și el editarea de aici.
+  /// `true` dacă numele curent a fost impus din Admin — dialogul de schimbare
+  /// a numelui îl ridică înainte de salvare ca primul heartbeat să nu-l pună
+  /// la loc.
   bool _nameSetByAdmin = false;
-
-  /// Numele/poza sunt legate live de contul Google (dacă e logat) — nu se
-  /// mai pot edita manual în acest caz, vezi [_editName].
-  ///
-  /// Numele stabilit de administrator blochează editarea DOAR la conturile
-  /// logate, unde e o decizie de moderare. Un Guest redenumit are voie să
-  /// revină oricând, singur, la un nume ales de el — aceeași regulă ca în
-  /// ProfileScreen, ținută în sincron aici ca jucătorul să nu găsească același
-  /// câmp blocat într-un ecran și liber în celălalt.
-  bool get _isGoogleLinked =>
-      _photoUrl != null || (_nameSetByAdmin && AuthService.instance.isSignedIn);
 
   @override
   void initState() {
@@ -76,7 +65,6 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
       if (!mounted) return;
       setState(() {
         _displayName = identity.name;
-        _photoUrl = identity.photoUrl;
       });
       // „Am intrat în Multiplayer" — anunțul scurt care le apare celorlalți
       // oriunde ar fi în joc (vezi MultiplayerPresenceService pentru de ce
@@ -187,7 +175,6 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   }
 
   Future<void> _editName() async {
-    if (_isGoogleLinked) return; // numele vine din contul Google, nu e editabil aici
     final result = await editDisplayName(context, currentName: _displayName, nameSetByAdmin: _nameSetByAdmin);
     if (result == null || !mounted) return;
     setState(() {
@@ -223,7 +210,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     }
     try {
       // identitate proaspătă, nu starea din câmp — dacă userul apasă chiar
-      // la deschiderea ecranului, `_photoUrl`/`_displayName` pot fi încă
+      // la deschiderea ecranului, `_displayName` poate fi încă
       // valorile inițiale goale (fetch-ul din initState nu a apucat să
       // răspundă), iar camera ar rămâne PERMANENT fără poza reală în
       // Firestore (scrisă o singură dată, la creare — vezi bug-ul cu poza
@@ -567,10 +554,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                                 children: [
                                   Text(_displayName.isEmpty ? '...' : _displayName,
                                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                                  if (!_isGoogleLinked) ...[
-                                    const SizedBox(width: 6),
-                                    const Icon(Icons.edit_rounded, color: Colors.white54, size: 15),
-                                  ],
+                                  const SizedBox(width: 6),
+                                  const Icon(Icons.edit_rounded, color: Colors.white54, size: 15),
                                 ],
                               ),
                             ),
