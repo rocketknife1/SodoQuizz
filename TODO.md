@@ -21,6 +21,48 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   `reflect` / `allyShield` / Double Shot ating tranzacția de rezolvare a
   rundei.
 
+## Găsite pe viu 2026-09-01, de reparat (NEATINSE încă)
+
+- **Tancurile au aceeași culoare pe telefon, dar două culori diferite în
+  browser.** Diferență de platformă ⇒ aproape sigur `String.hashCode`, care
+  dă valori DIFERITE în Dart VM (telefon) față de dart2js (browser). E exact
+  clasa de bug reparată pe 2026-08-05 prin `core/stable_hash.dart` — se pare
+  că alegerea culorii tancului n-a fost migrată atunci. Caută în
+  `lib/screens/multiplayer/multiplayer_tanks_screen.dart` și în
+  `lib/core/game_helpers.dart` (`pickAvatarColor` folosește
+  `seed.hashCode.abs() % 360`) de unde vine culoarea, și treci-o prin
+  `stableHash`. Simptomul „toate la fel pe telefon" sugereaza ca seed-ul
+  colapseaza la aceeasi valoare acolo — verifică ce seed se dă.
+
+- **Power-up-urile nu se pot selecta.** Raportat în Tanks. De stabilit întâi
+  DACĂ jucătorul chiar primise unul (se acordă doar cui câștigă runda, cu o
+  probabilitate — vezi `core/powerups.dart` `grantsPowerUp`), sau dacă
+  pastila apare dar tap-ul nu face nimic. Atenție: refactorul `118fab7` a
+  mutat interfața de power-up în `core/powerup_ui.dart` — dacă butonul nu mai
+  răspunde, acolo e primul loc de căutat. Verifică și `powerUpUsableInPhase`
+  (gardă de fază adăugată în `7aff8e8`): poate refuză tăcut apăsarea în faza
+  curentă, fără niciun mesaj către jucător — ceea ce ar fi tot un bug (dacă
+  nu se poate folosi acum, trebuie SPUS, nu ignorat).
+
+- **Roata norocului nu se simte plăcut.** Singura din animații care a rămas
+  neplăcută după pornirea Impeller (Tanks s-a îmbunătățit). Deci nu e
+  renderer-ul — e curba de animație sau modul în care e desenată. De privit
+  ce interpolare folosește la oprire și dacă se redesenează mai mult decât
+  trebuie (vezi și problema generală cu cronometrele de mai jos).
+
+- **Cronometrele reconstruiesc tot ecranul o dată pe secundă.** 11 locuri cu
+  `Timer.periodic(1s)` care fac `setState(() {})` pe tot ecranul, doar ca să
+  scadă o cifră: în multiplayer se redesenează lista de jucători, avatarele
+  și scorurile de 60 de ori pe minut degeaba. Fix: `ValueListenableBuilder`
+  (sau un widget separat cu stare proprie) doar în jurul inelului de
+  cronometru. Raportul general al proiectului e 221 `setState` vs 8
+  `ValueListenableBuilder` — ecranele grele merită mutate treptat pe
+  reconstrucție țintită.
+
+- **Flutter 3.27.4 e din ianuarie 2025** (un an și 7 luni). Un upgrade aduce
+  îmbunătățirile de Impeller acumulate de atunci. Merită, dar e operație
+  separată (poate rupe pluginuri) — nu de făcut pe fugă.
+
 ## Blocat pe tine — nu se poate din cod
 
 - **Magazin cu bani reali (IAP).** Azi monedele/gems sunt virtuale;
@@ -53,6 +95,10 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   fac și când se folosesc, plus `CITESTE-MA.txt`.
 - **Mod nou Piatră-Hârtie-Foarfecă** — probat live cu 2 jucători (vezi mai sus
   ce a rămas neverificat).
+- **Impeller (renderer-ul Vulkan) pornit la loc** — era oprit din cauza unui
+  ecran negru după login-ul Google pe GPU-uri Samsung Xclipse. Retestat pe
+  SM-S908B cu login complet + ciclu fundal/prim-plan: nu se mai reproduce,
+  zero erori în logcat. Tanks se simte vizibil mai bine; roata norocului nu.
 
 - **Timp real** (`13efb6b`, 27 commit-uri): tot ce vine din exterior — grant
   de la admin, redenumire, anunțuri, blocări, mesaje, cereri de prietenie —
