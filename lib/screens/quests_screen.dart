@@ -201,6 +201,22 @@ class _QuestsScreenState extends State<QuestsScreen> {
       hints += q.hintReward;
       await StorageService.claimQuest(q.id);
     }
+    // Pauza pe notificarile de balanta: scrierile de mai jos se fac ACUM, dar
+    // fiecare pastila din header se misca abia la impactul propriei animatii
+    // (vezi onImpact-urile de mai jos si StorageService.holdBalanceNotifications).
+    //
+    // Eliberarea e IDEMPOTENTA si are trei declansatoare, oricare vine primul:
+    // ultimul impact de animatie (calea fericita), o iesire timpurie prin
+    // demontare, si un cronometru de siguranta. Fara toate trei, o navigatie
+    // in timpul animatiei putea lasa pauza blocata la infinit -> toate
+    // badge-urile din joc ingheata pana la restart (bug real prins in recenzie).
+    StorageService.holdBalanceNotifications();
+    var holdReleased = false;
+    void releaseHold() {
+      if (holdReleased) return;
+      holdReleased = true;
+      StorageService.releaseBalanceNotifications();
+    }
     if (xp > 0) await StorageService.addXp(xp);
     if (coins > 0) await StorageService.addCoins(coins);
     if (gems > 0) await StorageService.addGems(gems);
@@ -209,7 +225,10 @@ class _QuestsScreenState extends State<QuestsScreen> {
     // StorageService — de-asta citim valoarea finală DIN storage (deja
     // plafonat corect) în loc să adunăm optimist current.hints + hints.
     if (hints > 0) await StorageService.addHints(hints);
-    if (!mounted) return;
+    if (!mounted) {
+      releaseHold();
+      return;
+    }
     _navBarKey.currentState?.refreshDots();
 
     // Citim valorile finale ACUM (corecte, plafonate), dar NU le aplicăm încă
@@ -223,7 +242,15 @@ class _QuestsScreenState extends State<QuestsScreen> {
     final finalGems = gems > 0 ? await StorageService.getGems() : current.gems;
     final finalLives = hearts > 0 ? await StorageService.getLives() : current.lives;
     final finalHints = hints > 0 ? await StorageService.getHints() : current.hints;
-    if (!mounted) return;
+    if (!mounted) {
+      releaseHold();
+      return;
+    }
+    // Contor de impacturi: ultimul cheama releaseHold (idempotent).
+    var pendingImpacts = [xp, coins, gems, hearts, hints].where((v) => v > 0).length;
+    void releaseAfterImpact() {
+      if (--pendingImpacts <= 0) releaseHold();
+    }
 
     final claimedUpdated = Map<String, bool>.of(current.claimed);
     for (final q in claimable) {
@@ -244,7 +271,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
           targetKey: _xpBadgeKey,
           onImpact: () {
             Sfx.xpHit();
+            StorageService.notifyBalanceChanged();
             _applyHeaderField((d) => d.copyWith(xp: finalXp));
+            releaseAfterImpact();
           },
         ),
       if (coins > 0)
@@ -255,7 +284,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
           targetKey: _coinBadgeKey,
           onImpact: () {
             Sfx.coinHit();
+            StorageService.notifyBalanceChanged();
             _applyHeaderField((d) => d.copyWith(coins: finalCoins));
+            releaseAfterImpact();
           },
         ),
       if (gems > 0)
@@ -267,7 +298,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
           onImpact: () {
             // nu exista un sunet dedicat de gems — refolosim coinHit (vezi Sfx).
             Sfx.coinHit();
+            StorageService.notifyBalanceChanged();
             _applyHeaderField((d) => d.copyWith(gems: finalGems));
+            releaseAfterImpact();
           },
         ),
       if (hearts > 0)
@@ -278,7 +311,9 @@ class _QuestsScreenState extends State<QuestsScreen> {
           targetKey: _livesBadgeKey,
           onImpact: () {
             Sfx.heartHit();
+            StorageService.notifyBalanceChanged();
             _applyHeaderField((d) => d.copyWith(lives: finalLives));
+            releaseAfterImpact();
           },
         ),
       if (hints > 0)
@@ -290,15 +325,23 @@ class _QuestsScreenState extends State<QuestsScreen> {
           onImpact: () {
             // nu exista un sunet dedicat de hint — refolosim xpHit (vezi Sfx).
             Sfx.xpHit();
+            StorageService.notifyBalanceChanged();
             _applyHeaderField((d) => d.copyWith(hints: finalHints));
+            releaseAfterImpact();
           },
         ),
     ];
     await CollectAllOverlay.show(context, entries: entries, questCount: claimable.length);
 
-    if (!mounted) return;
+    if (!mounted) {
+      releaseHold();
+      return;
+    }
     setState(() => _claiming = false);
     _launchCollectAllFlights(entries);
+    // Plasa de siguranta: daca vreun impact nu se mai declanseaza (navigatie
+    // in timpul zborului, overlay distrus), pauza se elibereaza oricum.
+    Future.delayed(const Duration(seconds: 6), releaseHold);
   }
 
   /// Aplică o singură schimbare punctuală (vezi apelurile din [_collectAll])

@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 title RESET COMPLET - sterge absolut tot - SodoQuizz
-cd /d "%~dp0"
+cd /d "%~dp0.."
 
 echo.
 echo ============================================================
