@@ -560,7 +560,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'daily_challenge_done',
-      title: 'Termină Daily Challenge de azi',
+      title: 'Termină Daily Challenge',
       target: 1,
       tier: QuestTier.easy,
       coinReward: 17,
@@ -660,7 +660,7 @@ const List<Quest> _easyQuests = [
       icon: Icons.public_rounded),
   Quest(
       id: 'streak_5_thrice',
-      title: 'Obține o serie de 5 răspunsuri corecte, de 3 ori azi',
+      title: 'Obține o serie de 5 răspunsuri corecte, de 3 ori în aceeași zi',
       target: 3,
       metricKey: 'streak_hit_5',
       tier: QuestTier.easy,
@@ -874,7 +874,7 @@ const List<Quest> _mediumQuests = [
       icon: Icons.local_fire_department_rounded),
   Quest(
       id: 'streak_3_twice',
-      title: 'Obține o serie de 3 răspunsuri corecte, de 2 ori azi',
+      title: 'Obține o serie de 3 răspunsuri corecte, de 2 ori în aceeași zi',
       target: 2,
       metricKey: 'streak_hit_3',
       tier: QuestTier.medium,
@@ -1061,7 +1061,7 @@ const List<Quest> _mediumQuests = [
       icon: Icons.shopping_cart_rounded),
   Quest(
       id: 'streak_5_twice',
-      title: 'Obține o serie de 5 răspunsuri corecte, de 2 ori azi',
+      title: 'Obține o serie de 5 răspunsuri corecte, de 2 ori în aceeași zi',
       target: 2,
       metricKey: 'streak_hit_5',
       tier: QuestTier.medium,
@@ -1223,7 +1223,7 @@ const List<Quest> _hardQuests = [
       icon: Icons.public_rounded),
   Quest(
       id: 'claim_3_quests_today',
-      title: 'Revendică alte 6 quest-uri azi',
+      title: 'Revendică alte 6 quest-uri',
       target: 6,
       metricKey: 'quests_claimed_today',
       tier: QuestTier.hard,
@@ -1300,7 +1300,7 @@ const List<Quest> _hardQuests = [
       icon: Icons.blur_on_rounded),
   Quest(
       id: 'clippy_perfect_2',
-      title: 'Termină un bonus de la Clippy perfect (3/3), de 2 ori azi',
+      title: 'Termină un bonus de la Clippy perfect (3/3), de 2 ori în aceeași zi',
       target: 2,
       metricKey: 'clippy_perfect',
       tier: QuestTier.hard,
@@ -1311,7 +1311,7 @@ const List<Quest> _hardQuests = [
       icon: Icons.auto_awesome_rounded),
   Quest(
       id: 'claim_5_quests_today',
-      title: 'Revendică alte 9 quest-uri azi',
+      title: 'Revendică alte 9 quest-uri',
       target: 9,
       metricKey: 'quests_claimed_today',
       tier: QuestTier.hard,
@@ -1366,7 +1366,7 @@ const List<Quest> _hardQuests = [
       icon: Icons.check_circle_rounded),
   Quest(
       id: 'clippy_perfect_4',
-      title: 'Termină un bonus de la Clippy perfect (3/3), de {n} ori azi',
+      title: 'Termină un bonus de la Clippy perfect (3/3), de {n} ori în aceeași zi',
       target: 4,
       metricKey: 'clippy_perfect',
       tier: QuestTier.hard,

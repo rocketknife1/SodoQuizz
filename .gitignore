@@ -62,3 +62,6 @@ tools/service-account.json
 # bytes, deci nu are rost sa stea de doua ori in istoric — vezi nota din
 # play_store/listare.md.
 play_store/capturi_tableta/
+
+# artefacte Playwright din verificarile pe browser
+.playwright-mcp/
