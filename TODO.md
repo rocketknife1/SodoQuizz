@@ -21,47 +21,38 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   `reflect` / `allyShield` / Double Shot ating tranzacția de rezolvare a
   rundei.
 
-## Găsite pe viu 2026-09-01, de reparat (NEATINSE încă)
+## Găsite pe viu 2026-09-01 — TOATE REPARATE (se șterge data viitoare)
 
-- **Tancurile au aceeași culoare pe telefon, dar două culori diferite în
-  browser.** Diferență de platformă ⇒ aproape sigur `String.hashCode`, care
-  dă valori DIFERITE în Dart VM (telefon) față de dart2js (browser). E exact
-  clasa de bug reparată pe 2026-08-05 prin `core/stable_hash.dart` — se pare
-  că alegerea culorii tancului n-a fost migrată atunci. Caută în
-  `lib/screens/multiplayer/multiplayer_tanks_screen.dart` și în
-  `lib/core/game_helpers.dart` (`pickAvatarColor` folosește
-  `seed.hashCode.abs() % 360`) de unde vine culoarea, și treci-o prin
-  `stableHash`. Simptomul „toate la fel pe telefon" sugereaza ca seed-ul
-  colapseaza la aceeasi valoare acolo — verifică ce seed se dă.
+- **Culorile jucătorilor difereau între telefon și browser.** Cauza reală era
+  mai largă decât părea: patru locuri se bazau pe `String.hashCode` sau
+  `Random(seed)`, care dau valori DIFERITE în Dart VM față de dart2js. Cel mai
+  grav dintre ele nu era cosmetic — **rotația de quest-uri**: același cont
+  putea vedea alte quest-uri zilnice pe telefon față de browser. Reparat prin
+  `stableHash` / `stableShuffle`, plus un `StableRandom` nou pentru cazul din
+  Obby unde nu ajungea o sămânță stabilă. Test golden care reproduce exact
+  simptomul raportat (cu `hashCode`, trei jucători primeau 2 culori; cu
+  `stableHash`, 3).
+- **Power-up-urile „nu se puteau selecta".** Logica era corectă — măsurat:
+  pică în 31% din rundele câștigate dacă ești pe primul loc, până la 88% dacă
+  ești ultimul. Problema era pastila: 9x4 px de padding, înghesuită între
+  „RUNDA N" și cronometru. Acum e țintă de 40px cu pulsație. Prinde toate
+  cele 5 moduri.
+- **Roata norocului.** Curba își contrazicea comentariul: zicea „viteză mare,
+  aproape constantă", folosea `Curves.easeIn` care pleacă de la viteză ZERO.
+  Acum fază liniară + decelerare, cu vitezele potrivite la trecere.
+- **Redesenări inutile.** Obby reconstruia tot ecranul de 10 ori pe secundă
+  (inclusiv scena Flame), Tanks și Scaunul Electric de 4 ori — deși arena din
+  Tanks ÎȘI ARE deja propriul `AnimatedBuilder`. Acum: tick adaptiv în Obby,
+  o dată pe secundă în celelalte două.
 
-- **Power-up-urile nu se pot selecta.** Raportat în Tanks. De stabilit întâi
-  DACĂ jucătorul chiar primise unul (se acordă doar cui câștigă runda, cu o
-  probabilitate — vezi `core/powerups.dart` `grantsPowerUp`), sau dacă
-  pastila apare dar tap-ul nu face nimic. Atenție: refactorul `118fab7` a
-  mutat interfața de power-up în `core/powerup_ui.dart` — dacă butonul nu mai
-  răspunde, acolo e primul loc de căutat. Verifică și `powerUpUsableInPhase`
-  (gardă de fază adăugată în `7aff8e8`): poate refuză tăcut apăsarea în faza
-  curentă, fără niciun mesaj către jucător — ceea ce ar fi tot un bug (dacă
-  nu se poate folosi acum, trebuie SPUS, nu ignorat).
+## Rămâne din zona de fluiditate
 
-- **Roata norocului nu se simte plăcut.** Singura din animații care a rămas
-  neplăcută după pornirea Impeller (Tanks s-a îmbunătățit). Deci nu e
-  renderer-ul — e curba de animație sau modul în care e desenată. De privit
-  ce interpolare folosește la oprire și dacă se redesenează mai mult decât
-  trebuie (vezi și problema generală cu cronometrele de mai jos).
-
-- **Cronometrele reconstruiesc tot ecranul o dată pe secundă.** 11 locuri cu
-  `Timer.periodic(1s)` care fac `setState(() {})` pe tot ecranul, doar ca să
-  scadă o cifră: în multiplayer se redesenează lista de jucători, avatarele
-  și scorurile de 60 de ori pe minut degeaba. Fix: `ValueListenableBuilder`
-  (sau un widget separat cu stare proprie) doar în jurul inelului de
-  cronometru. Raportul general al proiectului e 221 `setState` vs 8
-  `ValueListenableBuilder` — ecranele grele merită mutate treptat pe
-  reconstrucție țintită.
-
+- **Granularitatea reconstrucției, în general.** 221 `setState` vs 8
+  `ValueListenableBuilder` în tot proiectul. Ecranele grele merită mutate
+  treptat pe reconstrucție țintită. Nu e urgent după reparațiile de mai sus.
 - **Flutter 3.27.4 e din ianuarie 2025** (un an și 7 luni). Un upgrade aduce
-  îmbunătățirile de Impeller acumulate de atunci. Merită, dar e operație
-  separată (poate rupe pluginuri) — nu de făcut pe fugă.
+  îmbunătățirile de Impeller acumulate de atunci. Operație separată, poate
+  rupe pluginuri — nu de făcut pe fugă.
 
 ## Blocat pe tine — nu se poate din cod
 
