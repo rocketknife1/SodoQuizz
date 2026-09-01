@@ -131,19 +131,72 @@ class PowerUpChip extends StatelessWidget {
     if (powerUp == PowerUp.none) return const SizedBox.shrink(key: ValueKey('none'));
     final title = powerUpTitles[powerUp];
     if (title == null) return const SizedBox.shrink(key: ValueKey('none'));
-    return GestureDetector(
+    return _PulsingPowerUp(
       key: ValueKey(powerUp),
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.purple.withAlpha(60),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.purple.withAlpha(180)),
-        ),
-        child: Text(
-          tr(title.$1, title.$2),
-          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800),
+      label: tr(title.$1, title.$2),
+    );
+  }
+}
+
+/// Pastila de power-up — ținta de apăsare, nu doar o etichetă.
+///
+/// ERA un chip de 9x4 px de padding, text de 11, înghesuit între „RUNDA N" și
+/// cronometru: cea mai interesantă mecanică din mod, într-o țintă pe care nu
+/// o nimereai cu degetul și pe care ochiul o sărea. Un jucător a raportat
+/// „nu am putut selecta power-up-uri" — nu era stricat, era invizibil.
+///
+/// Acum: înălțime de 40 (peste minimul de 40-48 pentru o țintă de atins cu
+/// degetul), text mai mare, și o pulsație lentă care spune „apasă-mă". Pulsul
+/// se oprește singur când nu e nimic de arătat, deci nu consumă cadre degeaba.
+class _PulsingPowerUp extends StatefulWidget {
+  final String label;
+  final VoidCallback? onTap;
+  const _PulsingPowerUp({super.key, required this.label, this.onTap});
+
+  @override
+  State<_PulsingPowerUp> createState() => _PulsingPowerUpState();
+}
+
+class _PulsingPowerUpState extends State<_PulsingPowerUp> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1100),
+  )..repeat(reverse: true);
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: _c,
+        builder: (context, child) {
+          final t = Curves.easeInOut.transform(_c.value);
+          return Transform.scale(scale: 1 + t * 0.06, child: child);
+        },
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.purple.withAlpha(110),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.purple, width: 2),
+            boxShadow: [
+              BoxShadow(color: AppColors.purple.withAlpha(120), blurRadius: 14, spreadRadius: 1),
+            ],
+          ),
+          child: Text(
+            widget.label,
+            style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900),
+          ),
         ),
       ),
     );
