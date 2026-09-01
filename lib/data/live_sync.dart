@@ -150,6 +150,19 @@ class LiveSync {
   final ValueNotifier<List<String>> incomingRequestUids =
       ValueNotifier<List<String>>(const []);
 
+  /// Uid-urile prietenilor accepți, live.
+  ///
+  /// DE CE E SEPARAT DE [friendSummaries]: rezumatele se schimbă la fiecare
+  /// mesaj, dar LISTA se schimbă doar când chiar apare sau dispare un
+  /// prieten. Ecranul de Prieteni reîncarcă (`_load`) doar la al doilea caz —
+  /// altfel ar reciti tot de pe server la fiecare mesaj primit.
+  ///
+  /// Fără notificatorul ăsta, cine ÎȚI ACCEPTA cererea nu-ți apărea în listă
+  /// până nu ieșeai și intrai la loc: ecranul asculta firele de chat și
+  /// cererile PRIMITE, iar acceptarea cererii TALE nu mișcă niciuna. Găsit
+  /// pe viu, cu doi jucători, 2026-09-01.
+  final ValueNotifier<List<String>> friendUids = ValueNotifier<List<String>>(const []);
+
   void _startFriendWatchers() {
     // Aliniat cu `NotificationService.startLive` etc.: curăță întâi, ca un al
     // doilea apelant să nu lase abonamente agățate.
@@ -178,6 +191,7 @@ class LiveSync {
       (uids) {
         try {
           _resyncThreadSubs(uids.toSet(), me);
+          if (!listEquals(friendUids.value, uids)) friendUids.value = List.unmodifiable(uids);
         } catch (e) {
           debugPrint('LiveSync._friendsListSub a esuat: $e');
         }
@@ -186,18 +200,18 @@ class LiveSync {
     );
   }
 
-  void _resyncThreadSubs(Set<String> friendUids, String me) {
+  void _resyncThreadSubs(Set<String> uids, String me) {
     // Prieteni dispăruți: ANULEAZĂ firul (nu doar scoate-l din hartă) și curăță
     // starea de necitit + rezumatul.
     for (final uid in _threadSubs.keys.toList()) {
-      if (!friendUids.contains(uid)) {
+      if (!uids.contains(uid)) {
         _threadSubs.remove(uid)?.cancel();
         _unreadThreadUids.remove(uid);
         _writeSummary(uid, null);
       }
     }
     // Prieteni noi: un abonament pe firul fiecăruia.
-    for (final uid in friendUids) {
+    for (final uid in uids) {
       if (_threadSubs.containsKey(uid)) continue;
       _threadSubs[uid] = _summarySource(uid).listen(
         (summary) {
@@ -327,6 +341,7 @@ class LiveSync {
     if (!sameIdentity) {
       friendSummaries.value = const {};
       incomingRequestUids.value = const [];
+      friendUids.value = const [];
       // Aceeași regulă pentru starea per-cont ținută de servicii: `amIBanned`
       // și lista de blocați. Golirea stă AICI, nu în `stopLive`-urile lor —
       // acelea sunt și calea de fundal, unde ștergerea ar fi produs o clipă de

@@ -423,4 +423,35 @@ void main() {
     expect(banned.value, isFalse, reason: 'delogarea goleste starea de ban');
     expect(blocked.value, isEmpty, reason: 'delogarea goleste lista de blocati');
   });
+
+  test('13. lista de prieteni se expune live (cineva iti ACCEPTA cererea)', () {
+    // Gasit pe viu 2026-09-01: cine iti accepta cererea nu-ti aparea in lista
+    // pana nu ieseai si intrai la loc. Ecranul asculta firele de chat si
+    // cererile PRIMITE; acceptarea cererii TALE nu misca niciuna.
+    final friendsCtrl = StreamController<List<String>>.broadcast();
+    addTearDown(friendsCtrl.close);
+
+    final sync = LiveSync.instance;
+    sync.resetForTest(
+      readUid: () => 'eu',
+      // Fara Firebase: pornirea reala a serviciilor l-ar atinge.
+      onStartSubs: sync.startFriendWatchersForTest,
+      onStopSubs: sync.stopFriendWatchersForTest,
+      liveUnreadSink: (_, __) {},
+      requestUidsSource: () => const Stream<List<String>>.empty(),
+      friendUidsSource: () => friendsCtrl.stream,
+      summarySource: (_) => const Stream.empty(),
+      blockedChangesSource: (_) => () {},
+    );
+    sync.applyIdentityForTest('eu');
+
+    expect(sync.friendUids.value, isEmpty, reason: 'la inceput, niciun prieten');
+
+    friendsCtrl.add(['prietenul-nou']);
+    return Future<void>.delayed(Duration.zero, () {
+      expect(sync.friendUids.value, ['prietenul-nou'],
+          reason: 'lista trebuie sa se expuna, ca ecranul sa poata reincarca');
+    });
+  });
+
 }

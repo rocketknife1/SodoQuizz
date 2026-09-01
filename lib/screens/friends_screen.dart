@@ -101,6 +101,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     super.initState();
     LiveSync.instance.friendSummaries.addListener(_onSummariesChanged);
     LiveSync.instance.incomingRequestUids.addListener(_onRequestsChanged);
+    LiveSync.instance.friendUids.addListener(_onFriendListChanged);
     // După ce ramura asta a închis toate celelalte canale prin care un blocat
     // ajungea pe ecran (bulina de notificări, cererile, fetchLive), rândul de
     // prieten cu previzualizarea de chat + bulina de necitit a rămas singurul.
@@ -113,8 +114,12 @@ class _FriendsScreenState extends State<FriendsScreen> {
     if (mounted) setState(() {});
   }
 
-  /// Un fir s-a schimbat (mesaj nou, marcaj de citit, prieten adăugat/șters).
-  /// Doar `setState` cu ce e deja în memorie — zero citiri Firestore.
+  /// Un fir s-a schimbat: mesaj nou sau marcaj de citit. Doar `setState` cu ce
+  /// e deja în memorie — zero citiri Firestore.
+  ///
+  /// NU acoperă „prieten adăugat/șters" (cum pretindea comentariul de dinainte):
+  /// pentru asta e [_onFriendListChanged], fiindcă un prieten nou cere date pe
+  /// care nu le avem în memorie.
   void _onSummariesChanged() {
     if (!mounted) return;
     setState(() => _summaries = LiveSync.instance.friendSummaries.value);
@@ -127,10 +132,20 @@ class _FriendsScreenState extends State<FriendsScreen> {
   /// `fetchIncomingRequests`.
   void _onRequestsChanged() => _scheduleReload();
 
+  /// LISTA de prieteni s-a schimbat (cineva ți-a ACCEPTAT cererea, sau te-a
+  /// șters). Reîncărcăm, fiindcă numele/liga/scorul noului prieten nu sunt în
+  /// memorie — spre deosebire de [_onSummariesChanged], care doar redesenează.
+  ///
+  /// Fără asta, cine îți accepta cererea nu-ți apărea în listă până nu ieșeai
+  /// și intrai la loc: ecranul asculta firele de chat și cererile PRIMITE, iar
+  /// acceptarea cererii TALE nu mișcă niciuna. Găsit pe viu, cu doi jucători.
+  void _onFriendListChanged() => _scheduleReload();
+
   @override
   void dispose() {
     LiveSync.instance.friendSummaries.removeListener(_onSummariesChanged);
     LiveSync.instance.incomingRequestUids.removeListener(_onRequestsChanged);
+    LiveSync.instance.friendUids.removeListener(_onFriendListChanged);
     ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
     super.dispose();
