@@ -141,7 +141,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   @override
   void initState() {
     super.initState();
-    _tick = Timer.periodic(const Duration(milliseconds: 250), (_) {
+    // O data pe secunda, NU la 250ms. Nimic din ecranul asta nu se schimba mai des de o data pe secunda:
+    // singurul consumator de timp e cronometrul, care numara in secunde.
+    // Tick-ul asta exista doar pentru cronometru; la 250ms reconstruia tot
+    // ecranul (lista de jucatori, avatare, tot) de patru ori pe secunda
+    // degeaba. Verificarea de expirare a rundei ramane corecta — ruleaza in
+    // continuare o data pe secunda.
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {

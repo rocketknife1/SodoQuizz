@@ -63,6 +63,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Timer? _heartbeatTimer;
   Timer? _lateSfxTimer;
   DateTime? _revealedAtLocal;
+
+  /// Ultima secunda in care s-a reconstruit ecranul — vezi tick-ul adaptiv
+  /// din [initState].
+  int _lastTickSecond = -1;
   bool _playedRevealSfx = false;
 
   List<String>? _cachedChoices;
@@ -111,8 +115,24 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi ObbySfx pentru de ce.
     ObbySfx.preload();
+    // Tick ADAPTIV. Sub-secunda e nevoie DOAR cat ruleaza animatia de
+    // dezvaluire (saritura alergatorilor, vezi `_revealSpanSeconds`) — acolo
+    // pozitia se calculeaza din milisecunde. In faza de raspuns, care e cea
+    // mai lunga, conteaza doar cronometrul in secunde.
+    //
+    // Inainte era `setState` la fiecare 100ms indiferent de faza: TOT ecranul
+    // (lista de jucatori, avatarele si scena Flame din jur) se reconstruia de
+    // 10 ori pe secunda degeaba. Verificarea de expirare a rundei ramane
+    // corecta, fiindca reconstruim in continuare cel putin o data pe secunda.
     _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      final now = DateTime.now();
+      final animating = _revealedAtLocal != null &&
+          now.difference(_revealedAtLocal!).inMilliseconds < (_revealSpanSeconds * 1000).round() + 200;
+      if (animating || now.second != _lastTickSecond) {
+        _lastTickSecond = now.second;
+        setState(() {});
+      }
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
       MultiplayerService.instance.matchHeartbeat(widget.matchId);

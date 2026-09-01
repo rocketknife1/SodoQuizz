@@ -204,7 +204,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     _fire.addListener(_onFireTick);
     // Nicio actualizare Firestore nu vine „din ceas", dar cronometrul de 5
     // secunde trebuie să scadă vizibil în fiecare secundă.
-    _tick = Timer.periodic(const Duration(milliseconds: 250), (_) {
+    // O data pe secunda, NU la 250ms. Arena isi are propriul AnimatedBuilder legat de `_fire` (vezi comentariile
+    // de la _buildArena): animatia obuzelor NU depinde de setState-ul asta.
+    // Tick-ul asta exista doar pentru cronometru; la 250ms reconstruia tot
+    // ecranul (lista de jucatori, avatare, tot) de patru ori pe secunda
+    // degeaba. Verificarea de expirare a rundei ramane corecta — ruleaza in
+    // continuare o data pe secunda.
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
