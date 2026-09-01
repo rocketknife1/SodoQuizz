@@ -1,6 +1,6 @@
-import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'stable_hash.dart';
 
 /// Formula de nivel/XP: curbă mixtă pătratică+cubică, deliberat mai severă
 /// decât cea veche (`250 + 60·L²`). Motivul real pentru care se ajungea la
@@ -1473,9 +1473,11 @@ List<List<Quest>> _questRotation() {
     members.sort((a, b) => a.tier.index.compareTo(b.tier.index));
   }
 
-  final keys = families.keys.toList()
-    ..sort()
-    ..shuffle(Random(_questRotationSeed));
+  // stableShuffle, NU shuffle(Random(seed)): `Random(seed)` nu garanteaza
+  // acelasi sir pe platforme (vezi core/stable_hash.dart), deci acelasi cont
+  // putea vedea ALTE quest-uri zilnice pe telefon fata de browser.
+  final keys = families.keys.toList()..sort();
+  stableShuffle(keys, _questRotationSeed);
   // familiile mari întâi — ele sunt cele constrânse, restul umple golurile.
   keys.sort((a, b) => families[b]!.length.compareTo(families[a]!.length));
 

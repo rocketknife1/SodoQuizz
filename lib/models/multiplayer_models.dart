@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../core/electric_chair.dart';
 import '../core/tanks.dart';
+import '../core/stable_hash.dart';
 import '../core/theme.dart';
 
 enum MatchMode { private, public }
@@ -711,5 +712,9 @@ Color pickAvatarColor(String seed) {
     AppColors.danger,
     AppColors.coin,
   ];
-  return palette[seed.hashCode.abs() % palette.length];
+  // stableHash, NU seed.hashCode: `String.hashCode` da valori DIFERITE in
+  // Dart VM (telefon) fata de dart2js (browser), deci acelasi jucator aparea
+  // cu alta culoare pe fiecare platforma — iar cand cele doua seed-uri cadeau
+  // pe acelasi rest, toate tancurile ieseau la fel. Bug raportat 2026-09-01.
+  return palette[stableHash(seed) % palette.length];
 }

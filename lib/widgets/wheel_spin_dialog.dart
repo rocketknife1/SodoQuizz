@@ -399,24 +399,54 @@ class _WheelPainter extends CustomPainter {
 }
 
 /// Curbă în două faze, pentru senzația de suspans a unei roți fizice: viteză
-/// mare, aproape constantă, pe primii [_split] din timp (nu se poate ghici
-/// nimic încă — trece prin majoritatea cadranelor), urmată de o decelerare
+/// mare și CONSTANTĂ pe primii [_split] din timp (nu se poate ghici nimic
+/// încă — trece prin majoritatea cadranelor), urmată de o decelerare
 /// accentuată ([Curves.easeOutQuint]) pe restul timpului, unde roata
 /// încetinește vizibil și "ezită" tot mai aproape de rezultat.
+///
+/// PRIMA FAZĂ E LINIARĂ, nu `easeIn`. Varianta veche folosea `Curves.easeIn`,
+/// care pornește de la viteză ZERO și accelerează — adică exact opusul a ce
+/// spunea propriul ei comentariu. Pe o animație de 4,6 secunde, roata abia se
+/// târa în prima secundă și se simțea moale; o roată reală e pocnită cu
+/// degetul, deci pleacă din prima cu viteză maximă.
+///
+/// [_splitValue] NU e ales din ochi: e valoarea la care viteza fazei liniare
+/// (`_splitValue / _split`) e EXACT egală cu viteza cu care începe curba de
+/// decelerare. Fără potrivirea asta, roata ar avea o smucitură la trecerea
+/// între faze — ori ar accelera brusc, ori ar frâna sec.
+///
+/// Formula, cu `p` = panta inițială a curbei de coadă:
+///
+///     _splitValue = p * _split / ((1 - _split) + p * _split)
+///
+/// ATENȚIE: `p` se MĂSOARĂ, nu se deduce. Curbele `Curves.easeOutX` din
+/// Flutter sunt aproximări Bézier, nu funcțiile matematice după care sunt
+/// numite — `easeOutQuint` are panta inițială ~14,6, nu 5. Prima încercare de
+/// reparație a folosit valoarea teoretică și testul de smucitură a picat.
+///
+/// De ce [Curves.easeOut] și nu ceva mai agresiv: măsurat pe durata reală de
+/// 4,6 secunde, ultimele 5% din rotație durează ~1s cu `easeOut`, dar 2,5s cu
+/// `easeOutQuint` — adică roata se târăște vizibil la final în loc să
+/// „ezite". O secundă de ezitare e tensiune; două și jumătate e plictiseală.
+/// Expusa pentru `test/wheel_curve_test.dart`, care apara forma curbei
+/// (pleaca cu viteza maxima, e monotona, nu smuceste la trecerea intre faze).
+@visibleForTesting
+const Curve suspenseWheelCurveForTest = _SuspenseWheelCurve();
+
 class _SuspenseWheelCurve extends Curve {
   const _SuspenseWheelCurve();
 
-  static const double _split = 0.55;
-  static const double _splitValue = 0.72;
+  static const double _split = 0.35;
+  static const double _splitValue = 0.6611736558; // masurat pentru Curves.easeOut
 
   @override
   double transform(double t) {
     if (t <= _split) {
-      final local = (t / _split).clamp(0.0, 1.0);
-      return _splitValue * Curves.easeIn.transform(local);
+      // liniar: viteză constantă, roata pleacă din prima cu viteză maximă
+      return _splitValue * (t / _split).clamp(0.0, 1.0);
     }
     final local = ((t - _split) / (1 - _split)).clamp(0.0, 1.0);
-    final tail = Curves.easeOutQuint.transform(local);
+    final tail = Curves.easeOut.transform(local);
     return _splitValue + (1 - _splitValue) * tail;
   }
 }
