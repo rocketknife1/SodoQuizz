@@ -71,10 +71,6 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   /// variante, sunt doar două (higher/lower).
   bool _peekActive = false;
 
-  /// Efectul lui [PowerUp.extraTime]: secunde în plus adăugate la runda
-  /// curentă, cerute imediat la apăsarea pastilei (nu la runda viitoare —
-  /// simplificare pentru acest prim pas, rafinată la trecerea de polish).
-  int _extraSecondsThisRound = 0;
 
   HigherLowerItem _championFor(int roundIndex) => _pool[roundIndex % _pool.length];
   HigherLowerItem _challengerFor(int roundIndex) => _pool[(roundIndex + 1) % _pool.length];
@@ -102,7 +98,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     super.dispose();
   }
 
-  int get _roundTotalSeconds => higherLowerRoundSeconds + _extraSecondsThisRound;
+  int get _roundTotalSeconds => higherLowerRoundSeconds;
 
   int _secondsLeftFor(MatchInfo info) {
     final started = info.roundStartedAt?.toDate();
@@ -119,9 +115,6 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       switch (p) {
         case PowerUp.fiftyFifty:
           _peekActive = true;
-          break;
-        case PowerUp.extraTime:
-          _extraSecondsThisRound += extraTimeSeconds;
           break;
         default:
           break;
@@ -210,7 +203,6 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       _lastRoundIndex = info.roundIndex;
       _showWinners = false;
       _peekActive = false;
-      _extraSecondsThisRound = 0;
       _revealDelayTimer?.cancel();
       _revealDelayTimer = null;
       _advanceTimer?.cancel();

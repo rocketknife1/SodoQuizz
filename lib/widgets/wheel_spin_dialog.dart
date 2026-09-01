@@ -204,7 +204,13 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
+    // Butonul Back in timpul rotirii ajungea la `dispose()` cu ticker activ,
+    // iar `await _spin.forward()` nu se mai completa niciodata: premiul nu se
+    // acorda si nici rotirea nu se inregistra. Acum inchiderea e blocata cat
+    // se invarte (recenzie 2026-09-01).
+    return PopScope(
+      canPop: !_spinning,
+      child: Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
@@ -222,8 +228,14 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
             Text(tr('Un premiu o dată la 24 de ore', 'One prize every 24 hours'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
             const SizedBox(height: 20),
             SizedBox(
-              width: 240,
-              height: 240,
+              // 290, ca `CustomPaint`-ul de dedesubt sa primeasca chiar
+              // marimea pe care o cere. Un `CustomPaint` fara copil isi ia
+              // marimea prin `constraints.constrain(preferredSize)`, deci cat
+              // timp cutia asta a ramas 240 painter-ul primea 240 oricat scria
+              // in `size:` — iar etichetele lungi ("1284+💎") ieseau din disc
+              // si se atingeau de iconita. Recenzie 2026-09-01.
+              width: 290,
+              height: 290,
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
@@ -236,8 +248,8 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                     builder: (context, _) {
                       final pulse = _spinning ? 0.55 + 0.25 * sin(_spin.value * pi * 10) : 0.35;
                       return Container(
-                        width: 250,
-                        height: 250,
+                        width: 300,
+                        height: 300,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [BoxShadow(color: _wheelOrange.withAlpha((120 * pulse).round()), blurRadius: 40, spreadRadius: 4)],
@@ -262,6 +274,12 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                       // într-un cadru, cu opacitate descrescătoare. Apar DOAR
                       // cât viteza chiar e mare — la final, când roata
                       // ezită, dispar singure și marginile redevin clare.
+                      //
+                      // Se desenează DEASUPRA roții reale, nu dedesubt: discul
+                      // real e complet opac și de aceeași mărime, deci
+                      // fantomele puse în spate erau acoperite pixel cu pixel
+                      // — invizibile, dar plătite cu 4 repictări pe cadru
+                      // (recenzie 2026-09-01).
                       const dt = 0.004;
                       final speed = ((curve.transform((t + dt).clamp(0.0, 1.0)) -
                                   curve.transform((t - dt).clamp(0.0, 1.0))) /
@@ -275,9 +293,17 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                       return Stack(
                         alignment: Alignment.center,
                         children: [
-                          for (var g = ghosts; g >= 1; g--)
+                          Transform.rotate(
+                            angle: angle,
+                            child: const CustomPaint(
+                              size: Size(290, 290),
+                              painter: _WheelPainter(),
+                            ),
+                          ),
+                          // Coada: cu cât e mai în urmă, cu atât mai palidă.
+                          for (var g = 1; g <= ghosts; g++)
                             Opacity(
-                              opacity: 0.16,
+                              opacity: 0.20 * (1 - (g - 1) / ghosts),
                               child: Transform.rotate(
                                 angle: angle - perFrame * (g / ghosts),
                                 child: const CustomPaint(
@@ -286,13 +312,6 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                                 ),
                               ),
                             ),
-                          Transform.rotate(
-                            angle: angle,
-                            child: const CustomPaint(
-                              size: Size(290, 290),
-                              painter: _WheelPainter(),
-                            ),
-                          ),
                         ],
                       );
                     },
@@ -347,6 +366,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
               ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -419,7 +439,7 @@ class _WheelPainter extends CustomPainter {
       if (wedgesOnly) continue;
 
       final midAngle = startAngle + segmentAngle / 2;
-      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.60;
+      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.55;
       _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 22, Colors.white);
 
       // Eticheta se scrie PE RAZĂ, rotită să urmeze felia — ca la roțile
@@ -435,9 +455,9 @@ class _WheelPainter extends CustomPainter {
       // adevărate, unde eticheta e mereu citibilă indiferent unde se oprește.
       if (cos(midAngle) < 0) {
         canvas.rotate(pi);
-        _paintText(canvas, prize.wheelLabel, null, null, Offset(-radius * 0.87, 0), 13, Colors.white, bold: true);
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(-radius * 0.81, 0), 12, Colors.white, bold: true);
       } else {
-        _paintText(canvas, prize.wheelLabel, null, null, Offset(radius * 0.87, 0), 13, Colors.white, bold: true);
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(radius * 0.81, 0), 12, Colors.white, bold: true);
       }
       canvas.restore();
     }
@@ -490,10 +510,19 @@ class _WheelPainter extends CustomPainter {
 ///
 ///     _splitValue = p * _split / ((1 - _split) + p * _split)
 ///
-/// ATENȚIE: `p` se MĂSOARĂ, nu se deduce. Curbele `Curves.easeOutX` din
-/// Flutter sunt aproximări Bézier, nu funcțiile matematice după care sunt
-/// numite — `easeOutQuint` are panta inițială ~14,6, nu 5. Prima încercare de
-/// reparație a folosit valoarea teoretică și testul de smucitură a picat.
+/// ATENȚIE la cum se află `p`. Curbele `Curves.easeOutX` din Flutter sunt
+/// aproximări Bézier, nu funcțiile matematice după care sunt numite —
+/// `easeOutQuint` NU are panta 5. Dar nici măsurarea numerică nu merge:
+/// [Cubic] rezolvă `x(s) = t` prin căutare binară cu toleranță 1e-3, deci
+/// ieșirea e o scară cu trepte, iar o diferență finită fină măsoară zgomotul
+/// de cuantizare, nu panta. (Așa a ieșit constanta greșită 0,6612, prinsă la
+/// recenzia din 2026-09-01: viteza cădea la ~45% la trecere, adică exact
+/// smucitura pe care constanta trebuia s-o elimine.)
+///
+/// `p` se DEDUCE analitic din punctele de control. Pentru `Cubic(0, 0, x2,
+/// y2)` — ambele puncte de control de start în origine — lângă `s = 0` avem
+/// `x ≈ 3·x2·s²` și `y ≈ 3·y2·s²`, deci `p = y2 / x2`. Pentru
+/// [Curves.easeOut] = `Cubic(0, 0, 0.58, 1)` ⇒ `p = 1/0,58 ≈ 1,724`.
 ///
 /// De ce [Curves.easeOut] și nu ceva mai agresiv: măsurat pe durata reală de
 /// 4,6 secunde, ultimele 5% din rotație durează ~1s cu `easeOut`, dar 2,5s cu
@@ -508,7 +537,14 @@ class _SuspenseWheelCurve extends Curve {
   const _SuspenseWheelCurve();
 
   static const double _split = 0.35;
-  static const double _splitValue = 0.6611736558; // masurat pentru Curves.easeOut
+
+  /// Panta initiala a cozii. `Curves.easeOut` e `Cubic(0, 0, 0.58, 1)`, deci
+  /// `p = y2 / x2 = 1 / 0.58`. Daca schimbi curba de coada, schimba si asta
+  /// (si `Curves.easeOut` de mai jos) — altfel roata smuceste la trecere.
+  static const double _tailInitialSlope = 1 / 0.58;
+
+  static const double _splitValue =
+      _tailInitialSlope * _split / ((1 - _split) + _tailInitialSlope * _split);
 
   @override
   double transform(double t) {

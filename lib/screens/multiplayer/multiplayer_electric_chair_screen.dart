@@ -82,7 +82,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   PowerUp _myPowerUp = PowerUp.none;
   int? _powerUpRolledRound;
   Set<String> _hiddenChoices = const {};
-  int _extraSecondsThisRound = 0;
 
   /// uid → nume, reîmprospătat la fiecare [_onData] — pentru banner-ul de la
   /// [PowerUp.peek].
@@ -170,7 +169,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     return (total - elapsed).clamp(0, total);
   }
 
-  int get _answerTotalSeconds => electricChairAnswerSeconds + _extraSecondsThisRound;
+  int get _answerTotalSeconds => electricChairAnswerSeconds;
   int _answerSecondsLeftFor(MatchInfo info) => _secondsLeft(info, _answerTotalSeconds);
   int _targetSecondsLeftFor(MatchInfo info) => _secondsLeft(info, electricChairTargetSeconds);
   int _chairSecondsLeftFor(MatchInfo info) => _secondsLeft(info, electricChairSeconds);
@@ -240,8 +239,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
           stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
           setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
         }
-      case PowerUp.extraTime:
-        setState(() => _extraSecondsThisRound += extraTimeSeconds);
       case PowerUp.shield:
       case PowerUp.piercingShock:
       case PowerUp.reflect:
@@ -300,7 +297,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   Future<void> _advancePhase(MatchInfo info) async {
     if (_resolving) return;
     final now = DateTime.now();
-    if (_lastResolveAttempt != null && now.difference(_lastResolveAttempt!) < const Duration(milliseconds: 1200)) {
+    if (_lastResolveAttempt != null && now.difference(_lastResolveAttempt!) < const Duration(milliseconds: 900)) {
       return;
     }
     _lastResolveAttempt = now;
@@ -342,7 +339,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       _pendingTargetId = null;
       _lastResolveAttempt = null;
       _hiddenChoices = const {};
-      _extraSecondsThisRound = 0;
       _advanceTimer?.cancel();
       _advanceTimer = null;
     }

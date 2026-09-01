@@ -87,10 +87,36 @@ class _PowerUpTile extends StatefulWidget {
 }
 
 class _PowerUpTileState extends State<_PowerUpTile> with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat(reverse: true);
+  // NU `late`: `dispose()` ar declanșa altfel inițializatorul pe un State
+  // deja demontat dacă build-ul n-a rulat niciodată.
+  late final AnimationController _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _syncPulse();
+  }
+
+  @override
+  void didUpdateWidget(covariant _PowerUpTile old) {
+    super.didUpdateWidget(old);
+    if (old.dimmed != widget.dimmed) _syncPulse();
+  }
+
+  /// Pulsația se OPREȘTE cât puterea e estompată. Fără asta, fiecare pătrățel
+  /// din inventar ținea `SchedulerBinding` să ceară cadre la nesfârșit — și
+  /// cu 4-8 puteri strânse ecranul de Tanks nu mai intra niciodată în repaus,
+  /// exact ce tocmai eliminaserăm din tick-uri (recenzie 2026-09-01). Când e
+  /// estompată, scala e oricum 1.0, deci nu se pierde nimic vizual.
+  void _syncPulse() {
+    if (widget.dimmed) {
+      _pulse.stop();
+      _pulse.value = 0;
+    } else if (!_pulse.isAnimating) {
+      _pulse.repeat(reverse: true);
+    }
+  }
 
   @override
   void dispose() {

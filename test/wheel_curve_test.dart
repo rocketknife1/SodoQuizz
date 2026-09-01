@@ -11,6 +11,13 @@ void main() {
   double vitezaLa(double t, [double h = 0.0005]) =>
       (c.transform((t + h).clamp(0.0, 1.0)) - c.transform((t - h).clamp(0.0, 1.0))) / (2 * h);
 
+  /// Viteza medie pe o FEREASTRA LARGA. `Curves.easeOut` e un [Cubic], care
+  /// rezolva `x(s) = t` prin cautare binara cu toleranta 1e-3: iesirea e o
+  /// scara cu trepte de ~0,0017, deci o diferenta finita fina masoara
+  /// zgomotul de cuantizare, nu panta. Pe coada se masoara asa, nu cu
+  /// [vitezaLa] (care ramane buna pe faza liniara, unde nu exista Bezier).
+  double vitezaMedie(double a, double b) => (c.transform(b) - c.transform(a)) / (b - a);
+
   test('porneste la 0 si ajunge exact la 1', () {
     expect(c.transform(0), closeTo(0, 1e-9));
     expect(c.transform(1), closeTo(1, 1e-9));
@@ -26,8 +33,13 @@ void main() {
   });
 
   test('PLEACA CU VITEZA MAXIMA, nu de la zero (bug-ul raportat)', () {
+    // Pragul e 1,2 (nu 1,5): viteza fazei liniare e determinata de potrivirea
+    // cu panta cozii, iar pentru `Curves.easeOut` iese 1,3755. Pragul vechi de
+    // 1,5 era calibrat pe constanta gresita 0,6612 (vezi recenzia din
+    // 2026-09-01) — trecea tocmai fiindca roata mergea prea repede si apoi
+    // frana sec. Ce apara testul e ca NU pleaca de la ~0, ca la `easeIn`.
     final vStart = vitezaLa(0.02);
-    expect(vStart, greaterThan(1.5),
+    expect(vStart, greaterThan(1.2),
         reason: 'cu easeIn viteza initiala era ~0 si roata se simtea moale');
   });
 
@@ -42,11 +54,27 @@ void main() {
     // esantionare fina), ci: o roata pocnita cu degetul incetineste, nu
     // accelereaza. O crestere de viteza la mijloc s-ar vedea ca o smucitura.
     final vFaza1 = vitezaLa(0.20); // in mijlocul fazei liniare
-    for (var i = 36; i <= 99; i++) {
-      final v = vitezaLa(i / 100);
-      expect(v, lessThanOrEqualTo(vFaza1 * 1.02),
-          reason: 'la t=${i / 100} roata merge mai repede decat in faza rapida');
+    for (var i = 35; i <= 90; i += 3) {
+      final a = i / 100;
+      final v = vitezaMedie(a, a + 0.09);
+      expect(v, lessThanOrEqualTo(vFaza1 * 1.05),
+          reason: 'pe [$a, ${a + 0.09}] roata merge mai repede decat in faza rapida');
     }
+  });
+
+  test('NU franeaza sec la trecerea dintre faze (recenzie 2026-09-01)', () {
+    // Perechea testului de mai sus. Acela prinde doar panta de coada prea
+    // MARE (accelerare). Constanta gresita 0,6612 producea exact opusul:
+    // viteza cadea la ~45% fix la t=0,35 — o smucitura de franare pe care
+    // niciun test n-o vedea.
+    //
+    // Se masoara pe FERESTRE LARGI, nu prin diferente fine: `Cubic` rezolva
+    // x(s)=t prin cautare binara cu toleranta 1e-3, deci esantionarea fina
+    // langa capat masoara zgomotul de cuantizare, nu panta.
+    final inainte = vitezaMedie(0.25, 0.34);
+    final dupa = vitezaMedie(0.36, 0.45);
+    expect(dupa, greaterThan(inainte * 0.85),
+        reason: 'viteza cade brusc la trecere: $inainte -> $dupa');
   });
 
   test('faza rapida chiar e cu viteza constanta', () {

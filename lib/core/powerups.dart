@@ -196,7 +196,16 @@ const Map<PowerUp, Set<String>> powerUpModes = {
   PowerUp.allyShield: {'quizzTanks', 'electricChair'},
   PowerUp.reflect: {'quizzTanks', 'electricChair'},
   PowerUp.fiftyFifty: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
-  PowerUp.extraTime: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
+  // DOAR Clasic. În modurile sincrone (Tanks, Obby, Scaunul Electric,
+  // Higher & Lower) runda se închide când expiră cronometrul ORICĂRUI client
+  // (`closeTanksAnswering` & co. sunt apelate de toată lumea), iar secundele
+  // în plus sunt o valoare LOCALĂ — deci adversarul îți taie runda la
+  // secunda normală și puterea nu face absolut nimic. La Clasic fiecare are
+  // propriul termen (`_deadline`), acolo chiar funcționează.
+  // Recenzie 2026-09-01. Dacă vrei puterea înapoi în modurile sincrone,
+  // trebuie scrisă în documentul meciului ca să prelungească runda pentru
+  // toți — altă mecanică, altă decizie.
+  PowerUp.extraTime: {'classic'},
   PowerUp.peek: {'quizzTanks', 'obby', 'electricChair'},
   PowerUp.jetpack: {'obby'},
   PowerUp.repairKit: {'quizzTanks', 'electricChair'},
@@ -215,10 +224,15 @@ const Map<PowerUp, Set<String>> powerUpModes = {
 /// [powerUpUsableInPhase] înainte s-o consume și, dacă nu se poate, o
 /// păstrează și îi spun jucătorului.
 ///
-/// Power-up-urile care NU apar aici (50/50, timp în plus, trusă de
-/// reparații) au efect local instant sau pe runda următoare — se pot folosi
-/// oricând, n-au fereastră.
+/// Power-up-urile care NU apar aici (trusa de reparații) au efect local
+/// instant și se pot folosi oricând, n-au fereastră.
+///
+/// 50/50 a fost ADĂUGAT aici la recenzia din 2026-09-01: nu avea fereastră,
+/// deci trecea de gardă în orice fază, iar corpul lui nu făcea nimic afară
+/// din `answering` — puterea dispărea din inventar, nu se întâmpla nimic, și
+/// se ardea și dreptul la o putere pe runda aia.
 const Map<PowerUp, Set<String>> powerUpUsablePhases = {
+  PowerUp.fiftyFifty: {'answering'},
   PowerUp.megaRocket: {'answering', 'targeting'},
   PowerUp.doubleShot: {'answering', 'targeting'},
   PowerUp.shield: {'answering', 'targeting', 'chair'},

@@ -100,12 +100,30 @@ void main() {
       }
     });
 
-    test('puterile instant/locale se pot folosi in orice faza', () {
-      for (final p in [PowerUp.fiftyFifty, PowerUp.extraTime, PowerUp.repairKit]) {
-        for (final phase in ['answering', 'targeting', 'choosing', 'chair', 'revealed']) {
-          expect(powerUpUsableInPhase(p, phase), isTrue, reason: '$p in $phase');
-        }
+    test('trusa de reparatii se poate folosi in orice faza', () {
+      // Singura putere ramasa fara fereastra: recupereaza viata printr-o
+      // scriere care merge oricand.
+      for (final phase in ['answering', 'targeting', 'choosing', 'chair', 'revealed']) {
+        expect(powerUpUsableInPhase(PowerUp.repairKit, phase), isTrue,
+            reason: 'repairKit in $phase');
       }
+    });
+
+    test('50/50 se poate folosi DOAR cat se raspunde (recenzie 2026-09-01)', () {
+      // Testul asta spunea inainte ca 50/50 merge in orice faza — ceea ce era
+      // chiar bug-ul: fara fereastra, trecea de garda si se consuma in gol,
+      // arzand si dreptul la o putere pe runda aia.
+      expect(powerUpUsableInPhase(PowerUp.fiftyFifty, 'answering'), isTrue);
+      for (final phase in ['targeting', 'choosing', 'chair', 'revealed']) {
+        expect(powerUpUsableInPhase(PowerUp.fiftyFifty, phase), isFalse,
+            reason: 'fiftyFifty in $phase');
+      }
+    });
+
+    test('Timp in Plus e doar la Clasic (recenzie 2026-09-01)', () {
+      // In modurile sincrone runda se inchide cand expira cronometrul ORICARUI
+      // client, iar secundele in plus erau locale — puterea nu facea nimic.
+      expect(powerUpModes[PowerUp.extraTime], {'classic'});
     });
 
     test('fereastra de folosire e mereu un subset de faze reale', () {

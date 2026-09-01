@@ -8,7 +8,12 @@ Ultima curățare: 2026-09-01.
 Toate au trecut `flutter analyze` + `flutter test` și, o parte, recenzie
 independentă — dar niciunul n-a fost jucat cu jucători reali:
 
-- **Piatră-Hârtie-Foarfecă, finalul de meci.** Verificat live cu 2 jucători:
+- **Piatră-Hârtie-Foarfecă, finalul de meci.** Citit static la recenzia din
+  2026-09-01 și e corect: meciul se închide în ACEEAȘI tranzacție care scrie
+  scorurile (nimeni nu poate citi „finished" cu scoruri pe jumătate scrise),
+  cele trei ieșiri sunt acoperite (10 puncte / a rămas unul / plafonul de 30),
+  iar plata trece prin `matchPrizesForRanking` ca la orice alt mod. Rămâne de
+  probat pe viu. Verificat live cu 2 jucători:
   apare în selector, miza și tabelul de premii merg, camera se creează și se
   intră cu cod, runda se rezolvă corect (piatra bate foarfeca → +1, listă
   resortată), egalitatea dă 0 puncte. NEVERIFICAT: finalul la 10 puncte,
@@ -25,6 +30,51 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   `118fab7` care a mutat interfața de power-up într-un fișier comun).
   `reflect` / `allyShield` / Double Shot ating tranzacția de rezolvare a
   rundei.
+
+## Recenzie independentă 2026-09-01 — reparat, dar NEPROBAT pe telefon
+
+Doi recenzori pe zone diferite, pe ultimele 19 commit-uri (care nu trecuseră
+prin nicio recenzie). Nimic din ce urmează n-a fost văzut pe dispozitiv real —
+telefonul nu era conectat.
+
+- **Roata: creșterea la 290 nu intrase deloc în efect.** `CustomPaint` fără
+  copil își ia mărimea prin `constraints.constrain(...)`, iar `SizedBox`-ul
+  rămăsese 240 — deci raza reală era 120, nu 145, și exact de-aia „1284+💎"
+  tot nu încăpea. Reparat, plus eticheta trasă spre interior (0,81) și iconul
+  la 0,55, ca textul lung să nu se atingă de el.
+- **Roata: blur-ul de mișcare era invizibil.** Fantomele se desenau SUB discul
+  real, care e complet opac și de aceeași mărime — acoperite pixel cu pixel.
+  Rămânea doar costul: 4 repictări de disc întreg pe fiecare cadru. Acum se
+  desenează deasupra, cu opacitate chiar descrescătoare.
+- **Roata: constanta de trecere între faze era greșită** — viteza cădea la
+  ~45% fix la mijloc, adică exact smucitura pe care trebuia s-o elimine.
+  Cauza: „măsurasem" panta prin diferențe fine pe un `Cubic`, care rezolvă
+  prin căutare binară cu toleranță 1e-3 — măsurasem zgomotul de cuantizare.
+  Acum se deduce analitic din punctele de control (`p = y2/x2`).
+- **Roata: Back în timpul rotirii** lăsa premiul neacordat. `PopScope`.
+- **50/50 se consuma în gol.** N-avea fereastră de fază, deci trecea de gardă
+  oriunde; corpul lui nu făcea nimic afară din `answering`. Puterea dispărea,
+  nu se întâmpla nimic, și se ardea și dreptul la o putere pe runda aia.
+- **„Timp în Plus" nu funcționa în NICIUN mod sincron.** Secundele erau o
+  valoare locală, dar runda se închide când expiră cronometrul oricărui
+  client — adversarul îți tăia runda la secunda normală. Scos din Tanks,
+  Obby, Scaunul Electric și Higher & Lower (rămâne la Clasic, unde fiecare
+  are propriul termen). **Decizie de-a ta:** dacă îl vrei înapoi, trebuie
+  scris în documentul meciului ca să prelungească runda pentru toți — altă
+  mecanică.
+- **Inventarul de puteri lipsea din faza de țintire** la Tanks, deși șase
+  puteri au fereastră fix acolo și tot acolo se și ACORDĂ puterea: primeai
+  „ai primit o putere!" exact în ecranul în care n-aveai pe ce apăsa.
+- **Pulsația pătrățelelor** cerea cadre la nesfârșit, inclusiv estompate —
+  adică fix ce tocmai scosesem din tick-uri. Se oprește când sunt estompate.
+- **Mesaj greșit**: „ai folosit deja o putere" spunea „prea târziu".
+- **Ecranul de Prieteni** se golea într-un spinner la fiecare cerere primită
+  (de două ori la o acceptare), pierzând poziția de derulare.
+- **Bolovanii asteroizilor din Obby** rămăseseră pe `Random(seed)`, deci
+  arătau altfel în browser față de telefon. Ultimul rest din reparația de
+  consistență.
+- **Teste**: testul curbei apăra doar o direcție (accelerare), nu și frânarea
+  bruscă — adăugat, plus goldene pentru `StableRandom`, care n-avea niciunul.
 
 ## Găsite pe viu 2026-09-01 — TOATE REPARATE (se șterge data viitoare)
 

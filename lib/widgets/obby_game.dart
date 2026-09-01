@@ -486,7 +486,11 @@ class _AsteroidComponent extends PositionComponent {
 
   _AsteroidComponent({required this.index, required Vector2 position})
       : super(position: position, size: Vector2(64, 46), anchor: Anchor.center) {
-    final rng = Random(index * 97 + 13);
+    // StableRandom, nu Random: `Random(seed)` da alte valori in Dart VM fata
+    // de dart2js, deci acelasi cont vedea alti bolovani pe telefon fata de
+    // browser. Celalalt consumator al lui `buildObbyRockPath` era deja mutat;
+    // asta ramasese in urma (recenzie 2026-09-01).
+    final rng = StableRandom(index * 97 + 13);
     _rockPath = buildObbyRockPath(rng, size.x, size.y);
     _craters = List.generate(3, (i) {
       final a = rng.nextDouble() * pi * 2;

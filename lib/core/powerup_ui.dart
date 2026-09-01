@@ -51,6 +51,38 @@ void notifyPowerUpTooLate(BuildContext context) {
     ));
 }
 
+/// Ai folosit deja o putere în runda asta — regula e una pe rundă.
+/// Mesaj separat de [notifyPowerUpTooLate]: până la recenzia din 2026-09-01
+/// ambele situații spuneau „prea târziu", ceea ce n-avea nicio legătură cu
+/// motivul real al refuzului.
+void notifyPowerUpAlreadyUsed(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      content: Text(tr(
+        'Ai folosit deja o putere runda asta — mai ai voie una la runda următoare.',
+        'You already used a power-up this round — you get another one next round.',
+      )),
+    ));
+}
+
+/// Puterea nu mai are ce face acum (ex. 50/50 după ce ai răspuns deja).
+/// NU se consumă: jucătorul o păstrează pentru runda următoare.
+void notifyPowerUpNoEffect(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      content: Text(tr(
+        'N-are ce face acum — ai răspuns deja. O păstrezi.',
+        'Nothing to do right now — you already answered. You keep it.',
+      )),
+    ));
+}
+
 /// Anunță jucătorul că tocmai a primit un power-up.
 void announcePowerUp(BuildContext context, PowerUp p) {
   if (!context.mounted) return;

@@ -72,7 +72,11 @@ class _FriendsScreenState extends State<FriendsScreen> {
   Future<_FriendsData> _runLoad() async {
     _loadInFlight = true;
     try {
-      return await _load();
+      // Ultimul rezultat bun se ține separat ca ecranul să NU se golească
+      // într-un spinner la fiecare reîncărcare — vezi [_lastData].
+      final data = await _load();
+      _lastData = data;
+      return data;
     } finally {
       _loadInFlight = false;
       if (_reloadQueued && mounted) {
@@ -81,6 +85,14 @@ class _FriendsScreenState extends State<FriendsScreen> {
       }
     }
   }
+
+  /// Ultimul set de date încărcat cu succes. `FutureBuilder` are `data == null`
+  /// cât timp noul `future` e în zbor, deci fără asta orice cerere primită sau
+  /// schimbare de listă ștergea tot ecranul (codul meu, câmpul de adăugare,
+  /// lista) și pierdea poziția de derulare. O acceptare produce chiar DOUĂ
+  /// semnale — cererea dispare ȘI lista crește — adică două clipiri la rând.
+  /// Acum spinnerul apare doar la prima încărcare (recenzie 2026-09-01).
+  _FriendsData? _lastData;
 
   void _scheduleReload() {
     if (!mounted) return;
@@ -262,7 +274,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
               child: FutureBuilder<_FriendsData>(
                 future: _dataFuture,
                 builder: (context, snap) {
-                  final data = snap.data;
+                  final data = snap.data ?? _lastData;
                   if (data == null) {
                     return const Center(child: CircularProgressIndicator(color: AppColors.teal));
                   }

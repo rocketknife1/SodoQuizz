@@ -86,4 +86,33 @@ void main() {
       expect(luni, isNot(marti));
     });
   });
+
+  // StableRandom n-avea niciun golden: o regresie in `_nextState` ar fi trecut
+  // nedetectata, desi tot rostul clasei e ca telefonul si browserul sa vada
+  // aceiasi bolovani (recenzie 2026-09-01). Valorile de mai jos sunt captura
+  // implementarii curente — daca pica testul, s-a schimbat generatorul si
+  // formele din Obby difera intre platforme.
+  group('StableRandom', () {
+    test('sirul e stabil, bit cu bit', () {
+      final r = StableRandom(1);
+      final got = [for (var i = 0; i < 5; i++) r.nextInt(1000)];
+      expect(got, [369, 689, 461, 695, 233]);
+    });
+
+    test('nextDouble ramane in [0, 1) pe multe trageri', () {
+      final r = StableRandom(12345);
+      for (var i = 0; i < 20000; i++) {
+        final v = r.nextDouble();
+        expect(v, greaterThanOrEqualTo(0.0));
+        expect(v, lessThan(1.0));
+      }
+    });
+
+    test('samante diferite dau siruri diferite', () {
+      final s1 = StableRandom(7);
+      final s2 = StableRandom(8);
+      expect([for (var i = 0; i < 5; i++) s1.nextInt(1 << 20)],
+          isNot([for (var i = 0; i < 5; i++) s2.nextInt(1 << 20)]));
+    });
+  });
 }

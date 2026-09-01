@@ -176,10 +176,6 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// lovitură dublă, sau încă n-am apăsat nimic. Se golește la runda nouă.
   String? _firstDoubleTarget;
 
-  /// Secunde adăugate la runda curentă de [PowerUp.extraTime] — vezi
-  /// [_secondsLeftFor].
-  int _extraSecondsThisRound = 0;
-
   List<CultureQuestion> _buildPool() {
     final pool = List.of(cultureQuestions);
     stableShuffle(pool, stableHash(widget.matchId));
@@ -235,7 +231,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     super.dispose();
   }
 
-  int _secondsLeftFor(MatchInfo info) => _secondsLeft(info, tanksRoundSeconds + _extraSecondsThisRound);
+  int _secondsLeftFor(MatchInfo info) => _secondsLeft(info, tanksRoundSeconds);
 
   /// Cronometrul fazei de țintire pornește de la zero: [closeTanksAnswering]
   /// rescrie `roundStartedAt` când intră în fază, tocmai ca secundele de aici
@@ -285,27 +281,32 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   ///  - [PowerUp.peek]: efect local — arată ce au răspuns ceilalți acum.
   void _usePowerUp(MatchInfo info, PowerUp p) {
     if (p == PowerUp.none || !_myPowerUps.contains(p)) return;
-    // O singură putere pe rundă — vezi [_powerUpUsedRound].
-    if (_powerUpUsedRound == info.roundIndex) {
-      notifyPowerUpTooLate(context);
-      return;
-    }
+    // Fereastra de fază se verifică ÎNAINTEA regulii „una pe rundă": dacă
+    // puterea n-ar fi mers oricum acum, ăsta e motivul real al refuzului.
     if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
       notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
     }
+    // O singură putere pe rundă — vezi [_powerUpUsedRound].
+    if (_powerUpUsedRound == info.roundIndex) {
+      notifyPowerUpAlreadyUsed(context);
+      return;
+    }
+    // 50/50 mai are o precondiție pe care faza n-o poate exprima: dacă am
+    // răspuns deja, n-are ce ascunde. O păstrez pentru runda următoare în
+    // loc s-o consum în gol (recenzie 2026-09-01).
+    if (p == PowerUp.fiftyFifty &&
+        info.roundAnswers.containsKey(MultiplayerService.instance.currentPlayerId)) {
+      notifyPowerUpNoEffect(context);
+      return;
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
-        final me = MultiplayerService.instance.currentPlayerId;
-        if (info.roundPhase == RoundPhase.answering && !info.roundAnswers.containsKey(me)) {
-          final q = _questionFor(info.roundIndex);
-          final wrong = q.choices.where((c) => c != q.answer).toList();
-          stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
-          setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
-        }
-      case PowerUp.extraTime:
-        setState(() => _extraSecondsThisRound += extraTimeSeconds);
+        final q = _questionFor(info.roundIndex);
+        final wrong = q.choices.where((c) => c != q.answer).toList();
+        stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
+        setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
       case PowerUp.repairKit:
         MultiplayerService.instance.useTanksRepairKit(matchId: widget.matchId);
       case PowerUp.megaRocket:
@@ -390,7 +391,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   Future<void> _advancePhase(MatchInfo info) async {
     if (_resolving) return;
     final now = DateTime.now();
-    if (_lastResolveAttempt != null && now.difference(_lastResolveAttempt!) < const Duration(milliseconds: 1200)) {
+    if (_lastResolveAttempt != null && now.difference(_lastResolveAttempt!) < const Duration(milliseconds: 900)) {
       return;
     }
     _lastResolveAttempt = now;
@@ -479,7 +480,6 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _lastResolveAttempt = null;
       _hiddenChoices = const {};
       _firstDoubleTarget = null;
-      _extraSecondsThisRound = 0;
       _advanceTimer?.cancel();
       _advanceTimer = null;
       // Post-frame, nu aici: [_onData] rulează CHIAR ÎN TIMPUL build-ului, iar
@@ -754,6 +754,17 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                         secondsLeft: _targetSecondsLeftFor(info),
                         firstDoubleTarget: _firstDoubleTarget,
                         onPick: (id) => _pickTarget(info, id),
+                        // Inventarul merge CU ecranul de țintire: șase din
+                        // puterile din `powerUpUsablePhases` au fereastră în
+                        // faza asta, iar tot aici se și ACORDĂ puterea. Până
+                        // la recenzia din 2026-09-01 dispărea din cadru
+                        // exact în faza în care primeai anunțul „ai primit o
+                        // putere" — deci nu se putea folosi.
+                        inventory: PowerUpInventory(
+                          powerUps: _myPowerUps,
+                          usedThisRound: _powerUpUsedRound == info.roundIndex,
+                          onUse: (p) => _usePowerUp(info, p),
+                        ),
                       );
                     }
                     // Camera de pe obuz stă PESTE tot ecranul, nu doar peste
@@ -1201,6 +1212,10 @@ class _TargetingView extends StatelessWidget {
   final String? firstDoubleTarget;
   final void Function(String targetId) onPick;
 
+  /// Bara de puteri, construită de ecran (vezi [PowerUpInventory]) — se
+  /// desenează sub conținut, deasupra dezvăluirii răspunsului.
+  final Widget inventory;
+
   const _TargetingView({
     required this.info,
     required this.players,
@@ -1208,6 +1223,7 @@ class _TargetingView extends StatelessWidget {
     required this.secondsLeft,
     required this.firstDoubleTarget,
     required this.onPick,
+    required this.inventory,
   });
 
   @override
@@ -1256,6 +1272,7 @@ class _TargetingView extends StatelessWidget {
               // rămâne una singură, iar lipită de titlu arăta a pagină
               // neterminată.
               Expanded(child: Center(child: iAmShooter ? _targets(enemies, chosen, locked) : _waitingRoom())),
+              inventory,
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
                 child: _answerReveal(),

@@ -87,7 +87,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// acordare pe aceeași rundă.
   PowerUp _myPowerUp = PowerUp.none;
   Set<String> _hiddenChoices = const {};
-  int _extraSecondsThisRound = 0;
 
   /// uid → nume, reîmprospătat la fiecare [_onData] — pentru [PowerUp.peek].
   final Map<String, String> _playerNames = {};
@@ -150,7 +149,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     super.dispose();
   }
 
-  int get _roundTotalSeconds => obbyRoundSeconds + _extraSecondsThisRound;
+  int get _roundTotalSeconds => obbyRoundSeconds;
 
   int _secondsLeftFor(MatchInfo info) {
     final started = info.roundStartedAt?.toDate();
@@ -251,8 +250,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
           setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
         }
-      case PowerUp.extraTime:
-        setState(() => _extraSecondsThisRound += extraTimeSeconds);
       case PowerUp.jetpack:
         MultiplayerService.instance.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.sabotage:
@@ -424,7 +421,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       _revealedAtLocal = null;
       _playedRevealSfx = false;
       _hiddenChoices = const {};
-      _extraSecondsThisRound = 0;
       _lateSfxTimer?.cancel();
       _lateSfxTimer = null;
       _revealDelayTimer?.cancel();
