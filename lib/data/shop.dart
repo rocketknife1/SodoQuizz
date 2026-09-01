@@ -141,13 +141,25 @@ const bool realMoneyStoreEnabled = false;
 /// Reveal-ul e o singură linie: `true` aici. [realMoneyStoreEnabled] rămâne
 /// separat — ăla deblochează plățile efective, ăsta doar vizibilitatea.
 ///
-/// Pus pe `true` la cerere explicită (2026-08-05): secțiunea premium se vede
-/// acum normal, fără blur. Fluxul de cumpărare rămâne SIMULAT — vezi
-/// [realMoneyStoreEnabled], care nu s-a schimbat — deci apăsarea unui buton
-/// arată în continuare dialogul "În curând", nu percepe bani reali. Dacă
-/// build-ul ăsta ajunge vreodată în Play Console, [realMoneyStoreEnabled]
-/// trebuie să rămână `false` până la integrarea billing-ului real.
-const bool premiumShopRevealed = true;
+/// Istoric:
+///  • 2026-08-05 — pus pe `true` la cerere explicită: zona premium se vedea
+///    normal, cu preturi la vedere.
+///  • 2026-09-02 — pus ÎNAPOI pe `false` cât timp jocul e în testare închisă.
+///    Motivul nu e unul de reguli (apăsarea unui preț nu acordă nimic și nu
+///    ia bani — vezi `_confirmPurchase`, care iese pe dialogul "În curând"),
+///    ci de moment: preturile tocmai s-au rescris, se vor mai schimba până la
+///    lansare, iar testerii care se obișnuiesc cu cifrele de acum ar da
+///    feedback pe o versiune care n-a existat niciodată. În plus, capturile
+///    de ecran ale testerilor circulă.
+///
+/// Rubricile care se plătesc în monede/gems (Vieți, Hints, deblocări) rămân
+/// NEATINSE — sunt joc curat, sunt principalul consumator de monede din
+/// economie și chiar trebuie testate.
+///
+/// Se pune la loc pe `true` odată cu deschiderea magazinului. Rămâne separat
+/// de [realMoneyStoreEnabled]: ăla deblochează plățile efective, ăsta doar
+/// vizibilitatea.
+const bool premiumShopRevealed = false;
 
 /// Formatare unitară a prețului, cu virgulă zecimală (convenția din România).
 String formatRon(double price) => '${price.toStringAsFixed(2).replaceAll('.', ',')} lei';
