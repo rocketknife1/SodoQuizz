@@ -10,7 +10,9 @@ void main() {
         if (grantsPowerUp(
           matchId: 'meci-test-$rank', roundIndex: r, playerId: 'jucator',
           wonRound: true, myRank: rank, totalPlayers: 4,
-        )) drops++;
+        )) {
+          drops++;
+        }
       }
       // ignore: avoid_print
       print('  locul ${rank + 1}/4 -> $drops din 200 runde castigate '
