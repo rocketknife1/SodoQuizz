@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'stable_hash.dart';
 
 const int maxHintsPerQuestion = 3;
 
@@ -191,7 +192,9 @@ double resolveBlurSigma(int hintsUsed, {required bool revealed}) {
 
 LinearGradient buildQuestionGradient(String seed, Color baseColor) {
   final accent = HSLColor.fromColor(baseColor)
-      .withHue((seed.hashCode.abs() % 360).toDouble())
+      // stableHash: aceeasi intrebare trebuie sa arate la fel pe telefon si
+      // in browser (vezi core/stable_hash.dart).
+      .withHue((stableHash(seed) % 360).toDouble())
       .toColor();
 
   return LinearGradient(

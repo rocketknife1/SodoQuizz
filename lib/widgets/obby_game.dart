@@ -6,6 +6,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../core/obby.dart';
+import '../core/stable_hash.dart';
 
 /// Ce a pățit un alergător în runda tocmai încheiată — se calculează în ecran
 /// (vezi MultiplayerObbyScreen._advancedThisRound) și ajunge aici gata
@@ -572,7 +573,9 @@ class _RunnerComponent extends PositionComponent {
     // din [update]: altfel primul cadru al scenei i-ar fi arătat pe toți la
     // linia de start, cu un salt vizibil imediat după.
     position.y = -startDepth * 900;
-    final rng = Random(data.id.hashCode);
+    // StableRandom: forma bolovanului trebuie sa fie aceeasi pentru toti cei
+    // care se uita la acelasi jucator, indiferent de platforma.
+    final rng = StableRandom(stableHash(data.id));
     _platformPath = buildObbyRockPath(rng, 78, 30);
     _shards = _buildObbyPlatformShards(rng);
   }

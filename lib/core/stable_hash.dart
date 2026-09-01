@@ -23,6 +23,8 @@
 /// sunt întregi pe 64 de biți (mobil, dart2wasm).
 library;
 
+import 'dart:math';
+
 /// Hash de șir pe 32 de biți, mereu pozitiv — se poate da direct ca sămânță.
 int stableHash(String input) {
   var hash = 0x811C9DC5; // offset basis FNV-1a
@@ -49,6 +51,41 @@ int _nextState(int state) {
   s = s ^ (s >> 17);
   s = (s ^ (s << 5)) & 0xFFFFFFFF;
   return s;
+}
+
+/// Generator de numere aleatoare STABIL între platforme, cu API-ul lui
+/// `Random` (atât cât folosim: `nextDouble`, `nextInt`, `nextBool`).
+///
+/// `Random(seed)` din `dart:math` NU garantează același șir pe platforme —
+/// documentația spune explicit „the implementation of the random stream can
+/// change". De aceea orice desen sau alegere pe care trebuie s-o vadă la fel
+/// și cel de pe telefon, și cel din browser, trece pe aici.
+///
+/// Folosit de: forma bolovanilor din Obby (aceeași pentru toți cei care se
+/// uită la același jucător). NU e criptografic și nu pretinde să fie.
+class StableRandom implements Random {
+  int _state;
+
+  StableRandom(int seed) : _state = (seed & 0xFFFFFFFF) == 0 ? 0xDEAD : (seed & 0xFFFFFFFF);
+
+  int _next() {
+    _state = _nextState(_state);
+    return _state;
+  }
+
+  @override
+  int nextInt(int max) {
+    if (max <= 0) throw RangeError.range(max, 1, null, 'max');
+    return _next() % max;
+  }
+
+  /// 0.0 (inclusiv) .. 1.0 (exclusiv), cu 32 de biți de precizie — mai mult
+  /// decât are nevoie orice desen.
+  @override
+  double nextDouble() => _next() / 4294967296.0;
+
+  @override
+  bool nextBool() => (_next() & 1) == 1;
 }
 
 /// Fisher–Yates cu generatorul de mai sus: aceeași listă și aceeași sămânță
