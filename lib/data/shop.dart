@@ -35,8 +35,38 @@ const int initialUnlockedQuestions = 15;
 const int questionUnlockBatch = 15;
 
 /// Gems primiți gratuit la instalare — [_questionUnlockTierPrices]`[0]` (34)
-/// plus un rest care contează pentru următoarea deblocare.
+/// plus un rest care contează pentru următoarea deblocare. NU trece prin
+/// [gemGiftGems]: ăștia sunt deja în sold de la prima pornire (vezi
+/// StorageService.getGems), cadoul de mai jos vine peste ei.
 const int starterGemGrant = 47;
+
+// ─── Cadoul de gems „din partea casei", repetabil ─────────────────────────
+// Era un mesaj pasiv pe ecranul de categorii, care se stingea singur când
+// soldul scădea sub prețul primei trepte. Acum e un buton de revendicat care
+// revine periodic — jucătorul vede ce primește și când.
+//
+// DE CE 34 la 48 de ore, și nu altceva:
+//
+//  • 34 e exact `questionUnlockGemsPrice(1)`, prețul unei trepte de
+//    categorie. Cadoul are deci un înțeles în joc („îți plătesc o treaptă"),
+//    nu e o cifră aleasă la întâmplare.
+//  • Venitul de gems al unui jucător activ e azi ~13/zi din quest-uri (1 per
+//    quest, 12-14 quest-uri pe zi) plus ~15/zi din roată, dacă o învârte
+//    zilnic — deci ~28/zi. Cadoul adaugă 17/zi, adică +60%: se simte, dar nu
+//    face gems-ul o resursă comună. Maxarea completă a unei categorii rămâne
+//    1.099 gems, obiectiv de săptămâni.
+//  • 48h, nu 24h: la o zi ar fi devenit „încă o recompensă zilnică" lângă
+//    cele existente. La 72h se pierde ca motiv de revenire. Două zile ține
+//    cadoul un eveniment, dar prinde și jucătorul care intră din două în
+//    două zile.
+//  • Cel mai ieftin pachet cu bani reali dă 130 gems, adică ~7,6 cadouri.
+//    Trickle-ul gratuit nu-l anulează — doar îl face opțional.
+const int gemGiftCooldownHours = 48;
+
+/// Cât dă un cadou. Aceeași sumă de fiecare dată, inclusiv prima — un prim
+/// cadou mai mare ar fi dublat [starterGemGrant], care e deja în sold de la
+/// instalare.
+int get gemGiftGems => questionUnlockGemsPrice(1);
 
 /// Câte trepte de upgrade poate face o categorie, în total (tier 0 = pornire,
 /// tier [maxUnlockTier] = maxată complet, indiferent de câte întrebări mai
@@ -122,12 +152,19 @@ const bool premiumShopRevealed = true;
 /// Formatare unitară a prețului, cu virgulă zecimală (convenția din România).
 String formatRon(double price) => '${price.toStringAsFixed(2).replaceAll('.', ',')} lei';
 
+// TREI trepte, nu cinci. Cinci opțiuni la același lucru nu ajută pe nimeni
+// să aleagă — și cele două de sus (93,99 și 233,99 lei) erau prețuri de
+// balenă într-un joc care n-a fost încă lansat. Cele trei de acum sunt:
+// „încerc", „mă țin de joc", „chiar investesc" — ultima e exact cât să maxeze
+// o categorie (1.099 gems, vezi [_questionUnlockTierPrices]), deci prețul are
+// un obiectiv de joc în spate, nu doar o cifră mai mare.
+//
+// Randamentul crește cu treapta (26 / 30 / 35 gems per leu), ca pachetul mare
+// să fie vizibil mai bun fără să facă cele mici să pară o păcăleală.
 const List<GemPack> gemPacks = [
-  GemPack(productId: 'gems_118', gems: 118, priceRon: 4.79),
-  GemPack(productId: 'gems_634', gems: 634, bonusLabel: '+10%', priceRon: 23.49),
-  GemPack(productId: 'gems_1372', gems: 1372, bonusLabel: '+20%', priceRon: 46.99),
-  GemPack(productId: 'gems_2918', gems: 2918, bonusLabel: '+30%', priceRon: 93.99),
-  GemPack(productId: 'gems_7640', gems: 7640, bonusLabel: '+40%', priceRon: 233.99),
+  GemPack(productId: 'gems_130', gems: 130, priceRon: 4.99),
+  GemPack(productId: 'gems_390', gems: 390, bonusLabel: '+15%', priceRon: 12.99),
+  GemPack(productId: 'gems_1050', gems: 1050, bonusLabel: '+35%', priceRon: 29.99),
 ];
 
 class LivesPack {
@@ -137,13 +174,17 @@ class LivesPack {
   const LivesPack({required this.productId, required this.lives, required this.priceRon});
 }
 
+// Vieţile sunt resursa moale (se refac singure, plus 6 gratuite pe zi), deci
+// intrarea e sub 3 lei — un preţ de impuls, nu o decizie. A treia treaptă
+// e „nelimitat 24h", care nu e un număr mai mare ci alt fel de valoare:
+// exact oferta pentru cine chiar stă în joc o zi întreagă.
 const List<LivesPack> livesPacks = [
-  LivesPack(productId: 'lives_7', lives: 7, priceRon: 4.79),
-  LivesPack(productId: 'lives_19', lives: 19, priceRon: 11.79),
+  LivesPack(productId: 'lives_10', lives: 10, priceRon: 2.99),
+  LivesPack(productId: 'lives_30', lives: 30, priceRon: 6.99),
 ];
 
 const String unlimitedLives24hProductId = 'lives_unlimited_24h';
-const double unlimitedLives24hPriceRon = 9.29;
+const double unlimitedLives24hPriceRon = 9.99;
 
 class HintPackReal {
   final String productId;
@@ -152,10 +193,12 @@ class HintPackReal {
   const HintPackReal({required this.productId, required this.hints, required this.priceRon});
 }
 
+// Aceleaşi trei trepte ca la vieţi, acelaşi prag de intrare de sub 3 lei.
+// Randament crescător: 8,4 / 10,0 / 11,7 hints per leu.
 const List<HintPackReal> hintPacksReal = [
-  HintPackReal(productId: 'hints_23', hints: 23, priceRon: 4.79),
-  HintPackReal(productId: 'hints_68', hints: 68, priceRon: 11.79),
-  HintPackReal(productId: 'hints_172', hints: 172, priceRon: 23.49),
+  HintPackReal(productId: 'hints_25', hints: 25, priceRon: 2.99),
+  HintPackReal(productId: 'hints_70', hints: 70, priceRon: 6.99),
+  HintPackReal(productId: 'hints_175', hints: 175, priceRon: 14.99),
 ];
 
 /// Ofertă cu mai multe resurse deodată, la un preț mai bun decât cumpărate
@@ -199,6 +242,12 @@ class Bundle {
         _subtitleEn = subtitleEn;
 }
 
+// TREI pachete, nu patru. „Pachet Legendar" la 117,99 lei a fost scos: era
+// mai scump decât tot restul magazinului la un loc și contrazicea direct
+// ideea de prețuri accesibile. Cele trei rămase acoperă exact cele trei
+// buzunare — și fiecare dă mai multe gems decât ai lua pe aceiași bani din
+// [gemPacks], PLUS monede/vieți/hints; de-aia sunt „pachete", nu doar gems
+// cu alt nume.
 const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_starter',
@@ -206,11 +255,14 @@ const List<Bundle> bundles = [
     titleEn: 'Starter Pack',
     subtitle: 'O singură dată — cea mai bună ofertă din shop',
     subtitleEn: 'One time only — the best deal in the shop',
-    gems: 434,
-    coins: 3170,
-    hearts: 17,
-    hints: 43,
-    priceRon: 23.49,
+    // Chiar TREBUIE sa fie cel mai bun raport din magazin, altfel subtitlul
+    // minte — prins de test/shop_pricing_test.dart, unde prima varianta
+    // (260 gems) iesea sub Pachetul Campion.
+    gems: 340,
+    coins: 3000,
+    hearts: 15,
+    hints: 35,
+    priceRon: 9.99,
     oneTimeOnly: true,
   ),
   Bundle(
@@ -219,11 +271,11 @@ const List<Bundle> bundles = [
     titleEn: 'Adventurer Pack',
     subtitle: 'Un plus solid pentru orice sesiune',
     subtitleEn: 'A solid boost for any session',
-    gems: 167,
-    coins: 1283,
-    hearts: 6,
-    hints: 17,
-    priceRon: 13.99,
+    gems: 520,
+    coins: 5000,
+    hearts: 25,
+    hints: 60,
+    priceRon: 19.99,
   ),
   Bundle(
     productId: 'bundle_campion',
@@ -231,23 +283,11 @@ const List<Bundle> bundles = [
     titleEn: 'Champion Pack',
     subtitle: 'Pentru cine joacă mult',
     subtitleEn: 'For people who play a lot',
-    gems: 534,
-    coins: 4270,
-    hearts: 17,
-    hints: 53,
-    priceRon: 46.99,
-  ),
-  Bundle(
-    productId: 'bundle_legendar',
-    title: 'Pachet Legendar',
-    titleEn: 'Legendary Pack',
-    subtitle: 'Cel mai mare pachet disponibil',
-    subtitleEn: 'The biggest pack available',
-    gems: 1634,
-    coins: 12840,
-    hearts: 43,
-    hints: 158,
-    priceRon: 117.99,
+    gems: 1200,
+    coins: 12000,
+    hearts: 60,
+    hints: 150,
+    priceRon: 39.99,
   ),
 ];
 
@@ -263,10 +303,10 @@ const Bundle noAdsBundle = Bundle(
   titleEn: 'No ads, forever',
   subtitle: 'Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
   subtitleEn: 'Forced ads stay off for good, plus an instant bonus',
-  gems: 214,
-  coins: 2130,
-  hearts: 17,
-  hints: 43,
-  priceRon: 46.99,
+  gems: 150,
+  coins: 1500,
+  hearts: 10,
+  hints: 25,
+  priceRon: 24.99,
   permanentNoAds: true,
 );

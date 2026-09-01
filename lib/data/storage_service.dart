@@ -131,6 +131,7 @@ class StorageService {
   static const _dailyChallengesTotalKey = 'daily_challenges_total';
   static const _modesEverPlayedKey = 'modes_ever_played';
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
+  static const _gemGiftTimestampKey = 'gem_gift_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';
   static const _displayNameChosenKey = 'display_name_chosen';
@@ -776,6 +777,42 @@ class StorageService {
   static Future<void> recordRingSpin() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_ringSpinTimestampKey, DateTime.now().millisecondsSinceEpoch);
+    await _recordActivity(prefs);
+  }
+
+  // ─── Cadoul de gems „din partea casei" ────────────────────────────────────
+  // Era un simplu MESAJ care se stingea singur când scădea soldul. Acum e un
+  // buton de revendicat, care revine la [gemGiftCooldownHours] (vezi
+  // core/shop_gifts.dart pentru cât și DE CE atât).
+  //
+  // Acelaşi tipar ca la roată: timestamp, nu dată calendaristică — cine
+  // revendică seara nu trebuie să aştepte până a doua zi dimineaţa.
+  // Prima revendicare e mereu disponibilă (fără timestamp), deci jucătorul
+  // nou primeşte cadoul de pornire chiar de la prima deschidere.
+
+  static Future<bool> canClaimGemGift() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getInt(_gemGiftTimestampKey);
+    if (last == null) return true;
+    final elapsed = DateTime.now().millisecondsSinceEpoch - last;
+    return elapsed >= const Duration(hours: gemGiftCooldownHours).inMilliseconds;
+  }
+
+  /// Timpul rămas până la următorul cadou (zero dacă e deja disponibil).
+  static Future<Duration> gemGiftTimeRemaining() async {
+    final prefs = await SharedPreferences.getInstance();
+    final last = prefs.getInt(_gemGiftTimestampKey);
+    if (last == null) return Duration.zero;
+    final elapsed = DateTime.now().millisecondsSinceEpoch - last;
+    final remaining = const Duration(hours: gemGiftCooldownHours).inMilliseconds - elapsed;
+    return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
+  }
+
+  /// ȚINE MINTE că s-a revendicat — gems-ii îi scrie apelantul, aceeași
+  /// convenție ca la quest-uri și la categoria zilei.
+  static Future<void> recordGemGiftClaim() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_gemGiftTimestampKey, DateTime.now().millisecondsSinceEpoch);
     await _recordActivity(prefs);
   }
 

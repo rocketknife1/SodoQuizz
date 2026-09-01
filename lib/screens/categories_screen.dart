@@ -52,6 +52,13 @@ class CategoriesScreen extends StatefulWidget {
 class _CategoriesScreenState extends State<CategoriesScreen> with TickerProviderStateMixin {
   late Future<Map<String, _ModeStats>> _statsFuture;
 
+  /// Se poate lua cadoul de gems acum? Vezi [_buildGemGiftButton].
+  late Future<bool> _gemGiftFuture;
+
+  /// Blochează butonul cât rulează revendicarea, ca două apăsări rapide să nu
+  /// dea cadoul de două ori.
+  bool _claiming = false;
+
   /// Categoria evidențiată azi (conținut rotativ, PLAN_DE_VIITOR.md punctul
   /// 5) — calculată o singură dată la montare, nu la fiecare build: nu se
   /// schimbă cât timp stai pe ecran, iar `DateTime.now()` direct în build ar
@@ -74,6 +81,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
   void initState() {
     super.initState();
     _statsFuture = _loadStats();
+    _gemGiftFuture = _loadGemGiftState();
     _featuredFuture = _loadFeaturedClaimState();
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
     _liveCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 8))..repeat();
@@ -209,28 +217,48 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
             ),
           ],
         ),
-        content: Text(
-          tr(
-            'Taxă de intrare: $fee monede '
-                '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1).replaceAll('.', ',')}% '
-                'din câte ai, între $categoryEntryFeeMin și $categoryEntryFeeMax).\n\n'
-                'Recompensa la ieșire depinde STRICT de câte răspunzi corect:\n'
-                '• sub 4 corecte — nimic înapoi\n'
-                '• 4-7 corecte — 60% din taxă\n'
-                '• 8-14 corecte — taxa întreagă\n'
-                '• 15+ corecte — taxa +30%'
-                '${canAfford ? '' : '\n\nNu ai destule monede (ai $coins).'}',
-            'Entry fee: $fee coins '
-                '(${(categoryEntryFeeRatio * 100).toStringAsFixed(1)}% '
-                'of what you have, between $categoryEntryFeeMin and $categoryEntryFeeMax).\n\n'
-                'Your payout depends STRICTLY on how many you answer correctly:\n'
-                '• under 4 correct — nothing back\n'
-                '• 4-7 correct — 60% of the fee\n'
-                '• 8-14 correct — the whole fee\n'
-                '• 15+ correct — the fee +30%'
-                '${canAfford ? '' : '\n\nNot enough coins (you have $coins).'}',
-          ),
-          style: const TextStyle(color: Colors.white70),
+        // Peretele de text de dinainte spunea și formula taxei
+        // ("2,1% din câte ai, între 13 și 174") — informație de designer, nu
+        // de jucător. Acum: cât plătești, și un tabel de patru rânduri cu ce
+        // primești înapoi, colorat pe pierdere / recuperare / profit.
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.coin.withAlpha(28),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: AppColors.coin.withAlpha(90)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.monetization_on_rounded, color: AppColors.coin, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(tr('Costă $fee monede', 'Costs $fee coins'),
+                        style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(tr('CÂT PRIMEȘTI ÎNAPOI', 'WHAT YOU GET BACK'),
+                style: const TextStyle(
+                    color: Colors.white38, fontSize: 10, letterSpacing: 1.1, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            _payoutRow(tr('sub 4 corecte', 'under 4 correct'), tr('nimic', 'nothing'), AppColors.danger),
+            _payoutRow(tr('4-7 corecte', '4-7 correct'), '60%', AppColors.orange),
+            _payoutRow(tr('8-14 corecte', '8-14 correct'), tr('tot', 'all of it'), Colors.white70),
+            _payoutRow(tr('15+ corecte', '15+ correct'), '+30%', AppColors.play),
+            if (!canAfford) ...[
+              const SizedBox(height: 12),
+              Text(tr('Nu ai destule monede — ai $coins.', 'Not enough coins — you have $coins.'),
+                  style: const TextStyle(color: AppColors.danger, fontSize: 13, fontWeight: FontWeight.w700)),
+            ],
+          ],
         ),
         actions: [
           TextButton(
@@ -396,53 +424,141 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     );
   }
 
-  /// Îndrumar pentru jucătorul nou: la instalare primește [starterGemGrant]
-  /// gems "din partea casei", exact cât să-și deblocheze SINGUR o categorie
-  /// pe care și-o dorește (cele 3 de start sunt alese random). Dispare de
-  /// îndată ce gems-ul scade sub prețul primei trepte — deci imediat după ce
-  /// și-a ales categoria.
-  Widget _buildStarterGemsBanner() {
-    return FutureBuilder<int>(
-      future: StorageService.getGems(),
-      builder: (context, snapshot) {
-        final gems = snapshot.data ?? 0;
-        final firstTierPrice = questionUnlockGemsPrice(1);
-        if (gems < firstTierPrice || gems > starterGemGrant) {
-          return const SizedBox.shrink();
-        }
-        return Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFF5EC8F2).withAlpha(28),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFF5EC8F2).withAlpha(120)),
+  /// Un rând din tabelul de recompensă al dialogului de intrare: câte corecte
+  /// și ce iei înapoi, cu culoarea care spune dacă e pierdere, recuperare sau
+  /// profit — fără s-o mai citească nimeni din text.
+  static Widget _payoutRow(String condition, String payout, Color color) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          child: Row(
-            children: [
-              const Icon(Icons.diamond_rounded,
-                  color: Color(0xFF5EC8F2), size: 20),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  tr(
-                    'Ai $gems 💎 din partea casei — deblochează categoria pe care '
-                        'o vrei tu (prima treaptă costă $firstTierPrice).',
-                    'Here are $gems 💎 on the house — unlock whichever category '
-                        'you want (the first tier costs $firstTierPrice).',
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(condition,
+                style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
+          ),
+          Text(payout, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w900)),
+        ],
+      ),
+    );
+  }
+
+  /// Cadoul de gems „din partea casei" — BUTON, nu mesaj.
+  ///
+  /// Era un banner pasiv care se stingea singur când soldul scădea sub prețul
+  /// primei trepte: jucătorul nu primea nimic apăsând pe el, iar cadoul de
+  /// pornire era acordat în tăcere la instalare. Acum se revendică explicit,
+  /// butonul dispare după ce l-ai luat și revine la [gemGiftCooldownHours]
+  /// (vezi data/shop.dart pentru cât și de ce atât).
+  Widget _buildGemGiftButton() {
+    return FutureBuilder<bool>(
+      future: _gemGiftFuture,
+      builder: (context, snapshot) {
+        // Cât timp e pe răcire, butonul nu există — exact cum s-a cerut.
+        if (snapshot.data != true) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+          child: Material(
+            borderRadius: BorderRadius.circular(18),
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: _claiming ? null : _claimGemGift,
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [Color(0xFF1E7FA8), Color(0xFF5EC8F2)],
                   ),
-                  style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      height: 1.3),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(color: const Color(0xFF5EC8F2).withAlpha(90), blurRadius: 18, spreadRadius: -4),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(55),
+                        borderRadius: BorderRadius.circular(13),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 13),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            tr('Cadou din partea casei', 'A gift on the house'),
+                            style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            tr('Fix cât o treaptă de categorie', 'Exactly one category tier'),
+                            style: TextStyle(color: Colors.white.withAlpha(215), fontSize: 12, fontWeight: FontWeight.w600),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.diamond_rounded, color: Color(0xFF1E7FA8), size: 17),
+                          const SizedBox(width: 5),
+                          Text('+$gemGiftGems',
+                              style: const TextStyle(
+                                  color: Color(0xFF12546F), fontSize: 15, fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         );
       },
     );
+  }
+
+  Future<bool> _loadGemGiftState() => StorageService.canClaimGemGift();
+
+  /// Aceeași convenție ca la [_claimFeatured] și la quest-uri: metoda de
+  /// storage doar ține minte revendicarea, apelantul scrie resursele.
+  Future<void> _claimGemGift() async {
+    if (_claiming) return;
+    setState(() => _claiming = true);
+    try {
+      await StorageService.addGems(gemGiftGems);
+      await StorageService.recordGemGiftClaim();
+      Sfx.rewardPop();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _claiming = false;
+          _gemGiftFuture = _loadGemGiftState();
+        });
+      }
+    }
   }
 
   Future<_FeaturedClaimState> _loadFeaturedClaimState() async {
@@ -584,7 +700,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                       ),
                     ),
                   ),
-                  _buildStarterGemsBanner(),
+                  _buildGemGiftButton(),
                   _buildFeaturedCategoryBanner(),
                   Expanded(
                     child: ListView.separated(

@@ -383,6 +383,119 @@ class _QuestsScreenState extends State<QuestsScreen> {
     }
   }
 
+  /// Ce quest-uri intră mâine. Rotația e deterministă — [todaysQuests] ia
+  /// grupa zilei din săptămână, deci ziua de mâine se poate arăta EXACT, nu
+  /// ghicit. Lista e read-only: nu se poate progresa la ele azi.
+  Future<void> _showTomorrowQuests() async {
+    final level = await StorageService.questScaleLevel();
+    if (!mounted) return;
+    final quests = todaysQuests(DateTime.now().add(const Duration(days: 1)));
+    Sfx.tileSelect();
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF141B36),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Icon(Icons.event_rounded, color: AppColors.purple, size: 22),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(tr('Mâine intră astea', "Tomorrow's line-up"),
+                        style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                  ),
+                  Text('${quests.length}',
+                      style: const TextStyle(color: Colors.white38, fontSize: 15, fontWeight: FontWeight.w800)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                tr('Recompensele se văd la valorile nivelului tău de acum.',
+                    'Rewards are shown at your current level.'),
+                style: const TextStyle(color: Colors.white38, fontSize: 11.5),
+              ),
+              const SizedBox(height: 14),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: quests.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (context, i) {
+                    final q = quests[i];
+                    final color = switch (q.tier) {
+                      QuestTier.easy => AppColors.teal,
+                      QuestTier.medium => AppColors.orange,
+                      QuestTier.hard => AppColors.danger,
+                    };
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(10),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: color.withAlpha(70)),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              color: color.withAlpha(38),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            alignment: Alignment.center,
+                            child: Icon(q.icon, color: color, size: 18),
+                          ),
+                          const SizedBox(width: 11),
+                          Expanded(
+                            child: Text(q.titleAt(level),
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w600)),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('💰${q.coinRewardAt(level)}',
+                              style: const TextStyle(
+                                  color: AppColors.coin, fontSize: 12, fontWeight: FontWeight.w800)),
+                          if (q.gemReward > 0) ...[
+                            const SizedBox(width: 7),
+                            Text('💎${q.gemReward}',
+                                style: const TextStyle(
+                                    color: AppColors.gem, fontSize: 12, fontWeight: FontWeight.w800)),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -424,39 +537,85 @@ class _QuestsScreenState extends State<QuestsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Explicatia de dinainte era un paragraf de trei randuri
+                      // pe care nimeni nu-l citeste a doua oara. Ce conteaza
+                      // zilnic incape intr-o linie; restul e in pastilele de
+                      // dedesubt, care sunt si actionabile.
                       Text(
-                        tr(
-                            'Azi ai ${todaysQuests().length} quest-uri din cele ${allQuests.length}. '
-                                'Fiecare are alt contor, deci niciunul nu se bifează singur. '
-                                'La miezul nopții primești un set complet nou — aceleași revin abia peste o săptămână.',
-                            'Today you have ${todaysQuests().length} quests out of ${allQuests.length}. '
-                                'Each one tracks something different, so none of them completes itself. '
-                                'At midnight you get a brand new set — the same ones only come back a week later.'),
+                        tr('${todaysQuests().length} azi din ${allQuests.length}. La miezul nopții intră alt set.',
+                            '${todaysQuests().length} today out of ${allQuests.length}. A new set arrives at midnight.'),
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
-                      // fiecare quest dă acum gems (1/2/4 după dificultate),
-                      // dar cu un plafon zilnic — arătăm explicit cât a mai
-                      // rămas, altfel un card cu 💎 care nu mai plătește ar
-                      // părea stricat.
-                      FutureBuilder<int>(
-                        future: StorageService.questGemsLeftToday(),
-                        builder: (context, snap) {
-                          final left = snap.data;
-                          if (left == null) return const SizedBox.shrink();
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 3),
-                            child: Text(
-                              left > 0
-                                  ? tr('Gems din quest-uri azi: încă $left din $dailyQuestGemCap.',
-                                      'Gems from quests today: $left more out of $dailyQuestGemCap.')
-                                  : 'Ai atins plafonul de $dailyQuestGemCap 💎 din quest-uri pe ziua de azi — restul recompenselor vin normal.',
-                              style: TextStyle(
-                                  color: left > 0 ? AppColors.gem : Colors.white38,
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w600),
+                      const SizedBox(height: 9),
+                      Row(
+                        children: [
+                          // Fiecare quest da gems (1/2/4 dupa dificultate), dar
+                          // cu plafon zilnic — fara pastila asta un card cu 💎
+                          // care nu mai plateste ar parea stricat.
+                          FutureBuilder<int>(
+                            future: StorageService.questGemsLeftToday(),
+                            builder: (context, snap) {
+                              final left = snap.data;
+                              if (left == null) return const SizedBox.shrink();
+                              final done = left <= 0;
+                              return Container(
+                                margin: const EdgeInsets.only(right: 8),
+                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                                decoration: BoxDecoration(
+                                  color: (done ? Colors.white24 : AppColors.gem).withAlpha(done ? 20 : 30),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                      color: (done ? Colors.white24 : AppColors.gem).withAlpha(done ? 60 : 110)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.diamond_rounded,
+                                        size: 14, color: done ? Colors.white38 : AppColors.gem),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      done
+                                          ? tr('plafon atins', 'cap reached')
+                                          : tr('încă $left din $dailyQuestGemCap', '$left more of $dailyQuestGemCap'),
+                                      style: TextStyle(
+                                          color: done ? Colors.white38 : AppColors.gem,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w800),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          // Ce intra maine: jucatorii isi pot planifica seara
+                          // ce joaca a doua zi. Rotatia e determinista (vezi
+                          // todaysQuests), deci se poate arata exact, nu ghicit.
+                          Material(
+                            color: AppColors.purple.withAlpha(38),
+                            borderRadius: BorderRadius.circular(20),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              onTap: _showTomorrowQuests,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: AppColors.purple.withAlpha(120)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(Icons.event_rounded, size: 14, color: AppColors.purple),
+                                    const SizedBox(width: 5),
+                                    Text(tr('Ce intră mâine', "Tomorrow's quests"),
+                                        style: const TextStyle(
+                                            color: AppColors.purple, fontSize: 11.5, fontWeight: FontWeight.w800)),
+                                  ],
+                                ),
+                              ),
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ],
                   ),

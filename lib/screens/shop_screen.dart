@@ -291,6 +291,16 @@ class _ShopScreenState extends State<ShopScreen> {
     await _loadState();
   }
 
+  /// Eticheta treptei dintr-o rubrică cu trei prețuri. Toate rubricile de
+  /// bani reali sunt acum construite la fel — mic / mediu / mare — iar
+  /// eticheta spune pentru CINE e treapta, nu doar „achiziție cu bani reali"
+  /// repetat de nouă ori, cum era înainte.
+  static String _tierLabel(int index) => switch (index) {
+        0 => tr('Cel mai ieftin', 'Cheapest'),
+        1 => tr('Cel mai popular', 'Most popular'),
+        _ => tr('Cea mai bună valoare', 'Best value'),
+      };
+
   Future<void> _buyUnlimitedLives24h() async {
     if (_busy) return;
     if (!await _confirmPurchase(tr('Vieți nelimitate 24h', 'Unlimited lives 24h'), unlimitedLives24hPriceRon)) return;
@@ -534,46 +544,61 @@ class _ShopScreenState extends State<ShopScreen> {
                                   icon: Icons.diamond_rounded,
                                   color: AppColors.gem,
                                   children: [
-                                    for (final pack in gemPacks)
+                                    for (var i = 0; i < gemPacks.length; i++)
                                       _ShopItem(
-                                        title: pack.bonusLabel.isEmpty ? '${pack.gems} gems' : '${pack.gems} gems  (${pack.bonusLabel})',
-                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
-                                        priceLabel: formatRon(pack.priceRon),
+                                        title: gemPacks[i].bonusLabel.isEmpty
+                                            ? '${gemPacks[i].gems} gems'
+                                            : '${gemPacks[i].gems} gems  (${gemPacks[i].bonusLabel})',
+                                        subtitle: _tierLabel(i),
+                                        priceLabel: formatRon(gemPacks[i].priceRon),
                                         disabled: _busy,
-                                        onTap: () => _buyGemPack(pack),
+                                        onTap: () => _buyGemPack(gemPacks[i]),
                                       ),
                                   ],
                                 ),
                                 const SizedBox(height: 14),
+                                // Vieți și Hints au acum rubrici SEPARATE.
+                                // Erau înghesuite într-una singură ("Vieți &
+                                // Hints"), cu șase rânduri de tipuri diferite
+                                // unul sub altul — nu se putea compara nimic
+                                // cu nimic.
                                 _ShopSectionCard(
-                                  title: tr('Vieți & Hints (bani reali)', 'Lives & Hints (real money)'),
-                                  subtitle: tr('Cumpărare directă, fără gems', 'Buy directly, no gems needed'),
-                                  icon: Icons.shopping_bag_rounded,
+                                  title: tr('Vieți', 'Lives'),
+                                  subtitle: tr('Cu bani reali, instant', 'Real money, instant'),
+                                  icon: Icons.favorite_rounded,
                                   color: AppColors.life,
                                   children: [
-                                    for (final pack in livesPacks)
+                                    for (var i = 0; i < livesPacks.length; i++)
                                       _ShopItem(
-                                        title: tr('${pack.lives} vieți instant', '${pack.lives} instant lives'),
-                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
-                                        priceLabel: formatRon(pack.priceRon),
+                                        title: tr('${livesPacks[i].lives} vieți', '${livesPacks[i].lives} lives'),
+                                        subtitle: _tierLabel(i),
+                                        priceLabel: formatRon(livesPacks[i].priceRon),
                                         disabled: _busy,
-                                        onTap: () => _buyLivesPack(pack),
+                                        onTap: () => _buyLivesPack(livesPacks[i]),
                                       ),
                                     _ShopItem(
                                       title: tr('Vieți nelimitate 24h', 'Unlimited lives 24h'),
-                                      subtitle: tr('Joci fără să pierzi vieți timp de 24h',
-                                          'Play for 24h without losing lives'),
+                                      subtitle: tr('O zi întreagă fără oprire', 'A full day, no stopping'),
                                       priceLabel: formatRon(unlimitedLives24hPriceRon),
                                       disabled: _busy,
                                       onTap: _buyUnlimitedLives24h,
                                     ),
-                                    for (final pack in hintPacksReal)
+                                  ],
+                                ),
+                                const SizedBox(height: 14),
+                                _ShopSectionCard(
+                                  title: 'Hints',
+                                  subtitle: tr('Cu bani reali, instant', 'Real money, instant'),
+                                  icon: Icons.tips_and_updates_rounded,
+                                  color: AppColors.hint,
+                                  children: [
+                                    for (var i = 0; i < hintPacksReal.length; i++)
                                       _ShopItem(
-                                        title: '${pack.hints} hints',
-                                        subtitle: tr('Achiziție cu bani reali', 'Real-money purchase'),
-                                        priceLabel: formatRon(pack.priceRon),
+                                        title: '${hintPacksReal[i].hints} hints',
+                                        subtitle: _tierLabel(i),
+                                        priceLabel: formatRon(hintPacksReal[i].priceRon),
                                         disabled: _busy,
-                                        onTap: () => _buyHintPackReal(pack),
+                                        onTap: () => _buyHintPackReal(hintPacksReal[i]),
                                       ),
                                   ],
                                 ),
