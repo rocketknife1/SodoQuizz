@@ -34,7 +34,18 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build Flutter Web
-        run: flutter build web --release --base-href /SodoQuizz/
+        # APPCHECK_RECAPTCHA_KEY: cheia reCAPTCHA v3 din Firebase Console ->
+        # App Check -> aplicatia web. NU e secreta (ajunge oricum in pagina
+        # servita), dar sta ca secret de repo ca sa nu fie in git. Cat timp
+        # secretul lipseste, `--dart-define` primeste string gol si
+        # activateAppCheck() iese curat pe web (vezi app_check_service.dart) —
+        # deci pasul asta e inofensiv pana cand cheia e adaugata.
+        #
+        # PANA la adaugarea ei, varianta web NU trimite niciun token App
+        # Check. Consecinta: daca se apasa "Enforce" in consola inainte de
+        # asta, browserul (canalul principal din LINKS.md) ramane fara
+        # leaderboard / multiplayer / cloud save. Vezi TODO.
+        run: flutter build web --release --base-href /SodoQuizz/ --dart-define=APPCHECK_RECAPTCHA_KEY=${{ secrets.APPCHECK_RECAPTCHA_KEY }}
 
       - name: Copy static pages (privacy policy etc.)
         run: cp web/privacy-policy.html build/web/privacy-policy.html

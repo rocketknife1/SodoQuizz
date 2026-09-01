@@ -80,11 +80,31 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
      nicio eroare de permisiune. Testele de reguli sunt scrise
      (`scratchpad/rulestest/test.mjs`, 11 cazuri) dar emulatorul Firebase
      cere JDK 21, iar mașina are Java 8. De rulat după un upgrade de JDK.
-- **App Check pe „Enforce"** — codul trimite deja tokenul, dar aplicația nu e
-  înregistrată și e pe „Unenforced". Capcana: APK-ul sideloaded din GitHub
-  Releases ia `UNRECOGNIZED_VERSION` și rămâne fără multiplayer, clasament și
-  cloud save. Enforce doar după ce canalul ăla e acceptabil de pierdut. Vezi
-  `project_guess_it_app_check`.
+- **App Check pe „Enforce" — analizat 2026-09-02, NU se poate flipa acum.**
+  La Enforce, o cerere fără token App Check valid e refuzată de Firestore.
+  Starea celor trei canale:
+  - **Browser (github.io), canalul PRINCIPAL din LINKS.md** — nu trimite
+    NICIUN token: workflow-ul de deploy n-avea `APPCHECK_RECAPTCHA_KEY`, deci
+    `activateAppCheck()` ieșea pe web fără să facă nimic. Acum workflow-ul
+    pasează cheia (ca secret de repo), dar **secretul încă nu există** —
+    trebuie luat din Firebase Console → App Check → aplicația web și adăugat
+    la Settings → Secrets → Actions ca `APPCHECK_RECAPTCHA_KEY`. Până atunci,
+    web = zero protecție și Enforce l-ar rupe complet.
+  - **APK din GitHub Releases (link în LINKS.md + Discord)** — ia
+    `UNRECOGNIZED_VERSION`: e semnat cu cheia de upload, iar Play Integrity
+    vouchează doar binare distribuite de Play. Nu există fix — ori se renunță
+    la canalul ăsta (toți testerii Android → Play closed testing, care dă
+    binarul semnat de Play), ori se acceptă că sideload = fără online.
+  - **Play closed testing** — Play Integrity merge, singurul canal OK azi.
+  **Pas următor, gratuit și informativ:** Firebase Console → App Check arată
+  ce procent din cereri vin deja verificate, pe API, în ultimele zile. Dacă
+  aproape tot traficul e browser + sideload (probabil), flipul rupe aproape
+  tot — de amânat până distribuția se mută pe Play. `project_guess_it_app_check`.
+  **Ce a scăzut valoarea flipului:** din 3 motive pentru App Check din
+  `app_check_service.dart`, unul (leaderboard scriabil) e acum acoperit de
+  regulile din 2026-09-02, altul (`completed_matches`) era deja restrâns.
+  Rămân vandalizarea meciurilor și balanța din `users/{uid}` — reale, dar cu
+  impact mic până la bani reali.
 
 ## Datorie tehnică, fără grabă
 
