@@ -208,12 +208,26 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     // iar `await _spin.forward()` nu se mai completa niciodata: premiul nu se
     // acorda si nici rotirea nu se inregistra. Acum inchiderea e blocata cat
     // se invarte (recenzie 2026-09-01).
+    // Roata ia cat spatiu ii da ecranul, nu o marime fixa. Etichetele ("1284+💎")
+    // se scriu pe raza, deci fiecare pixel de raza in plus e latime de text —
+    // pe 240 pur si simplu nu incapeau. Se plafoneaza si dupa inaltime, ca pe
+    // telefoanele scunde/in peisaj sa nu depaseasca fereastra.
+    final screen = MediaQuery.sizeOf(context);
+    final wheelSize = [
+      420.0,
+      screen.width - _dialogInset * 2 - _dialogPadding * 2,
+      screen.height * 0.46,
+    ].reduce(min);
+
     return PopScope(
       canPop: !_spinning,
       child: Dialog(
       backgroundColor: Colors.transparent,
+      // Fereastra se lipeste de marginile ecranului (implicit sunt 40 de o
+      // parte si de alta), ca roata sa aiba loc sa creasca.
+      insetPadding: const EdgeInsets.symmetric(horizontal: _dialogInset, vertical: 24),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+        padding: const EdgeInsets.fromLTRB(_dialogPadding, 24, _dialogPadding, 20),
         decoration: BoxDecoration(
           color: const Color(0xFF1A1A2E),
           borderRadius: BorderRadius.circular(24),
@@ -228,14 +242,14 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
             Text(tr('Un premiu o dată la 24 de ore', 'One prize every 24 hours'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
             const SizedBox(height: 20),
             SizedBox(
-              // 290, ca `CustomPaint`-ul de dedesubt sa primeasca chiar
-              // marimea pe care o cere. Un `CustomPaint` fara copil isi ia
-              // marimea prin `constraints.constrain(preferredSize)`, deci cat
-              // timp cutia asta a ramas 240 painter-ul primea 240 oricat scria
-              // in `size:` — iar etichetele lungi ("1284+💎") ieseau din disc
-              // si se atingeau de iconita. Recenzie 2026-09-01.
-              width: 290,
-              height: 290,
+              // ATENTIE: cutia asta e cea care decide marimea reala. Un
+              // `CustomPaint` fara copil isi ia marimea prin
+              // `constraints.constrain(preferredSize)`, deci cat timp cutia a
+              // ramas 240 painter-ul primea 240 oricat scria in `size:` — de-aia
+              // o crestere facuta doar in painter n-a schimbat nimic
+              // (recenzie 2026-09-01). Se trece aceeasi valoare in ambele.
+              width: wheelSize,
+              height: wheelSize,
               child: Stack(
                 alignment: Alignment.center,
                 clipBehavior: Clip.none,
@@ -248,8 +262,8 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                     builder: (context, _) {
                       final pulse = _spinning ? 0.55 + 0.25 * sin(_spin.value * pi * 10) : 0.35;
                       return Container(
-                        width: 300,
-                        height: 300,
+                        width: wheelSize + 10,
+                        height: wheelSize + 10,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [BoxShadow(color: _wheelOrange.withAlpha((120 * pulse).round()), blurRadius: 40, spreadRadius: 4)],
@@ -295,9 +309,9 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                         children: [
                           Transform.rotate(
                             angle: angle,
-                            child: const CustomPaint(
-                              size: Size(290, 290),
-                              painter: _WheelPainter(),
+                            child: CustomPaint(
+                              size: Size(wheelSize, wheelSize),
+                              painter: const _WheelPainter(),
                             ),
                           ),
                           // Coada: cu cât e mai în urmă, cu atât mai palidă.
@@ -306,9 +320,9 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                               opacity: 0.20 * (1 - (g - 1) / ghosts),
                               child: Transform.rotate(
                                 angle: angle - perFrame * (g / ghosts),
-                                child: const CustomPaint(
-                                  size: Size(290, 290),
-                                  painter: _WheelPainter(wedgesOnly: true),
+                                child: CustomPaint(
+                                  size: Size(wheelSize, wheelSize),
+                                  painter: const _WheelPainter(wedgesOnly: true),
                                 ),
                               ),
                             ),
@@ -408,6 +422,11 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
   }
 }
 
+/// Cat spatiu lasa fereastra pana la marginile ecranului, si cat padding are
+/// pe dinauntru. Amandoua intra in calculul lui `wheelSize`.
+const double _dialogInset = 10;
+const double _dialogPadding = 12;
+
 class _WheelPainter extends CustomPainter {
   /// Fantomele de blur desenează DOAR cadranele colorate, fără iconițe și
   /// fără etichete: la viteza la care apar, textul e oricum ilizibil, iar
@@ -426,7 +445,10 @@ class _WheelPainter extends CustomPainter {
       final startAngle = -pi / 2 + i * segmentAngle;
       // cadranul roții e portocaliu (alternând două nuanțe) — jackpot-ul
       // (24h) iese în evidență cu o nuanță mai închisă/distinctă, restul
-      // cadranelor doar alternează, culoarea premiului rămâne doar pe icon.
+      // cadranelor doar alternează. Iconița și eticheta se desenează ALBE, nu
+      // în culoarea premiului: pe portocaliu, auriul monedei și galbenul
+      // indiciului n-ar avea contrast. Culoarea premiului apare la rezultat
+      // (`_buildResultRows`). Comentariul spunea invers — corectat 2026-09-01.
       final wedgeColor = prize.unlimitedLives != null ? _wheelOrangeDeep : (i.isEven ? _wheelOrange : _wheelOrangeLight);
       final fill = Paint()..color = wedgeColor;
       canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, segmentAngle, true, fill);
@@ -439,8 +461,11 @@ class _WheelPainter extends CustomPainter {
       if (wedgesOnly) continue;
 
       final midAngle = startAngle + segmentAngle / 2;
-      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.55;
-      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 22, Colors.white);
+      // Tot ce se scrie in felie e proportional cu raza: roata isi ia acum
+      // marimea din ecran (vezi `wheelSize`), iar marimile fixe faceau ori
+      // scris minuscul pe un disc mare, ori text iesit din felie pe unul mic.
+      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.40;
+      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, radius * 0.14, Colors.white);
 
       // Eticheta se scrie PE RAZĂ, rotită să urmeze felia — ca la roțile
       // adevărate. Orizontal, un premiu lung („1284+💎") depășea lățimea
@@ -455,9 +480,9 @@ class _WheelPainter extends CustomPainter {
       // adevărate, unde eticheta e mereu citibilă indiferent unde se oprește.
       if (cos(midAngle) < 0) {
         canvas.rotate(pi);
-        _paintText(canvas, prize.wheelLabel, null, null, Offset(-radius * 0.81, 0), 12, Colors.white, bold: true);
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(-radius * 0.74, 0), radius * 0.062, Colors.white, bold: true);
       } else {
-        _paintText(canvas, prize.wheelLabel, null, null, Offset(radius * 0.81, 0), 12, Colors.white, bold: true);
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(radius * 0.74, 0), radius * 0.062, Colors.white, bold: true);
       }
       canvas.restore();
     }
