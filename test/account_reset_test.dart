@@ -48,7 +48,6 @@ void main() {
         'music_enabled': false,
         'music_volume': 0.3,
         'no_blur_mode': true,
-        'intro_tutorial_seen': true,
         'multiplayer_info_seen': true,
         'no_ads_forever': true,
         'coins': 9999,
@@ -60,7 +59,6 @@ void main() {
       expect(await StorageService.getMusicEnabled(), false);
       expect(await StorageService.getMusicVolume(), 0.3);
       expect(await StorageService.getNoBlurMode(), true);
-      expect(await StorageService.getIntroSeen(), true);
       expect(await StorageService.getMultiplayerInfoSeen(), true);
       expect(await StorageService.getNoAdsForever(), true);
       expect(await StorageService.getCoins(), StorageService.startingCoinsDefault);

@@ -173,9 +173,59 @@ service cloud.firestore {
       //    niciodata la `request.auth.token.email`, claim care la conturile
       //    anonime LIPSESTE din token. Adminul scrie pe profilul altcuiva,
       //    deci pica pe ramura a doua — dar el are claim-ul.
-      allow write: if request.auth != null
+      // Despartit in `create` si `update` (2026-09-02) ca sa se poata pune o
+      // limita pe CAT poate creste clasamentul intr-o singura scriere.
+      //
+      // Gaura reala pe care o astupa: profilul public e documentul dupa care
+      // se face clasamentul (`orderBy('leaguePoints')`), si pana acum
+      // proprietarul putea scrie in el ORICE. Adica oricine isi putea seta
+      // `leaguePoints: 999999` direct din consola si aparea primul, fara sa
+      // joace un meci. Auditul mai vechi cauta problema in scorurile de meci
+      // si propunea o Cloud Function de validare — dar meciul nici nu era
+      // necesar, atacul scurtcircuita tot.
+      //
+      // Limitele vin din cod, nu din burta: `winPoints = 20` si
+      // `lossPoints = 8` (PlayerProfileService), iar `recordMatchResult`
+      // creste `matchesPlayed` cu exact 1 si `wins` cu cel mult 1 per meci.
+      // Deci o scriere legitima nu poate depasi valorile de mai jos. DACA se
+      // schimba winPoints in cod, trebuie schimbat si aici.
+      //
+      // Scaderile raman permise: sezonul se reseteaza lazy (seasonPoints cade
+      // la 0 in luna noua) si o infrangere scade leaguePoints. Trisatul
+      // inseamna crestere, nu scadere.
+      //
+      // Ce NU rezolva asta, ca sa nu para mai mult decat e: un trisor rabdator
+      // poate face multe scrieri mici. Oprirea completa cere autoritate
+      // server-side (balanta scrisa DOAR de Cloud Functions), adica
+      // rescrierea stratului de economie. Vezi TODO.
+      function rankingGrowthOk() {
+        return request.resource.data.get('leaguePoints', 0)
+                 <= resource.data.get('leaguePoints', 0) + 20
+            && request.resource.data.get('seasonPoints', 0)
+                 <= resource.data.get('seasonPoints', 0) + 20
+            && request.resource.data.get('matchesPlayed', 0)
+                 <= resource.data.get('matchesPlayed', 0) + 1
+            && request.resource.data.get('wins', 0)
+                 <= resource.data.get('wins', 0) + 1
+            && request.resource.data.get('longestStreak', 0)
+                 <= resource.data.get('longestStreak', 0) + 1;
+      }
+
+      // Un profil NOU porneste de la zero. Fara asta, ramanea o portita:
+      // stergi profilul si il recreezi direct cu punctajul dorit.
+      allow create: if request.auth != null
         && ((request.auth.uid == uid
-             && !exists(/databases/$(database)/documents/banned_players/$(uid)))
+             && !exists(/databases/$(database)/documents/banned_players/$(uid))
+             && request.resource.data.get('leaguePoints', 0) == 0
+             && request.resource.data.get('seasonPoints', 0) == 0
+             && request.resource.data.get('matchesPlayed', 0) == 0
+             && request.resource.data.get('wins', 0) == 0)
+            || request.auth.token.email == 'dragosssx@gmail.com');
+
+      allow update: if request.auth != null
+        && ((request.auth.uid == uid
+             && !exists(/databases/$(database)/documents/banned_players/$(uid))
+             && rankingGrowthOk())
             || request.auth.token.email == 'dragosssx@gmail.com');
 
       // Curatare Guest abandonati (vezi PlayerProfileService._sweepStaleGuests

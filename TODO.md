@@ -43,12 +43,43 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   (vizibilitatea, pus pe `false` pe 2026-09-02 cât e testare închisă) și
   `realMoneyStoreEnabled` (plățile efective). Adăugarea plăților obligă și
   **reretrimiterea formularului Data safety**.
-- **Audit securitate #1** — scorurile de multiplayer sunt falsificabile
-  direct din Firestore, premiile se acordă 100% local. **Se poate ataca
-  acum.** Planul Blaze e activ din 2026-08-31, deci soluția e disponibilă: o
-  Cloud Function de validare server-side a scorului, singura care are voie să
-  scrie premiile. Lucrare reală, nu un fix. Vezi memoria
-  `project_guess_it_security_audit_blaze`.
+- **Audit securitate #1 — DIAGNOSTIC CORECTAT 2026-09-02.** Formularea veche
+  („scoruri de meci falsificabile, se repară cu o Cloud Function de validare a
+  scorului") căuta problema în locul greșit. Atacul real nu are nevoie de
+  niciun meci: `users/{uid}` (salvarea din cloud, cu monedele) și
+  `player_profiles/{uid}` (rândul din clasament) sunt amândouă scriabile de
+  proprietar. Îți setezi balanța sau punctajul direct, dintr-o singură
+  scriere. O Cloud Function pe scorurile de meci ar fi lăsat ambele deschise.
+
+  **Făcut:** `player_profiles` are acum limite în `firestore.rules` —
+  `leaguePoints`/`seasonPoints` nu pot crește cu mai mult de 20 pe scriere
+  (exact `winPoints`), `matchesPlayed` cu mai mult de 1, `wins` cu mai mult
+  de 1, iar un profil nou trebuie să pornească de la zero. Deployat.
+  Integritatea clasamentului — paguba VIZIBILĂ — e acoperită.
+
+  **Rămâne deschis, în ordinea gravității:**
+  1. `users/{uid}` — balanța de monede/gems e în continuare scriabilă
+     integral de proprietar. Nu se poate strânge cu reguli fără să rupă
+     jocul: clientul scrie salvarea întreagă, iar salturile legitime
+     (pachet cumpărat, jackpot la roată) sunt mari. Închiderea reală cere
+     ca balanța să fie scrisă DOAR de Cloud Functions, adică rescrierea
+     stratului de economie, care azi e local-first (SharedPreferences +
+     sincronizare). Merită făcut abia când jocul face bani reali.
+  2. `matches/{id}` — `allow update: if request.auth != null` lasă ORICE cont
+     autentificat să scrie în meciul oricui, iar `read` permite listarea, deci
+     id-urile se pot afla. Vandalizarea meciurilor străine e posibilă.
+     Restrângerea la participanți e ieftină DACĂ documentul meciului ține un
+     câmp `playerIds`: regula devine `request.auth.uid in
+     resource.data.playerIds`, fără nicio citire în plus. Varianta cu
+     `exists(.../players/$(uid))` funcționează la fel, dar costă o citire
+     facturată la FIECARE actualizare de rundă — pe calea cea mai fierbinte
+     din joc.
+  3. **Limitele noi n-au fost testate prin execuție pe partea de RESPINGERE.**
+     S-a confirmat pe viu doar că nu strică jocul: două conturi noi în
+     browsere separate și-au creat profilul și au trimis heartbeat fără
+     nicio eroare de permisiune. Testele de reguli sunt scrise
+     (`scratchpad/rulestest/test.mjs`, 11 cazuri) dar emulatorul Firebase
+     cere JDK 21, iar mașina are Java 8. De rulat după un upgrade de JDK.
 - **App Check pe „Enforce"** — codul trimite deja tokenul, dar aplicația nu e
   înregistrată și e pe „Unenforced". Capcana: APK-ul sideloaded din GitHub
   Releases ia `UNRECOGNIZED_VERSION` și rămâne fără multiplayer, clasament și
@@ -64,6 +95,3 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
 - **Flutter 3.27.4 e din ianuarie 2025.** Un upgrade aduce îmbunătățirile de
   Impeller acumulate de atunci. Operație separată, poate rupe pluginuri — nu
   de făcut pe fugă.
-- **`intro_tutorial_dialog.dart` (253 de linii) nu e chemat de nimeni.** E
-  dezactivat INTENȚIONAT, cu comentariu în `home_screen.dart:65`. De decis
-  cândva: se repune în funcțiune sau se șterge.

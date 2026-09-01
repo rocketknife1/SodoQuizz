@@ -61,12 +61,6 @@ class _HomeScreenState extends State<HomeScreen> {
     // Redenumirea din panoul de Admin ajunge live (vezi
     // PlayerProfileService.startLive) — reîmprospătăm ca numele nou să apară pe loc.
     PlayerProfileService.instance.profileChanged.addListener(_refresh);
-    // Dezactivat temporar - popup-ul cerea prea multe apasari (o pagina pe
-    // rand) la prima intrare. Codul (IntroTutorialDialog) ramane neatins,
-    // doar apelul e oprit.
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   if (mounted) IntroTutorialDialog.maybeShow(context);
-    // });
   }
 
   @override

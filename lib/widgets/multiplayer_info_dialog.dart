@@ -11,7 +11,7 @@ import '../data/storage_service.dart';
 
 /// Popup explicativ pentru ecranul de Multiplayer: cameră privată vs. Join
 /// Online, taxa de intrare în lobby și formula de recompensă la finalul
-/// meciului. Spre deosebire de IntroTutorialDialog (dezactivat în
+/// meciului. Spre deosebire de vechiul popup de intro (sters în
 /// home_screen.dart pentru că cerea prea multe apăsări paginate la prima
 /// intrare), e un singur dialog scrollabil, cu un singur buton de închidere.
 /// Arătat automat o singură dată ([maybeShow]), dar redeschidere oricând din

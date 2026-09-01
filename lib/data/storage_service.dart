@@ -28,7 +28,6 @@ class StorageService {
   static const _xpKey = 'xp';
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
-  static const _introSeenKey = 'intro_tutorial_seen';
   static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
@@ -680,7 +679,6 @@ class StorageService {
     _musicEnabledKey,
     _musicVolumeKey,
     _noBlurKey,
-    _introSeenKey,
     _multiplayerInfoSeenKey,
     _noAdsForeverKey,
     // Limba e preferință de afișare, nu progres — un reset de cont n-are de ce
@@ -1305,18 +1303,6 @@ class StorageService {
   static Future<void> setNotificationsReadAt(int millis) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_notificationsReadKey, millis);
-  }
-
-  // ─── Popup de introducere la prima intrare în joc ─────────────────────────
-
-  static Future<bool> getIntroSeen() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_introSeenKey) ?? false;
-  }
-
-  static Future<void> setIntroSeen(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_introSeenKey, value);
   }
 
   // ─── Popup explicativ pentru ecranul de Multiplayer ───────────────────────

@@ -137,7 +137,7 @@ class _BalloonTailPainter extends CustomPainter {
 
 /// Textul lung din spatele balonului. Un singur dialog scrollabil, cu un
 /// singur buton de închidere — același tipar ca [MultiplayerInfoDialog],
-/// deliberat NU paginat (vezi IntroTutorialDialog, dezactivat tocmai pentru
+/// deliberat NU paginat (popup-ul vechi de intro era paginat si a fost sters
 /// că cerea prea multe apăsări).
 class BetaInfoDialog extends StatelessWidget {
   const BetaInfoDialog({super.key});
