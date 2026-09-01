@@ -13,9 +13,14 @@ independentă — dar niciunul n-a fost jucat cu jucători reali:
   intră cu cod, runda se rezolvă corect (piatra bate foarfeca → +1, listă
   resortată), egalitatea dă 0 puncte. NEVERIFICAT: finalul la 10 puncte,
   plafonul de 30 de runde și plata premiilor (ar fi cerut 10 runde jucate).
-- **Mesaje + cereri de prietenie live** între 2 jucători (Sarcina 9 din
-  timp-real, 4 runde de reparare + recenzie finală). Tiparul de abonament e
-  identic cu grant/redenumire/ban, care AU fost verificate pe viu.
+- **Mesaje + cereri de prietenie** — PROBAT pe viu cu doi jucători în browser
+  2026-09-01. Ce merge, confirmat cu capturi: cererea de prietenie apare
+  singură în lista celuilalt, fără reload; mesajul trimis ajunge în fir.
+  A ieșit la iveală și o gaură reală, reparată în `2e2baa6`: cine îți
+  ACCEPTA cererea nu-ți apărea în listă până nu ieșeai și intrai la loc.
+  **Reparația are test unitar, dar re-confirmarea ei vizuală n-a fost dusă
+  la capăt** — contextele de browser reutilizează identitatea anonimă între
+  rulări și starea devenise încurcată. De reprobat cu un prieten real.
 - **Power-up-uri în Tanks / Obby / Scaunul Electric** (`7aff8e8` + refactorul
   `118fab7` care a mutat interfața de power-up într-un fișier comun).
   `reflect` / `allyShield` / Double Shot ating tranzacția de rezolvare a
