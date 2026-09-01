@@ -13,6 +13,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
@@ -156,7 +157,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
   /// celelalte moduri deja cablate. Vezi [_maybeGrantPowerUp]/[_usePowerUp].
-  PowerUp _myPowerUp = PowerUp.none;
+  /// Puterile strânse, în ordinea primirii. ÎNAINTE era una singură: dacă
+  /// primeai alta cât o aveai pe cea veche nefolosită, cea veche se pierdea
+  /// în tăcere. Se golesc la finalul meciului (nu se duc în contul tău).
+  final List<PowerUp> _myPowerUps = [];
+
+  /// Runda în care s-a folosit deja o putere — regula e UNA pe rundă.
+  int _powerUpUsedRound = -1;
   int? _powerUpRolledRound;
   Set<String> _hiddenChoices = const {};
 
@@ -276,9 +283,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   ///  - [PowerUp.reflect]: se scrie pe `roundPowerUps`, întoarce lovitura la
   ///    rezolvare.
   ///  - [PowerUp.peek]: efect local — arată ce au răspuns ceilalți acum.
-  void _usePowerUp(MatchInfo info) {
-    final p = _myPowerUp;
-    if (p == PowerUp.none) return;
+  void _usePowerUp(MatchInfo info, PowerUp p) {
+    if (p == PowerUp.none || !_myPowerUps.contains(p)) return;
+    // O singură putere pe rundă — vezi [_powerUpUsedRound].
+    if (_powerUpUsedRound == info.roundIndex) {
+      notifyPowerUpTooLate(context);
+      return;
+    }
     if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
       notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
@@ -309,7 +320,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       default:
         break;
     }
-    setState(() => _myPowerUp = PowerUp.none);
+    setState(() {
+      _myPowerUps.remove(p);
+      _powerUpUsedRound = info.roundIndex;
+    });
   }
 
   /// Vezi core/powerups.dart — acordat cui a răspuns corect runda tocmai
@@ -336,7 +350,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'quizzTanks');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() => _myPowerUp = picked);
+      setState(() => _myPowerUps.add(picked));
       Sfx.rewardPop();
       announcePowerUp(context, picked);
     });
@@ -757,6 +771,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                               compact: true,
                             ),
                             Expanded(child: _buildArena(info, players)),
+                            // Sub tancuri, nu în colțul din dreapta sus: aici
+                            // se uită oricum jucătorul între runde.
+                            PowerUpInventory(
+                              powerUps: _myPowerUps,
+                              usedThisRound: _powerUpUsedRound == info.roundIndex,
+                              onUse: (p) => _usePowerUp(info, p),
+                            ),
                             _buildBottomPanel(info, players),
                           ],
                         ),
@@ -856,8 +877,6 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             ),
           ),
           const SizedBox(width: 8),
-          PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
-          const SizedBox(width: 10),
           // În faza de foc cronometrul n-are ce număra: acolo se arată o
           // țintă aprinsă, ca să fie limpede că nu mai e nimic de apăsat.
           AnimatedScale(

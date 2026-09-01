@@ -110,6 +110,10 @@ class WheelSpinDialog extends StatefulWidget {
   State<WheelSpinDialog> createState() => _WheelSpinDialogState();
 }
 
+/// Durata unei rotiri. Folosită și de calculul blur-ului de mișcare, care are
+/// nevoie de ea ca să afle câți radiani se parcurg într-un cadru.
+const int _spinMs = 4600;
+
 class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProviderStateMixin {
   late final AnimationController _spin;
   double _finalAngle = 0;
@@ -124,7 +128,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     // durată mai lungă + curbă cu suspans (vezi _SuspenseWheelCurve) — roata
     // se învârte "plin" mult timp, fără să dea niciun indiciu, apoi
     // încetinește vizibil doar spre final.
-    _spin = AnimationController(vsync: this, duration: const Duration(milliseconds: 4600));
+    _spin = AnimationController(vsync: this, duration: const Duration(milliseconds: _spinMs));
     _spin.addListener(_onSpinTick);
   }
 
@@ -244,10 +248,52 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                   AnimatedBuilder(
                     animation: _spin,
                     builder: (context, _) {
-                      final angle = const _SuspenseWheelCurve().transform(_spin.value) * _finalAngle;
-                      return Transform.rotate(
-                        angle: angle,
-                        child: CustomPaint(size: const Size(240, 240), painter: _WheelPainter()),
+                      const curve = _SuspenseWheelCurve();
+                      final t = _spin.value;
+                      final angle = curve.transform(t) * _finalAngle;
+
+                      // BLUR DE MIȘCARE. La viteză mare, o roată desenată în
+                      // poziții discrete la 60-120 Hz produce efectul de
+                      // „roată de căruță": paletele par că sar înapoi sau că
+                      // stau pe loc, și totul arată ieftin. Un obiect real ar
+                      // fi estompat pe direcția mișcării.
+                      //
+                      // Aproximăm cu câteva copii decalate cu unghiul parcurs
+                      // într-un cadru, cu opacitate descrescătoare. Apar DOAR
+                      // cât viteza chiar e mare — la final, când roata
+                      // ezită, dispar singure și marginile redevin clare.
+                      const dt = 0.004;
+                      final speed = ((curve.transform((t + dt).clamp(0.0, 1.0)) -
+                                  curve.transform((t - dt).clamp(0.0, 1.0))) /
+                              (2 * dt)) *
+                          _finalAngle;
+                      // radiani parcurși într-un cadru (durata totală a
+                      // animației e `_spinDuration`)
+                      final perFrame = speed * (1 / 60) / (_spinMs / 1000);
+                      final ghosts = perFrame.abs() < 0.012 ? 0 : 4;
+
+                      return Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          for (var g = ghosts; g >= 1; g--)
+                            Opacity(
+                              opacity: 0.16,
+                              child: Transform.rotate(
+                                angle: angle - perFrame * (g / ghosts),
+                                child: const CustomPaint(
+                                  size: Size(290, 290),
+                                  painter: _WheelPainter(wedgesOnly: true),
+                                ),
+                              ),
+                            ),
+                          Transform.rotate(
+                            angle: angle,
+                            child: const CustomPaint(
+                              size: Size(290, 290),
+                              painter: _WheelPainter(),
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -343,6 +389,12 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
 }
 
 class _WheelPainter extends CustomPainter {
+  /// Fantomele de blur desenează DOAR cadranele colorate, fără iconițe și
+  /// fără etichete: la viteza la care apar, textul e oricum ilizibil, iar
+  /// desenarea lui de câteva ori pe cadru ar fi singurul lucru scump de aici.
+  final bool wedgesOnly;
+  const _WheelPainter({this.wedgesOnly = false});
+
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
@@ -364,11 +416,30 @@ class _WheelPainter extends CustomPainter {
         ..strokeWidth = 2;
       canvas.drawLine(center, center + Offset(cos(startAngle), sin(startAngle)) * radius, line);
 
+      if (wedgesOnly) continue;
+
       final midAngle = startAngle + segmentAngle / 2;
-      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.64;
-      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 20, Colors.white);
-      final labelPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.89;
-      _paintText(canvas, prize.wheelLabel, null, null, labelPos, 11, Colors.white, bold: true);
+      final iconPos = center + Offset(cos(midAngle), sin(midAngle)) * radius * 0.60;
+      _paintText(canvas, String.fromCharCode(prize.icon.codePoint), prize.icon.fontFamily, prize.icon.fontPackage, iconPos, 22, Colors.white);
+
+      // Eticheta se scrie PE RAZĂ, rotită să urmeze felia — ca la roțile
+      // adevărate. Orizontal, un premiu lung („1284+💎") depășea lățimea
+      // feliei la marginea cercului și se lovea de vecini; pe rază are toată
+      // lungimea razei la dispoziție, deci încape orice sumă.
+      canvas.save();
+      canvas.translate(center.dx, center.dy);
+      canvas.rotate(midAngle);
+      // După rotație, axa X pozitivă merge spre marginea feliei. Pe jumătatea
+      // STÂNGĂ a roții direcția aia arată spre stânga ecranului, deci textul
+      // ar apărea cu capul în jos — îl întoarcem, exact ca la roțile
+      // adevărate, unde eticheta e mereu citibilă indiferent unde se oprește.
+      if (cos(midAngle) < 0) {
+        canvas.rotate(pi);
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(-radius * 0.87, 0), 13, Colors.white, bold: true);
+      } else {
+        _paintText(canvas, prize.wheelLabel, null, null, Offset(radius * 0.87, 0), 13, Colors.white, bold: true);
+      }
+      canvas.restore();
     }
 
     canvas.drawCircle(center, radius, Paint()
