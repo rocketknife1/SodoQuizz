@@ -13,8 +13,9 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   10 runde până la prag. Verificat: meciul se închide la 10 puncte, clasamentul
   final e corect, premiile se plătesc exact — câștigătorul 173 −50 miză +90
   premiu +137 bonus „prima victorie a zilei" = 350 și 136 XP (47+89),
-  perdantul 173 −50 = 123 și 13 XP. RĂMÂNE neprobat doar **plafonul de 30 de
-  runde** (cere un meci care se termină în egalitate, nu la prag).
+  perdantul 173 −50 = 123 și 13 XP. Plafonul de 30 de runde rămâne neprobat și
+  ASA RĂMÂNE (decizie user 2026-09-02: e practic imposibil ca doi jucători să
+  aleagă la fel 30 de runde la rând). **Modul e considerat închis.**
 - **Power-up-uri în Tanks / Obby / Scaunul Electric.** `reflect`,
   `allyShield` și Double Shot ating tranzacția de rezolvare a rundei. Cere 4
   jucători reali la Tanks. Include și reparațiile din `d471a03`: inventarul
