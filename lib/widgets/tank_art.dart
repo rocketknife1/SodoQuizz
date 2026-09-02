@@ -539,6 +539,13 @@ class ShotFlight {
   /// ele însele, ieșind de două ori mai opace decât restul rundei.
   final bool meetLead;
 
+  /// **Reflexie** — obuzul lovește un tanc cu [PowerUp.reflect], ricoșează
+  /// din scutul lui și se întoarce ÎN TRĂGĂTOR. [to] rămâne reflectorul
+  /// (unde ricoșează, la jumătatea zborului), iar aici e trăgătorul, unde
+  /// obuzul ajunge și explodează. Un singur zbor pentru tot drumul dus-întors,
+  /// ca ochiul să vadă că e ACELAȘI proiectil care se întoarce, nu două.
+  final Offset? reflectBackTo;
+
   const ShotFlight({
     required this.from,
     required this.to,
@@ -550,13 +557,22 @@ class ShotFlight {
     this.lateral = 0,
     this.intercepted = false,
     this.meetLead = false,
+    this.reflectBackTo,
   });
+
+  bool get isReflected => reflectBackTo != null;
+
+  /// Fracțiunea din zbor la care obuzul atinge reflectorul și cotește înapoi.
+  static const double reflectPivot = 0.5;
 
   /// Cât zboară până se oprește — la o ciocnire în aer, jumătate de drum.
   double get travelDuration => intercepted ? flightDuration * 0.5 : flightDuration;
 
-  /// Unde se termină drumul: tancul țintă, sau punctul de ciocnire.
-  Offset get landing => intercepted ? pointAt(0.5) : to;
+  /// Unde se termină drumul: tancul țintă, punctul de ciocnire, sau — la o
+  /// reflexie — înapoi în trăgător.
+  Offset get landing => intercepted
+      ? pointAt(0.5)
+      : (reflectBackTo ?? to);
 
   /// Clipa în care se oprește proiectilul — impact, ricoșeu sau ciocnire.
   /// Tot restul coregrafiei (sunet, bare care scad, camerele cinematice) se
@@ -573,6 +589,15 @@ class ShotFlight {
   /// ciocnire ([landing]) — două formule separate s-ar fi despărțit la prima
   /// modificare a arcului, iar obuzele s-ar fi „izbit" pe lângă ele.
   Offset pointAt(double t) {
+    // Reflexie: două arce lipite — trăgător→reflector până la [reflectPivot],
+    // reflector→trăgător după. Aceeași formulă de arc pe fiecare bucată.
+    if (reflectBackTo != null) {
+      final back = reflectBackTo!;
+      if (t <= reflectPivot) {
+        return _arc(from, to, t / reflectPivot);
+      }
+      return _arc(to, back, (t - reflectPivot) / (1 - reflectPivot));
+    }
     final d = to - from;
     final dist = d.distance;
     var p = Offset.lerp(from, to, t)! + Offset(0, -sin(t * pi) * dist * 0.16);
@@ -580,6 +605,11 @@ class ShotFlight {
       p += Offset(-d.dy, d.dx) / dist * lateral;
     }
     return p;
+  }
+
+  static Offset _arc(Offset a, Offset b, double t) {
+    final dist = (b - a).distance;
+    return Offset.lerp(a, b, t)! + Offset(0, -sin(t * pi) * dist * 0.16);
   }
 }
 
@@ -608,7 +638,14 @@ class TankShotsPainter extends CustomPainter {
       if (local < f.travelDuration) {
         // fracțiunea din drumul COMPLET: un obuz interceptat se oprește la
         // jumătate, deci parcurge tot 0→0,5 din traiectorie, nu 0→1.
-        _paintShell(canvas, f, local / f.flightDuration);
+        final frac = local / f.flightDuration;
+        _paintShell(canvas, f, frac);
+        // Reflexie: în clipa în care obuzul atinge reflectorul, un inel de
+        // scut care ricoșează — semnul vizibil că nu l-a lovit, l-a întors.
+        if (f.isReflected) {
+          final since = (frac - ShotFlight.reflectPivot) / 0.22;
+          if (since >= 0 && since < 1) _paintReflectBounce(canvas, f, since);
+        }
       } else {
         final since = local - f.travelDuration;
         if (since < impactDuration) _paintImpact(canvas, f, since / impactDuration);
@@ -645,18 +682,20 @@ class TankShotsPainter extends CustomPainter {
       _paintClash(canvas, f, t, fade);
       return;
     }
+    // La o reflexie, explozia e în TRĂGĂTOR (f.landing), nu în reflector.
+    final at = f.landing;
     if (f.hit) {
       // inel de explozie + schije
       final r = 6 + t * 26;
       canvas.drawCircle(
-        f.to,
+        at,
         r,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 3.5 * fade
           ..color = AppColors.orange.withAlpha((220 * fade).round()),
       );
-      canvas.drawCircle(f.to, r * 0.55, Paint()..color = Colors.white.withAlpha((160 * fade * fade).round()));
+      canvas.drawCircle(at, r * 0.55, Paint()..color = Colors.white.withAlpha((160 * fade * fade).round()));
       final spark = Paint()
         ..strokeCap = StrokeCap.round
         ..strokeWidth = 2.4 * fade
@@ -664,20 +703,38 @@ class TankShotsPainter extends CustomPainter {
       for (var i = 0; i < 7; i++) {
         final a = i * (2 * pi / 7) + f.damage;
         canvas.drawLine(
-          f.to + Offset(cos(a), sin(a)) * (r * 0.5),
-          f.to + Offset(cos(a), sin(a)) * (r * 1.15),
+          at + Offset(cos(a), sin(a)) * (r * 0.5),
+          at + Offset(cos(a), sin(a)) * (r * 1.15),
           spark,
         );
       }
     } else {
       // ricoșeu: un arc subțire care sare mai departe, fără explozie
       canvas.drawCircle(
-        f.to,
+        at,
         6 + t * 16,
         Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2 * fade
           ..color = Colors.white.withAlpha((160 * fade).round()),
+      );
+    }
+  }
+
+  /// Inelul de scut care apare când un obuz reflectat atinge reflectorul și
+  /// cotește înapoi — un arc concentric în alb-albastru, ca „a lovit ceva
+  /// tare și a sărit", nu ca o explozie.
+  void _paintReflectBounce(Canvas canvas, ShotFlight f, double t) {
+    final fade = 1 - t;
+    for (var k = 0; k < 2; k++) {
+      canvas.drawCircle(
+        f.to,
+        8 + t * 22 + k * 6,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (2.6 - k) * fade
+          ..color = (k == 0 ? Colors.white : const Color(0xFF7EC8FF))
+              .withAlpha((200 * fade).round()),
       );
     }
   }
@@ -715,7 +772,7 @@ class TankShotsPainter extends CustomPainter {
   void _paintDamageText(Canvas canvas, ShotFlight f, double t) {
     _paintFloatingText(
       canvas,
-      f.to,
+      f.landing,
       '-${f.damage}',
       t,
       AppColors.danger,

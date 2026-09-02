@@ -110,4 +110,34 @@ void main() {
       );
     });
   });
+
+  testWidgets('reflexie: obuzul cotește din reflector și explodează în trăgător', (tester) async {
+    const shooter = Offset(60, 300);
+    const reflector = Offset(260, 100);
+    const f = ShotFlight(
+      from: shooter,
+      to: reflector,
+      hit: true,
+      damage: 9,
+      startAt: 0.6,
+      color: Colors.cyan,
+      flightDuration: 2.34,
+      reflectBackTo: shooter,
+    );
+
+    expect(f.isReflected, isTrue);
+    // la jumătatea zborului obuzul e la reflector...
+    expect((f.pointAt(ShotFlight.reflectPivot) - reflector).distance, lessThan(0.001));
+    // ...iar la capăt s-a întors fix în trăgător
+    expect((f.pointAt(1) - shooter).distance, lessThan(0.001));
+    // explozia e în trăgător, nu în reflector
+    expect(f.landing, shooter);
+
+    await pumpAcross(tester, 3.5, (t) {
+      return CustomPaint(
+        size: const Size(340, 400),
+        painter: TankShotsPainter(flights: const [f], time: t),
+      );
+    });
+  });
 }

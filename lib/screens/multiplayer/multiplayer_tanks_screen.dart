@@ -578,11 +578,36 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final names = {for (final p in players) p.id: p.name};
     final me = MultiplayerService.instance.currentPlayerId;
 
+    // Reflexii. `resolveTanksVolleys` scrie DOUĂ intrări pentru o reflexie:
+    // trăgător→reflector (ratată) și reflector→trăgător (lovește). Le lipim
+    // într-un singur zbor dus-întors: [reflectMerged] ține indicele intrării
+    // „dus" → indicele intrării „întors" (pe care n-o mai desenăm separat).
+    final reflectMerged = <int, int>{};
+    final reflectSkip = <int>{};
+    for (var i = 0; i < shots.length; i++) {
+      for (var j = 0; j < shots.length; j++) {
+        if (i == j) continue;
+        final out = shots[i];
+        final back = shots[j];
+        if (out.byId == back.atId &&
+            out.atId == back.byId &&
+            !out.hit &&
+            back.hit &&
+            info.roundPowerUps[out.atId] == PowerUp.reflect.name) {
+          reflectMerged[i] = j;
+          reflectSkip.add(j);
+        }
+      }
+    }
+
     // Perechile de duel. Un jucător trage o singură dată pe rundă, deci
     // partenerul e unic — nu se poate ajunge la un „triunghi" de dueluri.
+    // O reflexie NU e duel (obuzul e al aceluiași trăgător, dus-întors).
     final partner = <int, int>{};
     for (var i = 0; i < shots.length; i++) {
+      if (reflectMerged.containsKey(i) || reflectSkip.contains(i)) continue;
       for (var j = i + 1; j < shots.length; j++) {
+        if (reflectMerged.containsKey(j) || reflectSkip.contains(j)) continue;
         if (shots[i].byId == shots[j].atId && shots[i].atId == shots[j].byId) {
           partner[i] = j;
           partner[j] = i;
@@ -597,7 +622,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final slot = <int, int>{};
     var nextSlot = 0;
     for (var i = 0; i < shots.length; i++) {
-      if (slot.containsKey(i)) continue;
+      if (slot.containsKey(i) || reflectSkip.contains(i)) continue;
       slot[i] = nextSlot;
       final j = partner[i];
       if (j != null) slot[j] = nextSlot;
@@ -610,10 +635,38 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final atMe = <({TankShot shot, ShotFlight flight, double lane})>[];
     var damageTaken = 0;
     for (var i = 0; i < shots.length; i++) {
+      if (reflectSkip.contains(i)) continue; // desenată ca parte din „dus-întors"
       final s = shots[i];
       final from = centers[s.byId];
       final to = centers[s.atId];
       if (from == null || to == null) continue; // jucător plecat între timp
+
+      final bounceIdx = reflectMerged[i];
+      if (bounceIdx != null) {
+        // Reflexie: un singur zbor dus-întors. `s` e „dus" (trăgător→reflector,
+        // ratată), `bounce` e „întors" (reflector→trăgător, lovește). Obuzul
+        // explodează în trăgător.
+        final bounce = shots[bounceIdx];
+        final flight = ShotFlight(
+          from: from,
+          to: to,
+          hit: true,
+          damage: bounce.damage,
+          startAt: _firstShotAt + slot[i]! * _shotStagger,
+          flightDuration: _flightDuration * 1.8,
+          color: pickAvatarColor(seeds[s.byId] ?? s.byId),
+          reflectBackTo: from,
+        );
+        flights.add(flight);
+        if (s.byId == me) {
+          _myFlight = flight;
+          _myDuel = false;
+          _myDuelIntercepted = false;
+          damageTaken += bounce.damage; // propriul obuz întors mă lovește
+        }
+        continue;
+      }
+
       final j = partner[i];
       final duel = j != null;
       // Se izbesc între ele doar dacă AMÂNDOUĂ obuzele erau oricum ratate:
