@@ -8,12 +8,13 @@ Ultima curățare: 2026-09-02.
 Toate au trecut `flutter analyze` + `flutter test`, o parte și recenzie
 independentă — dar niciunul n-a fost jucat cu jucători reali.
 
-- **Piatră-Hârtie-Foarfecă, finalul de meci.** Probat cu 2 jucători:
-  selectorul, miza, crearea camerei, intrarea cu cod și rezolvarea rundei
-  merg. NEPROBAT: finalul la 10 puncte, plafonul de 30 de runde și plata
-  premiilor — ar fi cerut 10 runde jucate. Citit static la recenzia din
-  2026-09-01 și e corect (meciul se închide în aceeași tranzacție care scrie
-  scorurile), dar citit ≠ jucat.
+- **Piatră-Hârtie-Foarfecă, finalul de meci.** ~~Neprobat.~~ **JUCAT
+  2026-09-02**, meci complet cu 2 conturi reale (2 contexte Chrome separate),
+  10 runde până la prag. Verificat: meciul se închide la 10 puncte, clasamentul
+  final e corect, premiile se plătesc exact — câștigătorul 173 −50 miză +90
+  premiu +137 bonus „prima victorie a zilei" = 350 și 136 XP (47+89),
+  perdantul 173 −50 = 123 și 13 XP. RĂMÂNE neprobat doar **plafonul de 30 de
+  runde** (cere un meci care se termină în egalitate, nu la prag).
 - **Power-up-uri în Tanks / Obby / Scaunul Electric.** `reflect`,
   `allyShield` și Double Shot ating tranzacția de rezolvare a rundei. Cere 4
   jucători reali la Tanks. Include și reparațiile din `d471a03`: inventarul
