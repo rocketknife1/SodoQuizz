@@ -95,11 +95,12 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   (leaderboard scriabil); `completed_matches` era deja restrâns.
 
   **De făcut, în ordine, când e cineva să verifice:**
-  1. **Redeploy web.** Ultimul deploy verde a pornit la 14:05, ÎNAINTE ca
-     secretul să existe — site-ul live încă iese fără token. Un
-     `gh workflow run flutter_web.yml` (sau orice push) reconstruiește cu
-     cheia. De verificat după: pe github.io, DevTools → Network → cereri
-     către `firebaseappcheck.googleapis.com` care întorc 200.
+  1. ~~Redeploy web.~~ **FĂCUT + verificat 2026-09-02.** Redeploy prin push
+     (workflow are acum și `workflow_dispatch`). Pe `rocketknife1.github.io/SodoQuizz`,
+     Network arată acum: `recaptcha/enterprise/reload?k=6Lee...` → 200 și
+     `content-firebaseappcheck.googleapis.com/.../exchangeRecaptchaEnterpriseToken`
+     → 200. Auth + Firestore merg normal, zero erori în consolă. Web-ul chiar
+     trimite token App Check acum (înainte: nimic).
   2. **Închide canalul GitHub APK.** Scoate linkul APK din `LINKS.md` +
      Discord, mută testerii pe Play closed testing (binar semnat de Play →
      Play Integrity merge). APK-ul sideloaded lua oricum `UNRECOGNIZED_VERSION`
