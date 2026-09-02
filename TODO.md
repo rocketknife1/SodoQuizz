@@ -15,21 +15,20 @@ era goală.
 
 ## Animații pentru power-up-uri (cerut 2026-09-02)
 
-Fiecare putere să aibă animația ei, unde se poate — azi efectul se vede doar
-în cifre. Cerute explicit:
+- **Reflect** — FĂCUT + verificat pe viu (`c2ee94e`). Obuzul arcă la reflector,
+  ricoșează din dom, se întoarce în trăgător care încasează.
+- **Scut** — FĂCUT, NEVERIFICAT vizual (`e305f26`). Dom hexagonal pulsând în
+  jurul tancului apărat, „SCUT!"/„0" în loc de „MISS", fără smucire de fereală,
+  în toate 3 vederile (arenă, camera de apărare, camera trăgătorului). De
+  reprobat cu `--dart-define=FORCE_POWERUP=shield`.
+- **Double Shot** — DE FĂCUT. Proiectilul pleacă și **se desparte în două**,
+  lovind ambele tancuri alese. Dacă unul evită, se vede tancul ferindu-se ȘI
+  celălalt încasând. (Azi se desenează deja două obuze separate din același
+  tun — lipsește doar despărțirea vizuală „un obuz → două".)
 
-- **Double Shot**: proiectilul pleacă și **se desparte în două**, lovind
-  ambele tancuri alese. Dacă unul evită (dodge), se vede tancul ferindu-se
-  ȘI celălalt încasând — ambele momente prinse pe ecran.
-- **Scut**: se vede din start scutul PE tanc, iar lovitura face vizibil
-  `0 dmg` din cauza protecției.
-- **Reflect**: proiectilul lovește tancul cu reflect, ricoșează și se
-  întoarce spre trăgător, care încasează vizibil — ambele momente pe ecran.
-
-Notă: decizia despre scut e luată și implementată — scutul la Quizz Tanks
-blochează acum TOATE loviturile din rundă (inclusiv ambele proiectile ale
-unui Double Shot). Animația de scut trebuie să arate asta corect: `0 dmg` la
-fiecare lovitură primită, nu doar la prima.
+Harness de test: `<scratchpad>/rps/` — `launch4.js` (4 conturi), `act.js`,
+`sburst2.js`. Patch temporar `FORCE_POWERUP` în `core/powerups.dart` +
+`testForcedPowerUpActive` — se scoate după fiecare rundă de test (grep în build).
 
 ## Decizii care te așteaptă pe tine
 
