@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  # redeploy manual, fara commit gol — ex. dupa ce se schimba un secret de
+  # repo (APPCHECK_RECAPTCHA_KEY): `gh workflow run flutter_web.yml`
+  workflow_dispatch:
 
 permissions:
   contents: read
