@@ -20,11 +20,13 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   `allyShield` și Double Shot ating tranzacția de rezolvare a rundei. Cere 4
   jucători reali la Tanks. Include și reparațiile din `d471a03`: inventarul
   care acum apare și în faza de țintire, și regula „una pe rundă".
-- **Acceptarea unei cereri de prietenie.** Gaura reparată în `2e2baa6` (cine
-  îți ACCEPTĂ cererea nu-ți apărea în listă până nu ieșeai și intrai la loc)
-  are test unitar, dar re-confirmarea vizuală n-a fost dusă la capăt —
-  contextele de browser reutilizau identitatea anonimă între rulări. De
-  reprobat cu un prieten real.
+- **Acceptarea unei cereri de prietenie.** ~~Neconfirmat vizual.~~
+  **CONFIRMAT 2026-09-02** cu 2 conturi reale (2 contexte Chrome separate —
+  asta rezolvă și problema veche cu identitatea anonimă refolosită între
+  rulări). Reparația din `2e2baa6` ține: B trimite cererea → apare LIVE la A,
+  fără reîncărcare → A acceptă → **lista lui B se actualizează pe loc**, fără
+  să iasă din ecran. Ambele părți văd prietenul, cu ligă și „ultima dată
+  activ". **Închis.**
 
 ## Decizii care te așteaptă pe tine
 
