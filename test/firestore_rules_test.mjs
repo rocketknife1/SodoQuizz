@@ -2,9 +2,13 @@
 // productie. Verifica exact gaura raportata: profilul public e documentul dupa
 // care se face clasamentul, iar pana la 2026-09-02 proprietarul putea scrie in
 // el orice valoare.
+//
+// Fiecare caz porneste de la o stare cunoscuta, scrisa cu drepturi de admin
+// (withSecurityRulesDisabled), ca sa nu depinda de ordinea rularii — un caz
+// picat inainte nu mai lasa starea "murdara" peste urmatorul.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
   projectId: 'sodoquizz-test',
@@ -20,34 +24,65 @@ const check = async (nume, fn) => {
 const eu = env.authenticatedContext('jucator1').firestore();
 const P = (db, id) => doc(db, 'player_profiles', id);
 
-// pornim de la un profil existent, scris cu drepturi de admin (fara reguli)
-await env.withSecurityRulesDisabled(async (ctx) => {
-  await setDoc(P(ctx.firestore(), 'jucator1'), {
-    name: 'Eu', leaguePoints: 100, seasonPoints: 50, matchesPlayed: 5, wins: 3, longestStreak: 2,
-  });
-});
+const BASE = {
+  name: 'Eu', leaguePoints: 100, seasonPoints: 50,
+  matchesPlayed: 5, wins: 3, losses: 2,
+  currentStreak: 2, longestStreak: 2, seasonKey: '2026-09',
+};
+// reincarca profilul 'jucator1' la BASE (+ suprascrieri), fara reguli
+const reset = (over = {}) => env.withSecurityRulesDisabled((ctx) =>
+  setDoc(P(ctx.firestore(), 'jucator1'), { ...BASE, ...over }));
+
+// scriere de owner, cu merge — exact ca in app (SetOptions(merge: true))
+const write = (fields) => setDoc(P(eu, 'jucator1'), fields, { merge: true });
 
 console.log('\nCE TREBUIE SA MEARGA (joc normal):');
-await check('un meci castigat: +20 puncte, +1 meci, +1 victorie', () => assertSucceeds(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 120, seasonPoints: 70, matchesPlayed: 6, wins: 4, longestStreak: 3 })));
-await check('un meci pierdut: -8 puncte', () => assertSucceeds(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 92, seasonPoints: 42, matchesPlayed: 6, wins: 3, longestStreak: 0 })));
-await check('heartbeat: nu schimba nimic din clasament', () => assertSucceeds(
-  setDoc(P(eu, 'jucator1'), { name: 'AltNume', leaguePoints: 100, seasonPoints: 50, matchesPlayed: 5, wins: 3, longestStreak: 2 })));
-await check('sezon nou: seasonPoints cade la 20', () => assertSucceeds(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 120, seasonPoints: 20, matchesPlayed: 6, wins: 4, longestStreak: 2 })));
+
+await reset();
+await check('un meci castigat: +20 puncte, +1 meci, +1 victorie, streak 2->3', () => assertSucceeds(
+  write({ leaguePoints: 120, seasonPoints: 70, matchesPlayed: 6, wins: 4, currentStreak: 3, longestStreak: 3 })));
+
+await reset();
+await check('un meci pierdut: -8 puncte, streak cade la 0', () => assertSucceeds(
+  write({ leaguePoints: 92, seasonPoints: 42, matchesPlayed: 6, losses: 3, currentStreak: 0 })));
+
+await reset();
+await check('heartbeat (merge, doar nume + lastActive): nu atinge clasamentul', () => assertSucceeds(
+  write({ name: 'AltNume' })));
+
+await reset({ seasonKey: '2026-08' }); // ultima scriere a fost luna trecuta
+await check('sezon nou: seasonPoints reincepe de la delta unui meci castigat', () => assertSucceeds(
+  write({ leaguePoints: 120, seasonPoints: 20, matchesPlayed: 6, wins: 4, seasonKey: '2026-09' })));
+
+await reset();
+await check('o infrangere poate scadea leaguePoints oricat (scaderea nu e trisat)', () => assertSucceeds(
+  write({ leaguePoints: 0, seasonPoints: 0 })));
 
 console.log('\nCE TREBUIE SA FIE REFUZAT (trisat):');
+
+await reset();
 await check('nu-si poate seta 999999 puncte', () => assertFails(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 999999, seasonPoints: 50, matchesPlayed: 5, wins: 3 })));
-await check('nu poate lua 21 de puncte dintr-o scriere (peste winPoints)', () => assertFails(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 121, seasonPoints: 50, matchesPlayed: 5, wins: 3 })));
+  write({ leaguePoints: 999999 })));
+
+await reset();
+await check('nu poate lua 21 de puncte dintr-o scriere (peste winPoints=20)', () => assertFails(
+  write({ leaguePoints: 121 })));
+
+await reset();
 await check('nu poate umfla seasonPoints', () => assertFails(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 100, seasonPoints: 50000, matchesPlayed: 5, wins: 3 })));
+  write({ seasonPoints: 50000 })));
+
+await reset();
 await check('nu poate declara 500 de meciuri jucate deodata', () => assertFails(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 100, seasonPoints: 50, matchesPlayed: 505, wins: 3 })));
+  write({ matchesPlayed: 505 })));
+
+await reset();
 await check('nu poate declara victorii care n-au existat', () => assertFails(
-  setDoc(P(eu, 'jucator1'), { name: 'Eu', leaguePoints: 100, seasonPoints: 50, matchesPlayed: 6, wins: 99 })));
+  write({ wins: 99 })));
+
+await reset();
+await check('nu poate sari longestStreak cu mai mult de 1', () => assertFails(
+  write({ longestStreak: 20 })));
 
 console.log('\nPROFIL NOU:');
 const nou = env.authenticatedContext('jucatorNou').firestore();
