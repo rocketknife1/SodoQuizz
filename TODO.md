@@ -101,7 +101,13 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   aproape tot traficul e browser + sideload (probabil), flipul rupe aproape
   tot — de amânat până distribuția se mută pe Play. `project_guess_it_app_check`.
 
-  **Stare 2026-09-02:** cheie reCAPTCHA v3 creata (in `c:\proiecte\secret keys\`), site key gata de pus in GitHub secret `APPCHECK_RECAPTCHA_KEY`, DAR consola Firebase nu lasa sa introduci secret key-ul (reCAPTCHA legacy blocat pentru inregistrari noi). Optiuni: (a) reincearca formularul cu browser curat/incognito; (b) trece pe reCAPTCHA Enterprise — `firebase_app_check` din proiect suporta `ReCaptchaEnterpriseProvider` (schimbare de o linie), plus un key Enterprise din Cloud Console. Negrabnic — vezi mai sus de ce Enforce oricum nu se poate flipa.
+  **Stare 2026-09-02 — REZOLVAT partea de inregistrare:** ambele aplicatii
+  sunt acum Registered in App Check (Android/Play Integrity, Web/reCAPTCHA
+  Enterprise — clasic e blocat de Google). Codul foloseste
+  `ReCaptchaEnterpriseProvider`, secretul `APPCHECK_RECAPTCHA_KEY` e in GitHub.
+  Firestore RAMANE pe Monitoring. Ce blocheaza Enforce e neschimbat: APK-ul
+  sideloaded din GitHub nu poate lua token Play Integrity, iar canalul ala
+  trebuie inchis (toti pe Play) sau declarat pierdut inainte de flip.
   **Ce a scăzut valoarea flipului:** din 3 motive pentru App Check din
   `app_check_service.dart`, unul (leaderboard scriabil) e acum acoperit de
   regulile din 2026-09-02, altul (`completed_matches`) era deja restrâns.
