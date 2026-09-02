@@ -3,46 +3,15 @@
 Doar ce e DESCHIS. Ce s-a rezolvat stă în git + memorii, nu aici.
 Ultima curățare: 2026-09-02.
 
-## De probat pe viu (cu 2-3 jucători reali)
+## Changelog sesiune 2026-09-02 (se șterge data viitoare)
 
-Toate au trecut `flutter analyze` + `flutter test`, o parte și recenzie
-independentă — dar niciunul n-a fost jucat cu jucători reali.
-
-- **Piatră-Hârtie-Foarfecă, finalul de meci.** ~~Neprobat.~~ **JUCAT
-  2026-09-02**, meci complet cu 2 conturi reale (2 contexte Chrome separate),
-  10 runde până la prag. Verificat: meciul se închide la 10 puncte, clasamentul
-  final e corect, premiile se plătesc exact — câștigătorul 173 −50 miză +90
-  premiu +137 bonus „prima victorie a zilei" = 350 și 136 XP (47+89),
-  perdantul 173 −50 = 123 și 13 XP. Plafonul de 30 de runde rămâne neprobat și
-  ASA RĂMÂNE (decizie user 2026-09-02: e practic imposibil ca doi jucători să
-  aleagă la fel 30 de runde la rând). **Modul e considerat închis.**
-- **Power-up-uri.** PROBAT 2026-09-02 la **Scaunul Electric**, cu 2 conturi
-  reale, folosind un build de test cu `--dart-define=FORCE_POWERUP=<nume>`
-  (picătura e determinista pe hash de matchId, deci altfel nedirijabilă):
-  - `reflect` ✅ — victima de pe scaun răspunde GREȘIT și rămâne cu 8 vieți,
-    iar atacatorul scade la 7. Exact `ChairVerdict.reflected`.
-  - `allyShield` ✅ — scutul pus de celălalt absoarbe șocul: victima răspunde
-    GREȘIT și rămâne cu 8 vieți.
-  - Inventarul apare și în faza de țintire (reparația din `d471a03`) ✅.
-
-  Și la **Quizz Tanks**, cu 4 conturi reale:
-  - **Double Shot** ✅ pe ambele variante. Ținte diferite: două proiectile,
-    B −7 și C −9, iar al patrulea tanc neatins. Aceeași țintă de două ori:
-    **o singură lovitură de 14** — peste maximul normal de 13, deci chiar s-a
-    aplicat ×1.8 (`tanksDoubleShotFocusMultiplier`).
-  - `reflect` ✅ — trăgătorul lovește un tanc cu reflect: ținta rămâne la 100,
-    **trăgătorul scade la 92**. Proiectilul chiar se întoarce.
-
-  NEPROBAT: `allyShield` la Tanks (același mecanism `shields.<id>` ca la
-  Scaunul Electric, unde a mers) — și vezi avertismentul despre `shieldConsumed`
-  din secțiunea de animații de mai sus.
-- **Acceptarea unei cereri de prietenie.** ~~Neconfirmat vizual.~~
-  **CONFIRMAT 2026-09-02** cu 2 conturi reale (2 contexte Chrome separate —
-  asta rezolvă și problema veche cu identitatea anonimă refolosită între
-  rulări). Reparația din `2e2baa6` ține: B trimite cererea → apare LIVE la A,
-  fără reîncărcare → A acceptă → **lista lui B se actualizează pe loc**, fără
-  să iasă din ecran. Ambele părți văd prietenul, cu ligă și „ultima dată
-  activ". **Închis.**
+Testat pe viu cu Playwright (2–4 conturi reale, contexte Chrome separate):
+Piatră-Hârtie-Foarfecă până la final (premii exacte), acceptare cerere
+prietenie (bug `2e2baa6` reparat, confirmat vizual), `reflect`+`allyShield`
+la Scaunul Electric, Double Shot + `reflect` la Quizz Tanks. Toate verzi.
+`allyShield` la Tanks rămâne singurul neprobat (mecanism identic cu Scaunul
+Electric). Detalii în commit-uri. Secțiunea „De probat pe viu" a dispărut —
+era goală.
 
 ## Animații pentru power-up-uri (cerut 2026-09-02)
 
