@@ -141,6 +141,35 @@ void main() {
     });
   });
 
+  testWidgets('camera trăgătorului la lovitură dublă: ambele ținte, toate combinațiile', (tester) async {
+    // Cele patru deznodăminte posibile pe două ținte — camera trebuie să le
+    // deseneze pe toate fără excepție, inclusiv cea în care una încasează și
+    // cealaltă evită (aici camera NU se poate rostogoli după una din ele).
+    for (final a in [true, false]) {
+      for (final b in [true, false]) {
+        await pumpAcross(tester, TankPovView.endAtFor(1.9), (t) => TankPovView(
+              time: t,
+              launchAt: 0.6,
+              impactAt: 1.9,
+              hit: a,
+              damage: a ? 11 : 0,
+              targetColor: Colors.orange,
+              targetName: 'Ana',
+              targetHp: 74,
+              targetDamageRatio: 0.26,
+              shooterColor: Colors.cyan,
+              second: TankPovSecondTarget(
+                color: Colors.purple,
+                name: 'Bogdan',
+                damageRatio: 0.4,
+                hit: b,
+                damage: b ? 9 : 0,
+              ),
+            ));
+      }
+    }
+  });
+
   testWidgets('lovitură dublă: obuzul comun se desparte la splitAt spre două ținte', (tester) async {
     const shooter = Offset(50, 350);
     const targetA = Offset(280, 60);

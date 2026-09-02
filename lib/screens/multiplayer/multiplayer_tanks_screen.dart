@@ -113,6 +113,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   MatchPlayer? _myPovTarget;
   int _myPovTargetHpAtStart = tanksMaxHp;
 
+  /// A doua țintă a propriei lovituri duble, pentru camera de pe obuz. `null`
+  /// la o tragere obișnuită — vezi [TankPovSecondTarget].
+  TankPovSecondTarget? _myPovSecond;
+
   /// Duelul rundei, dacă există: ținta mea a tras, în aceeași clipă, chiar în
   /// mine. [_myDuelIntercepted] e cazul în care amândoi am ratat — atunci
   /// obuzele se izbesc între ele la mijlocul drumului (vezi
@@ -469,6 +473,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _flightsBuiltForRound = -1;
       _myFlight = null;
       _myPovTarget = null;
+      _myPovSecond = null;
       _myDuel = false;
       _myDuelIntercepted = false;
       _myIncoming = const [];
@@ -721,15 +726,33 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       );
       flights.add(flight);
       if (s.byId == me) {
-        _myFlight = flight;
-        _myDuel = duel;
-        _myDuelIntercepted = intercepted;
-        for (final p in players) {
-          if (p.id == s.atId) {
-            _myPovTarget = p;
-            // viața de la ÎNCEPUTUL rundei: `p.hp` e deja cea de după
-            // lovitura asta, iar camera arată drumul spre ea, nu urmarea.
-            _myPovTargetHpAtStart = _hpAtRoundStart[p.id] ?? p.hp;
+        // Lovitură dublă: camera rămâne pe PRIMUL obuz al perechii, iar al
+        // doilea devine [_myPovSecond]. Fără asta, a doua atribuire ar fi
+        // suprascris-o pe prima și al doilea tanc n-ar fi apărut deloc.
+        final isSecondOfPair = sj != null && !flight.splitLead;
+        if (isSecondOfPair) {
+          for (final p in players) {
+            if (p.id != s.atId) continue;
+            final hpStart = _hpAtRoundStart[p.id] ?? p.hp;
+            _myPovSecond = TankPovSecondTarget(
+              color: pickAvatarColor(p.avatarSeed),
+              name: p.name,
+              damageRatio: 1 - (hpStart / tanksMaxHp),
+              hit: s.hit,
+              damage: s.damage,
+            );
+          }
+        } else {
+          _myFlight = flight;
+          _myDuel = duel;
+          _myDuelIntercepted = intercepted;
+          for (final p in players) {
+            if (p.id == s.atId) {
+              _myPovTarget = p;
+              // viața de la ÎNCEPUTUL rundei: `p.hp` e deja cea de după
+              // lovitura asta, iar camera arată drumul spre ea, nu urmarea.
+              _myPovTargetHpAtStart = _hpAtRoundStart[p.id] ?? p.hp;
+            }
           }
         }
       }
@@ -935,6 +958,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             duelIncoming: _myDuel,
             duelIntercepted: _myDuelIntercepted,
             damageTaken: _myDamageTaken,
+            second: _myPovSecond,
           );
         }
         if (_myIncoming.isEmpty || t >= TankDefenceView.endAtFor(_myIncoming)) {

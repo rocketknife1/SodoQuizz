@@ -51,6 +51,25 @@ const double tankPovFade = 0.4;
 
 double _lerp(double a, double b, double t) => a + (b - a) * t;
 
+/// A doua țintă a unei lovituri duble, așa cum o vede TRĂGĂTORUL în camera
+/// lui. Primul tanc rămâne în câmpurile `target*` ale [TankPovView]; ăsta e
+/// perechea lui, cu propriul deznodământ (poate lovi unul și rata celălalt).
+class TankPovSecondTarget {
+  final Color color;
+  final String name;
+  final double damageRatio;
+  final bool hit;
+  final int damage;
+
+  const TankPovSecondTarget({
+    required this.color,
+    required this.name,
+    required this.damageRatio,
+    required this.hit,
+    required this.damage,
+  });
+}
+
 /// Suprapunerea care ține tot ecranul cât zboară obuzul jucătorului curent.
 ///
 /// [time] e ceasul comun al fazei de foc (secunde de la începutul ei), același
@@ -99,6 +118,13 @@ class TankPovView extends StatelessWidget {
   /// la o viață mai mică fără să știe de la ce.
   final int damageTaken;
 
+  /// **Lovitură dublă pe două ținte.** Când e setat, camera NU mai călărește
+  /// un singur obuz: rămâne în spatele tunului, ține ambele tancuri în cadru
+  /// și arată obuzul care se desparte în față, fiecare jumătate plecând spre
+  /// tancul ei. Fără el, trăgătorul vedea un singur proiectil spre un singur
+  /// tanc, iar al doilea nu apărea deloc.
+  final TankPovSecondTarget? second;
+
   const TankPovView({
     super.key,
     this.blockedByShield = false,
@@ -115,6 +141,7 @@ class TankPovView extends StatelessWidget {
     this.duelIncoming = false,
     this.duelIntercepted = false,
     this.damageTaken = 0,
+    this.second,
   });
 
   /// Când se retrage camera, în ceasul fazei de foc. Ecranul are nevoie de
@@ -147,6 +174,7 @@ class TankPovView extends StatelessWidget {
             duelIncoming: duelIncoming,
             duelIntercepted: duelIntercepted,
             damageTaken: damageTaken,
+            second: second,
           ),
         ),
       ),
@@ -169,10 +197,12 @@ class _TankPovPainter extends CustomPainter {
   final bool duelIncoming;
   final bool duelIntercepted;
   final int damageTaken;
+  final TankPovSecondTarget? second;
 
   const _TankPovPainter({
     required this.time,
     this.blockedByShield = false,
+    this.second,
     required this.launchAt,
     required this.impactAt,
     required this.hit,
@@ -211,6 +241,15 @@ class _TankPovPainter extends CustomPainter {
     final flightSpan = max(impactAt - launchAt, 0.001);
     final p = ((time - launchAt) / flightSpan).clamp(0.0, 1.0);
     final after = time - impactAt; // negativ cât obuzul e încă în aer
+
+    // Lovitură dublă: altă scenă cu totul — camera stă pe loc, ambele tancuri
+    // în cadru, obuzul se desparte în față. Rostogolirea și trecerea pe lângă
+    // țintă (dramatismul unui singur obuz) n-au ce căuta aici: cu două
+    // deznodăminte diferite, camera n-ar ști după care să se rostogolească.
+    if (second != null) {
+      _paintDoubleScene(canvas, size, baseHorizon, p, after);
+      return;
+    }
 
     /// Cât de mult am trecut DE ținta pe lângă care am ratat. La o lovitură
     /// directă rămâne mereu 0 — acolo drumul se termină în explozie, nu
@@ -427,6 +466,157 @@ class _TankPovPainter extends CustomPainter {
     canvas.drawCircle(pos, r * 2.2, Paint()..color = targetColor.withAlpha(60));
     canvas.drawCircle(pos, r, Paint()..color = Colors.white);
     canvas.drawCircle(pos, r * 0.55, Paint()..color = targetColor);
+  }
+
+  // ─── Lovitura dublă, văzută de trăgător ─────────────────────────────────
+
+  /// Fracțiunea din zbor la care obuzul comun se desparte în două — aceeași
+  /// idee (și aproape aceeași valoare) ca [ShotFlight.splitAt] din arenă, ca
+  /// despărțirea să se petreacă în același moment pe amândouă vederile.
+  static const double _splitAt = 0.4;
+
+  /// Cele două tancuri stau simetric față de centru, la fracțiunea asta din
+  /// lățime — destul de depărtate ca să se citească drept DOUĂ ținte, destul
+  /// de aproape cât să încapă amândouă când cresc spre final.
+  static const double _spread = 0.26;
+
+  void _paintDoubleScene(Canvas canvas, Size size, double horizon, double p, double after) {
+    final w = size.width;
+    final h = size.height;
+    final sec = second!;
+
+    _paintSky(canvas, size, horizon);
+    _paintGround(canvas, size, horizon, p, after);
+
+    // Cât de aproape par tancurile. Aceeași curbă ca la o țintă singură, dar
+    // fără creșterea de după ratare: camera nu trece pe lângă nimeni, rămâne
+    // în spatele tunului.
+    final approach = Curves.easeInQuart.transform(p);
+    final tankW = _lerp(w * 0.05, w * 0.62, approach);
+    final cy = _lerp(horizon + h * 0.012, horizon + h * 0.26, approach);
+    final dx = w * _spread * (0.35 + 0.65 * approach);
+
+    // Stânga = prima țintă, dreapta = a doua. Ordinea e cea în care le-ai
+    // ales, nu una aleasă din desen.
+    final leftX = w / 2 - dx;
+    final rightX = w / 2 + dx;
+
+    _paintDoubleTank(canvas, leftX, cy, tankW, targetColor, targetDamageRatio, hit, after, true);
+    _paintDoubleTank(canvas, rightX, cy, tankW, sec.color, sec.damageRatio, sec.hit, after, false);
+
+    // Obuzul: unul singur până la despărțire, apoi două care se desfac spre
+    // tancurile lor.
+    _paintDoubleShells(canvas, size, p, cy, leftX, rightX);
+
+    _paintSpeedLines(canvas, size, p, after);
+    _paintNoseCone(canvas, size, p);
+
+    // Numele ambelor ținte, sus — altfel nu se știe care e care.
+    _label(canvas, Offset(w / 2, h * 0.055),
+        '${targetName.toUpperCase()}  +  ${sec.name.toUpperCase()}', 13, AppColors.orange,
+        weight: FontWeight.w800, letterSpacing: 1.2);
+
+    if (after >= 0) {
+      final fade = (1 - (after / tankPovAftermath)).clamp(0.0, 1.0);
+      _doubleOutcomeLabel(canvas, Offset(leftX, cy - tankW * 0.55), hit, damage, fade);
+      _doubleOutcomeLabel(canvas, Offset(rightX, cy - tankW * 0.55), sec.hit, sec.damage, fade);
+    }
+    _paintVignette(canvas, size, after);
+    _paintHud(canvas, size, p, after);
+  }
+
+  void _paintDoubleTank(Canvas canvas, double cx, double cy, double tankW, Color color,
+      double damageRatio, bool willHit, double after, bool facingRight) {
+    // După o lovitură directă tancul dispare în minge de foc.
+    if (willHit && after > 0.06) {
+      final t = (after / (0.7 * _scale)).clamp(0.0, 1.0);
+      if (t < 1) {
+        final fade = 1 - t;
+        final r = tankW * (0.3 + 0.9 * Curves.easeOutCubic.transform(t));
+        canvas.drawCircle(
+          Offset(cx, cy),
+          r,
+          Paint()
+            ..shader = RadialGradient(colors: [
+              Colors.white.withAlpha((240 * fade).round()),
+              AppColors.coin.withAlpha((225 * fade).round()),
+              AppColors.orange.withAlpha((170 * fade).round()),
+              Colors.transparent,
+            ], stops: const [0.0, 0.28, 0.6, 1.0])
+                .createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+        );
+      }
+      return;
+    }
+    final tankH = tankW * 0.62;
+    // tancul care evită sare în lateral, spre marginea lui de cadru
+    final juke = (!willHit && after > -0.25)
+        ? Curves.easeInCubic.transform(((after + 0.25) / 0.5).clamp(0.0, 1.0)) * tankW * 0.7
+        : 0.0;
+    final x = cx + juke * (facingRight ? -1 : 1);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(x, cy + tankH * 0.54), width: tankW * 0.95, height: tankH * 0.20),
+      Paint()..color = Colors.black.withAlpha(120),
+    );
+    paintTankInto(
+      canvas,
+      Rect.fromCenter(center: Offset(x, cy), width: tankW, height: tankH),
+      color: color,
+      facingRight: facingRight,
+      damage: damageRatio,
+    );
+  }
+
+  /// Obuzul comun urcă din marginea de jos până la [_splitAt], apoi se desparte
+  /// în două care se desfac spre cele două tancuri. Un inel alb scurt marchează
+  /// chiar clipa despărțirii — fără el, „unul a devenit doi" trece neobservat.
+  void _paintDoubleShells(
+      Canvas canvas, Size size, double p, double cy, double leftX, double rightX) {
+    final w = size.width;
+    final h = size.height;
+    final start = Offset(w / 2, h * 0.98);
+    final splitPt = Offset(w / 2, _lerp(h * 0.98, cy, _splitAt * 1.1));
+
+    Offset shellAt(double t, Offset target) {
+      if (t <= _splitAt) return Offset.lerp(start, splitPt, t / _splitAt)!;
+      return Offset.lerp(splitPt, target, (t - _splitAt) / (1 - _splitAt))!;
+    }
+
+    void dot(Offset pos, double r) {
+      canvas.drawCircle(pos, r * 2.4, Paint()..color = shooterColor.withAlpha(60));
+      canvas.drawCircle(pos, r, Paint()..color = Colors.white);
+      canvas.drawCircle(pos, r * 0.55, Paint()..color = shooterColor);
+    }
+
+    if (p <= _splitAt) {
+      dot(shellAt(p, Offset.zero), 6.5);
+    } else {
+      dot(shellAt(p, Offset(leftX, cy)), 5.2);
+      dot(shellAt(p, Offset(rightX, cy)), 5.2);
+      final s = (p - _splitAt) / 0.12;
+      if (s < 1) {
+        final fade = 1 - s;
+        canvas.drawCircle(
+          splitPt,
+          8 + s * 26,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3 * fade
+            ..color = Colors.white.withAlpha((230 * fade).round()),
+        );
+      }
+    }
+  }
+
+  void _doubleOutcomeLabel(Canvas canvas, Offset at, bool didHit, int dmg, double fade) {
+    _label(
+      canvas,
+      at,
+      didHit ? '-$dmg' : tr('EVITAT', 'DODGED'),
+      didHit ? 34 : 20,
+      didHit ? AppColors.danger : Colors.white70,
+      alpha: fade,
+    );
   }
 
   void _paintSpeedLines(Canvas canvas, Size size, double p, double after) {
