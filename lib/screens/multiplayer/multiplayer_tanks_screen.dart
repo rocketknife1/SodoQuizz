@@ -600,6 +600,22 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       }
     }
 
+    // Lovitură dublă pe DOUĂ ținte diferite: `resolveTanksVolleys` scrie două
+    // intrări cu același `byId`. Vizual pleacă UN obuz care se desparte în
+    // două la [_splitAt] din drum — [splitPair] leagă cei doi indici, iar
+    // primul din pereche desenează obuzul comun de dinainte de despărțire.
+    final splitPair = <int, int>{};
+    for (var i = 0; i < shots.length; i++) {
+      if (reflectMerged.containsKey(i) || reflectSkip.contains(i)) continue;
+      if (info.roundPowerUps[shots[i].byId] != PowerUp.doubleShot.name) continue;
+      for (var j = i + 1; j < shots.length; j++) {
+        if (shots[j].byId == shots[i].byId) {
+          splitPair[i] = j;
+          splitPair[j] = i;
+        }
+      }
+    }
+
     // Perechile de duel. Un jucător trage o singură dată pe rundă, deci
     // partenerul e unic — nu se poate ajunge la un „triunghi" de dueluri.
     // O reflexie NU e duel (obuzul e al aceluiași trăgător, dus-întors).
@@ -624,8 +640,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     for (var i = 0; i < shots.length; i++) {
       if (slot.containsKey(i) || reflectSkip.contains(i)) continue;
       slot[i] = nextSlot;
-      final j = partner[i];
-      if (j != null) slot[j] = nextSlot;
+      final j = partner[i] ?? splitPair[i];
+      if (j != null) slot[j] = nextSlot; // duelul / lovitura dublă pleacă odată
       nextSlot++;
     }
 
@@ -675,6 +691,19 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       final intercepted = duel && !s.hit && !shots[j].hit;
       // Lovitură ratată pe un tanc cu scut = OPRITĂ, nu evitată la noroc.
       final blocked = !s.hit && info.roundShieldedIds.contains(s.atId);
+
+      // Lovitură dublă pe două ținte: obuzul comun urcă până la un punct la
+      // ~40% din drumul spre media celor două ținte, apoi se desparte.
+      final sj = splitPair[i];
+      Offset? splitPoint;
+      if (sj != null) {
+        final otherTo = centers[shots[sj].atId];
+        if (otherTo != null) {
+          final mid = Offset((to.dx + otherTo.dx) / 2, (to.dy + otherTo.dy) / 2);
+          splitPoint = Offset.lerp(from, mid, 0.42)!;
+        }
+      }
+
       final flight = ShotFlight(
         from: from,
         to: to,
@@ -687,6 +716,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         intercepted: intercepted && !blocked,
         meetLead: intercepted && !blocked && i < j,
         blockedByShield: blocked,
+        splitPoint: splitPoint,
+        splitLead: sj != null && i < sj,
       );
       flights.add(flight);
       if (s.byId == me) {

@@ -140,4 +140,33 @@ void main() {
       );
     });
   });
+
+  testWidgets('lovitură dublă: obuzul comun se desparte la splitAt spre două ținte', (tester) async {
+    const shooter = Offset(50, 350);
+    const targetA = Offset(280, 60);
+    const targetB = Offset(300, 320);
+    const sp = Offset(150, 250); // punctul de despărțire, dat de ecran
+    const a = ShotFlight(
+        from: shooter, to: targetA, hit: true, damage: 8, startAt: 0.6,
+        color: Colors.cyan, splitPoint: sp, splitLead: true);
+    const b = ShotFlight(
+        from: shooter, to: targetB, hit: true, damage: 9, startAt: 0.6,
+        color: Colors.cyan, splitPoint: sp, splitLead: false);
+
+    // înainte de despărțire, amândouă obuzele sunt în același punct (pe drumul
+    // comun tun→splitPoint)
+    expect((a.pointAt(0.2) - b.pointAt(0.2)).distance, lessThan(0.001));
+    // la despărțire sunt fix în splitPoint
+    expect((a.pointAt(ShotFlight.splitAt) - sp).distance, lessThan(0.001));
+    // după, fiecare ajunge la ținta lui
+    expect((a.pointAt(1) - targetA).distance, lessThan(0.001));
+    expect((b.pointAt(1) - targetB).distance, lessThan(0.001));
+
+    await pumpAcross(tester, 2.4, (t) {
+      return CustomPaint(
+        size: const Size(340, 400),
+        painter: TankShotsPainter(flights: const [a, b], time: t),
+      );
+    });
+  });
 }

@@ -550,6 +550,15 @@ class ShotFlight {
   /// aliat). Se desenează o pocnitură de scut și „0", nu „MISS".
   final bool blockedByShield;
 
+  /// **Lovitură dublă pe două ținte** — până la [splitPoint] cele două obuze
+  /// merg lipite (unul singur, plecat din tun), acolo se despart, apoi
+  /// fiecare arcuiește spre ținta lui. `null` la o lovitură normală.
+  final Offset? splitPoint;
+
+  /// Care din cele două obuze ale unei despărțiri desenează obuzul comun de
+  /// dinainte de [splitPoint] (celălalt îl sare, ca să nu iasă dublu).
+  final bool splitLead;
+
   const ShotFlight({
     required this.from,
     required this.to,
@@ -563,7 +572,14 @@ class ShotFlight {
     this.meetLead = false,
     this.reflectBackTo,
     this.blockedByShield = false,
+    this.splitPoint,
+    this.splitLead = false,
   });
+
+  bool get isSplit => splitPoint != null;
+
+  /// Fracțiunea din zbor la care obuzul comun se desparte în două.
+  static const double splitAt = 0.4;
 
   bool get isReflected => reflectBackTo != null;
 
@@ -602,6 +618,14 @@ class ShotFlight {
         return _arc(from, to, t / reflectPivot);
       }
       return _arc(to, back, (t - reflectPivot) / (1 - reflectPivot));
+    }
+    // Lovitură dublă: obuzul comun tun→[splitPoint], apoi splitPoint→țintă.
+    if (splitPoint != null) {
+      final sp = splitPoint!;
+      if (t <= splitAt) {
+        return _arc(from, sp, t / splitAt);
+      }
+      return _arc(sp, to, (t - splitAt) / (1 - splitAt));
     }
     final d = to - from;
     final dist = d.distance;
@@ -655,7 +679,27 @@ class TankShotsPainter extends CustomPainter {
         // fracțiunea din drumul COMPLET: un obuz interceptat se oprește la
         // jumătate, deci parcurge tot 0→0,5 din traiectorie, nu 0→1.
         final frac = local / f.flightDuration;
-        _paintShell(canvas, f, frac);
+        // Lovitură dublă: înainte de despărțire desenează un singur obuz
+        // comun (îl face doar [splitLead]); după, fiecare pe al lui.
+        if (f.isSplit && frac < ShotFlight.splitAt && !f.splitLead) {
+          // celălalt obuz al perechii nu se vede încă
+        } else {
+          _paintShell(canvas, f, frac);
+        }
+        if (f.isSplit && f.splitLead) {
+          final s = (frac - ShotFlight.splitAt) / 0.12;
+          if (s >= 0 && s < 1) {
+            final fade = 1 - s;
+            canvas.drawCircle(
+              f.splitPoint!,
+              4 + s * 14,
+              Paint()
+                ..style = PaintingStyle.stroke
+                ..strokeWidth = 2.4 * fade
+                ..color = Colors.white.withAlpha((220 * fade).round()),
+            );
+          }
+        }
         // Reflexie: în clipa în care obuzul atinge reflectorul, un inel de
         // scut care ricoșează — semnul vizibil că nu l-a lovit, l-a întors.
         if (f.isReflected) {
