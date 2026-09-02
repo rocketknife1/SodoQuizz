@@ -16,10 +16,18 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   perdantul 173 −50 = 123 și 13 XP. Plafonul de 30 de runde rămâne neprobat și
   ASA RĂMÂNE (decizie user 2026-09-02: e practic imposibil ca doi jucători să
   aleagă la fel 30 de runde la rând). **Modul e considerat închis.**
-- **Power-up-uri în Tanks / Obby / Scaunul Electric.** `reflect`,
-  `allyShield` și Double Shot ating tranzacția de rezolvare a rundei. Cere 4
-  jucători reali la Tanks. Include și reparațiile din `d471a03`: inventarul
-  care acum apare și în faza de țintire, și regula „una pe rundă".
+- **Power-up-uri.** PROBAT 2026-09-02 la **Scaunul Electric**, cu 2 conturi
+  reale, folosind un build de test cu `--dart-define=FORCE_POWERUP=<nume>`
+  (picătura e determinista pe hash de matchId, deci altfel nedirijabilă):
+  - `reflect` ✅ — victima de pe scaun răspunde GREȘIT și rămâne cu 8 vieți,
+    iar atacatorul scade la 7. Exact `ChairVerdict.reflected`.
+  - `allyShield` ✅ — scutul pus de celălalt absoarbe șocul: victima răspunde
+    GREȘIT și rămâne cu 8 vieți.
+  - Inventarul apare și în faza de țintire (reparația din `d471a03`) ✅.
+
+  RĂMÂNE: **Double Shot** și versiunile de la **Quizz Tanks** ale lui
+  `reflect`/`allyShield` — cod separat (`resolveTanksRound`), și Double Shot
+  cere meciuri de 3+ jucători.
 - **Acceptarea unei cereri de prietenie.** ~~Neconfirmat vizual.~~
   **CONFIRMAT 2026-09-02** cu 2 conturi reale (2 contexte Chrome separate —
   asta rezolvă și problema veche cu identitatea anonimă refolosită între
