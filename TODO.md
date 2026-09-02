@@ -100,6 +100,8 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   ce procent din cereri vin deja verificate, pe API, în ultimele zile. Dacă
   aproape tot traficul e browser + sideload (probabil), flipul rupe aproape
   tot — de amânat până distribuția se mută pe Play. `project_guess_it_app_check`.
+
+  **Stare 2026-09-02:** cheie reCAPTCHA v3 creata (in `c:\proiecte\secret keys\`), site key gata de pus in GitHub secret `APPCHECK_RECAPTCHA_KEY`, DAR consola Firebase nu lasa sa introduci secret key-ul (reCAPTCHA legacy blocat pentru inregistrari noi). Optiuni: (a) reincearca formularul cu browser curat/incognito; (b) trece pe reCAPTCHA Enterprise — `firebase_app_check` din proiect suporta `ReCaptchaEnterpriseProvider` (schimbare de o linie), plus un key Enterprise din Cloud Console. Negrabnic — vezi mai sus de ce Enforce oricum nu se poate flipa.
   **Ce a scăzut valoarea flipului:** din 3 motive pentru App Check din
   `app_check_service.dart`, unul (leaderboard scriabil) e acum acoperit de
   regulile din 2026-09-02, altul (`completed_matches`) era deja restrâns.
