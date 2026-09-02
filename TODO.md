@@ -13,22 +13,26 @@ la Scaunul Electric, Double Shot + `reflect` la Quizz Tanks. Toate verzi.
 Electric). Detalii în commit-uri. Secțiunea „De probat pe viu" a dispărut —
 era goală.
 
-## Animații pentru power-up-uri (cerut 2026-09-02)
+## Animații pentru power-up-uri — TOATE TREI FĂCUTE (2026-09-03)
 
-- **Reflect** — FĂCUT + verificat pe viu (`c2ee94e`). Obuzul arcă la reflector,
-  ricoșează din dom, se întoarce în trăgător care încasează.
-- **Scut** — FĂCUT, NEVERIFICAT vizual (`e305f26`). Dom hexagonal pulsând în
-  jurul tancului apărat, „SCUT!"/„0" în loc de „MISS", fără smucire de fereală,
-  în toate 3 vederile (arenă, camera de apărare, camera trăgătorului). De
-  reprobat cu `--dart-define=FORCE_POWERUP=shield`.
-- **Double Shot** — DE FĂCUT. Proiectilul pleacă și **se desparte în două**,
-  lovind ambele tancuri alese. Dacă unul evită, se vede tancul ferindu-se ȘI
-  celălalt încasând. (Azi se desenează deja două obuze separate din același
-  tun — lipsește doar despărțirea vizuală „un obuz → două".)
+Toate verificate pe viu, cu 4 conturi reale și `--dart-define=FORCE_POWERUP=<nume>`:
+
+- **Reflect** (`c2ee94e`) — obuzul arcă la reflector, ricoșează din dom, se
+  întoarce în trăgător care încasează.
+- **Scut** (`e305f26`) — dom hexagonal în arenă cu „0" deasupra; în camera de
+  apărare „SHIELD! — the dome held — 0 damage", tancul NU mai smucește.
+  (Camera trăgătorului primește același flag, dar n-a fost prinsă în captură.)
+- **Double Shot** (`4117fc9`) — UN obuz iese din tun, se desparte în două la
+  40% din drum, fiecare arcuiește spre ținta lui; ambele ținte încasează.
+
+Ce a mai rămas din zona asta, dacă se vrea: la o lovitură dublă, camera
+trăgătorului (`TankPovView`) arată un singur obuz din cele două — `_myFlight`
+reține ultimul. Nu deranjează în arenă, doar în POV.
 
 Harness de test: `<scratchpad>/rps/` — `launch4.js` (4 conturi), `act.js`,
-`sburst2.js`. Patch temporar `FORCE_POWERUP` în `core/powerups.dart` +
-`testForcedPowerUpActive` — se scoate după fiecare rundă de test (grep în build).
+plus scripturile de burst (`dburst3.js`, `shburst.js`). Patch temporar
+`FORCE_POWERUP` în `core/powerups.dart` + `testForcedPowerUpActive` — se scoate
+după fiecare rundă de test (grep în build ca să confirmi).
 
 ## Decizii care te așteaptă pe tine
 
