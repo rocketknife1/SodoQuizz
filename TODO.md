@@ -26,14 +26,10 @@ Fiecare putere să aibă animația ei, unde se poate — azi efectul se vede doa
 - **Reflect**: proiectilul lovește tancul cu reflect, ricoșează și se
   întoarce spre trăgător, care încasează vizibil — ambele momente pe ecran.
 
-- ⚠️ **DECIZIE, nu doar animație:** userul a spus „mereu protecția te va
-  proteja și de double shot sau orice lovitură asupra ta în runda aia".
-  **Codul de azi face ALTCEVA:** în `core/tanks.dart`, `shieldConsumed.add(t)`
-  face ca scutul să blocheze **o singură lovitură pe rundă** — deci un Double
-  Shot cu două proiectile pe același tanc scutit are primul blocat și **al
-  doilea intră**. Ori se schimbă codul (scutul ține toată runda), ori se
-  păstrează așa și animația trebuie să arate corect că doar prima e blocată.
-  De hotărât înainte de a face animația, altfel animația va minți.
+Notă: decizia despre scut e luată și implementată — scutul la Quizz Tanks
+blochează acum TOATE loviturile din rundă (inclusiv ambele proiectile ale
+unui Double Shot). Animația de scut trebuie să arate asta corect: `0 dmg` la
+fiecare lovitură primită, nu doar la prima.
 
 ## Decizii care te așteaptă pe tine
 
