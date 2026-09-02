@@ -1065,6 +1065,18 @@ class MultiplayerService {
           rng: Random(),
         );
 
+        // Cine e apărat de scut runda asta (propriu sau de aliat) — scris
+        // explicit pe documentul meciului ca ecranul să poată desena domul de
+        // scut și „0" în loc de „MISS" la loviturile blocate, fără să mai
+        // recalculeze el mulțimea.
+        final roundPowerUps = data['roundPowerUps'] as Map? ?? const {};
+        final shieldedIds = {
+          for (final id in alive)
+            if (roundPowerUps[id] == PowerUp.shield.name ||
+                (allyShields[id] as int? ?? -1) >= roundIndex)
+              id,
+        }.toList();
+
         final shots = [for (final s in outcome.shots) TankShot(byId: s.byId, atId: s.atId, hit: s.hit, damage: s.damage).toMap()];
         final destroyed = outcome.destroyed;
         var stillAlive = 0;
@@ -1092,6 +1104,7 @@ class MultiplayerService {
           'roundPhase': RoundPhase.revealed.name,
           'roundShots': shots,
           'roundDestroyedIds': destroyed,
+          'roundShieldedIds': shieldedIds,
           if (stillAlive <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
         });
       });

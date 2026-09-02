@@ -673,6 +673,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       // altfel am schimba rezultatul rundei dintr-o animație, exact lucrul pe
       // care modul îl ține strict în tranzacția de rezolvare.
       final intercepted = duel && !s.hit && !shots[j].hit;
+      // Lovitură ratată pe un tanc cu scut = OPRITĂ, nu evitată la noroc.
+      final blocked = !s.hit && info.roundShieldedIds.contains(s.atId);
       final flight = ShotFlight(
         from: from,
         to: to,
@@ -681,9 +683,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         startAt: _firstShotAt + slot[i]! * _shotStagger,
         flightDuration: _flightDuration,
         color: pickAvatarColor(seeds[s.byId] ?? s.byId),
-        lateral: duel && !intercepted ? _duelLateral : 0,
-        intercepted: intercepted,
-        meetLead: intercepted && i < j,
+        lateral: duel && !intercepted && !blocked ? _duelLateral : 0,
+        intercepted: intercepted && !blocked,
+        meetLead: intercepted && !blocked && i < j,
+        blockedByShield: blocked,
       );
       flights.add(flight);
       if (s.byId == me) {
@@ -717,6 +720,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
           hit: atMe[k].shot.hit,
           damage: atMe[k].shot.damage,
           color: atMe[k].flight.color,
+          blockedByShield: atMe[k].flight.blockedByShield,
           shooterName: names[atMe[k].shot.byId] ?? '?',
           lane: atMe.length == 1
               ? atMe[k].lane
@@ -889,6 +893,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
             impactAt: flight.impactAt,
             hit: flight.hit,
             damage: flight.damage,
+            blockedByShield: flight.blockedByShield,
             targetColor: pickAvatarColor(target.avatarSeed),
             targetName: target.name,
             targetHp: _myPovTargetHpAtStart,
@@ -1044,7 +1049,16 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                 Positioned.fill(
                   child: IgnorePointer(
                     child: CustomPaint(
-                      painter: TankShotsPainter(flights: _flights, time: _fire.value * tanksRevealSeconds),
+                      painter: TankShotsPainter(
+                        flights: _flights,
+                        time: _fire.value * tanksRevealSeconds,
+                        shieldedCenters: info.roundPhase == RoundPhase.revealed
+                            ? [
+                                for (final id in info.roundShieldedIds)
+                                  if (centers[id] != null) centers[id]!,
+                              ]
+                            : const [],
+                      ),
                     ),
                   ),
                 ),

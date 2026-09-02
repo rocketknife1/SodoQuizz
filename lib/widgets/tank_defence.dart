@@ -45,6 +45,10 @@ class IncomingShell {
   final bool hit;
   final int damage;
 
+  /// Oprit de scutul meu — nu evitat. Fără smucire, fără fum de fereală: un
+  /// dom care ține și obuzul care se sparge de el.
+  final bool blockedByShield;
+
   /// Culoarea celui care trage — aceeași cu a proiectilului lui din arenă,
   /// ca „cine m-a lovit" să se citească din culoare, nu doar din nume.
   final Color color;
@@ -65,6 +69,7 @@ class IncomingShell {
     required this.color,
     required this.shooterName,
     this.lane = 0,
+    this.blockedByShield = false,
   });
 }
 
@@ -172,7 +177,7 @@ class _TankDefencePainter extends CustomPainter {
     var dx = 0.0;
     var dy = 0.0;
     for (final s in shells) {
-      if (s.hit) continue;
+      if (s.hit || s.blockedByShield) continue;
       final since = t - (s.impactAt - _dodgeLead);
       if (since <= 0) continue;
       final e = Curves.easeOutCubic.transform((since / _dodgeSpan).clamp(0.0, 1.0));
@@ -211,7 +216,7 @@ class _TankDefencePainter extends CustomPainter {
   /// arăta ca o eroare de desen.
   Offset _aimAt(Size size, IncomingShell s) {
     final base = _tankBase(size);
-    final at = s.hit ? s.impactAt : s.impactAt - _dodgeLead - 0.05;
+    final at = (s.hit || s.blockedByShield) ? s.impactAt : s.impactAt - _dodgeLead - 0.05;
     return base + _tankShift(size, at) + Offset(0, size.height * 0.01);
   }
 
@@ -237,6 +242,9 @@ class _TankDefencePainter extends CustomPainter {
     }
     _paintDodgeSmoke(canvas, size);
     _paintMyTank(canvas, size, shift);
+    if (shells.any((s) => s.blockedByShield)) {
+      _paintShieldDome(canvas, size, shift);
+    }
     for (final s in shells) {
       _paintShell(canvas, size, s);
     }
@@ -356,7 +364,7 @@ class _TankDefencePainter extends CustomPainter {
   /// în altă parte a cadrului.
   void _paintDodgeSmoke(Canvas canvas, Size size) {
     for (final s in shells) {
-      if (s.hit) continue;
+      if (s.hit || s.blockedByShield) continue;
       final since = time - (s.impactAt - _dodgeLead);
       if (since <= 0) continue;
       final life = (since / (_dodgeSpan + 0.7)).clamp(0.0, 1.0);
@@ -432,11 +440,51 @@ class _TankDefencePainter extends CustomPainter {
     canvas.drawCircle(pos, r * 0.55, Paint()..color = s.color);
   }
 
+  /// Domul de scut din fața tancului meu — o calotă hexagonală alb-albastră
+  /// care pulsează ușor, prezentă toată faza cât un obuz blocat e pe drum.
+  void _paintShieldDome(Canvas canvas, Size size, Offset shift) {
+    final c = _tankBase(size) + shift - Offset(0, size.height * 0.03);
+    final rx = size.width * 0.28;
+    final ry = size.height * 0.10;
+    final pulse = 0.5 + 0.5 * sin(time * 3.4);
+    canvas.drawOval(
+      Rect.fromCenter(center: c, width: rx * 2, height: ry * 2),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..color = const Color(0xFF7EC8FF).withAlpha((70 + pulse * 80).round()),
+    );
+    canvas.drawOval(
+      Rect.fromCenter(center: c, width: rx * 2, height: ry * 2),
+      Paint()..color = const Color(0xFF7EC8FF).withAlpha((14 + pulse * 12).round()),
+    );
+  }
+
   void _paintImpact(Canvas canvas, Size size, IncomingShell s) {
     final after = time - s.impactAt;
     if (after < 0) return;
     final at = _aimAt(size, s);
     final w = size.width;
+
+    if (s.blockedByShield) {
+      // Oprit de scut: obuzul se sparge de dom, câteva inele alb-albastre și
+      // „0", nimic din focul unei lovituri încasate.
+      final t = (after / (0.6 * _scale)).clamp(0.0, 1.0);
+      if (t >= 1) return;
+      final fade = 1 - t;
+      final domeTop = at - Offset(0, size.height * 0.05);
+      for (var k = 0; k < 3; k++) {
+        canvas.drawCircle(
+          domeTop,
+          w * (0.06 + 0.20 * Curves.easeOutCubic.transform(t)) + k * 8,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = (5 - k * 1.5) * fade
+            ..color = (k == 0 ? Colors.white : const Color(0xFF7EC8FF)).withAlpha((220 * fade).round()),
+        );
+      }
+      return;
+    }
 
     if (s.hit) {
       final t = (after / (0.72 * _scale)).clamp(0.0, 1.0);
@@ -570,6 +618,22 @@ class _TankDefencePainter extends CustomPainter {
         18,
         AppColors.orange,
         alpha: fade,
+      );
+      return;
+    }
+
+    if (last.blockedByShield) {
+      paintBattleLabel(canvas, Offset(w / 2, h * 0.24 - t * 30), tr('SCUT!', 'SHIELD!'), 52,
+          const Color(0xFF7EC8FF), alpha: fade);
+      paintBattleLabel(
+        canvas,
+        Offset(w / 2, h * 0.24 + 44 - t * 30),
+        tr('domul a ținut — 0 daune', 'the dome held — 0 damage'),
+        13,
+        Colors.white70,
+        alpha: fade,
+        weight: FontWeight.w600,
+        letterSpacing: 0,
       );
       return;
     }

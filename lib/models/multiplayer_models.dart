@@ -176,6 +176,11 @@ class MatchInfo {
   final List<TankShot> roundShots;
   final List<String> roundDestroyedIds;
 
+  /// Doar [MatchGameMode.quizzTanks], faza [RoundPhase.revealed]: uid-urile
+  /// tancurilor apărate de scut runda asta (propriu sau de aliat) — ecranul
+  /// desenează domul de scut și „0" în loc de „MISS" la loviturile blocate.
+  final List<String> roundShieldedIds;
+
   /// Doar [MatchGameMode.quizzTanks], în faza [RoundPhase.targeting]:
   /// uid-ul țintașului → uid-ul celui pe care l-a ales. Cine a răspuns
   /// corect apare în [roundWinnerIds] (lista țintașilor) încă de la
@@ -250,6 +255,7 @@ class MatchInfo {
     this.roundStartedAt,
     this.roundShots = const [],
     this.roundDestroyedIds = const [],
+    this.roundShieldedIds = const [],
     this.roundTargets = const {},
     this.roundPowerUps = const {},
     this.roundPlatformChoices = const {},
@@ -294,6 +300,7 @@ class MatchInfo {
           TankShot.fromMap(Map<String, dynamic>.from(s as Map)),
       ],
       roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
+      roundShieldedIds: List<String>.from(data['roundShieldedIds'] as List? ?? const []),
       roundTargets: Map<String, String>.from(data['roundTargets'] as Map? ?? const {}),
       roundPowerUps: Map<String, String>.from(data['roundPowerUps'] as Map? ?? const {}),
       // (x as num).toInt() nu `as int`: Firestore poate întoarce un întreg
@@ -335,6 +342,7 @@ class MatchInfo {
         'roundWinnerIds': <String>[],
         'roundShots': <Map<String, dynamic>>[],
         'roundDestroyedIds': <String>[],
+        'roundShieldedIds': <String>[],
         'roundTargets': <String, String>{},
         'roundPowerUps': <String, String>{},
         'roundPlatformChoices': <String, int>{},

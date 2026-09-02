@@ -65,6 +65,9 @@ class TankPovView extends StatelessWidget {
   final bool hit;
   final int damage;
 
+  /// Ținta mea avea scut: obuzul s-a spart de dom, „SCUT!" nu „EVITAT!".
+  final bool blockedByShield;
+
   /// Culoarea și starea țintei, ca tancul din cadru să fie chiar al ei —
   /// [targetDamageRatio] e 0 la un tanc intact, 1 la unul aproape mort (vezi
   /// [paintTankInto]).
@@ -98,6 +101,7 @@ class TankPovView extends StatelessWidget {
 
   const TankPovView({
     super.key,
+    this.blockedByShield = false,
     required this.time,
     required this.launchAt,
     required this.impactAt,
@@ -134,6 +138,7 @@ class TankPovView extends StatelessWidget {
             impactAt: impactAt,
             hit: hit,
             damage: damage,
+            blockedByShield: blockedByShield,
             targetColor: targetColor,
             targetName: targetName,
             targetHp: targetHp,
@@ -155,6 +160,7 @@ class _TankPovPainter extends CustomPainter {
   final double impactAt;
   final bool hit;
   final int damage;
+  final bool blockedByShield;
   final Color targetColor;
   final String targetName;
   final int targetHp;
@@ -166,6 +172,7 @@ class _TankPovPainter extends CustomPainter {
 
   const _TankPovPainter({
     required this.time,
+    this.blockedByShield = false,
     required this.launchAt,
     required this.impactAt,
     required this.hit,
@@ -672,11 +679,15 @@ class _TankPovPainter extends CustomPainter {
         );
       }
     }
-    _label(canvas, Offset(w / 2, h * 0.33), tr('EVITAT!', 'DODGED!'), 46, Colors.white, alpha: fade);
+    _label(canvas, Offset(w / 2, h * 0.33),
+        blockedByShield ? tr('SCUT!', 'SHIELD!') : tr('EVITAT!', 'DODGED!'),
+        46, blockedByShield ? const Color(0xFF7EC8FF) : Colors.white, alpha: fade);
     _label(
       canvas,
       Offset(w / 2, h * 0.33 + 40),
-      tr('$targetName s-a ferit în ultima clipă', '$targetName slipped the shot at the last moment'),
+      blockedByShield
+          ? tr('domul lui $targetName a ținut', "$targetName's dome held")
+          : tr('$targetName s-a ferit în ultima clipă', '$targetName slipped the shot at the last moment'),
       13,
       Colors.white70,
       alpha: fade,

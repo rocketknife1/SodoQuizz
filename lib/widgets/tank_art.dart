@@ -546,6 +546,10 @@ class ShotFlight {
   /// ca ochiul să vadă că e ACELAȘI proiectil care se întoarce, nu două.
   final Offset? reflectBackTo;
 
+  /// Lovitura n-a fost EVITATĂ, ci OPRITĂ de scutul țintei (propriu sau de
+  /// aliat). Se desenează o pocnitură de scut și „0", nu „MISS".
+  final bool blockedByShield;
+
   const ShotFlight({
     required this.from,
     required this.to,
@@ -558,6 +562,7 @@ class ShotFlight {
     this.intercepted = false,
     this.meetLead = false,
     this.reflectBackTo,
+    this.blockedByShield = false,
   });
 
   bool get isReflected => reflectBackTo != null;
@@ -624,7 +629,15 @@ class TankShotsPainter extends CustomPainter {
   /// Secunde scurse de la începutul fazei de foc.
   final double time;
 
-  const TankShotsPainter({required this.flights, required this.time});
+  /// Centrele tancurilor apărate de scut runda asta — un dom hexagonal se
+  /// desenează în jurul fiecăruia pe toată faza de reveal.
+  final List<Offset> shieldedCenters;
+
+  const TankShotsPainter({
+    required this.flights,
+    required this.time,
+    this.shieldedCenters = const [],
+  });
 
   /// Cât timp rămâne vizibil efectul de impact după ce proiectilul ajunge.
   static const double impactDuration = 0.55;
@@ -632,6 +645,9 @@ class TankShotsPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    for (final c in shieldedCenters) {
+      _paintShieldDome(canvas, c);
+    }
     for (final f in flights) {
       final local = time - f.startAt;
       if (local < 0) continue;
@@ -648,15 +664,64 @@ class TankShotsPainter extends CustomPainter {
         }
       } else {
         final since = local - f.travelDuration;
-        if (since < impactDuration) _paintImpact(canvas, f, since / impactDuration);
-        if (f.hit && since < damageTextDuration) _paintDamageText(canvas, f, since / damageTextDuration);
-        // La o ciocnire în aer scrie unul singur pentru amândoi: „MISS” apare
-        // acolo unde s-au izbit obuzele, nu de două ori peste el însuși.
-        if (!f.hit && since < damageTextDuration && (!f.intercepted || f.meetLead)) {
-          _paintDodgeText(canvas, f, since / damageTextDuration);
+        if (f.blockedByShield) {
+          // Oprită de scut: pocnitură pe dom + „0", niciun „MISS".
+          if (since < impactDuration) _paintShieldHit(canvas, f, since / impactDuration);
+          if (since < damageTextDuration) _paintBlockedText(canvas, f, since / damageTextDuration);
+        } else {
+          if (since < impactDuration) _paintImpact(canvas, f, since / impactDuration);
+          if (f.hit && since < damageTextDuration) _paintDamageText(canvas, f, since / damageTextDuration);
+          // La o ciocnire în aer scrie unul singur pentru amândoi: „MISS” apare
+          // acolo unde s-au izbit obuzele, nu de două ori peste el însuși.
+          if (!f.hit && since < damageTextDuration && (!f.intercepted || f.meetLead)) {
+            _paintDodgeText(canvas, f, since / damageTextDuration);
+          }
         }
       }
     }
+  }
+
+  /// Domul de scut din jurul unui tanc apărat — un hexagon pulsând ușor, în
+  /// alb-albastru, prezent toată faza de reveal ca semn că lovitura care vine
+  /// va fi oprită, nu evitată la noroc.
+  void _paintShieldDome(Canvas canvas, Offset c) {
+    final pulse = 0.5 + 0.5 * sin(time * 3.2);
+    final r = 30.0 + pulse * 3;
+    final path = Path();
+    for (var i = 0; i < 6; i++) {
+      final a = -pi / 2 + i * pi / 3;
+      final p = c + Offset(cos(a), sin(a)) * r;
+      i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+    }
+    path.close();
+    canvas.drawPath(
+      path,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xFF7EC8FF).withAlpha((90 + pulse * 70).round()),
+    );
+    canvas.drawPath(path, Paint()..color = const Color(0xFF7EC8FF).withAlpha((18 + pulse * 14).round()));
+  }
+
+  /// Pocnitura de pe dom când un obuz e oprit — un inel scurt alb-albastru,
+  /// fără schije, ca „a lovit un perete", nu ca o explozie.
+  void _paintShieldHit(Canvas canvas, ShotFlight f, double t) {
+    final fade = 1 - t;
+    for (var k = 0; k < 3; k++) {
+      canvas.drawCircle(
+        f.to,
+        10 + t * 20 + k * 5,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (2.4 - k * 0.6) * fade
+          ..color = (k == 0 ? Colors.white : const Color(0xFF7EC8FF)).withAlpha((210 * fade).round()),
+      );
+    }
+  }
+
+  void _paintBlockedText(Canvas canvas, ShotFlight f, double t) {
+    _paintFloatingText(canvas, f.to, '0', t, const Color(0xFF7EC8FF), fontSize: 16);
   }
 
   void _paintShell(Canvas canvas, ShotFlight f, double t) {
@@ -812,5 +877,7 @@ class TankShotsPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant TankShotsPainter oldDelegate) =>
-      oldDelegate.time != time || oldDelegate.flights != flights;
+      oldDelegate.time != time ||
+      oldDelegate.flights != flights ||
+      oldDelegate.shieldedCenters != shieldedCenters;
 }
