@@ -936,8 +936,8 @@ class MultiplayerService {
   /// slăbit (cel mai puțin HP), nu unul ales manual — exact convenția de la
   /// [useElectricChairAllyShield] (fără fereastră nouă de alegere doar
   /// pentru un power-up). Ține 2 runde ([powerUpDurationRounds]); citit din
-  /// `shields.<id>` de [resolveTanksRound], care blochează prima lovitură ca
-  /// scutul propriu.
+  /// `shields.<id>` de [resolveTanksRound], care blochează toate loviturile
+  /// din rundă ca scutul propriu.
   Future<void> useTanksAllyShield({required String matchId, required int roundIndex}) async {
     final me = currentPlayerId;
     final matchRef = _db.collection('matches').doc(matchId);

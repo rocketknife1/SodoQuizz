@@ -118,8 +118,9 @@ void main() {
   });
 
   group('scut', () {
-    test('scutul propriu absoarbe prima lovitura, a doua trece', () {
-      // doi tintasi pe aceeasi tinta, ambele lovituri fortate (mega racheta)
+    test('scutul propriu blocheaza TOATE loviturile din runda, nu doar prima', () {
+      // doi tintasi pe aceeasi tinta, ambele lovituri fortate (mega racheta) —
+      // decizie user 2026-09-02: scutul te apara toata runda.
       final o = run(
         alive: ['a', 'b', 'v'],
         shooters: {'a', 'b'},
@@ -128,8 +129,18 @@ void main() {
       );
       final atV = o.shots.where((s) => s.atId == 'v').toList();
       expect(atV.length, 2);
-      expect(atV.where((s) => s.hit).length, 1, reason: 'exact una din doua lovituri trece');
-      expect(o.damageTaken['v'], atV.firstWhere((s) => s.hit).damage);
+      expect(atV.where((s) => s.hit).length, 0, reason: 'niciuna nu trece');
+      expect(o.damageTaken['v'], 0);
+    });
+
+    test('scutul opreste si ambele proiectile ale unei lovituri duble', () {
+      final o = run(
+        alive: ['s', 'v', 'x'],
+        shooters: {'s'},
+        targets: {'s': 'v${tanksTargetSeparator}v'}, // aceeasi tinta de doua ori
+        powerUps: {'s': PowerUp.doubleShot.name, 'v': PowerUp.shield.name},
+      );
+      expect(o.damageTaken['v'], 0);
     });
 
     test('scutul de aliat se comporta la fel ca scutul propriu', () {

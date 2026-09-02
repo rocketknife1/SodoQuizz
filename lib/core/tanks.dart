@@ -446,9 +446,11 @@ TanksRoundOutcome resolveTanksVolleys({
   final dodgeBonus = event == RoundEvent.battleFog ? tanksBattleFogDodgeBonus : 0.0;
   final damageMultiplier = event == RoundEvent.heavyShells ? tanksHeavyShellsMultiplier : 1.0;
 
-  // Un scut (propriu sau de aliat) absoarbe O SINGURĂ lovitură pe rundă,
-  // chiar dacă vin mai multe spre aceeași victimă.
-  final shieldConsumed = <String>{};
+  // Un scut (propriu sau de aliat) blochează TOATE loviturile primite în
+  // runda asta, nu doar prima — decizie explicită a userului (2026-09-02):
+  // „mereu protecția te va proteja și de double shot sau orice lovitură
+  // asupra ta în runda aia". Include ambele proiectile ale unei lovituri
+  // duble țintite pe același tanc.
   final shots = <ResolvedTankShot>[];
   final incoming = {for (final id in alive) id: 0};
   final dealt = {for (final id in alive) id: 0};
@@ -491,11 +493,10 @@ TanksRoundOutcome resolveTanksVolleys({
       if (roll.hit && focusMult != 1.0) {
         roll = TankShotRoll(hit: true, damage: (roll.damage * focusMult).round());
       }
-      // Scut (propriu sau de aliat): blochează doar o lovitură care CHIAR
-      // ar fi atins ținta.
+      // Scut (propriu sau de aliat): blochează orice lovitură care CHIAR ar
+      // fi atins ținta, de câte ori vine în runda asta.
       if (roll.hit &&
-          (powerUpOf(t) == PowerUp.shield || allyShieldedIds.contains(t)) &&
-          shieldConsumed.add(t)) {
+          (powerUpOf(t) == PowerUp.shield || allyShieldedIds.contains(t))) {
         roll = const TankShotRoll(hit: false, damage: 0);
       }
       // Reflexie: lovitura care ar fi atins un tanc cu [PowerUp.reflect] se
