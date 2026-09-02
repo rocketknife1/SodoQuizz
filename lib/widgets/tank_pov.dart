@@ -491,8 +491,11 @@ class _TankPovPainter extends CustomPainter {
     // Cât de aproape par tancurile. Aceeași curbă ca la o țintă singură, dar
     // fără creșterea de după ratare: camera nu trece pe lângă nimeni, rămâne
     // în spatele tunului.
+    // Tancurile nu cresc cât unul singur (w*1.5): două trebuie să încapă unul
+    // lângă altul la apropierea maximă, cu spațiu între ele — altfel se
+    // suprapun și se citesc ca o singură masă de blindaj.
     final approach = Curves.easeInQuart.transform(p);
-    final tankW = _lerp(w * 0.05, w * 0.62, approach);
+    final tankW = _lerp(w * 0.05, w * 0.42, approach);
     final cy = _lerp(horizon + h * 0.012, horizon + h * 0.26, approach);
     final dx = w * _spread * (0.35 + 0.65 * approach);
 
@@ -512,9 +515,10 @@ class _TankPovPainter extends CustomPainter {
     _paintNoseCone(canvas, size, p);
 
     // Numele ambelor ținte, sus — altfel nu se știe care e care.
-    _label(canvas, Offset(w / 2, h * 0.055),
+    final hudDim = after > 0 ? (1 - (after / tankPovAftermath).clamp(0.0, 1.0)) : 1.0;
+    _label(canvas, Offset(w / 2, h * 0.048),
         '${targetName.toUpperCase()}  +  ${sec.name.toUpperCase()}', 13, AppColors.orange,
-        weight: FontWeight.w800, letterSpacing: 1.2);
+        alpha: hudDim, weight: FontWeight.w800, letterSpacing: 1.2);
 
     if (after >= 0) {
       final fade = (1 - (after / tankPovAftermath)).clamp(0.0, 1.0);
@@ -532,7 +536,9 @@ class _TankPovPainter extends CustomPainter {
       final t = (after / (0.7 * _scale)).clamp(0.0, 1.0);
       if (t < 1) {
         final fade = 1 - t;
-        final r = tankW * (0.3 + 0.9 * Curves.easeOutCubic.transform(t));
+        // Raza rămâne sub jumătatea distanței dintre cele două tancuri, ca
+        // exploziile să se citească drept DOUĂ, nu una singură lățită.
+        final r = tankW * (0.24 + 0.62 * Curves.easeOutCubic.transform(t));
         canvas.drawCircle(
           Offset(cx, cy),
           r,
@@ -953,7 +959,12 @@ class _TankPovPainter extends CustomPainter {
       canvas.drawLine(o, o + Offset(0, len * dy), bracket);
     }
 
-    _label(canvas, Offset(w / 2, pad + 26), tr('ȚINTĂ: ${targetName.toUpperCase()}', 'TARGET: ${targetName.toUpperCase()}'), 13, AppColors.orange, alpha: dim);
+    // La lovitura dublă numele celor două ținte sunt scrise de
+    // [_paintDoubleScene], pe un singur rând — fără garda asta s-ar fi
+    // suprapus două etichete peste ele însele.
+    if (second == null) {
+      _label(canvas, Offset(w / 2, pad + 26), tr('ȚINTĂ: ${targetName.toUpperCase()}', 'TARGET: ${targetName.toUpperCase()}'), 13, AppColors.orange, alpha: dim);
+    }
     // Avertismentul de duel, cât obuzele sunt încă în aer: fără el, obuzul
     // care vine din față ar putea trece drept un efect de fundal, iar
     // ciocnirea de la mijloc ar pica din senin.
