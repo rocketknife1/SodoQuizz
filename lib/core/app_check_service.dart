@@ -50,12 +50,19 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 /// Check inutil exact acolo unde trebuie să conteze.
 const bool _forceDebugProvider = bool.fromEnvironment('APPCHECK_DEBUG');
 
-/// Cheia de site reCAPTCHA v3 pentru varianta din browser, din Firebase
+/// Cheia de site reCAPTCHA pentru varianta din browser, din Firebase
 /// Console → App Check. Nu e secretă (ajunge oricum în pagina servită), dar
 /// nu e nici în cod: se dă la compilare, ca build-ul web să poată fi făcut
 /// și fără ea, în timpul dezvoltării.
 ///
 ///   flutter build web --release --dart-define=APPCHECK_RECAPTCHA_KEY=6Lc...
+///
+/// E o cheie reCAPTCHA **Enterprise** (înregistrată așa în consolă pe
+/// 2026-09-02) — providerul e [ReCaptchaEnterpriseProvider], nu v3. reCAPTCHA
+/// clasic e blocat de Google pentru înregistrări noi. Cheia a fost creată în
+/// proiectul Cloud „SodoQuizz", deci merge prin API-ul Enterprise (plafon
+/// gratuit 10.000 verificări/lună — TTL-ul tokenului e 1 zi ca să nu se
+/// consume repede).
 const String _recaptchaSiteKey = String.fromEnvironment(
   'APPCHECK_RECAPTCHA_KEY',
 );
@@ -82,10 +89,10 @@ Future<void> activateAppCheck() async {
       providerAndroid: _useDebugProvider
           ? const AndroidDebugProvider()
           : const AndroidPlayIntegrityProvider(),
-      providerWeb: kIsWeb ? ReCaptchaV3Provider(_recaptchaSiteKey) : null,
+      providerWeb: kIsWeb ? ReCaptchaEnterpriseProvider(_recaptchaSiteKey) : null,
     );
     debugPrint(
-      'App Check activat (${kIsWeb ? "reCAPTCHA v3" : _useDebugProvider ? "debug" : "Play Integrity"}).',
+      'App Check activat (${kIsWeb ? "reCAPTCHA Enterprise" : _useDebugProvider ? "debug" : "Play Integrity"}).',
     );
   } catch (e) {
     debugPrint('App Check nu s-a activat: $e');
