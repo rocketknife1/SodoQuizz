@@ -54,6 +54,8 @@ Fiecare putere să aibă animația ei, unde se poate — azi efectul se vede doa
   ȘI celălalt încasând — ambele momente prinse pe ecran.
 - **Scut**: se vede din start scutul PE tanc, iar lovitura face vizibil
   `0 dmg` din cauza protecției.
+- **Reflect**: proiectilul lovește tancul cu reflect, ricoșează și se
+  întoarce spre trăgător, care încasează vizibil — ambele momente pe ecran.
 
 - ⚠️ **DECIZIE, nu doar animație:** userul a spus „mereu protecția te va
   proteja și de double shot sau orice lovitură asupra ta în runda aia".
