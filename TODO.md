@@ -74,45 +74,43 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
      `exists(.../players/$(uid))` funcționează la fel, dar costă o citire
      facturată la FIECARE actualizare de rundă — pe calea cea mai fierbinte
      din joc.
-  3. **Limitele noi n-au fost testate prin execuție pe partea de RESPINGERE.**
-     S-a confirmat pe viu doar că nu strică jocul: două conturi noi în
-     browsere separate și-au creat profilul și au trimis heartbeat fără
-     nicio eroare de permisiune. Testele de reguli sunt scrise
-     (`scratchpad/rulestest/test.mjs`, 11 cazuri) dar emulatorul Firebase
-     cere JDK 21, iar mașina are Java 8. De rulat după un upgrade de JDK.
-- **App Check pe „Enforce" — analizat 2026-09-02, NU se poate flipa acum.**
+  3. ~~Limitele noi n-au fost testate prin execuție pe partea de RESPINGERE.~~
+     **FĂCUT 2026-09-02.** `test/firestore_rules_test.mjs` (14 cazuri) rulează
+     pe emulatorul Firebase — mașina are deja Temurin JDK 25, doar că
+     shim-ul `java8path` e primul pe PATH (vezi `test/README-reguli.md`
+     pentru comanda cu `JAVA_HOME`). 14/14 verde: trișatul (leaguePoints
+     999999, +21 puncte, seasonPoints umflat, meciuri/victorii inventate,
+     salt de longestStreak) e refuzat, jocul normal (meci câștigat/pierdut,
+     heartbeat cu merge, sezon nou) trece.
+- **App Check pe „Enforce" — DECIS 2026-09-02 (userul): se renunță la canalul
+  APK din GitHub Releases, toți testerii Android trec pe Play closed testing.**
   La Enforce, o cerere fără token App Check valid e refuzată de Firestore.
-  Starea celor trei canale:
-  - **Browser (github.io), canalul PRINCIPAL din LINKS.md** — nu trimite
-    NICIUN token: workflow-ul de deploy n-avea `APPCHECK_RECAPTCHA_KEY`, deci
-    `activateAppCheck()` ieșea pe web fără să facă nimic. Acum workflow-ul
-    pasează cheia (ca secret de repo), dar **secretul încă nu există** —
-    trebuie luat din Firebase Console → App Check → aplicația web și adăugat
-    la Settings → Secrets → Actions ca `APPCHECK_RECAPTCHA_KEY`. Până atunci,
-    web = zero protecție și Enforce l-ar rupe complet.
-  - **APK din GitHub Releases (link în LINKS.md + Discord)** — ia
-    `UNRECOGNIZED_VERSION`: e semnat cu cheia de upload, iar Play Integrity
-    vouchează doar binare distribuite de Play. Nu există fix — ori se renunță
-    la canalul ăsta (toți testerii Android → Play closed testing, care dă
-    binarul semnat de Play), ori se acceptă că sideload = fără online.
-  - **Play closed testing** — Play Integrity merge, singurul canal OK azi.
-  **Pas următor, gratuit și informativ:** Firebase Console → App Check arată
-  ce procent din cereri vin deja verificate, pe API, în ultimele zile. Dacă
-  aproape tot traficul e browser + sideload (probabil), flipul rupe aproape
-  tot — de amânat până distribuția se mută pe Play. `project_guess_it_app_check`.
+  `project_guess_it_app_check`.
 
-  **Stare 2026-09-02 — REZOLVAT partea de inregistrare:** ambele aplicatii
-  sunt acum Registered in App Check (Android/Play Integrity, Web/reCAPTCHA
-  Enterprise — clasic e blocat de Google). Codul foloseste
-  `ReCaptchaEnterpriseProvider`, secretul `APPCHECK_RECAPTCHA_KEY` e in GitHub.
-  Firestore RAMANE pe Monitoring. Ce blocheaza Enforce e neschimbat: APK-ul
-  sideloaded din GitHub nu poate lua token Play Integrity, iar canalul ala
-  trebuie inchis (toti pe Play) sau declarat pierdut inainte de flip.
-  **Ce a scăzut valoarea flipului:** din 3 motive pentru App Check din
-  `app_check_service.dart`, unul (leaderboard scriabil) e acum acoperit de
-  regulile din 2026-09-02, altul (`completed_matches`) era deja restrâns.
-  Rămân vandalizarea meciurilor și balanța din `users/{uid}` — reale, dar cu
-  impact mic până la bani reali.
+  **Gata:** ambele aplicații sunt Registered în App Check (Android/Play
+  Integrity, Web/reCAPTCHA Enterprise — clasic e blocat de Google). Codul
+  folosește `ReCaptchaEnterpriseProvider`. Secretul `APPCHECK_RECAPTCHA_KEY`
+  există în GitHub (adăugat 2026-09-02 14:15). Testele de reguli pe
+  `player_profiles` acoperă deja unul din cele 3 motive de App Check
+  (leaderboard scriabil); `completed_matches` era deja restrâns.
+
+  **De făcut, în ordine, când e cineva să verifice:**
+  1. **Redeploy web.** Ultimul deploy verde a pornit la 14:05, ÎNAINTE ca
+     secretul să existe — site-ul live încă iese fără token. Un
+     `gh workflow run flutter_web.yml` (sau orice push) reconstruiește cu
+     cheia. De verificat după: pe github.io, DevTools → Network → cereri
+     către `firebaseappcheck.googleapis.com` care întorc 200.
+  2. **Închide canalul GitHub APK.** Scoate linkul APK din `LINKS.md` +
+     Discord, mută testerii pe Play closed testing (binar semnat de Play →
+     Play Integrity merge). APK-ul sideloaded lua oricum `UNRECOGNIZED_VERSION`
+     — nu există fix, e semnat cu cheia de upload.
+  3. **Firebase Console → App Check → metrics.** Confirmă ce procent din
+     cereri vin verificate. Dacă web + Play acoperă aproape tot, flipul e sigur.
+  4. **Flip Firestore pe Enforce.**
+
+  **Ce rămâne descoperit chiar și după flip:** vandalizarea meciurilor
+  (`matches/{id}`) și balanța din `users/{uid}` — reale, dar cu impact mic
+  până la bani reali (vezi punctele 1-2 de la Audit #1 mai sus).
 
 ## Datorie tehnică, fără grabă
 
