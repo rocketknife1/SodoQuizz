@@ -25,9 +25,12 @@ Toate verificate pe viu, cu 4 conturi reale și `--dart-define=FORCE_POWERUP=<nu
 - **Double Shot** (`4117fc9`) — UN obuz iese din tun, se desparte în două la
   40% din drum, fiecare arcuiește spre ținta lui; ambele ținte încasează.
 
-Ce a mai rămas din zona asta, dacă se vrea: la o lovitură dublă, camera
-trăgătorului (`TankPovView`) arată un singur obuz din cele două — `_myFlight`
-reține ultimul. Nu deranjează în arenă, doar în POV.
+- **Camera trăgătorului la lovitură dublă** — SCRIS, **NEVERIFICAT vizual**.
+  Când tragi TU cu Double Shot în doi oameni, camera ta nu mai călărește un
+  singur obuz: stă în spatele tunului cu ambele tancuri în cadru, obuzul se
+  desparte în față și fiecare tanc își primește deznodământul lui.
+  De reprobat cu `FORCE_POWERUP=doubleShot`, **uitându-te la ecranul
+  trăgătorului** (nu la spectator — acolo era deja bine).
 
 Harness de test: `<scratchpad>/rps/` — `launch4.js` (4 conturi), `act.js`,
 plus scripturile de burst (`dburst3.js`, `shburst.js`). Patch temporar
