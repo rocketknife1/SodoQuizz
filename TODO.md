@@ -25,9 +25,17 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
     GREȘIT și rămâne cu 8 vieți.
   - Inventarul apare și în faza de țintire (reparația din `d471a03`) ✅.
 
-  RĂMÂNE: **Double Shot** și versiunile de la **Quizz Tanks** ale lui
-  `reflect`/`allyShield` — cod separat (`resolveTanksRound`), și Double Shot
-  cere meciuri de 3+ jucători.
+  Și la **Quizz Tanks**, cu 4 conturi reale:
+  - **Double Shot** ✅ pe ambele variante. Ținte diferite: două proiectile,
+    B −7 și C −9, iar al patrulea tanc neatins. Aceeași țintă de două ori:
+    **o singură lovitură de 14** — peste maximul normal de 13, deci chiar s-a
+    aplicat ×1.8 (`tanksDoubleShotFocusMultiplier`).
+  - `reflect` ✅ — trăgătorul lovește un tanc cu reflect: ținta rămâne la 100,
+    **trăgătorul scade la 92**. Proiectilul chiar se întoarce.
+
+  NEPROBAT: `allyShield` la Tanks (același mecanism `shields.<id>` ca la
+  Scaunul Electric, unde a mers) — și vezi avertismentul despre `shieldConsumed`
+  din secțiunea de animații de mai sus.
 - **Acceptarea unei cereri de prietenie.** ~~Neconfirmat vizual.~~
   **CONFIRMAT 2026-09-02** cu 2 conturi reale (2 contexte Chrome separate —
   asta rezolvă și problema veche cu identitatea anonimă refolosită între
@@ -35,6 +43,26 @@ independentă — dar niciunul n-a fost jucat cu jucători reali.
   fără reîncărcare → A acceptă → **lista lui B se actualizează pe loc**, fără
   să iasă din ecran. Ambele părți văd prietenul, cu ligă și „ultima dată
   activ". **Închis.**
+
+## Animații pentru power-up-uri (cerut 2026-09-02)
+
+Fiecare putere să aibă animația ei, unde se poate — azi efectul se vede doar
+în cifre. Cerute explicit:
+
+- **Double Shot**: proiectilul pleacă și **se desparte în două**, lovind
+  ambele tancuri alese. Dacă unul evită (dodge), se vede tancul ferindu-se
+  ȘI celălalt încasând — ambele momente prinse pe ecran.
+- **Scut**: se vede din start scutul PE tanc, iar lovitura face vizibil
+  `0 dmg` din cauza protecției.
+
+- ⚠️ **DECIZIE, nu doar animație:** userul a spus „mereu protecția te va
+  proteja și de double shot sau orice lovitură asupra ta în runda aia".
+  **Codul de azi face ALTCEVA:** în `core/tanks.dart`, `shieldConsumed.add(t)`
+  face ca scutul să blocheze **o singură lovitură pe rundă** — deci un Double
+  Shot cu două proiectile pe același tanc scutit are primul blocat și **al
+  doilea intră**. Ori se schimbă codul (scutul ține toată runda), ori se
+  păstrează așa și animația trebuie să arate corect că doar prima e blocată.
+  De hotărât înainte de a face animația, altfel animația va minți.
 
 ## Decizii care te așteaptă pe tine
 
