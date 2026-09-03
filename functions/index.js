@@ -62,21 +62,29 @@ async function sendToUser(uid, { title, body, data = {} }) {
     return;
   }
 
+  // MESAJ DATA-ONLY, DELIBERAT — fara camp `notification`.
+  //
+  // Prima versiune (2026-09-03) trimitea `notification: {title, body}`, iar
+  // Android afisa singur notificarea din system tray. DOUA probleme, ambele
+  // raportate de user:
+  //  1. TAP-ul nu ducea nicaieri in aplicatie — notificarea de sistem
+  //     deschide doar activitatea de lansare, fara payload de rutare;
+  //  2. INTARZIERE mare — FCM trateaza mesajele-notificare catre aplicatii in
+  //     fundal ca "low priority" si le amana/grupeaza, mai ales pe Samsung cu
+  //     optimizarea de baterie.
+  //
+  // Data-only cu `priority: high` NU e amanat la fel, iar aplicatia isi
+  // deseneaza singura notificarea (background handler in push_service.dart),
+  // deci controleaza si sunetul, si canalul, si ce se intampla la tap.
   const res = await getMessaging().sendEachForMulticast({
     tokens,
-    notification: { title, body },
-    // Toate valorile din `data` trebuie sa fie STRING — FCM refuza numerele.
-    data: Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])),
-    android: {
-      priority: "high",
-      notification: {
-        channelId: CHANNEL_ID,
-        sound: "sodo_notify",
-        // Cerinta userului: notificarea RAMANE in bara, nu dispare la tap.
-        // Trebuie spus si aici, nu doar in canal: campul e per-mesaj.
-        clickAction: "FLUTTER_NOTIFICATION_CLICK",
-      },
-    },
+    // Tot ce ii trebuie aplicatiei ca sa deseneze notificarea SI sa stie unde
+    // sa navigheze la tap. Toate valorile STRING — FCM refuza numerele.
+    data: Object.fromEntries(
+      Object.entries({ title, body, channelId: CHANNEL_ID, ...data })
+        .map(([k, v]) => [k, String(v)])
+    ),
+    android: { priority: "high" },
   });
 
   // Curatam token-urile moarte, ca lista sa nu creasca la nesfarsit.

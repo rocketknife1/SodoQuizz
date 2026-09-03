@@ -29,21 +29,20 @@ OUT = os.path.join("android", "app", "src", "main", "res", "raw", "sodo_notify.w
 
 
 def note(freq, dur, delay, amp=0.5):
-    """O nota de clopotel: fundamentala + doua armonice, cu stingere rapida.
+    """O nota de clopotel MOALE: fundamentala + o armonica slaba, stingere lina.
 
-    Armonicele sunt la 2x si 3x, tot mai slabe — asa suna a clopot/carillon.
-    O sinusoida singura ar fi iesit un bip de ceas desteptator.
+    A doua versiune (2026-09-03) — userul a zis ca prima suna "brutal si
+    zgomotos". Schimbari: armonica de ordin 3 scoasa (ea dadea muchia
+    metalica), armonica 2 mult mai slaba, atac de 3x mai lung (fara pocnet),
+    stingere mai lunga (coada catifelata, nu taiere seaca).
     """
     n = int(RATE * dur)
     t = np.linspace(0, dur, n, endpoint=False)
-    # stingere exponentiala: lovitura e la inceput, coada se duce lin
-    env = np.exp(-t * 5.5)
-    # atac scurt, ca sa nu pocneasca la pornire
-    attack = np.minimum(t / 0.004, 1.0)
+    env = np.exp(-t * 3.6)  # era 5.5 — coada mai lunga, mai blanda
+    attack = 1.0 - np.exp(-t / 0.014)  # rampa lina, nu prag (era t/0.004)
     wave_ = (
         np.sin(2 * np.pi * freq * t)
-        + 0.42 * np.sin(2 * np.pi * freq * 2 * t)
-        + 0.16 * np.sin(2 * np.pi * freq * 3 * t)
+        + 0.18 * np.sin(2 * np.pi * freq * 2 * t)  # era 0.42
     )
     out = np.zeros(int(RATE * TOTAL))
     start = int(RATE * delay)
@@ -51,14 +50,15 @@ def note(freq, dur, delay, amp=0.5):
     return out
 
 
-TOTAL = 1.1
+TOTAL = 1.3
 
-# Do-mi-sol in octava a 5-a: luminos, nu strident. Ultima nota e mai lunga si
-# putin mai tare — se termina pe ceva, nu se opreste brusc.
+# Do-mi-sol in octava a 4-a (o octava mai JOS decat prima versiune): mai cald,
+# mai putin ascutit. Note mai apropiate in timp — suna a "ding-dong" scurt, nu
+# a trei bipuri separate.
 NOTES = [
-    (523.25, 0.45, 0.00, 0.42),  # do5
-    (659.25, 0.45, 0.09, 0.42),  # mi5
-    (783.99, 0.75, 0.18, 0.50),  # sol5
+    (261.63, 0.55, 0.00, 0.40),  # do4
+    (329.63, 0.55, 0.07, 0.40),  # mi4
+    (392.00, 0.95, 0.14, 0.46),  # sol4
 ]
 
 
@@ -67,17 +67,15 @@ def main():
     for freq, dur, delay, amp in NOTES:
         mix += note(freq, dur, delay, amp)
 
-    # "sclipici": o octava peste ultima nota, foarte incet, doar cat sa dea
-    # stralucire — fara el clopotelul suna gros si ieftin.
-    mix += note(1567.98, 0.5, 0.18, 0.10)
-
     peak = np.max(np.abs(mix))
     if peak > 0:
-        mix = mix / peak * 0.85
+        # 0.62 in loc de 0.85 — notificarea nu trebuie sa sara mai tare decat
+        # sunetele sistemului.
+        mix = mix / peak * 0.62
 
-    # fade final, ca sa nu se taie coada cu un click
-    tail = int(RATE * 0.06)
-    mix[-tail:] *= np.linspace(1, 0, tail)
+    # fade lung la final, ca sa se stinga, nu sa se taie
+    tail = int(RATE * 0.12)
+    mix[-tail:] *= np.linspace(1, 0, tail) ** 2
 
     data = (mix * 32767).astype(np.int16)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)

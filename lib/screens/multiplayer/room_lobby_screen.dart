@@ -344,45 +344,71 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         ),
         shadows: [BoxShadow(color: AppColors.blue.withAlpha(60), blurRadius: 14, offset: const Offset(0, 5))],
       ),
-      child: Row(
+      child: Column(
         children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: AppColors.blue.withAlpha(70),
-              borderRadius: BorderRadius.circular(11),
-              border: Border.all(color: Colors.white.withAlpha(70)),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.vpn_key_rounded, color: Colors.white, size: 19),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(tr('CODUL CAMEREI', 'ROOM CODE'),
-                    style: const TextStyle(color: Colors.white60, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                Text(
-                  code ?? '-----',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 5),
+          Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.blue.withAlpha(70),
+                  borderRadius: BorderRadius.circular(11),
+                  border: Border.all(color: Colors.white.withAlpha(70)),
                 ),
-              ],
+                alignment: Alignment.center,
+                child: const Icon(Icons.vpn_key_rounded, color: Colors.white, size: 19),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(tr('CODUL CAMEREI', 'ROOM CODE'),
+                        style: const TextStyle(color: Colors.white60, fontSize: 10.5, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                    Text(
+                      code ?? '-----',
+                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900, letterSpacing: 5),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // „Cheamă prietenii" — buton PLIN, pe toată lățimea, verde aprins.
+          // Prima versiune era un TextButton mic lângă cod, pe care userul
+          // „abia îl observa". Rostul lui e mare: trimite o invitație care
+          // ajunge ca notificare pe telefonul unui prieten CHIAR DACĂ nu e
+          // online (MultiplayerService.inviteFriendToRoom + functions/index.js).
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _inviteFriends(code ?? '', players.map((p) => p.id).toSet()),
+              icon: const Icon(Icons.person_add_alt_1_rounded, size: 20),
+              label: Text(
+                tr('CHEAMĂ PRIETENII', 'INVITE FRIENDS'),
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.play,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 4,
+                shadowColor: AppColors.play.withAlpha(140),
+              ),
             ),
           ),
-          // „Chemă un prieten": trimite o invitație care ajunge ca notificare
-          // pe telefonul lui CHIAR DACĂ nu e online (vezi
-          // MultiplayerService.inviteFriendToRoom + functions/index.js).
-          // Codul de mai sus e util doar cuiva care e deja lângă tine;
-          // butonul ăsta e pentru restul.
-          TextButton.icon(
-            onPressed: () => _inviteFriends(code ?? '', players.map((p) => p.id).toSet()),
-            icon: const Icon(Icons.person_add_alt_1_rounded, size: 17),
-            label: Text(tr('Cheamă', 'Invite'),
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Text(
+              tr('Primesc notificare pe telefon, chiar dacă nu-s în joc acum.',
+                  'They get a phone notification even if not in the game right now.'),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white38, fontSize: 10.5),
+            ),
           ),
         ],
       ),
@@ -426,8 +452,11 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                 Padding(
                   padding: const EdgeInsets.all(28),
                   child: Text(
-                    tr('N-ai pe cine chema — toți prietenii tăi sunt deja aici.',
-                        'Nobody left to invite — all your friends are already here.'),
+                    friends.isEmpty
+                        ? tr('N-ai încă niciun prieten. Adaugă-i din ecranul Prieteni, apoi îi poți chema aici.',
+                            'No friends yet. Add some from the Friends screen, then you can invite them here.')
+                        : tr('Toți prietenii tăi sunt deja în cameră.',
+                            'All your friends are already in the room.'),
                     textAlign: TextAlign.center,
                     style: const TextStyle(color: Colors.white38, fontSize: 13),
                   ),

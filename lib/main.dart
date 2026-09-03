@@ -1,7 +1,10 @@
 ﻿import 'dart:async';
+import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/ads_service.dart';
 import 'core/app_check_service.dart';
@@ -92,6 +95,11 @@ void main() async {
   // init() cere intai consimtamantul GDPR (UMP) si abia apoi initializeaza
   // SDK-ul de reclame reale (vezi ads_service.dart) - nu blocheaza pornirea.
   AdsService.instance.init();
+  // Handler-ul de fundal FCM trebuie inregistrat INAINTE de runApp si e o
+  // functie top-level (ruleaza in izolat separat) — vezi push_service.dart.
+  if (!kIsWeb && !Platform.isIOS) {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  }
   runApp(const GuessItApp());
 }
 
@@ -127,8 +135,21 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     LiveSync.instance.attachToIdentity();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
-    _setUpDeviceNotifications();
+    _setUpNotifications();
+  }
+
+  /// Ordine: întâi notificările locale (care inițializează pluginul și citesc
+  /// payload-ul de pornire), apoi push-ul (token FCM + rutarea tap-ului),
+  /// apoi consumarea payload-ului de pornire — abia după ce navigatorul e gata.
+  Future<void> _setUpNotifications() async {
+    await _setUpDeviceNotifications();
     _setUpPush();
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushService.instance.routePayload(
+        DeviceNotificationService.instance.takePendingLaunchPayload(),
+      );
+    });
   }
 
   /// Notificarile PUSH (mesaj, cerere de prietenie, anunt de sistem,

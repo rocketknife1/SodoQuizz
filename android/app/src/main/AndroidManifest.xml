@@ -88,6 +88,15 @@
             android:name="com.chunkytofustudios.firebase_auth_games_services.OAUTH_2_WEB_CLIENT_ID"
             android:value="@string/firebase_auth_oauth_2_web_client_id"/>
 
+        <!-- Canalul implicit pentru orice notificare push care ar ajunge totusi
+             ca `notification` de sistem (nu ar trebui - Functions trimit
+             data-only - dar daca se intampla, sa foloseasca canalul nostru cu
+             sunetul propriu, nu unul generat de Android). ID-ul TREBUIE sa fie
+             exact cel din DeviceNotificationService._channelId. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="sodo_events_v1"/>
+
         <!-- Pluginul de notificari locale: primeste alarma programata si
              afiseaza notificarea chiar daca aplicatia e inchisa. Al doilea
              receiver le pune la loc dupa o repornire de telefon. -->

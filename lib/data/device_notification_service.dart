@@ -6,6 +6,7 @@ import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
 import '../core/lang.dart';
+import 'push_service.dart';
 import 'storage_service.dart';
 
 /// **Notificări în bara telefonului** — altceva decât [NotificationService],
@@ -40,6 +41,23 @@ class DeviceNotificationService {
   final _plugin = FlutterLocalNotificationsPlugin();
   bool _ready = false;
 
+  /// Payload-ul notificării care a pornit aplicația din stare complet închisă.
+  /// Se consumă o singură dată, când navigatorul e gata — vezi
+  /// [takePendingLaunchPayload].
+  String? _pendingLaunchPayload;
+
+  /// Ecranul-rădăcină îl cheamă după ce montează navigatorul: dacă aplicația a
+  /// fost deschisă printr-un tap pe notificare, aici e unde voia să ajungă.
+  String? takePendingLaunchPayload() {
+    final p = _pendingLaunchPayload;
+    _pendingLaunchPayload = null;
+    return p;
+  }
+
+  /// Câți contori de notificare push dinamici s-au emis — folosit doar ca să
+  /// dăm id-uri distincte notificărilor de mesaj/invitație (vezi [show]).
+  int _dynamicId = 5000;
+
   /// Sufixul `_v1` există ca să se poată schimba sunetul mai târziu — vezi
   /// nota din capul clasei. Dacă îl schimbi, adaugă vechiul id în
   /// [_retiredChannelIds] ca să fie curățat.
@@ -72,7 +90,21 @@ class DeviceNotificationService {
         const InitializationSettings(
           android: AndroidInitializationSettings('@mipmap/ic_launcher'),
         ),
+        // Tap pe notificare CÂND APLICAȚIA E DESCHISĂ sau în fundal. Payload-ul
+        // e un query string („type=room_invite&matchId=..."), decodat de
+        // [PushService.routePayload].
+        onDidReceiveNotificationResponse: (resp) {
+          PushService.instance.routePayload(resp.payload);
+        },
       );
+
+      // Tap CÂND APLICAȚIA ERA COMPLET ÎNCHISĂ: notificarea a pornit-o.
+      // `initialize` de mai sus NU declanșează callback-ul în cazul ăsta —
+      // trebuie citit separat, o singură dată, la pornire.
+      final launch = await _plugin.getNotificationAppLaunchDetails();
+      if (launch?.didNotificationLaunchApp ?? false) {
+        _pendingLaunchPayload = launch!.notificationResponse?.payload;
+      }
 
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
@@ -141,6 +173,33 @@ class DeviceNotificationService {
         autoCancel: false,
         icon: '@mipmap/ic_launcher',
       );
+
+  /// Afișează ACUM o notificare (nu programată) — o folosește [PushService]
+  /// când sosește un mesaj FCM data-only. Payload-ul e query string-ul care
+  /// spune la tap unde să ducă.
+  ///
+  /// [collapseId] grupează: un mesaj nou de la același prieten înlocuiește
+  /// notificarea veche în loc să adune un teanc. `null` → id nou de fiecare
+  /// dată (invitații diferite rămân separate).
+  Future<void> show({
+    required String title,
+    required String body,
+    String? payload,
+    String? collapseId,
+  }) async {
+    if (!_supported) return;
+    await ensureInitialized();
+    if (!_ready) return;
+    final id = collapseId != null
+        ? 6000 + (collapseId.hashCode & 0x3FF) // stabil per collapseId
+        : ++_dynamicId;
+    try {
+      await _plugin.show(id, title, body, NotificationDetails(android: _details),
+          payload: payload);
+    } catch (e) {
+      debugPrint('DeviceNotificationService.show a esuat: $e');
+    }
+  }
 
   Future<void> _schedule({
     required int id,
