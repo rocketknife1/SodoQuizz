@@ -6,10 +6,13 @@ Ultima curățare: 2026-09-03.
 
 ---
 
-## Notificări — RĂMĂȘIȚE (restul e făcut și verificat pe telefon)
+## Notificări — RĂMĂȘIȚE MICI
 
-Notificările locale, insigna de pe planetă și push-ul prin Cloud Functions
-sunt gata. Ce a mai rămas de rafinat, când e ocazia:
+Notificările (locale + push prin Cloud Functions), insigna de pe planetă,
+sunetul moale, tap-ul care rutează în aplicație, butonul mare de invitație —
+toate gata. **NEVERIFICAT pe telefon** noul flux data-only (telefonul e la
+încărcat); Functions NEDEPLOYATE. De reprobat: mesaj + invitație în cameră,
+cu aplicația închisă, si tap-ul să intre direct în cameră.
 
 - **Fusul orar la notificările locale** e ghicit din decalaj
   (`Europe/Bucharest` sau UTC), nu citit ca IANA. Merge pentru publicul de
