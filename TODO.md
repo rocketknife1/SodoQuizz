@@ -36,17 +36,17 @@ sau revenirea conexiunii. De verificat că meciul chiar mai există și că e î
 
 ## De pus în funcțiune (cod gata, așteaptă un pas al tău)
 
-- **Regulile Firestore care închid vandalizarea meciurilor.** Codul e pushat
-  (web-ul are deja `playerIds`), regulile din `firestore.rules` **nu sunt
-  deployate**. Ordinea e obligatorie:
-  1. urci în Play Console AAB-ul (`flutter build appbundle --release
-     --dart-define=REAL_ADS=true`) și aștepți să se propage la testeri;
-  2. abia apoi `comenzi/4 - Trimite regulile Firestore in productie...bat`.
+- **Scoate ramura tranzitorie din regula de meciuri.** `firestore.rules` are
+  acum `matchLegacyPlayerDoc()` — un `exists(.../players/uid)` care lasă
+  clienții VECHI (fără `playerIds`) să scrie mai departe, ca deploy-ul
+  regulilor să nu depindă de propagarea pe Play. Slăbește reparația:
+  subcolecția `players` e deschisă la scriere, deci un atacator hotărât își
+  poate crea singur un document și trece de verificare.
 
-  Invers, un tester pe Android cu build vechi care intră într-o cameră creată
-  de un client nou nu s-ar adăuga în `playerIds` și ar fi refuzat la prima
-  rundă. Meciurile vechi, fără câmp, merg mai departe — regula are ieșire
-  pentru ele.
+  De scos după ce build-ul cu `playerIds` ajunge la toți (web e deja acolo;
+  rămâne Play). După ștergere, rulează testele de reguli — cazul „meci VECHI,
+  fără playerIds" va trebui și el scos.
+
 
 - **App Check pe „Enforce".** Web-ul trimite deja token. Mai rămâne:
   1. închide canalul GitHub APK (scoate linkul din `LINKS.md` + Discord, mută
