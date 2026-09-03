@@ -6,71 +6,20 @@ Ultima curățare: 2026-09-03.
 
 ---
 
-## Notificări pe telefon (cerut 2026-09-03) — DE FĂCUT
+## Notificări — RĂMĂȘIȚE (restul e făcut și verificat pe telefon)
 
-Azi **nu există nicio notificare pe telefon**. Tot ce se numește „notificare"
-în cod e clopoțelul din aplicație (`NotificationService` = panoul in-app).
-Nu e nici `flutter_local_notifications`, nici `firebase_messaging`, nici
-permisiunea `POST_NOTIFICATIONS`.
+Notificările locale, insigna de pe planetă și push-ul prin Cloud Functions
+sunt gata. Ce a mai rămas de rafinat, când e ocazia:
 
-Cererea se împarte în trei bucăți, cu dependențe reale între ele:
-
-### ~~Piesa 1 — notificări LOCALE~~ FĂCUTĂ (`b44495c`, verificată pe telefon)
-
-Roata, questurile, Clippy (pe resetul ZILNIC, nu la 5 minute) și planeta.
-Sunet propriu, notificarea rămâne în bară. Rămân de scos, când e ocazia, două
-lucruri de rafinat: fusul orar e ghicit din decalaj (`Europe/Bucharest` sau
-UTC) în loc să fie citit ca IANA, iar notificarea nu se anulează când
-jucătorul consumă lucrul înainte să sune alarma.
-
-Plus, tot aici: **sunetul propriu al aplicației** la orice notificare (canal
-Android dedicat cu sunet custom — sunetul se leagă de CANAL, nu de mesaj,
-deci canalul trebuie creat corect din prima; schimbarea sunetului mai târziu
-cere canal nou, cel vechi păstrează sunetul cu care a fost creat).
-
-**Cerință explicită (2026-09-03): notificarea RĂMÂNE în bara de notificări**,
-nu apare și dispare. Concret: `autoCancel: false` ca să nu se șteargă la tap,
-importanță `high` ca să apară și ca banner peste ecran, și id stabil per tip
-de notificare ca una nouă să o înlocuiască pe cea veche în loc să adune un
-teanc. De hotărât pe parcurs dacă „rămâne" înseamnă și `ongoing: true` (nu
-poate fi ștearsă cu degetul) — aia e mai agresivă și se folosește de obicei
-doar pentru lucruri în desfășurare, nu pentru anunțuri.
-
-### Piesa 2 — overlay pe planetă (pur UI, independent)
-
-Peste planeta din Home:
-- „Ready" când se poate juca;
-- în cooldown: cât mai are până e gata + câte rulări mai ai („1 din 2").
-
-Datele există deja: `StorageService.planetCooldownRemaining()`,
-`StorageService.planetRunsLeft()`, `planetRunsPerCycle` /
-`planetRunsPerCycleWithAd` (`core/progression.dart`, cooldown 12h).
-
-### Piesa 3 — notificări PUSH (cere Cloud Functions)
-
-Astea vin din acțiunea ALTUI jucător, când aplicația ta e închisă:
-- ți-a scris cineva un mesaj;
-- cerere de prietenie;
-- anunț de sistem de la admin;
-- **invitație în cameră** — inviți un prieten offline, îi apare notificare, iar
-  la tap **intră direct în camera aia** de multiplayer.
-
-⚠️ **Blocajul real:** un client NU poate trimite FCM altui client. Trimiterea
-cere cheia de server / Admin SDK, adică **Cloud Functions**. Toată
-documentația proiectului spune „fără Cloud Functions", dar asta **s-a
-schimbat**: contul e acum pe **Blaze (free trial)**, deci Functions se pot
-deploya. E infrastructură nouă, nu o seară de lucru.
-
-Pentru „tap pe notificare → intri în cameră" există deja jumătate din
-mecanică: pachetul `app_links` e în `pubspec.yaml`, iar schema custom
-`guessit://` era deja gândită pentru invitațiile de prietenie (vezi memoria
-`project_guess_it_friend_invite_link`), doar că n-a fost construită.
-
-**Ordinea recomandată:** Piesa 1 → Piesa 2 → Piesa 3. Primele două n-au nevoie
-de nimic din afară și dau imediat 5 din lucrurile cerute; a treia e proiect
-separat, cu Functions.
-
----
+- **Fusul orar la notificările locale** e ghicit din decalaj
+  (`Europe/Bucharest` sau UTC), nu citit ca IANA. Merge pentru publicul de
+  acum; se strică pentru cineva din alt fus.
+- **Notificarea locală nu se anulează** dacă jucătorul consumă lucrul înainte
+  să sune alarma (ex. intră în joc și învârte roata cu 10 minute înainte).
+- **Push-ul pe web nu există** — ar cere cheie VAPID și service worker separat.
+  Doar Android primește notificări.
+- La tap pe notificarea de mesaj se deschide lista de prieteni, nu firul
+  direct cu omul respectiv.
 
 ## Reconectare în meci (cerut 2026-09-03) — DE FĂCUT
 
