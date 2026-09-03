@@ -47,6 +47,23 @@ singură în `config/admin`, nescriabil de altcineva și necitibil din client.
 
 ---
 
+## De făcut la întoarcere (2026-09-03 seara)
+
+1. **Curăță baza** — două conturi Guest de test, create de mine pe web:
+   ```
+   python tools/_curata_conturi_test.py            # raport
+   python tools/_curata_conturi_test.py --sterge   # aplică
+   ```
+   Păstrează contul tău, salvarea lui din cloud și `config/admin`. (Am încercat
+   să-l rulez eu; l-a blocat sistemul de permisiuni.) După ce merge, șterge și
+   scriptul — e de unică folosință.
+2. **Instalează APK-ul** de la `build/app/outputs/flutter-apk/app-release.apk`
+   — cel de pe telefon e vechi.
+3. **Probează tabul „Azi"** din Admin (commit `6e4e299`, ținut LOCAL, nepushat
+   tocmai fiindcă nu l-am văzut pe ecran). Dacă arată bine: `git push`.
+
+---
+
 ## De pus în funcțiune (cod gata, așteaptă un pas al tău)
 
 - **Scoate ramura tranzitorie din regula de meciuri.** `firestore.rules` are
