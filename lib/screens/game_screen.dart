@@ -16,6 +16,7 @@ import '../data/storage_service.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
 import '../widgets/category_unlock_animation.dart';
+import '../widgets/formula_card.dart';
 import '../widgets/in_app_notification.dart';
 import '../widgets/next_button.dart';
 import '../widgets/report_question_button.dart';
@@ -859,14 +860,27 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                                 return Transform.translate(
                                     offset: Offset(shake, 0), child: child);
                               },
-                              child: BlurImage(
-                                color: q.color,
-                                answer: q.answer,
-                                revealed: answered,
-                                hintsUsed: hintsUsed,
-                                imageAssetPath: q.imageAssetPath,
-                                noBlur: _noBlur,
-                              ),
+                              // Formulă sau poză. O întrebare de Matematică
+                              // arată formula scrisă mare, în locul pozei;
+                              // restul ecranului (hint-uri, variante, punctaj)
+                              // e identic. Vezi FormulaCard pentru de ce nu se
+                              // aplică blur peste o formulă.
+                              child: q.formula != null
+                                  ? FormulaCard(
+                                      color: q.color,
+                                      prompt: q.prompt,
+                                      formula: q.formula!,
+                                      answer: q.answer,
+                                      revealed: answered,
+                                    )
+                                  : BlurImage(
+                                      color: q.color,
+                                      answer: q.answer,
+                                      revealed: answered,
+                                      hintsUsed: hintsUsed,
+                                      imageAssetPath: q.imageAssetPath,
+                                      noBlur: _noBlur,
+                                    ),
                             ),
                             Positioned(
                                 top: -9,
@@ -1084,10 +1098,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%',
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
+        // La o formulă nu se limpezește nimic (vezi FormulaCard), deci un
+        // procent de claritate ar fi o cifră care nu descrie nimic. Rândul
+        // rămâne, ca butoanele din dreapta să nu sară de pe loc.
+        if (q.formula == null)
+          Text(
+            'Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%',
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          )
+        else
+          const SizedBox.shrink(),
         // Când s-a răspuns, rândul rămâne doar cu "Claritate" — Hint și Skip
         // dispar (butonul Următoarea întrebare apare imediat sub acest rând).
         if (!answered)

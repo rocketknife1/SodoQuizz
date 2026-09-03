@@ -1,0 +1,1734 @@
+{
+  "version": "1.0",
+  "limba": "ro",
+  "categorii": {
+    "formule_celebre": {
+      "mod": "4_variante",
+      "culoare_tema": "#7C4DFF",
+      "descriere": "Formule celebre",
+      "intrebari": [
+        {
+          "id": "mat_001",
+          "enunt": "Cine a demonstrat această relație?",
+          "formula": "a² + b² = c²",
+          "raspuns": "PITAGORA",
+          "variante": [
+            "PITAGORA",
+            "EUCLID",
+            "ARHIMEDE",
+            "TALES"
+          ],
+          "hint_1": "Relația fundamentală din triunghiul dreptunghic",
+          "hint_2": "Matematician grec din secolul VI î.Hr.",
+          "hint_3": "A întemeiat o școală filozofică ce-i poartă numele",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_002",
+          "enunt": "Cine a formulat această ecuație?",
+          "formula": "E = mc²",
+          "raspuns": "EINSTEIN",
+          "variante": [
+            "EINSTEIN",
+            "NEWTON",
+            "PLANCK",
+            "BOHR"
+          ],
+          "hint_1": "Leagă energia de masă prin viteza luminii",
+          "hint_2": "Publicată în 1905, «anul minunat»",
+          "hint_3": "Cea mai cunoscută ecuație din fizică",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_003",
+          "enunt": "Cum se numește această egalitate?",
+          "formula": "e^(iπ) + 1 = 0",
+          "raspuns": "IDENTITATEA LUI EULER",
+          "variante": [
+            "IDENTITATEA LUI EULER",
+            "TEOREMA LUI ABEL",
+            "LEMA LUI GAUSS",
+            "AXIOMA LUI HILBERT"
+          ],
+          "hint_1": "Leagă cinci constante fundamentale într-o singură egalitate",
+          "hint_2": "Conține e, i, π, 1 și 0",
+          "hint_3": "Considerată cea mai frumoasă formulă din matematică",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_004",
+          "enunt": "Cine a formulat principiul al doilea al mecanicii?",
+          "formula": "F = m · a",
+          "raspuns": "NEWTON",
+          "variante": [
+            "NEWTON",
+            "GALILEI",
+            "HUYGENS",
+            "KEPLER"
+          ],
+          "hint_1": "Forța egal masa ori accelerația",
+          "hint_2": "Englez, secolul XVII",
+          "hint_3": "Legenda spune că i-a căzut un măr în cap",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_005",
+          "enunt": "Ce se calculează cu această formulă?",
+          "formula": "A = π · r²",
+          "raspuns": "ARIA CERCULUI",
+          "variante": [
+            "ARIA CERCULUI",
+            "VOLUMUL SFEREI",
+            "ARIA PĂTRATULUI",
+            "ARIA ROMBULUI"
+          ],
+          "hint_1": "r este raza",
+          "hint_2": "Rezultatul se măsoară în unități pătrate",
+          "hint_3": "Cu r = 1 rezultatul este chiar π",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_006",
+          "enunt": "Cum se numește această sumă?",
+          "formula": "1 + 2 + 3 + ... + n = n(n+1)/2",
+          "raspuns": "SUMA LUI GAUSS",
+          "variante": [
+            "SUMA LUI GAUSS",
+            "SUMA LUI EULER",
+            "SERIA LUI TAYLOR",
+            "ȘIRUL LUI FIBONACCI"
+          ],
+          "hint_1": "Suma primelor n numere naturale",
+          "hint_2": "Un copil de 9 ani a găsit-o în câteva secunde la școală",
+          "hint_3": "Pentru n = 100 dă 5050",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_007",
+          "enunt": "Cum se numește această formulă?",
+          "formula": "x = (−b ± √(b² − 4ac)) / 2a",
+          "raspuns": "FORMULA CUADRATICĂ",
+          "variante": [
+            "FORMULA CUADRATICĂ",
+            "FORMULA LUI HERON",
+            "REGULA LUI CRAMER",
+            "TEOREMA LUI VIÈTE"
+          ],
+          "hint_1": "Rezolvă ecuația de gradul al doilea",
+          "hint_2": "Sub radical stă discriminantul",
+          "hint_3": "Semnul ± arată că sunt două soluții",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_008",
+          "enunt": "Cum se numește această relație?",
+          "formula": "sin²α + cos²α = 1",
+          "raspuns": "IDENTITATEA FUNDAMENTALĂ",
+          "variante": [
+            "IDENTITATEA FUNDAMENTALĂ",
+            "TEOREMA SINUSURILOR",
+            "FORMULA LUI MOIVRE",
+            "LEGEA TANGENTELOR"
+          ],
+          "hint_1": "Este adevărată pentru orice unghi α",
+          "hint_2": "Vine direct din teorema lui Pitagora pe cercul unitate",
+          "hint_3": "Se numește «fundamentală» a trigonometriei",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_009",
+          "enunt": "Ce teoremă este scrisă aici?",
+          "formula": "a / sin A = b / sin B = c / sin C",
+          "raspuns": "TEOREMA SINUSURILOR",
+          "variante": [
+            "TEOREMA SINUSURILOR",
+            "TEOREMA COSINUSULUI",
+            "TEOREMA LUI CEVA",
+            "TEOREMA LUI MENELAU"
+          ],
+          "hint_1": "Leagă laturile de unghiurile opuse lor",
+          "hint_2": "Raportul comun este diametrul cercului circumscris",
+          "hint_3": "Se folosește la rezolvarea triunghiurilor oarecare",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_010",
+          "enunt": "Ce teoremă este scrisă aici?",
+          "formula": "c² = a² + b² − 2ab · cos C",
+          "raspuns": "TEOREMA COSINUSULUI",
+          "variante": [
+            "TEOREMA COSINUSULUI",
+            "TEOREMA SINUSURILOR",
+            "TEOREMA ÎNĂLȚIMII",
+            "TEOREMA CATETEI"
+          ],
+          "hint_1": "O generalizare a teoremei lui Pitagora",
+          "hint_2": "Când C = 90°, termenul cu cosinus dispare",
+          "hint_3": "Se mai numește teorema generalizată a lui Pitagora",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_011",
+          "enunt": "Ce se calculează aici?",
+          "formula": "V = (4/3) · π · r³",
+          "raspuns": "VOLUMUL SFEREI",
+          "variante": [
+            "VOLUMUL SFEREI",
+            "ARIA SFEREI",
+            "VOLUMUL CONULUI",
+            "VOLUMUL CILINDRULUI"
+          ],
+          "hint_1": "r este raza corpului",
+          "hint_2": "Rezultatul se măsoară în unități cubice",
+          "hint_3": "Arhimede a considerat-o cea mai frumoasă descoperire a lui",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_012",
+          "enunt": "Cum se numește dezvoltarea din dreapta?",
+          "formula": "(a + b)² = a² + 2ab + b²",
+          "raspuns": "BINOMUL LA PĂTRAT",
+          "variante": [
+            "BINOMUL LA PĂTRAT",
+            "DIFERENȚA DE PĂTRATE",
+            "SUMA DE CUBURI",
+            "PRODUSUL REMARCABIL"
+          ],
+          "hint_1": "Cel mai folosit produs remarcabil",
+          "hint_2": "Termenul din mijloc se uită cel mai des",
+          "hint_3": "Cu a = b = 1 dă 4",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_013",
+          "enunt": "Ce lege este scrisă aici?",
+          "formula": "F = G · (m₁ · m₂) / r²",
+          "raspuns": "ATRACȚIA GRAVITAȚIONALĂ",
+          "variante": [
+            "ATRACȚIA GRAVITAȚIONALĂ",
+            "LEGEA LUI COULOMB",
+            "LEGEA LUI HOOKE",
+            "LEGEA LUI OHM"
+          ],
+          "hint_1": "Descrie forța dintre două corpuri cu masă",
+          "hint_2": "G este constanta universală",
+          "hint_3": "Scade cu pătratul distanței",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_014",
+          "enunt": "Cum se numește problema rezolvată de această sumă?",
+          "formula": "1 + 1/4 + 1/9 + 1/16 + ... = π²/6",
+          "raspuns": "PROBLEMA DIN BASEL",
+          "variante": [
+            "PROBLEMA DIN BASEL",
+            "PARADOXUL LUI ZENON",
+            "PROBLEMA LUI DIDONA",
+            "CONJECTURA GOLDBACH"
+          ],
+          "hint_1": "Suma inverselor pătratelor perfecte",
+          "hint_2": "A rezistat celor mai buni matematicieni zeci de ani",
+          "hint_3": "Numele vine de la orașul elvețian al familiei Bernoulli",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_015",
+          "enunt": "Ce definește această egalitate?",
+          "formula": "i² = −1",
+          "raspuns": "UNITATEA IMAGINARĂ",
+          "variante": [
+            "UNITATEA IMAGINARĂ",
+            "NUMĂRUL NEPERIAN",
+            "NUMĂRUL DE AUR",
+            "CONSTANTA LUI EULER"
+          ],
+          "hint_1": "Baza numerelor complexe",
+          "hint_2": "Niciun număr real nu are pătratul negativ",
+          "hint_3": "Se notează cu litera i",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_016",
+          "enunt": "Ce constantă este definită aici?",
+          "formula": "(1 + √5) / 2 ≈ 1,618",
+          "raspuns": "NUMĂRUL DE AUR",
+          "variante": [
+            "NUMĂRUL DE AUR",
+            "NUMĂRUL LUI EULER",
+            "CONSTANTA LUI CATALAN",
+            "NUMĂRUL LUI FEIGENBAUM"
+          ],
+          "hint_1": "Apare în artă, arhitectură și în natură",
+          "hint_2": "Se notează cu litera grecească φ",
+          "hint_3": "Raportul dintre termenii consecutivi Fibonacci tinde spre el",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_017",
+          "enunt": "Ce operație este scrisă aici?",
+          "formula": "n! = n · (n−1) · ... · 2 · 1",
+          "raspuns": "FACTORIAL",
+          "variante": [
+            "FACTORIAL",
+            "PERMUTARE",
+            "ARANJAMENT",
+            "PUTERE"
+          ],
+          "hint_1": "Se notează cu semnul exclamării",
+          "hint_2": "Numără în câte moduri poți ordona n obiecte",
+          "hint_3": "Prin convenție, valoarea pentru 0 este 1",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_018",
+          "enunt": "Ce se calculează cu această formulă?",
+          "formula": "C(n, k) = n! / (k! · (n − k)!)",
+          "raspuns": "COMBINĂRI",
+          "variante": [
+            "COMBINĂRI",
+            "ARANJAMENTE",
+            "PERMUTĂRI",
+            "PROGRESII"
+          ],
+          "hint_1": "Numără submulțimile de k elemente",
+          "hint_2": "Ordinea NU contează",
+          "hint_3": "Valorile ei formează triunghiul lui Pascal",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_019",
+          "enunt": "Ce proprietate este scrisă aici?",
+          "formula": "log(a · b) = log a + log b",
+          "raspuns": "LOGARITMUL PRODUSULUI",
+          "variante": [
+            "LOGARITMUL PRODUSULUI",
+            "LOGARITMUL CÂTULUI",
+            "SCHIMBAREA BAZEI",
+            "LOGARITMUL PUTERII"
+          ],
+          "hint_1": "Transformă înmulțirea în adunare",
+          "hint_2": "Din cauza ei s-au inventat riglele de calcul",
+          "hint_3": "Regula inversă transformă împărțirea în scădere",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_020",
+          "enunt": "Ce se calculează cu această formulă?",
+          "formula": "d = √((x₂ − x₁)² + (y₂ − y₁)²)",
+          "raspuns": "DISTANȚA DINTRE DOUĂ PUNCTE",
+          "variante": [
+            "DISTANȚA DINTRE DOUĂ PUNCTE",
+            "PANTA DREPTEI",
+            "MIJLOCUL SEGMENTULUI",
+            "ARIA TRAPEZULUI"
+          ],
+          "hint_1": "În plan, cu coordonate carteziene",
+          "hint_2": "Este tot teorema lui Pitagora, scrisă altfel",
+          "hint_3": "Rezultatul nu poate fi negativ",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_021",
+          "enunt": "Ce se calculează aici?",
+          "formula": "A = (b · h) / 2",
+          "raspuns": "ARIA TRIUNGHIULUI",
+          "variante": [
+            "ARIA TRIUNGHIULUI",
+            "ARIA PARALELOGRAMULUI",
+            "ARIA TRAPEZULUI",
+            "ARIA SECTORULUI"
+          ],
+          "hint_1": "b este baza, h este înălțimea",
+          "hint_2": "Jumătate din aria unui paralelogram cu aceeași bază",
+          "hint_3": "Nu contează care latură alegi ca bază",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_022",
+          "enunt": "Ce se calculează aici?",
+          "formula": "L = 2 · π · r",
+          "raspuns": "CIRCUMFERINȚA",
+          "variante": [
+            "CIRCUMFERINȚA",
+            "DIAMETRUL",
+            "ARIA DISCULUI",
+            "ARCUL DE CERC"
+          ],
+          "hint_1": "Lungimea conturului unui cerc",
+          "hint_2": "Se mai scrie și π · d",
+          "hint_3": "Cu r = 1 dă aproximativ 6,28",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_023",
+          "enunt": "Ce proprietate a puterilor este scrisă aici?",
+          "formula": "aᵐ · aⁿ = aᵐ⁺ⁿ",
+          "raspuns": "REGULA PUTERILOR",
+          "variante": [
+            "REGULA PUTERILOR",
+            "REGULA RADICALILOR",
+            "REGULA SEMNELOR",
+            "REGULA LUI L'HÔPITAL"
+          ],
+          "hint_1": "Aceeași bază, exponenți adunați",
+          "hint_2": "La împărțire exponenții se scad",
+          "hint_3": "Funcționează doar dacă baza este aceeași",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_024",
+          "enunt": "Ce definește această formulă?",
+          "formula": "P(A) = cazuri favorabile / cazuri posibile",
+          "raspuns": "PROBABILITATEA CLASICĂ",
+          "variante": [
+            "PROBABILITATEA CLASICĂ",
+            "MEDIA ARITMETICĂ",
+            "DISPERSIA",
+            "FRECVENȚA RELATIVĂ"
+          ],
+          "hint_1": "Rezultatul este mereu între 0 și 1",
+          "hint_2": "Presupune că toate cazurile sunt egal posibile",
+          "hint_3": "La zarul corect, șansa unui număr anume este 1/6",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_025",
+          "enunt": "Cum se numește membrul din dreapta?",
+          "formula": "(a − b)(a + b) = a² − b²",
+          "raspuns": "DIFERENȚA DE PĂTRATE",
+          "variante": [
+            "DIFERENȚA DE PĂTRATE",
+            "BINOMUL LUI NEWTON",
+            "SUMA DE PĂTRATE",
+            "TRINOMUL PĂTRAT"
+          ],
+          "hint_1": "Cel mai util produs remarcabil la descompuneri",
+          "hint_2": "Suma de pătrate NU se descompune la fel",
+          "hint_3": "Cu a = 10 și b = 1 dă 99",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_026",
+          "enunt": "Cum se numește expresia din dreapta?",
+          "formula": "Δ = b² − 4ac",
+          "raspuns": "DISCRIMINANTUL",
+          "variante": [
+            "DISCRIMINANTUL",
+            "DETERMINANTUL",
+            "COEFICIENTUL",
+            "REZIDUUL"
+          ],
+          "hint_1": "Spune câte soluții reale are ecuația de gradul II",
+          "hint_2": "Se notează cu litera grecească Δ",
+          "hint_3": "Dacă e negativ, soluțiile sunt complexe",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_027",
+          "enunt": "Ce operație inversă derivării este scrisă aici?",
+          "formula": "∫ x dx = x²/2 + C",
+          "raspuns": "INTEGRAREA",
+          "variante": [
+            "INTEGRAREA",
+            "DERIVAREA",
+            "LIMITAREA",
+            "FACTORIZAREA"
+          ],
+          "hint_1": "Semnul seamănă cu un S alungit",
+          "hint_2": "C este constanta de integrare",
+          "hint_3": "Este operația inversă a derivării",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_028",
+          "enunt": "Ce teoremă leagă cateta de ipotenuză?",
+          "formula": "b² = c · c₁",
+          "raspuns": "TEOREMA CATETEI",
+          "variante": [
+            "TEOREMA CATETEI",
+            "TEOREMA ÎNĂLȚIMII",
+            "TEOREMA LUI TALES",
+            "TEOREMA BISECTOAREI"
+          ],
+          "hint_1": "În triunghiul dreptunghic, cu înălțimea din unghiul drept",
+          "hint_2": "c₁ este proiecția catetei pe ipotenuză",
+          "hint_3": "Perechea ei este teorema înălțimii",
+          "dificultate": "greu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_097",
+          "enunt": "Ce se calculează aici?",
+          "formula": "V = π · r² · h",
+          "raspuns": "VOLUMUL CILINDRULUI",
+          "variante": [
+            "VOLUMUL CILINDRULUI",
+            "VOLUMUL CONULUI",
+            "ARIA LATERALĂ",
+            "VOLUMUL PRISMEI"
+          ],
+          "hint_1": "Aria bazei ori înălțimea",
+          "hint_2": "Baza este un cerc",
+          "hint_3": "Conul cu aceleași dimensiuni are o treime din el",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        }
+      ]
+    },
+    "simboluri": {
+      "mod": "4_variante",
+      "culoare_tema": "#7C4DFF",
+      "descriere": "Simboluri matematice",
+      "intrebari": [
+        {
+          "id": "mat_029",
+          "enunt": "Cum se numește acest simbol?",
+          "formula": "π",
+          "raspuns": "PI",
+          "variante": [
+            "PI",
+            "RO",
+            "FI",
+            "PSI"
+          ],
+          "hint_1": "Raportul dintre circumferință și diametru",
+          "hint_2": "Aproximativ 3,14159",
+          "hint_3": "A 16-a literă din alfabetul grecesc",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_030",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "∑",
+          "raspuns": "SUMĂ",
+          "variante": [
+            "SUMĂ",
+            "PRODUS",
+            "INTEGRALĂ",
+            "DERIVATĂ"
+          ],
+          "hint_1": "Adună mai mulți termeni deodată",
+          "hint_2": "Este litera grecească sigma mare",
+          "hint_3": "Sub el se scrie de unde începe numărătoarea",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_031",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "∫",
+          "raspuns": "INTEGRALĂ",
+          "variante": [
+            "INTEGRALĂ",
+            "SUMĂ",
+            "LIMITĂ",
+            "MODUL"
+          ],
+          "hint_1": "Seamănă cu un S alungit",
+          "hint_2": "Calculează aria de sub o curbă",
+          "hint_3": "Operația inversă a derivării",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_032",
+          "enunt": "Cum se numește acest semn?",
+          "formula": "√",
+          "raspuns": "RADICAL",
+          "variante": [
+            "RADICAL",
+            "MODUL",
+            "FACTORIAL",
+            "PROCENT"
+          ],
+          "hint_1": "Extrage rădăcina unui număr",
+          "hint_2": "√9 = 3",
+          "hint_3": "Fără indice, se subînțelege ordinul 2",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_033",
+          "enunt": "Ce reprezintă acest simbol?",
+          "formula": "∞",
+          "raspuns": "INFINIT",
+          "variante": [
+            "INFINIT",
+            "ZERO",
+            "NEDEFINIT",
+            "CICLU"
+          ],
+          "hint_1": "Nu este un număr, ci o tendință",
+          "hint_2": "Seamănă cu un 8 culcat",
+          "hint_3": "Se numește și lemniscată",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_034",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "α",
+          "raspuns": "ALFA",
+          "variante": [
+            "ALFA",
+            "BETA",
+            "GAMA",
+            "DELTA"
+          ],
+          "hint_1": "Prima literă din alfabetul grecesc",
+          "hint_2": "Notează de obicei un unghi",
+          "hint_3": "De la ea vine cuvântul «alfabet»",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_035",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "β",
+          "raspuns": "BETA",
+          "variante": [
+            "BETA",
+            "ALFA",
+            "TETA",
+            "ZETA"
+          ],
+          "hint_1": "A doua literă din alfabetul grecesc",
+          "hint_2": "Notează de obicei al doilea unghi",
+          "hint_3": "Dă numele versiunilor de test ale programelor",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_036",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "ω",
+          "raspuns": "OMEGA",
+          "variante": [
+            "OMEGA",
+            "OMICRON",
+            "SIGMA",
+            "FI"
+          ],
+          "hint_1": "Ultima literă din alfabetul grecesc",
+          "hint_2": "Notează viteza unghiulară în fizică",
+          "hint_3": "«Alfa și …» este o expresie cunoscută",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_037",
+          "enunt": "Cum se numește această literă?",
+          "formula": "Δ",
+          "raspuns": "DELTA",
+          "variante": [
+            "DELTA",
+            "LAMBDA",
+            "GAMA",
+            "SIGMA"
+          ],
+          "hint_1": "Notează o variație sau discriminantul",
+          "hint_2": "Are forma unui triunghi",
+          "hint_3": "Dă numele și gurilor unui fluviu",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_038",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "θ",
+          "raspuns": "TETA",
+          "variante": [
+            "TETA",
+            "FI",
+            "PSI",
+            "IOTA"
+          ],
+          "hint_1": "Notează de obicei un unghi în trigonometrie",
+          "hint_2": "Seamănă cu un 0 tăiat de o linie",
+          "hint_3": "Este a opta literă grecească",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_039",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "λ",
+          "raspuns": "LAMBDA",
+          "variante": [
+            "LAMBDA",
+            "MIU",
+            "NU",
+            "CSI"
+          ],
+          "hint_1": "Notează lungimea de undă în fizică",
+          "hint_2": "Dă numele unui stil de programare",
+          "hint_3": "Seamănă cu un A fără bara din mijloc",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_040",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "μ",
+          "raspuns": "MIU",
+          "variante": [
+            "MIU",
+            "NU",
+            "RO",
+            "TAU"
+          ],
+          "hint_1": "Prefixul «micro» vine de la ea",
+          "hint_2": "Notează media în statistică",
+          "hint_3": "Un milion de unități din ea fac una întreagă",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_041",
+          "enunt": "Cum se numește această literă grecească?",
+          "formula": "φ",
+          "raspuns": "FI",
+          "variante": [
+            "FI",
+            "HI",
+            "PSI",
+            "OMICRON"
+          ],
+          "hint_1": "Notează numărul de aur",
+          "hint_2": "Seamănă cu un 0 străpuns vertical",
+          "hint_3": "Aproximativ 1,618",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_042",
+          "enunt": "Ce înseamnă acest semn?",
+          "formula": "≈",
+          "raspuns": "APROXIMATIV EGAL",
+          "variante": [
+            "APROXIMATIV EGAL",
+            "IDENTIC",
+            "PROPORȚIONAL",
+            "CONGRUENT"
+          ],
+          "hint_1": "Două valori foarte apropiate, dar nu identice",
+          "hint_2": "π ≈ 3,14 este scris cu el",
+          "hint_3": "Sunt două semne de egal ondulate",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_043",
+          "enunt": "Ce înseamnă acest semn?",
+          "formula": "≠",
+          "raspuns": "DIFERIT",
+          "variante": [
+            "DIFERIT",
+            "NEGATIV",
+            "OPUS",
+            "INVERS"
+          ],
+          "hint_1": "Neagă egalitatea",
+          "hint_2": "Este semnul egal tăiat",
+          "hint_3": "Se citește «diferit de»",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_044",
+          "enunt": "Ce înseamnă acest semn?",
+          "formula": "≤",
+          "raspuns": "MAI MIC SAU EGAL",
+          "variante": [
+            "MAI MIC SAU EGAL",
+            "MAI MARE SAU EGAL",
+            "STRICT MAI MIC",
+            "INCLUS"
+          ],
+          "hint_1": "Acceptă și cazul de egalitate",
+          "hint_2": "Vârful ascuțit arată spre valoarea mică",
+          "hint_3": "Apare des la definirea intervalelor",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_045",
+          "enunt": "Ce înseamnă acest semn?",
+          "formula": "±",
+          "raspuns": "PLUS-MINUS",
+          "variante": [
+            "PLUS-MINUS",
+            "APROXIMATIV",
+            "MODUL",
+            "OPUS"
+          ],
+          "hint_1": "Arată două valori deodată",
+          "hint_2": "Apare în formula ecuației de gradul II",
+          "hint_3": "Se folosește și pentru marja de eroare",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_046",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "∈",
+          "raspuns": "APARȚINE",
+          "variante": [
+            "APARȚINE",
+            "INCLUS",
+            "EXISTĂ",
+            "IMPLICĂ"
+          ],
+          "hint_1": "Leagă un element de o mulțime",
+          "hint_2": "Se citește «este element al»",
+          "hint_3": "Tăiat cu o linie înseamnă contrariul",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_047",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "⊂",
+          "raspuns": "INCLUS",
+          "variante": [
+            "INCLUS",
+            "APARȚINE",
+            "REUNIT",
+            "INTERSECTAT"
+          ],
+          "hint_1": "Leagă o mulțime de altă mulțime",
+          "hint_2": "Se citește «este submulțime a»",
+          "hint_3": "Seamănă cu un C rotunjit",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_048",
+          "enunt": "Ce reprezintă acest simbol?",
+          "formula": "∅",
+          "raspuns": "MULȚIMEA VIDĂ",
+          "variante": [
+            "MULȚIMEA VIDĂ",
+            "ZERO",
+            "INFINIT",
+            "MULȚIMEA UNIVERSALĂ"
+          ],
+          "hint_1": "Nu conține niciun element",
+          "hint_2": "Se notează și cu două acolade goale",
+          "hint_3": "Este inclusă în orice mulțime",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_049",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "∀",
+          "raspuns": "ORICARE",
+          "variante": [
+            "ORICARE",
+            "EXISTĂ",
+            "NICIUNUL",
+            "UNIC"
+          ],
+          "hint_1": "Cuantificatorul universal",
+          "hint_2": "Este litera A întoarsă",
+          "hint_3": "Se citește «pentru orice»",
+          "dificultate": "greu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_050",
+          "enunt": "Ce înseamnă acest simbol?",
+          "formula": "∃",
+          "raspuns": "EXISTĂ",
+          "variante": [
+            "EXISTĂ",
+            "ORICARE",
+            "APARȚINE",
+            "IMPLICĂ"
+          ],
+          "hint_1": "Cuantificatorul existențial",
+          "hint_2": "Este litera E oglindită",
+          "hint_3": "Se citește «există cel puțin un»",
+          "dificultate": "greu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_098",
+          "enunt": "Ce înseamnă acest semn?",
+          "formula": "≥",
+          "raspuns": "MAI MARE SAU EGAL",
+          "variante": [
+            "MAI MARE SAU EGAL",
+            "MAI MIC SAU EGAL",
+            "STRICT MAI MARE",
+            "APROXIMATIV"
+          ],
+          "hint_1": "Acceptă și cazul de egalitate",
+          "hint_2": "Vârful ascuțit arată spre valoarea mică",
+          "hint_3": "Perechea lui este ≤",
+          "dificultate": "usor",
+          "puncte_max": 200
+        }
+      ]
+    },
+    "matematicieni": {
+      "mod": "4_variante",
+      "culoare_tema": "#7C4DFF",
+      "descriere": "Matematicieni",
+      "intrebari": [
+        {
+          "id": "mat_051",
+          "enunt": "Cine a scris «Elementele», temelia geometriei?",
+          "formula": "«Elementele»\n13 cărți, ~300 î.Hr.",
+          "raspuns": "EUCLID",
+          "variante": [
+            "EUCLID",
+            "PITAGORA",
+            "PTOLEMEU",
+            "APOLLONIUS"
+          ],
+          "hint_1": "Geometria din școală îi poartă numele",
+          "hint_2": "A trăit în Alexandria",
+          "hint_3": "Cartea lui a fost manual timp de peste 2000 de ani",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_052",
+          "enunt": "Cine a strigat «Evrica!» sărind din baie?",
+          "formula": "«Εὕρηκα!»",
+          "raspuns": "ARHIMEDE",
+          "variante": [
+            "ARHIMEDE",
+            "TALES",
+            "DEMOCRIT",
+            "ERATOSTENE"
+          ],
+          "hint_1": "A descoperit legea plutirii corpurilor",
+          "hint_2": "A trăit în Siracuza",
+          "hint_3": "Tot el a spus «dați-mi un punct de sprijin»",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_053",
+          "enunt": "Cine a inventat sistemul de coordonate din desen?",
+          "formula": "(x, y)\nplanul xOy",
+          "raspuns": "DESCARTES",
+          "variante": [
+            "DESCARTES",
+            "FERMAT",
+            "PASCAL",
+            "LEIBNIZ"
+          ],
+          "hint_1": "Coordonatele îi poartă numele",
+          "hint_2": "Filozof francez, secolul XVII",
+          "hint_3": "«Cogito, ergo sum» este a lui",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_054",
+          "enunt": "A cui teoremă a rămas nedemonstrată 358 de ani?",
+          "formula": "xⁿ + yⁿ = zⁿ\nfără soluții pentru n > 2",
+          "raspuns": "FERMAT",
+          "variante": [
+            "FERMAT",
+            "GOLDBACH",
+            "RIEMANN",
+            "POINCARÉ"
+          ],
+          "hint_1": "A scris că demonstrația nu încape pe margine",
+          "hint_2": "Jurist francez, matematician amator",
+          "hint_3": "Demonstrată abia în 1994",
+          "dificultate": "mediu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_055",
+          "enunt": "Cine a demonstrat marea teoremă a lui Fermat, în 1994?",
+          "formula": "xⁿ + yⁿ = zⁿ\nnicio soluție întreagă pentru n > 2",
+          "raspuns": "ANDREW WILES",
+          "variante": [
+            "ANDREW WILES",
+            "TERENCE TAO",
+            "GRIGORI PERELMAN",
+            "JOHN NASH"
+          ],
+          "hint_1": "A lucrat în secret șapte ani",
+          "hint_2": "Matematician britanic",
+          "hint_3": "Prima variantă avea o eroare, corectată un an mai târziu",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_056",
+          "enunt": "Cine este considerat primul programator din istorie?",
+          "formula": "Nota G\nmașina analitică, 1843",
+          "raspuns": "ADA LOVELACE",
+          "variante": [
+            "ADA LOVELACE",
+            "GRACE HOPPER",
+            "EMMY NOETHER",
+            "SOFIA KOVALEVSKAIA"
+          ],
+          "hint_1": "A scris primul algoritm destinat unei mașini",
+          "hint_2": "Fiica poetului Byron",
+          "hint_3": "Un limbaj de programare îi poartă numele",
+          "dificultate": "mediu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_057",
+          "enunt": "Cine a demonstrat teoremele de incompletitudine?",
+          "formula": "Orice sistem coerent\neste incomplet",
+          "raspuns": "GÖDEL",
+          "variante": [
+            "GÖDEL",
+            "HILBERT",
+            "RUSSELL",
+            "TURING"
+          ],
+          "hint_1": "A zguduit temeliile logicii matematice",
+          "hint_2": "Austriac, prieten cu Einstein la Princeton",
+          "hint_3": "A arătat că unele adevăruri nu pot fi demonstrate",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_058",
+          "enunt": "De la numele cui vine cuvântul «algoritm»?",
+          "formula": "al-jabr → algebră",
+          "raspuns": "AL-KHWARIZMI",
+          "variante": [
+            "AL-KHWARIZMI",
+            "OMAR KHAYYAM",
+            "AVICENNA",
+            "AL-KINDI"
+          ],
+          "hint_1": "Matematician persan din secolul IX",
+          "hint_2": "De la cartea lui vine și cuvântul «algebră»",
+          "hint_3": "A lucrat la Casa Înțelepciunii din Bagdad",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_059",
+          "enunt": "Cine a făcut cunoscut acest șir?",
+          "formula": "1, 1, 2, 3, 5, 8, 13, 21, ...",
+          "raspuns": "FIBONACCI",
+          "variante": [
+            "FIBONACCI",
+            "LUCAS",
+            "CATALAN",
+            "MERSENNE"
+          ],
+          "hint_1": "Fiecare termen este suma celor doi dinainte",
+          "hint_2": "Matematician italian din Pisa",
+          "hint_3": "A introdus cifrele arabe în Europa",
+          "dificultate": "usor",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_060",
+          "enunt": "Cine a pus bazele teoriei mulțimilor?",
+          "formula": "|ℕ| < |ℝ|",
+          "raspuns": "CANTOR",
+          "variante": [
+            "CANTOR",
+            "DEDEKIND",
+            "PEANO",
+            "ZERMELO"
+          ],
+          "hint_1": "A demonstrat că există infinituri de mărimi diferite",
+          "hint_2": "German, secolul XIX",
+          "hint_3": "Ideile lui au fost respinse violent la vremea lor",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_061",
+          "enunt": "Cine a inventat calculul diferențial în paralel cu Newton?",
+          "formula": "dy/dx    ∫ y dx",
+          "raspuns": "LEIBNIZ",
+          "variante": [
+            "LEIBNIZ",
+            "BERNOULLI",
+            "L'HÔPITAL",
+            "CAUCHY"
+          ],
+          "hint_1": "Notația lui se folosește și azi",
+          "hint_2": "German, secolul XVII",
+          "hint_3": "A avut o dispută celebră cu Newton pentru întâietate",
+          "dificultate": "mediu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_062",
+          "enunt": "Cine este supranumit «prințul matematicii»?",
+          "formula": "«Princeps mathematicorum»",
+          "raspuns": "CARL FRIEDRICH GAUSS",
+          "variante": [
+            "CARL FRIEDRICH GAUSS",
+            "LEONHARD EULER",
+            "HENRI POINCARÉ",
+            "DAVID HILBERT"
+          ],
+          "hint_1": "A uimit un învățător adunând 1..100 în câteva secunde",
+          "hint_2": "German, secolul XIX",
+          "hint_3": "Distribuția normală îi poartă numele",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_063",
+          "enunt": "Care matematician a murit la 20 de ani, într-un duel?",
+          "formula": "Teoria grupurilor, 1832",
+          "raspuns": "GALOIS",
+          "variante": [
+            "GALOIS",
+            "ABEL",
+            "RIEMANN",
+            "JACOBI"
+          ],
+          "hint_1": "Și-a scris ideile în noaptea dinaintea duelului",
+          "hint_2": "Francez, a întemeiat teoria grupurilor",
+          "hint_3": "A arătat de ce ecuația de gradul V nu se rezolvă prin radicali",
+          "dificultate": "greu",
+          "puncte_max": 600
+        },
+        {
+          "id": "mat_064",
+          "enunt": "Al cui este triunghiul de numere din desen?",
+          "formula": "1\n1 1\n1 2 1\n1 3 3 1",
+          "raspuns": "PASCAL",
+          "variante": [
+            "PASCAL",
+            "NEWTON",
+            "TARTAGLIA",
+            "STIFEL"
+          ],
+          "hint_1": "Fiecare număr este suma celor două de deasupra",
+          "hint_2": "Dă coeficienții binomiali",
+          "hint_3": "Un limbaj de programare îi poartă numele",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_065",
+          "enunt": "A cui conjectură despre numerele prime este încă nedemonstrată?",
+          "formula": "ζ(s) = 0 ⇒ Re(s) = 1/2",
+          "raspuns": "RIEMANN",
+          "variante": [
+            "RIEMANN",
+            "HODGE",
+            "BIRCH",
+            "COLLATZ"
+          ],
+          "hint_1": "Una dintre problemele de un milion de dolari",
+          "hint_2": "German, secolul XIX",
+          "hint_3": "Se referă la zerourile funcției zeta",
+          "dificultate": "greu",
+          "puncte_max": 700
+        },
+        {
+          "id": "mat_066",
+          "enunt": "Cine a inventat logaritmii?",
+          "formula": "log₁₀ 1000 = 3",
+          "raspuns": "NAPIER",
+          "variante": [
+            "NAPIER",
+            "BRIGGS",
+            "KEPLER",
+            "OUGHTRED"
+          ],
+          "hint_1": "Scoțian, începutul secolului XVII",
+          "hint_2": "Invenția lui a scurtat drastic calculele astronomice",
+          "hint_3": "«Oasele» de calcul îi poartă numele",
+          "dificultate": "greu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_067",
+          "enunt": "Cine a demonstrat că unghiul înscris în semicerc este drept?",
+          "formula": "∠ = 90° în semicerc",
+          "raspuns": "TALES",
+          "variante": [
+            "TALES",
+            "EUCLID",
+            "ARHIMEDE",
+            "HIPPOCRATE"
+          ],
+          "hint_1": "Unul dintre cei șapte înțelepți ai Greciei",
+          "hint_2": "A măsurat piramidele după umbra lor",
+          "hint_3": "Teorema despre segmente proporționale îi poartă numele",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_068",
+          "enunt": "Care matematician este considerat părintele informaticii românești?",
+          "formula": "Logica trivalentă\nBucurești, 1906–1973",
+          "raspuns": "GRIGORE MOISIL",
+          "variante": [
+            "GRIGORE MOISIL",
+            "SPIRU HARET",
+            "DIMITRIE POMPEIU",
+            "GHEORGHE ȚIȚEICA"
+          ],
+          "hint_1": "A adus primul calculator în România",
+          "hint_2": "Are un premiu al ACM care-i poartă numele",
+          "hint_3": "A lucrat la logica circuitelor cu comutatoare",
+          "dificultate": "mediu",
+          "puncte_max": 500
+        },
+        {
+          "id": "mat_099",
+          "enunt": "Cine a rezolvat problema podurilor din Königsberg?",
+          "formula": "7 poduri\n0 trasee posibile",
+          "raspuns": "EULER",
+          "variante": [
+            "EULER",
+            "HAMILTON",
+            "KIRCHHOFF",
+            "DIJKSTRA"
+          ],
+          "hint_1": "A întemeiat teoria grafurilor cu această problemă",
+          "hint_2": "Elvețian, cel mai prolific matematician din istorie",
+          "hint_3": "A demonstrat că traseul cerut e imposibil",
+          "dificultate": "mediu",
+          "puncte_max": 500
+        }
+      ]
+    },
+    "calcule": {
+      "mod": "4_variante",
+      "culoare_tema": "#7C4DFF",
+      "descriere": "Calcule & regula de trei",
+      "intrebari": [
+        {
+          "id": "mat_069",
+          "enunt": "Cât costă 5 caiete?",
+          "formula": "3 caiete ......... 12 lei\n5 caiete ......... ?",
+          "raspuns": "20 LEI",
+          "variante": [
+            "20 LEI",
+            "15 LEI",
+            "18 LEI",
+            "24 LEI"
+          ],
+          "hint_1": "Regula de trei simplă, direct proporțională",
+          "hint_2": "Un caiet costă 12 : 3 = 4 lei",
+          "hint_3": "4 lei × 5 caiete",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_070",
+          "enunt": "În câte zile termină 8 muncitori?",
+          "formula": "4 muncitori ...... 6 zile\n8 muncitori ...... ?",
+          "raspuns": "3 ZILE",
+          "variante": [
+            "3 ZILE",
+            "12 ZILE",
+            "8 ZILE",
+            "4 ZILE"
+          ],
+          "hint_1": "Regula de trei simplă, INVERS proporțională",
+          "hint_2": "Mai mulți muncitori, mai puține zile",
+          "hint_3": "Dublezi oamenii, înjumătățești timpul",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_071",
+          "enunt": "Cât costă 6 kg de mere?",
+          "formula": "2 kg ......... 9 lei\n6 kg ......... ?",
+          "raspuns": "27 LEI",
+          "variante": [
+            "27 LEI",
+            "18 LEI",
+            "24 LEI",
+            "36 LEI"
+          ],
+          "hint_1": "Regula de trei simplă, direct proporțională",
+          "hint_2": "Un kilogram costă 4,5 lei",
+          "hint_3": "Cantitatea se triplează",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_072",
+          "enunt": "Câți kilometri parcurge în 5 ore?",
+          "formula": "2 ore ......... 120 km\n5 ore ......... ?",
+          "raspuns": "300 KM",
+          "variante": [
+            "300 KM",
+            "240 KM",
+            "250 KM",
+            "360 KM"
+          ],
+          "hint_1": "Viteza rămâne constantă",
+          "hint_2": "Într-o oră face 60 km",
+          "hint_3": "60 × 5",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_073",
+          "enunt": "Cât face?",
+          "formula": "20% din 250",
+          "raspuns": "50",
+          "variante": [
+            "50",
+            "45",
+            "25",
+            "60"
+          ],
+          "hint_1": "Procentul înseamnă «din o sută»",
+          "hint_2": "10% din 250 este 25",
+          "hint_3": "Dublezi rezultatul de la 10%",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_074",
+          "enunt": "Cât face?",
+          "formula": "15% din 200",
+          "raspuns": "30",
+          "variante": [
+            "30",
+            "15",
+            "25",
+            "35"
+          ],
+          "hint_1": "Împarte la 100, apoi înmulțește cu 15",
+          "hint_2": "1% din 200 este 2",
+          "hint_3": "2 × 15",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_075",
+          "enunt": "Cât face?",
+          "formula": "1/4 din 96",
+          "raspuns": "24",
+          "variante": [
+            "24",
+            "32",
+            "16",
+            "48"
+          ],
+          "hint_1": "Sfertul unui număr",
+          "hint_2": "Jumătatea lui 96 este 48",
+          "hint_3": "Jumătate din 48",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_076",
+          "enunt": "Cât este?",
+          "formula": "√144",
+          "raspuns": "12",
+          "variante": [
+            "12",
+            "14",
+            "16",
+            "11"
+          ],
+          "hint_1": "Ce număr înmulțit cu el însuși dă 144?",
+          "hint_2": "Este între 10 și 15",
+          "hint_3": "12 × 12",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_077",
+          "enunt": "Cât este?",
+          "formula": "√225",
+          "raspuns": "15",
+          "variante": [
+            "15",
+            "25",
+            "18",
+            "13"
+          ],
+          "hint_1": "Ce număr înmulțit cu el însuși dă 225?",
+          "hint_2": "Se termină în 5",
+          "hint_3": "15 × 15",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_078",
+          "enunt": "Cât este?",
+          "formula": "7²",
+          "raspuns": "49",
+          "variante": [
+            "49",
+            "14",
+            "77",
+            "42"
+          ],
+          "hint_1": "Puterea a doua înseamnă înmulțit cu el însuși",
+          "hint_2": "NU este 7 × 2",
+          "hint_3": "7 × 7",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_079",
+          "enunt": "Cât este?",
+          "formula": "2⁸",
+          "raspuns": "256",
+          "variante": [
+            "256",
+            "128",
+            "512",
+            "64"
+          ],
+          "hint_1": "Doi înmulțit cu el însuși de 8 ori",
+          "hint_2": "Un număr foarte cunoscut în informatică",
+          "hint_3": "Este dublul lui 128",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_080",
+          "enunt": "Cât este?",
+          "formula": "5!",
+          "raspuns": "120",
+          "variante": [
+            "120",
+            "25",
+            "60",
+            "720"
+          ],
+          "hint_1": "Semnul exclamării înseamnă factorial",
+          "hint_2": "5 × 4 × 3 × 2 × 1",
+          "hint_3": "Este 20 × 6",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_081",
+          "enunt": "Cât este suma unghiurilor?",
+          "formula": "△",
+          "raspuns": "180°",
+          "variante": [
+            "180°",
+            "360°",
+            "90°",
+            "270°"
+          ],
+          "hint_1": "Într-un triunghi oarecare",
+          "hint_2": "Este un unghi alungit",
+          "hint_3": "Jumătate dintr-o rotație completă",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_082",
+          "enunt": "Cât este suma unghiurilor?",
+          "formula": "▭",
+          "raspuns": "360°",
+          "variante": [
+            "360°",
+            "180°",
+            "540°",
+            "270°"
+          ],
+          "hint_1": "Într-un patrulater oarecare",
+          "hint_2": "Este o rotație completă",
+          "hint_3": "Dublul sumei dintr-un triunghi",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_083",
+          "enunt": "Cât este π cu două zecimale?",
+          "formula": "π ≈ ?",
+          "raspuns": "3,14",
+          "variante": [
+            "3,14",
+            "3,41",
+            "2,17",
+            "3,12"
+          ],
+          "hint_1": "Cea mai cunoscută constantă din matematică",
+          "hint_2": "Ziua ei se sărbătorește pe 14 martie",
+          "hint_3": "Începe cu 3",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_084",
+          "enunt": "Câte fețe are un cub?",
+          "formula": "▣",
+          "raspuns": "6 FEȚE",
+          "variante": [
+            "6 FEȚE",
+            "8 FEȚE",
+            "4 FEȚE",
+            "12 FEȚE"
+          ],
+          "hint_1": "Toate sunt pătrate egale",
+          "hint_2": "Un zar obișnuit are aceeași formă",
+          "hint_3": "Are 8 vârfuri și 12 muchii",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_085",
+          "enunt": "Care este cel mai mic număr prim?",
+          "formula": "p = ?",
+          "raspuns": "2",
+          "variante": [
+            "2",
+            "1",
+            "3",
+            "0"
+          ],
+          "hint_1": "Se împarte doar la 1 și la el însuși",
+          "hint_2": "Este singurul număr prim par",
+          "hint_3": "1 NU este considerat prim",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_086",
+          "enunt": "Care este al 7-lea termen?",
+          "formula": "1, 1, 2, 3, 5, 8, ?",
+          "raspuns": "13",
+          "variante": [
+            "13",
+            "11",
+            "12",
+            "15"
+          ],
+          "hint_1": "Fiecare termen este suma celor doi dinainte",
+          "hint_2": "5 + 8",
+          "hint_3": "Este șirul lui Fibonacci",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_087",
+          "enunt": "Cât face?",
+          "formula": "3 × 4 + 5 × 2",
+          "raspuns": "22",
+          "variante": [
+            "22",
+            "34",
+            "26",
+            "44"
+          ],
+          "hint_1": "Înmulțirea se face înaintea adunării",
+          "hint_2": "12 + 10",
+          "hint_3": "NU se calculează de la stânga la dreapta",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_088",
+          "enunt": "Cât face?",
+          "formula": "(8 + 4) ÷ 3",
+          "raspuns": "4",
+          "variante": [
+            "4",
+            "10",
+            "6",
+            "12"
+          ],
+          "hint_1": "Paranteza se calculează prima",
+          "hint_2": "12 ÷ 3",
+          "hint_3": "Rezultatul este un număr dintr-o cifră",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_089",
+          "enunt": "Cât este aria cercului cu r = 10?",
+          "formula": "A = π · r²\nπ ≈ 3,14",
+          "raspuns": "314",
+          "variante": [
+            "314",
+            "31,4",
+            "62,8",
+            "100"
+          ],
+          "hint_1": "Înlocuiește raza în formulă",
+          "hint_2": "10² = 100",
+          "hint_3": "3,14 × 100",
+          "dificultate": "mediu",
+          "puncte_max": 400
+        },
+        {
+          "id": "mat_090",
+          "enunt": "Câte grade are un unghi drept?",
+          "formula": "⊾",
+          "raspuns": "90°",
+          "variante": [
+            "90°",
+            "45°",
+            "180°",
+            "60°"
+          ],
+          "hint_1": "Format de două drepte perpendiculare",
+          "hint_2": "Colțul unei foi de hârtie",
+          "hint_3": "Un sfert de rotație",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_091",
+          "enunt": "Cât face?",
+          "formula": "10% din 1000",
+          "raspuns": "100",
+          "variante": [
+            "100",
+            "10",
+            "1000",
+            "50"
+          ],
+          "hint_1": "Zece la sută",
+          "hint_2": "Împarte la 10",
+          "hint_3": "Este o zecime din întreg",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_092",
+          "enunt": "Cum se scrie 0,5 ca fracție?",
+          "formula": "0,5 = ?",
+          "raspuns": "1/2",
+          "variante": [
+            "1/2",
+            "1/5",
+            "5/10 000",
+            "2/1"
+          ],
+          "hint_1": "Este jumătate",
+          "hint_2": "Numărătorul este 1",
+          "hint_3": "Se mai scrie și 50%",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_093",
+          "enunt": "Câte diagonale are un pătrat?",
+          "formula": "□",
+          "raspuns": "2 DIAGONALE",
+          "variante": [
+            "2 DIAGONALE",
+            "4 DIAGONALE",
+            "1 DIAGONALĂ",
+            "3 DIAGONALE"
+          ],
+          "hint_1": "Unesc vârfurile opuse",
+          "hint_2": "Se intersectează în centru",
+          "hint_3": "Sunt egale și perpendiculare",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_094",
+          "enunt": "Cât face?",
+          "formula": "(−3) × (−4)",
+          "raspuns": "12 (POZITIV)",
+          "variante": [
+            "12 (POZITIV)",
+            "−12",
+            "−7",
+            "7"
+          ],
+          "hint_1": "Regula semnelor la înmulțire",
+          "hint_2": "Minus ori minus dă plus",
+          "hint_3": "Valoarea absolută este 12",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_095",
+          "enunt": "Care este media aritmetică?",
+          "formula": "4, 8, 12, 16",
+          "raspuns": "10",
+          "variante": [
+            "10",
+            "8",
+            "12",
+            "40"
+          ],
+          "hint_1": "Aduni valorile și împarți la câte sunt",
+          "hint_2": "Suma este 40",
+          "hint_3": "40 ÷ 4",
+          "dificultate": "usor",
+          "puncte_max": 200
+        },
+        {
+          "id": "mat_096",
+          "enunt": "Cât face?",
+          "formula": "2³ + 3²",
+          "raspuns": "17",
+          "variante": [
+            "17",
+            "13",
+            "25",
+            "36"
+          ],
+          "hint_1": "Calculezi întâi puterile",
+          "hint_2": "8 + 9",
+          "hint_3": "NU este (2+3) la o putere",
+          "dificultate": "mediu",
+          "puncte_max": 300
+        },
+        {
+          "id": "mat_100",
+          "enunt": "Cât face?",
+          "formula": "9 × 8",
+          "raspuns": "72",
+          "variante": [
+            "72",
+            "63",
+            "81",
+            "56"
+          ],
+          "hint_1": "Tabla înmulțirii cu 9",
+          "hint_2": "Este cu 8 mai mult decât 8 × 8",
+          "hint_3": "Suma cifrelor rezultatului este 9",
+          "dificultate": "usor",
+          "puncte_max": 200
+        }
+      ]
+    }
+  }
+}

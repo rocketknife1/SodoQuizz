@@ -46,6 +46,9 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    # Matematica nu are folder `poze/`: intrebarile ei arata formule, nu
+    # imagini. Se adauga cand apar primele intrebari cu matematicieni.
+    - assets/continut/matematica/
     - assets/continut/cartoon/
     - assets/continut/cartoon/poze/
     - assets/continut/logouri/

@@ -36,6 +36,7 @@ Future<List<Question>> _loadQuestionsForMode(GameMode mode) async {
     for (final itemData in items) {
       final item = itemData as Map<String, dynamic>;
       final id = item['id'] as String;
+      final formula = item['formula'] as String?;
       questions.add(Question(
         id: id,
         answer: item['raspuns'] as String,
@@ -49,7 +50,13 @@ Future<List<Question>> _loadQuestionsForMode(GameMode mode) async {
             : const [],
         color: color,
         maxPoints: item['puncte_max'] as int? ?? 200,
-        imageAssetPath: mode.imagePath(id),
+        prompt: item['enunt'] as String? ?? '',
+        formula: formula,
+        // O întrebare cu formulă NU are poză: ecranul de joc desenează cardul
+        // de formulă în locul ei. Lăsat pe `mode.imagePath(id)` ar fi însemnat
+        // ca BlurImage să caute un fișier inexistent și să cadă pe
+        // placeholder-ul „Va urma" în spatele formulei.
+        imageAssetPath: formula == null ? mode.imagePath(id) : null,
       ));
     }
   }

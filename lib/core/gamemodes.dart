@@ -169,6 +169,19 @@ const List<GameMode> gameModes = [
     icon: Icons.account_balance_rounded,
     accentColor: Color(0xFFB8860B),
   ),
+  // Singura categorie care NU merge pe poze: intrebarile arata o formula
+  // scrisa mare (vezi FormulaCard si campul `formula` din intrebari.json).
+  // Poate contine si intrebari cu poza — un matematician de ghicit se comporta
+  // exact ca orice alta poza din joc, fara cod special.
+  GameMode(
+    id: 'matematica',
+    title: 'Matematică',
+    titleEn: 'Mathematics',
+    subtitle: 'Formule, simboluri & matematicieni',
+    subtitleEn: 'Formulas, symbols & mathematicians',
+    icon: Icons.functions_rounded,
+    accentColor: Color(0xFF7C4DFF),
+  ),
   GameMode(
     id: 'instrumente',
     title: 'Instrumente',
