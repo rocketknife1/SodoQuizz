@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -126,14 +127,19 @@ class DeviceNotificationService {
     }
   }
 
-  /// Numele fusului orar al sistemului. `DateTime.now().timeZoneName` dă un
-  /// nume scurt („EEST"), pe care baza de fusuri nu-l cunoaște — de-aia
-  /// încercăm întâi numele lung și cădem pe UTC dacă nu merge.
+  /// Numele IANA al fusului orar al telefonului (`Europe/Bucharest`,
+  /// `America/New_York`...). `zonedSchedule` are nevoie de el ca notificarea
+  /// să cadă la ora de pe ceasul telefonului, nu la alta.
+  ///
+  /// Citit direct din sistem prin `flutter_timezone`; dacă eșuează (rar),
+  /// cade pe un fus cu același decalaj — un mp3 la ora greșită e supărător,
+  /// dar o excepție la pornire e mai rea.
   Future<String> _localTimeZone() async {
     try {
+      return await FlutterTimezone.getLocalTimezone();
+    } catch (_) {}
+    try {
       final offset = DateTime.now().timeZoneOffset;
-      // Nu putem citi IANA fără un plugin în plus. Bucureștiul acoperă
-      // publicul de acum; orice altceva cade pe un fus cu același decalaj.
       if (offset == const Duration(hours: 2) || offset == const Duration(hours: 3)) {
         return 'Europe/Bucharest';
       }
