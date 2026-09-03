@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/admin_reveal.dart';
 import '../core/ads_service.dart';
 import '../core/game_helpers.dart';
 import '../core/quest_bump.dart';
@@ -535,6 +536,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
               border = const Color(0xFFE24B4A);
             }
           }
+
+          // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart).
+          final adminHint =
+              !answered && adminAnswerRevealOn && opt == q.answer;
+          if (adminHint) {
+            bg = adminRevealColor.withAlpha(28);
+            border = adminRevealColor;
+          }
           return Padding(
             padding: EdgeInsets.only(bottom: i == q.choices.length - 1 ? 0 : 6),
             child: GestureDetector(
@@ -543,7 +552,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
                 duration: const Duration(milliseconds: 150),
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), border: Border.all(color: border)),
+                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), border: Border.all(color: border, width: adminHint ? 2.2 : 1)),
                 child: Text(
                   opt,
                   textAlign: TextAlign.center,

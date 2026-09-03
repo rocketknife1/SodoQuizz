@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flame/game.dart' show GameWidget;
 import 'package:flutter/material.dart';
+import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
 import '../../core/obby.dart';
@@ -715,6 +716,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           )
         : _choicesFor(info.roundIndex);
     final visible = choices.where((c) => !_hiddenChoices.contains(c)).toList();
+    final correct = _questionFor(info.roundIndex).answer;
     return Column(
       children: [
         if (bonus)
@@ -730,10 +732,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Expanded(child: _choiceButton(visible[i], () => _selectAnswer(info, myPlayer, players, visible[i]))),
+                Expanded(child: _choiceButton(visible[i], visible[i] == correct, () => _selectAnswer(info, myPlayer, players, visible[i]))),
                 if (i + 1 < visible.length) ...[
                   const SizedBox(width: 10),
-                  Expanded(child: _choiceButton(visible[i + 1], () => _selectAnswer(info, myPlayer, players, visible[i + 1]))),
+                  Expanded(child: _choiceButton(visible[i + 1], visible[i + 1] == correct, () => _selectAnswer(info, myPlayer, players, visible[i + 1]))),
                 ],
               ],
             ),
@@ -742,15 +744,18 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
-  Widget _choiceButton(String label, VoidCallback onTap) {
+  Widget _choiceButton(String label, bool isCorrect, VoidCallback onTap) {
+    // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart) —
+    // conturează varianta corectă cu chihlimbar. Pur vizual.
+    final adminHint = adminAnswerRevealOn && isCorrect;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
-          color: AppColors.teal.withAlpha(35),
+          color: (adminHint ? adminRevealColor : AppColors.teal).withAlpha(adminHint ? 45 : 35),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.teal, width: 1.4),
+          border: Border.all(color: adminHint ? adminRevealColor : AppColors.teal, width: adminHint ? 2.4 : 1.4),
         ),
         alignment: Alignment.center,
         child: Text(

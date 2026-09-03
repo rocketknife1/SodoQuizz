@@ -6,6 +6,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../core/progression.dart' show levelForXp;
 import '../core/theme.dart';
 import '../data/admin_chat_service.dart';
+import '../core/admin_reveal.dart';
 import '../data/moderation_service.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';
@@ -1210,6 +1211,8 @@ class _DebugTabState extends State<_DebugTab> {
 
   bool _noBlur = false;
   bool _noBlurLoaded = false;
+  bool _revealAnswers = false;
+  bool _revealAnswersLoaded = false;
 
   @override
   void initState() {
@@ -1221,11 +1224,23 @@ class _DebugTabState extends State<_DebugTab> {
         _noBlurLoaded = true;
       });
     });
+    StorageService.getAdminAnswerReveal().then((value) {
+      if (!mounted) return;
+      setState(() {
+        _revealAnswers = value;
+        _revealAnswersLoaded = true;
+      });
+    });
   }
 
   Future<void> _toggleNoBlur(bool value) async {
     setState(() => _noBlur = value);
     await StorageService.setNoBlurMode(value);
+  }
+
+  Future<void> _toggleRevealAnswers(bool value) async {
+    setState(() => _revealAnswers = value);
+    await setAdminAnswerReveal(value);
   }
 
   /// Rulează, pe rând, aceeași animație de zbor (CoinRewardOverlay) folosită
@@ -1384,6 +1399,57 @@ class _DebugTabState extends State<_DebugTab> {
           ),
           const SizedBox(height: 16),
           _buildNoBlurCard(),
+          const SizedBox(height: 10),
+          _buildRevealAnswersCard(),
+        ],
+      ),
+    );
+  }
+
+  /// „Vezi răspunsul corect" — cât e pornit, varianta corectă a oricărei
+  /// întrebări cu 4 variante e conturată cu chihlimbar, ORIUNDE în joc
+  /// (singleplayer, multiplayer, Cultură Generală, Planeta hologramelor).
+  /// Doar pentru contul de admin — vezi core/admin_reveal.dart pentru al
+  /// doilea gard (pref-ul singur nu ajunge).
+  Widget _buildRevealAnswersCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white10),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(9),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFC107).withAlpha(40),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.visibility_rounded, color: Color(0xFFFFC107), size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Vezi răspunsul corect', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700)),
+                SizedBox(height: 2),
+                Text('Varianta corectă e conturată cu chihlimbar, oriunde în joc — doar pentru tine',
+                    style: TextStyle(color: Colors.white54, fontSize: 11)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          _revealAnswersLoaded
+              ? CupertinoSwitch(
+                  value: _revealAnswers,
+                  activeTrackColor: AppColors.play,
+                  onChanged: _toggleRevealAnswers,
+                )
+              : const SizedBox(width: 51, height: 31),
         ],
       ),
     );

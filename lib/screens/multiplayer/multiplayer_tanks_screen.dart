@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
 import '../../core/powerup_ui.dart';
@@ -1275,6 +1276,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                   // Răspunsul corect se arată abia în faza de foc — până
                   // atunci nimeni nu vede nimic, nici măcar propria greșeală.
                   correct: revealed && choice == question.answer,
+                  adminHint: !revealed && adminAnswerRevealOn && choice == question.answer,
                   dimmed: myAnswer != null && myAnswer != choice && !revealed,
                   onTap: myAnswer == null && !revealed ? () => _answer(info, choice) : null,
                 ),
@@ -2161,6 +2163,9 @@ class _AnswerButton extends StatelessWidget {
   final bool picked;
   final bool correct;
   final bool dimmed;
+  /// Toggle-ul de admin „vezi răspunsul corect" — chihlimbar, doar cât NU s-a
+  /// dezvăluit încă runda (core/admin_reveal.dart). Pur vizual.
+  final bool adminHint;
   final VoidCallback? onTap;
 
   const _AnswerButton({
@@ -2169,6 +2174,7 @@ class _AnswerButton extends StatelessWidget {
     required this.picked,
     required this.correct,
     required this.dimmed,
+    this.adminHint = false,
     this.onTap,
   });
 
@@ -2176,9 +2182,12 @@ class _AnswerButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = correct
         ? AppColors.play
-        : picked
-            ? AppColors.blue
-            : Colors.white;
+        : adminHint
+            ? adminRevealColor
+            : picked
+                ? AppColors.blue
+                : Colors.white;
+    final accent = correct || picked || adminHint;
     return Opacity(
       opacity: dimmed ? 0.4 : 1,
       child: Material(
@@ -2190,13 +2199,13 @@ class _AnswerButton extends StatelessWidget {
             duration: const Duration(milliseconds: 160),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
-              color: correct || picked ? color.withAlpha(38) : Colors.white.withAlpha(14),
+              color: accent ? color.withAlpha(38) : Colors.white.withAlpha(14),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: correct || picked ? color : Colors.white24,
-                width: correct || picked ? 1.6 : 1,
+                color: accent ? color : Colors.white24,
+                width: accent ? 1.6 : 1,
               ),
-              boxShadow: correct ? [BoxShadow(color: color.withAlpha(90), blurRadius: 12, spreadRadius: -3)] : null,
+              boxShadow: correct || adminHint ? [BoxShadow(color: color.withAlpha(90), blurRadius: 12, spreadRadius: -3)] : null,
             ),
             child: Row(
               children: [
@@ -2205,13 +2214,13 @@ class _AnswerButton extends StatelessWidget {
                   height: 20,
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
-                    color: correct || picked ? color.withAlpha(60) : Colors.white.withAlpha(20),
+                    color: accent ? color.withAlpha(60) : Colors.white.withAlpha(20),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     letter,
                     style: TextStyle(
-                      color: correct || picked ? color : Colors.white70,
+                      color: accent ? color : Colors.white70,
                       fontSize: 10.5,
                       fontWeight: FontWeight.w900,
                     ),

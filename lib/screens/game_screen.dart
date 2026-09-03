@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/admin_reveal.dart';
 import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
@@ -1225,6 +1226,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           letterBg = const Color(0xFF9A5AFB);
         }
 
+        // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart).
+        // Conturează varianta corectă înainte de răspuns; după răspuns lasă
+        // verdele normal să preia. Pur vizual.
+        final adminHint = !answered && adminAnswerRevealOn && opt == q.answer;
+        if (adminHint) {
+          btnGradient = null;
+          btnColor = adminRevealColor.withAlpha(26);
+          borderColor = adminRevealColor;
+          letterBg = adminRevealColor.withAlpha(120);
+        }
+
         return Padding(
           padding: EdgeInsets.only(bottom: i == opts.length - 1 ? 0 : 6),
           child: GestureDetector(
@@ -1237,7 +1249,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 color: btnGradient == null ? btnColor : null,
                 gradient: btnGradient,
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: borderColor, width: 1.5),
+                border: Border.all(color: borderColor, width: adminHint ? 2.2 : 1.5),
               ),
               child: Row(
                 children: [

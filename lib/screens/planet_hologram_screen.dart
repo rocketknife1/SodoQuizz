@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/admin_reveal.dart';
 import '../core/audio.dart';
 import '../core/lang.dart';
 import '../core/progression.dart';
@@ -549,6 +550,14 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
           letterBg = AppColors.danger;
         }
       }
+
+      // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart).
+      final adminHint = !_answered && adminAnswerRevealOn && opt == q.answer;
+      if (adminHint) {
+        bg = adminRevealColor.withAlpha(26);
+        border = adminRevealColor;
+        letterBg = adminRevealColor.withAlpha(120);
+      }
       return Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: GestureDetector(
@@ -560,7 +569,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
             decoration: BoxDecoration(
               color: bg,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: border, width: 1.5),
+              border: Border.all(color: border, width: adminHint ? 2.2 : 1.5),
             ),
             child: Row(
               children: [

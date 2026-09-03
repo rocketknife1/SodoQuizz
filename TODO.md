@@ -2,15 +2,16 @@
 
 Doar ce e DESCHIS, plus notele de care am nevoie ca să lucrez.
 Ce s-a rezolvat stă în git + memorii, NU aici.
-Ultima curățare: 2026-09-03 (a doua).
+Ultima curățare: 2026-09-04.
 
 ---
 
 ## Notificări — RĂMĂȘIȚE MICI
 
-Fluxul data-only e VERIFICAT pe telefon (2026-09-03): mesaj FCM → notificare
-desenată de aplicație pe canalul propriu → tap → firul direct cu omul.
-Functions deployate (Node 22). Rămâne de probat doar invitația în cameră.
+Fluxul data-only e VERIFICAT pe telefon: mesaj FCM → notificare desenată de
+aplicație → tap → firul direct. Functions deployate (Node 22). Firul admin↔
+jucător e GATA și verificat cap-la-cap (commit-uri 640d477 + 99fbd20 + e9fdd76,
+deployat). Rămâne de probat doar invitația în cameră.
 
 - **Push-ul pe web nu există** — ar cere cheie VAPID și service worker separat.
   Doar Android primește notificări.
@@ -22,28 +23,25 @@ Functions deployate (Node 22). Rămâne de probat doar invitația în cameră.
 
 ---
 
-## Mesaje admin ↔ jucător — GATA, verificat capăt-la-capăt (2026-09-03)
+## Categoria Matematică — SCRISĂ, polish rămas (2026-09-04, cb1633e)
 
-Reguli și Functions DEPLOYATE. Probat pe telefon (admin) + web (jucător):
-mesaj jucător → push la admin → tap → firul direct; răspuns admin → ajunge la
-jucător; tab „Mesaje" în Admin; bulina pe SETĂRI.
+Categoria #14 în Play, prima FĂRĂ poze — arată o formulă scrisă mare. 100 de
+întrebări (Formule celebre, Simboluri, Matematicieni, Calcule). Verificată pe
+telefon: apare, deblocare cu Gems, cardul de formulă, reveal-ul.
 
-Rămâne doar: **reinstalează APK-ul pe telefon** — cel de acolo e de la 19:50 și
-nu are ultimele două reparații (insigna de pe SETĂRI, cache-ul funcției).
+Rămas pentru „finalizări pe viitor" (cuvintele userului):
+- **formulele lungi** — fix-ul de one-line (`softWrap:false` în `FormulaCard`)
+  a fost probat pe telefon DUPĂ commit și merge (`sin²α + cos²α = 1` pe un
+  rând), dar nu e într-un build pushat separat — e în `cb1633e`, care are în
+  mesaj nota că era neprobat. Nimic de făcut, doar de știut.
+- **poze cu matematicieni** de ghicit — arhitectura le suportă deja (întrebare
+  cu `formula` gol + poză). Cere adăugarea liniei
+  `assets/continut/matematica/poze/` în `pubspec.yaml`.
+- **mai multe întrebări** — userul: „pe viitor urcăm la mai multe".
+- **tur pe telefon** al conținutului — s-au văzut ~6 din 100.
 
-Trei bug-uri prinse DOAR probând pe ecran, niciunul vizibil la analyze/teste:
-1. `StreamBuilder` verifica doar `data == null`; un stream Firestore respins nu
-   emite niciodată, deci ecranul rămânea pe spinner la infinit;
-2. funcția Cloud memora EȘECUL rezolvării uid-ului de admin (`_adminUid = null`
-   + gardă `!== undefined`) și rămânea oarbă pe toată viața instanței, ieșind
-   fără niciun log — mesajele ajungeau, push-ul nu mai pleca deloc;
-3. `SolidMenuButton` desena `badge` doar pe varianta fără subtitlu; Home trimite
-   `subtitle: ''`, deci insigna era acceptată și ignorată TĂCUT. Acum are test
-   de widget dedicat (`test/solid_menu_button_badge_test.dart`).
-
-Uid-ul adminului NU se mai caută în Auth (`getUserByEmail` pică — contul e legat
-prin Google, iar emailul e doar în token): aplicația adminului îl publică
-singură în `config/admin`, nescriabil de altcineva și necitibil din client.
+Generatorul (`gen_matematica.py`) e în scratchpad, nu în repo — unealtă de o
+dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart).
 
 ---
 
@@ -155,6 +153,16 @@ ecranele să sară peste condiția „ai câștigat runda").
 scriere în producție. Emulatorul cere JDK 21+; mașina are Temurin JDK 25, dar
 shim-ul `java8path` e primul pe PATH — vezi `test/README-reguli.md` pentru
 comanda cu `JAVA_HOME` (nu uita `hash -r`).
+
+## Toggle admin „vezi răspunsul corect"
+
+`core/admin_reveal.dart` — un toggle în tabul Debug (Admin), doar pentru
+contul de admin logat cu Google. Cât e pornit, varianta corectă a oricărei
+întrebări cu 4 variante e conturată cu chihlimbar, ORIUNDE (singleplayer, cele
+5 moduri multiplayer cu întrebări, Cultură Generală, Planeta hologramelor,
+bonusul Clippy). Pur vizual — nu atinge scorul. Dublu gard: pref + emailul din
+token (`adminAnswerRevealOn`), pref-ul singur nu ajunge. Cele 8 grile de
+variante au primit fiecare o linie/param `adminHint`.
 
 ## Meniul principal NU derulează
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
 import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
@@ -568,6 +569,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                 text: c,
                 onTap: answered ? null : () => _answerOwnQuestion(info, c),
                 selected: info.roundAnswers[me] == c,
+                adminHint: !answered && adminAnswerRevealOn && c == question.answer,
               ),
             ),
           if (answered)
@@ -733,6 +735,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                   onTap: answered ? null : () => _answerChairQuestion(info, c),
                   selected: info.roundChairAnswers[me] == c,
                   danger: true,
+                  adminHint: !answered && adminAnswerRevealOn && c == question.answer,
                 ),
               ),
             if (answered)
@@ -916,11 +919,15 @@ class _AnswerButton extends StatelessWidget {
   final VoidCallback? onTap;
   final bool selected;
   final bool danger;
-  const _AnswerButton({required this.text, required this.onTap, this.selected = false, this.danger = false});
+  /// Toggle-ul de admin „vezi răspunsul corect" — conturează varianta corectă
+  /// cu chihlimbar. Pur vizual (core/admin_reveal.dart).
+  final bool adminHint;
+  const _AnswerButton({required this.text, required this.onTap, this.selected = false, this.danger = false, this.adminHint = false});
 
   @override
   Widget build(BuildContext context) {
-    final accent = danger ? AppColors.danger : AppColors.coin;
+    final accent = adminHint && !selected ? adminRevealColor : (danger ? AppColors.danger : AppColors.coin);
+    final showAccent = selected || adminHint;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -930,9 +937,9 @@ class _AnswerButton extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: selected ? accent.withAlpha(60) : Colors.white.withAlpha(15),
+            color: showAccent ? accent.withAlpha(60) : Colors.white.withAlpha(15),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: selected ? accent : Colors.white24),
+            border: Border.all(color: showAccent ? accent : Colors.white24, width: adminHint && !selected ? 2.2 : 1),
           ),
           child: Text(text, style: TextStyle(color: onTap == null && !selected ? Colors.white38 : Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
         ),

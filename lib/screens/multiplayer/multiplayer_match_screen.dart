@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
 import '../../core/game_helpers.dart';
 import '../../core/powerups.dart';
@@ -554,6 +555,14 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           }
         }
 
+        // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart).
+        final adminHint = !_answered && adminAnswerRevealOn && opt == q.answer;
+        if (adminHint) {
+          btnColor = adminRevealColor.withAlpha(26);
+          borderColor = adminRevealColor;
+          letterBg = adminRevealColor.withAlpha(120);
+        }
+
         return Padding(
           padding: EdgeInsets.only(bottom: i == visible.length - 1 ? 0 : 6),
           child: GestureDetector(
@@ -562,7 +571,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
               duration: const Duration(milliseconds: 200),
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(color: btnColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: borderColor, width: 1.5)),
+              decoration: BoxDecoration(color: btnColor, borderRadius: BorderRadius.circular(14), border: Border.all(color: borderColor, width: adminHint ? 2.2 : 1.5)),
               child: Row(
                 children: [
                   Container(

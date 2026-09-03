@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/admin_reveal.dart';
 import '../core/game_helpers.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
@@ -288,6 +289,13 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
               border = const Color(0xFFE24B4A);
             }
           }
+
+          // Toggle-ul de admin „vezi răspunsul corect" (core/admin_reveal.dart).
+          final adminHint = !answered && adminAnswerRevealOn && opt == q.answer;
+          if (adminHint) {
+            bg = adminRevealColor.withAlpha(28);
+            border = adminRevealColor;
+          }
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: GestureDetector(
@@ -296,7 +304,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
                 duration: const Duration(milliseconds: 150),
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: border, width: 1.5)),
+                decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(14), border: Border.all(color: border, width: adminHint ? 2.2 : 1.5)),
                 child: Text(opt, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
               ),
             ),

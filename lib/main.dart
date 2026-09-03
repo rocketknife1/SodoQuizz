@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'core/admin_reveal.dart';
 import 'core/ads_service.dart';
 import 'core/app_check_service.dart';
 import 'core/audio.dart';
@@ -48,6 +49,8 @@ void main() async {
   // zilnice ale zilelor trecute — vezi StorageService.pruneOldDailyCounters.
   await StorageService.pruneOldDailyCounters();
   await StorageService.migratePixelatIdToCartoon();
+  // Toggle-ul de admin „vezi raspunsul corect" (core/admin_reveal.dart).
+  unawaited(loadAdminAnswerReveal());
   // INAINTE de runApp, ca primul cadru desenat sa fie deja in limba corecta.
   await L10n.load();
   // O singura initializare, la pornire - restul (login Google) ramane lazy,

@@ -30,6 +30,7 @@ class StorageService {
   static const _xpKey = 'xp';
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
+  static const _adminAnswerRevealKey = 'admin_answer_reveal';
   static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
@@ -709,6 +710,7 @@ class StorageService {
     _musicEnabledKey,
     _musicVolumeKey,
     _noBlurKey,
+    _adminAnswerRevealKey,
     _multiplayerInfoSeenKey,
     _noAdsForeverKey,
     // Limba e preferință de afișare, nu progres — un reset de cont n-are de ce
@@ -1284,6 +1286,21 @@ class StorageService {
   static Future<void> setNoBlurMode(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_noBlurKey, value);
+  }
+
+  // ─── „Vezi răspunsul corect" — DOAR admin (vezi core/admin_reveal.dart) ───
+  // Colorează varianta corectă la orice întrebare cu 4 variante, oriunde în
+  // joc. Pur vizual. Al doilea gard (emailul de admin) e în admin_reveal.dart:
+  // pref-ul singur nu ajunge.
+
+  static Future<bool> getAdminAnswerReveal() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_adminAnswerRevealKey) ?? false;
+  }
+
+  static Future<void> setAdminAnswerReveal(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_adminAnswerRevealKey, value);
   }
 
   // ─── Piesa de fundal aleasă (vezi core/music_tracks.dart) ────────────────
