@@ -15,13 +15,13 @@ permisiunea `POST_NOTIFICATIONS`.
 
 Cererea se împarte în trei bucăți, cu dependențe reale între ele:
 
-### Piesa 1 — notificări LOCALE (nu cere niciun server)
+### ~~Piesa 1 — notificări LOCALE~~ FĂCUTĂ (`b44495c`, verificată pe telefon)
 
-Se programează pe telefon și se declanșează singure. Acoperă:
-- roata norocului s-a resetat;
-- questurile s-au reînnoit;
-- Clippy e din nou disponibil;
-- **planeta e „Ready"** după cooldown.
+Roata, questurile, Clippy (pe resetul ZILNIC, nu la 5 minute) și planeta.
+Sunet propriu, notificarea rămâne în bară. Rămân de scos, când e ocazia, două
+lucruri de rafinat: fusul orar e ghicit din decalaj (`Europe/Bucharest` sau
+UTC) în loc să fie citit ca IANA, iar notificarea nu se anulează când
+jucătorul consumă lucrul înainte să sune alarma.
 
 Plus, tot aici: **sunetul propriu al aplicației** la orice notificare (canal
 Android dedicat cu sunet custom — sunetul se leagă de CANAL, nu de mesaj,
