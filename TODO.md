@@ -6,6 +6,85 @@ Ultima curățare: 2026-09-03.
 
 ---
 
+## Notificări pe telefon (cerut 2026-09-03) — DE FĂCUT
+
+Azi **nu există nicio notificare pe telefon**. Tot ce se numește „notificare"
+în cod e clopoțelul din aplicație (`NotificationService` = panoul in-app).
+Nu e nici `flutter_local_notifications`, nici `firebase_messaging`, nici
+permisiunea `POST_NOTIFICATIONS`.
+
+Cererea se împarte în trei bucăți, cu dependențe reale între ele:
+
+### Piesa 1 — notificări LOCALE (nu cere niciun server)
+
+Se programează pe telefon și se declanșează singure. Acoperă:
+- roata norocului s-a resetat;
+- questurile s-au reînnoit;
+- Clippy e din nou disponibil;
+- **planeta e „Ready"** după cooldown.
+
+Plus, tot aici: **sunetul propriu al aplicației** la orice notificare (canal
+Android dedicat cu sunet custom — sunetul se leagă de CANAL, nu de mesaj,
+deci canalul trebuie creat corect din prima; schimbarea sunetului mai târziu
+cere canal nou, cel vechi păstrează sunetul cu care a fost creat).
+
+**Cerință explicită (2026-09-03): notificarea RĂMÂNE în bara de notificări**,
+nu apare și dispare. Concret: `autoCancel: false` ca să nu se șteargă la tap,
+importanță `high` ca să apară și ca banner peste ecran, și id stabil per tip
+de notificare ca una nouă să o înlocuiască pe cea veche în loc să adune un
+teanc. De hotărât pe parcurs dacă „rămâne" înseamnă și `ongoing: true` (nu
+poate fi ștearsă cu degetul) — aia e mai agresivă și se folosește de obicei
+doar pentru lucruri în desfășurare, nu pentru anunțuri.
+
+### Piesa 2 — overlay pe planetă (pur UI, independent)
+
+Peste planeta din Home:
+- „Ready" când se poate juca;
+- în cooldown: cât mai are până e gata + câte rulări mai ai („1 din 2").
+
+Datele există deja: `StorageService.planetCooldownRemaining()`,
+`StorageService.planetRunsLeft()`, `planetRunsPerCycle` /
+`planetRunsPerCycleWithAd` (`core/progression.dart`, cooldown 12h).
+
+### Piesa 3 — notificări PUSH (cere Cloud Functions)
+
+Astea vin din acțiunea ALTUI jucător, când aplicația ta e închisă:
+- ți-a scris cineva un mesaj;
+- cerere de prietenie;
+- anunț de sistem de la admin;
+- **invitație în cameră** — inviți un prieten offline, îi apare notificare, iar
+  la tap **intră direct în camera aia** de multiplayer.
+
+⚠️ **Blocajul real:** un client NU poate trimite FCM altui client. Trimiterea
+cere cheia de server / Admin SDK, adică **Cloud Functions**. Toată
+documentația proiectului spune „fără Cloud Functions", dar asta **s-a
+schimbat**: contul e acum pe **Blaze (free trial)**, deci Functions se pot
+deploya. E infrastructură nouă, nu o seară de lucru.
+
+Pentru „tap pe notificare → intri în cameră" există deja jumătate din
+mecanică: pachetul `app_links` e în `pubspec.yaml`, iar schema custom
+`guessit://` era deja gândită pentru invitațiile de prietenie (vezi memoria
+`project_guess_it_friend_invite_link`), doar că n-a fost construită.
+
+**Ordinea recomandată:** Piesa 1 → Piesa 2 → Piesa 3. Primele două n-au nevoie
+de nimic din afară și dau imediat 5 din lucrurile cerute; a treia e proiect
+separat, cu Functions.
+
+---
+
+## Reconectare în meci (cerut 2026-09-03) — DE FĂCUT
+
+Dacă cineva e într-un meci multiplayer în desfășurare și pierde legătura
+(minimizează aplicația, cade internetul, îl omoară sistemul), la revenire să
+apară un buton **„Reconectează"** care îl bagă înapoi în meciul în curs.
+
+De declanșat la: revenirea aplicației în prim-plan (`AppLifecycleState.resumed`)
+sau revenirea conexiunii. De verificat că meciul chiar mai există și că e încă
+în desfășurare — camerele se șterg când pleacă ultimul jucător, iar
+`purge_stale_matches.py` mătură ce rămâne agățat.
+
+---
+
 ## De pus în funcțiune (cod gata, așteaptă un pas al tău)
 
 - **Regulile Firestore care închid vandalizarea meciurilor.** Codul e pushat
