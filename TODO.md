@@ -77,15 +77,23 @@ după fiecare rundă de test (grep în build ca să confirmi).
      ca balanța să fie scrisă DOAR de Cloud Functions, adică rescrierea
      stratului de economie, care azi e local-first (SharedPreferences +
      sincronizare). Merită făcut abia când jocul face bani reali.
-  2. `matches/{id}` — `allow update: if request.auth != null` lasă ORICE cont
-     autentificat să scrie în meciul oricui, iar `read` permite listarea, deci
-     id-urile se pot afla. Vandalizarea meciurilor străine e posibilă.
-     Restrângerea la participanți e ieftină DACĂ documentul meciului ține un
-     câmp `playerIds`: regula devine `request.auth.uid in
-     resource.data.playerIds`, fără nicio citire în plus. Varianta cu
-     `exists(.../players/$(uid))` funcționează la fel, dar costă o citire
-     facturată la FIECARE actualizare de rundă — pe calea cea mai fierbinte
-     din joc.
+  2. ~~`matches/{id}` — vandalizabil de orice cont autentificat.~~ **REPARAT
+     în cod 2026-09-03, REGULILE ÎNCĂ NEDEPLOYATE.** Documentul meciului ține
+     acum `playerIds`, iar regula e `request.auth.uid in
+     resource.data.playerIds` (fără citire în plus). Verificat pe emulator
+     (22/22), pe viu cu 2 conturi (creare + intrare + 5 runde, zero erori) și
+     în Firestore de producție (câmpul chiar se scrie, cu ambele uid-uri).
+
+     ⚠️ **ORDINEA DE PUNERE ÎN FUNCȚIUNE, obligatorie:**
+     1. întâi ajunge aplicația asta la toată lumea — **web** (push pe main) și
+        **Play** (build nou în closed testing, așteptat să se propage);
+     2. **abia apoi** `firebase deploy --only firestore:rules`
+        (`comenzi/4 - Trimite regulile Firestore in productie...bat`).
+
+     Dacă se deployează regulile întâi, un tester pe un build vechi care intră
+     într-o cameră creată de un client nou nu s-ar adăuga în `playerIds` și ar
+     fi refuzat la prima rundă. Meciurile vechi, fără câmp, merg mai departe —
+     regula are ieșire pentru ele.
   3. ~~Limitele noi n-au fost testate prin execuție pe partea de RESPINGERE.~~
      **FĂCUT 2026-09-02.** `test/firestore_rules_test.mjs` (14 cazuri) rulează
      pe emulatorul Firebase — mașina are deja Temurin JDK 25, doar că
