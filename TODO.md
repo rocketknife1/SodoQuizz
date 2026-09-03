@@ -60,14 +60,6 @@ Ultima curățare: 2026-09-03.
 
 ---
 
-## Mic, de făcut când e ocazia
-
-- **`allyShield` la Quizz Tanks** — singurul power-up neprobat pe viu.
-  Mecanismul (`shields.<id>`) e identic cu cel de la Scaunul Electric, unde a
-  fost verificat, deci riscul e mic.
-
----
-
 ## Datorie tehnică, fără grabă
 
 - **Granularitatea reconstrucției.** 221 `setState` față de 8
