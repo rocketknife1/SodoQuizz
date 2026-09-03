@@ -53,26 +53,49 @@ const CHANNEL_ID = "sodo_events_v1";
  * lib/core/admin.dart — daca se schimba, se schimba in toate trei. */
 const ADMIN_EMAIL = "dragosssx@gmail.com";
 
-/** uid-ul adminului, cautat dupa email si tinut in memoria instantei.
+/** uid-ul adminului, tinut in memoria instantei dupa prima rezolvare.
  *
- * De ce nu e o constanta: uid-ul nu se vede nicaieri in cod, iar scrierea lui
- * de mana ar fi insemnat un al doilea loc de tinut in sincron cu contul real.
- * Cautarea costa o cerere la Auth, dar doar la prima notificare a fiecarei
- * instante — pe urma raspunde din cache.
+ * De ce nu e o constanta scrisa de mana: ar fi insemnat un al doilea loc de
+ * tinut in sincron cu contul real. Rezolvarea costa o citire, dar doar la
+ * prima notificare a fiecarei instante — pe urma raspunde din cache.
  *
- * `null` daca nu se poate rezolva (cont sters, Auth picat): atunci mesajul
- * jucatorului ramane doar in Firestore, unde adminul il vede oricum in
- * tab-ul Mesaje. Un push pierdut nu are voie sa rupa scrierea mesajului. */
+ * `undefined` daca nu se poate rezolva acum (contul de admin n-a pornit inca
+ * aplicatia macar o data): mesajul jucatorului ramane oricum in Firestore, iar
+ * adminul il vede in tab-ul Mesaje. Un push pierdut nu are voie sa rupa
+ * scrierea mesajului — dar NICI sa se pietrifice, vezi nota de la final. */
 let _adminUid;
 async function adminUid() {
   if (_adminUid !== undefined) return _adminUid;
+  // 1) Documentul scris de aplicatia adminului la pornire. E calea CARE
+  //    MERGE: contul e legat prin Google/Play Games, iar emailul exista doar
+  //    in tokenul de autentificare, nu pe inregistrarea Auth.
+  try {
+    const snap = await db.collection("config").doc("admin").get();
+    const uid = snap.exists && snap.data().uid;
+    if (uid) {
+      _adminUid = uid;
+      return _adminUid;
+    }
+  } catch (e) {
+    logger.warn(`config/admin nu s-a putut citi: ${e}`);
+  }
+  // 2) Rezerva: cautarea dupa email. Ramane fiindca merge daca vreodata
+  //    contul chiar are emailul pe inregistrarea Auth, si fiindca acopera
+  //    fereastra dintre un cont de admin nou si prima lui pornire de aplicatie.
   try {
     _adminUid = (await getAuth().getUserByEmail(ADMIN_EMAIL)).uid;
+    return _adminUid;
   } catch (e) {
     logger.warn(`nu am putut rezolva uid-ul adminului: ${e}`);
-    _adminUid = null;
   }
-  return _adminUid;
+  // ESECUL NU SE MEMOREAZA, dinadins. Prima versiune punea `_adminUid = null`
+  // aici, iar garda de cache de sus (`!== undefined`) il returna pe urma
+  // instant, fara sa mai incerce: o instanta care nimerise o data momentul in
+  // care `config/admin` inca nu exista ramanea oarba pentru tot restul vietii
+  // ei, si iesea din functie FARA NICIUN LOG. Exact asa s-a manifestat la
+  // proba pe telefon — mesajele ajungeau in Firestore, dar push-ul nu mai
+  // pleca deloc dupa prima incercare esuata.
+  return undefined;
 }
 
 /**
@@ -259,8 +282,14 @@ exports.onAdminMessage = onDocumentCreated(
     }
 
     const admin = await adminUid();
+    if (!admin) {
+      // Logat explicit: fara linia asta, iesirea de aici e invizibila in
+      // Cloud Logging si arata identic cu "functia n-a facut nimic".
+      logger.warn(`nu stiu uid-ul adminului, push-ul catre el se pierde (mesaj de la ${playerUid})`);
+      return;
+    }
     // Adminul care isi scrie in propriul fir nu are de ce sa se anunte singur.
-    if (!admin || admin === playerUid) return;
+    if (admin === playerUid) return;
     const name = await displayName(playerUid);
     await sendToUser(admin, {
       title: `✉️ Mesaj de la ${name}`,

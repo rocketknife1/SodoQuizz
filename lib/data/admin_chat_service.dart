@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
+import '../core/admin.dart';
 import '../core/chat_filter.dart';
 import '../models/admin_message.dart';
 import 'auth_service.dart';
@@ -48,6 +49,36 @@ class AdminChatService {
 
   StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _mySub;
 
+  /// Publica uid-ul adminului in `config/admin`, ca sa-l poata citi Cloud
+  /// Function-ul care trimite push-ul catre el.
+  ///
+  /// DE CE E NEVOIE: functia stia sa-l caute in Firebase Auth dupa email
+  /// (`getUserByEmail`), dar cautarea PICA — „There is no user record
+  /// corresponding to the provided identifier". Contul de admin e legat prin
+  /// Google/Play Games, iar inregistrarea lui Auth nu are emailul pe campul de
+  /// nivel superior dupa care cauta API-ul; emailul exista doar in TOKEN, de
+  /// unde il citesc regulile Firestore (de-aia panoul de admin merge).
+  ///
+  /// Aplicatia adminului stie insa amandoua lucrurile deodata — emailul din
+  /// token SI propriul uid — deci le poate lega ea, o data pe pornire. Nimeni
+  /// altcineva nu poate scrie documentul (vezi firestore.rules), iar niciun
+  /// client nu-l poate citi: singurul cititor e Admin SDK-ul din Functions,
+  /// caruia regulile nu i se aplica.
+  Future<void> _publishAdminUidIfAdmin() async {
+    try {
+      final user = AuthService.instance.currentUser;
+      if (user == null || user.email != kAdminEmail) return;
+      final me = _uid;
+      if (me.isEmpty) return;
+      await _db.collection('config').doc('admin').set({
+        'uid': me,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('AdminChatService._publishAdminUidIfAdmin a esuat: $e');
+    }
+  }
+
   DocumentReference<Map<String, dynamic>> _thread(String playerUid) =>
       _db.collection('admin_threads').doc(playerUid);
 
@@ -58,6 +89,7 @@ class AdminChatService {
   void startLive() {
     final me = _uid;
     if (me.isEmpty) return;
+    unawaited(_publishAdminUidIfAdmin());
     stopLive();
     try {
       _mySub = _thread(me).snapshots().listen(

@@ -22,25 +22,28 @@ Functions deployate (Node 22). Rămâne de probat doar invitația în cameră.
 
 ---
 
-## Mesaje admin ↔ jucător — SCRIS, NEVERIFICAT PE TELEFON
+## Mesaje admin ↔ jucător — GATA, verificat capăt-la-capăt (2026-09-03)
 
-Implementat 2026-09-03. Reguli testate pe emulator (33/33), analyze curat,
-296 teste Flutter trec. **Neprobat pe telefon** (telefonul era descărcat) și
-**Functions NEDEPLOYATE** — fără deploy, mesajele ajung în Firestore și se văd
-în aplicație, dar NU sună notificarea la niciuna dintre părți.
+Reguli și Functions DEPLOYATE. Probat pe telefon (admin) + web (jucător):
+mesaj jucător → push la admin → tap → firul direct; răspuns admin → ajunge la
+jucător; tab „Mesaje" în Admin; bulina pe SETĂRI.
 
-De făcut de tine, în ordine:
-1. `firebase.cmd deploy --only firestore:rules --project sodoquizz`
-   (fără asta, firul e refuzat de regulile vechi — nimeni nu poate scrie);
-2. `firebase.cmd deploy --only functions --project sodoquizz` (push-ul);
-3. probă cu două conturi: din Setări → „Mesaj către admin" scrii ca jucător,
-   răspunzi din Admin → tab „Mesaje"; verifici bulina de pe SETĂRI și tap-ul
-   pe notificare (payload `type=admin_chat`).
+Rămâne doar: **reinstalează APK-ul pe telefon** — cel de acolo e de la 19:50 și
+nu are ultimele două reparații (insigna de pe SETĂRI, cache-ul funcției).
 
-Unde e codul: `admin_chat_service.dart`, `models/admin_message.dart`,
-`screens/admin_chat_screen.dart` (un singur ecran pentru ambele capete),
-tab-ul `_MessagesTab` din `admin_screen.dart`, plus butonul „Scrie-i un mesaj"
-din fișa jucătorului.
+Trei bug-uri prinse DOAR probând pe ecran, niciunul vizibil la analyze/teste:
+1. `StreamBuilder` verifica doar `data == null`; un stream Firestore respins nu
+   emite niciodată, deci ecranul rămânea pe spinner la infinit;
+2. funcția Cloud memora EȘECUL rezolvării uid-ului de admin (`_adminUid = null`
+   + gardă `!== undefined`) și rămânea oarbă pe toată viața instanței, ieșind
+   fără niciun log — mesajele ajungeau, push-ul nu mai pleca deloc;
+3. `SolidMenuButton` desena `badge` doar pe varianta fără subtitlu; Home trimite
+   `subtitle: ''`, deci insigna era acceptată și ignorată TĂCUT. Acum are test
+   de widget dedicat (`test/solid_menu_button_badge_test.dart`).
+
+Uid-ul adminului NU se mai caută în Auth (`getUserByEmail` pică — contul e legat
+prin Google, iar emailul e doar în token): aplicația adminului îl publică
+singură în `config/admin`, nescriabil de altcineva și necitibil din client.
 
 ---
 

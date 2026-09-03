@@ -193,6 +193,21 @@ await check('adminul LISTEAZA toate firele (tab-ul Mesaje)', () => assertSucceed
 await check('un jucator NU poate lista firele tuturor', () => assertFails(
   getDocs(collection(jucator, 'admin_threads'))));
 
+// config/admin: uid-ul adminului, publicat de propria lui aplicatie ca sa-l
+// poata citi Cloud Function-ul. Nimeni nu-l citeste din client.
+
+await check('adminul isi publica uid-ul in config/admin', () => assertSucceeds(
+  setDoc(doc(adminCtx, 'config', 'admin'), { uid: 'adminUid' })));
+
+await check('adminul NU poate publica alt uid decat al lui', () => assertFails(
+  setDoc(doc(adminCtx, 'config', 'admin'), { uid: 'altcineva' })));
+
+await check('un jucator NU poate scrie config/admin', () => assertFails(
+  setDoc(doc(jucator, 'config', 'admin'), { uid: 'jucatorX' })));
+
+await check('nimeni nu citeste config/admin din client (nici adminul)', () => assertFails(
+  getDoc(doc(adminCtx, 'config', 'admin'))));
+
 console.log(`\n=== ${pass} trec, ${fail} pica ===`);
 await env.cleanup();
 process.exit(fail === 0 ? 0 : 1);

@@ -590,6 +590,27 @@ service cloud.firestore {
       }
     }
 
+    // Uid-ul contului de admin, publicat de propria lui aplicatie la pornire
+    // (vezi AdminChatService._publishAdminUidIfAdmin).
+    //
+    // DE CE EXISTA: `onAdminMessage` are nevoie de uid-ul adminului ca sa-i
+    // trimita push cand ii scrie un jucator. Prima varianta il cauta in Auth
+    // dupa email (`getUserByEmail`) si PICA — contul e legat prin Google/Play
+    // Games, iar emailul exista doar in TOKEN (de unde il citesc regulile de
+    // mai jos), nu pe campul de nivel superior al inregistrarii Auth.
+    // Aplicatia adminului stie amandoua lucrurile deodata, deci le leaga ea.
+    //
+    // NIMENI nu-l poate citi din client: singurul cititor e Admin SDK-ul din
+    // Cloud Functions, caruia regulile nu i se aplica. Un uid de admin
+    // vizibil tuturor n-ar fi o catastrofa, dar nu are niciun motiv sa fie.
+    match /config/{doc} {
+      allow read: if false;
+      allow write: if request.auth != null
+        && request.auth.token.email == 'dragosssx@gmail.com'
+        && doc == 'admin'
+        && request.resource.data.uid == request.auth.uid;
+    }
+
     // Coada de conturi de sters din Firebase Authentication (vezi
     // PlayerProfileService.purgePlayer + tools/purge_accounts.py).
     //

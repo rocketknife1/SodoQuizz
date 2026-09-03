@@ -351,7 +351,12 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle: '',
                         angular: true,
                         color: AppColors.gray,
-                        badge: unread ? tr('1 nou', '1 new') : null,
+                        // UN SINGUR caracter, nu „1 nou": coloana de butoane
+                        // e ingusta, iar o insigna de 45px stivea eticheta
+                        // „SETARI" prin FittedBox pana devenea ilizibila
+                        // (vazut pe ecran). Bulina spune oricum tot ce trebuie:
+                        // ai ceva de citit acolo.
+                        badge: unread ? '●' : null,
                         onTap: () async {
                           await Navigator.push(context,
                               MaterialPageRoute(builder: (_) => const SettingsScreen()));

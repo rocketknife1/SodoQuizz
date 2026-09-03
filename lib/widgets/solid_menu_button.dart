@@ -169,6 +169,25 @@ class SolidMenuButton extends StatelessWidget {
                 ],
               ),
             ),
+            // Insigna, si pe varianta CARD. Lipsea: `badge` era desenat doar
+            // pe varianta fara subtitlu, iar apelantii care trec `subtitle`
+            // (fie si gol, ca Home) cadeau pe cardul asta si primeau o insigna
+            // ignorata TACIT — parametrul se accepta, dar nu aparea nimic pe
+            // ecran. Prins abia la proba pe dispozitiv.
+            if (badge != null) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(70),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  badge!,
+                  style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
           ],
         ),
       ),
