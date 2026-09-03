@@ -57,6 +57,21 @@ service cloud.firestore {
       // facut-o vizibila TUTUROR jucatorilor, deci strict mai rau.
       allow read, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
 
+      // Token-urile FCM ale telefoanelor acestui cont — de aici le citesc
+      // Cloud Functions (prin Admin SDK, deci fara reguli) ca sa trimita
+      // notificarile push. Vezi lib/data/push_service.dart si functions/index.js.
+      //
+      // STAU AICI, sub users/{uid}, si NU in player_profiles: profilul public
+      // e citibil de orice cont autentificat, iar un token FCM in mana
+      // altcuiva inseamna notificari false trimise in numele jocului. Aici,
+      // singurul care le poate citi sau scrie e proprietarul.
+      //
+      // Adminul NU primeste acces: n-are ce face cu ele, iar "citeste tot" pe
+      // ceva ce e practic o adresa de livrare n-ar avea nicio justificare.
+      match /fcm_tokens/{token} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+
       // Curatarea Guest-ilor abandonati sterge AMANDOUA documentele contului
       // (profilul public + asta) intr-un singur batch — de cand urca si
       // Guest-ii progresul aici, fara regula asta ar fi ramas in urma lor
@@ -107,10 +122,33 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerIds']);
     }
 
+    // TRANZITORIE — DE SCOS dupa ce build-ul cu `playerIds` ajunge la toti
+    // (web e deja acolo; ramane Play).
+    //
+    // DE CE EXISTA: fara ea, ordinea de punere in functiune conta. Un tester
+    // pe un build VECHI care intra intr-o camera creata de un client NOU nu
+    // se adauga in `playerIds` si ar fi fost refuzat la prima runda —
+    // multiplayer rupt, fara niciun mesaj util. Cu ramura asta, ordinea nu
+    // mai conteaza deloc si nimic nu se rupe.
+    //
+    // CE SLABESTE, pe fata: subcolectia `players` e deschisa la scriere
+    // (trebuie sa fie, pentru matchmaking), deci un atacator hotarat isi
+    // poate crea singur un document de jucator in meciul altuia si trece de
+    // verificare. Opreste vandalismul ocazional, nu pe cel intentionat — dar
+    // e strict mai mult decat `if request.auth != null`, care era tot ce
+    // aveam inainte.
+    //
+    // Costa o citire facturata DOAR cand primele doua ramuri pica, adica doar
+    // pentru clientii vechi: `||` scurtcircuiteaza, deci un client nou nu
+    // plateste nimic in plus.
+    function matchLegacyPlayerDoc(matchId) {
+      return exists(/databases/$(database)/documents/matches/$(matchId)/players/$(request.auth.uid));
+    }
+
     match /matches/{matchId} {
       allow read, create: if request.auth != null;
       allow update, delete: if request.auth != null
-        && (matchParticipant() || matchSelfJoin());
+        && (matchParticipant() || matchSelfJoin() || matchLegacyPlayerDoc(matchId));
 
       match /players/{playerId} {
         allow read, write: if request.auth != null;
@@ -399,6 +437,27 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && (request.auth.token.email == 'dragosssx@gmail.com'
             || (resource.data.expiresAt is timestamp && request.time > resource.data.expiresAt));
+    }
+
+    // Invitatie intr-o camera de multiplayer: "intra si tu, te astept".
+    // Rostul ei e sa ajunga la un prieten care NU e online — Cloud Functions
+    // o preiau si trimit notificarea push (vezi functions/index.js
+    // onRoomInvite), iar la tap aplicatia intra direct in camera.
+    //
+    // Scrie DOAR cel care invita, si doar in numele lui (conditia pe fromUid):
+    // altfel un client modificat ar fi putut trimite invitatii semnate cu
+    // numele altcuiva — adica notificari false catre oricine.
+    //
+    // Citeste si sterge doar cel invitat (isi curata invitatiile consumate)
+    // sau cel care a trimis-o (o poate anula).
+    match /room_invites/{inviteId} {
+      allow create: if request.auth != null
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid is string
+        && request.resource.data.matchId is string;
+      allow read, delete: if request.auth != null
+        && (resource.data.toUid == request.auth.uid
+            || resource.data.fromUid == request.auth.uid);
     }
 
     // Raportarile trimise de jucatori (vezi ModerationService.submitReport).

@@ -10,6 +10,8 @@ import '../../core/theme.dart';
 import '../../data/auth_service.dart';
 import '../../data/moderation_service.dart';
 import '../../data/multiplayer_service.dart';
+import '../../widgets/avatar.dart';
+import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/entrance_item.dart';
@@ -282,7 +284,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                             EntranceItem(
                               controller: _introCtrl,
                               interval: const Interval(0.08, 0.55, curve: Curves.easeOutBack),
-                              child: _buildCodeBanner(info?.code),
+                              child: _buildCodeBanner(info?.code, players),
                             ),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
                             if (info?.gameMode == MatchGameMode.obby) _buildObbyBanner(players.length),
@@ -326,7 +328,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
   /// albastru, aceeași familie vizuală cu plăcile de pe ecranul de intrare în
   /// Multiplayer, ca lobby-ul să pară continuarea firească a aceluiași loc,
   /// nu un ecran croit separat.
-  Widget _buildCodeBanner(String? code) {
+  Widget _buildCodeBanner(String? code, List<MatchPlayer> players) {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 10),
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -370,9 +372,106 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
               ],
             ),
           ),
-          Text(tr('dă-l unui prieten', 'share it'),
-              style: const TextStyle(color: Colors.white38, fontSize: 10.5, fontWeight: FontWeight.w600)),
+          // „Chemă un prieten": trimite o invitație care ajunge ca notificare
+          // pe telefonul lui CHIAR DACĂ nu e online (vezi
+          // MultiplayerService.inviteFriendToRoom + functions/index.js).
+          // Codul de mai sus e util doar cuiva care e deja lângă tine;
+          // butonul ăsta e pentru restul.
+          TextButton.icon(
+            onPressed: () => _inviteFriends(code ?? '', players.map((p) => p.id).toSet()),
+            icon: const Icon(Icons.person_add_alt_1_rounded, size: 17),
+            label: Text(tr('Cheamă', 'Invite'),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+            style: TextButton.styleFrom(foregroundColor: Colors.white),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Foaia cu prietenii, de unde se trimit invitațiile. Cine e deja în
+  /// cameră nu mai apare — n-are sens să chemi pe cineva care e lângă tine.
+  Future<void> _inviteFriends(String code, Set<String> alreadyHere) async {
+    final friends = await PlayerProfileService.instance.fetchFriends();
+    if (!mounted) return;
+    final invitable = friends.where((f) => !alreadyHere.contains(f.uid)).toList();
+    final sent = <String>{};
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xFF141B2E),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 14),
+              Text(tr('Cheamă un prieten', 'Invite a friend'),
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900)),
+              const SizedBox(height: 4),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Text(
+                  tr('Primește notificare pe telefon chiar dacă nu e în joc acum.',
+                      'They get a phone notification even if they are not in the game right now.'),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (invitable.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Text(
+                    tr('N-ai pe cine chema — toți prietenii tăi sunt deja aici.',
+                        'Nobody left to invite — all your friends are already here.'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white38, fontSize: 13),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: invitable.length,
+                    itemBuilder: (context, i) {
+                      final f = invitable[i];
+                      final done = sent.contains(f.uid);
+                      return ListTile(
+                        leading: Avatar(
+                          size: 34,
+                          label: f.name.isNotEmpty ? f.name[0].toUpperCase() : '?',
+                          accentColor: pickAvatarColor(f.avatarSeed),
+                          photoUrl: f.photoUrl,
+                          style: avatarStyleFromId(f.avatarStyle),
+                        ),
+                        title: Text(f.name,
+                            style: const TextStyle(
+                                color: Colors.white, fontWeight: FontWeight.w600)),
+                        trailing: done
+                            ? const Icon(Icons.check_circle_rounded, color: AppColors.play)
+                            : const Icon(Icons.send_rounded, color: Colors.white70, size: 20),
+                        onTap: done
+                            ? null
+                            : () async {
+                                setSheetState(() => sent.add(f.uid));
+                                await MultiplayerService.instance.inviteFriendToRoom(
+                                  matchId: widget.matchId,
+                                  toUid: f.uid,
+                                  code: code,
+                                );
+                              },
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
       ),
     );
   }

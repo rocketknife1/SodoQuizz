@@ -1509,6 +1509,37 @@ class MultiplayerService {
     }
   }
 
+  /// **Invita un prieten in camera curenta**, chiar daca nu e online.
+  ///
+  /// Scrie un document in `room_invites`; de acolo il preiau Cloud Functions
+  /// si trimit notificarea push (vezi functions/index.js `onRoomInvite`), iar
+  /// la tap aplicatia lui intra DIRECT in camera. Fara Functions n-ar exista
+  /// niciun fel: un client nu poate trimite FCM altui client.
+  ///
+  /// Nu verificam aici daca prietenul e online — tocmai asta e rostul: cine e
+  /// deja in aplicatie vede oricum anuntul de prezenta (vezi
+  /// MultiplayerPresenceService), invitatia e pentru cine NU e.
+  Future<void> inviteFriendToRoom({
+    required String matchId,
+    required String toUid,
+    String code = '',
+  }) async {
+    await ensureInitialized();
+    final me = currentPlayerId;
+    if (me.isEmpty || toUid.isEmpty || toUid == me) return;
+    try {
+      await _paced(() => _db.collection('room_invites').add({
+            'fromUid': me,
+            'toUid': toUid,
+            'matchId': matchId,
+            'code': code,
+            'createdAt': FieldValue.serverTimestamp(),
+          }));
+    } catch (e) {
+      debugPrint('MultiplayerService.inviteFriendToRoom a esuat: $e');
+    }
+  }
+
   Future<void> sendChatMessage({required String matchId, required String senderName, required String text}) async {
     final me = currentPlayerId;
     await _paced(() => _db.collection('matches').doc(matchId).collection('chat').add(

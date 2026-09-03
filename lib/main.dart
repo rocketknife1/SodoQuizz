@@ -10,6 +10,10 @@ import 'core/lang.dart';
 import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
 import 'data/device_notification_service.dart';
+import 'data/push_service.dart';
+import 'data/auth_service.dart';
+import 'screens/multiplayer/room_lobby_screen.dart';
+import 'screens/friends_screen.dart';
 import 'data/live_sync.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
@@ -124,6 +128,51 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
     _setUpDeviceNotifications();
+    _setUpPush();
+  }
+
+  /// Notificarile PUSH (mesaj, cerere de prietenie, anunt de sistem,
+  /// invitatie in camera). Serviciul nu stie nimic despre widget-uri — aici i
+  /// se spune UNDE sa duca fiecare tap.
+  void _setUpPush() {
+    if (Firebase.apps.isEmpty) return;
+    PushService.instance
+      ..onOpenRoom = _openInvitedRoom
+      ..onOpenChat = _openChatWith
+      ..start();
+  }
+
+  /// Tap pe o invitatie in camera: intram DIRECT in ea, nu doar deschidem
+  /// aplicatia. Daca intre timp camera a disparut (gazda a inchis-o, meciul
+  /// s-a terminat), spunem asta pe fata in loc sa lasam un ecran gol.
+  Future<void> _openInvitedRoom(String matchId, String code) async {
+    try {
+      await MultiplayerService.instance.ensureInitialized();
+      final identity = await AuthService.instance.multiplayerIdentity();
+      final info = await MultiplayerService.instance.joinRoomById(
+        matchId: matchId,
+        displayName: identity.name,
+        photoUrl: identity.photoUrl,
+        avatarStyle: identity.avatarStyle,
+      );
+      _navigatorKey.currentState?.push(MaterialPageRoute(
+        builder: (_) => RoomLobbyScreen(matchId: info.id, isHost: false, stakePaid: info.stake),
+      ));
+    } catch (e) {
+      debugPrint('Deschiderea camerei din invitatie a esuat: $e');
+      _showRootBanner(
+        title: tr('Invitație', 'Invite'),
+        message: tr('Camera nu mai e disponibilă.', 'That room is no longer available.'),
+        icon: Icons.meeting_room_outlined,
+      );
+    }
+  }
+
+  void _openChatWith(String withUid) {
+    // Firul se deschide din lista de prieteni, care stie sa-l caute dupa uid.
+    _navigatorKey.currentState?.push(
+      MaterialPageRoute(builder: (_) => const FriendsScreen()),
+    );
   }
 
   /// Permisiunea de notificari + prima programare. Nu blocheaza pornirea:
