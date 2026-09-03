@@ -58,6 +58,11 @@ COLLECTIONS = [
     "admin_grants",
     "banned_players",
     "pending_auth_deletions",
+    # Adaugat 3 septembrie 2026 odata cu notificarile push: invitatiile in
+    # camera (`room_invites`). Token-urile FCM sunt in subcolectia
+    # `users/{uid}/fcm_tokens` si sunt sterse automat cand se sterge parintele
+    # `users/{uid}` — nu au nevoie de intrare separata aici.
+    "room_invites",
 ]
 
 # ATENTIE LA ORICE FEATURE NOU CARE SCRIE O COLECTIE NOUA: lista de mai sus e
