@@ -983,6 +983,12 @@ class StorageService {
     return Duration.zero;
   }
 
+  /// Câte rulări are ciclul curent cu totul — 2 normal, 3 dacă s-a văzut
+  /// reclama. Public fiindcă insigna de pe planetă arată „1 din 2", deci are
+  /// nevoie și de numitor, nu doar de cât a rămas.
+  static Future<int> planetRunsLimit() async =>
+      _planetLimit(await SharedPreferences.getInstance());
+
   /// Câte rulări mai are jucătorul în ciclul curent (0 cât timp e cooldown).
   static Future<int> planetRunsLeft() async {
     if ((await planetCooldownRemaining()) > Duration.zero) return 0;

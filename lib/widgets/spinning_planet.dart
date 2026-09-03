@@ -1,5 +1,9 @@
+import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+import '../core/lang.dart';
+import '../data/storage_service.dart';
 import '../core/audio.dart';
 import '../core/repeating_animation.dart';
 import '../core/gamemodes.dart';
@@ -45,6 +49,11 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
   late final List<double> _driftSpeed;
   late final List<double> _orbitPhase;
 
+  /// Insigna isi tine singura starea; dupa o rulare o rugam sa se
+  /// reciteasca imediat, ca sa nu ramana pe „READY" cateva secunde dupa ce
+  /// jucatorul tocmai a consumat ultima rulare.
+  final _badgeKey = GlobalKey<PlanetStatusBadgeState>();
+
   @override
   void initState() {
     super.initState();
@@ -72,6 +81,7 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
   Future<void> _onTap() async {
     Sfx.tileSelect();
     await PlanetEntryDialog.show(context, onRewardsChanged: widget.onRewardsChanged);
+    _badgeKey.currentState?.refresh();
   }
 
   @override
@@ -182,6 +192,11 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
                 // holograme care traversează diagonal toată zona, inclusiv
                 // peste planetă, pe unghiuri aleatorii — mereu deasupra.
                 ...driftHolograms,
+                // Insigna de stare, ULTIMA: userul a cerut-o „peste planetă",
+                // iar prima variantă o pusese sub holograme — treceau peste
+                // ea și nu se mai putea citi nici „READY", nici cronometrul.
+                // O insignă e informație, nu decor: trece înaintea efectului.
+                PlanetStatusBadge(key: _badgeKey, planetSize: widget.size),
               ],
             );
           },
@@ -318,4 +333,146 @@ class _RingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Starea planetei, citită o dată și ținută împreună — insigna are nevoie de
+/// toate trei deodată, iar trei `FutureBuilder` separate ar fi clipit
+/// independent unul de altul.
+class _PlanetStatus {
+  final Duration cooldown;
+  final int runsLeft;
+  final int runsLimit;
+  const _PlanetStatus(this.cooldown, this.runsLeft, this.runsLimit);
+
+  bool get ready => cooldown <= Duration.zero && runsLeft > 0;
+}
+
+/// Insigna de peste planetă: „READY" cât se poate juca, iar în cooldown cât
+/// mai are până e gata. Sub ea, câte rulări mai sunt în ciclu („1 / 2").
+///
+/// ARE CEAS PROPRIU, în widget separat, tocmai ca numărătoarea de o secundă
+/// să NU reconstruiască planeta cu tot cu holograme: aia are deja trei
+/// animații continue, iar un `setState` pe secundă în părintele ei ar fi
+/// însemnat recalcularea a zeci de poziții orbitale degeaba.
+class PlanetStatusBadge extends StatefulWidget {
+  /// Cât de lată e sfera — insigna se scalează după ea, ca să nu iasă în
+  /// afara planetei la dimensiuni mici.
+  final double planetSize;
+
+  const PlanetStatusBadge({super.key, required this.planetSize});
+
+  @override
+  State<PlanetStatusBadge> createState() => PlanetStatusBadgeState();
+}
+
+class PlanetStatusBadgeState extends State<PlanetStatusBadge> {
+  final ValueNotifier<_PlanetStatus?> _status = ValueNotifier(null);
+  Timer? _tick;
+
+  @override
+  void initState() {
+    super.initState();
+    refresh();
+    // O secundă: sub un minut rămas chiar se numără secundele, iar peste
+    // atât citirea se schimbă oricum doar din minut în minut — costul e o
+    // reconstrucție a unui singur text mic.
+    _tick = Timer.periodic(const Duration(seconds: 1), (_) => refresh());
+  }
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    _status.dispose();
+    super.dispose();
+  }
+
+  /// Public: ecranul-gazdă o cheamă și după ce jucătorul iese dintr-o rulare,
+  /// ca insigna să treacă pe cooldown fără să aștepte următoarea secundă.
+  Future<void> refresh() async {
+    try {
+      final cooldown = await StorageService.planetCooldownRemaining();
+      final left = await StorageService.planetRunsLeft();
+      final limit = await StorageService.planetRunsLimit();
+      if (!mounted) return;
+      _status.value = _PlanetStatus(cooldown, left, limit);
+    } catch (e) {
+      debugPrint('PlanetStatusBadge.refresh a esuat: $e');
+    }
+  }
+
+  /// „4h 12m", „12m 30s", „45s" — unitatea cea mai mare plus următoarea, ca
+  /// să se citească dintr-o privire. Fără secunde la ore: nimeni nu se uită
+  /// la o planetă care mai are 4 ore ca să vadă cum scad secundele.
+  String _format(Duration d) {
+    if (d.inHours > 0) return '${d.inHours}h ${d.inMinutes % 60}m';
+    if (d.inMinutes > 0) return '${d.inMinutes}m ${d.inSeconds % 60}s';
+    return '${d.inSeconds}s';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<_PlanetStatus?>(
+      valueListenable: _status,
+      builder: (context, s, _) {
+        if (s == null) return const SizedBox.shrink();
+        final ready = s.ready;
+        final accent = ready ? const Color(0xFF6BE58A) : const Color(0xFF9FD8FF);
+        final label = ready ? tr('READY', 'READY') : _format(s.cooldown);
+        // Fundal propriu, opac: planeta e portocalie și luminoasă, iar un text
+        // pus direct peste ea s-ar pierde exact în zona cea mai deschisă.
+        return IgnorePointer(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xE6101828),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: accent.withAlpha(200), width: 1.2),
+                  boxShadow: [BoxShadow(color: accent.withAlpha(90), blurRadius: 10)],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(ready ? Icons.bolt_rounded : Icons.hourglass_bottom_rounded,
+                        size: 12, color: accent),
+                    const SizedBox(width: 3),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: accent,
+                        fontSize: ready ? 11 : 10.5,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: ready ? 1.1 : 0.2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 3),
+              // Câte rulări mai sunt în ciclu. Se arată SI in cooldown (unde e
+              // 0 din 2): altfel ar disparea exact cand jucatorul se intreaba
+              // de ce nu mai poate intra.
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xCC101828),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${s.runsLeft} / ${s.runsLimit}',
+                  style: TextStyle(
+                    color: s.runsLeft > 0 ? Colors.white : Colors.white54,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }
