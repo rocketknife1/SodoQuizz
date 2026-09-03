@@ -208,6 +208,25 @@ await check('un jucator NU poate scrie config/admin', () => assertFails(
 await check('nimeni nu citeste config/admin din client (nici adminul)', () => assertFails(
   getDoc(doc(adminCtx, 'config', 'admin'))));
 
+// Stergerea unui profil de catre ADMIN ("Sterge complet" din panou).
+// A fost stricata tacit intre 2026-09-02 si 2026-09-03: despartirea lui
+// `allow write` in create+update a lasat `delete` doar cu regula de curatare a
+// Guest-ilor abandonati de 15 zile.
+
+console.log('\nSTERGEREA UNUI CONT DE CATRE ADMIN:');
+
+await env.withSecurityRulesDisabled((ctx) => setDoc(P(ctx.firestore(), 'deSters'), {
+  name: 'DeSters', hasGoogleAccount: true, matchesPlayed: 7, activityEvents: 3,
+}));
+await check('adminul sterge un cont ACTIV cu cont Google', () => assertSucceeds(
+  deleteDoc(P(adminCtx, 'deSters'))));
+
+await env.withSecurityRulesDisabled((ctx) => setDoc(P(ctx.firestore(), 'deSters2'), {
+  name: 'DeSters2', hasGoogleAccount: false, matchesPlayed: 0, activityEvents: 0,
+}));
+await check('un jucator oarecare NU poate sterge profilul altuia', () => assertFails(
+  deleteDoc(P(jucator, 'deSters2'))));
+
 console.log(`\n=== ${pass} trec, ${fail} pica ===`);
 await env.cleanup();
 process.exit(fail === 0 ? 0 : 1);

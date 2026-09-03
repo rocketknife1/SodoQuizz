@@ -305,12 +305,22 @@ service cloud.firestore {
       // sunt cele din isSweepableGuest() de la inceputul fisierului, scrise
       // aici pe `resource.data` (documentul se sterge chiar pe el insusi,
       // deci nu mai e nevoie de un get() in plus).
+      //
+      // ADMINUL, PRIMUL: "Sterge complet" din AdminScreen (purgePlayer) sterge
+      // inclusiv documentul asta. Ramura lui exista dintotdeauna, dar s-a
+      // PIERDUT pe 2026-09-02, cand `allow write` (care acoperea si delete) a
+      // fost despartit in `create` + `update` pentru limita anti-trisare:
+      // `delete` a ramas doar cu cazul de curatare a Guest-ilor abandonati,
+      // deci stergerea din panoul de admin era refuzata tacit pentru orice
+      // alt cont. Regasit abia cand am incercat sa curat baza de conturile de
+      // test (2026-09-03) — pana atunci nimeni n-a mai sters un cont.
       allow delete: if request.auth != null
-        && resource.data.get('hasGoogleAccount', false) == false
-        && resource.data.get('matchesPlayed', 0) == 0
-        && resource.data.get('activityEvents', 0) == 0
-        && resource.data.lastActive is timestamp
-        && request.time > resource.data.lastActive + duration.value(15, 'd');
+        && (request.auth.token.email == 'dragosssx@gmail.com'
+            || (resource.data.get('hasGoogleAccount', false) == false
+                && resource.data.get('matchesPlayed', 0) == 0
+                && resource.data.get('activityEvents', 0) == 0
+                && resource.data.lastActive is timestamp
+                && request.time > resource.data.lastActive + duration.value(15, 'd')));
 
       // Cereri de prietenie primite — un doc per expeditor (id = uid-ul lui).
       // Citire/ștergere permisă fie owner-ului (uid, care le primește), fie
