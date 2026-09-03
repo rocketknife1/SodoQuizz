@@ -14,11 +14,12 @@ toate gata. **NEVERIFICAT pe telefon** noul flux data-only (telefonul e la
 încărcat); Functions NEDEPLOYATE. De reprobat: mesaj + invitație în cameră,
 cu aplicația închisă, si tap-ul să intre direct în cameră.
 
-- **Fusul orar la notificările locale** e ghicit din decalaj
-  (`Europe/Bucharest` sau UTC), nu citit ca IANA. Merge pentru publicul de
-  acum; se strică pentru cineva din alt fus.
+- ~~Fusul orar la notificările locale~~ **FĂCUT** (`e8cd20f`) — `flutter_timezone`
+  citește IANA din sistem.
 - **Notificarea locală nu se anulează** dacă jucătorul consumă lucrul înainte
   să sune alarma (ex. intră în joc și învârte roata cu 10 minute înainte).
+  `rescheduleAll` la fiecare trecere în fundal o corectează parțial — rămâne
+  fereastra în care aplicația e în prim-plan după consum.
 - **Push-ul pe web nu există** — ar cere cheie VAPID și service worker separat.
   Doar Android primește notificări.
 - La tap pe notificarea de mesaj se deschide lista de prieteni, nu firul
