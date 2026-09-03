@@ -9,6 +9,7 @@ import 'core/audio.dart';
 import 'core/lang.dart';
 import 'core/theme.dart';
 import 'data/cloud_sync_service.dart';
+import 'data/device_notification_service.dart';
 import 'data/live_sync.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
@@ -122,6 +123,20 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     LiveSync.instance.attachToIdentity();
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
+    _setUpDeviceNotifications();
+  }
+
+  /// Permisiunea de notificari + prima programare. Nu blocheaza pornirea:
+  /// daca userul refuza, tot serviciul devine un no-op tacut si jocul merge
+  /// mai departe neschimbat.
+  ///
+  /// Cererea vine la PRIMA pornire, nu ingropata intr-un ecran de setari:
+  /// notificarile astea sunt singurul lucru care aduce jucatorul inapoi cand
+  /// i s-a reincarcat roata, si nimeni nu cauta un comutator pentru ceva ce
+  /// n-a vazut niciodata.
+  Future<void> _setUpDeviceNotifications() async {
+    await DeviceNotificationService.instance.requestPermission();
+    await DeviceNotificationService.instance.rescheduleAll();
   }
 
   @override
@@ -381,6 +396,10 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       LiveSync.instance.stop();
       CloudSyncService.instance.push();
       Music.pauseForBackground();
+      // Reprogramam alarmele TOCMAI cand plecam din aplicatie: aia e clipa in
+      // care starea de pe telefon (cat mai are roata, planeta, Clippy) e cea
+      // mai proaspata, si tot atunci notificarile chiar incep sa conteze.
+      DeviceNotificationService.instance.rescheduleAll();
     } else if (state == AppLifecycleState.resumed) {
       LiveSync.instance.start();
       Music.resumeFromBackground();

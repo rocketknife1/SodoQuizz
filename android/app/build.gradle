@@ -24,6 +24,11 @@ android {
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
+        // Cerut de flutter_local_notifications: pluginul foloseste API-uri de
+        // data/ora din Java 8 (java.time) care nu exista pe Android vechi, iar
+        // desugaring-ul le rescrie ca sa mearga si acolo. Fara el, build-ul de
+        // release pica la `checkReleaseAarMetadata` cu un mesaj explicit.
+        coreLibraryDesugaringEnabled = true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -72,10 +77,23 @@ android {
             // Altfel cade pe cheia de debug, ca `flutter run --release` sa
             // mearga si fara el (ex. checkout nou, fara keystore-ul original).
             signingConfig = hasKeystore ? signingConfigs.release : signingConfigs.debug
+
+            // Flutter porneste R8 oricum la --release; fara fisierul asta,
+            // regulile noastre nu erau incarcate deloc si notificarile
+            // programate crapau tacut in release (vezi proguard-rules.pro
+            // pentru bug-ul exact).
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"),
+                          "proguard-rules.pro"
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Perechea lui coreLibraryDesugaringEnabled de mai sus — biblioteca in
+    // care se rescriu API-urile Java 8.
+    coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.1.4"
 }

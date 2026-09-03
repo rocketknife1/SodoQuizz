@@ -1,5 +1,21 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Notificari pe telefon (vezi lib/data/device_notification_service.dart).
+         POST_NOTIFICATIONS e ceruta de la Android 13 incolo si trebuie ceruta
+         SI la rulare, nu doar declarata aici.
+         SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM: notificarile noastre sunt
+         legate de momente exacte (roata s-a resetat la fix 24h de la ultimul
+         spin, planeta la fix 12h). Fara ele, Android amana declansarea cu
+         zeci de minute ca sa economiseasca bateria, iar "e gata acum" ar
+         ajunge cand nu mai e adevarat.
+         RECEIVE_BOOT_COMPLETED: alarmele programate se pierd la repornirea
+         telefonului; cu ea, pluginul le reprogrameaza singur. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
         android:label="SodoQuizz"
         android:name="${applicationName}"
@@ -71,6 +87,21 @@
         <meta-data
             android:name="com.chunkytofustudios.firebase_auth_games_services.OAUTH_2_WEB_CLIENT_ID"
             android:value="@string/firebase_auth_oauth_2_web_client_id"/>
+
+        <!-- Pluginul de notificari locale: primeste alarma programata si
+             afiseaza notificarea chiar daca aplicatia e inchisa. Al doilea
+             receiver le pune la loc dupa o repornire de telefon. -->
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"/>
+        <receiver android:exported="false"
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON"/>
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
