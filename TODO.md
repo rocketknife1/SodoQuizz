@@ -198,3 +198,21 @@ rulează **din rădăcina repo-ului** (calea cheii e relativă la CWD). Pentru o
 citire ad-hoc, importă `FIRESTORE` și `_session` din `tools/purge_accounts.py`.
 Restul scripturilor din `tools/` ating date reale — se rulează întâi în mod
 raportare și se confirmă cu userul.
+
+---
+
+## Cloud Functions — întreținere (adăugat 2026-09-03)
+
+Deployate în `europe-west1`, patru declanșatoare (vezi `functions/index.js`).
+Firebase avertizează la fiecare deploy:
+
+- **Node.js 20 e depreciat**, se scoate din funcțiune pe **2026-10-30**. După
+  data aia nu se mai poate deploya fără upgrade. De urcat la Node 22 în
+  `functions/package.json` + `firebase.json` înainte de termen.
+- `firebase-functions` e o versiune veche; upgrade-ul aduce **modificări
+  incompatibile**, deci nu se face pe fugă odată cu altceva.
+
+Comanda de deploy (PowerShell refuză shim-ul `.ps1`, de-aia `.cmd`):
+```
+firebase.cmd deploy --only functions --project sodoquizz
+```
