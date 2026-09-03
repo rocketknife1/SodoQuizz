@@ -17,6 +17,7 @@ import 'data/push_service.dart';
 import 'data/auth_service.dart';
 import 'screens/multiplayer/room_lobby_screen.dart';
 import 'screens/friends_screen.dart';
+import 'screens/friend_chat_screen.dart';
 import 'data/live_sync.dart';
 import 'data/moderation_service.dart';
 import 'data/multiplayer_activity_service.dart';
@@ -24,6 +25,7 @@ import 'data/multiplayer_presence_service.dart';
 import 'data/multiplayer_service.dart';
 import 'data/notification_service.dart';
 import 'data/player_profile_service.dart';
+import 'models/player_profile.dart';
 import 'data/storage_service.dart';
 import 'firebase_options.dart';
 import 'models/multiplayer_models.dart';
@@ -192,11 +194,23 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     }
   }
 
-  void _openChatWith(String withUid) {
-    // Firul se deschide din lista de prieteni, care stie sa-l caute dupa uid.
-    _navigatorKey.currentState?.push(
-      MaterialPageRoute(builder: (_) => const FriendsScreen()),
-    );
+  Future<void> _openChatWith(String withUid) async {
+    // Tap pe notificarea de mesaj: deschidem DIRECT firul cu omul respectiv,
+    // nu lista de prieteni. Daca profilul nu se poate incarca (offline, cont
+    // sters), cadem pe lista de prieteni ca sa nu ramana tap-ul fara efect.
+    final nav = _navigatorKey.currentState;
+    if (nav == null) return;
+    PlayerProfile? friend;
+    try {
+      friend = await PlayerProfileService.instance.getProfile(withUid);
+    } catch (e) {
+      debugPrint('_openChatWith: incarcarea profilului $withUid a esuat: $e');
+    }
+    nav.push(MaterialPageRoute(
+      builder: (_) => friend != null
+          ? FriendChatScreen(friend: friend)
+          : const FriendsScreen(),
+    ));
   }
 
   /// Permisiunea de notificari + prima programare. Nu blocheaza pornirea:

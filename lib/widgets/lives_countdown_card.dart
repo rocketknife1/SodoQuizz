@@ -98,16 +98,16 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
       builder: (context, child) {
         final glow = 0.55 + 0.45 * _pulse.value;
         return Container(
-          margin: const EdgeInsets.only(top: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          margin: const EdgeInsets.only(top: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: AppColors.danger.withAlpha(28),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(13),
             border: Border.all(color: AppColors.danger.withAlpha((150 * glow).round())),
             boxShadow: [
               BoxShadow(
-                color: AppColors.danger.withAlpha((70 * glow).round()),
-                blurRadius: 20,
+                color: AppColors.danger.withAlpha((60 * glow).round()),
+                blurRadius: 14,
                 spreadRadius: -6,
               ),
             ],
@@ -115,17 +115,22 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
           child: child,
         );
       },
+      // UN SINGUR RÂND, deliberat. Varianta veche punea inelul de 34px lângă un
+      // titlu şi un subtitlu pe două rânduri — ~62px de înălţime, exact pe 0
+      // vieţi, adică fix atunci când tot ce e sub el (Cultură Generală) e
+      // împins peste banda mascotelor de jos. Acum tot mesajul intră pe un rând
+      // de ~38px, fără să piardă nimic din informaţie.
       child: Row(
         children: [
           SizedBox(
-            width: 34,
-            height: 34,
+            width: 26,
+            height: 26,
             child: Stack(
               alignment: Alignment.center,
               children: [
                 CircularProgressIndicator(
                   value: progress,
-                  strokeWidth: 3,
+                  strokeWidth: 2.4,
                   backgroundColor: Colors.white12,
                   valueColor: const AlwaysStoppedAnimation(AppColors.life),
                 ),
@@ -133,40 +138,29 @@ class _LivesCountdownCardState extends State<LivesCountdownCard>
                   scale: Tween<double>(begin: 0.82, end: 1.0).animate(
                       CurvedAnimation(parent: _pulse, curve: Curves.easeInOut)),
                   child: const Icon(Icons.favorite_rounded,
-                      color: AppColors.life, size: 16),
+                      color: AppColors.life, size: 12),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 9),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  tr('Nu mai ai vieți', 'You are out of lives'),
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  tr('Următoarea se încarcă în', 'Next one recharges in'),
-                  style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600),
-                ),
-              ],
+            child: Text(
+              tr('Fără vieți — următoarea în', 'Out of lives — next one in'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700),
             ),
           ),
+          const SizedBox(width: 6),
           Text(
             _format(_remaining),
             style: const TextStyle(
               color: AppColors.life,
-              fontSize: 19,
+              fontSize: 16,
               fontWeight: FontWeight.w900,
               fontFeatures: [FontFeature.tabularFigures()],
             ),

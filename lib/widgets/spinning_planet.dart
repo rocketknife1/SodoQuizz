@@ -187,16 +187,17 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
                     ),
                   ),
                 ),
-                // holograme "din față" — peste sferă.
+                // Insigna de stare, LIPITĂ DE SFERĂ, sub holograme — ca la
+                // prima implementare. A fost o vreme desenată ultima, peste
+                // tot, ca să rămână mereu lizibilă; userul a cerut explicit
+                // (2026-09-03) întoarcerea: hologramele trebuie să zboare pe
+                // deasupra, chiar dacă din când în când una trece peste text.
+                PlanetStatusBadge(key: _badgeKey, planetSize: widget.size),
+                // holograme "din față" — peste sferă ȘI peste insignă.
                 ...frontHolograms,
                 // holograme care traversează diagonal toată zona, inclusiv
                 // peste planetă, pe unghiuri aleatorii — mereu deasupra.
                 ...driftHolograms,
-                // Insigna de stare, ULTIMA: userul a cerut-o „peste planetă",
-                // iar prima variantă o pusese sub holograme — treceau peste
-                // ea și nu se mai putea citi nici „READY", nici cronometrul.
-                // O insignă e informație, nu decor: trece înaintea efectului.
-                PlanetStatusBadge(key: _badgeKey, planetSize: widget.size),
               ],
             );
           },

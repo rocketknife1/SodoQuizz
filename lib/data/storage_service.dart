@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/progression.dart';
+import 'device_notification_service.dart';
 import 'shop.dart';
 
 /// Ce s-a acordat efectiv la o vizionare de reclamă recompensată — vezi
@@ -804,6 +806,10 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_ringSpinTimestampKey, DateTime.now().millisecondsSinceEpoch);
     await _recordActivity(prefs);
+    // Consumat cu aplicația în prim-plan: reprogramează notificarea acum, nu
+    // abia la trecerea în fundal — altfel alarma veche sună degeaba peste
+    // câteva minute pentru ceva deja consumat.
+    unawaited(DeviceNotificationService.instance.rescheduleAll());
   }
 
   // ─── Cadoul de gems „din partea casei" ────────────────────────────────────
@@ -897,6 +903,7 @@ class StorageService {
   static Future<void> resetClippyCooldown() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_clippyNextReadyKey, DateTime.now().millisecondsSinceEpoch + clippyReadyIntervalSeconds * 1000);
+    unawaited(DeviceNotificationService.instance.rescheduleAll());
   }
 
   // ─── Daily Challenge (mini-quiz special, o dată pe zi) ─────────────────────
@@ -1056,6 +1063,7 @@ class StorageService {
             .millisecondsSinceEpoch,
       );
     }
+    unawaited(DeviceNotificationService.instance.rescheduleAll());
   }
 
   // ─── Contoare pe VIAȚĂ, derivate din metricile de quest ───────────────────

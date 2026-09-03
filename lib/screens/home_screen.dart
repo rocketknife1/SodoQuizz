@@ -16,6 +16,7 @@ import '../widgets/lives_countdown_card.dart';
 import '../widgets/mascots/discord_mascot.dart';
 import '../widgets/mascots/paperclip_mascot.dart';
 import '../widgets/mascots/ring_mascot.dart';
+import '../widgets/notification_bell.dart';
 import '../widgets/solid_menu_button.dart';
 import '../widgets/spinning_planet.dart';
 import '../widgets/space_background.dart';
@@ -202,7 +203,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 // layout; ambele au și o funcție reală (roata norocului /
                 // bonusul cu întrebări), de-asta reîmprospătează header-ul.
                 Positioned(bottom: 24, left: 12, child: RingMascot(onRewardsChanged: _refresh)),
-                Positioned(bottom: 16, right: 0, child: PaperclipMascot(onRewardsChanged: _refresh)),
+                // Clippy e MICŞORAT şi coborât faţă de ceilalţi: cutia lui
+                // (116px corp + etichetă = ~153px) urca peste colţul de jos al
+                // panoului de Cultură Generală şi acoperea variantele de
+                // răspuns — aceeaşi problemă pentru care balonul de BETA a fost
+                // mutat deja în banda de jos. Scalarea se face AICI, nu în
+                // widget: toate poziţiile dinăuntru (ochi, bulina, propuri)
+                // sunt calculate faţă de cutia de 116, iar micşorarea ei le-ar
+                // fi rupt una câte una.
+                Positioned(
+                  bottom: 6,
+                  right: -6,
+                  child: Transform.scale(
+                    scale: 0.8,
+                    alignment: Alignment.bottomRight,
+                    child: PaperclipMascot(onRewardsChanged: _refresh),
+                  ),
+                ),
                 const Positioned(bottom: 24, left: 104, child: DiscordMascot()),
                 // Balonul de BETA stă în golul dintre marțianul de Discord
                 // (cutia lui: left 104 + 92 lățime) și Clippy (right 0 + 116
@@ -221,22 +238,23 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContent(BuildContext context, _HomeData? data) {
-    // Pe 0 vieți apare cardul roșu cu numărătoarea inversă (LivesCountdownCard,
-    // ~62px) și împinge tot ce e sub el în jos — inclusiv panoul de Cultură
-    // Generală, care ajungea astfel exact peste Clippy și balonul de BETA
-    // (ambele plutesc fix, în Stack-ul de deasupra). Soluția: ascundem logo-ul
-    // (92px, pur decorativ) cât timp cardul e pe ecran. Net, conținutul urcă
-    // ~30px față de normal, deci Cultura Generală stă imediat sub "fereastra"
-    // de vieți și rămâne complet liberă de mascote.
+    // Pe 0 vieți apare cardul cu numărătoarea inversă (LivesCountdownCard) și
+    // împinge tot ce e sub el în jos — inclusiv panoul de Cultură Generală,
+    // care ajungea astfel exact peste Clippy și balonul de BETA (ambele
+    // plutesc fix, în Stack-ul de deasupra). Soluția rămâne aceeași: ascundem
+    // titlul (pur decorativ) cât timp cardul e pe ecran. Clopoțelul NU se
+    // ascunde odată cu el — e un control, nu decor.
     final outOfLives = data != null && data.lives == 0;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 20),
+      // NU mări padding-ul de jos ca să „faci loc" mascotelor: meniul principal
+      // NU are voie să deruleze, niciodată (regulă explicită a userului,
+      // 2026-09-03). O încercare cu 130 aici a făcut exact asta. Tot ce se
+      // adaugă pe Home trebuie să încapă pe ecran, nu să împingă în scroll.
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
       child: Column(
         children: [
-          if (!outOfLives) ...[
-            _buildLogo(),
-            const SizedBox(height: 4),
-          ],
+          _buildTopBar(outOfLives),
+          const SizedBox(height: 2),
           LevelHeader(
             xp: data?.xp ?? 0,
             coins: data?.coins ?? 0,
@@ -246,10 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
             pendingLevelRewards: data?.pendingLevelRewards ?? 0,
             livesUnlimited: data?.livesUnlimited ?? false,
             livesUnlimitedLabel: (data?.livesUnlimited ?? false) ? _formatCountdown(data!.livesUnlimitedRemaining) : null,
-            // clopoțelul de notificări stă deasupra avatarului DOAR aici, în
-            // meniul principal — vezi LevelHeader.showNotifications.
-            showNotifications: true,
-            onNotificationsClosed: _refresh,
+            // clopoțelul NU mai stă în rândul de resurse — s-a mutat în bara
+            // de sus, lângă titlu (vezi [_buildTopBar]).
             coinBadgeKey: _coinBadgeKey,
             xpBadgeKey: _xpBadgeKey,
             livesBadgeKey: _livesBadgeKey,
@@ -399,48 +415,75 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Bara de sus: titlul centrat şi clopoţelul de notificări la dreapta, în
+  /// spaţiul care era oricum gol de o parte şi de alta a titlului.
+  ///
+  /// Pe 0 vieţi titlul dispare (ca înainte, ca să facă loc cardului de
+  /// reîncărcare), dar bara rămâne — clopoţelul e un control, nu decor, şi
+  /// n-are voie să dispară exact când jucătorul stă şi aşteaptă.
+  Widget _buildTopBar(bool outOfLives) {
+    return SizedBox(
+      height: outOfLives ? 38 : 42,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          if (!outOfLives) _buildLogo(),
+          Align(
+            alignment: Alignment.centerRight,
+            child: NotificationBell(onClosed: _refresh),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Logo-ul jocului, cu efect de glow — o nebuloasă difuză în spate și
   /// text cu umbră colorată, ca un "badge" jucăuș, în stilul referinței.
   Widget _buildLogo() {
     return SizedBox(
-      height: 88,
+      height: 42,
       child: Stack(
         alignment: Alignment.center,
         children: [
           Container(
-            width: 200,
-            height: 82,
+            width: 210,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  AppColors.purple.withAlpha(110),
+                  AppColors.purple.withAlpha(95),
                   AppColors.purple.withAlpha(0)
                 ],
               ),
             ),
           ),
-          Column(
+          // Fulgerul stă ACUM pe acelaşi rând cu titlul, nu pe un rând propriu
+          // deasupra lui: aşezarea veche (icon + text în coloană, într-o cutie
+          // de 88px) mânca ~46px de înălţime pur decorativă în capul unui ecran
+          // deja aglomerat. Inline, blocul întreg intră în 42px.
+          Row(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Icon(
                 Icons.bolt_rounded,
                 color: AppColors.coin,
-                size: 26,
+                size: 21,
                 shadows: [
-                  Shadow(color: AppColors.coin.withAlpha(200), blurRadius: 18)
+                  Shadow(color: AppColors.coin.withAlpha(200), blurRadius: 14)
                 ],
               ),
-              const SizedBox(height: 2),
+              const SizedBox(width: 3),
               const Text(
                 'SODO QUIZZ',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 25,
+                  fontSize: 21,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 1.2,
+                  letterSpacing: 1.1,
                   shadows: [
-                    Shadow(color: Color(0xAA9A5AFB), blurRadius: 20),
+                    Shadow(color: Color(0xAA9A5AFB), blurRadius: 18),
                     Shadow(color: Colors.black87, blurRadius: 8),
                   ],
                 ),

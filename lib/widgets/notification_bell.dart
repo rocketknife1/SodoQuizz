@@ -1,19 +1,28 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../core/repeating_animation.dart';
 import '../core/theme.dart';
 import '../data/notification_service.dart';
 import '../screens/notifications_screen.dart';
 
-/// Clopoțelul de notificări, așezat DEASUPRA avatarului din meniul principal
-/// (vezi LevelHeader) — de acolo se deschide panoul cu anunțuri de sistem,
-/// cadouri și mesaje de la prieteni.
+/// Clopoțelul de notificări, așezat în bara de sus a meniului principal, la
+/// dreapta titlului (vezi HomeScreen._buildTopBar) — de acolo se deschide
+/// panoul cu anunțuri de sistem, cadouri și mesaje de la prieteni.
+///
+/// A stat înainte în rândul de resurse, lipit de pastila de monede, unde era
+/// înghesuit între cifre. Locul de acum era oricum gol (titlul e centrat), deci
+/// mutarea nu costă nicio înălțime în plus și scapă rândul de resurse de un
+/// element care nu e o resursă.
 ///
 /// Numărul de necitite vine din [NotificationService.unreadCount], deci se
 /// actualizează singur din orice ecran, fără ca meniul să fie reconstruit:
 /// un mesaj primit cât stai pe Home aprinde bulina pe loc.
 ///
-/// Cât timp există ceva necitit, clopoțelul pulsează discret; bulina roșie e
-/// oricum semnalul care contează.
+/// Cu ceva necitit, clopoțelul chiar SUNĂ: se leagănă în jurul punctului lui
+/// de agățare (de sus, nu din centru — altfel arată ca o rotire, nu ca un
+/// clopot), iar în spate pulsează un halou. Fără nimic necitit stă complet
+/// nemișcat: o animație permanentă pe meniul principal ar fi doar zgomot.
 class NotificationBell extends StatefulWidget {
   /// Chemat după închiderea panoului — meniul își reîncarcă balanța, fiindcă
   /// un cadou revendicat între timp îi schimbă cifrele.
@@ -74,53 +83,97 @@ class _NotificationBellState extends State<NotificationBell> with SingleTickerPr
           child: AnimatedBuilder(
             animation: _pulse,
             builder: (context, _) {
-              final glow = unread > 0 ? 0.35 + _pulse.value * 0.65 : 0.0;
-              final accent = unread > 0 ? AppColors.coin : AppColors.blue;
-              return Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [accent.withAlpha(70), accent.withAlpha(28)],
-                  ),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: accent.withAlpha(unread > 0 ? 200 : 130), width: 1.3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withAlpha(unread > 0 ? (90 * glow).round() : 55),
-                      blurRadius: unread > 0 ? 10 * glow : 6,
-                      spreadRadius: unread > 0 ? glow : 0,
-                    ),
-                  ],
-                ),
+              final active = unread > 0;
+              // 0..1 -> 0..1..0, ca haloul să crească și să scadă lin.
+              final beat = active ? _pulse.value : 0.0;
+              final accent = active ? AppColors.coin : AppColors.blue;
+              // Legănarea: două perioade pe ciclu, ca să bată mai repede decât
+              // pulsează haloul — un clopot sună, nu respiră.
+              final swing = active ? math.sin(_pulse.value * 2 * math.pi * 2) * 0.20 : 0.0;
+              return SizedBox(
+                width: 40,
+                height: 40,
                 child: Stack(
                   clipBehavior: Clip.none,
                   alignment: Alignment.center,
                   children: [
-                    Icon(
-                      unread > 0 ? Icons.notifications_active_rounded : Icons.notifications_rounded,
-                      color: unread > 0 ? AppColors.coin : Colors.white,
-                      size: 20,
+                    // Haloul care se umflă în spate — desenat SUB pastilă, deci
+                    // nu mișcă nimic din layout când pulsează.
+                    if (active)
+                      Container(
+                        width: 34 + beat * 12,
+                        height: 34 + beat * 12,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: accent.withAlpha((46 * (1 - beat)).round()),
+                        ),
+                      ),
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: active
+                              ? [accent.withAlpha(105), accent.withAlpha(35)]
+                              : [Colors.white.withAlpha(26), Colors.white.withAlpha(10)],
+                        ),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: accent.withAlpha(active ? 215 : 95), width: 1.4),
+                        boxShadow: [
+                          BoxShadow(
+                            color: accent.withAlpha(active ? (60 + 70 * beat).round() : 40),
+                            blurRadius: active ? 8 + 10 * beat : 6,
+                            spreadRadius: -1,
+                          ),
+                        ],
+                      ),
+                      alignment: Alignment.center,
+                      child: Transform(
+                        alignment: Alignment.topCenter,
+                        transform: Matrix4.rotationZ(swing),
+                        child: Icon(
+                          active
+                              ? Icons.notifications_active_rounded
+                              : Icons.notifications_none_rounded,
+                          color: active ? AppColors.coin : Colors.white70,
+                          size: 21,
+                        ),
+                      ),
                     ),
-                    if (unread > 0)
+                    if (active)
                       Positioned(
-                        top: -3,
-                        right: -5,
+                        top: -2,
+                        right: -4,
                         child: Container(
-                          constraints: const BoxConstraints(minWidth: 17),
-                          height: 17,
+                          constraints: const BoxConstraints(minWidth: 18),
+                          height: 18,
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: AppColors.danger,
+                            gradient: const LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xFFFF6B6B), AppColors.danger],
+                            ),
                             borderRadius: BorderRadius.circular(9),
-                            border: Border.all(color: AppColors.bg, width: 1.5),
+                            border: Border.all(color: AppColors.bg, width: 1.6),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: AppColors.danger.withAlpha(120),
+                                  blurRadius: 6,
+                                  spreadRadius: -1),
+                            ],
                           ),
                           alignment: Alignment.center,
                           child: Text(
                             unread > 99 ? '99+' : '$unread',
-                            style: const TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w900),
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                                height: 1.0),
                           ),
                         ),
                       ),

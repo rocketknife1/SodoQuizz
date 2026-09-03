@@ -2,39 +2,42 @@
 
 Doar ce e DESCHIS, plus notele de care am nevoie ca să lucrez.
 Ce s-a rezolvat stă în git + memorii, NU aici.
-Ultima curățare: 2026-09-03.
+Ultima curățare: 2026-09-03 (a doua).
 
 ---
 
 ## Notificări — RĂMĂȘIȚE MICI
 
-Notificările (locale + push prin Cloud Functions), insigna de pe planetă,
-sunetul moale, tap-ul care rutează în aplicație, butonul mare de invitație —
-toate gata. **NEVERIFICAT pe telefon** noul flux data-only (telefonul e la
-încărcat); Functions NEDEPLOYATE. De reprobat: mesaj + invitație în cameră,
-cu aplicația închisă, si tap-ul să intre direct în cameră.
+Fluxul data-only e VERIFICAT pe telefon (2026-09-03): mesaj FCM → notificare
+desenată de aplicație pe canalul propriu → tap → firul direct cu omul.
+Functions deployate (Node 22). Rămâne de probat doar invitația în cameră.
 
-- ~~Fusul orar la notificările locale~~ **FĂCUT** (`e8cd20f`) — `flutter_timezone`
-  citește IANA din sistem.
-- **Notificarea locală nu se anulează** dacă jucătorul consumă lucrul înainte
-  să sune alarma (ex. intră în joc și învârte roata cu 10 minute înainte).
-  `rescheduleAll` la fiecare trecere în fundal o corectează parțial — rămâne
-  fereastra în care aplicația e în prim-plan după consum.
 - **Push-ul pe web nu există** — ar cere cheie VAPID și service worker separat.
   Doar Android primește notificări.
-- La tap pe notificarea de mesaj se deschide lista de prieteni, nu firul
-  direct cu omul respectiv.
+- Dacă push-ul „nu merge" la un test, verifică ÎNTÂI permisiunea, nu codul:
+  `dumpsys package com.dragosssx.guessit | grep POST_NOTIFICATIONS`. Un
+  `granted=false` cu flag `USER_FIXED` nu se mai poate cere din aplicație —
+  se dă cu `adb shell pm grant`. La fel, o reinstalare clean invalidează
+  token-ul FCM vechi, iar Functions îl șterg ca „mort" la prima trimitere.
 
-## Reconectare în meci (cerut 2026-09-03) — DE FĂCUT
+---
 
-Dacă cineva e într-un meci multiplayer în desfășurare și pierde legătura
-(minimizează aplicația, cade internetul, îl omoară sistemul), la revenire să
-apară un buton **„Reconectează"** care îl bagă înapoi în meciul în curs.
+## Mesaje admin ↔ jucător — DE FĂCUT (aprobat 2026-09-03)
 
-De declanșat la: revenirea aplicației în prim-plan (`AppLifecycleState.resumed`)
-sau revenirea conexiunii. De verificat că meciul chiar mai există și că e încă
-în desfășurare — camerele se șterg când pleacă ultimul jucător, iar
-`purge_stale_matches.py` mătură ce rămâne agățat.
+Fir real în două sensuri, colecția `admin_threads/{uid}/messages`, separată de
+`friend_chats` (nu cere prietenie). Mesajele rămân stocate permanent = arhiva
+de feedback.
+
+- jucătorul: buton „✉️ Mesaj către admin" în **Setări**, cu buliniță pe
+  butonul SETĂRI din Home când adminul a răspuns;
+- adminul: în panoul de Admin, lista firelor cu bulină de necitit, poate
+  deschide fir cu orice jucător;
+- reguli Firestore: citesc/scriu doar proprietarul firului și adminul;
+- push în ambele sensuri printr-o singură funcție nouă `onAdminMessage`, cu
+  payload `type=admin_chat` (acelaşi tipar ca `chat`, care e deja verificat).
+
+Textul din dialogul BETA trimite deja la „Setări → Mesaj către admin" —
+până se face, trimite în gol.
 
 ---
 
@@ -138,6 +141,13 @@ scriere în producție. Emulatorul cere JDK 21+; mașina are Temurin JDK 25, dar
 shim-ul `java8path` e primul pe PATH — vezi `test/README-reguli.md` pentru
 comanda cu `JAVA_HOME` (nu uita `hash -r`).
 
+## Meniul principal NU derulează
+
+Regulă dură (2026-09-03). Home e `SingleChildScrollView`, dar tot ce e pe el
+trebuie să încapă pe ecran — dacă apare scroll, e bug. Nu „face loc"
+mascotelor cu padding de jos: alea plutesc într-un `Stack` peste conținut, iar
+padding-ul doar împinge în scroll. Micșorează ce e în flux.
+
 ## Cronometre în testele mele
 
 La orice self-test se ridică timerele în build-ul local (`sharedRoundAnswerSeconds`,
@@ -159,11 +169,11 @@ raportare și se confirmă cu userul.
 Deployate în `europe-west1`, patru declanșatoare (vezi `functions/index.js`).
 Firebase avertizează la fiecare deploy:
 
-- **Node.js 20 e depreciat**, se scoate din funcțiune pe **2026-10-30**. După
-  data aia nu se mai poate deploya fără upgrade. De urcat la Node 22 în
-  `functions/package.json` + `firebase.json` înainte de termen.
-- `firebase-functions` e o versiune veche; upgrade-ul aduce **modificări
-  incompatibile**, deci nu se face pe fugă odată cu altceva.
+- **Node 22** e deja setat în `functions/package.json` + `firebase.json`
+  (era 20, depreciat, scos pe 2026-10-30). Rămâne DOAR redeploy-ul ca să intre
+  în vigoare — `firebase.cmd deploy --only functions --project sodoquizz`.
+- `firebase-functions` (`^6.1.0`) e ok deocamdată; un upgrade major aduce
+  **modificări incompatibile**, deci nu se face pe fugă odată cu altceva.
 
 Comanda de deploy (PowerShell refuză shim-ul `.ps1`, de-aia `.cmd`):
 ```
