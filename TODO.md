@@ -47,20 +47,12 @@ singură în `config/admin`, nescriabil de altcineva și necitibil din client.
 
 ---
 
-## De făcut la întoarcere (2026-09-03 seara)
+## De curățat, când ai chef
 
-1. **Curăță baza** — două conturi Guest de test, create de mine pe web:
-   ```
-   python tools/_curata_conturi_test.py            # raport
-   python tools/_curata_conturi_test.py --sterge   # aplică
-   ```
-   Păstrează contul tău, salvarea lui din cloud și `config/admin`. (Am încercat
-   să-l rulez eu; l-a blocat sistemul de permisiuni.) După ce merge, șterge și
-   scriptul — e de unică folosință.
-2. **Instalează APK-ul** de la `build/app/outputs/flutter-apk/app-release.apk`
-   — cel de pe telefon e vechi.
-3. **Probează tabul „Azi"** din Admin (commit `6e4e299`, ținut LOCAL, nepushat
-   tocmai fiindcă nu l-am văzut pe ecran). Dacă arată bine: `git push`.
+`python tools/purge_accounts.py --sterge` — două conturi Guest de test
+(`Jucator381`, `Jucator422`) sunt la coadă pentru ștergerea din Firebase
+Authentication. În Firestore nu mai au nicio dată legată de ele, deci nu
+grăbește nimic.
 
 ---
 
