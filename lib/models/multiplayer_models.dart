@@ -143,6 +143,21 @@ class MatchInfo {
   /// alege nimic. 0 doar la camerele rămase de la versiuni mai vechi.
   final int stake;
 
+  /// Cine are voie să scrie în documentul meciului — uid-urile tuturor celor
+  /// aflați la masă. Există DOAR pentru `firestore.rules`: fără el, regula era
+  /// `allow update: if request.auth != null`, adică orice cont autentificat
+  /// putea scrie în meciul oricui (id-urile se pot afla, `read` permite
+  /// listarea). Cu el, regula devine `request.auth.uid in
+  /// resource.data.playerIds` — fără nicio citire în plus, pe calea cea mai
+  /// fierbinte din joc.
+  ///
+  /// Se scrie la creare (gazda, sau toți participanții la Meci Rapid/revanșă)
+  /// și se completează cu `arrayUnion` la fiecare intrare în cameră — vezi
+  /// MultiplayerService._joinRoomDoc. Documentele rămase de la versiuni mai
+  /// vechi n-au câmpul deloc; regula le lasă pe vechiul comportament, ca
+  /// meciurile aflate în desfășurare la momentul actualizării să nu se rupă.
+  final List<String> playerIds;
+
   /// Dacă documentul chiar mai EXISTĂ în Firestore. Contează pentru că ștergerea
   /// camerei e felul în care gazda îi anunță pe ceilalți că a plecat: fără
   /// steagul ăsta, un `fromDoc` pe un document șters întorcea un MatchInfo gol,
@@ -245,6 +260,7 @@ class MatchInfo {
     this.hostAvatarStyle = '',
     this.createdAt,
     this.stake = 0,
+    this.playerIds = const [],
     this.exists = true,
     this.startedAt,
     this.gameMode = MatchGameMode.classic,
@@ -281,6 +297,7 @@ class MatchInfo {
       hostAvatarStyle: data['hostAvatarStyle'] as String? ?? '',
       createdAt: data['createdAt'] as Timestamp?,
       stake: data['stake'] as int? ?? 0,
+      playerIds: List<String>.from(data['playerIds'] as List? ?? const []),
       exists: doc.exists,
       startedAt: data['startedAt'] as Timestamp?,
       gameMode: MatchGameMode.values.firstWhere(
@@ -334,6 +351,7 @@ class MatchInfo {
         'hostPhotoUrl': hostPhotoUrl,
         'hostAvatarStyle': hostAvatarStyle,
         'stake': stake,
+        'playerIds': playerIds,
         'createdAt': FieldValue.serverTimestamp(),
         'gameMode': gameMode.name,
         'roundIndex': 0,

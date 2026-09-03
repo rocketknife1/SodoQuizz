@@ -70,14 +70,47 @@ service cloud.firestore {
       allow delete: if request.auth != null && isSweepableGuest(uid);
     }
 
-    // Meciuri multiplayer — orice cont autentificat (inclusiv anonim,
-    // vezi MultiplayerService.ensureInitialized) poate participa. Nu se
-    // poate restrânge la request.auth.uid == playerId fără Cloud
-    // Functions, pentru că liderul care formează un meci de matchmaking
-    // scrie playeri/scoruri și în documentele altor candidați
-    // (attemptFormMatch în multiplayer_service.dart).
+    // Meciuri multiplayer. Citirea si crearea raman deschise oricui e
+    // autentificat (inclusiv anonim, vezi MultiplayerService.ensureInitialized):
+    // camerele publice trebuie sa se vada in lista, iar cine creeaza o camera
+    // n-are cum sa fie deja participant la ea.
+    //
+    // SCRIEREA insa e restransa la cei aflati LA MASA. Inainte era
+    // `allow update: if request.auth != null`, adica orice cont autentificat
+    // putea scrie in meciul oricui — iar `read` permite listarea, deci
+    // id-urile se pot afla. Se putea vandaliza meciul altora din afara
+    // aplicatiei: scoruri, faza rundei, cine e distrus.
+    //
+    // Verificarea se face pe `playerIds` de pe DOCUMENT (vezi
+    // MatchInfo.playerIds), nu cu `exists(.../players/$(uid))`: a doua
+    // varianta ar fi costat o citire facturata la FIECARE actualizare de
+    // runda, adica exact pe calea cea mai fierbinte din joc.
+    function matchParticipant() {
+      // Documentele ramase de la versiuni de dinainte de campul asta n-au
+      // `playerIds` deloc. Pentru ele ramane vechiul comportament, ca
+      // meciurile aflate in desfasurare la momentul actualizarii sa nu se
+      // rupa in mana jucatorilor. Camerele sunt efemere (se sterg cand pleaca
+      // ultimul), deci portita se inchide singura in cateva minute.
+      return !('playerIds' in resource.data)
+          || request.auth.uid in resource.data.playerIds;
+    }
+
+    // Cine tocmai a intrat in camera se adauga SINGUR in lista, cu
+    // `arrayUnion` — vezi MultiplayerService._joinRoomDoc. E singura scriere
+    // pe care o poate face cineva din afara mesei, si e permisa strict in
+    // forma asta: lista veche, plus EXACT propriul uid la coada. Nu poate
+    // adauga pe altcineva, nu poate rescrie lista, nu poate schimba altceva
+    // in aceeasi scriere.
+    function matchSelfJoin() {
+      return 'playerIds' in resource.data
+          && request.resource.data.playerIds == resource.data.playerIds.concat([request.auth.uid])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playerIds']);
+    }
+
     match /matches/{matchId} {
-      allow read, create, update, delete: if request.auth != null;
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (matchParticipant() || matchSelfJoin());
 
       match /players/{playerId} {
         allow read, write: if request.auth != null;

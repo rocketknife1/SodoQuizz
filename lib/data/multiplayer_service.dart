@@ -190,6 +190,7 @@ class MultiplayerService {
       hostAvatarStyle: avatarStyle,
       gameMode: gameMode,
       stake: stake,
+      playerIds: [me], // vezi MatchInfo.playerIds — gazda e singura la masa
     );
     await _paced(() async {
       await ref.set(info.toMap());
@@ -291,6 +292,13 @@ class MultiplayerService {
             avatarStyle: avatarStyle,
           ).toMap(),
         ));
+    // Fara asta, `firestore.rules` m-ar refuza la prima scriere de rundă: cine
+    // nu e in playerIds nu poate atinge documentul meciului. E singura
+    // scriere in care cineva se adauga singur, iar regula o permite EXACT in
+    // forma asta (doar propriul uid, doar prin arrayUnion).
+    await _paced(() => doc.reference.update({
+          'playerIds': FieldValue.arrayUnion([me]),
+        }));
     return info;
   }
 
@@ -1669,6 +1677,7 @@ class MultiplayerService {
       hostAvatarStyle: host.avatarStyle,
       gameMode: offer.gameMode,
       stake: offer.stake,
+      playerIds: [for (final p in offer.participants) p.id],
     );
     final batch = _db.batch();
     batch.set(ref, info.toMap());
@@ -2000,6 +2009,7 @@ class MultiplayerService {
       hostId: offer.participants.first.id,
       gameMode: offer.gameMode,
       stake: offer.stake,
+      playerIds: [for (final p in offer.participants) p.id],
     );
     final batch = _db.batch();
     batch.set(ref, info.toMap());

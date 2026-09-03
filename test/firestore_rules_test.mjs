@@ -8,7 +8,7 @@
 // picat inainte nu mai lasa starea "murdara" peste urmatorul.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
   projectId: 'sodoquizz-test',
@@ -95,6 +95,56 @@ await check('NU se poate crea direct cu punctaj', () => assertFails(
 console.log('\nPROFILUL ALTUIA:');
 await check('nu poate scrie in profilul altcuiva', () => assertFails(
   setDoc(P(eu, 'jucator1_altcineva'), { name: 'x', leaguePoints: 0, seasonPoints: 0, matchesPlayed: 0, wins: 0 })));
+
+
+// --- matches/{id}: doar cei de la masa pot scrie -----------------------------
+console.log('MECIURI - cine poate scrie in documentul meciului:');
+
+const M = (db, id) => doc(db, 'matches', id);
+const eu2 = env.authenticatedContext('jucator1').firestore();
+const strain = env.authenticatedContext('strain').firestore();
+const nou3 = env.authenticatedContext('jucatorNou3').firestore();
+
+const seedMatch = (over = {}) => env.withSecurityRulesDisabled((ctx) =>
+  setDoc(M(ctx.firestore(), 'm1'), {
+    status: 'playing', roundIndex: 3, playerIds: ['jucator1', 'coleg'], ...over,
+  }));
+
+await seedMatch();
+await check('un participant scrie runda', () => assertSucceeds(
+  setDoc(M(eu2, 'm1'), { roundIndex: 4 }, { merge: true })));
+
+await seedMatch();
+await check('un STRAIN nu poate vandaliza meciul', () => assertFails(
+  setDoc(M(strain, 'm1'), { roundIndex: 999, status: 'finished' }, { merge: true })));
+
+await seedMatch();
+await check('un STRAIN nu poate sterge meciul', () => assertFails(
+  deleteDoc(M(strain, 'm1'))));
+
+await seedMatch();
+await check('cine intra in camera se adauga singur (arrayUnion)', () => assertSucceeds(
+  updateDoc(M(nou3, 'm1'), { playerIds: arrayUnion('jucatorNou3') })));
+
+await seedMatch();
+await check('NU poate adauga pe altcineva in lista', () => assertFails(
+  updateDoc(M(nou3, 'm1'), { playerIds: arrayUnion('cineva-random') })));
+
+await seedMatch();
+await check('NU poate rescrie lista ca sa ramana singur', () => assertFails(
+  updateDoc(M(nou3, 'm1'), { playerIds: ['jucatorNou3'] })));
+
+await seedMatch();
+await check('NU poate strecura si alte campuri odata cu intrarea', () => assertFails(
+  updateDoc(M(nou3, 'm1'), { playerIds: arrayUnion('jucatorNou3'), roundIndex: 999 })));
+
+// Meciurile ramase de la versiunea dinainte de `playerIds` n-au campul deloc
+// si trebuie sa mearga mai departe, altfel s-ar rupe in mana jucatorilor chiar
+// in clipa actualizarii.
+await env.withSecurityRulesDisabled((ctx) =>
+  setDoc(M(ctx.firestore(), 'm_vechi'), { status: 'playing', roundIndex: 1 }));
+await check('meci VECHI, fara playerIds: scrierea merge mai departe', () => assertSucceeds(
+  setDoc(M(strain, 'm_vechi'), { roundIndex: 2 }, { merge: true })));
 
 console.log(`\n=== ${pass} trec, ${fail} pica ===`);
 await env.cleanup();
