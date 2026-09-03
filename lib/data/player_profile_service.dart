@@ -711,6 +711,30 @@ class PlayerProfileService {
   /// Profilurile create înainte de introducerea acestui câmp (fără
   /// migrare retroactivă, vezi PlayerProfile.createdAt) nu apar niciodată
   /// aici, indiferent cât de recent au fost active.
+  /// Cine a DESCHIS jocul azi, cel mai recent primul.
+  ///
+  /// Altceva decat [fetchNewPlayersToday], care da conturile CREATE azi: aici
+  /// intra si un jucator vechi care s-a intors. `lastActive` se rescrie la
+  /// fiecare pornire (vezi heartbeat-ul din [ensureProfileHeartbeat]), deci e
+  /// exact semnalul de "a intrat in joc".
+  ///
+  /// Interogare pe UN SINGUR camp, ca sora ei de mai jos — filtrul si
+  /// ordonarea sunt pe `lastActive`, deci nu cere index compus.
+  Future<List<PlayerProfile>> fetchPlayersActiveToday() async {
+    try {
+      final now = DateTime.now();
+      final startOfDay = Timestamp.fromDate(DateTime(now.year, now.month, now.day));
+      final snap = await _col
+          .where('lastActive', isGreaterThanOrEqualTo: startOfDay)
+          .orderBy('lastActive', descending: true)
+          .get();
+      return snap.docs.map(PlayerProfile.fromDoc).toList();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchPlayersActiveToday a esuat: $e');
+      return [];
+    }
+  }
+
   Future<List<PlayerProfile>> fetchNewPlayersToday() async {
     try {
       final now = DateTime.now();

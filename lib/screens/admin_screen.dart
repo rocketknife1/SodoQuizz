@@ -24,8 +24,9 @@ import 'test_images_screen.dart';
 
 /// Panou vizibil DOAR pentru contul de admin (vezi profile_screen.dart,
 /// randul care navigheaza aici, ascuns pentru oricine altcineva). Opt
-/// taburi: gestionare jucatori (interzicere + trimitere de resurse),
-/// jucatorii inregistrati azi, raportarile trimise de jucatori, conturile interzise (singurul loc de unde
+/// taburi: gestionare jucatori (interzicere + trimitere de resurse), cine a
+/// INTRAT IN JOC azi (tabul implicit — vezi initialIndex), firele de mesaje
+/// cu jucatorii, raportarile trimise de jucatori, conturile interzise (singurul loc de unde
 /// se poate RIDICA o interdictie — un cont banat nu mai apare in lista
 /// normala, fiindca banul ii sterge profilul public), camerele de
 /// multiplayer terminate recent, uneltele de debug/test (mutate din
@@ -43,7 +44,10 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 8, vsync: this);
+    /// Se deschide pe „Azi", nu pe „Jucători": prima intrebare cand intru in
+  /// panou e daca a intrat cineva in joc azi. Rosterul complet e la un tap
+  /// distanta, in stanga.
+  late final TabController _tabController = TabController(length: 8, initialIndex: 1, vsync: this);
 
   @override
   void dispose() {
@@ -76,7 +80,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               unselectedLabelColor: Colors.white54,
               tabs: const [
                 Tab(text: 'Jucători'),
-                Tab(text: 'Noi azi'),
+                Tab(text: 'Azi'),
                 Tab(text: 'Mesaje'),
                 Tab(text: 'Raportări'),
                 Tab(text: 'Banați'),
@@ -590,11 +594,31 @@ class _NewTodayTab extends StatefulWidget {
 }
 
 class _NewTodayTabState extends State<_NewTodayTab> {
-  late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchNewPlayersToday();
+  /// Cine a DESCHIS jocul azi, nu doar cine si-a facut cont azi. Asta e
+  /// intrebarea pe care si-o pune adminul cand deschide panoul ("a intrat
+  /// cineva?"), iar conturile noi sunt oricum o submultime: un cont creat azi
+  /// a si fost activ azi, deci apare aici, marcat cu NOU.
+  late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchPlayersActiveToday();
 
   Future<void> _refresh() async {
-    setState(() => _future = PlayerProfileService.instance.fetchNewPlayersToday());
+    setState(() => _future = PlayerProfileService.instance.fetchPlayersActiveToday());
     await _future;
+  }
+
+  /// A fost creat azi? Doar ca sa punem eticheta NOU pe rand.
+  static bool _isNewToday(PlayerProfile p) {
+    final created = p.createdAt?.toDate();
+    if (created == null) return false;
+    final now = DateTime.now();
+    return !created.isBefore(DateTime(now.year, now.month, now.day));
+  }
+
+  static String _when(Timestamp? ts) {
+    if (ts == null) return '';
+    final d = DateTime.now().difference(ts.toDate());
+    if (d.inMinutes < 1) return 'acum';
+    if (d.inMinutes < 60) return 'acum ${d.inMinutes}m';
+    return 'acum ${d.inHours}h';
   }
 
   @override
@@ -613,7 +637,16 @@ class _NewTodayTabState extends State<_NewTodayTab> {
             child: ListView(
               children: const [
                 SizedBox(height: 120),
-                Center(child: Text('Niciun jucător nou azi.', style: TextStyle(color: Colors.white38, fontSize: 13))),
+                Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 40),
+                    child: Text(
+                      'Nimeni n-a intrat în joc azi.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white38, fontSize: 13),
+                    ),
+                  ),
+                ),
               ],
             ),
           );
@@ -626,16 +659,43 @@ class _NewTodayTabState extends State<_NewTodayTab> {
             itemCount: players.length,
             itemBuilder: (context, i) {
               final p = players[i];
-              return _AdminPlayerRow(
-                profile: p,
-                onChanged: _refresh,
-                onGrant: () => _openGrantSheet(context, p),
-                onBan: () async {
-                  if (await _confirmBan(context, p)) await _refresh();
-                },
-                onPurge: () async {
-                  if (await _confirmAndPurge(context, p)) await _refresh();
-                },
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 2),
+                    child: Row(
+                      children: [
+                        Text(_when(p.lastActive),
+                            style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                        if (_isNewToday(p)) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.play.withAlpha(40),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: AppColors.play.withAlpha(120)),
+                            ),
+                            child: const Text('NOU',
+                                style: TextStyle(color: AppColors.play, fontSize: 9, fontWeight: FontWeight.w900)),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  _AdminPlayerRow(
+                    profile: p,
+                    onChanged: _refresh,
+                    onGrant: () => _openGrantSheet(context, p),
+                    onBan: () async {
+                      if (await _confirmBan(context, p)) await _refresh();
+                    },
+                    onPurge: () async {
+                      if (await _confirmAndPurge(context, p)) await _refresh();
+                    },
+                  ),
+                ],
               );
             },
           ),
