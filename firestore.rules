@@ -547,6 +547,49 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
+    // Firul de mesaje dintre un jucator si administrator (vezi
+    // AdminChatService). Canalul de feedback din joc, in DOUA sensuri.
+    //
+    // DE CE NU E `friend_chats`: acolo numele documentului e "uidA_uidB"
+    // sortat, iar regula despica numele ca sa verifice apartenenta. Aici n-ar
+    // merge — jucatorul NU stie uid-ul adminului, deci n-ar putea construi
+    // numele firului. Documentul se numeste pur si simplu cu uid-ul
+    // JUCATORULUI, iar cealalta parte e "adminul" ca ROL, verificat dupa
+    // emailul din token. Consecinta buna: adminul deschide fir cu oricine,
+    // fara sa existe vreo prietenie intre ei.
+    //
+    // Adminul poate LISTA colectia (tab-ul Mesaje): regula lui de citire nu
+    // depinde de continutul documentelor, deci motorul o poate demonstra
+    // pentru toata colectia. Jucatorul citeste doar documentul lui.
+    match /admin_threads/{playerUid} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == playerUid;
+      }
+      function isAdmin() {
+        return request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      }
+
+      allow read, create, update: if isOwner() || isAdmin();
+      // Stergerea: adminul, la "Sterge complet" (vezi purgePlayer), sau
+      // proprietarul la stergerea propriului cont. Firele NU se sterg altfel
+      // — sunt arhiva de feedback a jocului.
+      allow delete: if isOwner() || isAdmin();
+
+      match /messages/{messageId} {
+        allow read: if isOwner() || isAdmin();
+        // Poti scrie doar in numele tau, ca la orice chat din joc. In plus,
+        // `fromAdmin` trebuie sa spuna adevarul: un jucator care ar trimite
+        // `fromAdmin: true` si-ar face singur un mesaj care arata in
+        // aplicatie ca venit de la administrator. Verificarea asta e SINGURUL
+        // lucru care impiedica impersonarea — clientul afiseaza baloanele
+        // strict dupa campul asta (vezi AdminMessage.fromAdmin).
+        allow create: if request.resource.data.senderId == request.auth.uid
+          && ((isAdmin() && request.resource.data.fromAdmin == true)
+              || (isOwner() && request.resource.data.fromAdmin == false));
+        allow delete: if isOwner() || isAdmin();
+      }
+    }
+
     // Coada de conturi de sters din Firebase Authentication (vezi
     // PlayerProfileService.purgePlayer + tools/purge_accounts.py).
     //

@@ -3,11 +3,14 @@ import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
+import '../data/admin_chat_service.dart';
 import '../data/auth_service.dart';
+import '../data/multiplayer_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/entrance_item.dart';
 import '../widgets/pressable.dart';
 import '../widgets/space_background.dart';
+import 'admin_chat_screen.dart';
 import 'blocked_players_screen.dart';
 import 'home_screen.dart';
 import 'language_screen.dart';
@@ -261,6 +264,42 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(builder: (_) => const BlockedPlayersScreen()),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // Canalul de feedback catre mine. Sta in Setari, nu pe
+                    // Home sau in Profil: e suport, nu functie de joc, iar
+                    // Home e ecranul pe care il tinem aerisit dinadins.
+                    // Subtitlul se aprinde cand am raspuns si jucatorul n-a
+                    // deschis inca firul — aceeasi sursa ca bulina de pe
+                    // butonul SETARI din meniul principal.
+                    _staggered(
+                      i++,
+                      ValueListenableBuilder<bool>(
+                        valueListenable: AdminChatService.instance.hasUnreadReply,
+                        builder: (context, unread, _) => _navRow(
+                          icon: Icons.mark_email_unread_rounded,
+                          color: AppColors.orange,
+                          title: tr('Mesaj catre admin', 'Message the admin'),
+                          subtitle: unread
+                              ? tr('Ai un raspuns nou', 'You have a new reply')
+                              : tr('Bug, idee sau reclamatie', 'Bug, idea or complaint'),
+                          onTap: () async {
+                            final uid = MultiplayerService.instance.currentPlayerId;
+                            if (uid.isEmpty) return;
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AdminChatScreen(
+                                  playerUid: uid,
+                                  title: tr('Administrator', 'Administrator'),
+                                  asAdmin: false,
+                                ),
+                              ),
+                            );
+                            if (context.mounted) setState(() {});
+                          },
                         ),
                       ),
                     ),

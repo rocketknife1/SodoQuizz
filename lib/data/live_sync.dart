@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import '../models/friend_chat.dart';
+import 'admin_chat_service.dart';
 import 'cloud_sync_service.dart';
 import 'friend_chat_service.dart';
 import 'moderation_service.dart';
@@ -69,6 +70,7 @@ class LiveSync {
     PlayerProfileService.instance.startLive();
     NotificationService.instance.startLive();
     ModerationService.instance.startLive();
+    AdminChatService.instance.startLive();
     instance._startFriendWatchers();
   }
 
@@ -77,6 +79,7 @@ class LiveSync {
     PlayerProfileService.instance.stopLive();
     NotificationService.instance.stopLive();
     ModerationService.instance.stopLive();
+    AdminChatService.instance.stopLive();
     instance._stopFriendWatchers();
   }
 

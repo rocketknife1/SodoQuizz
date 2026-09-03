@@ -8,7 +8,7 @@
 // picat inainte nu mai lasa starea "murdara" peste urmatorul.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc, updateDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, arrayUnion, getDoc, getDocs, collection } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
   projectId: 'sodoquizz-test',
@@ -145,6 +145,53 @@ await env.withSecurityRulesDisabled((ctx) =>
   setDoc(M(ctx.firestore(), 'm_vechi'), { status: 'playing', roundIndex: 1 }));
 await check('meci VECHI, fara playerIds: scrierea merge mai departe', () => assertSucceeds(
   setDoc(M(strain, 'm_vechi'), { roundIndex: 2 }, { merge: true })));
+
+// --- Firul admin <-> jucator (admin_threads) -------------------------------
+// Miza reala aici e IMPERSONAREA: aplicatia deseneaza baloanele strict dupa
+// campul `fromAdmin` (vezi AdminMessage), deci daca un jucator ar putea scrie
+// `fromAdmin: true` si-ar fabrica singur un mesaj care pare al administratorului.
+
+console.log('\nFIRUL CU ADMINUL:');
+
+const adminCtx = env.authenticatedContext('adminUid', { email: 'dragosssx@gmail.com' }).firestore();
+const jucator = env.authenticatedContext('jucatorX').firestore();
+const altul = env.authenticatedContext('jucatorY').firestore();
+
+const T = (db, uid) => doc(db, 'admin_threads', uid);
+const MSG = (db, uid, id) => doc(db, 'admin_threads', uid, 'messages', id);
+
+await check('jucatorul isi scrie in propriul fir (fromAdmin: false)', () => assertSucceeds(
+  setDoc(MSG(jucator, 'jucatorX', 'm1'), { senderId: 'jucatorX', fromAdmin: false, text: 'salut' })));
+
+await check('IMPERSONARE: jucatorul NU poate scrie fromAdmin: true', () => assertFails(
+  setDoc(MSG(jucator, 'jucatorX', 'm2'), { senderId: 'jucatorX', fromAdmin: true, text: 'sunt adminul' })));
+
+await check('jucatorul NU poate scrie in numele altui senderId', () => assertFails(
+  setDoc(MSG(jucator, 'jucatorX', 'm3'), { senderId: 'altcineva', fromAdmin: false, text: 'x' })));
+
+await check('un STRAIN nu poate scrie in firul altui jucator', () => assertFails(
+  setDoc(MSG(altul, 'jucatorX', 'm4'), { senderId: 'jucatorY', fromAdmin: false, text: 'x' })));
+
+await check('un STRAIN nu poate citi firul altui jucator', () => assertFails(
+  getDoc(T(altul, 'jucatorX'))));
+
+await check('jucatorul isi citeste propriul fir', () => assertSucceeds(
+  getDoc(T(jucator, 'jucatorX'))));
+
+await check('adminul raspunde in firul oricui (fromAdmin: true)', () => assertSucceeds(
+  setDoc(MSG(adminCtx, 'jucatorX', 'a1'), { senderId: 'adminUid', fromAdmin: true, text: 'am notat' })));
+
+await check('adminul NU poate scrie in numele jucatorului', () => assertFails(
+  setDoc(MSG(adminCtx, 'jucatorX', 'a2'), { senderId: 'jucatorX', fromAdmin: false, text: 'x' })));
+
+await check('adminul citeste firul oricui', () => assertSucceeds(
+  getDoc(T(adminCtx, 'jucatorX'))));
+
+await check('adminul LISTEAZA toate firele (tab-ul Mesaje)', () => assertSucceeds(
+  getDocs(collection(adminCtx, 'admin_threads'))));
+
+await check('un jucator NU poate lista firele tuturor', () => assertFails(
+  getDocs(collection(jucator, 'admin_threads'))));
 
 console.log(`\n=== ${pass} trec, ${fail} pica ===`);
 await env.cleanup();

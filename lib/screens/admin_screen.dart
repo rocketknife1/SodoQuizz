@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../core/progression.dart' show levelForXp;
 import '../core/theme.dart';
+import '../data/admin_chat_service.dart';
 import '../data/moderation_service.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';
 import '../data/shop.dart' show starterGemGrant;
 import '../data/storage_service.dart';
+import '../models/admin_message.dart';
 import '../models/moderation.dart';
 import '../models/multiplayer_activity.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
@@ -17,10 +19,11 @@ import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/category_unlock_animation.dart';
 import '../widgets/coin_reward_overlay.dart';
+import 'admin_chat_screen.dart';
 import 'test_images_screen.dart';
 
 /// Panou vizibil DOAR pentru contul de admin (vezi profile_screen.dart,
-/// randul care navigheaza aici, ascuns pentru oricine altcineva). Sapte
+/// randul care navigheaza aici, ascuns pentru oricine altcineva). Opt
 /// taburi: gestionare jucatori (interzicere + trimitere de resurse),
 /// jucatorii inregistrati azi, raportarile trimise de jucatori, conturile interzise (singurul loc de unde
 /// se poate RIDICA o interdictie — un cont banat nu mai apare in lista
@@ -40,7 +43,7 @@ class AdminScreen extends StatefulWidget {
 }
 
 class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 7, vsync: this);
+  late final TabController _tabController = TabController(length: 8, vsync: this);
 
   @override
   void dispose() {
@@ -74,6 +77,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
               tabs: const [
                 Tab(text: 'Jucători'),
                 Tab(text: 'Noi azi'),
+                Tab(text: 'Mesaje'),
                 Tab(text: 'Raportări'),
                 Tab(text: 'Banați'),
                 Tab(text: 'Camere'),
@@ -84,7 +88,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_PlayersTab(), _NewTodayTab(), _ReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
+                children: const [_PlayersTab(), _NewTodayTab(), _MessagesTab(), _ReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
               ),
             ),
           ],
@@ -1825,6 +1829,23 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                         ),
                       ),
                     ),
+                    // Deschide firul cu jucatorul asta. Merge si daca el n-a
+                    // scris niciodata: firul se creeaza la primul mesaj, iar
+                    // documentul-cap poarta uid-ul lui ca nume.
+                    IconButton(
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AdminChatScreen(
+                            playerUid: p.uid,
+                            title: _renamedTo ?? p.name,
+                            asAdmin: true,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.forum_rounded, color: AppColors.teal, size: 20),
+                      tooltip: 'Scrie-i un mesaj',
+                    ),
                   ],
                 ),
               ),
@@ -2625,6 +2646,145 @@ class _RoomPlayerCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Tab-ul Mesaje: toate firele admin↔jucator, cel mai recent primul.
+///
+/// Un singur abonament pe colectia `admin_threads` — de-aia rezumatul
+/// (ultimul mesaj, numele jucatorului, bulinele de necitit) e copiat in
+/// documentul-cap al firului: altfel lista ar fi cerut un query ordonat in
+/// subcolectia fiecarui fir, la fiecare deschidere a tabului.
+class _MessagesTab extends StatelessWidget {
+  const _MessagesTab();
+
+  static String _when(Timestamp? ts) {
+    if (ts == null) return '';
+    final d = DateTime.now().difference(ts.toDate());
+    if (d.inMinutes < 1) return 'acum';
+    if (d.inMinutes < 60) return '${d.inMinutes}m';
+    if (d.inHours < 24) return '${d.inHours}h';
+    return '${d.inDays}z';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<AdminThreadSummary>>(
+      stream: AdminChatService.instance.watchAllThreads(),
+      builder: (context, snap) {
+        if (snap.hasError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Firele nu au putut fi citite.\n\n${snap.error}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white38, fontSize: 12, height: 1.5),
+              ),
+            ),
+          );
+        }
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
+        }
+        final threads = snap.data!;
+        if (threads.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 40),
+              child: Text(
+                'Niciun mesaj de la jucatori.\n\nAici ajunge ce scriu din '
+                'Setari → "Mesaj catre admin". Poti deschide un fir si tu, din '
+                'fisa oricarui jucator (tab-ul Jucatori).',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white38, fontSize: 13, height: 1.5),
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+          itemCount: threads.length,
+          itemBuilder: (context, i) => _row(context, threads[i]),
+        );
+      },
+    );
+  }
+
+  Widget _row(BuildContext context, AdminThreadSummary t) {
+    final unread = t.hasUnreadForAdmin;
+    final name = t.playerName.isNotEmpty ? t.playerName : t.playerUid;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: unread ? AppColors.orange.withAlpha(26) : Colors.white.withAlpha(12),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AdminChatScreen(playerUid: t.playerUid, title: name, asAdmin: true),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Avatar(
+                  size: 34,
+                  label: name.isNotEmpty ? name[0].toUpperCase() : '?',
+                  accentColor: pickAvatarColor(t.playerUid),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: unread ? FontWeight.w900 : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        // Prefixul spune dintr-o privire daca astept raspuns
+                        // de la mine sau daca mingea e la jucator.
+                        (t.lastFromAdmin ? 'Tu: ' : '') + t.lastText,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(_when(t.lastMessageAt),
+                        style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                    const SizedBox(height: 6),
+                    if (unread)
+                      Container(
+                        width: 9,
+                        height: 9,
+                        decoration: const BoxDecoration(
+                            color: AppColors.danger, shape: BoxShape.circle),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

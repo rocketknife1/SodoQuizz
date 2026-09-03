@@ -16,6 +16,7 @@ import 'data/device_notification_service.dart';
 import 'data/push_service.dart';
 import 'data/auth_service.dart';
 import 'screens/multiplayer/room_lobby_screen.dart';
+import 'screens/admin_chat_screen.dart';
 import 'screens/friends_screen.dart';
 import 'screens/friend_chat_screen.dart';
 import 'data/live_sync.dart';
@@ -165,6 +166,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     PushService.instance
       ..onOpenRoom = _openInvitedRoom
       ..onOpenChat = _openChatWith
+      ..onOpenAdminChat = _openAdminChat
       ..start();
   }
 
@@ -192,6 +194,31 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
         icon: Icons.meeting_room_outlined,
       );
     }
+  }
+
+  /// Tap pe notificarea firului cu administratorul. [playerUid] gol = firul
+  /// meu (mi-a raspuns adminul); nevid = sunt adminul, iar acela e jucatorul.
+  Future<void> _openAdminChat(String playerUid) async {
+    final nav = _navigatorKey.currentState;
+    if (nav == null) return;
+    final asAdmin = playerUid.isNotEmpty;
+    final uid = asAdmin ? playerUid : MultiplayerService.instance.currentPlayerId;
+    if (uid.isEmpty) return;
+    var title = tr('Administrator', 'Administrator');
+    if (asAdmin) {
+      // Numele jucatorului, ca sa nu deschid un fir intitulat cu un uid.
+      // Daca profilul nu se poate citi, uid-ul e tot mai bun decat nimic.
+      try {
+        final profile = await PlayerProfileService.instance.getProfile(playerUid);
+        title = profile?.name ?? playerUid;
+      } catch (e) {
+        debugPrint('_openAdminChat: profilul $playerUid nu s-a putut citi: $e');
+        title = playerUid;
+      }
+    }
+    nav.push(MaterialPageRoute(
+      builder: (_) => AdminChatScreen(playerUid: uid, title: title, asAdmin: asAdmin),
+    ));
   }
 
   Future<void> _openChatWith(String withUid) async {

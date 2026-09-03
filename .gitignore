@@ -69,3 +69,11 @@ play_store/capturi_tableta/
 # Dependintele Cloud Functions — se refac cu `npm install` in functions/,
 # n-au ce cauta in repo (5600 de fisiere, ~875k linii).
 functions/node_modules/
+
+# Testele de reguli isi instaleaza singure dependentele in test/ (vezi
+# test/README-reguli.md) si copiaza acolo firestore.rules ca sa-l vada
+# emulatorul. Nimic din astea nu e sursa — sursa regulilor e in radacina.
+test/node_modules/
+test/package.json
+test/package-lock.json
+test/firestore.rules

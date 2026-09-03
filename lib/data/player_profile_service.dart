@@ -8,6 +8,7 @@ import '../models/app_notification.dart';
 import '../models/moderation.dart' show BannedPlayer;
 import '../models/player_profile.dart';
 import 'auth_service.dart';
+import 'admin_chat_service.dart';
 import 'friend_chat_service.dart';
 import 'moderation_service.dart';
 import 'multiplayer_service.dart';
@@ -923,6 +924,10 @@ class PlayerProfileService {
       for (final doc in friendsSnap.docs) {
         await FriendChatService.instance.deleteThreadWith(doc.id, forUid: uid);
       }
+      // Firul cu adminul: la fel, subcolecție care ar fi rămas în urmă.
+      // Ștergerea completă a unui cont e SINGURUL loc care șterge firul —
+      // altfel arhiva de feedback se păstrează (vezi AdminChatService).
+      await AdminChatService.instance.deleteThreadOf(uid);
       return true;
     } catch (e) {
       debugPrint('PlayerProfileService.purgePlayer a esuat: $e');
@@ -1107,6 +1112,7 @@ class PlayerProfileService {
       for (final doc in friendsSnap.docs) {
         await FriendChatService.instance.deleteThreadWith(doc.id, forUid: uid);
       }
+      await AdminChatService.instance.deleteThreadOf(uid);
     } catch (e) {
       debugPrint('PlayerProfileService.deleteMyProfile a esuat: $e');
     }

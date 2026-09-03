@@ -38,6 +38,11 @@ class PushService {
   /// Idem, pentru un mesaj primit.
   void Function(String withUid)? onOpenChat;
 
+  /// Firul cu administratorul. [playerUid] gol inseamna „firul meu" (sunt
+  /// jucatorul care a primit un raspuns); nevid inseamna ca sunt adminul si
+  /// mi-a scris jucatorul ala.
+  void Function(String playerUid)? onOpenAdminChat;
+
   bool _started = false;
 
   bool get _supported => !kIsWeb && Platform.isAndroid;
@@ -94,6 +99,9 @@ class PushService {
     // Mesajele de la același prieten se înlocuiesc; invitațiile rămân separate.
     final collapse = switch (type) {
       'chat' => 'chat_${d['withUid'] ?? ''}',
+      // Un singur fir cu adminul per jucator, deci mesajele lui se inlocuiesc
+      // intre ele, ca la chat.
+      'admin_chat' => 'admin_chat_${d['withUid'] ?? ''}',
       'friend_request' => 'friend_request',
       'system' => 'system',
       _ => null,
@@ -138,6 +146,10 @@ class PushService {
       case 'chat':
         final withUid = data['withUid'] ?? '';
         if (withUid.isNotEmpty) onOpenChat?.call(withUid);
+      case 'admin_chat':
+        // Fara `withUid` = raspunsul adminului catre mine, deci firul meu.
+        // Cu `withUid` = sunt adminul, iar acela e jucatorul care mi-a scris.
+        onOpenAdminChat?.call(data['withUid'] ?? '');
       default:
         // „friend_request", „system" și notificările locale (roata etc.) nu
         // au destinație proprie — deschiderea aplicației e tot ce trebuia.

@@ -22,22 +22,25 @@ Functions deployate (Node 22). Rămâne de probat doar invitația în cameră.
 
 ---
 
-## Mesaje admin ↔ jucător — DE FĂCUT (aprobat 2026-09-03)
+## Mesaje admin ↔ jucător — SCRIS, NEVERIFICAT PE TELEFON
 
-Fir real în două sensuri, colecția `admin_threads/{uid}/messages`, separată de
-`friend_chats` (nu cere prietenie). Mesajele rămân stocate permanent = arhiva
-de feedback.
+Implementat 2026-09-03. Reguli testate pe emulator (33/33), analyze curat,
+296 teste Flutter trec. **Neprobat pe telefon** (telefonul era descărcat) și
+**Functions NEDEPLOYATE** — fără deploy, mesajele ajung în Firestore și se văd
+în aplicație, dar NU sună notificarea la niciuna dintre părți.
 
-- jucătorul: buton „✉️ Mesaj către admin" în **Setări**, cu buliniță pe
-  butonul SETĂRI din Home când adminul a răspuns;
-- adminul: în panoul de Admin, lista firelor cu bulină de necitit, poate
-  deschide fir cu orice jucător;
-- reguli Firestore: citesc/scriu doar proprietarul firului și adminul;
-- push în ambele sensuri printr-o singură funcție nouă `onAdminMessage`, cu
-  payload `type=admin_chat` (acelaşi tipar ca `chat`, care e deja verificat).
+De făcut de tine, în ordine:
+1. `firebase.cmd deploy --only firestore:rules --project sodoquizz`
+   (fără asta, firul e refuzat de regulile vechi — nimeni nu poate scrie);
+2. `firebase.cmd deploy --only functions --project sodoquizz` (push-ul);
+3. probă cu două conturi: din Setări → „Mesaj către admin" scrii ca jucător,
+   răspunzi din Admin → tab „Mesaje"; verifici bulina de pe SETĂRI și tap-ul
+   pe notificare (payload `type=admin_chat`).
 
-Textul din dialogul BETA trimite deja la „Setări → Mesaj către admin" —
-până se face, trimite în gol.
+Unde e codul: `admin_chat_service.dart`, `models/admin_message.dart`,
+`screens/admin_chat_screen.dart` (un singur ecran pentru ambele capete),
+tab-ul `_MessagesTab` din `admin_screen.dart`, plus butonul „Scrie-i un mesaj"
+din fișa jucătorului.
 
 ---
 
@@ -166,7 +169,8 @@ raportare și se confirmă cu userul.
 
 ## Cloud Functions — întreținere (adăugat 2026-09-03)
 
-Deployate în `europe-west1`, patru declanșatoare (vezi `functions/index.js`).
+Deployate în `europe-west1`, CINCI declanșatoare (vezi `functions/index.js`);
+al cincilea, `onAdminMessage`, e scris dar NEDEPLOYAT.
 Firebase avertizează la fiecare deploy:
 
 - **Node 22** e deja setat în `functions/package.json` + `firebase.json`

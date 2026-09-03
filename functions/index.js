@@ -31,6 +31,7 @@
 const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
+const { getAuth } = require("firebase-admin/auth");
 const { onDocumentCreated } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
@@ -47,6 +48,32 @@ setGlobalOptions({ region: "europe-west1", maxInstances: 10 });
  * foloseste unul implicit si se pierde sunetul propriu. Vezi
  * DeviceNotificationService._channelId. */
 const CHANNEL_ID = "sodo_events_v1";
+
+/** Contul de admin. Acelasi literal ca in firestore.rules si in
+ * lib/core/admin.dart — daca se schimba, se schimba in toate trei. */
+const ADMIN_EMAIL = "dragosssx@gmail.com";
+
+/** uid-ul adminului, cautat dupa email si tinut in memoria instantei.
+ *
+ * De ce nu e o constanta: uid-ul nu se vede nicaieri in cod, iar scrierea lui
+ * de mana ar fi insemnat un al doilea loc de tinut in sincron cu contul real.
+ * Cautarea costa o cerere la Auth, dar doar la prima notificare a fiecarei
+ * instante — pe urma raspunde din cache.
+ *
+ * `null` daca nu se poate rezolva (cont sters, Auth picat): atunci mesajul
+ * jucatorului ramane doar in Firestore, unde adminul il vede oricum in
+ * tab-ul Mesaje. Un push pierdut nu are voie sa rupa scrierea mesajului. */
+let _adminUid;
+async function adminUid() {
+  if (_adminUid !== undefined) return _adminUid;
+  try {
+    _adminUid = (await getAuth().getUserByEmail(ADMIN_EMAIL)).uid;
+  } catch (e) {
+    logger.warn(`nu am putut rezolva uid-ul adminului: ${e}`);
+    _adminUid = null;
+  }
+  return _adminUid;
+}
 
 /**
  * Trimite o notificare catre toate dispozitivele unui jucator.
@@ -202,5 +229,44 @@ exports.onRoomInvite = onDocumentCreated(
     } catch (e) {
       logger.warn(`nu am putut marca invitatia ${event.params.inviteId}: ${e}`);
     }
+  }
+);
+
+// ─── Firul admin ↔ jucator ──────────────────────────────────────────────────
+// O SINGURA functie pentru ambele sensuri: documentul stie el cine a scris
+// (`fromAdmin`), iar destinatarul e mereu celalalt. Doua functii separate ar
+// fi insemnat acelasi cod scris de doua ori, cu doua deploy-uri de tinut minte.
+//
+// `admin_threads/{uid}` se numeste cu uid-ul JUCATORULUI (vezi AdminChatService
+// pentru de ce nu e perechea sortata ca la friend_chats), deci
+// `event.params.uid` e mereu jucatorul, indiferent cine a scris mesajul.
+exports.onAdminMessage = onDocumentCreated(
+  "admin_threads/{uid}/messages/{messageId}",
+  async (event) => {
+    const msg = event.data && event.data.data();
+    if (!msg) return;
+    const playerUid = event.params.uid;
+    const text = String(msg.text || "").slice(0, 120);
+
+    if (msg.fromAdmin) {
+      await sendToUser(playerUid, {
+        title: "✉️ Raspuns de la administrator",
+        body: text || "Ti-a raspuns la mesaj.",
+        // Fara `withUid`: jucatorul deschide PROPRIUL fir, nu al altcuiva.
+        data: { type: "admin_chat" },
+      });
+      return;
+    }
+
+    const admin = await adminUid();
+    // Adminul care isi scrie in propriul fir nu are de ce sa se anunte singur.
+    if (!admin || admin === playerUid) return;
+    const name = await displayName(playerUid);
+    await sendToUser(admin, {
+      title: `✉️ Mesaj de la ${name}`,
+      body: text || "Ti-a scris un jucator.",
+      // `withUid` spune aplicatiei ca sunt adminul si al cui fir sa deschida.
+      data: { type: "admin_chat", withUid: playerUid },
+    });
   }
 );

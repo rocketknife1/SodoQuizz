@@ -4,6 +4,7 @@ import '../core/lang.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
+import '../data/admin_chat_service.dart';
 import '../data/auth_service.dart';
 import '../data/player_profile_service.dart';
 import '../data/storage_service.dart';
@@ -339,16 +340,24 @@ class _HomeScreenState extends State<HomeScreen> {
                               builder: (_) => const MultiplayerScreen())),
                     ),
                     const SizedBox(height: 8),
-                    SolidMenuButton(
-                      icon: Icons.settings_rounded,
-                      label: tr('SETĂRI', 'SETTINGS'),
-                      subtitle: '',
-                      angular: true,
-                      color: AppColors.gray,
-                      onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const SettingsScreen())),
+                    // Bulina „ai raspuns de la admin" sta pe SETARI fiindca
+                    // acolo e firul (vezi SettingsScreen). Fara ea, un raspuns
+                    // ar zacea nevazut: nimeni nu intra in Setari degeaba.
+                    ValueListenableBuilder<bool>(
+                      valueListenable: AdminChatService.instance.hasUnreadReply,
+                      builder: (context, unread, _) => SolidMenuButton(
+                        icon: Icons.settings_rounded,
+                        label: tr('SETĂRI', 'SETTINGS'),
+                        subtitle: '',
+                        angular: true,
+                        color: AppColors.gray,
+                        badge: unread ? tr('1 nou', '1 new') : null,
+                        onTap: () async {
+                          await Navigator.push(context,
+                              MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                          _refresh();
+                        },
+                      ),
                     ),
                     const SizedBox(height: 14),
                     // planeta stă direct sub Setări, în coloana de butoane —
