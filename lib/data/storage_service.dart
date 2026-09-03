@@ -130,6 +130,34 @@ class StorageService {
   static const _dailyChallengesTotalKey = 'daily_challenges_total';
   static const _modesEverPlayedKey = 'modes_ever_played';
   static const _ringSpinTimestampKey = 'ring_spin_timestamp';
+
+  // ─── Meciul multiplayer activ (pentru butonul de reconectare) ────────────
+  // Scris de fiecare ecran de meci la intrare, sters la iesire normala. La
+  // pornire / revenire in prim-plan, MultiplayerService.checkReconnect il
+  // citeste si verifica pe server daca meciul mai e in desfasurare.
+  static const _activeMatchIdKey = 'active_match_id';
+  static const _activeMatchModeKey = 'active_match_mode';
+
+  static Future<void> setActiveMatch(String matchId, String modeName) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_activeMatchIdKey, matchId);
+    await prefs.setString(_activeMatchModeKey, modeName);
+  }
+
+  /// `(matchId, modeName)` sau `null`.
+  static Future<(String, String)?> getActiveMatch() async {
+    final prefs = await SharedPreferences.getInstance();
+    final id = prefs.getString(_activeMatchIdKey);
+    final mode = prefs.getString(_activeMatchModeKey);
+    if (id == null || id.isEmpty || mode == null) return null;
+    return (id, mode);
+  }
+
+  static Future<void> clearActiveMatch() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_activeMatchIdKey);
+    await prefs.remove(_activeMatchModeKey);
+  }
   static const _gemGiftTimestampKey = 'gem_gift_timestamp';
   static const _clippyNextReadyKey = 'clippy_next_ready_at';
   static const _displayNameKey = 'display_name';

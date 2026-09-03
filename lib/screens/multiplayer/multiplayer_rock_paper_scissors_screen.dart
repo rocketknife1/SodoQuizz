@@ -51,6 +51,9 @@ class _MultiplayerRockPaperScissorsScreenState
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.rockPaperScissors);
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });

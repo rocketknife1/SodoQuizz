@@ -13,6 +13,7 @@ import '../core/powerups.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
 import 'player_profile_service.dart';
+import 'storage_service.dart';
 
 /// Aruncată când Firebase nu e (încă) configurat corect — [firebase_options.dart]
 /// are valori placeholder până userul pune un proiect real. UI-ul o prinde și
@@ -1569,6 +1570,9 @@ class MultiplayerService {
   /// nesfârșit în Firestore, fără niciun cleanup automat (nu avem Cloud
   /// Functions/TTL configurate).
   Future<void> leaveMatch(String matchId) async {
+    // Am iesit intentionat — nu mai e nimic de „reconectat" (vezi
+    // markActiveMatch/checkReconnect).
+    await clearActiveMatch(matchId);
     final me = currentPlayerId;
     final matchRef = _db.collection('matches').doc(matchId);
     final matchDoc = await matchRef.get();
@@ -1861,6 +1865,86 @@ class MultiplayerService {
   /// Cât de des își împrospătează semnul de viață un jucător aflat într-un
   /// meci activ (lobby sau rundă) — aceeași cadență ca [queueHeartbeatInterval].
   static const matchHeartbeatInterval = Duration(seconds: 15);
+
+  // ─── Reconectare într-un meci întrerupt ─────────────────────────────────
+  //
+  // Cerinta userului (2026-09-03): daca pierzi legatura in mijlocul unui meci
+  // (minimizezi, cade netul, te omoara sistemul), la revenire sa apara un
+  // buton „Reconecteaza" care te baga inapoi.
+  //
+  // Cum: fiecare ecran de meci scrie `markActiveMatch` la intrare si
+  // `clearActiveMatch` la iesire normala (meci terminat, plecat). La pornirea
+  // aplicatiei si la fiecare revenire in prim-plan, `checkReconnect` verifica
+  // daca meciul salvat mai exista, e inca `playing` si mai sunt in `players` —
+  // si daca da, aprinde [reconnectTarget]. Ecranul-radacina asculta si arata
+  // banner-ul.
+
+  /// `null` cand nu e nimic de reconectat. `(matchId, gameMode)` cand exista
+  /// un meci intrerupt in care jucatorul poate reintra.
+  final ValueNotifier<({String matchId, MatchGameMode gameMode})?> reconnectTarget =
+      ValueNotifier(null);
+
+  Future<void> markActiveMatch(String matchId, MatchGameMode gameMode) async {
+    try {
+      await StorageService.setActiveMatch(matchId, gameMode.name);
+    } catch (e) {
+      debugPrint('MultiplayerService.markActiveMatch: $e');
+    }
+    reconnectTarget.value = null; // sunt deja in el
+  }
+
+  Future<void> clearActiveMatch(String matchId) async {
+    try {
+      final stored = await StorageService.getActiveMatch();
+      // Nu sterge daca intre timp am intrat in ALT meci (revansa imediata).
+      if (stored == null || stored.$1 == matchId) {
+        await StorageService.clearActiveMatch();
+      }
+    } catch (e) {
+      debugPrint('MultiplayerService.clearActiveMatch: $e');
+    }
+    if (reconnectTarget.value?.matchId == matchId) reconnectTarget.value = null;
+  }
+
+  /// Verifica daca exista un meci intrerupt in care jucatorul poate reintra.
+  /// Aprinde [reconnectTarget] sau il stinge. Ieftin: o citire de document +
+  /// una de subdocument, doar cand chiar e un meci salvat.
+  Future<void> checkReconnect() async {
+    try {
+      final stored = await StorageService.getActiveMatch();
+      if (stored == null) {
+        reconnectTarget.value = null;
+        return;
+      }
+      final (matchId, modeName) = stored;
+      final me = currentPlayerId;
+      if (me.isEmpty) return;
+
+      final matchRef = _db.collection('matches').doc(matchId);
+      final matchDoc = await matchRef.get();
+      final status = matchDoc.data()?['status'] as String?;
+      // Meci disparut (gazda a inchis), sau terminat, sau inca in lobby (acolo
+      // nu e nimic de „reconectat" — te intorci normal): curata si iesi.
+      if (!matchDoc.exists ||
+          status != MatchStatus.playing.name) {
+        await StorageService.clearActiveMatch();
+        reconnectTarget.value = null;
+        return;
+      }
+      final meDoc = await matchRef.collection('players').doc(me).get();
+      if (!meDoc.exists) {
+        // Am fost scos ca fantoma cat eram plecat — nu mai am ce reconecta.
+        await StorageService.clearActiveMatch();
+        reconnectTarget.value = null;
+        return;
+      }
+      final gameMode = MatchGameMode.values
+          .firstWhere((m) => m.name == modeName, orElse: () => MatchGameMode.classic);
+      reconnectTarget.value = (matchId: matchId, gameMode: gameMode);
+    } catch (e) {
+      debugPrint('MultiplayerService.checkReconnect: $e');
+    }
+  }
 
   /// Peste cât timp fără semn de viață un jucător dintr-un meci e considerat
   /// fantomă — vezi [_isDeadMatchPlayer].

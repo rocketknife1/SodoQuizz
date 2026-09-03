@@ -136,6 +136,9 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     MultiplayerService.instance.lastFinishedMatchId.addListener(_watchRematchOffer);
     _listenForDeepLinks();
     _setUpNotifications();
+    // La pornire: am fost intr-un meci care inca ruleaza? (aplicatia a murit
+    // in mijlocul lui). Banner-ul de reconectare il monteaza [_ReconnectHost].
+    MultiplayerService.instance.checkReconnect();
   }
 
   /// Ordine: întâi notificările locale (care inițializează pluginul și citesc
@@ -491,6 +494,9 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       NotificationService.instance.pullFromCloud().then((_) {
         return NotificationService.instance.refreshUnreadLocalOnly();
       });
+      // Am revenit in prim-plan — daca eram intr-un meci si l-am pierdut
+      // (net cazut, aplicatia omorata), aici se aprinde butonul de reconectare.
+      MultiplayerService.instance.checkReconnect();
     }
   }
 
@@ -524,10 +530,120 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
             ),
           ),
           home: const LoadingScreen(nextBuilder: _homeBuilder, duration: Duration(milliseconds: 1400)),
+          // Banner-ul de reconectare sta DEASUPRA oricarui ecran (peste
+          // navigator), ca sa apara si daca jucatorul a ajuns inapoi in meniu.
+          builder: (context, child) => _ReconnectHost(
+            navigatorKey: _navigatorKey,
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
     );
   }
 
   static Widget _homeBuilder(BuildContext _) => const HomeScreen();
+}
+
+/// Bara subtire de sus „Ai un meci in desfasurare — Reconecteaza". Asculta
+/// [MultiplayerService.reconnectTarget]; la tap deschide ecranul modului
+/// respectiv cu acelasi matchId.
+class _ReconnectHost extends StatefulWidget {
+  final Widget child;
+  final GlobalKey<NavigatorState> navigatorKey;
+  const _ReconnectHost({required this.child, required this.navigatorKey});
+
+  @override
+  State<_ReconnectHost> createState() => _ReconnectHostState();
+}
+
+class _ReconnectHostState extends State<_ReconnectHost> {
+  bool _opening = false;
+
+  Future<void> _reconnect(String matchId, MatchGameMode mode) async {
+    if (_opening) return;
+    setState(() => _opening = true);
+    try {
+      // Verificam inca o data live — meciul putea sa se termine intre timp.
+      await MultiplayerService.instance.checkReconnect();
+      if (MultiplayerService.instance.reconnectTarget.value == null) return;
+      widget.navigatorKey.currentState?.push(MaterialPageRoute(
+        builder: (_) => switch (mode) {
+          MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: matchId),
+          MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: matchId),
+          MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
+          MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
+          MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
+          MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
+        },
+      ));
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<({String matchId, MatchGameMode gameMode})?>(
+      valueListenable: MultiplayerService.instance.reconnectTarget,
+      builder: (context, target, _) {
+        return Stack(
+          children: [
+            widget.child,
+            if (target != null)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Material(
+                  color: Colors.transparent,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1B2540),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: AppColors.play.withAlpha(180), width: 1.4),
+                          boxShadow: [BoxShadow(color: AppColors.play.withAlpha(90), blurRadius: 14)],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.sports_esports_rounded, color: AppColors.play, size: 22),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                tr('Ai un meci în desfășurare.', 'You have a match in progress.'),
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            ElevatedButton(
+                              onPressed: _opening
+                                  ? null
+                                  : () => _reconnect(target.matchId, target.gameMode),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.play,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: _opening
+                                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                  : Text(tr('RECONECTEAZĂ', 'RECONNECT'),
+                                      style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
 }

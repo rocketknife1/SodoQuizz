@@ -89,6 +89,9 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.classic);
     _load();
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
       MultiplayerService.instance.matchHeartbeat(widget.matchId);

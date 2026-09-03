@@ -78,6 +78,9 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.higherLower);
     // Nicio actualizare Firestore nu vine "din ceas" - dar CountdownRing
     // trebuie să scadă vizual în fiecare secundă cât suntem în faza
     // "answering", la fel ca la modul solo (higher_lower_screen.dart).

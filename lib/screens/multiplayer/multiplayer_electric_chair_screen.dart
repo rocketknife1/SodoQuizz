@@ -140,6 +140,9 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.electricChair);
     // O data pe secunda, NU la 250ms. Nimic din ecranul asta nu se schimba mai des de o data pe secunda:
     // singurul consumator de timp e cronometrul, care numara in secunde.
     // Tick-ul asta exista doar pentru cronometru; la 250ms reconstruia tot

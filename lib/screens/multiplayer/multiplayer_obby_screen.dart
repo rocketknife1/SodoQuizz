@@ -111,6 +111,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.obby);
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi ObbySfx pentru de ce.
     ObbySfx.preload();

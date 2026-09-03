@@ -205,6 +205,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   @override
   void initState() {
     super.initState();
+    // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
+    // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
+    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.quizzTanks);
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi TankSfx pentru de ce.
     TankSfx.preload();
