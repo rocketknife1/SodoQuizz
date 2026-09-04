@@ -74,8 +74,13 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 Șase pași, hotărâți împreună, în ordinea asta. Ce e bifat e și verificat.
 
 - ✅ **0. Flutter 3.27.4 → 3.47.2** — cod neatins, verificat pe telefon
-- ✅ **1a. Crashlytics + Analytics** — construit; **rămâne de probat un crash
-  real** (buton „TEST: PROVOACĂ UN CRASH" în tabul Debug)
+- ✅ **1a. Crashlytics + Analytics** — VERIFICAT pe telefon: crash provocat din
+  tabul Debug → raport ajuns în consolă cu numele funcției, clasa și versiunea
+  (deci pluginul Gradle urcă simbolurile). Firebase e legat de Google Play, cu
+  Crashlytics pornit.
+
+  Probată doar calea NATIVĂ. Erorile din Dart merg prin `FlutterError.onError`
+  — legată, neprobată separat; sunt acoperite oricum de ecranul de raport.
 - ✅ **1b. „Trimite raportul"** — verificat cap-la-cap, raport ajuns în bază
 - ✅ **2. Remote Config** — versiune minimă, mesaj de întreținere, comutatoare
   de magazin
@@ -125,6 +130,11 @@ trecere prin toată lista de mai sus.
 
 - **Magazin cu bani reali (IAP).** Ordinea obligatorie:
   0. **validarea bonului pe server** — vezi mai jos DE CE e pasul zero;
+  0b. aprinde comutatorul **„Google Analytics: share in-app purchase and
+     subscription revenue data"** din Firebase → Project settings →
+     Integrations → Google Play. E lăsat OPRIT dinadins (2026-09-05): fără
+     cumpărături reale ar raporta zero la nesfârșit. Legarea în sine e făcută,
+     cu Crashlytics pornit;
   1. integrez `in_app_purchase` + permisiunea `com.android.vending.BILLING`
      și leg butoanele de SDK-ul real (nu e o seară de lucru);
   2. urci un build cu asta în Play Console;
