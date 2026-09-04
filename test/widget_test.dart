@@ -1,10 +1,3 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,21 +5,45 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:guess_it/main.dart';
 import 'package:guess_it/widgets/mascots/mascot_sync.dart';
 
+/// Ce vede omul imediat după ecranul de încărcare — depinde de un singur
+/// lucru: dacă a mai deschis jocul vreodată.
+///
+/// Cazul „instalare curată" contează cel puțin la fel de mult ca celălalt:
+/// tutorialul e singura șansă de a explica jocul cuiva care nu l-a mai văzut,
+/// iar dacă nu apare, nu se plânge nimeni — pur și simplu nu se mai întorc.
 void main() {
-  testWidgets('SodoQuizz app loads home screen', (WidgetTester tester) async {
-    // Marcheaza intro tutorial-ul ca deja vazut - testul verifica doar ca
-    // ecranul de Acasa se incarca, nu fluxul separat al popup-ului de
-    // introducere (vezi IntroTutorialDialog.maybeShow, aratat automat la
-    // prima intrare daca acest flag nu e setat).
-    SharedPreferences.setMockInitialValues({'intro_tutorial_seen': true});
-
+  /// Trece de ecranul de încărcare (1400 ms, vezi main.dart) și lasă câteva
+  /// cadre pentru navigare și citirile din SharedPreferences.
+  Future<void> pumpPastLoading(WidgetTester tester) async {
     await tester.pumpWidget(const GuessItApp());
-    // LoadingScreen initial tine 1400ms inainte sa treaca la HomeScreen
-    // (vezi main.dart) - depasim acel prag, apoi mai lasam cateva cadre sa
-    // se aseze navigarea si incarcarea datelor din HomeScreen.
     await tester.pump(const Duration(milliseconds: 1500));
     await tester.pump(const Duration(milliseconds: 500));
     await tester.pump(const Duration(milliseconds: 500));
+  }
+
+  testWidgets('la instalare curată apare TUTORIALUL, nu meniul',
+      (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+
+    await pumpPastLoading(tester);
+
+    expect(find.text('Vezi o poză neclară.'), findsOneWidget);
+    expect(find.text('Sari peste'), findsOneWidget);
+    // Meniul NU trebuie să fie dedesubt — altfel jucătorul nou l-ar vedea
+    // pe jumătate și tutorialul și-ar pierde rostul.
+    expect(find.text('PLAY'), findsNothing);
+
+    MascotSync.resetForTest();
+  });
+
+  testWidgets('după ce l-a văzut o dată, intră direct în meniu',
+      (WidgetTester tester) async {
+    // Aceeași cheie ca `StorageService._introSeenKey`. Dacă se schimbă acolo,
+    // testul ăsta pică — și e bine: altfel tutorialul ar reapărea la fiecare
+    // pornire fără ca nimeni să observe.
+    SharedPreferences.setMockInitialValues({'intro_seen': true});
+
+    await pumpPastLoading(tester);
 
     expect(find.text('SODO QUIZZ'), findsAtLeastNWidgets(1));
     expect(find.text('PLAY'), findsOneWidget);

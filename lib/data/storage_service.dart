@@ -172,6 +172,10 @@ class StorageService {
   static const _xpCurveMigratedKey = 'xp_curve_migrated_v2';
   static const _xpCurveV3MigratedKey = 'xp_curve_migrated_v3';
   static const _pixelatToCartoonMigratedKey = 'pixelat_to_cartoon_migrated';
+
+  /// Tutorialul de la prima pornire a fost văzut (sau sărit). Vezi
+  /// screens/welcome_screen.dart — apare O SINGURĂ DATĂ.
+  static const _introSeenKey = 'intro_seen';
   static const _maxLives = 6;
   static const ringSpinCooldownHours = 24;
   static const _unlimitedLivesUntilKey = 'unlimited_lives_until';
@@ -1901,6 +1905,25 @@ class StorageService {
   static Future<String> getForcedName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_forcedNameKey) ?? '';
+  }
+
+  /// Tutorialul de la prima pornire — vezi screens/welcome_screen.dart.
+  ///
+  /// Se citește ÎNAINTE de primul cadru desenat, deci întoarce `true` (adică
+  /// „nu-l arăta") dacă ceva nu merge: mai bine sare cineva peste tutorial
+  /// decât să-l vadă la fiecare pornire.
+  static Future<bool> hasSeenIntro() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_introSeenKey) ?? false;
+    } catch (_) {
+      return true;
+    }
+  }
+
+  static Future<void> setIntroSeen() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_introSeenKey, true);
   }
 
   static Future<void> setForcedName(String name) async {

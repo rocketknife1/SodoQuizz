@@ -40,6 +40,7 @@ import 'firebase_options.dart';
 import 'models/multiplayer_models.dart';
 import 'screens/home_screen.dart';
 import 'screens/loading_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'screens/multiplayer/multiplayer_electric_chair_screen.dart';
 import 'screens/multiplayer/multiplayer_rock_paper_scissors_screen.dart';
 import 'screens/multiplayer/multiplayer_higher_lower_screen.dart';
@@ -640,7 +641,19 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     );
   }
 
-  static Widget _homeBuilder(BuildContext _) => const HomeScreen();
+  /// Ce se vede dupa ecranul de incarcare: la PRIMA pornire tutorialul, pe
+  /// urma mereu meniul. Vezi screens/welcome_screen.dart.
+  ///
+  /// Cat timp raspunsul nu a sosit din SharedPreferences (cateva
+  /// milisecunde), se arata meniul — nu un ecran gol si nici un spinner:
+  /// jucatorul care a mai jucat nu are de ce sa astepte, iar cel nou vede
+  /// tutorialul o clipa mai tarziu, fara sa piarda nimic.
+  static Widget _homeBuilder(BuildContext _) => FutureBuilder<bool>(
+        future: StorageService.hasSeenIntro(),
+        builder: (_, snap) => snap.data == false
+            ? const WelcomeScreen()
+            : const HomeScreen(),
+      );
 }
 
 /// Bara subtire de sus „Ai un meci in desfasurare — Reconecteaza". Asculta

@@ -77,6 +77,11 @@ class Analytics {
   void multiplayerFinished({required String mod, required bool castigat}) =>
       _log('mp_final', {'mod': mod, 'castigat': castigat ? 1 : 0});
 
+  /// Câți pași a apucat să vadă din tutorial înainte să intre în joc. Dacă
+  /// mulți sar de la primul, tutorialul e de refăcut, nu jocul.
+  void tutorialFinished({required int pasi}) =>
+      _log('tutorial_final', {'pasi': pasi});
+
   void wheelSpun() => _log('roata_rotita');
 
   void planetRun() => _log('planeta_rulare');
