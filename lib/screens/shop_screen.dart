@@ -7,6 +7,7 @@ import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/shop.dart';
+import '../core/remote_flags.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/coin_reward_overlay.dart';
@@ -189,7 +190,10 @@ class _ShopScreenState extends State<ShopScreen> {
     // Gate-ul de publicare: cât timp billing-ul real nu e integrat, nicio
     // achiziție simulată nu se poate întâmpla (vezi realMoneyStoreEnabled
     // din shop.dart — un build cu plăți simulate nu poate ajunge în Play).
-    if (!realMoneyStoreEnabled) {
+    // Constanta din cod SAU comutatorul de la distanta: oricare dintre ele
+    // deschide platile. Asa se poate aprinde magazinul fara un build nou —
+    // vezi core/remote_flags.dart.
+    if (!realMoneyStoreEnabled && !RemoteFlags.instance.realMoneyStore) {
       await showDialog<void>(
         context: context,
         builder: (_) => AlertDialog(
@@ -510,7 +514,8 @@ class _ShopScreenState extends State<ShopScreen> {
                           // ascuns sub un strat "În curând" până la lansarea
                           // magazinului — vezi [premiumShopRevealed].
                           _PremiumVeil(
-                            revealed: premiumShopRevealed,
+                            revealed: premiumShopRevealed ||
+                                RemoteFlags.instance.premiumVisible,
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [

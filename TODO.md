@@ -153,6 +153,17 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 
 ## Datorie tehnică, fără grabă
 
+- **Lanțul de build Android va trebui urcat încă o dată.** Suntem pe Gradle
+  8.14 + AGP 8.11.1 + Kotlin 2.2.20 (minimul cerut de Flutter 3.47). Flutter
+  avertizează deja la fiecare build că suportul pentru ele „va fi scos în
+  curând" și cere **Gradle ≥ 9.1.0, AGP ≥ 9.0.1, Kotlin ≥ 2.3.20**.
+
+  N-am urcat acum dinadins: de la **AGP 9 se citește doar DSL-ul nou**, deci
+  `android/app/build.gradle` trebuie rescris, iar `android/gradle.properties`
+  are acum `android.newDsl=false` și `android.builtInKotlin=false` (puse
+  automat de Flutter) tocmai ca să nu fie nevoie. E un șantier separat, de
+  făcut când nu se lucrează la altceva — nu odată cu o lansare.
+
 - **Granularitatea reconstrucției.** 221 `setState` față de 8
   `ValueListenableBuilder` în tot proiectul. Ecranele grele merită mutate
   treptat pe reconstrucție țintită.

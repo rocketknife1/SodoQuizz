@@ -10,6 +10,8 @@ import 'package:flutter/material.dart';
 import 'core/admin_reveal.dart';
 import 'core/ads_service.dart';
 import 'core/analytics.dart';
+import 'widgets/remote_gate.dart';
+import 'core/remote_flags.dart';
 import 'data/bug_report_service.dart';
 import 'widgets/error_boundary.dart';
 import 'core/breadcrumbs.dart';
@@ -95,6 +97,10 @@ void main() async {
     // Merge si pe web, spre deosebire de Crashlytics. Vezi core/analytics.dart
     // pentru de ce sunt putine evenimente si care anume.
     Analytics.instance.init();
+    // NU se asteapta dupa el (`unawaited`): pornirea nu are voie sa depinda de
+    // retea, iar valorile implicite din cod sunt bune pana sosesc cele reale.
+    // Vezi core/remote_flags.dart.
+    unawaited(RemoteFlags.instance.init());
     // Inainte de prima cerere catre Auth/Firestore, ca tokenul care dovedeste
     // ca binarul e cel autentic sa plece odata cu ea - vezi
     // app_check_service.dart, inclusiv de ce activarea singura nu schimba
@@ -623,9 +629,11 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           home: const LoadingScreen(nextBuilder: _homeBuilder, duration: Duration(milliseconds: 1400)),
           // Banner-ul de reconectare sta DEASUPRA oricarui ecran (peste
           // navigator), ca sa apara si daca jucatorul a ajuns inapoi in meniu.
-          builder: (context, child) => _ReconnectHost(
-            navigatorKey: _navigatorKey,
-            child: child ?? const SizedBox.shrink(),
+          builder: (context, child) => RemoteGate(
+            child: _ReconnectHost(
+              navigatorKey: _navigatorKey,
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
