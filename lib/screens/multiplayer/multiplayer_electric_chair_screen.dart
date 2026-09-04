@@ -219,7 +219,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
 
   /// Consumă power-up-ul curent. Efectele de scaun (scut, reflect, sabotaj
   /// pe atac) vin la trecerea de polish — aici doar [PowerUp.fiftyFifty]
-  /// (pe propria întrebare) și [PowerUp.extraTime] au efect local, instant.
+  /// (pe propria întrebare) are efect local, instant.
   /// [PowerUp.shield]/[PowerUp.piercingShock] se scriu pe `roundPowerUps` —
   /// [resolveElectricChairRound] le citește de-acolo la deznodământ, ca la
   /// mega rachetă/scut din Quizz Tanks. [PowerUp.allyShield] apără automat

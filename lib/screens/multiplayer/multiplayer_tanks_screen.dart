@@ -275,7 +275,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   /// Consumă power-up-ul curent.
   ///
-  ///  - [PowerUp.fiftyFifty]/[PowerUp.extraTime]: efect local, instant.
+  ///  - [PowerUp.fiftyFifty]: efect local, instant.
   ///  - [PowerUp.repairKit]: scriere directă de viață, instant.
   ///  - [PowerUp.megaRocket]/[PowerUp.doubleShot]/[PowerUp.shield]/
   ///    [PowerUp.reflect]: NU au efect local — se scriu pe `roundPowerUps`

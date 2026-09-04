@@ -173,9 +173,6 @@ enum PowerUp {
   /// Elimină două variante greșite la întrebarea următoare.
   fiftyFifty,
 
-  /// Îți dă câteva secunde în plus la runda următoare.
-  extraTime,
-
   /// Vezi ce a răspuns altcineva înainte să se închidă runda.
   peek,
 
@@ -197,16 +194,6 @@ const Map<PowerUp, Set<String>> powerUpModes = {
   PowerUp.allyShield: {'quizzTanks', 'electricChair'},
   PowerUp.reflect: {'quizzTanks', 'electricChair'},
   PowerUp.fiftyFifty: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
-  // DOAR Clasic. În modurile sincrone (Tanks, Obby, Scaunul Electric,
-  // Higher & Lower) runda se închide când expiră cronometrul ORICĂRUI client
-  // (`closeTanksAnswering` & co. sunt apelate de toată lumea), iar secundele
-  // în plus sunt o valoare LOCALĂ — deci adversarul îți taie runda la
-  // secunda normală și puterea nu face absolut nimic. La Clasic fiecare are
-  // propriul termen (`_deadline`), acolo chiar funcționează.
-  // Recenzie 2026-09-01. Dacă vrei puterea înapoi în modurile sincrone,
-  // trebuie scrisă în documentul meciului ca să prelungească runda pentru
-  // toți — altă mecanică, altă decizie.
-  PowerUp.extraTime: {'classic'},
   PowerUp.peek: {'quizzTanks', 'obby', 'electricChair'},
   PowerUp.jetpack: {'obby'},
   PowerUp.repairKit: {'quizzTanks', 'electricChair'},
@@ -262,7 +249,6 @@ const Map<PowerUp, (String, String)> powerUpTitles = {
   PowerUp.allyShield: ('🛡️ Scut pe Aliat', '🛡️ Ally Shield'),
   PowerUp.reflect: ('🪞 Reflexie', '🪞 Reflect'),
   PowerUp.fiftyFifty: ('✂️ 50/50', '✂️ 50/50'),
-  PowerUp.extraTime: ('⏱️ Timp în Plus', '⏱️ Extra Time'),
   PowerUp.peek: ('👁️ Spionaj', '👁️ Peek'),
   PowerUp.jetpack: ('🛸 Jetpack', '🛸 Jetpack'),
   PowerUp.repairKit: ('🔧 Trusă de Reparații', '🔧 Repair Kit'),
@@ -277,7 +263,6 @@ const Map<PowerUp, (String, String)> powerUpDescriptions = {
   PowerUp.allyShield: ('Aperi pe altcineva 2 runde.', 'Protect someone else for 2 rounds.'),
   PowerUp.reflect: ('Cine te lovește încasează el.', 'Whoever hits you takes it instead.'),
   PowerUp.fiftyFifty: ('Două variante greșite dispar.', 'Two wrong options disappear.'),
-  PowerUp.extraTime: ('Secunde în plus la runda următoare.', 'Extra seconds next round.'),
   PowerUp.peek: ('Vezi ce a răspuns altcineva.', "See someone else's answer."),
   PowerUp.jetpack: ('Treci obstacolul automat.', 'Clear the obstacle automatically.'),
   PowerUp.repairKit: ('Recuperezi viață.', 'Recover some life.'),
@@ -306,9 +291,6 @@ const double tanksDoubleShotFocusMultiplier = 1.8;
 /// conține niciodată `|`, deci despărțirea e fără ambiguitate. Ținta simplă
 /// rămâne un uid gol, fără separator — compatibil cu ce era înainte.
 const String tanksTargetSeparator = '|';
-
-/// Câte secunde în plus dă [PowerUp.extraTime].
-const int extraTimeSeconds = 6;
 
 /// Câtă viață/HP recuperează [PowerUp.repairKit].
 const int repairKitHp = 25;

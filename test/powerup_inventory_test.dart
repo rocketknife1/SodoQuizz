@@ -38,7 +38,7 @@ void main() {
     // "cate vrei" — userul a cerut explicit sa se poata aduna oricate.
     await pump(tester, const [
       PowerUp.megaRocket, PowerUp.doubleShot, PowerUp.shield, PowerUp.allyShield,
-      PowerUp.reflect, PowerUp.fiftyFifty, PowerUp.extraTime, PowerUp.repairKit,
+      PowerUp.reflect, PowerUp.fiftyFifty, PowerUp.peek, PowerUp.repairKit,
     ]);
     expect(tester.takeException(), isNull,
         reason: 'un overflow aici ar strica ecranul in mijlocul meciului');

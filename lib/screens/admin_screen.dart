@@ -1775,6 +1775,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       PlayerProfileService.instance.fetchFriendsOf(widget.profile.uid),
       PlayerProfileService.instance.fetchCloudSaveAsAdmin(widget.profile.uid),
       PlayerProfileService.instance.getProfile(widget.profile.uid),
+      PlayerProfileService.instance.fetchSecurityFlagAsAdmin(widget.profile.uid),
     ]);
     final fresh = results[2] as PlayerProfile? ?? widget.profile;
     _fresh = fresh;
@@ -1782,6 +1783,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
       friends: results[0] as List<PlayerProfile>,
       cloudSave: results[1] as Map<String, dynamic>?,
       profile: fresh,
+      securityFlag: results[3] as Map<String, dynamic>?,
     );
   }
 
@@ -2077,6 +2079,13 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
 
       // ── Balanța ──
       const _SectionTitle('Balanță'),
+      // Semnalul stă DEASUPRA cifrelor, nu sub ele: dacă balanța e falsificată,
+      // asta e prima informație care contează despre ea. Apare doar când chiar
+      // există un semnal — un panou curat nu arată nimic aici.
+      if (d.securityFlag != null) ...[
+        _SecurityFlagCard(flag: d.securityFlag!),
+        const SizedBox(height: 12),
+      ],
       if (save == null)
         const _InfoCard(
           icon: Icons.lock_outline_rounded,
@@ -2277,7 +2286,15 @@ class _PlayerDetail {
 
   /// Profilul public recitit acum, nu cel din listă — vezi [_load].
   final PlayerProfile profile;
-  const _PlayerDetail({required this.friends, required this.cloudSave, required this.profile});
+
+  /// null = curat, cazul normal. Altfel, ce a notat `onBalanceAudit`.
+  final Map<String, dynamic>? securityFlag;
+  const _PlayerDetail({
+    required this.friends,
+    required this.cloudSave,
+    required this.profile,
+    required this.securityFlag,
+  });
 }
 
 class _SectionTitle extends StatelessWidget {
@@ -2292,6 +2309,61 @@ class _SectionTitle extends StatelessWidget {
           style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
         ),
       );
+}
+
+/// Semnalul lăsat de Cloud Function `onBalanceAudit` (functions/index.js).
+///
+/// Deliberat NU e o acuzație: pragurile sunt generoase, dar un fals pozitiv
+/// tot e posibil (o sesiune foarte lungă, un grant mare dat chiar de admin).
+/// De-aia textul spune ce s-a văzut, nu ce înseamnă — decizia rămâne a
+/// omului, care are oricum butoanele de ban/reset mai jos pe ecran.
+class _SecurityFlagCard extends StatelessWidget {
+  final Map<String, dynamic> flag;
+  const _SecurityFlagCard({required this.flag});
+
+  @override
+  Widget build(BuildContext context) {
+    final count = (flag['flagCount'] as num?)?.toInt() ?? 1;
+    final reason = flag['lastReason'] as String? ?? '';
+    final when = (flag['lastFlaggedAt'] as Timestamp?)?.toDate();
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withAlpha(28),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.orange.withAlpha(90)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.gpp_maybe_rounded, color: AppColors.orange, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  count == 1 ? 'Salt de balanță semnalat' : 'Balanță semnalată de $count ori',
+                  style: const TextStyle(color: AppColors.orange, fontSize: 13, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 4),
+                if (reason.isNotEmpty)
+                  Text(reason, style: const TextStyle(color: Colors.white70, fontSize: 11, height: 1.4)),
+                if (when != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      'ultima oară ${_relative(when)}',
+                      style: const TextStyle(color: Colors.white38, fontSize: 11),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _BalanceTile extends StatelessWidget {

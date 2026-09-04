@@ -83,18 +83,24 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
   (vizibilitatea) și `realMoneyStoreEnabled` (plățile efective). Adăugarea
   plăților obligă și **reretrimiterea formularului Data safety**.
 
-- **„Timp în Plus" în modurile sincrone.** A fost scos fiindcă nu funcționa:
-  secundele erau o valoare locală, dar runda se închide când expiră
-  cronometrul ORICĂRUI client. A rămas doar la Clasic. Dacă îl vrei înapoi,
-  trebuie scris în documentul meciului ca să prelungească runda pentru toți —
-  altă mecanică, nu o reparație.
+- **`users/{uid}` — balanța rămâne scriabilă de proprietar, dar acum se
+  VEDE.** Din 2026-09-04 există `onBalanceAudit` (functions/index.js): notează
+  salturile implauzibile în `security_flags/{uid}`, iar panoul de Admin le
+  arată deasupra balanței, în fișa jucătorului.
 
-- **`users/{uid}` — balanța de monede/gems e scriabilă integral de
-  proprietar.** Nu se poate strânge cu reguli fără să rupă jocul: clientul
-  scrie salvarea întreagă, iar salturile legitime (pachet cumpărat, jackpot la
-  roată) sunt mari. Închiderea reală cere ca balanța să fie scrisă DOAR de
-  Cloud Functions, adică rescrierea stratului de economie, care azi e
-  local-first. Merită făcut abia când jocul face bani reali.
+  De ce detecție și nu blocare — motivul e în cod, nu teoretic:
+  `CloudSyncService.push()` scrie documentul ÎNTREG, doar la trecerea în
+  fundal, deci o scriere acoperă o sesiune întreagă și diferența legitimă
+  n-are plafon. Iar dacă o regulă ar refuza scrierea, eșecul e TĂCUT
+  (`catch { debugPrint }`): jucătorul ar juca mai departe cu salvarea oprită
+  și ar afla la reinstalare, când pierde tot. Leacul ar fi fost mai rău decât
+  boala, într-un joc unde monedele sunt azi pur virtuale.
+
+  Ce rămâne deschis: nu OPREȘTE pe nimeni. Oprirea reală cere balanța scrisă
+  doar de Cloud Functions = rescrierea stratului de economie (azi local-first),
+  și merită abia când jocul face bani reali. Între timp App Check pe „Enforce"
+  a închis deja calea de pe Android (un APK modificat nu mai primește token
+  Play Integrity); deschisă rămâne varianta din browser.
 
 ---
 

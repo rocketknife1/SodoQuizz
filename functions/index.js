@@ -32,7 +32,10 @@ const { initializeApp } = require("firebase-admin/app");
 const { getFirestore, FieldValue } = require("firebase-admin/firestore");
 const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
-const { onDocumentCreated } = require("firebase-functions/v2/firestore");
+const {
+  onDocumentCreated,
+  onDocumentUpdated,
+} = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
 
@@ -299,3 +302,99 @@ exports.onAdminMessage = onDocumentCreated(
     });
   }
 );
+
+// ─── Paza balantei: DETECTEAZA, nu blocheaza ────────────────────────────────
+// Problema reala (vezi TODO.md): `users/{uid}` e salvarea din cloud si si-o
+// scrie proprietarul integral, deci un client modificat isi poate pune orice
+// suma. Nu se poate strange din firestore.rules, si motivul e in cod, nu
+// teoretic:
+//
+//   CloudSyncService.push() face `_userDoc(uid).set(data)` — documentul
+//   INTREG — si doar cand aplicatia trece in fundal. Deci o singura scriere
+//   acopera o sesiune intreaga de joc: cate roti, cate rulari de planeta si
+//   cate meciuri a apucat sa joace omul. Diferenta legitima dintre doua
+//   scrieri nu are plafon.
+//
+// Iar daca o regula ar refuza scrierea, esecul e TACUT: `push()` prinde
+// exceptia si doar face `debugPrint`. Jucatorul ar continua sa joace, cu
+// salvarea in cloud oprita, si ar afla abia la o reinstalare — cand pierde
+// tot. Adica leacul ar fi mai rau decat boala, intr-un joc unde monedele sunt
+// azi pur virtuale.
+//
+// De-aia functia asta nu atinge niciodata documentul: doar noteaza salturile
+// implauzibile in `security_flags/{uid}`, pe care le vede adminul. Cu
+// detectie, un prag prea strans costa o linie in panou; cu blocare, ar costa
+// salvarea cuiva. Pragurile sunt deliberat GENEROASE din exact motivul asta.
+//
+// Ce NU rezolva, pe fata: nu opreste pe nimeni, doar arata. Oprirea reala cere
+// ca balanta sa fie scrisa DOAR de aici (Cloud Functions), adica rescrierea
+// stratului de economie, care azi e local-first — merita cand jocul face bani
+// reali. Intre timp, App Check pe "Enforce" (2026-09-04) a inchis deja calea
+// de pe Android: un APK modificat nu mai primeste token Play Integrity, deci
+// nu mai atinge Firestore deloc. Ce ramane deschis e varianta din browser.
+
+/** Cat poate creste o resursa intre doua scrieri fara sa fie suspect.
+ *
+ * NU sunt maximele jocului, sunt praguri de absurditate. Reperele din cod:
+ * recompensa mare a planetei da ~772 monede la plafon
+ * (`planetJackpotReward`, lib/core/progression.dart), roata e comparabila,
+ * iar castigul la pariuri creste cu portofelul. O sesiune lunga poate aduna
+ * legitim mii de monede — de-aia pragul e la zeci de mii, nu la sute. */
+const BALANCE_JUMP = {
+  coins: 200000,
+  gems: 5000,
+  hints_balance: 500,
+  lives: 500,
+  xp: 200000,
+  high_score: 100000,
+};
+
+/** Peste valorile astea nu se ajunge jucand, oricat. Prind cazul „mi-am pus
+ * 999999999", care nu produce neaparat un SALT mare daca vine dintr-un cont
+ * nou-nout. */
+const BALANCE_CEILING = {
+  coins: 50000000,
+  gems: 1000000,
+  hints_balance: 100000,
+  lives: 100000,
+  xp: 50000000,
+  high_score: 10000000,
+};
+
+const asInt = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+
+exports.onBalanceAudit = onDocumentUpdated("users/{uid}", async (event) => {
+  const before = (event.data && event.data.before.data()) || {};
+  const after = (event.data && event.data.after.data()) || {};
+  const uid = event.params.uid;
+
+  const reasons = [];
+  for (const field of Object.keys(BALANCE_JUMP)) {
+    const vechi = asInt(before[field]);
+    const nou = asInt(after[field]);
+    if (nou - vechi > BALANCE_JUMP[field]) {
+      reasons.push(`${field}: +${nou - vechi} intr-o scriere (${vechi} → ${nou})`);
+    }
+    if (nou > BALANCE_CEILING[field]) {
+      reasons.push(`${field}: ${nou}, peste orice valoare atinsa jucand`);
+    }
+  }
+  if (reasons.length === 0) return;
+
+  logger.warn(`balanta suspecta la ${uid}: ${reasons.join(" | ")}`);
+  try {
+    await db.collection("security_flags").doc(uid).set(
+      {
+        lastFlaggedAt: FieldValue.serverTimestamp(),
+        // Doar ultimul motiv + un contor: panoul de admin are nevoie de „s-a
+        // intamplat, cand, de cate ori", nu de un jurnal care creste la
+        // nesfarsit intr-un document cu limita de 1 MB.
+        lastReason: reasons.join(" | ").slice(0, 500),
+        flagCount: FieldValue.increment(1),
+      },
+      { merge: true },
+    );
+  } catch (e) {
+    logger.warn(`nu am putut scrie security_flags/${uid}: ${e}`);
+  }
+});

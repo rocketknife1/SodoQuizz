@@ -247,10 +247,9 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     Sfx.rewardPop();
   }
 
-  /// Consumă power-up-ul curent. [PowerUp.fiftyFifty] și [PowerUp.extraTime]
-  /// sunt singurele valabile pentru Classic (vezi `powerUpModes` din
-  /// core/powerups.dart), deci au efect real; restul modurilor au propriile
-  /// power-uri, cu efecte proprii.
+  /// Consumă power-up-ul curent. [PowerUp.fiftyFifty] e singurul valabil
+  /// pentru Classic (vezi `powerUpModes` din core/powerups.dart), deci are
+  /// efect real; restul modurilor au propriile power-uri, cu efecte proprii.
   void _usePowerUp() {
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
@@ -264,10 +263,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
             stableShuffle(wrong, stableHash(q.id) + _qIndex + 1);
             _hiddenOptions = wrong.take(max(0, wrong.length - 1)).toSet();
           }
-          break;
-        case PowerUp.extraTime:
-          final d = _deadline;
-          if (d != null) _deadline = d.add(const Duration(seconds: extraTimeSeconds));
           break;
         default:
           break;

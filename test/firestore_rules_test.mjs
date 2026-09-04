@@ -208,6 +208,26 @@ await check('un jucator NU poate scrie config/admin', () => assertFails(
 await check('nimeni nu citeste config/admin din client (nici adminul)', () => assertFails(
   getDoc(doc(adminCtx, 'config', 'admin'))));
 
+// security_flags: salturile de balanta notate de Cloud Function
+// `onBalanceAudit`. Scrie DOAR Admin SDK-ul (caruia regulile nu i se aplica);
+// din client nu scrie nimeni, altfel un trisor si-ar sterge propriul semnal.
+
+await env.withSecurityRulesDisabled((ctx) => setDoc(
+  doc(ctx.firestore(), 'security_flags', 'jucatorUid'),
+  { flagCount: 2, lastReason: 'coins: +9000000 intr-o scriere' }));
+
+await check('adminul citeste semnalul de balanta', () => assertSucceeds(
+  getDoc(doc(adminCtx, 'security_flags', 'jucatorUid'))));
+
+await check('jucatorul NU-si vede propriul semnal', () => assertFails(
+  getDoc(doc(jucator, 'security_flags', 'jucatorUid'))));
+
+await check('jucatorul NU-si poate sterge semnalul', () => assertFails(
+  deleteDoc(doc(jucator, 'security_flags', 'jucatorUid'))));
+
+await check('nici adminul nu scrie semnale din client', () => assertFails(
+  setDoc(doc(adminCtx, 'security_flags', 'altul'), { flagCount: 1 })));
+
 // Stergerea unui profil de catre ADMIN ("Sterge complet" din panou).
 // A fost stricata tacit intre 2026-09-02 si 2026-09-03: despartirea lui
 // `allow write` in create+update a lasat `delete` doar cu regula de curatare a

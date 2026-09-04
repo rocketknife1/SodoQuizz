@@ -645,6 +645,24 @@ class PlayerProfileService {
     }
   }
 
+  /// Semnalul lăsat de Cloud Function `onBalanceAudit` când balanța cuiva a
+  /// sărit implauzibil. Doar adminul poate citi (vezi `security_flags` din
+  /// firestore.rules); pentru oricine altcineva întoarce null, tăcut.
+  ///
+  /// `null` e cazul NORMAL — înseamnă că jucătorul n-a fost semnalat
+  /// niciodată, nu că ceva n-a mers.
+  Future<Map<String, dynamic>?> fetchSecurityFlagAsAdmin(String uid) async {
+    if (uid.isEmpty) return null;
+    try {
+      final doc = await _db.collection('security_flags').doc(uid).get();
+      if (!doc.exists) return null;
+      return doc.data();
+    } catch (e) {
+      debugPrint('PlayerProfileService.fetchSecurityFlagAsAdmin a esuat: $e');
+      return null;
+    }
+  }
+
   Future<List<FriendRequest>> fetchIncomingRequests() async {
     final me = _uid;
     if (me.isEmpty) return [];

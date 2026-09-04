@@ -635,6 +635,22 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
+    // Salturile suspecte de balanta, notate de Cloud Function `onBalanceAudit`
+    // (vezi functions/index.js pentru DE CE e detectie si nu blocare).
+    //
+    // NIMENI nu scrie de aici: singurul scriitor e Admin SDK-ul din Functions,
+    // caruia regulile nu i se aplica. Daca ar putea scrie clientul, primul
+    // lucru pe care l-ar face un trisor ar fi sa-si stearga propriul semnal.
+    //
+    // Adminul doar CITESTE — panoul lui arata semnalul in detaliul jucatorului.
+    // Stergerea lipseste intentionat: un semnal nu se „rezolva" facandu-l sa
+    // dispara, iar contorul (`flagCount`) are sens doar daca urca in continuu.
+    match /security_flags/{uid} {
+      allow read: if request.auth != null
+        && request.auth.token.email == 'dragosssx@gmail.com';
+      allow write: if false;
+    }
+
     // Orice altceva neenumerat explicit mai sus — refuzat implicit.
     match /{document=**} {
       allow read, write: if false;

@@ -2,10 +2,10 @@
 
 `firestore_rules_test.mjs` verifică limitele anti-trișare din
 `firestore.rules`: clasamentul (`player_profiles`), scrierea în meciuri
-(`matches`) și firul cu adminul (`admin_threads`) — ce trebuie să meargă în
-joc normal, ce trebuie refuzat. 33 de cazuri, fiecare pornind de la o stare
-curată (scrisă cu `withSecurityRulesDisabled`), deci ordinea rulării nu
-contează.
+(`matches`), firul cu adminul (`admin_threads`) și semnalele de balanță
+(`security_flags`) — ce trebuie să meargă în joc normal, ce trebuie refuzat.
+43 de cazuri, fiecare pornind de la o stare curată (scrisă cu
+`withSecurityRulesDisabled`), deci ordinea rulării nu contează.
 
 Cazul care contează cel mai mult la `admin_threads` e IMPERSONAREA: aplicația
 desenează baloanele strict după câmpul `fromAdmin`, deci regula trebuie să
@@ -27,4 +27,4 @@ firebase emulators:exec --only firestore --project sodoquizz-test "node firestor
 
 Rulează pe emulatorul LOCAL — nicio scriere în producție.
 
-Ultima rulare verde: 2026-09-03, 33/33 (după adăugarea `admin_threads`).
+Ultima rulare verde: 2026-09-04, 43/43 (după adăugarea `security_flags`).

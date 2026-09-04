@@ -120,10 +120,12 @@ void main() {
       }
     });
 
-    test('Timp in Plus e doar la Clasic (recenzie 2026-09-01)', () {
-      // In modurile sincrone runda se inchide cand expira cronometrul ORICARUI
-      // client, iar secundele in plus erau locale — puterea nu facea nimic.
-      expect(powerUpModes[PowerUp.extraTime], {'classic'});
+    test('nu exista power-up de timp in plus', () {
+      // Scos de tot pe 2026-09-04: in modurile sincrone runda se inchide cand
+      // expira cronometrul ORICARUI client, iar secundele in plus erau locale,
+      // deci puterea nu facea nimic. Ar fi mers doar prelungind runda pentru
+      // TOTI — adica ajutandu-ti si adversarii. Nu se potriveste in joc.
+      expect(PowerUp.values.map((p) => p.name), isNot(contains('extraTime')));
     });
 
     test('fereastra de folosire e mereu un subset de faze reale', () {

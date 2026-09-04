@@ -16,7 +16,6 @@ const Map<PowerUp, IconData> powerUpIcons = {
   PowerUp.allyShield: Icons.health_and_safety_rounded,
   PowerUp.reflect: Icons.flip_camera_android_rounded,
   PowerUp.fiftyFifty: Icons.content_cut_rounded,
-  PowerUp.extraTime: Icons.more_time_rounded,
   PowerUp.peek: Icons.visibility_rounded,
   PowerUp.jetpack: Icons.rocket_rounded,
   PowerUp.repairKit: Icons.build_rounded,
