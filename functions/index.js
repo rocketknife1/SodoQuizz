@@ -34,7 +34,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
 const {
   onDocumentCreated,
-  onDocumentUpdated,
+  onDocumentWritten,
 } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const logger = require("firebase-functions/logger");
@@ -339,12 +339,17 @@ exports.onAdminMessage = onDocumentCreated(
  * recompensa mare a planetei da ~772 monede la plafon
  * (`planetJackpotReward`, lib/core/progression.dart), roata e comparabila,
  * iar castigul la pariuri creste cu portofelul. O sesiune lunga poate aduna
- * legitim mii de monede — de-aia pragul e la zeci de mii, nu la sute. */
+ * legitim mii de monede — de-aia pragul e la zeci de mii, nu la sute.
+ *
+ * SUB fiecare prag trebuie sa incapa si butonul de debug al adminului, care
+ * da dintr-o data `999 vieti, 999 hint-uri, +99999 monede, +9999 gems`
+ * (AdminScreen). Altfel s-ar autosemnala la fiecare apasare si panoul ar fi
+ * plin de zgomot propriu. */
 const BALANCE_JUMP = {
   coins: 200000,
-  gems: 5000,
-  hints_balance: 500,
-  lives: 500,
+  gems: 25000,
+  hints_balance: 5000,
+  lives: 5000,
   xp: 200000,
   high_score: 100000,
 };
@@ -363,10 +368,16 @@ const BALANCE_CEILING = {
 
 const asInt = (v) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
 
-exports.onBalanceAudit = onDocumentUpdated("users/{uid}", async (event) => {
+// `onDocumentWritten`, nu `onDocumentUpdated`: prinde si CREAREA documentului.
+// Cea mai simpla trisare nu e sa umfli o balanta existenta, ci sa scrii prima
+// oara `users/{uid}` direct cu suma dorita — un `onDocumentUpdated` ar fi ratat
+// exact cazul ala. La creare `before` lipseste, deci se compara cu zero.
+exports.onBalanceAudit = onDocumentWritten("users/{uid}", async (event) => {
   const before = (event.data && event.data.before.data()) || {};
   const after = (event.data && event.data.after.data()) || {};
   const uid = event.params.uid;
+  // Stergerea contului nu e o balanta suspecta.
+  if (!event.data || !event.data.after.exists) return;
 
   const reasons = [];
   for (const field of Object.keys(BALANCE_JUMP)) {
