@@ -9,14 +9,21 @@ Cele periculoase (7 si 9) intreaba INTAI si arata ce ar sterge; nu fac nimic
 pana nu confirmi.
 
 
-1 - INSTALEAZA JOCUL PE TELEFON
-   Cand: dupa ce s-a construit o versiune noua (APK).
+1 - CONSTRUIESTE JOCUL
+   Cand: dupa orice modificare in cod, inainte de a-l pune pe telefon.
+   Ce face: face APK-ul (fisierul pe care il instalezi). Dureaza cateva
+   minute — e normal, nu s-a blocat.
+   La final trebuie sa scrie "Built ... app-release.apk".
+
+
+2 - INSTALEAZA JOCUL PE TELEFON
+   Cand: dupa numarul 1.
    Cere: telefonul conectat prin USB, cu depanare USB pornita.
    Ce face: pune APK-ul din build/ pe telefon.
-   Daca da eroare de semnatura, ruleaza intai numarul 2.
+   Daca da eroare de semnatura, ruleaza intai numarul 3.
 
 
-2 - STERGE JOCUL DE PE TELEFON
+3 - STERGE JOCUL DE PE TELEFON
    Cand: inainte de un RESET TOTAL (numarul 9), sau cand instalarea
    refuza din cauza semnaturii.
    Ce face: dezinstaleaza jocul CU TOT CU datele lui locale.
@@ -25,12 +32,11 @@ pana nu confirmi.
    golirea se anuleaza singura.
 
 
-3 - PUBLICA VERSIUNE NOUA PE GITHUB
-   Cand: vrei ca prietenii sa descarce versiunea noua.
-   Cere: sa fi construit APK-urile inainte.
-   Ce face: creeaza un "Release" pe GitHub cu cele doua APK-uri. Iti cere
-   un numar de versiune (ex. v1.0.3). Linkul public de descarcare arata
-   automat spre ultima versiune — nu trebuie schimbat nicaieri.
+CUM AJUNGE VERSIUNEA NOUA LA JUCATORI
+   Nu exista o comanda pentru asta, si e bine asa: varianta din browser
+   (rocketknife1.github.io/SodoQuizz) se reconstruieste SINGURA la fiecare
+   push pe GitHub. Pentru magazinul Play se incarca un fisier .aab din
+   Play Console — vezi docs/build.md.
 
 
 4 - TRIMITE REGULILE FIRESTORE IN PRODUCTIE
@@ -60,6 +66,13 @@ pana nu confirmi.
    anonime fara nicio activitate — nu atinge conturile Google.
 
 
+8 - TRIMITE FUNCTIILE IN PRODUCTIE
+   Cand: dupa ce s-a modificat ceva in folderul "functions".
+   Ce face: publica functiile de server — cele care trimit notificarile
+   push (invitatii la joc, mesaje) si supravegheaza balantele.
+   Pana nu rulezi asta, modificarile exista doar pe calculator.
+
+
 9 - RESET TOTAL — STERGE ABSOLUT TOT
    Cand: vrei sa pornesti de la zero, ca inainte de lansare.
    ASTA E CEL MAI DISTRUCTIV. Sterge fiecare profil, cont, meci,
@@ -68,10 +81,10 @@ pana nu confirmi.
    Arata intai numerele si cere sa scrii DA. Nu se poate anula.
 
    ORDINEA CORECTA pentru un reset care ramane curat:
-     a) numarul 2  (scoate jocul de pe telefon)
+     a) numarul 3  (scoate jocul de pe telefon)
      b) inchide orice fereastra de browser cu jocul deschis
      c) numarul 9  (scrie DA)
-     d) numarul 1  (pune versiunea noua, curata, inapoi pe telefon)
+     d) numarul 1, apoi 2  (construieste si pune versiunea curata inapoi)
 
    Fara pasii a) si b), telefonul sau browserul isi re-urca datele si
    baza nu ramane goala.
