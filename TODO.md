@@ -90,9 +90,12 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
   fișierelor mari NU se sparg, deliberat: `multiplayer_service` e o singură
   clasă (Dart nu împarte membri de clasă în `part`), `storage_service` e o
   listă de chei. Ar fi fost mișcare de dragul mișcării.
-- 🔸 **6. Sisteme care lipseau** — cerere de recenzie ✅; **rămâne tutorialul
-  pentru jucătorul nou** (reperul public: sub 20% retenție la ziua 1 se
-  repară onboarding-ul înaintea oricărui altui lucru)
+- ✅ **6. Sisteme care lipseau** — cerere de recenzie în Play + **tutorial la
+  prima pornire** (3 pași, verificat pe telefon inclusiv că nu reapare)
+
+**Planul e încheiat.** Ce a mai rămas de făcut nu ține de cod:
+push-ul celor 18 commit-uri și, înainte de orice build trimis în Play,
+formularul Data safety de mai jos.
 
 ---
 
