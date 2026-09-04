@@ -69,6 +69,36 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 
 ---
 
+## ⚠️ ÎNAINTE DE LANSARE — Data safety, o singură dată
+
+**NU se face acum**, la cererea userului (2026-09-05): până la lansare se mai
+schimbă lucruri, deci formularul se completează **o dată, la final**, cu lista
+întreagă în față. Lista de mai jos se ADAUGĂ pe măsură ce apar lucruri noi —
+ăsta e rostul ei.
+
+Formularul devine FALS dacă se trimite build-ul fără actualizarea lui, iar o
+declarație falsă în Play e o problemă de conformitate, nu un detaliu.
+
+Ce s-a adăugat de la ultima completare și trebuie bifat:
+
+- **Firebase Crashlytics** (2026-09-04) — jurnale de erori, model de telefon,
+  versiune de sistem. Categoria Play: „Crash logs" + „Diagnostics".
+- **Firebase Analytics** (2026-09-04) — evenimente de joc și un identificator
+  pseudonim. Categoria: „App interactions" + „Other actions".
+- **Rapoartele „Trimite raportul"** (2026-09-05) — uid, versiune, platformă,
+  ecran, urma tehnică a sesiunii. Tot „Diagnostics"; **nimic scris de
+  jucător**, deci NU e „User messages".
+- **Firebase Remote Config** (2026-09-05) — doar CITEȘTE valori de la server,
+  nu trimite nimic. De regulă nu cere nicio bifă, dar se verifică la final.
+
+Ce era deja declarat și rămâne: emailul (Firebase Auth), numele afișat,
+progresul de joc.
+
+Când vine momentul: Play Console → App content → Data safety, o singură
+trecere prin toată lista de mai sus.
+
+---
+
 ## Decizii care te așteaptă pe tine
 
 - **Magazin cu bani reali (IAP).** Ordinea obligatorie:
