@@ -187,17 +187,16 @@ raportare și se confirmă cu userul.
 
 ---
 
-## Cloud Functions — întreținere (adăugat 2026-09-03)
+## Cloud Functions — întreținere
 
-Deployate în `europe-west1`, CINCI declanșatoare (vezi `functions/index.js`);
-al cincilea, `onAdminMessage`, e scris dar NEDEPLOYAT.
-Firebase avertizează la fiecare deploy:
+CINCI declanșatoare în `europe-west1`, toate pe **nodejs22**, DEPLOYATE
+(verificat `firebase.cmd functions:list` pe 2026-09-04): onFriendMessage,
+onFriendRequest, onRoomInvite, onSystemNotification, onAdminMessage.
 
-- **Node 22** e deja setat în `functions/package.json` + `firebase.json`
-  (era 20, depreciat, scos pe 2026-10-30). Rămâne DOAR redeploy-ul ca să intre
-  în vigoare — `firebase.cmd deploy --only functions --project sodoquizz`.
 - `firebase-functions` (`^6.1.0`) e ok deocamdată; un upgrade major aduce
   **modificări incompatibile**, deci nu se face pe fugă odată cu altceva.
+- Firebase avertizează la fiecare deploy despre `firebase-functions` vechi —
+  benign, nu blochează nimic.
 
 Comanda de deploy (PowerShell refuză shim-ul `.ps1`, de-aia `.cmd`):
 ```
