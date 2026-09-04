@@ -107,9 +107,10 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 - ✅ **6. Sisteme care lipseau** — cerere de recenzie în Play + **tutorial la
   prima pornire** (3 pași, verificat pe telefon inclusiv că nu reapare)
 
-**Planul e încheiat.** Ce a mai rămas de făcut nu ține de cod:
-push-ul celor 18 commit-uri și, înainte de orice build trimis în Play,
-formularul Data safety de mai jos.
+**Planul e încheiat și PUBLICAT** (push 2026-09-05, `c8c0052..a5ad21e`).
+Ambele fluxuri GitHub au ieșit verzi, iar site-ul public a fost verificat live:
+tutorialul apare la prima intrare. Mai rămâne, înainte de orice build trimis
+în Play, formularul Data safety de mai jos.
 
 ---
 
