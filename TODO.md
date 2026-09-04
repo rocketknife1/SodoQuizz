@@ -6,12 +6,15 @@ Ultima curățare: 2026-09-04.
 
 ---
 
-## Notificări — RĂMĂȘIȚE MICI
+## Notificări — TOATE VERIFICATE (2026-09-04)
 
 Fluxul data-only e VERIFICAT pe telefon: mesaj FCM → notificare desenată de
 aplicație → tap → firul direct. Functions deployate (Node 22). Firul admin↔
 jucător e GATA și verificat cap-la-cap (commit-uri 640d477 + 99fbd20 + e9fdd76,
-deployat). Rămâne de probat doar invitația în cameră.
+deployat). **Invitația în cameră a fost probată și ea**, prin fluxul real
+(prieten adăugat pe cod → „CHEAMĂ PRIETENII" din lobby): notificarea „🎮 Te-a
+invitat la o partida" a ajuns cu aplicația în fundal, iar tap-ul a intrat
+DIRECT în camera corectă (2/10 jucători în lobby).
 
 - **Push-ul pe web nu există** — ar cere cheie VAPID și service worker separat.
   Doar Android primește notificări.
@@ -20,6 +23,12 @@ deployat). Rămâne de probat doar invitația în cameră.
   `granted=false` cu flag `USER_FIXED` nu se mai poate cere din aplicație —
   se dă cu `adb shell pm grant`. La fel, o reinstalare clean invalidează
   token-ul FCM vechi, iar Functions îl șterg ca „mort" la prima trimitere.
+- **`adb shell am force-stop` NU e felul corect de a testa „aplicația
+  închisă".** Android pune aplicația în stare *stopped* și refuză să-i mai
+  livreze broadcast-uri până la o lansare manuală — FCM-ul ajunge la telefon,
+  dar se anulează (`GCM: broadcast intent callback: result=CANCELLED`), deci
+  pare bug de aplicație când e de fapt sistemul. Testează cu aplicația trimisă
+  în fundal (HOME sau scoasă din recente), nu force-stop.
 
 ---
 
@@ -41,15 +50,6 @@ Rămas pentru „finalizări pe viitor" (cuvintele userului):
 
 Generatorul (`gen_matematica.py`) e în scratchpad, nu în repo — unealtă de o
 dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart).
-
----
-
-## De curățat, când ai chef
-
-`python tools/purge_accounts.py --sterge` — două conturi Guest de test
-(`Jucator381`, `Jucator422`) sunt la coadă pentru ștergerea din Firebase
-Authentication. În Firestore nu mai au nicio dată legată de ele, deci nu
-grăbește nimic.
 
 ---
 
