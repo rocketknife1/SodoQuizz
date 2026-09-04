@@ -69,6 +69,28 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 
 ---
 
+## Planul de finalizare (2026-09-04/05) — unde am ajuns
+
+Șase pași, hotărâți împreună, în ordinea asta. Ce e bifat e și verificat.
+
+- ✅ **0. Flutter 3.27.4 → 3.47.2** — cod neatins, verificat pe telefon
+- ✅ **1a. Crashlytics + Analytics** — construit; **rămâne de probat un crash
+  real** (buton „TEST: PROVOACĂ UN CRASH" în tabul Debug)
+- ✅ **1b. „Trimite raportul"** — verificat cap-la-cap, raport ajuns în bază
+- ✅ **2. Remote Config** — versiune minimă, mesaj de întreținere, comutatoare
+  de magazin
+- ✅ **3. Mărime** — APK 173 MB → **125 MB** (`tools/optimize_images.py`)
+- ✅ **5. Comenzi** — scoasă cea moartă, adăugate „Construiește" și „Funcții"
+- ✅ **4. Restructurare** — `admin_screen.dart` spart pe tab-uri. Restul
+  fișierelor mari NU se sparg, deliberat: `multiplayer_service` e o singură
+  clasă (Dart nu împarte membri de clasă în `part`), `storage_service` e o
+  listă de chei. Ar fi fost mișcare de dragul mișcării.
+- 🔸 **6. Sisteme care lipseau** — cerere de recenzie ✅; **rămâne tutorialul
+  pentru jucătorul nou** (reperul public: sub 20% retenție la ziua 1 se
+  repară onboarding-ul înaintea oricărui altui lucru)
+
+---
+
 ## ⚠️ ÎNAINTE DE LANSARE — Data safety, o singură dată
 
 **NU se face acum**, la cererea userului (2026-09-05): până la lansare se mai
