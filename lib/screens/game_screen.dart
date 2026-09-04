@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/admin_reveal.dart';
 import '../core/ads_service.dart';
+import '../core/analytics.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
@@ -92,6 +93,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     super.initState();
     _shakeController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 400));
+    Analytics.instance.gameStarted(widget.gameModeId);
     _loadQuestions();
     // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
@@ -445,6 +447,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   /// dialoguri) — de-asta recompensa de ieșire se decontează AICI, o
   /// singură dată, indiferent pe ce ușă ai plecat.
   Future<void> _goHome() async {
+    // Aici, nu la ultima intrebare: multi jucatori pleaca inainte de final,
+    // iar aia e chiar informatia interesanta — cate au apucat sa raspunda.
+    Analytics.instance.gameFinished(
+      categorie: widget.gameModeId,
+      corecte: _sessionCorrect,
+      total: qIndex,
+    );
     await _settleExitReward();
     if (!mounted) return;
     Navigator.pushReplacement(

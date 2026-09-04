@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/admin_reveal.dart';
+import '../core/analytics.dart';
 import '../core/audio.dart';
 import '../core/lang.dart';
 import '../core/progression.dart';
@@ -295,6 +296,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
     }
     if (!mounted) return;
     await StorageService.recordPlanetRunFinished();
+    Analytics.instance.planetRun();
     if (!mounted) return;
     setState(() {
       _collecting = false;

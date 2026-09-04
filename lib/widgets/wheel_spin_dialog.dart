@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show HapticFeedback;
 import '../core/audio.dart';
+import '../core/analytics.dart';
 import '../core/quest_bump.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
@@ -192,6 +193,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       await StorageService.activateUnlimitedLives(prize.unlimitedLives!);
     }
     await StorageService.recordRingSpin();
+    Analytics.instance.wheelSpun();
     if (mounted) await bumpQuestMetric(context, 'wheel_spin', 1);
     Sfx.rewardPop();
     if (!mounted) return;

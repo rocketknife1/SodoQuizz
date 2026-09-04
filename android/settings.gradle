@@ -42,6 +42,8 @@ plugins {
     // config-ul Firebase real nu ajunge la SDK-urile native (in special
     // pentru client ID-ul implicit de Google Sign-In).
     id "com.google.gms.google-services" version "4.4.2" apply false
+    // Vezi app/build.gradle pentru ce face. Se declara aici, se aplica acolo.
+    id "com.google.firebase.crashlytics" version "3.0.2" apply false
 }
 
 include ":app"

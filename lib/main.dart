@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/admin_reveal.dart';
 import 'core/ads_service.dart';
+import 'core/analytics.dart';
 import 'core/app_check_service.dart';
 import 'core/audio.dart';
 import 'core/lang.dart';
@@ -59,6 +61,28 @@ void main() async {
   // blocheze restul aplicatiei - single-player merge oricum 100% local.
   try {
     await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+    // IMEDIAT dupa Firebase, inainte de orice altceva care poate crapa: de
+    // aici incolo, o eroare nu se mai pierde. Vezi core/error_reporting.dart
+    // pentru de ce conteaza intr-un proiect cu ~168 de `catch` tacute.
+    //
+    // Doar Android/iOS — Crashlytics nu exista pe web. Jucatorii din browser
+    // sunt acoperiti de raportul trimis din aplicatie, nu de aici.
+    if (!kIsWeb) {
+      // Erorile de framework (build/layout/paint) si cele asincrone care
+      // scapa pana la radacina. Fara astea doua linii, Crashlytics ar vedea
+      // doar crash-urile native, adica aproape nimic dintr-o aplicatie Dart.
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    }
+    // Merge si pe web, spre deosebire de Crashlytics. Vezi core/analytics.dart
+    // pentru de ce sunt putine evenimente si care anume.
+    Analytics.instance.init();
     // Inainte de prima cerere catre Auth/Firestore, ca tokenul care dovedeste
     // ca binarul e cel autentic sa plece odata cu ea - vezi
     // app_check_service.dart, inclusiv de ce activarea singura nu schimba
@@ -559,6 +583,12 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
         return MaterialApp(
           key: ValueKey(language.code),
           navigatorKey: _navigatorKey,
+          // Numara singur ecranele vizitate. O linie aici tine locul unei
+          // linii in fiecare din cele 33 de ecrane — si nu se poate uita la
+          // adaugarea unuia nou.
+          navigatorObservers: [
+            if (Analytics.instance.observer != null) Analytics.instance.observer!,
+          ],
           title: 'SodoQuizz',
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

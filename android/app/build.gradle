@@ -4,6 +4,11 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
     id "com.google.gms.google-services"
+    // Fara pluginul asta, Crashlytics tot primeste rapoartele, dar stiva de
+    // apeluri vine ca adrese de memorie in loc de nume de functii — adica
+    // exact partea din care se intelege ce s-a stricat. El urca simbolurile
+    // la fiecare build de release.
+    id "com.google.firebase.crashlytics"
 }
 
 def keystoreProperties = new Properties()
