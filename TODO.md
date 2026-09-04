@@ -67,15 +67,6 @@ grăbește nimic.
   fără playerIds" va trebui și el scos.
 
 
-- **App Check pe „Enforce".** Web-ul trimite deja token. Mai rămâne:
-  1. închide canalul GitHub APK (scoate linkul din `LINKS.md` + Discord, mută
-     testerii pe Play closed testing) — APK-ul sideloaded ia oricum
-     `UNRECOGNIZED_VERSION`, nu există fix;
-  2. Firebase Console → App Check → metrics: confirmă procentul de cereri
-     verificate (ultima verificare: 2% verified / 98% unverified — flipul ar
-     rupe aproape tot);
-  3. flip Firestore pe Enforce.
-
 ---
 
 ## Decizii care te așteaptă pe tine

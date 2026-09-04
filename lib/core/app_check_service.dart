@@ -20,22 +20,20 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 // nici el, dar mută bariera: nu mai e destul să ai un cont, îți trebuie
 // binarul autentic, nemodificat, pe un dispozitiv real.
 //
-// ATENȚIE — activarea de aici NU schimbă nimic pe server, deocamdată.
-// Câtă vreme în Firebase Console → App Check aplicația e pe "unenforced"
-// (implicit), tokenul e doar trimis și numărat. Se vede în consolă ce
-// procent din cereri vin verificate. Beneficiul real de securitate apare
-// abia când se apasă "Enforce", iar aia e o decizie separată — vezi mai jos
-// de ce nu e gratis.
+// STARE ACTUALĂ (2026-09-04): Firestore e pe "Enforce" în Firebase Console —
+// orice cerere fără token App Check valid e refuzată direct de server, nu
+// doar numărată. Auth a rămas pe "Monitoring" (e încă PREVIEW acolo).
 //
-// CAPCANA la Enforce, de citit înainte: APK-ul public din GitHub Releases
-// (vezi LINKS.md) e semnat cu cheia de upload locală, pe când Play
-// redistribuie binarul semnat cu propria cheie (Play App Signing — de-asta
-// sunt 4 amprente SHA-1 în google-services.json). Play Integrity recunoaște
-// doar ce distribuie Play, deci APK-ul sideloaded primește
-// UNRECOGNIZED_VERSION și NU obține token. Cu Enforce pornit, acei jucători
-// rămân fără leaderboard, fără multiplayer și fără salvare în cloud —
-// tăcut, fiindcă restul jocului merge local. Enforce doar după ce canalul
-// ăla e închis sau declarat acceptabil de pierdut.
+// S-a putut flipa fiindcă userul a renunțat la canalul de APK din GitHub
+// Releases (vezi LINKS.md) — acolo era capcana: APK-ul sideloaded e semnat cu
+// cheia de upload locală, pe când Play redistribuie binarul semnat cu propria
+// cheie (Play App Signing — de-asta sunt 4 amprente SHA-1 în
+// google-services.json). Play Integrity recunoaște doar ce distribuie Play,
+// deci un APK sideloaded primește UNRECOGNIZED_VERSION și nu obține token —
+// pierde leaderboard, multiplayer și salvare în cloud, tăcut. Web a fost
+// verificat live că merge (reCAPTCHA Enterprise → token → Firestore 200)
+// înainte de flip. Un APK construit local pentru testare (telefonul de
+// dezvoltare) tot are nevoie de [_forceDebugProvider] de mai jos.
 
 /// Forțează providerul de debug și într-un build `--release`, pentru
 /// verificările pe telefonul de dezvoltare (unde se testează mereu release,
@@ -75,7 +73,8 @@ bool get _useDebugProvider => kDebugMode || _forceDebugProvider;
 ///
 /// Nu aruncă niciodată: un eșec aici (fără net, Play Services vechi,
 /// aplicație neînregistrată încă în consolă) nu are voie să oprească
-/// pornirea. În modul neimpus, o cerere fără token trece oricum.
+/// pornirea. Firestore e pe Enforce (vezi mai sus) — un eșec aici lasă
+/// cererile fără token, iar serverul le refuză direct, nu doar local.
 Future<void> activateAppCheck() async {
   // Pe web fără cheie reCAPTCHA nu are ce activa: SDK-ul ar încerca să
   // încarce reCAPTCHA cu cheie goală și ar arunca. Ieșim curat, ca

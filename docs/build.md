@@ -7,7 +7,17 @@ Notițe de dezvoltare. Partea publică, de postat, e în [LINKS.md](../LINKS.md)
 Unitatea AdMob se alege la COMPILARE, nu la runtime — vezi
 `lib/core/ads_service.dart`.
 
-### Build public (GitHub release, prieteni care testează)
+### Build public — CANALUL ĂSTA S-A ÎNCHIS (2026-09-04)
+
+Firestore e pe „Enforce" din App Check (vezi mai jos): un APK sideloadat, fără
+tokenul de debug al unui telefon anume, nu mai atinge Firestore — leaderboard,
+multiplayer și cloud save mor tăcut. Distribuția publică e acum DOAR
+`rocketknife1.github.io/SodoQuizz` (browser, web App Check funcțional).
+`gh release create` de mai jos rămâne ca rețetă, pentru cazul rar în care ai
+nevoie de un APK de dat cuiva direct (ei tot n-ar avea Firestore fără un
+token de debug înregistrat pe telefonul lor).
+
+### Build public (GitHub release, prieteni care testează) — ISTORIC
 
 ```
 flutter build apk --release
@@ -34,8 +44,9 @@ Play, legată de listare în AdMob și trecută prin review-ul lor — vezi
 
 ## App Check (dovada că binarul e cel autentic)
 
-Vezi `lib/core/app_check_service.dart` pentru ce face și, mai ales, pentru
-capcana de la „Enforce". Două flag-uri de compilare:
+Vezi `lib/core/app_check_service.dart` pentru ce face. **Firestore e pe
+„Enforce" din 2026-09-04** (Auth a rămas pe Monitoring, e încă PREVIEW) —
+capcana descrisă acolo nu mai e ipotetică. Două flag-uri de compilare:
 
 ```
 --dart-define=APPCHECK_DEBUG=true              # doar pentru testele mele pe telefon

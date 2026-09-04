@@ -2,9 +2,10 @@
 
 **Vezi o poză neclară. Ai patru variante. Cât de repede îți dai seama ce e?**
 
-1.394 de întrebări în 14 categorii: logo-uri, desene animate și filme, jocuri
+1.494 de întrebări în 15 categorii: logo-uri, desene animate și filme, jocuri
 video, mașini de lux, celebrități, sport, monumente, animale, steaguri,
-instrumente, obiecte medicale, scule auto, aplicații de telefon și România.
+instrumente, obiecte medicale, scule auto, aplicații de telefon, România și
+Matematică (formule, simboluri și matematicieni — fără poze).
 
 ---
 
@@ -14,19 +15,6 @@ Merge pe orice — telefon Android, iPhone, tabletă, calculator. Nu trebuie
 instalat nimic.
 
 **https://rocketknife1.github.io/SodoQuizz/**
-
----
-
-## 📱 Instalează pe Android
-
-**https://github.com/rocketknife1/SodoQuizz/releases/latest/download/app-release.apk**
-
-*~148 MB · merge pe telefoane cu Android 7.0 sau mai nou*
-
-**Cum se instalează:** apeși pe link, aștepți descărcarea, apoi deschizi
-fișierul. Telefonul o să te întrebe dacă permiți instalarea din „surse
-necunoscute" — accepți, e normal pentru aplicațiile care nu vin din Magazin
-Play. Instalarea durează un minut.
 
 ---
 
