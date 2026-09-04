@@ -33,6 +33,7 @@ dependencies:
   firebase_analytics: ^12.5.0
   package_info_plus: ^9.0.1
   firebase_remote_config: ^6.6.0
+  in_app_review: ^2.0.12
 
 dev_dependencies:
   flutter_test:

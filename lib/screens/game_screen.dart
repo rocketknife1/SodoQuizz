@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/admin_reveal.dart';
 import '../core/ads_service.dart';
 import '../core/analytics.dart';
+import '../core/review_prompt.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
@@ -454,6 +455,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       corecte: _sessionCorrect,
       total: qIndex,
     );
+    // Cere o recenzie doar dupa multe partide SI doar daca asta a mers bine —
+    // vezi core/review_prompt.dart pentru de ce momentul conteaza mai mult
+    // decat insistenta.
+    unawaited(ReviewPrompt.maybeAsk(correct: _sessionCorrect, total: qIndex));
     await _settleExitReward();
     if (!mounted) return;
     Navigator.pushReplacement(
