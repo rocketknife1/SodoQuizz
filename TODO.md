@@ -86,7 +86,9 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 - **`users/{uid}` — balanța rămâne scriabilă de proprietar, dar acum se
   VEDE.** Din 2026-09-04 există `onBalanceAudit` (functions/index.js): notează
   salturile implauzibile în `security_flags/{uid}`, iar panoul de Admin le
-  arată deasupra balanței, în fișa jucătorului.
+  arată deasupra balanței, în fișa jucătorului. DEPLOYAT și verificat
+  cap-la-cap pe producție (creare cu 999999999 monede → semnal → card portocaliu
+  pe telefon → date de test șterse).
 
   De ce detecție și nu blocare — motivul e în cod, nu teoretic:
   `CloudSyncService.push()` scrie documentul ÎNTREG, doar la trecerea în
