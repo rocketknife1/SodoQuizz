@@ -53,6 +53,30 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 
 ---
 
+## ⚠️ RECLAME REALE LA TESTERI — de reparat la următorul build de Play
+
+Build-ul pentru Play se face cu `--dart-define=REAL_ADS=true` (vezi
+docs/build.md), deci **testerii din testarea închisă văd reclame REALE**.
+Lista `_testDeviceIds` din `core/ads_service.dart` protejează DOAR telefonul
+de dezvoltare — chiar așa scrie și comentariul de acolo.
+
+Venitul e zero virgulă ceva la 20 de oameni, dar riscul nu e zero: reclame
+servite unui grup mic și cunoscut, care testează aplicația, e exact tiparul de
+**trafic invalid** pentru care AdMob suspendă conturi.
+
+**Ce se face:** AAB-ul pentru testarea închisă se construiește **FĂRĂ**
+`REAL_ADS`:
+
+```
+flutter build appbundle --release
+```
+
+`REAL_ADS=true` se pune abia la lansarea în PRODUCȚIE. Că fluxul de reclame
+merge se verifică pe telefonul de dezvoltare, care e deja înregistrat ca
+dispozitiv de test și primește reclame marcate „Test Ad".
+
+---
+
 ## Scăpări mici, găsite dar nereparate
 
 - **`room_invites` se adună la nesfârșit.** `onRoomInvite` marchează invitația
@@ -146,7 +170,20 @@ trecere prin toată lista de mai sus.
 
 ## Decizii care te așteaptă pe tine
 
-- **Magazin cu bani reali (IAP).** Ordinea obligatorie:
+- **Magazin cu bani reali (IAP).**
+
+  **CÂND: înainte de a cere accesul la producție, cât ești ÎNCĂ în testarea
+  închisă.** Userul credea (2026-09-05) că se adaugă abia după ce aplicația
+  apare în căutarea din Play — e pe dos. Produsele se pot testa din orice
+  canal, inclusiv închis
+  ([Play Console Help](https://support.google.com/googleplay/android-developer/answer/6062777?hl=en)),
+  iar testerii licențiați cumpără FĂRĂ să fie taxați.
+
+  Dacă amâni până ești public, primul om care dă bani reali e cobaiul tău.
+  Dar nici nu se face acum: întâi lasă testarea închisă să-și facă treaba cu
+  JOCUL, nu cu magazinul.
+
+  Ordinea obligatorie:
   0. **validarea bonului pe server** — vezi mai jos DE CE e pasul zero;
   0b. aprinde comutatorul **„Google Analytics: share in-app purchase and
      subscription revenue data"** din Firebase → Project settings →
