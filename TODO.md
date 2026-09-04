@@ -53,6 +53,20 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 
 ---
 
+## Scăpări mici, găsite dar nereparate
+
+- **`room_invites` se adună la nesfârșit.** `onRoomInvite` marchează invitația
+  cu `pushedAt` „ca să se poată curăța" (chiar așa scrie comentariul), dar
+  nimic nu o curăță vreodată. Documentele rămân după ce camera a dispărut.
+
+  La ritmul actual sunt câteva pe an, deci nu grăbește nimic. Două variante
+  când se ajunge acolo: fie funcția o **șterge** după ce a trimis push-ul
+  (invitația și-a făcut treaba, iar clientul primește `matchId` în notificare,
+  nu din document), fie o politică TTL în Firestore pe `createdAt`. Prima e
+  trei linii și zero configurare.
+
+---
+
 ## De pus în funcțiune (cod gata, așteaptă un pas al tău)
 
 - **Scoate ramura tranzitorie din regula de meciuri.** `firestore.rules` are
