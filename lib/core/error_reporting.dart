@@ -1,6 +1,8 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 
+import 'breadcrumbs.dart';
+
 // ─── O singură ușă prin care ies erorile din aplicație ────────────────────
 //
 // DE CE EXISTĂ: proiectul are ~168 de locuri scrise ca
@@ -33,6 +35,11 @@ import 'package:flutter/foundation.dart';
 /// glumă proastă.
 void reportError(Object error, StackTrace? stack, {required String unde}) {
   debugPrint('$unde a esuat: $error');
+  // ÎNTÂI firimitura: e gratis (o linie în memorie) și merge pe orice
+  // platformă, inclusiv web, unde Crashlytics nu există. Chiar dacă eroarea
+  // asta singură nu doboară nimic, va apărea în raportul următoarei probleme
+  // — de multe ori exact ea e cauza.
+  Breadcrumbs.drop('EROARE $unde: $error');
   if (kIsWeb) return;
   try {
     FirebaseCrashlytics.instance.recordError(

@@ -651,6 +651,29 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Rapoartele de eroare trimise din aplicatie ("Trimite raportul").
+    //
+    // DE CE creare libera pentru orice cont logat: raportul are sens tocmai
+    // cand ceva e rupt — daca l-am conditiona de starea contului, am pierde
+    // exact cazurile in care starea aia e problema. `fromUid` trebuie sa fie
+    // al lui, ca nimeni sa nu poata trimite rapoarte in numele altuia.
+    //
+    // Cine le citeste: doar adminul. Un raport contine urma tehnica a
+    // sesiunii cuiva — nu are ce cauta la ceilalti jucatori.
+    //
+    // Marimea e plafonata aici, nu doar in aplicatie: un client modificat ar
+    // putea trimite documente uriase si ar umple baza. 80 de firimituri e
+    // limita din core/breadcrumbs.dart, cu loc de siguranta.
+    match /bug_reports/{reportId} {
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.firimituri.size() <= 120
+        && request.resource.data.stiva.size() <= 8000
+        && request.resource.data.eroare.size() <= 2000;
+      allow read, update, delete: if request.auth != null
+        && request.auth.token.email == 'dragosssx@gmail.com';
+    }
+
     // Orice altceva neenumerat explicit mai sus — refuzat implicit.
     match /{document=**} {
       allow read, write: if false;

@@ -8,7 +8,7 @@
 // picat inainte nu mai lasa starea "murdara" peste urmatorul.
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc, updateDoc, deleteDoc, arrayUnion, getDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, deleteDoc, arrayUnion, getDoc, getDocs, collection, addDoc } from 'firebase/firestore';
 
 const env = await initializeTestEnvironment({
   projectId: 'sodoquizz-test',
@@ -227,6 +227,34 @@ await check('jucatorul NU-si poate sterge semnalul', () => assertFails(
 
 await check('nici adminul nu scrie semnale din client', () => assertFails(
   setDoc(doc(adminCtx, 'security_flags', 'altul'), { flagCount: 1 })));
+
+// bug_reports: rapoartele trimise din aplicatie. Oricine logat poate CREA
+// (raportul are sens tocmai cand ceva e rupt), dar numai in numele lui, si
+// numai adminul citeste.
+
+const RAPORT = (uid) => ({
+  uid, versiune: '1.0.1+6', platforma: 'android', ecran: 'Joc',
+  eroare: 'ceva a crapat', stiva: 'linia 1\nlinia 2', firimituri: ['[0:01] intra: Joc'],
+  rezolvat: false,
+});
+
+await check('un jucator isi trimite propriul raport', () => assertSucceeds(
+  addDoc(collection(jucator, 'bug_reports'), RAPORT('jucatorX'))));
+
+await check('NU poate trimite un raport in numele altuia', () => assertFails(
+  addDoc(collection(jucator, 'bug_reports'), RAPORT('altcineva'))));
+
+await check('un raport urias e refuzat (ar umple baza)', () => assertFails(
+  addDoc(collection(jucator, 'bug_reports'), {
+    ...RAPORT('jucatorX'),
+    firimituri: Array.from({ length: 500 }, (_, i) => `linia ${i}`),
+  })));
+
+await check('adminul citeste rapoartele', () => assertSucceeds(
+  getDocs(collection(adminCtx, 'bug_reports'))));
+
+await check('un jucator NU citeste rapoartele (nici pe ale lui)', () => assertFails(
+  getDocs(collection(jucator, 'bug_reports'))));
 
 // Stergerea unui profil de catre ADMIN ("Sterge complet" din panou).
 // A fost stricata tacit intre 2026-09-02 si 2026-09-03: despartirea lui

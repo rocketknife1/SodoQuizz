@@ -9,6 +9,7 @@ import '../core/display_name.dart';
 import 'cloud_sync_service.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
+import '../core/error_reporting.dart';
 
 /// Scope suplimentar necesar ca Google chiar să trimită poza de profil —
 /// API-ul nou de "Sign in with Google" (Credential Manager) NU o include
@@ -178,8 +179,8 @@ class AuthService {
       if (e.code == GoogleSignInExceptionCode.canceled) return; // userul a renuntat, nu e o eroare
       debugPrint('AuthService.signInWithGoogle a esuat: $e');
       throw const AccountUnavailableException();
-    } catch (e) {
-      debugPrint('AuthService.signInWithGoogle a esuat: $e');
+    } catch (e, s) {
+      reportError(e, s, unde: 'AuthService.signInWithGoogle');
       throw const AccountUnavailableException();
     }
   }

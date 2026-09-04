@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../core/error_reporting.dart';
 import 'auth_service.dart';
 import 'multiplayer_service.dart';
 import 'notification_service.dart';
@@ -119,8 +120,11 @@ class CloudSyncService {
       // Abia după ce scrierea a reușit — dacă pică (fără net), amprenta rămâne
       // cea veche și următoarea încercare reia urcarea, nu o sare.
       await StorageService.setCloudPushSnapshot(snapshot);
-    } catch (e) {
-      debugPrint('CloudSyncService.push a esuat: $e');
+    } catch (e, s) {
+      // Cel mai scump esec tacut din tot proiectul: jucatorul continua sa
+      // joace crezand ca e salvat, si afla abia la reinstalare, cand pierde
+      // tot. Vezi core/error_reporting.dart.
+      reportError(e, s, unde: 'CloudSyncService.push');
     } finally {
       _pushing = false;
     }

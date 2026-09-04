@@ -13,6 +13,7 @@ import 'friend_chat_service.dart';
 import 'moderation_service.dart';
 import 'multiplayer_service.dart';
 import 'storage_service.dart';
+import '../core/error_reporting.dart';
 
 /// Mesajul unic "esti banat, nu poti juca online", folosit IDENTIC de toate
 /// portile de UI (Multiplayer, Clasament, dialogul de revansa din main.dart).
@@ -226,8 +227,8 @@ class PlayerProfileService {
         'leaguePoints': FieldValue.increment(0),
         'seasonPoints': FieldValue.increment(0),
       }, SetOptions(merge: true));
-    } catch (e) {
-      debugPrint('PlayerProfileService.ensureProfileHeartbeat a esuat: $e');
+    } catch (e, s) {
+      reportError(e, s, unde: 'PlayerProfileService.ensureProfileHeartbeat');
     }
   }
 

@@ -10,6 +10,9 @@ import 'package:flutter/material.dart';
 import 'core/admin_reveal.dart';
 import 'core/ads_service.dart';
 import 'core/analytics.dart';
+import 'data/bug_report_service.dart';
+import 'widgets/error_boundary.dart';
+import 'core/breadcrumbs.dart';
 import 'core/app_check_service.dart';
 import 'core/audio.dart';
 import 'core/lang.dart';
@@ -45,6 +48,15 @@ import 'widgets/in_app_notification.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Inlocuieste dreptunghiul gri implicit al Flutter cu un ecran care ii spune
+  // omului ca nu e vina lui si ii da un buton de trimis raportul (vezi
+  // widgets/error_boundary.dart).
+  //
+  // AICI, in main, NU in `MaterialApp.builder`: e o variabila globala, iar
+  // atribuirea ei la fiecare reconstructie de widget e o scapare — testele de
+  // widget chiar pica pe asta („The value of ErrorWidget.builder was changed
+  // by the test"), fiindca ramanea schimbata intre teste.
+  ErrorWidget.builder = (details) => ErrorBoundary(details: details);
   Sfx.preload();
   Music.start();
   // Inainte de orice sincronizare, ca sa nu se mai urce in cloud contoarele
@@ -119,6 +131,10 @@ void main() async {
     // meciului, fiindca ultima camera jucata ar ramane altfel pana la
     // urmatorul meci - vezi MultiplayerActivityService.
     unawaited(MultiplayerActivityService.instance.sweepMine());
+    // Rapoartele de eroare care n-au putut pleca (fara net) pleaca acum.
+    // Erorile apar cel mai des cand conexiunea e proasta, deci fara pasul
+    // asta am pierde exact rapoartele care conteaza.
+    unawaited(BugReportService.instance.flushQueue());
   } catch (e) {
     debugPrint('Firebase.initializeApp/identitate a esuat: $e');
   }
@@ -588,6 +604,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           // adaugarea unuia nou.
           navigatorObservers: [
             if (Analytics.instance.observer != null) Analytics.instance.observer!,
+            _BreadcrumbObserver(),
           ],
           title: 'SodoQuizz',
           debugShowCheckedModeBanner: false,
@@ -720,4 +737,28 @@ class _ReconnectHostState extends State<_ReconnectHost> {
       },
     );
   }
+}
+
+/// Notează în firimituri fiecare schimbare de ecran. O singură clasă, pusă pe
+/// `navigatorObservers`, ține locul unei linii în fiecare din cele 33 de
+/// ecrane — și, spre deosebire de ele, nu se poate uita la adăugarea unuia nou.
+///
+/// Numele rutei vine din `settings.name` când există; altfel din tipul
+/// widget-ului, care e oricum lizibil ("GameScreen", "RoomLobbyScreen").
+class _BreadcrumbObserver extends NavigatorObserver {
+  void _note(String verb, Route<dynamic>? route) {
+    final name = route?.settings.name ??
+        route?.settings.arguments?.runtimeType.toString() ??
+        (route is MaterialPageRoute ? 'ecran' : route?.runtimeType.toString());
+    if (name == null) return;
+    Breadcrumbs.drop('$verb: $name');
+  }
+
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _note('intra', route);
+
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
+      _note('iese din', route);
 }

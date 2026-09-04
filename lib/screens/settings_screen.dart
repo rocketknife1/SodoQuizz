@@ -16,6 +16,8 @@ import 'home_screen.dart';
 import 'language_screen.dart';
 import 'loading_screen.dart';
 import 'music_screen.dart';
+import '../core/breadcrumbs.dart';
+import '../data/bug_report_service.dart';
 
 /// Setările vizibile oricui.
 ///
@@ -274,6 +276,22 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     // Subtitlul se aprinde cand am raspuns si jucatorul n-a
                     // deschis inca firul — aceeasi sursa ca bulina de pe
                     // butonul SETARI din meniul principal.
+                    // „Ceva nu merge" — raportul tehnic, SEPARAT de mesajul
+                    // catre admin. Mesajul e o conversatie in cuvintele lui;
+                    // asta e urma tehnica pe care el n-are cum s-o scrie:
+                    // ce ecrane a atins, ce a picat, pe ce versiune. O
+                    // apasare, fara nimic de completat.
+                    _staggered(
+                      i++,
+                      _navRow(
+                        icon: Icons.bug_report_rounded,
+                        color: AppColors.play,
+                        title: tr('Ceva nu merge', 'Something is broken'),
+                        subtitle: tr('Trimite-mi ce s-a intamplat, cu o apasare',
+                            'Send me what happened, in one tap'),
+                        onTap: _sendBugReport,
+                      ),
+                    ),
                     _staggered(
                       i++,
                       ValueListenableBuilder<bool>(
@@ -336,6 +354,23 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
 
 
   /// Rând obișnuit de setare care duce în alt ecran.
+  /// Raportul manual: pentru ce nu crapă, dar e greșit („poza nu se potrivește
+  /// cu răspunsul", „butonul nu face nimic"). Nu i se cere să descrie nimic —
+  /// sistemul trimite urma tehnică, el doar confirmă.
+  Future<void> _sendBugReport() async {
+    Breadcrumbs.drop('a cerut raport din Setari');
+    final report = await BugReportService.instance.build(screen: 'Setari');
+    await BugReportService.instance.send(report);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(tr('Trimis. Mă uit peste el, mulțumesc!',
+            "Sent. I'll look into it, thank you!")),
+        backgroundColor: AppColors.teal,
+      ),
+    );
+  }
+
   Widget _navRow({
     required IconData icon,
     required Color color,
