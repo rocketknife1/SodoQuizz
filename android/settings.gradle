@@ -18,14 +18,26 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    id "com.android.application" version "8.2.2" apply false
+    // 8.11.1 nu e o alegere de gust: e minimul cerut de Flutter 3.47 SI exact
+    // versiunea fata de care isi compileaza el pluginul Gradle
+    // (flutter_tools/gradle/build.gradle.kts), deci combinatia cea mai bine
+    // testata. Deliberat SUB AGP 9: de acolo se citeste doar DSL-ul nou, iar
+    // `app/build.gradle` ar trebui rescris.
+    id "com.android.application" version "8.11.1" apply false
     // Urcat de la 1.8.22 la 2.1.0 pentru firebase_app_check: build.gradle-ul
     // lui foloseste DSL-ul `kotlin { compilerOptions { ... } }`, care exista
     // abia din Kotlin Gradle Plugin 2.0. Pe 1.8.22 build-ul pica la faza de
     // evaluare cu "Could not find method compilerOptions()", inainte sa
     // compileze ceva. Celelalte pluginuri Firebase (core, auth, firestore) nu
     // il folosesc inca, deci pana acum 1.8.22 a fost de ajuns.
-    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
+    //
+    // Urcat din nou la 2.2.20 odata cu Flutter 3.47 (2026-09-04), si NU din
+    // pofta de versiuni noi: Flutter 3.47 refuza sa construiasca sub Gradle
+    // 8.14, iar Kotlin 2.1.0 suporta Gradle doar pana sub 8.11 (matricea din
+    // flutter_tools/lib/src/android/gradle_utils.dart). Cele doua nu se pot
+    // impaca — asa ca urcarea lui Kotlin e obligatorie, nu optionala.
+    // 2.2.20 acopera Gradle pana sub 8.14.99, deci exact fereastra ceruta.
+    id "org.jetbrains.kotlin.android" version "2.2.20" apply false
     // Necesar ca google-services.json sa fie procesat la build - fara el,
     // config-ul Firebase real nu ajunge la SDK-urile native (in special
     // pentru client ID-ul implicit de Google Sign-In).

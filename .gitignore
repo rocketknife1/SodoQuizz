@@ -33,6 +33,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+# `/build/` e ancorat la radacina, deci NU acopera si asta — rapoarte generate
+# de Gradle, aparute odata cu AGP 8.11.1 (2026-09-04).
+android/build/
 
 # Symbolication related
 app.*.symbols
