@@ -29,16 +29,15 @@ Categoria #14 în Play, prima FĂRĂ poze — arată o formulă scrisă mare. 10
 întrebări (Formule celebre, Simboluri, Matematicieni, Calcule). Verificată pe
 telefon: apare, deblocare cu Gems, cardul de formulă, reveal-ul.
 
+Turul de conținut FĂCUT (a15952a): toate 100 revizuite, 2 greșeli reparate
+(hint Moisil + un distractor malformat). Fix-ul one-line al formulelor
+(`softWrap:false`) e în `cb1633e`, probat pe telefon după commit, merge.
+
 Rămas pentru „finalizări pe viitor" (cuvintele userului):
-- **formulele lungi** — fix-ul de one-line (`softWrap:false` în `FormulaCard`)
-  a fost probat pe telefon DUPĂ commit și merge (`sin²α + cos²α = 1` pe un
-  rând), dar nu e într-un build pushat separat — e în `cb1633e`, care are în
-  mesaj nota că era neprobat. Nimic de făcut, doar de știut.
 - **poze cu matematicieni** de ghicit — arhitectura le suportă deja (întrebare
   cu `formula` gol + poză). Cere adăugarea liniei
   `assets/continut/matematica/poze/` în `pubspec.yaml`.
 - **mai multe întrebări** — userul: „pe viitor urcăm la mai multe".
-- **tur pe telefon** al conținutului — s-au văzut ~6 din 100.
 
 Generatorul (`gen_matematica.py`) e în scratchpad, nu în repo — unealtă de o
 dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart).
