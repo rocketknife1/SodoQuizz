@@ -72,16 +72,61 @@ dată. Toate răspunsurile trebuie unice GLOBAL (test/question_loader_test.dart)
 ## Decizii care te așteaptă pe tine
 
 - **Magazin cu bani reali (IAP).** Ordinea obligatorie:
+  0. **validarea bonului pe server** — vezi mai jos DE CE e pasul zero;
   1. integrez `in_app_purchase` + permisiunea `com.android.vending.BILLING`
      și leg butoanele de SDK-ul real (nu e o seară de lucru);
   2. urci un build cu asta în Play Console;
   3. **abia atunci** creezi produsele cu ID-urile din `shop.dart` — sunt
      permanente, nu se redenumesc și nu se refolosesc după ștergere;
-  4. testezi cu cont licențiat.
+  4. testezi cu cont licențiat (License testers, în Play Console).
 
   La deschidere se schimbă DOUĂ comutatoare, nu unul: `premiumShopRevealed`
   (vizibilitatea) și `realMoneyStoreEnabled` (plățile efective). Adăugarea
   plăților obligă și **reretrimiterea formularului Data safety**.
+
+  ### De ce validarea pe server e pasul ZERO, nu ultimul
+
+  Din secunda în care vinzi gems, o monedă cumpărată și una fabricată devin
+  imposibil de deosebit — `users/{uid}` e scriabil de proprietar (vezi punctul
+  cu balanța). Ai vinde ceva ce oricine își poate tipări singur.
+
+  **Dar NU cere rescrierea economiei.** Monedele câștigate din quiz pot rămâne
+  liniștit locale: dacă cineva își fabrică 10.000 de monede, nu pierzi niciun
+  leu. Se protejează doar ce s-a CUMPĂRAT. Concret, o Cloud Function care:
+  - primește `purchaseToken`-ul de la client și îl verifică la Google cu
+    `purchases.products.get` (Play Developer API v3, scope
+    `androidpublisher`), cu `packageName` + `productId` + token;
+  - **abia dacă Google confirmă**, acordă gems-ii/vieţile/hint-urile;
+  - **ține minte token-urile deja folosite**, altfel același bon valid poate fi
+    trimis de o sută de ori (replay).
+
+  ### Capcana care te costă bani tăcut: fereastra de 3 zile
+
+  O achiziție neconfirmată în **3 zile** e **rambursată automat, iar Google
+  revocă produsul** — dar tu i-ai dat deja gems-ii. Ceasul pornește când
+  starea trece din `PENDING` în `PURCHASED` (nu confirma cât e `PENDING`).
+  `consumeAsync()` confirmă implicit, iar la noi **11 din 12 produse sunt
+  consumabile**, deci e acoperit — dar doar dacă chiar consumi în 3 zile.
+
+  ### Ce e consumabil și ce nu
+
+  Consumabile (se pot cumpăra la nesfârșit): `gems_130/390/1050`,
+  `lives_10/30`, `hints_25/70/175`, `bundle_starter/aventurier/campion`.
+  NEconsumabil, o singură dată pe viață: **`no_ads_forever`** — ăsta cere
+  obligatoriu **„Restaurează cumpărăturile"** în interfață (Play o cere), altfel
+  omul care schimbă telefonul își pierde plata și îți deschide dispută.
+
+  ### Rambursări și chargeback
+
+  Fără asta, cineva cumpără gems, îi cheltuie, cere refund și rămâne cu tot.
+  Se închide cu **Voided Purchases API** (lista comenzilor anulate/rambursate/
+  contestate) plus **Real-time developer notifications** (RTDN) — la o
+  notificare, ceri starea reală și retragi ce s-a acordat.
+
+  Surse verificate 2026-09-04:
+  [ciclul unei achiziții](https://developer.android.com/google/play/billing/lifecycle/one-time),
+  [fraudă și abuz](https://developer.android.com/google/play/billing/security),
+  [purchases.products.get](https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.products/get).
 
 - **`users/{uid}` — balanța rămâne scriabilă de proprietar, dar acum se
   VEDE.** Din 2026-09-04 există `onBalanceAudit` (functions/index.js): notează
