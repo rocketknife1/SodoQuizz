@@ -15,9 +15,16 @@ import 'dart:collection';
 // întâmplat în sesiunea în care a apărut problema, nu istoria contului.
 
 class _Crumb {
-  final DateTime cand;
-  final String ce;
-  const _Crumb(this.cand, this.ce);
+  /// Momentul, calculat CÂND SE ADAUGĂ, nu când se citește lista.
+  ///
+  /// Prima versiune îl calcula la citire, față de un `_start` inițializat
+  /// leneș de Dart — adică abia la primul `snapshot()`. Ieșeau timpi în
+  /// dezordine („0:39" urmat de „0:00" pentru o acțiune mai recentă),
+  /// exact pe primul raport real trimis de pe telefon. Momentul aparține
+  /// firimiturii, deci se îngheață odată cu ea.
+  final String at;
+  final String what;
+  const _Crumb(this.at, this.what);
 }
 
 class Breadcrumbs {
@@ -30,18 +37,24 @@ class Breadcrumbs {
 
   static final Queue<_Crumb> _ring = Queue<_Crumb>();
 
-  /// Momentul pornirii, ca timpii din raport să fie relativi („la 0:42 de la
-  /// pornire"), nu ore absolute care nu spun nimic.
-  static final DateTime _start = DateTime.now();
+  /// Ceasul, ca testele să poată controla trecerea timpului. În aplicație e
+  /// mereu `DateTime.now`.
+  static DateTime Function() clock = DateTime.now;
 
-  /// Notează o acțiune. [ce] trebuie să fie scurt și concret: „ecran: Joc",
+  /// Momentul primei firimituri — reperul față de care se măsoară restul.
+  /// Setat EXPLICIT la prima adăugare, nu lăsat pe inițializarea leneșă.
+  static DateTime? _start;
+
+  /// Notează o acțiune. [what] trebuie să fie scurt și concret: „ecran: Joc",
   /// „raspuns corect", „firestore: permission-denied la profil".
   ///
   /// NU pune aici text scris de jucător, nume, sau conținut de mesaje —
   /// raportul ajunge în baza de date și nu are de ce să conțină date
   /// personale peste ce există deja.
-  static void drop(String ce) {
-    _ring.addLast(_Crumb(DateTime.now(), ce));
+  static void drop(String what) {
+    final now = clock();
+    _start ??= now;
+    _ring.addLast(_Crumb(_format(now.difference(_start!)), what));
     while (_ring.length > _max) {
       _ring.removeFirst();
     }
@@ -49,17 +62,19 @@ class Breadcrumbs {
 
   /// Firimiturile, ca linii gata de citit, cele mai vechi întâi.
   /// Formatul „[m:ss] ce" se citește dintr-o privire în panoul de admin.
-  static List<String> snapshot() => [
-        for (final c in _ring) '[${_relativ(c.cand)}] ${c.ce}',
-      ];
+  static List<String> snapshot() =>
+      [for (final c in _ring) '[${c.at}] ${c.what}'];
 
-  static String _relativ(DateTime t) {
-    final d = t.difference(_start);
+  static String _format(Duration d) {
     final m = d.inMinutes;
     final s = d.inSeconds % 60;
     return '$m:${s.toString().padLeft(2, '0')}';
   }
 
-  /// Doar pentru teste — starea globală trebuie să poată fi resetată între ele.
-  static void clearForTest() => _ring.clear();
+  /// Doar pentru teste — starea globală trebuie să poată fi resetată.
+  static void clearForTest() {
+    _ring.clear();
+    _start = null;
+    clock = DateTime.now;
+  }
 }
