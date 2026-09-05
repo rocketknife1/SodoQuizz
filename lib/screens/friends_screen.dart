@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
+import '../core/cosmetics.dart';
 import '../core/leagues.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
@@ -12,6 +13,7 @@ import '../models/friend_chat.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
+import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
 import 'friend_chat_screen.dart';
 
@@ -506,6 +508,7 @@ class _FriendRow extends StatelessWidget {
               accentColor: pickAvatarColor(profile.avatarSeed),
               photoUrl: profile.photoUrl,
               style: avatarStyleFromId(profile.avatarStyle),
+              frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
               tier: peakTier,
             ),
             const SizedBox(width: 12),
@@ -524,6 +527,7 @@ class _FriendRow extends StatelessWidget {
                       if (unread) ...[const SizedBox(width: 6), const UnreadDot()],
                     ],
                   ),
+                  CosmeticTitle(titleId: profile.equippedTitle, fontSize: 10),
                   // Ultimul mesaj ia locul rândului de ligă doar când există —
                   // altfel rândul ar fi crescut cu o linie goală pentru toți
                   // prietenii cu care n-ai vorbit niciodată.

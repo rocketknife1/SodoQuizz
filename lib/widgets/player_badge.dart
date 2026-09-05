@@ -3,6 +3,7 @@ import '../core/cosmetics.dart';
 import '../core/theme.dart';
 import '../models/multiplayer_models.dart';
 import 'avatar.dart';
+import 'cosmetic_title.dart';
 
 /// Avatar + nume, cu un inel colorat opțional (evidențiază gazda, liderul
 /// sau „tu") și o insignă mică sus (coroană, loc pe podium) — un singur
@@ -21,6 +22,11 @@ class PlayerBadge extends StatelessWidget {
   final VoidCallback? onTap;
   final Frame frame;
 
+  /// Titlul cosmetic (vezi core/cosmetics.dart). Default `'novice'` = gol.
+  /// `MatchPlayer` nu carea inca `equippedTitle`, deci badge-ul de meci ramane
+  /// pe default pana la o extindere viitoare (Task 8).
+  final String titleId;
+
   const PlayerBadge({
     super.key,
     required this.name,
@@ -33,6 +39,7 @@ class PlayerBadge extends StatelessWidget {
     this.scoreChip,
     this.onTap,
     this.frame = Frame.none,
+    this.titleId = 'novice',
   });
 
   @override
@@ -78,6 +85,7 @@ class PlayerBadge extends StatelessWidget {
               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ),
+          CosmeticTitle(titleId: titleId, fontSize: 9, align: TextAlign.center),
           if (scoreChip != null) ...[const SizedBox(height: 2), scoreChip!],
         ],
       ),

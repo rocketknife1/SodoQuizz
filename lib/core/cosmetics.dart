@@ -64,6 +64,15 @@ bool ownsFrame(Frame f, {required int level, required int leaguePoints}) {
   };
 }
 
+/// Rama de afisat pentru un jucator, verificand ca o DETINE cu adevarat din
+/// nivelul/liga lui publice. Titlurile din realizari NU se pot valida (nu-s in
+/// profilul public) - se afiseaza pe incredere, sunt pur vizuale.
+Frame validatedFrame(String equippedFrame,
+    {required int level, required int leaguePoints}) {
+  final f = frameFromId(equippedFrame);
+  return ownsFrame(f, level: level, leaguePoints: leaguePoints) ? f : Frame.none;
+}
+
 bool ownsTitle(PlayerTitle t,
     {required int level, required Set<String> achievements}) {
   return switch (t) {

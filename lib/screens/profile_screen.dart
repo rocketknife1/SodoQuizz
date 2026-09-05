@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../core/admin.dart';
+import '../core/cosmetics.dart';
 import '../core/leagues.dart';
 import '../core/progression.dart';
 import '../core/lang.dart';
@@ -16,6 +17,7 @@ import '../data/storage_service.dart';
 import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
 import '../widgets/edit_name_dialog.dart';
 import 'achievements_screen.dart';
@@ -274,6 +276,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 8),
                         const Icon(Icons.edit_rounded, color: Colors.white54, size: 18),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: ValueListenableBuilder<PlayerTitle>(
+                    valueListenable: myTitle,
+                    builder: (_, title, __) => CosmeticTitle(
+                      titleId: title.name,
+                      fontSize: 12,
+                      align: TextAlign.center,
                     ),
                   ),
                 ),

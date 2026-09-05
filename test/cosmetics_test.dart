@@ -109,4 +109,15 @@ void main() {
       expect(myFrame.value, Frame.none);
     });
   });
+
+  group('validatedFrame', () {
+    test('cade pe none daca nu e detinuta', () {
+      expect(validatedFrame('diamond', level: 1, leaguePoints: 0), Frame.none);
+      expect(validatedFrame('lvl10', level: 15, leaguePoints: 0), Frame.lvl10);
+    });
+
+    test('id necunoscut -> none', () {
+      expect(validatedFrame('zzz', level: 99, leaguePoints: 999999), Frame.none);
+    });
+  });
 }
