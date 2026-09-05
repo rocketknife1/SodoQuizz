@@ -458,8 +458,9 @@ service cloud.firestore {
     // altfel un client modificat ar fi putut trimite invitatii semnate cu
     // numele altcuiva — adica notificari false catre oricine.
     //
-    // Citeste si sterge doar cel invitat (isi curata invitatiile consumate)
-    // sau cel care a trimis-o (o poate anula).
+    // Citeste si sterge doar cel invitat sau cel care a trimis-o (o poate
+    // anula inainte sa fie trimisa). In practica documentul e sters de
+    // `onRoomInvite` imediat dupa push — clientul nu-l citeste niciodata.
     match /room_invites/{inviteId} {
       allow create: if request.auth != null
         && request.resource.data.fromUid == request.auth.uid

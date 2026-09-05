@@ -187,15 +187,11 @@ dispozitiv de test și primește reclame marcate „Test Ad".
 
 ## Scăpări mici, găsite dar nereparate
 
-- **`room_invites` se adună la nesfârșit.** `onRoomInvite` marchează invitația
-  cu `pushedAt` „ca să se poată curăța" (chiar așa scrie comentariul), dar
-  nimic nu o curăță vreodată. Documentele rămân după ce camera a dispărut.
-
-  La ritmul actual sunt câteva pe an, deci nu grăbește nimic. Două variante
-  când se ajunge acolo: fie funcția o **șterge** după ce a trimis push-ul
-  (invitația și-a făcut treaba, iar clientul primește `matchId` în notificare,
-  nu din document), fie o politică TTL în Firestore pe `createdAt`. Prima e
-  trei linii și zero configurare.
+- ✅ **`room_invites` se adună la nesfârșit** — REPARAT 2026-09-06 (necommitat
+  deploy). `onRoomInvite` șterge acum invitația imediat după push, în loc s-o
+  marcheze cu `pushedAt`. Verificat: clientul ia `matchId`/`code` din payload-ul
+  notificării (push_service.dart), nu citește niciodată documentul.
+  **Rămâne:** `firebase deploy --only functions` ca să intre în producție.
 
 ---
 

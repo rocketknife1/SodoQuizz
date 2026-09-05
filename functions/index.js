@@ -249,11 +249,14 @@ exports.onRoomInvite = onDocumentCreated(
         fromUid: inv.fromUid || "",
       },
     });
-    // Invitatia si-a facut treaba; o marcam ca trimisa ca sa se poata curata.
+    // Invitatia si-a facut treaba: clientul primeste `matchId` si `code` in
+    // payload-ul notificarii, nu din document (vezi push_service.dart, cazul
+    // "room_invite"), iar `room_invites` nu se citeste niciodata din client.
+    // Deci o stergem pe loc — altfel documentele se adunau la nesfarsit.
     try {
-      await event.data.ref.update({ pushedAt: FieldValue.serverTimestamp() });
+      await event.data.ref.delete();
     } catch (e) {
-      logger.warn(`nu am putut marca invitatia ${event.params.inviteId}: ${e}`);
+      logger.warn(`nu am putut sterge invitatia ${event.params.inviteId}: ${e}`);
     }
   }
 );
