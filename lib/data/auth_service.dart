@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import '../firebase_options.dart';
 import '../core/display_name.dart';
+import '../core/progression.dart';
 import 'cloud_sync_service.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
@@ -81,7 +82,9 @@ class AuthService {
   /// widgets/avatar_art.dart). Călătorește odată cu numele și poza tocmai ca
   /// să ajungă în TOATE locurile unde apare jucătorul pentru ceilalți —
   /// lobby, meci, clasament, listă de prieteni — dintr-un singur loc.
-  Future<({String name, String? photoUrl, String avatarStyle})> multiplayerIdentity() async {
+  Future<({String name, String? photoUrl, String avatarStyle,
+      String equippedFrame, String equippedTitle, int level})>
+      multiplayerIdentity() async {
     final avatarStyle = await StorageService.getAvatarStyleId();
     final u = currentUser;
     // Ordinea numelor stă într-un singur loc, testabil: core/display_name.dart.
@@ -94,7 +97,14 @@ class AuthService {
     // aici se cade pe numele local generat — [getDisplayName] îl și creează
     // dacă lipsește, deci nu are voie să fie chemat pe calea de mai sus.
     final name = resolved.isNotEmpty ? resolved : await StorageService.getDisplayName();
-    return (name: name, photoUrl: u?.photoURL, avatarStyle: avatarStyle);
+    return (
+      name: name,
+      photoUrl: u?.photoURL,
+      avatarStyle: avatarStyle,
+      equippedFrame: await StorageService.getEquippedFrame(),
+      equippedTitle: await StorageService.getEquippedTitle(),
+      level: levelForXp(await StorageService.getXp()),
+    );
   }
 
   /// Cere autorizare pentru scope-ul de profil și ia poza direct de la

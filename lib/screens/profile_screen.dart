@@ -114,7 +114,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
-    final identity = results[8] as ({String name, String? photoUrl, String avatarStyle});
+    final identity = results[8] as ({String name, String? photoUrl, String avatarStyle,
+        String equippedFrame, String equippedTitle, int level});
     final forcedName = results[9] as String;
     return _ProfileData(
       xp: results[0] as int,
