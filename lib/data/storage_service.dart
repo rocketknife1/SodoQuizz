@@ -31,6 +31,8 @@ class StorageService {
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
   static const _adminAnswerRevealKey = 'admin_answer_reveal';
+  static const _equippedFrameKey = 'equipped_frame';
+  static const _equippedTitleKey = 'equipped_title';
   static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
@@ -1305,6 +1307,28 @@ class StorageService {
   static Future<void> setAdminAnswerReveal(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_adminAnswerRevealKey, value);
+  }
+
+  // ─── Cosmeticul echipat (rama + titlu) — vezi core/cosmetics.dart ────────
+
+  static Future<String> getEquippedFrame() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_equippedFrameKey) ?? 'none';
+  }
+
+  static Future<void> setEquippedFrame(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_equippedFrameKey, id);
+  }
+
+  static Future<String> getEquippedTitle() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_equippedTitleKey) ?? 'novice';
+  }
+
+  static Future<void> setEquippedTitle(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_equippedTitleKey, id);
   }
 
   // ─── Piesa de fundal aleasă (vezi core/music_tracks.dart) ────────────────

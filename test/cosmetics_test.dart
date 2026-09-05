@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/cosmetics.dart';
+import 'package:guess_it/data/storage_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('ownsFrame', () {
@@ -72,5 +74,39 @@ void main() {
       expect(ro, isNotEmpty);
       expect(en, isNotEmpty);
     }
+  });
+
+  group('echipare — persistenta si globali', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('valorile implicite fara nimic salvat', () async {
+      expect(await StorageService.getEquippedFrame(), 'none');
+      expect(await StorageService.getEquippedTitle(), 'novice');
+    });
+
+    test('setMyFrame scrie prefs SI notifier', () async {
+      SharedPreferences.setMockInitialValues({});
+      await loadCosmetics();
+      expect(myFrame.value, Frame.none);
+      await setMyFrame(Frame.gold);
+      expect(myFrame.value, Frame.gold);
+      expect(await StorageService.getEquippedFrame(), 'gold');
+    });
+
+    test('loadCosmetics citeste ce s-a salvat', () async {
+      SharedPreferences.setMockInitialValues({
+        'equipped_frame': 'diamond',
+        'equipped_title': 'veteran',
+      });
+      await loadCosmetics();
+      expect(myFrame.value, Frame.diamond);
+      expect(myTitle.value, PlayerTitle.veteran);
+    });
+
+    test('loadCosmetics cade pe default la valoare corupta', () async {
+      SharedPreferences.setMockInitialValues({'equipped_frame': 'zzz'});
+      await loadCosmetics();
+      expect(myFrame.value, Frame.none);
+    });
   });
 }

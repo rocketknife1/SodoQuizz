@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../data/storage_service.dart';
 import 'leagues.dart';
 import 'theme.dart';
 
@@ -147,3 +148,34 @@ String titleRequirement(PlayerTitle t) => switch (t) {
       PlayerTitle.legenda => 'Nivel 25',
       PlayerTitle.titan => 'Nivel 50',
     };
+
+// ─── Ce am echipat pe TELEFONUL ăsta ─────────────────────────────────────
+//
+// Tiparul `myAvatarStyle` din widgets/avatar.dart: ValueNotifier global, citit
+// o dată la pornire, ținut aici ca schimbarea să se vadă instant peste tot
+// fără restart.
+
+final ValueNotifier<Frame> myFrame = ValueNotifier<Frame>(Frame.none);
+final ValueNotifier<PlayerTitle> myTitle =
+    ValueNotifier<PlayerTitle>(PlayerTitle.novice);
+
+/// Chemată din `main()`. Nu aruncă niciodată.
+Future<void> loadCosmetics() async {
+  try {
+    myFrame.value = frameFromId(await StorageService.getEquippedFrame());
+    myTitle.value = titleFromId(await StorageService.getEquippedTitle());
+  } catch (_) {
+    myFrame.value = Frame.none;
+    myTitle.value = PlayerTitle.novice;
+  }
+}
+
+Future<void> setMyFrame(Frame f) async {
+  myFrame.value = f;
+  await StorageService.setEquippedFrame(f.name);
+}
+
+Future<void> setMyTitle(PlayerTitle t) async {
+  myTitle.value = t;
+  await StorageService.setEquippedTitle(t.name);
+}
