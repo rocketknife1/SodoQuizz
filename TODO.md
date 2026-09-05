@@ -466,9 +466,9 @@ raportare și se confirmă cu userul.
 
 ## Cloud Functions — întreținere
 
-CINCI declanșatoare în `europe-west1`, toate pe **nodejs22**, DEPLOYATE
-(verificat `firebase.cmd functions:list` pe 2026-09-04): onFriendMessage,
-onFriendRequest, onRoomInvite, onSystemNotification, onAdminMessage.
+ȘASE declanșatoare în `europe-west1`, toate pe **nodejs22**, DEPLOYATE
+(redeployate 2026-09-06): onFriendMessage, onFriendRequest, onRoomInvite,
+onSystemNotification, onAdminMessage, onBalanceAudit.
 
 - `firebase-functions` (`^6.1.0`) e ok deocamdată; un upgrade major aduce
   **modificări incompatibile**, deci nu se face pe fugă odată cu altceva.
