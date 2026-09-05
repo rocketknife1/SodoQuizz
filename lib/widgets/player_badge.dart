@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/cosmetics.dart';
 import '../core/theme.dart';
 import '../models/multiplayer_models.dart';
 import 'avatar.dart';
@@ -18,6 +19,7 @@ class PlayerBadge extends StatelessWidget {
   final Widget? topBadge;
   final Widget? scoreChip;
   final VoidCallback? onTap;
+  final Frame frame;
 
   const PlayerBadge({
     super.key,
@@ -30,6 +32,7 @@ class PlayerBadge extends StatelessWidget {
     this.topBadge,
     this.scoreChip,
     this.onTap,
+    this.frame = Frame.none,
   });
 
   @override
@@ -58,6 +61,7 @@ class PlayerBadge extends StatelessWidget {
                   accentColor: pickAvatarColor(avatarSeed),
                   photoUrl: photoUrl,
                   style: avatarStyleFromId(avatarStyle),
+                  frame: frame,
                 ),
               ),
               if (topBadge != null) Positioned(top: -10, child: topBadge!),

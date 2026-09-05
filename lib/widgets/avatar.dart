@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../core/cosmetics.dart';
 import '../core/theme.dart';
 import '../data/auth_service.dart';
 import '../data/storage_service.dart';
@@ -46,6 +47,12 @@ class Avatar extends StatelessWidget {
   /// n-ar avea niciun efect vizibil pentru cine e logat cu Google.
   final AvatarStyle style;
 
+  /// Rama cosmetică din jurul avatarului (vezi core/cosmetics.dart).
+  /// [Frame.none] = fără inel, comportamentul de dinainte. Inelul CONSUMĂ din
+  /// [size] (nu adaugă) — [Avatar] e folosit în rânduri strânse cu dimensiune
+  /// fixă (clasament, badge de meci) unde câțiva px în plus ar sparge layout-ul.
+  final Frame frame;
+
   const Avatar({
     super.key,
     this.size = 44,
@@ -53,6 +60,7 @@ class Avatar extends StatelessWidget {
     this.accentColor,
     this.photoUrl,
     this.style = AvatarStyle.poza,
+    this.frame = Frame.none,
   });
 
   /// Pozele de Google (`...googleusercontent.com/...=s96-c`) vin implicit la
@@ -70,13 +78,18 @@ class Avatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Inelul consumă din dimensiunea totală: avatarul interior se desenează la
+    // `size - 2*ringWidth`, iar cercul exterior rămâne exact [size].
+    final ringWidth =
+        frame == Frame.none ? 0.0 : (size * 0.08).clamp(2.0, 5.0);
+    final innerSize = size - 2 * ringWidth;
     final color = accentColor ?? AppColors.purple;
     final fallback = Container(
       color: color.withAlpha(60),
       alignment: Alignment.center,
       child: label != null
-          ? Text(label!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: size * 0.4))
-          : Icon(Icons.person_rounded, color: Colors.white, size: size * 0.5),
+          ? Text(label!, style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: innerSize * 0.4))
+          : Icon(Icons.person_rounded, color: Colors.white, size: innerSize * 0.5),
     );
     // pozele (mai ales cele de Google, care nu sunt mereu perfect patrate/
     // centrate) sunt usor "supra-scalate" fata de cerc, ca sa nu ramana
@@ -85,24 +98,39 @@ class Avatar extends StatelessWidget {
     Widget overscan(Widget child) => Transform.scale(scale: 1.18, child: child);
     Widget photo(String url) {
       final dpr = MediaQuery.of(context).devicePixelRatio;
-      return overscan(Image.network(_highResUrl(url, size, dpr), fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
+      return overscan(Image.network(_highResUrl(url, innerSize, dpr), fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
     }
     Widget localPhoto() => overscan(Image.asset(userAvatarAsset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback));
-    return Container(
-      width: size,
-      height: size,
+    final inner = Container(
+      width: innerSize,
+      height: innerSize,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: color, width: size > 60 ? 3 : 2),
+        border: Border.all(color: color, width: innerSize > 60 ? 3 : 2),
       ),
       clipBehavior: Clip.hardEdge,
       child: style.isArt
-          ? AvatarArt(style: style, size: size)
+          ? AvatarArt(style: style, size: innerSize)
           : (photoUrl != null && photoUrl!.isNotEmpty)
               ? photo(photoUrl!)
               : label != null
                   ? fallback
                   : localPhoto(),
+    );
+    if (frame == Frame.none) return inner;
+    final fs = frameStyle(frame);
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(ringWidth),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: fs.colors.length > 1
+            ? SweepGradient(colors: [...fs.colors, fs.colors.first])
+            : null,
+        color: fs.colors.length == 1 ? fs.colors.first : null,
+      ),
+      child: inner,
     );
   }
 }
@@ -150,11 +178,17 @@ class _MyAvatarState extends State<MyAvatar> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<AvatarStyle>(
       valueListenable: myAvatarStyle,
-      builder: (context, style, __) => StreamBuilder<User?>(
-        stream: AuthService.instance.authStateChanges(),
-        initialData: AuthService.instance.currentUser,
-        builder: (context, snap) =>
-            Avatar(size: widget.size, photoUrl: snap.data?.photoURL, style: style),
+      builder: (context, style, __) => ValueListenableBuilder<Frame>(
+        valueListenable: myFrame,
+        builder: (context, frame, ___) => StreamBuilder<User?>(
+          stream: AuthService.instance.authStateChanges(),
+          initialData: AuthService.instance.currentUser,
+          builder: (context, snap) => Avatar(
+              size: widget.size,
+              photoUrl: snap.data?.photoURL,
+              style: style,
+              frame: frame),
+        ),
       ),
     );
   }
