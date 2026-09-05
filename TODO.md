@@ -2,7 +2,104 @@
 
 Doar ce e DESCHIS, plus notele de care am nevoie ca să lucrez.
 Ce s-a rezolvat stă în git + memorii, NU aici.
-Ultima curățare: 2026-09-04.
+Ultima curățare: 2026-09-05.
+
+---
+
+## 🎯 RETENȚIE — „e plictisitor la un moment dat" (2026-09-05)
+
+Feedback real de la jucători. Analiză făcută împreună cu userul + GPT + Claude,
+cu acces la tot codul. **Diagnostic:** problema NU e „nu sunt destule
+întrebări". E gameplay loop-ul: alegi un mod → 10 întrebări → câștigi →
+repeți. Adăugarea de conținut nu repară asta.
+
+### Ce EXISTĂ deja (ca să nu reconstruim din listă)
+
+- **Cont/profil:** nume, avatar (5 stiluri), nivel, XP, statistici (winrate,
+  meciuri, streak cel mai lung), istoric de ligă.
+- **6 moduri multiplayer:** Clasic, Higher&Lower, Quizz Tanks, Obby, Scaunul
+  Electric (≈Sudden Death), Piatră-Hârtie-Foarfecă.
+- **Meci:** countdown, întrebare + 4 variante, timer, scoring, runde multiple,
+  ecran final cu clasament, miză pe monede.
+- **Multiplayer online:** lobby/cameră, invitație prieteni (pe cod +
+  „CHEAMĂ PRIETENII"), matchmaking public 1v1 (fără boți), reconectare
+  (`markActiveMatch`), buton REVANȘĂ, anunț „cineva a intrat în multiplayer"
+  (`multiplayer_presence`).
+- **15 categorii**, ≈1.494 întrebări, raportare întrebare, hash stabil (fiecare
+  meci = altă ordine).
+- **Progresie:** XP → nivel → economie (v3), quest-uri (zilnice + generale),
+  realizări (permanente), **ligi Bronze→Diamond + sezoane lunare**,
+  leaderboard.
+- **Zilnic:** categoria zilei, Daily Challenge (quest), streak de login
+  („2 zile la rând"), Roata (1/zi), Clippy (la 5 min), Planeta (2 rulări/12h).
+- **Setări:** sunet/muzică, limbă RO/EN, block/report player, privacy,
+  ștergere cont, **tutorial** (nou), ecran de întreținere (RemoteGate),
+  ecran de eroare cu „Trimite raportul".
+
+### Ce LIPSEȘTE cu adevărat — ordonat după cât mișcă retenția / cât costă
+
+**Nivel 1 — ieftin, efect direct, de făcut înaintea oricărui mod nou:**
+
+1. **Recompense COSMETICE pe nivel.** Azi urci în nivel și primești doar
+   monede. Fără identitate vizuală (rame de profil, titluri, culori de nume,
+   badge-uri pe avatar), nivelul nu înseamnă nimic. Ăsta e cel mai mare gol:
+   progresia nu se VEDE. Avatarele existente (5) sunt puține — se pot debloca
+   altele pe nivel/sezon.
+2. **Provocarea zilei cu MIZĂ, nu doar quest.** Daily Challenge există ca
+   bifă în quest-uri. De transformat într-un motiv real: o întrebare/set
+   special pe zi, cu recompensă mare și un mini-leaderboard de „azi".
+3. **Prieteni online / recent players.** `multiplayer_presence` există dar e
+   doar un banner global. Nu vezi CARE prieten e online acum, nu ai listă de
+   „jucători recenți" (doar prieteni). Fără asta, multiplayer-ul cu prieteni
+   depinde de coordonare pe alt canal.
+4. **Party persistentă.** Joci un meci cu un prieten → REVANȘĂ merge, dar nu
+   poți sta 3-4 într-un lobby și schimba modul între meciuri. Camera se
+   închide după meci.
+
+**Nivel 2 — mediu, ține oamenii pe termen lung:**
+
+5. **Ladder vizibil cu rating (nu doar ligă pe puncte).** Azi: `winPoints=20`,
+   `lossPoints=8` — puncte cumulate, nu Elo. Nu simți un „urcuș", nu vezi un
+   număr care crește/scade cu skill-ul. Un rating vizibil + matchmaking pe
+   rating ar da sens modului Ranked.
+6. **Recompense de sfârșit de sezon.** Ligile + sezoanele există, dar se
+   resetează lazy fără nimic la capăt. Un pachet de recompense (cosmetice +
+   monede) în funcție de liga atinsă = motiv să joci în ultima săptămână.
+7. **Evenimente limitate cu leaderboard separat.** „Săptămâna Gaming",
+   „Weekend fotbal", Halloween — o categorie/mod în față 3-7 zile, cu board
+   propriu și recompense. Se controlează din Remote Config (deja avem
+   infrastructura). Cel mai bun raport efect/efort pentru „lumea nu stă pe joc".
+8. **Emote-uri / reacții în meci.** Un strat de „prezență" — 4-6 emote-uri pe
+   care le trimiți adversarului în timpul rundei. Ieftin, face meciul social.
+
+**Nivel 3 — scump / are nevoie de bază de jucători pe care n-o ai încă:**
+
+9. **Moduri în echipă (2v2 / 3v3).** Toate cele 6 moduri sunt FFA. Team battle
+   cere rescris logica de scoring + lobby. Merită DOAR după ce ai destui
+   jucători simultan.
+10. **Turnee / bracket.** Idem — n-ai destui jucători ca un bracket să se
+    umple.
+11. **Clanuri.** Sistem întreg (creare, invitații, chat, leaderboard de clan).
+    Doar dacă jocul prinde.
+12. **Spectating.** `watchMatch` există read-only, dar UI-ul de spectator e
+    muncă separată. Nu urgent la 3 jucători.
+
+**Sisteme mici, dar de bifat înainte de lansare (nu retenție, igienă):**
+
+- Indicator de conexiune / ping în meci + „Adversarul se reconectează..."
+- Profil public — un jucător să poată vedea profilul altuia (azi doar adminul)
+- Leaderboard între prieteni (separat de cel global)
+- Dificultate Easy/Medium/Hard pe întrebare (azi doar „claritate"/blur)
+
+### Recomandarea mea de ordine
+
+**1 → 2 → 3 → 7 → 6 → 5**, restul pe măsură ce jocul prinde. Punctele 1-3 sunt
+mici, se văd imediat, și rezolvă exact „progresia nu înseamnă nimic + greu să
+joci cu prietenii". Punctul 7 (evenimente) e cel mai bun răspuns direct la
+„lumea nu stă pe joc" — un motiv nou la fiecare 3-7 zile, fără build nou.
+
+Se iau **pe rând**, fiecare cu design înainte de cod. Nu se începe niciunul
+neîntrebat.
 
 ---
 
