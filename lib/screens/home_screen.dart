@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
+import '../core/cosmetics.dart';
 import '../core/lang.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
@@ -275,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
             hintsBadgeKey: _hintsBadgeKey,
             gemsBadgeKey: _gemsBadgeKey,
             displayName: data?.name,
+            titleId: myTitle.value.name,
             onNameTap: data == null ? null : () => _editName(data),
             onCoinsTap: () async {
               await Navigator.push(context,

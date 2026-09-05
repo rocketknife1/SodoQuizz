@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/cosmetics.dart';
 import '../../core/gamemodes.dart';
 import '../../core/leagues.dart';
 import '../../core/lang.dart';
@@ -10,6 +11,7 @@ import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../models/player_profile.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/cosmetic_title.dart';
 import '../../widgets/entrance_item.dart';
 import '../../widgets/league_badge.dart';
 import '../../widgets/pressable.dart';
@@ -262,11 +264,19 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
                   accentColor: pickAvatarColor(p.avatarSeed),
                   photoUrl: p.photoUrl,
                   style: avatarStyleFromId(p.avatarStyle),
+                  frame: validatedFrame(p.equippedFrame, level: p.level, leaguePoints: p.leaguePoints),
                   tier: LeagueTier.values[(p.seasonKey == currentSeasonKey() ? p.seasonBestTierIndex : 0).clamp(0, LeagueTier.values.length - 1)],
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(p.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(p.name, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                      CosmeticTitle(titleId: p.equippedTitle),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -378,6 +388,7 @@ class _PlayerRow extends StatelessWidget {
               accentColor: pickAvatarColor(profile.avatarSeed),
               photoUrl: profile.photoUrl,
               style: avatarStyleFromId(profile.avatarStyle),
+              frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
               tier: peakTier,
             ),
             const SizedBox(width: 12),
@@ -387,6 +398,10 @@ class _PlayerRow extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(profile.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis),
+                  CosmeticTitle(titleId: profile.equippedTitle, fontSize: 10),
+                  if (profile.level > 0)
+                    Text(tr('Nivel ${profile.level}', 'Level ${profile.level}'),
+                        style: const TextStyle(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.w600)),
                   if (showLastActive)
                     Row(
                       children: [

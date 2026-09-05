@@ -84,6 +84,20 @@ await reset();
 await check('nu poate sari longestStreak cu mai mult de 1', () => assertFails(
   write({ longestStreak: 20 })));
 
+console.log('\nCOSMETICE (equippedFrame / equippedTitle / level):');
+
+await reset();
+await check('owner-ul isi poate scrie cosmeticele + nivelul', () => assertSucceeds(
+  write({ equippedFrame: 'gold', equippedTitle: 'veteran', level: 12 })));
+
+await reset();
+await check('cosmeticele nu pacalesc garda anti-cheat de clasament (delta legala)', () => assertSucceeds(
+  write({ equippedFrame: 'diamond', equippedTitle: 'titan', level: 50, leaguePoints: 110 })));
+
+await reset();
+await check('cosmeticele nu deblocheaza un salt ilegal de leaguePoints', () => assertFails(
+  write({ equippedFrame: 'gold', leaguePoints: 999999 })));
+
 console.log('\nPROFIL NOU:');
 const nou = env.authenticatedContext('jucatorNou').firestore();
 await check('se poate crea de la zero', () => assertSucceeds(

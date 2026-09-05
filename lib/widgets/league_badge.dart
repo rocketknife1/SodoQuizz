@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/cosmetics.dart';
 import '../core/leagues.dart';
 import 'avatar.dart';
 
@@ -60,6 +61,7 @@ class AvatarWithLeagueBadge extends StatelessWidget {
   final String? photoUrl;
   final AvatarStyle style;
   final LeagueTier? tier;
+  final Frame frame;
 
   const AvatarWithLeagueBadge({
     super.key,
@@ -69,11 +71,12 @@ class AvatarWithLeagueBadge extends StatelessWidget {
     this.photoUrl,
     this.style = AvatarStyle.poza,
     required this.tier,
+    this.frame = Frame.none,
   });
 
   @override
   Widget build(BuildContext context) {
-    final avatar = Avatar(size: size, label: label, accentColor: accentColor, photoUrl: photoUrl, style: style);
+    final avatar = Avatar(size: size, label: label, accentColor: accentColor, photoUrl: photoUrl, style: style, frame: frame);
     if (tier == null) return avatar;
     final badgeSize = (size * 0.44).clamp(14.0, 26.0);
     return SizedBox(

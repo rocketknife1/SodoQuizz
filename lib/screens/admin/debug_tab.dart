@@ -237,6 +237,24 @@ class _DebugTabState extends State<_DebugTab> {
           ),
           const SizedBox(height: 10),
           _buildDevToolButton(
+            icon: Icons.workspace_premium_rounded,
+            label: 'DEBLOCHEAZĂ COSMETICELE (nivel 50 + ligă)',
+            color: AppColors.coin,
+            onTap: () async {
+              // Suficient XP pentru nivel 50 + puncte de ligă pentru diamant.
+              await StorageService.addXp(500000);
+              await PlayerProfileService.instance.debugGrantLeaguePoints(2000);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text(
+                      'Cosmeticele sunt deblocate. Deschide Profil → avatar.'),
+                  backgroundColor: AppColors.teal,
+                ));
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          _buildDevToolButton(
             icon: Icons.bug_report_rounded,
             label: 'TRIMITE UN RAPORT ACUM',
             color: AppColors.play,

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../core/admin.dart';
+import '../core/cosmetics.dart';
 import '../core/leagues.dart';
 import '../core/progression.dart';
 import '../core/lang.dart';
@@ -14,8 +15,10 @@ import '../data/player_profile_service.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
 import '../models/player_profile.dart';
+import '../widgets/appearance_sheet.dart';
 import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
+import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
 import '../widgets/edit_name_dialog.dart';
 import 'achievements_screen.dart';
@@ -114,7 +117,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ]);
     final answered = results[3] as Set<String>;
     final total = (results[4] as List).length;
-    final identity = results[8] as ({String name, String? photoUrl, String avatarStyle});
+    final identity = results[8] as ({String name, String? photoUrl, String avatarStyle,
+        String equippedFrame, String equippedTitle, int level});
     final forcedName = results[9] as String;
     return _ProfileData(
       xp: results[0] as int,
@@ -144,63 +148,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// avatarul din spatele dialogului se schimbă instant, deci se și vede ce
   /// ai ales. Alegerea urcă și în profilul public la următorul heartbeat, ca
   /// s-o vadă și ceilalți în clasament și în multiplayer.
-  Future<void> _pickAvatar() async {
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        backgroundColor: AppColors.card,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(tr('Alege-ți avatarul', 'Pick your avatar'),
-            style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: ValueListenableBuilder<AvatarStyle>(
-            valueListenable: myAvatarStyle,
-            builder: (context, current, __) => Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 14,
-              runSpacing: 14,
-              children: [
-                for (final style in AvatarStyle.values)
-                  GestureDetector(
-                    onTap: () => setMyAvatarStyle(style),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: style == current ? AppColors.play : Colors.transparent,
-                              width: 3,
-                            ),
-                          ),
-                          child: style == AvatarStyle.poza
-                              ? const MyPhotoPreview(size: 62)
-                              : AvatarArt(style: style, size: 62),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(style.label,
-                            style: TextStyle(
-                              color: style == current ? Colors.white : Colors.white54,
-                              fontSize: 11,
-                              fontWeight: style == current ? FontWeight.w800 : FontWeight.w500,
-                            )),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(tr('Gata', 'Done'), style: const TextStyle(color: AppColors.play, fontWeight: FontWeight.w800)),
-          ),
-        ],
-      ),
+  Future<void> _pickAppearance() async {
+    final data = await _dataFuture;
+    final achievements = await StorageService.completedAchievementIds();
+    if (!mounted) return;
+    await showAppearanceSheet(
+      context,
+      level: levelForXp(data.xp),
+      leaguePoints: data.multiplayerProfile?.leaguePoints ?? 0,
+      achievements: achievements,
     );
     // urcă alegerea în profilul public, ca ceilalți s-o vadă fără să aștepte
     // repornirea aplicației
@@ -228,7 +184,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 Center(
                   child: GestureDetector(
-                    onTap: _pickAvatar,
+                    onTap: _pickAppearance,
                     child: const Stack(
                       alignment: Alignment.bottomRight,
                       children: [
@@ -246,8 +202,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 const SizedBox(height: 6),
                 Center(
-                  child: Text(tr('Apasă pe poză ca să-ți schimbi avatarul',
-                          'Tap the picture to change your avatar'),
+                  child: Text(tr('Apasă pe avatar ca să-ți schimbi aspectul',
+                          'Tap the avatar to change your look'),
                       style: const TextStyle(color: Colors.white38, fontSize: 11)),
                 ),
                 const SizedBox(height: 14),
@@ -273,6 +229,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(width: 8),
                         const Icon(Icons.edit_rounded, color: Colors.white54, size: 18),
                       ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Center(
+                  child: ValueListenableBuilder<PlayerTitle>(
+                    valueListenable: myTitle,
+                    builder: (_, title, __) => CosmeticTitle(
+                      titleId: title.name,
+                      fontSize: 12,
+                      align: TextAlign.center,
                     ),
                   ),
                 ),

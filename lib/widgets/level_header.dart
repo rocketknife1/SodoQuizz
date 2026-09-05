@@ -4,6 +4,7 @@ import '../core/repeating_animation.dart';
 import '../core/progression.dart';
 import '../core/theme.dart';
 import 'avatar.dart';
+import 'cosmetic_title.dart';
 import 'notification_bell.dart';
 
 /// Header cu avatar + nivel + bară de progres XP (stânga) și pastilă de
@@ -34,6 +35,10 @@ class LevelHeader extends StatefulWidget {
   /// din HomeScreen (ecranul principal). Pe restul ecranelor care refolosesc
   /// acest header (joc etc.), `null` păstrează exact layout-ul de dinainte.
   final String? displayName;
+
+  /// Titlul cosmetic echipat (vezi core/cosmetics.dart) - un rand mic sub
+  /// "Level N". `null` sau `'novice'` nu arata nimic.
+  final String? titleId;
   /// Dacă e dat, numele devine un shortcut direct spre dialogul de schimbare
   /// a numelui (vezi widgets/edit_name_dialog.dart) — `null` când numele nu
   /// se poate edita de aici (cont Google legat / impus de administrator).
@@ -74,6 +79,7 @@ class LevelHeader extends StatefulWidget {
     this.gemsBadgeKey,
     this.displayName,
     this.onNameTap,
+    this.titleId,
   });
 
   @override
@@ -205,6 +211,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
                 ? const TextStyle(color: Colors.white60, fontSize: 11.5, fontWeight: FontWeight.w700)
                 : const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
           ),
+          if (widget.titleId != null) CosmeticTitle(titleId: widget.titleId!, fontSize: 10),
           const SizedBox(height: 5),
           bar,
           if (!claimable) ...[

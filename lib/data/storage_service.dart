@@ -31,6 +31,8 @@ class StorageService {
   static const _dailyChallengeKey = 'daily_challenge_date';
   static const _noBlurKey = 'no_blur_mode';
   static const _adminAnswerRevealKey = 'admin_answer_reveal';
+  static const _equippedFrameKey = 'equipped_frame';
+  static const _equippedTitleKey = 'equipped_title';
   static const _multiplayerInfoSeenKey = 'multiplayer_info_seen';
   static const _musicEnabledKey = 'music_enabled';
   static const _musicVolumeKey = 'music_volume';
@@ -1307,6 +1309,28 @@ class StorageService {
     await prefs.setBool(_adminAnswerRevealKey, value);
   }
 
+  // ─── Cosmeticul echipat (rama + titlu) — vezi core/cosmetics.dart ────────
+
+  static Future<String> getEquippedFrame() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_equippedFrameKey) ?? 'none';
+  }
+
+  static Future<void> setEquippedFrame(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_equippedFrameKey, id);
+  }
+
+  static Future<String> getEquippedTitle() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_equippedTitleKey) ?? 'novice';
+  }
+
+  static Future<void> setEquippedTitle(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_equippedTitleKey, id);
+  }
+
   // ─── Piesa de fundal aleasă (vezi core/music_tracks.dart) ────────────────
 
   /// Id-ul piesei, nu numele fișierului: fișierul se poate redenumi sau
@@ -1786,6 +1810,17 @@ class StorageService {
       if (progressFor(a) >= a.target && !await isAchievementClaimed(a.id)) return true;
     }
     return false;
+  }
+
+  /// Id-urile realizărilor cu ținta atinsă (revendicate SAU nu). Folosit de
+  /// cosmetice pentru titlurile legate de realizări — vezi
+  /// `ownsTitle` din core/cosmetics.dart.
+  static Future<Set<String>> completedAchievementIds() async {
+    final progressFor = await achievementProgressResolver();
+    return {
+      for (final a in achievements)
+        if (progressFor(a) >= a.target) a.id,
+    };
   }
 
   /// DEV: aduce progresul TUTUROR quest-urilor zilnice și realizărilor

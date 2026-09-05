@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'core/admin_reveal.dart';
 import 'core/ads_service.dart';
+import 'core/cosmetics.dart';
 import 'core/analytics.dart';
 import 'widgets/remote_gate.dart';
 import 'core/remote_flags.dart';
@@ -67,6 +68,8 @@ void main() async {
   await StorageService.migratePixelatIdToCartoon();
   // Toggle-ul de admin „vezi raspunsul corect" (core/admin_reveal.dart).
   unawaited(loadAdminAnswerReveal());
+  // Cosmeticele echipate (rama + titlul) — vezi core/cosmetics.dart.
+  unawaited(loadCosmetics());
   // INAINTE de runApp, ca primul cadru desenat sa fie deja in limba corecta.
   await L10n.load();
   // O singura initializare, la pornire - restul (login Google) ramane lazy,

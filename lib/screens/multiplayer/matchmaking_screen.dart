@@ -43,7 +43,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
   bool _matched = false;
   bool _left = false;
   bool _joiningRoom = false;
-  ({String name, String? photoUrl, String avatarStyle})? _identity;
+  ({String name, String? photoUrl, String avatarStyle,
+      String equippedFrame, String equippedTitle, int level})? _identity;
 
   /// Cât am plătit deja. Pornește de la [publicMatchStake] (plătit înainte de
   /// a ajunge aici), dar se poate schimba dacă alegem din listă o cameră cu

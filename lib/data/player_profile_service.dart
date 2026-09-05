@@ -206,6 +206,9 @@ class PlayerProfileService {
         'photoUrl': identity.photoUrl,
         'avatarSeed': uid,
         'avatarStyle': identity.avatarStyle,
+        'equippedFrame': identity.equippedFrame,
+        'equippedTitle': identity.equippedTitle,
+        'level': identity.level,
         'lastActive': FieldValue.serverTimestamp(),
         'hasGoogleAccount': AuthService.instance.isSignedIn,
         if (isNew) 'createdAt': FieldValue.serverTimestamp(),
@@ -304,6 +307,23 @@ class PlayerProfileService {
     // n-are voie să pară că meciul nu s-a scris.
     if (newSeasonPoints > oldSeasonPoints) {
       unawaited(_notifyOvertakes(myUid: uid, myName: myName, oldPoints: oldSeasonPoints, newPoints: newSeasonPoints));
+    }
+  }
+
+  /// DOAR pentru testarea cosmeticelor pe telefon — vezi butonul „DEBLOCHEAZĂ
+  /// COSMETICELE" din tabul Debug. N-are cale de acces din joc. Trece de
+  /// `rankingGrowthOk` din reguli doar pe contul de admin (ramura de email),
+  /// unde tabul Debug oricum e singurul loc de unde se apelează.
+  Future<void> debugGrantLeaguePoints(int amount) async {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    try {
+      await _col.doc(uid).set(
+        {'leaguePoints': FieldValue.increment(amount)},
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      debugPrint('PlayerProfileService.debugGrantLeaguePoints a esuat: $e');
     }
   }
 

@@ -16,6 +16,15 @@ class PlayerProfile {
   /// Gol = poza obișnuită. E aici, în profilul PUBLIC, tocmai ca ceilalți
   /// jucători să-l vadă în clasament și în lista de prieteni.
   final String avatarStyle;
+
+  /// Cosmeticele echipate — vezi core/cosmetics.dart. Doar id-uri (numele
+  /// enum); randarea recalculează ce e chiar deblocat din `level`/`leaguePoints`.
+  final String equippedFrame;
+  final String equippedTitle;
+
+  /// Nivelul (levelForXp) — nou în profilul public. Se afișează lângă nume în
+  /// clasament și validează ramele/titlurile pe nivel ale acestui jucător.
+  final int level;
   final int matchesPlayed;
   final int wins;
   final int losses;
@@ -94,6 +103,9 @@ class PlayerProfile {
     required this.avatarSeed,
     this.photoUrl,
     this.avatarStyle = '',
+    this.equippedFrame = 'none',
+    this.equippedTitle = 'novice',
+    this.level = 0,
     this.matchesPlayed = 0,
     this.wins = 0,
     this.losses = 0,
@@ -122,6 +134,9 @@ class PlayerProfile {
       avatarSeed: data['avatarSeed'] as String? ?? doc.id,
       photoUrl: data['photoUrl'] as String?,
       avatarStyle: data['avatarStyle'] as String? ?? '',
+      equippedFrame: data['equippedFrame'] as String? ?? 'none',
+      equippedTitle: data['equippedTitle'] as String? ?? 'novice',
+      level: data['level'] as int? ?? 0,
       matchesPlayed: data['matchesPlayed'] as int? ?? 0,
       wins: data['wins'] as int? ?? 0,
       losses: data['losses'] as int? ?? 0,
