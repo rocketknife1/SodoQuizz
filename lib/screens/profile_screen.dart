@@ -23,6 +23,7 @@ import 'admin_screen.dart';
 import 'friends_screen.dart';
 import 'multiplayer/leaderboard_screen.dart';
 import 'settings_screen.dart';
+import '../core/breadcrumbs.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -45,6 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Profil');
     // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
     // StorageService.balanceRevision.

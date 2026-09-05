@@ -26,6 +26,7 @@ import '../widgets/report_question_button.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
 import 'loading_screen.dart';
+import '../core/breadcrumbs.dart';
 
 /// Un singur ecran de joc pentru toate gamemodurile: fiecare întrebare
 /// arată o imagine care se limpezește cu fiecare hint și 4 variante de
@@ -92,6 +93,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Joc');
     _shakeController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 400));
     Analytics.instance.gameStarted(widget.gameModeId);

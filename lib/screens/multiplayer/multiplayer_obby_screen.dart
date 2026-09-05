@@ -20,6 +20,7 @@ import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
+import '../../core/breadcrumbs.dart';
 
 /// **Obby** — cursă de obstacole tip Roblox, de la 2 la [obbyMaxPlayers]
 /// personaje pe aceeași pistă (vezi core/obby.dart): ecranul nu decide nimic, citește
@@ -112,6 +113,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Meci Obby');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
     MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.obby);

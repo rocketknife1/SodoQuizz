@@ -14,7 +14,6 @@ import 'widgets/remote_gate.dart';
 import 'core/remote_flags.dart';
 import 'data/bug_report_service.dart';
 import 'widgets/error_boundary.dart';
-import 'core/breadcrumbs.dart';
 import 'core/app_check_service.dart';
 import 'core/audio.dart';
 import 'core/lang.dart';
@@ -611,7 +610,6 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           // adaugarea unuia nou.
           navigatorObservers: [
             if (Analytics.instance.observer != null) Analytics.instance.observer!,
-            _BreadcrumbObserver(),
           ],
           title: 'SodoQuizz',
           debugShowCheckedModeBanner: false,
@@ -758,28 +756,4 @@ class _ReconnectHostState extends State<_ReconnectHost> {
       },
     );
   }
-}
-
-/// Notează în firimituri fiecare schimbare de ecran. O singură clasă, pusă pe
-/// `navigatorObservers`, ține locul unei linii în fiecare din cele 33 de
-/// ecrane — și, spre deosebire de ele, nu se poate uita la adăugarea unuia nou.
-///
-/// Numele rutei vine din `settings.name` când există; altfel din tipul
-/// widget-ului, care e oricum lizibil ("GameScreen", "RoomLobbyScreen").
-class _BreadcrumbObserver extends NavigatorObserver {
-  void _note(String verb, Route<dynamic>? route) {
-    final name = route?.settings.name ??
-        route?.settings.arguments?.runtimeType.toString() ??
-        (route is MaterialPageRoute ? 'ecran' : route?.runtimeType.toString());
-    if (name == null) return;
-    Breadcrumbs.drop('$verb: $name');
-  }
-
-  @override
-  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) =>
-      _note('intra', route);
-
-  @override
-  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) =>
-      _note('iese din', route);
 }

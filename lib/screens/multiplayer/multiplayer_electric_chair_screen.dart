@@ -17,6 +17,7 @@ import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
 import 'multiplayer_results_screen.dart';
+import '../../core/breadcrumbs.dart';
 
 /// **Scaunul Electric** — până la [electricChairPlayerCount] jucători,
 /// [electricChairMaxLives] vieți fiecare. Cine răspunde corect la propria
@@ -141,6 +142,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Meci Scaunul Electric');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
     MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.electricChair);

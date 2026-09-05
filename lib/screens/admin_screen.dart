@@ -24,6 +24,8 @@ import 'admin_chat_screen.dart';
 import 'test_images_screen.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../core/breadcrumbs.dart';
+import '../data/bug_report_service.dart';
+import 'welcome_screen.dart';
 
 part 'admin/players_tab.dart';
 part 'admin/player_detail.dart';

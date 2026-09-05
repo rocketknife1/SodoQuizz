@@ -26,6 +26,7 @@ import 'multiplayer/leaderboard_screen.dart';
 import 'multiplayer/multiplayer_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
+import '../core/breadcrumbs.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -54,6 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Acasa');
     _dataFuture = _loadData();
     _checkStreakMilestones();
     // Resursele trimise de admin (și resetul de cont) se aplică în fundal, la

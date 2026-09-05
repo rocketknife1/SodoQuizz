@@ -20,6 +20,7 @@ import '../../widgets/multiplayer_info_dialog.dart';
 import '../../widgets/space_background.dart';
 import 'matchmaking_screen.dart';
 import 'room_lobby_screen.dart';
+import '../../core/breadcrumbs.dart';
 
 /// Ecranul de intrare în Multiplayer: Create Room (cameră privată cu cod),
 /// Join Online (matchmaking public) sau Join with code (intri într-o cameră
@@ -57,6 +58,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Multiplayer');
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 1100))..forward();
     _pulseCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat(reverse: true);
     _ringCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 14))..repeat();

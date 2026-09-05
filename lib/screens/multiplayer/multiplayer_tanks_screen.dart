@@ -20,6 +20,7 @@ import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
 import '../../widgets/tank_pov.dart';
 import 'multiplayer_results_screen.dart';
+import '../../core/breadcrumbs.dart';
 
 /// **Quizz Tanks** — patru tancuri, întrebări de cultură generală, cinci
 /// secunde de răspuns și bare de viață de 100. Cine răspunde corect trage în
@@ -206,6 +207,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Meci Tancuri');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
     MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.quizzTanks);

@@ -14,6 +14,7 @@ import '../data/storage_service.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
 import '../widgets/level_header.dart';
+import '../core/breadcrumbs.dart';
 
 /// Planeta hologramelor — modul care a înlocuit Quiz Nelimitat.
 ///
@@ -116,6 +117,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Planeta');
     _load();
     // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi

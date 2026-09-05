@@ -10,6 +10,7 @@ import '../widgets/bottom_nav_bar.dart';
 import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
 import '../widgets/level_header.dart';
+import '../core/breadcrumbs.dart';
 
 /// Quest-uri zilnice — 12 pe zi în timpul săptămânii și 14 în weekend,
 /// dintr-o rotație săptămânală peste tot catalogul (vezi [todaysQuests]).
@@ -47,6 +48,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Questuri');
     _dataFuture = _load();
     // Resursele se pot schimba sub ecranul deschis: un grant de la admin, un
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi

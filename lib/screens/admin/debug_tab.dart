@@ -217,6 +217,32 @@ class _DebugTabState extends State<_DebugTab> {
           const SizedBox(height: 10),
           _buildRevealAnswersCard(),
           const SizedBox(height: 16),
+          // Tutorialul si raportul manual stau AICI, nu in Setari — decizie
+          // explicita a userului (2026-09-05): nu vrea unelte tehnice la
+          // vedere pentru jucatori.
+          //
+          // ATENTIE la ce NU s-a mutat: ecranul de eroare al aplicatiei
+          // (widgets/error_boundary.dart) ramane pentru toata lumea. Cand
+          // aplicatia chiar crapa, ORICE jucator vede butonul „Trimite
+          // raportul" — aia e calea care conteaza, si n-a fost atinsa.
+          _buildDevToolButton(
+            icon: Icons.school_rounded,
+            label: 'VEZI TUTORIALUL',
+            color: AppColors.purple,
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (_) => const WelcomeScreen(asReplay: true)),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildDevToolButton(
+            icon: Icons.bug_report_rounded,
+            label: 'TRIMITE UN RAPORT ACUM',
+            color: AppColors.play,
+            onTap: () => _sendBugReport(context),
+          ),
+          const SizedBox(height: 16),
           _buildDevToolButton(
             icon: Icons.bolt_rounded,
             label: 'TEST: PROVOACĂ UN CRASH',
@@ -224,6 +250,22 @@ class _DebugTabState extends State<_DebugTab> {
             onTap: () => _confirmTestCrash(context),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Raportul manual: urma tehnică a sesiunii, fără nimic de completat.
+  /// Mutat aici din Setări la cererea userului. Util ca să verifici lanțul
+  /// fără să aștepți un crash: apeși, apoi te uiți în tabul „Bug-uri".
+  Future<void> _sendBugReport(BuildContext context) async {
+    Breadcrumbs.drop('a cerut raport din Admin');
+    final report = await BugReportService.instance.build(screen: 'Admin/Debug');
+    await BugReportService.instance.send(report);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Raport trimis. E in tabul „Bug-uri".'),
+        backgroundColor: AppColors.teal,
       ),
     );
   }

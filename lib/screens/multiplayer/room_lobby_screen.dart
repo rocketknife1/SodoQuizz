@@ -26,6 +26,7 @@ import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
+import '../../core/breadcrumbs.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, premiile mesei
 /// (actualizate pe măsură ce intră lume), chat live, și (doar pentru gazdă)
@@ -79,6 +80,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Camera');
     _introCtrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 900))..forward();
     AuthService.instance.multiplayerIdentity().then((identity) {
       if (mounted) setState(() => _displayName = identity.name);

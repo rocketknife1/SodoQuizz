@@ -17,6 +17,7 @@ import '../widgets/pressable.dart';
 import '../widgets/space_background.dart';
 import 'higher_lower_screen.dart';
 import 'loading_screen.dart';
+import '../core/breadcrumbs.dart';
 
 class _ModeStats {
   final int total;
@@ -80,6 +81,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
   @override
   void initState() {
     super.initState();
+    Breadcrumbs.drop('ecran: Categorii');
     _statsFuture = _loadStats();
     _gemGiftFuture = _loadGemGiftState();
     _featuredFuture = _loadFeaturedClaimState();
