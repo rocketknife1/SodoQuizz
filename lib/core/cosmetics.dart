@@ -119,6 +119,20 @@ FrameStyle frameStyle(Frame f) => switch (f) {
         ]),
     };
 
+/// Etichetă scurtă pentru pickerul de rame — altfel inelele colorate
+/// (aur/argint/diamant/nivel) nu se pot deosebi între ele.
+String frameLabel(Frame f) => switch (f) {
+      Frame.none => 'Fără',
+      Frame.bronze => 'Bronz',
+      Frame.silver => 'Argint',
+      Frame.gold => 'Aur',
+      Frame.platinum => 'Platină',
+      Frame.diamond => 'Diamant',
+      Frame.lvl10 => 'Nivel 10',
+      Frame.lvl25 => 'Nivel 25',
+      Frame.lvl50 => 'Nivel 50',
+    };
+
 (String ro, String en) titleLabel(PlayerTitle t) => switch (t) {
       PlayerTitle.novice => ('Novice', 'Novice'),
       PlayerTitle.curios => ('Curios', 'Curious'),

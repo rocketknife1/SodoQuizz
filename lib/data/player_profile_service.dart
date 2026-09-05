@@ -310,6 +310,23 @@ class PlayerProfileService {
     }
   }
 
+  /// DOAR pentru testarea cosmeticelor pe telefon — vezi butonul „DEBLOCHEAZĂ
+  /// COSMETICELE" din tabul Debug. N-are cale de acces din joc. Trece de
+  /// `rankingGrowthOk` din reguli doar pe contul de admin (ramura de email),
+  /// unde tabul Debug oricum e singurul loc de unde se apelează.
+  Future<void> debugGrantLeaguePoints(int amount) async {
+    final uid = _uid;
+    if (uid.isEmpty) return;
+    try {
+      await _col.doc(uid).set(
+        {'leaguePoints': FieldValue.increment(amount)},
+        SetOptions(merge: true),
+      );
+    } catch (e) {
+      debugPrint('PlayerProfileService.debugGrantLeaguePoints a esuat: $e');
+    }
+  }
+
   /// „X te-a depășit în ligă" — scrie DIRECT în cutia poștală a fiecărui
   /// PRIETEN pe care tocmai l-am depășit în sezonul curent (vezi
   /// firestore.rules, regula de `create` pe `notifications` care permite

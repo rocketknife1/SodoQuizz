@@ -40,11 +40,19 @@ repeți. Adăugarea de conținut nu repară asta.
 
 **Nivel 1 — ieftin, efect direct, de făcut înaintea oricărui mod nou:**
 
-1. **Recompense COSMETICE pe nivel.** Azi urci în nivel și primești doar
-   monede. Fără identitate vizuală (rame de profil, titluri, culori de nume,
-   badge-uri pe avatar), nivelul nu înseamnă nimic. Ăsta e cel mai mare gol:
-   progresia nu se VEDE. Avatarele existente (5) sunt puține — se pot debloca
-   altele pe nivel/sezon.
+1. ✅ **Recompense COSMETICE pe nivel** — LIVRAT 2026-09-05 (branch
+   `worktree-cosmetice-pe-nivel`, spec+plan în `docs/superpowers/`). Rame de
+   avatar (5 ligi + 3 praguri de nivel) + ~10 titluri deblocate pe
+   nivel/ligă/realizări. Proprietatea NU se stochează — se recalculează din
+   XP/ligă/realizări. Picker cu 3 file (Avatar/Ramă/Titlu) la apăsarea pe
+   avatar în Profil. Se văd în clasament (+ „Nivel N" lângă nume), profil,
+   listă prieteni. `player_profiles` are 3 câmpuri noi (`equippedFrame`,
+   `equippedTitle`, `level`), scrise la heartbeat; regulile testate (51/51).
+   **NEVERIFICAT pe telefon** (butonul „DEBLOCHEAZĂ COSMETICELE" din Admin →
+   Debug e pus pentru asta) și **NEVERIFICAT** că un al 2-lea jucător îmi
+   vede rama/titlul în meci — `MatchPlayer` nu carează încă `equippedFrame`/
+   `equippedTitle`, badge-ul de meci arată doar avatarul + rama proprie
+   (extindere viitoare, mică).
 2. **Provocarea zilei cu MIZĂ, nu doar quest.** Daily Challenge există ca
    bifă în quest-uri. De transformat într-un motiv real: o întrebare/set
    special pe zi, cu recompensă mare și un mini-leaderboard de „azi".

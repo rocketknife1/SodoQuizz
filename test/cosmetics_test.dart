@@ -68,6 +68,12 @@ void main() {
     }
   });
 
+  test('frameLabel are un text pentru fiecare rama', () {
+    for (final f in Frame.values) {
+      expect(frameLabel(f), isNotEmpty);
+    }
+  });
+
   test('titleLabel are RO si EN pentru fiecare titlu', () {
     for (final t in PlayerTitle.values) {
       final (ro, en) = titleLabel(t);

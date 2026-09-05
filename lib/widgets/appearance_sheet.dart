@@ -163,7 +163,7 @@ class _FrameGrid extends StatelessWidget {
                 requirement: frameRequirement(f),
                 onTap: () => setMyFrame(f),
                 preview: Avatar(size: 58, label: '★', frame: f),
-                label: f == Frame.none ? tr('Fără', 'None') : '',
+                label: frameLabel(f),
               ),
           ],
         ),
@@ -241,7 +241,9 @@ class _CosmeticCell extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               preview,
-              if (label.isNotEmpty)
+              // Deținut → numele cosmeticului; blocat → doar cerința (ea spune
+              // și ce e, și cum se ia — n-are rost dublat cu numele).
+              if (owned && label.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(label,
