@@ -82,7 +82,9 @@ class Avatar extends StatelessWidget {
     // `size - 2*ringWidth`, iar cercul exterior rămâne exact [size].
     final ringWidth =
         frame == Frame.none ? 0.0 : (size * 0.08).clamp(2.0, 5.0);
-    final innerSize = size - 2 * ringWidth;
+    // clamp de siguranta: la un `size` minuscul (badge foarte mic) inelul ar
+    // putea consuma tot — nu lasam innerSize sa cada la 0 sau negativ.
+    final innerSize = (size - 2 * ringWidth).clamp(1.0, size);
     final color = accentColor ?? AppColors.purple;
     final fallback = Container(
       color: color.withAlpha(60),

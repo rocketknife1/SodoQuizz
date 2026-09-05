@@ -14,9 +14,14 @@ void main() {
       expect(ownsFrame(Frame.bronze, level: 1, leaguePoints: 0), isTrue);
       expect(ownsFrame(Frame.gold, level: 1, leaguePoints: 0), isFalse);
       // un punctaj de Gold sau mai mare deblocheaza bronze+silver+gold
-      const goldPoints = 10000; // suficient de mare; testul verifica monotonia
+      // 300..699 = Gold (vezi leagueForPoints). Deblocheaza bronze+silver+gold,
+      // dar nu platinum/diamond.
+      const goldPoints = 400;
       expect(ownsFrame(Frame.bronze, level: 1, leaguePoints: goldPoints), isTrue);
       expect(ownsFrame(Frame.silver, level: 1, leaguePoints: goldPoints), isTrue);
+      expect(ownsFrame(Frame.gold, level: 1, leaguePoints: goldPoints), isTrue);
+      expect(ownsFrame(Frame.platinum, level: 1, leaguePoints: goldPoints), isFalse);
+      expect(ownsFrame(Frame.diamond, level: 1, leaguePoints: goldPoints), isFalse);
     });
 
     test('ramele de nivel cer nivelul', () {
@@ -120,6 +125,10 @@ void main() {
     test('cade pe none daca nu e detinuta', () {
       expect(validatedFrame('diamond', level: 1, leaguePoints: 0), Frame.none);
       expect(validatedFrame('lvl10', level: 15, leaguePoints: 0), Frame.lvl10);
+    });
+
+    test('trece o rama de liga daca punctele o acopera', () {
+      expect(validatedFrame('gold', level: 1, leaguePoints: 400), Frame.gold);
     });
 
     test('id necunoscut -> none', () {
