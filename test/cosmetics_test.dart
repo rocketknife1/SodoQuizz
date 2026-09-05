@@ -1,0 +1,76 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:guess_it/core/cosmetics.dart';
+
+void main() {
+  group('ownsFrame', () {
+    test('none e mereu detinut', () {
+      expect(ownsFrame(Frame.none, level: 0, leaguePoints: 0), isTrue);
+    });
+
+    test('ramele de liga cer tierul respectiv', () {
+      // 0 puncte = bronze (tier 0). Vezi leagueTierIndexForPoints.
+      expect(ownsFrame(Frame.bronze, level: 1, leaguePoints: 0), isTrue);
+      expect(ownsFrame(Frame.gold, level: 1, leaguePoints: 0), isFalse);
+      // un punctaj de Gold sau mai mare deblocheaza bronze+silver+gold
+      const goldPoints = 10000; // suficient de mare; testul verifica monotonia
+      expect(ownsFrame(Frame.bronze, level: 1, leaguePoints: goldPoints), isTrue);
+      expect(ownsFrame(Frame.silver, level: 1, leaguePoints: goldPoints), isTrue);
+    });
+
+    test('ramele de nivel cer nivelul', () {
+      expect(ownsFrame(Frame.lvl10, level: 9, leaguePoints: 0), isFalse);
+      expect(ownsFrame(Frame.lvl10, level: 10, leaguePoints: 0), isTrue);
+      expect(ownsFrame(Frame.lvl50, level: 49, leaguePoints: 999999), isFalse);
+      expect(ownsFrame(Frame.lvl50, level: 50, leaguePoints: 0), isTrue);
+    });
+  });
+
+  group('ownsTitle', () {
+    test('novice e mereu detinut', () {
+      expect(ownsTitle(PlayerTitle.novice, level: 0, achievements: {}), isTrue);
+    });
+
+    test('titlurile pe nivel cer nivelul', () {
+      expect(ownsTitle(PlayerTitle.curios, level: 4, achievements: {}), isFalse);
+      expect(ownsTitle(PlayerTitle.curios, level: 5, achievements: {}), isTrue);
+      expect(ownsTitle(PlayerTitle.legenda, level: 25, achievements: {}), isTrue);
+    });
+
+    test('titlurile pe realizare cer id-ul realizarii', () {
+      expect(ownsTitle(PlayerTitle.expert, level: 1, achievements: {}), isFalse);
+      expect(ownsTitle(PlayerTitle.expert, level: 1, achievements: {'correct_150'}), isTrue);
+      expect(ownsTitle(PlayerTitle.veteran, level: 1, achievements: {'level_15'}), isTrue);
+    });
+  });
+
+  group('frameFromId / titleFromId', () {
+    test('id necunoscut cade pe default', () {
+      expect(frameFromId('inventat'), Frame.none);
+      expect(frameFromId(null), Frame.none);
+      expect(titleFromId('inventat'), PlayerTitle.novice);
+    });
+
+    test('drum dus-intors', () {
+      for (final f in Frame.values) {
+        expect(frameFromId(f.name), f);
+      }
+      for (final t in PlayerTitle.values) {
+        expect(titleFromId(t.name), t);
+      }
+    });
+  });
+
+  test('frameStyle returneaza culori pentru fiecare rama', () {
+    for (final f in Frame.values) {
+      expect(frameStyle(f).colors, isNotEmpty);
+    }
+  });
+
+  test('titleLabel are RO si EN pentru fiecare titlu', () {
+    for (final t in PlayerTitle.values) {
+      final (ro, en) = titleLabel(t);
+      expect(ro, isNotEmpty);
+      expect(en, isNotEmpty);
+    }
+  });
+}

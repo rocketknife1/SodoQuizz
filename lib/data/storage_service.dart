@@ -1788,6 +1788,17 @@ class StorageService {
     return false;
   }
 
+  /// Id-urile realizărilor cu ținta atinsă (revendicate SAU nu). Folosit de
+  /// cosmetice pentru titlurile legate de realizări — vezi
+  /// `ownsTitle` din core/cosmetics.dart.
+  static Future<Set<String>> completedAchievementIds() async {
+    final progressFor = await achievementProgressResolver();
+    return {
+      for (final a in achievements)
+        if (progressFor(a) >= a.target) a.id,
+    };
+  }
+
   /// DEV: aduce progresul TUTUROR quest-urilor zilnice și realizărilor
   /// permanente la prag (gata de "Revendică"), fără să marcheze nimic ca
   /// deja revendicat — apelat de butonul "UNLIMITED" din Settings, ca
