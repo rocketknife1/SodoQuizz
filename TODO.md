@@ -187,11 +187,13 @@ dispozitiv de test și primește reclame marcate „Test Ad".
 
 ## Scăpări mici, găsite dar nereparate
 
-- ✅ **`room_invites` se adună la nesfârșit** — REPARAT 2026-09-06 (necommitat
-  deploy). `onRoomInvite` șterge acum invitația imediat după push, în loc s-o
-  marcheze cu `pushedAt`. Verificat: clientul ia `matchId`/`code` din payload-ul
-  notificării (push_service.dart), nu citește niciodată documentul.
-  **Rămâne:** `firebase deploy --only functions` ca să intre în producție.
+- ✅ **`room_invites` se adună la nesfârșit** — REPARAT + DEPLOYAT 2026-09-06.
+  `onRoomInvite` șterge acum invitația imediat după push. Verificat: clientul
+  ia `matchId`/`code` din payload-ul notificării, nu citește documentul.
+  **Rămâne (opțional):** o curățare unică a documentelor vechi — 
+  `firebase firestore:delete room_invites --recursive --force --project sodoquizz`
+  (blocat de clasificator când a încercat Claude; rulează-l tu). Câteva zeci
+  de docuri, inofensive; fix-ul oprește acumularea de-acum.
 
 ---
 
