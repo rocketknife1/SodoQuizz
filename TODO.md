@@ -98,7 +98,11 @@ repeți. Adăugarea de conținut nu repară asta.
 **Sisteme mici, dar de bifat înainte de lansare (nu retenție, igienă):**
 
 - Indicator de conexiune / ping în meci + „Adversarul se reconectează..."
-- Profil public — un jucător să poată vedea profilul altuia (azi doar adminul)
+- Profil public — un jucător să poată vedea profilul altuia (azi doar adminul).
+  **Parțial 2026-09-06:** fișa de la tap pe un jucător în clasament arată acum
+  nivel/meciuri/winrate/streak + ramă/titlu, nu doar punctajul pe moduri.
+  Rămâne: același view accesibil din lista de prieteni (azi tap pe prieten =
+  chat) — cere extras `_showBreakdown` într-un widget comun.
 - Leaderboard între prieteni (separat de cel global)
 - Dificultate Easy/Medium/Hard pe întrebare (azi doar „claritate"/blur)
 
@@ -182,6 +186,11 @@ flutter build appbundle --release
 `REAL_ADS=true` se pune abia la lansarea în PRODUCȚIE. Că fluxul de reclame
 merge se verifică pe telefonul de dezvoltare, care e deja înregistrat ca
 dispozitiv de test și primește reclame marcate „Test Ad".
+
+**GATA 2026-09-06:** AAB construit (fără `REAL_ADS`, semnat cu keystore-ul de
+upload) la `build/app/outputs/bundle/release/app-release.aab` (126.7 MB, cod
+de pe `main` la commit `b805052`). Rămâne doar să-l urci în Play Console —
+**dar întâi formularul Data safety** (secțiunea de mai jos).
 
 ---
 
