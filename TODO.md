@@ -52,7 +52,10 @@ repeți. Adăugarea de conținut nu repară asta.
    Debug e pus pentru asta) și **NEVERIFICAT** că un al 2-lea jucător îmi
    vede rama/titlul în meci — `MatchPlayer` nu carează încă `equippedFrame`/
    `equippedTitle`, badge-ul de meci arată doar avatarul + rama proprie
-   (extindere viitoare, mică).
+   (extindere viitoare, mică). La probă pe telefon: după instalarea unui
+   build nou, ramele pe NIVEL ale altor jucători pot lipsi din clasament
+   până când fiecare își redeschide aplicația o dată (`level` se scrie la
+   heartbeat) — normal, se auto-repară; ramele de ligă nu sunt afectate.
 2. **Provocarea zilei cu MIZĂ, nu doar quest.** Daily Challenge există ca
    bifă în quest-uri. De transformat într-un motiv real: o întrebare/set
    special pe zi, cu recompensă mare și un mini-leaderboard de „azi".
