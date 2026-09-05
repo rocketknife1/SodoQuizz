@@ -288,6 +288,23 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
                 Text(tr('Ultima dată online: ${_formatLastActive(p.lastActive)}', 'Last online: ${_formatLastActive(p.lastActive)}'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
               ],
             ),
+            const SizedBox(height: 14),
+            // Profilul public al altui jucător: statistici de bază, nu doar
+            // punctajul pe moduri.
+            Row(
+              children: [
+                _MiniStat(label: tr('Nivel', 'Level'), value: '${p.level}'),
+                _MiniStat(label: tr('Meciuri', 'Matches'), value: '${p.matchesPlayed}'),
+                _MiniStat(
+                    label: tr('Rată câștig', 'Winrate'),
+                    value: p.matchesPlayed == 0
+                        ? '—'
+                        : '${(p.winrate * 100).round()}%'),
+                _MiniStat(
+                    label: tr('Cel mai bun streak', 'Best streak'),
+                    value: '${p.longestStreak}'),
+              ],
+            ),
             const SizedBox(height: 16),
             Text(tr('Unde și-a făcut punctajul', 'Where the points came from'), style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w600)),
             const SizedBox(height: 10),
@@ -306,6 +323,30 @@ void _showBreakdown(BuildContext context, PlayerProfile p) {
       ),
     ),
   );
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _MiniStat({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value,
+              style: const TextStyle(
+                  color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 2),
+          Text(label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white38, fontSize: 10)),
+        ],
+      ),
+    );
+  }
 }
 
 class _ModeScoreRow extends StatelessWidget {
