@@ -241,16 +241,20 @@ class _CosmeticCell extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               preview,
-              // Deținut → numele cosmeticului; blocat → doar cerința (ea spune
-              // și ce e, și cum se ia — n-are rost dublat cu numele).
-              if (owned && label.isNotEmpty)
+              // Numele mereu (gri când e blocat) — un titlu ca „Toți Plătesc"
+              // se vede și nedeblocat, ca să ai spre ce lucra. Cerința dedesubt
+              // doar dacă e blocat ȘI diferă de nume (la rame numele = cerința,
+              // ex. „Nivel 50" — n-are rost dublat).
+              if (label.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(label,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 11)),
+                      style: TextStyle(
+                          color: owned ? Colors.white : Colors.white54,
+                          fontSize: 11)),
                 ),
-              if (!owned && requirement.isNotEmpty)
+              if (!owned && requirement.isNotEmpty && requirement != label)
                 Padding(
                   padding: const EdgeInsets.only(top: 4),
                   child: Text(requirement,
