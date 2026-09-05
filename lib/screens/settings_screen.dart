@@ -18,6 +18,7 @@ import 'loading_screen.dart';
 import 'music_screen.dart';
 import '../core/breadcrumbs.dart';
 import '../data/bug_report_service.dart';
+import 'welcome_screen.dart';
 
 /// Setările vizibile oricui.
 ///
@@ -276,6 +277,24 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                     // Subtitlul se aprinde cand am raspuns si jucatorul n-a
                     // deschis inca firul — aceeasi sursa ca bulina de pe
                     // butonul SETARI din meniul principal.
+                    // Revezi tutorialul — apare o singură dată la prima
+                    // pornire, deci fără rândul ăsta n-ar mai exista nicio
+                    // cale înapoi la el.
+                    _staggered(
+                      i++,
+                      _navRow(
+                        icon: Icons.school_rounded,
+                        color: AppColors.purple,
+                        title: tr('Revezi tutorialul', 'Watch the tutorial again'),
+                        subtitle: tr('Cum se joacă, resursele, modurile, puterile',
+                            'How to play, resources, modes, power-ups'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const WelcomeScreen(asReplay: true)),
+                        ),
+                      ),
+                    ),
                     // „Ceva nu merge" — raportul tehnic, SEPARAT de mesajul
                     // catre admin. Mesajul e o conversatie in cuvintele lui;
                     // asta e urma tehnica pe care el n-are cum s-o scrie:
