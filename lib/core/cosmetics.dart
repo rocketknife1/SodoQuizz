@@ -33,6 +33,10 @@ enum PlayerTitle {
   maestru,
   legenda,
   titan,
+  campion,
+  faraIndiciu,
+  fidel,
+  omDeCultura,
 }
 
 /// Enum → string prin `.name`, drumul invers aici. `orElse` pe default: un id
@@ -79,13 +83,17 @@ bool ownsTitle(PlayerTitle t,
     PlayerTitle.novice => true,
     PlayerTitle.curios => level >= 5,
     PlayerTitle.cunoscator => achievements.contains('correct_50'),
-    PlayerTitle.inAscensiune => achievements.contains('level_5'),
+    PlayerTitle.inAscensiune => level >= 10,
     PlayerTitle.expert => achievements.contains('correct_150'),
     PlayerTitle.veteran => achievements.contains('level_15'),
     PlayerTitle.explorator => achievements.contains('all_modes'),
     PlayerTitle.maestru => achievements.contains('correct_400'),
     PlayerTitle.legenda => level >= 25,
     PlayerTitle.titan => level >= 50,
+    PlayerTitle.campion => achievements.contains('mp_wins_23'),
+    PlayerTitle.faraIndiciu => achievements.contains('no_hint_250'),
+    PlayerTitle.fidel => achievements.contains('streak_30'),
+    PlayerTitle.omDeCultura => achievements.contains('culture_600'),
   };
 }
 
@@ -134,16 +142,20 @@ String frameLabel(Frame f) => switch (f) {
     };
 
 (String ro, String en) titleLabel(PlayerTitle t) => switch (t) {
-      PlayerTitle.novice => ('Novice', 'Novice'),
-      PlayerTitle.curios => ('Curios', 'Curious'),
-      PlayerTitle.cunoscator => ('Cunoscător', 'Knower'),
-      PlayerTitle.inAscensiune => ('În ascensiune', 'On the rise'),
-      PlayerTitle.expert => ('Expert', 'Expert'),
-      PlayerTitle.veteran => ('Veteran', 'Veteran'),
-      PlayerTitle.explorator => ('Exploratorul', 'The Explorer'),
-      PlayerTitle.maestru => ('Maestru', 'Master'),
-      PlayerTitle.legenda => ('Legendă', 'Legend'),
-      PlayerTitle.titan => ('Titan', 'Titan'),
+      PlayerTitle.novice => ('Boboc', 'Fresh Meat'),
+      PlayerTitle.curios => ('Băgăcios', 'Nosy'),
+      PlayerTitle.cunoscator => ('Ăsta Știe', 'This Guy Knows'),
+      PlayerTitle.inAscensiune => ('Prinde Aripi', 'Taking Off'),
+      PlayerTitle.expert => ('Google Ambulant', 'Walking Google'),
+      PlayerTitle.veteran => ('Bătrânu\'', 'Old Guard'),
+      PlayerTitle.explorator => ('Le-a Făcut Pe Toate', 'Done It All'),
+      PlayerTitle.maestru => ('Creier de Cuantică', 'Quantum Brain'),
+      PlayerTitle.legenda => ('Nume Cunoscut', 'Household Name'),
+      PlayerTitle.titan => ('Diferență de Nivel', 'Skill Diff'),
+      PlayerTitle.campion => ('Toți Plătesc', 'Everyone Pays'),
+      PlayerTitle.faraIndiciu => ('Fără Plasă de Siguranță', 'No Safety Net'),
+      PlayerTitle.fidel => ('Vine Zilnic', 'Never Misses'),
+      PlayerTitle.omDeCultura => ('Om de Cultură', 'Cultured'),
     };
 
 /// Textul arătat pe un item BLOCAT în picker („de ce nu-l pot pune").
@@ -163,13 +175,17 @@ String titleRequirement(PlayerTitle t) => switch (t) {
       PlayerTitle.novice => '',
       PlayerTitle.curios => 'Nivel 5',
       PlayerTitle.cunoscator => '50 de răspunsuri corecte',
-      PlayerTitle.inAscensiune => 'Nivel 5 (realizare)',
+      PlayerTitle.inAscensiune => 'Nivel 10',
       PlayerTitle.expert => '150 de răspunsuri corecte',
       PlayerTitle.veteran => 'Nivel 15 (realizare)',
       PlayerTitle.explorator => 'Toate modurile jucate',
       PlayerTitle.maestru => '400 de răspunsuri corecte',
       PlayerTitle.legenda => 'Nivel 25',
       PlayerTitle.titan => 'Nivel 50',
+      PlayerTitle.campion => '23 de victorii în multiplayer',
+      PlayerTitle.faraIndiciu => '250 de răspunsuri corecte fără indiciu',
+      PlayerTitle.fidel => 'Streak de 30 de zile',
+      PlayerTitle.omDeCultura => '600 de întrebări de cultură',
     };
 
 // ─── Ce am echipat pe TELEFONUL ăsta ─────────────────────────────────────

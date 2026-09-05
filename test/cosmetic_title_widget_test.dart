@@ -12,9 +12,9 @@ void main() {
 
   testWidgets('un titlu real se afiseaza', (t) async {
     await t.pumpWidget(const MaterialApp(
-      home: Scaffold(body: CosmeticTitle(titleId: 'veteran')),
+      home: Scaffold(body: CosmeticTitle(titleId: 'explorator')),
     ));
-    expect(find.text('Veteran'), findsOneWidget);
+    expect(find.text('Le-a Făcut Pe Toate'), findsOneWidget);
   });
 
   testWidgets('id necunoscut -> nimic (cade pe novice)', (t) async {

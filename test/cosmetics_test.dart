@@ -47,6 +47,14 @@ void main() {
       expect(ownsTitle(PlayerTitle.expert, level: 1, achievements: {}), isFalse);
       expect(ownsTitle(PlayerTitle.expert, level: 1, achievements: {'correct_150'}), isTrue);
       expect(ownsTitle(PlayerTitle.veteran, level: 1, achievements: {'level_15'}), isTrue);
+      expect(ownsTitle(PlayerTitle.campion, level: 99, achievements: {}), isFalse);
+      expect(ownsTitle(PlayerTitle.campion, level: 1, achievements: {'mp_wins_23'}), isTrue);
+      expect(ownsTitle(PlayerTitle.omDeCultura, level: 1, achievements: {'culture_600'}), isTrue);
+    });
+
+    test('inAscensiune e pe nivel 10, nu pe realizare', () {
+      expect(ownsTitle(PlayerTitle.inAscensiune, level: 9, achievements: {}), isFalse);
+      expect(ownsTitle(PlayerTitle.inAscensiune, level: 10, achievements: {}), isTrue);
     });
   });
 
