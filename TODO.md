@@ -74,9 +74,10 @@ repeți. Adăugarea de conținut nu repară asta.
      (`lastActive` sub 5 min). Bulină verde pe avatarul prietenului + „Activ acum",
      prietenii activi sus în listă; același indicator în fișa publică din clasament.
      Zero citiri Firestore noi. NEVERIFICAT cu un prieten real activ (bază goală).
-   - ⏳ **„Recent players"** — amânat: `completed_matches` NU stochează uid-urile
-     adversarilor. Cere o cale de scriere nouă (salvezi adversarii la finalul
-     meciului) — separat.
+   - ✅ **„Jucători recenţi"** — LIVRAT 2026-09-06. Ecranul de rezultate
+     salvează adversarii local (`StorageService.addRecentOpponents`, JSON, cap
+     15). Secţiune nouă în ecranul de Prieteni: adversarii care nu-s deja
+     prieteni, cu buton „Adaugă". #3 COMPLET.
    - Notă: fără heartbeat periodic; `lastActive` se rescrie doar la
      deschidere/resume/profil. Dacă „activ acum" trebuie mai precis, un
      `Timer.periodic(~90s)` în `main.dart` peste `ensureProfileHeartbeat`.
