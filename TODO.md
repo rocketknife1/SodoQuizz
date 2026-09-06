@@ -62,8 +62,9 @@ repeți. Adăugarea de conținut nu repară asta.
    + 150 bonus la 5/5 (max 350 monede). Clasament „de azi" global top-20 +
    locul tău (`daily_challenges/{data}/scores/{uid}`, monedele legate de scor
    prin regulă). Card în capul ecranului de Quest-uri. Rulează şi quest-ul
-   `daily_challenge_done`. Reguli testate 58/58, deployate. **NEVERIFICAT pe
-   telefon** cu clasament populat (bază goală). Ajustabil: recompensa (o
+   `daily_challenge_done`. Reguli testate 58/58, deployate. **VERIFICAT pe telefon 2026-09-06**
+   (flow complet, +80 monede la 2/5, cardul în ambele stări). Board cu ≥2
+   jucători — neverificat (bază goală). Ajustabil: recompensa (o
    constantă în `dailyChallengeReward`), nr. de întrebări
    (`dailyChallengeQuestionCount`). Curăţarea colecţiilor `daily_challenges`
    vechi — niciun job încă; se adună câte un doc/jucător/zi. TTL Firestore
