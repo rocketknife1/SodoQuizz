@@ -108,6 +108,10 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   bool _finished = false;
   bool _collecting = false;
   bool _collected = false;
+
+  /// Rularea a fost deja scăzută din cele disponibile (vezi [_pick]) — o
+  /// singură dată per intrare pe ecran, la primul răspuns.
+  bool _runConsumed = false;
   PlanetReward _reward = const PlanetReward();
   bool _jackpot = false;
 
@@ -140,7 +144,9 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
       _pool = _buildRun(photos);
       _loading = false;
     });
-    if (mounted) await bumpQuestMetric(context, 'planet_run', 1);
+    // `planet_run` NU se bumpează aici: deschiderea ecranului nu e o rulare.
+    // Altfel se putea intra/ieși de 3 ori în 10 secunde ca să se bifeze
+    // „Intră de 3 ori pe Planeta hologramelor". Vezi [_pick].
   }
 
   /// Compune cele 17 întrebări. Ponderea pozelor se trage la zar între 35% și
@@ -207,6 +213,16 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
 
   Future<void> _pick(String option) async {
     if (_answered || _finished) return;
+    // Rularea se consumă ACUM, la primul răspuns — nu la colectare. Înainte,
+    // cine ieșea înainte de final o primea înapoi și putea reintra la
+    // nesfârșit cu 2/2. Tot aici (o singură dată per rulare) se bifează și
+    // quest-ul de vizită, ca deschiderea repetată a ecranului să nu-l umple.
+    if (!_runConsumed) {
+      _runConsumed = true;
+      await StorageService.recordPlanetRunStarted();
+      if (mounted) await bumpQuestMetric(context, 'planet_run', 1);
+      if (!mounted) return;
+    }
     final correct = option == _current.answer;
     setState(() {
       _answered = true;
@@ -238,8 +254,8 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
   }
 
   /// Închide rularea: trage zarul pentru recompensă și raportează metricile.
-  /// NU pornește cooldown-ul — acela începe abia după colectare (vezi
-  /// [_collect]), ca o ieșire forțată să nu coste o rulare neplătită.
+  /// Rularea (și, la ultima din ciclu, cooldown-ul) a fost deja consumată la
+  /// primul răspuns — vezi [_pick].
   Future<void> _finishRun() async {
     final chance = planetJackpotChance(_correct);
     final won = chance >= 1.0 || _rnd.nextDouble() < chance;
@@ -297,7 +313,8 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
       );
     }
     if (!mounted) return;
-    await StorageService.recordPlanetRunFinished();
+    // Rularea a fost deja consumată la primul răspuns (vezi [_pick]) — aici
+    // se ridică doar recompensa.
     Analytics.instance.planetRun();
     if (!mounted) return;
     setState(() {

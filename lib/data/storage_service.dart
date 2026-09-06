@@ -927,28 +927,63 @@ class StorageService {
 
   // ─── Provocarea Zilei (set fix de 5, o dată pe zi — vezi
   //     core/daily_challenge.dart) ────────────────────────────────────────────
-  // Stocat ca „<dateKey>:<corecte>". Ține minte DOAR că azi s-a jucat şi cu ce
-  // scor, ca ecranul să arate rezultatul + clasamentul în loc să lase o a doua
-  // rulare. Scorul „adevărat" pentru clasament e în Firestore.
+  // Stocat ca „<dateKey>:<intrebareUrmatoare>:<corecte>:<gata0sau1>".
+  //
+  // DE CE progresul, nu doar scorul final: fără el, cine răspundea la 3 din 5
+  // şi închidea aplicaţia din recente revenea la un start curat şi rejuca tot
+  // — o cale de trişat (rerulezi până iese bine). Acum, la PRIMUL răspuns ziua
+  // e marcată ca începută, iar la revenire se reia de la întrebarea unde a
+  // rămas. Scorul „adevărat" pentru clasament e în Firestore, scris la final.
+  //
+  // Formatul vechi „<dateKey>:<corecte>" (2 câmpuri) e citit ca „gata".
   static const _dailyChallengeRunKey = 'daily_challenge_run';
 
-  /// Câte răspunsuri corecte a dat azi la Provocarea Zilei, sau `null` dacă
-  /// n-a jucat-o azi. [todayKey] e `dailyChallengeDateKey(DateTime.now())`.
-  static Future<int?> dailyChallengeResultFor(String todayKey) async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_dailyChallengeRunKey);
+  static ({int nextIndex, int correct, bool done})? _parseDailyChallenge(
+      String? raw, String todayKey) {
     if (raw == null) return null;
-    final sep = raw.lastIndexOf(':');
-    if (sep <= 0) return null;
-    if (raw.substring(0, sep) != todayKey) return null;
-    return int.tryParse(raw.substring(sep + 1));
+    final parts = raw.split(':');
+    if (parts.isEmpty || parts.first != todayKey) return null;
+    if (parts.length == 2) {
+      // format vechi: doar scorul final
+      final c = int.tryParse(parts[1]);
+      return c == null ? null : (nextIndex: c, correct: c, done: true);
+    }
+    if (parts.length < 4) return null;
+    final nextIndex = int.tryParse(parts[1]) ?? 0;
+    final correct = int.tryParse(parts[2]) ?? 0;
+    return (nextIndex: nextIndex, correct: correct, done: parts[3] == '1');
   }
 
-  /// Notează rularea de azi. Bumpează şi contorul pentru `daily_10` (prin
-  /// [markDailyChallengeDone]) — Provocarea Zilei e o „provocare zilnică".
+  /// Câte răspunsuri corecte a dat azi la Provocarea Zilei DACĂ a terminat-o,
+  /// sau `null` dacă n-a terminat-o azi (neîncepută SAU în curs).
+  /// [todayKey] e `dailyChallengeDateKey(DateTime.now())`.
+  static Future<int?> dailyChallengeResultFor(String todayKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    final p = _parseDailyChallenge(prefs.getString(_dailyChallengeRunKey), todayKey);
+    return (p != null && p.done) ? p.correct : null;
+  }
+
+  /// Progresul de azi: de la ce întrebare se reia ([nextIndex]), câte corecte
+  /// are până acum, şi dacă a terminat. `null` dacă n-a început-o azi.
+  static Future<({int nextIndex, int correct, bool done})?>
+      dailyChallengeProgressFor(String todayKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    return _parseDailyChallenge(prefs.getString(_dailyChallengeRunKey), todayKey);
+  }
+
+  /// După fiecare răspuns: salvează unde s-a ajuns, ca o închidere a aplicaţiei
+  /// să nu şteargă progresul. NU marchează ziua ca terminată.
+  static Future<void> recordDailyChallengeProgress(
+      String todayKey, int nextIndex, int correct) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_dailyChallengeRunKey, '$todayKey:$nextIndex:$correct:0');
+  }
+
+  /// Notează rularea de azi ca TERMINATĂ. Bumpează şi contorul pentru
+  /// `daily_10` (prin [markDailyChallengeDone]).
   static Future<void> recordDailyChallengeRun(String todayKey, int correct) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_dailyChallengeRunKey, '$todayKey:$correct');
+    await prefs.setString(_dailyChallengeRunKey, '$todayKey:$correct:$correct:1');
     await markDailyChallengeDone();
     await _recordActivity(prefs);
   }
@@ -1112,11 +1147,14 @@ class StorageService {
   // [planetRunsPerCycleWithAd] și anulează cooldown-ul tocmai pornit, deci
   // "2 rulări, sau 3 dacă te uiți la o reclamă" e o singură stare, nu două.
   //
-  // Cooldown-ul pornește abia când jucătorul RIDICĂ recompensa ultimei rulări
-  // permise și iese din fereastra de colectare (vezi
-  // PlanetHologramScreen._finishAndCollect) — nu la intrarea în rulare.
-  // Altfel, cine închide aplicația în mijlocul unei rulări ar rămâne blocat
-  // 12 ore fără să fi primit nimic.
+  // Rularea se consumă la PRIMUL RĂSPUNS, nu la colectarea recompensei (vezi
+  // PlanetHologramScreen._pick). Înainte se consuma la colectare, iar cine
+  // ieșea din rulare înainte de final o primea înapoi — se putea intra,
+  // pierde inimile, ieși și reintra la nesfârșit cu 2/2.
+  //
+  // Primul RĂSPUNS, nu deschiderea ecranului: cine intră din greșeală și iese
+  // imediat nu pierde nimic; cine a început efectiv, a consumat. Recompensa
+  // rămâne de colectat la final — se pierde doar dacă abandonezi, nu rularea.
   //
   // Spre deosebire de Clippy, ciclul NU e legat de ziua calendaristică: 12
   // ore înseamnă 12 ore, oricând ar fi început.
@@ -1174,7 +1212,10 @@ class StorageService {
 
   /// Marchează o rulare consumată și, dacă era ultima permisă, pornește
   /// cooldown-ul. Se apelează DUPĂ colectarea recompensei.
-  static Future<void> recordPlanetRunFinished() async {
+  /// Consumă o rulare de planetă. Apelat la PRIMUL RĂSPUNS al rulării (vezi
+  /// nota de sus), nu la colectarea recompensei. Când s-au consumat toate
+  /// rulările ciclului, pornește și cooldown-ul.
+  static Future<void> recordPlanetRunStarted() async {
     final prefs = await SharedPreferences.getInstance();
     final used = (prefs.getInt(_planetRunsUsedKey) ?? 0) + 1;
     await prefs.setInt(_planetRunsUsedKey, used);

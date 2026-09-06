@@ -72,6 +72,12 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Timer? _cooldownTicker;
   Timer? _autoRecordTimer;
   bool _playRecorded = false;
+
+  /// Slotul rundei curente a fost deja scăzut din fereastră (vezi [_select]) —
+  /// se întâmplă la PRIMUL răspuns al rundei, nu la finalul ei. Fără asta,
+  /// cine răspundea la câteva întrebări și închidea aplicația din recente
+  /// relua aceeași rundă la nesfârșit.
+  bool _roundSlotRecorded = false;
   bool _watchingAd = false;
 
   /// Runda curentă (1-based) din fereastra activă — vezi
@@ -95,23 +101,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     super.dispose();
   }
 
-  /// Înregistrează runda curentă (1 sau 2) o singură dată — fie la tap pe
-  /// "Pregătit pentru runda X", fie automat, oricare vine prima. Fără asta,
-  /// un utilizator care iese din aplicație fără să apese butonul ar rămâne
-  /// blocat la nesfârșit pe ecranul de pauză dintre runde.
-  Future<void> _recordPlayOnce() async {
-    if (_playRecorded) return;
-    _playRecorded = true;
-    _autoRecordTimer?.cancel();
-    await StorageService.recordCultureQuizPlay();
-  }
-
   /// Pornește cooldown-ul de [StorageService.cultureQuizWindowMinutes] o
   /// singură dată — fie la tap pe COLECTEAZĂ, fie automat după 10s, oricare
-  /// vine prima (vezi [_collect]). Separat de [_recordPlayOnce]: doar runda
-  /// FINALĂ pornește efectiv cooldown-ul, ca numărătoarea afișată jucătorului
-  /// să înceapă mereu de la [StorageService.cultureQuizWindowMinutes] întregi,
-  /// nu de la momentul rundei 1.
+  /// vine prima (vezi [_collect]). Doar runda FINALĂ ajunge aici, ca
+  /// numărătoarea afișată jucătorului să înceapă de la
+  /// [StorageService.cultureQuizWindowMinutes] întregi, nu de la runda 1.
+  ///
+  /// Slotul fiecărei runde e deja consumat la primul ei răspuns (vezi
+  /// [_select]); asta doar închide ciclul și resetează contorul de runde.
   Future<void> _startCooldownOnce() async {
     if (_playRecorded) return;
     _playRecorded = true;
@@ -188,6 +185,16 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     }
     final playsSoFar = await StorageService.cultureQuizPlaysInWindow();
     if (!mounted) return;
+    // Toate rundele ciclului au fost ÎNCEPUTE, dar cooldown-ul n-a apucat să
+    // pornească — se întâmplă când jucătorul închide aplicația în timpul
+    // rundei finale, fără să colecteze. Pornește-l acum, altfel ar cădea pe
+    // „runda 4 din 3" și ar juca la nesfârșit.
+    if (playsSoFar >= StorageService.cultureQuizPlayLimit) {
+      await StorageService.startCultureQuizCooldown();
+      if (!mounted) return;
+      await _enterCooldown();
+      return;
+    }
     final round = playsSoFar + 1;
     // sesiune nouă = alt set aleatoriu din pool-ul global unic de întrebări.
     _questions = (List.of(cultureQuestions)..shuffle(Random()))
@@ -209,6 +216,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       }
       _collecting = false;
       _playRecorded = false;
+      _roundSlotRecorded = false;
     });
     _initQuestion();
   }
@@ -241,6 +249,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   Future<void> _select(String? opt) async {
     if (answered) return;
     _questionTimer?.cancel();
+    // Slotul rundei se consumă la PRIMUL răspuns, nu la finalul ei. Altfel,
+    // cine răspundea la câteva întrebări și închidea aplicația din recente
+    // revenea la aceeași rundă, la nesfârșit.
+    if (!_roundSlotRecorded) {
+      _roundSlotRecorded = true;
+      await StorageService.recordCultureQuizPlay();
+      if (!mounted) return;
+    }
     final correct = opt != null && opt == _current.answer;
     setState(() {
       answered = true;
@@ -303,15 +319,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         _xpEarned += completionXp;
       }
     });
-    // cooldown-ul de rate-limit pornește doar acum, la finalul lotului — nu
-    // la apăsarea START — dar nu așteptăm nedefinit tap-ul pe COLECTEAZĂ:
-    // dacă utilizatorul iese din aplicație fără să colecteze, sesiunea tot
-    // se înregistrează după 10s, ca să nu rămână blocată la nesfârșit. La
-    // runda finală, cele 10s chiar aplică recompensa și pornesc cooldown-ul
-    // (nu doar consumă slotul din fereastră) — jucătorul nu pierde ce a
-    // câștigat doar fiindcă a ieșit din aplicație fără să apese COLECTEAZĂ.
+    // Doar runda FINALĂ mai are ceva de făcut automat: după 10s aplică
+    // recompensa și pornește cooldown-ul, ca jucătorul care iese fără să
+    // apese COLECTEAZĂ să nu piardă ce a câștigat. Rundele 1-2 n-au nevoie
+    // de nimic — slotul lor a fost deja consumat la primul răspuns.
     _autoRecordTimer?.cancel();
-    _autoRecordTimer = Timer(const Duration(seconds: 10), _isFinalRound ? _autoCollectFinalRound : _recordPlayOnce);
+    if (_isFinalRound) {
+      _autoRecordTimer = Timer(const Duration(seconds: 10), _autoCollectFinalRound);
+    }
   }
 
   void _autoCollectFinalRound() {
@@ -320,15 +335,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   }
 
   /// Rundele 1-2 nu colectează nimic — recompensa rămâne acumulată local
-  /// (vezi [_start]) și doar trece la runda următoare. Tot aici se
-  /// înregistrează slotul din fereastra de rate-limit (nu la 10s auto, ca
-  /// să nu rămână "disponibilă la nesfârșit" dacă utilizatorul stă mult pe
-  /// ecranul de pauză înainte să apese).
-  Future<void> _continueRound() async {
-    await _recordPlayOnce();
-    if (!mounted) return;
-    await _start();
-  }
+  /// (vezi [_start]) și doar trece la runda următoare. Slotul rundei
+  /// următoare se consumă la primul ei răspuns, nu aici.
+  Future<void> _continueRound() async => _start();
 
   /// Aplică toată recompensa acumulată, în 3 etape separate și în ordine
   /// fixă (monede → XP → vieți) — vezi [collectRewards]. Apelat doar la

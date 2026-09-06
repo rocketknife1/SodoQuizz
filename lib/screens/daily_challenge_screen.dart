@@ -68,11 +68,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
   }
 
   Future<void> _boot() async {
-    final prev = await StorageService.dailyChallengeResultFor(_dateKey);
-    if (prev != null) {
+    final prev = await StorageService.dailyChallengeProgressFor(_dateKey);
+    if (prev != null && prev.done) {
       _alreadyPlayed = true;
-      _correct = prev;
-      _coins = dailyChallengeReward(prev);
+      _correct = prev.correct;
+      _coins = dailyChallengeReward(prev.correct);
       _collected = true;
       await _loadBoard();
       if (!mounted) return;
@@ -81,9 +81,26 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
     }
     final all = await loadAllQuestions();
     if (!mounted) return;
+    final questions = pickDailyChallenge(all, DateTime.now());
+    // Reluare: cine a răspuns la câteva întrebări și a ieșit revine EXACT de
+    // unde a rămas, nu de la zero. Întrebările zilei sunt deterministe, deci
+    // sunt aceleași — nu se poate „reroll-ui" un set prost ieșind din joc.
+    final resuming = prev != null &&
+        !prev.done &&
+        prev.nextIndex > 0 &&
+        prev.nextIndex < questions.length;
+    if (!mounted) return;
     setState(() {
-      _questions = pickDailyChallenge(all, DateTime.now());
-      _phase = _questions.isEmpty ? _Phase.finished : _Phase.intro;
+      _questions = questions;
+      if (questions.isEmpty) {
+        _phase = _Phase.finished;
+      } else if (resuming) {
+        _qIndex = prev.nextIndex;
+        _correct = prev.correct;
+        _phase = _Phase.playing;
+      } else {
+        _phase = _Phase.intro;
+      }
     });
   }
 
@@ -101,6 +118,11 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
       _selected = opt;
       if (opt == _current.answer) _correct++;
     });
+    // Salvat DUPĂ fiecare răspuns, nu la final: altfel cine răspundea la 3 din
+    // 5 și închidea aplicația din recente revenea la un start curat și rejuca
+    // tot, până ieșea bine. Acum ziua e „începută" din primul răspuns.
+    await StorageService.recordDailyChallengeProgress(
+        _dateKey, _qIndex + 1, _correct);
     await Future.delayed(const Duration(milliseconds: 1000));
     if (!mounted) return;
     if (_qIndex + 1 >= _questions.length) {
