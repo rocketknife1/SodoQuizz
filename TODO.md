@@ -44,6 +44,14 @@ Nimic. Toată secțiunea RETENȚIE (1-8) e livrată și testată cu 2/4 jucător
 - **Curățare colecții care se adună** — `daily_challenges/{dată}/scores` +
   `events/{id}/scores` cresc cu ~1 doc/jucător/zi. Purge lunar sau TTL
   Firestore când contează. (`room_invites` nu se mai acumulează din 2026-09-06.)
+- **Titlul „Boboc" nu se afișează pe cont nou** — INTENȚIONAT azi:
+  `widgets/cosmetic_title.dart` întoarce `SizedBox.shrink()` pentru
+  `PlayerTitle.novice` (comentariul: „titlul implicit n-are ce arăta").
+  Consecință: un jucător nou nu vede deloc că există sistem de titluri până
+  nu deblochează al doilea. DECIZIE: îl arătăm și pe „Boboc" (e un titlu
+  amuzant, gen „Fresh Meat" din LoL), sau rămâne ascuns? Dacă îl arătăm:
+  scoate check-ul din `cosmetic_title.dart` + verifică că nu aglomerează
+  clasamentul/lista de prieteni.
 
 ---
 
