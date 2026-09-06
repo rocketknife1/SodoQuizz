@@ -56,9 +56,18 @@ repeți. Adăugarea de conținut nu repară asta.
    build nou, ramele pe NIVEL ale altor jucători pot lipsi din clasament
    până când fiecare își redeschide aplicația o dată (`level` se scrie la
    heartbeat) — normal, se auto-repară; ramele de ligă nu sunt afectate.
-2. **Provocarea zilei cu MIZĂ, nu doar quest.** Daily Challenge există ca
-   bifă în quest-uri. De transformat într-un motiv real: o întrebare/set
-   special pe zi, cu recompensă mare și un mini-leaderboard de „azi".
+2. ✅ **Provocarea Zilei cu MIZĂ** — LIVRAT 2026-09-06 (commit `f39aba4`).
+   Set FIX de 5 întrebări pe zi, acelaşi pentru toată lumea (determinist,
+   `core/daily_challenge.dart`), o singură rulare pe zi, recompensă 40/corect
+   + 150 bonus la 5/5 (max 350 monede). Clasament „de azi" global top-20 +
+   locul tău (`daily_challenges/{data}/scores/{uid}`, monedele legate de scor
+   prin regulă). Card în capul ecranului de Quest-uri. Rulează şi quest-ul
+   `daily_challenge_done`. Reguli testate 58/58, deployate. **NEVERIFICAT pe
+   telefon** cu clasament populat (bază goală). Ajustabil: recompensa (o
+   constantă în `dailyChallengeReward`), nr. de întrebări
+   (`dailyChallengeQuestionCount`). Curăţarea colecţiilor `daily_challenges`
+   vechi — niciun job încă; se adună câte un doc/jucător/zi. TTL Firestore
+   sau un purge lunar când contează.
 3. **Prieteni online / recent players.** `multiplayer_presence` există dar e
    doar un banner global. Nu vezi CARE prieten e online acum, nu ai listă de
    „jucători recenți" (doar prieteni). Fără asta, multiplayer-ul cu prieteni
