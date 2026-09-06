@@ -97,13 +97,18 @@ repeți. Adăugarea de conținut nu repară asta.
 
 **Sisteme mici, dar de bifat înainte de lansare (nu retenție, igienă):**
 
-- Indicator de conexiune / ping în meci + „Adversarul se reconectează..."
+- Indicator de conexiune / ping în meci + „Adversarul se reconectează...".
+  RECONECTAREA TA există deja (`MultiplayerService.reconnectTarget` — ecranul
+  rădăcină te duce înapoi în meci). Lipsește doar semnalul invers: „adversarul
+  a picat / revine".
 - ✅ Profil public — GATA 2026-09-06. `showPlayerProfileSheet` (fost
   `_showBreakdown`): tap pe un jucător în clasament SAU pe avatarul unui
   prieten în lista de Prieteni → fișa lui (nivel, meciuri, winrate, cel mai
   bun streak, ramă, titlu, punctaj pe moduri, ultima dată online). Restul
   rândului de prieten rămâne pe deschiderea firului privat.
-- Leaderboard între prieteni (separat de cel global)
+- ✅ Leaderboard între prieteni — EXISTĂ deja: tab-ul „Prieteni" din ecranul
+  Clasament (`_FriendsLeaderboardTab`), lista proprie + tu, sortată pe
+  punctajul de sezon. Bulletul era stale.
 - Dificultate Easy/Medium/Hard pe întrebare (azi doar „claritate"/blur)
 
 ### Recomandarea mea de ordine
