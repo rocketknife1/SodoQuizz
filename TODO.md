@@ -50,9 +50,9 @@ repeți. Adăugarea de conținut nu repară asta.
    `equippedTitle`, `level`), scrise la heartbeat; regulile testate (51/51).
    **NEVERIFICAT pe telefon** (butonul „DEBLOCHEAZĂ COSMETICELE" din Admin →
    Debug e pus pentru asta) și **NEVERIFICAT** că un al 2-lea jucător îmi
-   vede rama/titlul în meci — `MatchPlayer` nu carează încă `equippedFrame`/
-   `equippedTitle`, badge-ul de meci arată doar avatarul + rama proprie
-   (extindere viitoare, mică). La probă pe telefon: după instalarea unui
+   vede rama/titlul în meci — ✅ REPARAT 2026-09-06: `MatchPlayer` carează
+   `equippedFrame`/`equippedTitle`, badge-ul de meci le arată. (Excepţie:
+   revanşa — acelaşi meci, aceiaşi oameni.) La probă pe telefon: după instalarea unui
    build nou, ramele pe NIVEL ale altor jucători pot lipsi din clasament
    până când fiecare își redeschide aplicația o dată (`level` se scrie la
    heartbeat) — normal, se auto-repară; ramele de ligă nu sunt afectate.
