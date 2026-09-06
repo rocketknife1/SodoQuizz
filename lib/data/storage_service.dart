@@ -924,6 +924,34 @@ class StorageService {
 
   static String _dateKey(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
+  // ─── Provocarea Zilei (set fix de 5, o dată pe zi — vezi
+  //     core/daily_challenge.dart) ────────────────────────────────────────────
+  // Stocat ca „<dateKey>:<corecte>". Ține minte DOAR că azi s-a jucat şi cu ce
+  // scor, ca ecranul să arate rezultatul + clasamentul în loc să lase o a doua
+  // rulare. Scorul „adevărat" pentru clasament e în Firestore.
+  static const _dailyChallengeRunKey = 'daily_challenge_run';
+
+  /// Câte răspunsuri corecte a dat azi la Provocarea Zilei, sau `null` dacă
+  /// n-a jucat-o azi. [todayKey] e `dailyChallengeDateKey(DateTime.now())`.
+  static Future<int?> dailyChallengeResultFor(String todayKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_dailyChallengeRunKey);
+    if (raw == null) return null;
+    final sep = raw.lastIndexOf(':');
+    if (sep <= 0) return null;
+    if (raw.substring(0, sep) != todayKey) return null;
+    return int.tryParse(raw.substring(sep + 1));
+  }
+
+  /// Notează rularea de azi. Bumpează şi contorul pentru `daily_10` (prin
+  /// [markDailyChallengeDone]) — Provocarea Zilei e o „provocare zilnică".
+  static Future<void> recordDailyChallengeRun(String todayKey, int correct) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_dailyChallengeRunKey, '$todayKey:$correct');
+    await markDailyChallengeDone();
+    await _recordActivity(prefs);
+  }
+
   // ─── Rate-limit Cultură Generală ([cultureQuizPlayLimit] runde pe ciclu,
   // apoi [cultureQuizWindowMinutes] minute de cooldown) ───────────────────
   // Cooldown-ul de [cultureQuizWindowMinutes] pornește o SINGURĂ dată, la

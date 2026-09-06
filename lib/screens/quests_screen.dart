@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/audio.dart';
+import '../core/daily_challenge.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
+import 'daily_challenge_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
@@ -524,6 +526,10 @@ class _QuestsScreenState extends State<QuestsScreen> {
                     gemsBadgeKey: _gemsBadgeKey,
                   ),
                 ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: _DailyChallengeCard(),
+                ),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Row(
@@ -908,6 +914,102 @@ class _RewardChips extends StatelessWidget {
         const SizedBox(width: 2),
         Text('$amount', style: TextStyle(color: color, fontSize: 10.5, fontWeight: FontWeight.w700)),
       ],
+    );
+  }
+}
+
+/// Cardul „Provocarea Zilei" din capul ecranului de Quest-uri — set fix de 5
+/// întrebări pe zi, o rulare, recompensă mare + clasament de azi (vezi
+/// [DailyChallengeScreen]). Se auto-încarcă: dacă azi s-a jucat deja, arată
+/// scorul; altfel invită la joc.
+class _DailyChallengeCard extends StatefulWidget {
+  const _DailyChallengeCard();
+
+  @override
+  State<_DailyChallengeCard> createState() => _DailyChallengeCardState();
+}
+
+class _DailyChallengeCardState extends State<_DailyChallengeCard> {
+  int? _todayCorrect;
+  bool _loaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    final key = dailyChallengeDateKey(DateTime.now());
+    final r = await StorageService.dailyChallengeResultFor(key);
+    if (!mounted) return;
+    setState(() {
+      _todayCorrect = r;
+      _loaded = true;
+    });
+  }
+
+  Future<void> _open() async {
+    await Navigator.push(context,
+        MaterialPageRoute(builder: (_) => const DailyChallengeScreen()));
+    _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final done = _todayCorrect != null;
+    return GestureDetector(
+      onTap: _loaded ? _open : null,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [AppColors.coin.withAlpha(60), AppColors.orange.withAlpha(30)],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.coin.withAlpha(120)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.local_fire_department_rounded, color: AppColors.coin, size: 30),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(tr('Provocarea Zilei', 'Daily Challenge'),
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(
+                    done
+                        ? tr('Azi: $_todayCorrect/$dailyChallengeQuestionCount corecte · vezi clasamentul',
+                            "Today: $_todayCorrect/$dailyChallengeQuestionCount correct · see the board")
+                        : tr('$dailyChallengeQuestionCount întrebări · o dată pe zi · până la 350 monede',
+                            '$dailyChallengeQuestionCount questions · once a day · up to 350 coins'),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: done ? Colors.white.withAlpha(28) : AppColors.coin,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                done ? tr('CLASAMENT', 'BOARD') : tr('JOACĂ', 'PLAY'),
+                style: TextStyle(
+                    color: done ? Colors.white : Colors.black,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

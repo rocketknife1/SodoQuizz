@@ -98,6 +98,32 @@ await reset();
 await check('cosmeticele nu deblocheaza un salt ilegal de leaguePoints', () => assertFails(
   write({ equippedFrame: 'gold', leaguePoints: 999999 })));
 
+console.log('\nPROVOCAREA ZILEI (daily_challenges/{data}/scores/{uid}):');
+
+const DC = (db, uid) => doc(db, 'daily_challenges', '2026-09-06', 'scores', uid);
+
+await check('owner-ul isi scrie scorul cu monede consistente (4/5)', () => assertSucceeds(
+  setDoc(DC(eu, 'jucator1'), { name: 'Eu', correct: 4, coins: 160, level: 3 })));
+
+await check('scor perfect: 5 corecte = 350 monede (40*5 + 150)', () => assertSucceeds(
+  setDoc(DC(eu, 'jucator1'), { name: 'Eu', correct: 5, coins: 350, level: 3 })));
+
+await check('NU poate umfla monedele peste formula', () => assertFails(
+  setDoc(DC(eu, 'jucator1'), { name: 'Eu', correct: 3, coins: 99999, level: 3 })));
+
+await check('NU poate declara mai mult de 5 corecte', () => assertFails(
+  setDoc(DC(eu, 'jucator1'), { name: 'Eu', correct: 8, coins: 470, level: 3 })));
+
+await check('NU poate scrie scorul altcuiva', () => assertFails(
+  setDoc(DC(eu, 'altcineva'), { name: 'X', correct: 5, coins: 350, level: 1 })));
+
+const strainDC = env.authenticatedContext('strain2').firestore();
+await check('oricine autentificat poate CITI clasamentul de azi', () => assertSucceeds(
+  getDoc(DC(strainDC, 'jucator1'))));
+
+await check('jucatorul NU-si poate STERGE scorul (nu rejoaca)', () => assertFails(
+  deleteDoc(DC(eu, 'jucator1'))));
+
 console.log('\nPROFIL NOU:');
 const nou = env.authenticatedContext('jucatorNou').firestore();
 await check('se poate crea de la zero', () => assertSucceeds(

@@ -3,10 +3,11 @@
 `firestore_rules_test.mjs` verifică limitele anti-trișare din
 `firestore.rules`: clasamentul (`player_profiles`), scrierea în meciuri
 (`matches`), firul cu adminul (`admin_threads`), semnalele de balanță
-(`security_flags`) și cosmeticele de profil (`equippedFrame`,
-`equippedTitle`, `level` — owner-ul le poate scrie liber, `rankingGrowthOk`
+(`security_flags`) cosmeticele de profil (`equippedFrame`,
+`equippedTitle`, `level`) și scorurile Provocării Zilei
+(`daily_challenges/{data}/scores/{uid}` — monede legate de scor prin formulă — owner-ul le poate scrie liber, `rankingGrowthOk`
 nu le atinge) — ce trebuie să meargă în joc normal, ce trebuie refuzat.
-51 de cazuri, fiecare pornind de la o stare curată (scrisă cu
+58 de cazuri, fiecare pornind de la o stare curată (scrisă cu
 `withSecurityRulesDisabled`), deci ordinea rulării nu contează.
 
 Cazul care contează cel mai mult la `admin_threads` e IMPERSONAREA: aplicația
@@ -29,4 +30,4 @@ firebase emulators:exec --only firestore --project sodoquizz-test "node firestor
 
 Rulează pe emulatorul LOCAL — nicio scriere în producție.
 
-Ultima rulare verde: 2026-09-05, 51/51 (după adăugarea cosmeticelor).
+Ultima rulare verde: 2026-09-06, 58/58 (după adăugarea Provocării Zilei).

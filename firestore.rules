@@ -471,6 +471,33 @@ service cloud.firestore {
             || resource.data.fromUid == request.auth.uid);
     }
 
+    // Provocarea Zilei — clasamentul "de azi" (vezi DailyChallengeService,
+    // core/daily_challenge.dart). `daily_challenges/{dateKey}/scores/{uid}`.
+    //
+    // Citeste oricine autentificat (e un clasament public). Scrie DOAR
+    // proprietarul propriul document, si doar cu valori consistente: 5
+    // intrebari deci `correct` in 0..5, iar `coins` LEGAT de scor prin exact
+    // formula din `dailyChallengeReward` (40/corect + 150 bonus la 5/5) — un
+    // client modificat nu poate declara nici un scor imposibil, nici o
+    // recompensa umflata. Documentul e sub o subcolectie datata: nu atinge
+    // `player_profiles`, deci nu poate pacali clasamentul de liga.
+    //
+    // Fara delete pentru jucatori: scorul de azi ramane pana cand colectia
+    // zilei e curatata (job separat / TTL), nu se poate rejuca stergandu-l.
+    match /daily_challenges/{dateKey}/scores/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.correct is int
+        && request.resource.data.correct >= 0
+        && request.resource.data.correct <= 5
+        && request.resource.data.coins ==
+             request.resource.data.correct * 40
+             + (request.resource.data.correct >= 5 ? 150 : 0)
+        && request.resource.data.name is string
+        && request.resource.data.level is int;
+    }
+
     // Raportarile trimise de jucatori (vezi ModerationService.submitReport).
     //
     // Scrie oricine, dar numai in numele lui: conditia pe reporterUid opreste
