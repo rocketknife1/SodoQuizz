@@ -399,6 +399,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         const SizedBox(height: 12),
         _StatTile(
+          icon: Icons.trending_up_rounded,
+          color: AppColors.teal,
+          label: tr('Rating (creşte când baţi jucători buni)', 'Rating (goes up beating strong players)'),
+          value: '${p.rating}',
+          wide: true,
+        ),
+        const SizedBox(height: 12),
+        _StatTile(
           icon: Icons.local_fire_department_rounded,
           color: AppColors.orange,
           label: 'Cel mai lung streak de victorii',

@@ -7,7 +7,7 @@
 `equippedTitle`, `level`) și scorurile Provocării Zilei
 (`daily_challenges/{data}/scores/{uid}` — monede legate de scor prin formulă — owner-ul le poate scrie liber, `rankingGrowthOk`
 nu le atinge) — ce trebuie să meargă în joc normal, ce trebuie refuzat.
-58 de cazuri, fiecare pornind de la o stare curată (scrisă cu
+67 de cazuri, fiecare pornind de la o stare curată (scrisă cu
 `withSecurityRulesDisabled`), deci ordinea rulării nu contează.
 
 Cazul care contează cel mai mult la `admin_threads` e IMPERSONAREA: aplicația
@@ -30,4 +30,4 @@ firebase emulators:exec --only firestore --project sodoquizz-test "node firestor
 
 Rulează pe emulatorul LOCAL — nicio scriere în producție.
 
-Ultima rulare verde: 2026-09-06, 58/58 (după adăugarea Provocării Zilei).
+Ultima rulare verde: 2026-09-06, 67/67 (după adăugarea evenimentelor + rating Elo).

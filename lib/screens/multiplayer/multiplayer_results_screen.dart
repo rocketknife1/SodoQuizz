@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/betting.dart';
 import '../../core/electric_chair.dart';
+import '../../core/elo.dart';
 import '../../core/obby.dart';
 import '../../core/progression.dart';
 import '../../core/quest_bump.dart';
@@ -107,6 +108,23 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// intenționat mic (bun pentru XP) și nu reflectă cine a rezistat mai mult
   /// (vezi core/electric_chair.dart `electricChairRankKey` pentru de ce nu
   /// se poate sorta direct după `score` acolo).
+  /// Schimbarea de rating pentru meciul ăsta — citeşte ratingul fiecărui
+  /// adversar (0 dacă nu se poate) şi cheamă [eloDelta]. [sorted] e deja
+  /// ordonat de la primul loc, deci un index mai mic = a terminat mai sus.
+  Future<int> _computeRatingDelta(List<MatchPlayer> sorted, int myIndex) async {
+    if (myIndex < 0 || sorted.length < 2) return 0;
+    final myRating = (await PlayerProfileService.instance.getMyProfile())?.rating ?? eloStartRating;
+    final oppRatings = <int>[];
+    final beat = <bool>[];
+    for (var i = 0; i < sorted.length; i++) {
+      if (i == myIndex) continue;
+      final p = await PlayerProfileService.instance.getProfile(sorted[i].id);
+      oppRatings.add(p?.rating ?? eloStartRating);
+      beat.add(myIndex < i); // eu, mai sus în clasament = l-am întrecut
+    }
+    return eloDelta(myRating: myRating, opponentRatings: oppRatings, beat: beat);
+  }
+
   int _rankValue(MatchPlayer p) => widget.gameMode == MatchGameMode.electricChair
       ? electricChairRankKey(eliminated: p.eliminated, eliminatedAtRound: p.eliminatedAtRound, score: p.score)
       : p.score;
@@ -163,10 +181,15 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       if (widget.gameMode == MatchGameMode.quizzTanks) {
         _computeSalvage(sorted, sorted[myIndex]);
       }
+      // Rating Elo (core/elo.dart): citim ratingul fiecărui adversar acum, la
+      // final, şi calculăm o singură deltă din perechile „am terminat peste /
+      // sub el". N-1 citiri per meci, doar la lobby-uri mici.
+      final ratingDelta = await _computeRatingDelta(sorted, myIndex);
       await PlayerProfileService.instance.recordMatchResult(
         gameModeId: widget.gameMode.name,
         won: won,
         draw: draw,
+        ratingDelta: ratingDelta,
       );
       // sorted.length = câți jucători reali au ajuns până la finalul acestui
       // meci — vezi PlayerProfileService.recordCompletedMatch (no-op sub 2).

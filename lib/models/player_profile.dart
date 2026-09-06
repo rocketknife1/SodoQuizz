@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../core/elo.dart';
+
 /// Profilul public al unui jucător — un doc per uid în `player_profiles`,
 /// citibil de orice user autentificat (Google sau anonim), scriibil doar
 /// de propriul owner (vezi firestore.rules). Separat de `users/{uid}`
@@ -56,6 +58,11 @@ class PlayerProfile {
   /// direct din [seasonPoints], ca o înfrângere de la finalul sezonului să
   /// nu retrogradeze vizual pe cineva care chiar a atins Gold luna asta.
   final int seasonBestTierIndex;
+
+  /// Rating vizibil de tip Elo (vezi core/elo.dart) — se mişcă în funcţie de
+  /// cât de buni erau adversarii, spre deosebire de [leaguePoints]. Porneşte
+  /// de la [eloStartRating]. Nou; profilurile vechi cad pe default.
+  final int rating;
 
   /// Puncte de ligă acumulate pe fiecare mod de joc (gameModeId → puncte) —
   /// folosit doar pentru "unde și-a făcut punctajul" la tap pe un rând din
@@ -115,6 +122,7 @@ class PlayerProfile {
     this.seasonPoints = 0,
     this.seasonKey = '',
     this.seasonBestTierIndex = 0,
+    this.rating = eloStartRating,
     this.modeBreakdown = const {},
     this.lastActive,
     this.friendCode,
@@ -157,6 +165,7 @@ class PlayerProfile {
       seasonPoints: data['seasonPoints'] as int? ?? 0,
       seasonKey: data['seasonKey'] as String? ?? '',
       seasonBestTierIndex: data['seasonBestTierIndex'] as int? ?? 0,
+      rating: data['rating'] as int? ?? eloStartRating,
       modeBreakdown: Map<String, int>.from(data['modeBreakdown'] as Map? ?? const {}),
       lastActive: data['lastActive'] as Timestamp?,
       friendCode: data['friendCode'] as String?,

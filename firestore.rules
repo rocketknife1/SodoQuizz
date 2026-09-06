@@ -279,7 +279,13 @@ service cloud.firestore {
             && request.resource.data.get('wins', 0)
                  <= resource.data.get('wins', 0) + 1
             && request.resource.data.get('longestStreak', 0)
-                 <= resource.data.get('longestStreak', 0) + 1;
+                 <= resource.data.get('longestStreak', 0) + 1
+            // Ratingul Elo (core/elo.dart, K=24) nu poate sari cu mai mult de
+            // 30 per meci, in niciun sens.
+            && request.resource.data.get('rating', 1000)
+                 <= resource.data.get('rating', 1000) + 30
+            && request.resource.data.get('rating', 1000)
+                 >= resource.data.get('rating', 1000) - 30;
       }
 
       // Un profil NOU porneste de la zero. Fara asta, ramanea o portita:

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import '../core/elo.dart';
 import '../core/lang.dart';
 import '../core/leagues.dart';
 import '../models/app_notification.dart';
@@ -252,6 +253,7 @@ class PlayerProfileService {
     required String gameModeId,
     required bool won,
     required bool draw,
+    int ratingDelta = 0,
   }) async {
     final uid = _uid;
     if (uid.isEmpty) return;
@@ -282,6 +284,10 @@ class PlayerProfileService {
         final storedBestTier = storedSeasonKey == season ? (data['seasonBestTierIndex'] as int? ?? 0) : 0;
         final seasonBestTierIndex = max(storedBestTier, leagueTierIndexForPoints(newSeasonPoints));
 
+        // Ratingul Elo (vezi core/elo.dart) — delta e calculat de apelant din
+        // ratingurile adversarilor. Plafonat inferior la 0.
+        final newRating = max(0, (data['rating'] as int? ?? eloStartRating) + ratingDelta);
+
         final breakdown = Map<String, int>.from(data['modeBreakdown'] as Map? ?? const {});
         breakdown[gameModeId] = (breakdown[gameModeId] ?? 0) + delta;
         tx.set(ref, {
@@ -291,6 +297,7 @@ class PlayerProfileService {
           'currentStreak': currentStreak,
           'longestStreak': longestStreak,
           'leaguePoints': leaguePoints,
+          'rating': newRating,
           'seasonPoints': newSeasonPoints,
           'seasonKey': season,
           'seasonBestTierIndex': seasonBestTierIndex,

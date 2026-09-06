@@ -84,6 +84,18 @@ await reset();
 await check('nu poate sari longestStreak cu mai mult de 1', () => assertFails(
   write({ longestStreak: 20 })));
 
+await reset({ rating: 1000 });
+await check('ratingul se poate misca <= 30 intr-un meci', () => assertSucceeds(
+  write({ rating: 1024 })));
+
+await reset({ rating: 1000 });
+await check('ratingul NU poate sari cu > 30', () => assertFails(
+  write({ rating: 1200 })));
+
+await reset({ rating: 1000 });
+await check('ratingul NU poate cadea cu > 30', () => assertFails(
+  write({ rating: 500 })));
+
 console.log('\nCOSMETICE (equippedFrame / equippedTitle / level):');
 
 await reset();
