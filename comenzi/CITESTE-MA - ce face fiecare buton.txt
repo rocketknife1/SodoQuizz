@@ -1,98 +1,43 @@
 ╔══════════════════════════════════════════════════════════════════╗
-║   COMENZILE SodoQuizz — ce face fiecare, si CAND se apasa         ║
+║   COMENZILE SodoQuizz — pentru tine                              ║
 ╚══════════════════════════════════════════════════════════════════╝
 
-Fiecare fisier .bat de aici e un buton. Il dai dublu-click. Se
-deschide o fereastra neagra, face treaba, si la sfarsit scrie "Gata"
-sau o eroare. Daca scrie eroare — copiaza TOT textul si trimite-mi-l.
+Trei butoane. Dublu-click. Se deschide o fereastra neagra, face treaba,
+si la sfarsit scrie "Gata" sau o eroare. Daca scrie eroare — copiaza
+TOT textul si trimite-mi-l.
 
-Nimic de aici nu se apasa "din curiozitate". Le apesi cand:
-  - iti spun eu ("ruleaza comanda 4"), SAU
-  - se potriveste exact situatia descrisa mai jos.
+Restul comenzilor (build, instalare pe telefon, trimis reguli / functii,
+curatenie in consola) le rulez eu direct cand lucrez — nu-ti trebuie
+tie butoane pentru ele.
 
-──────────────────────────────────────────────────────────────────
-  ZILNIC / DES — le folosesti singur
-──────────────────────────────────────────────────────────────────
-
-1 · CONSTRUIESTE JOCUL
-    Dupa ORICE modificare pe care ti-o trimit in cod. Face APK-ul
-    pentru telefon. Dureaza 3-5 minute. Nu inchide fereastra.
-
-2 · INSTALEAZA PE TELEFON
-    Dupa comanda 1. Pune APK-ul proaspat pe telefonul conectat.
-    Daca da "eroare de semnatura" -> intai comanda 3, apoi din nou 2.
-
-3 · STERGE JOCUL DE PE TELEFON
-    Cand instalarea (2) refuza, sau cand vrei telefonul curat
-    inainte de un RESET TOTAL (ca sa nu re-urce datele vechi).
-
-10 · VEZI RAPOARTELE JUCATORILOR
-    Cand cineva a trimis un report din joc (blocaj, intrebare
-    gresita, alt jucator). Le aduna intr-un fisier. Dupa ce rulezi,
-    spune-mi "am rapoarte noi" si le citesc si eu.
-
-11 · PUNE / SCOATE MESAJUL DE MENTENANTA
-    Aprinde ecranul "Revenim imediat" peste joc, pentru TOTI
-    jucatorii — cand faci ceva pe server si nu vrei pe nimeni in
-    joc. Il stingi tot de aici cand ai terminat. (Ca sa vezi cum
-    arata ecranul fara sa-l aprinzi pentru toata lumea: in joc,
-    Admin -> Debug -> "PREVIEW ECRAN DE MENTENANTA".)
-
-──────────────────────────────────────────────────────────────────
-  RAR — doar cand iti spun EU ca am schimbat ceva pe server
-──────────────────────────────────────────────────────────────────
-
-4 · TRIMITE REGULILE + INDEXURILE FIRESTORE
-    Cand iti zic "am schimbat regulile" sau "am adaugat un index".
-    Regulile = cine are voie sa scrie ce in baza de date.
-    Indexurile = ce clasamente pot fi sortate (fara ele apar goale).
-    Nu atinge datele nimanui.
-
-8 · TRIMITE FUNCTIILE IN PRODUCTIE
-    Cand iti zic "am schimbat ceva in folderul functions". Astea
-    trimit notificarile push (invitatii, mesaje admin) si
-    supravegheaza balantele. Nu atinge datele nimanui.
-
-──────────────────────────────────────────────────────────────────
-  CURATENIE — cand consola Firebase se aglomereaza
-──────────────────────────────────────────────────────────────────
-
-5 · CURATA CAMERELE MULTIPLAYER BLOCATE
-    Camerele de meci raman uneori agatate (cineva a inchis brusc
-    aplicatia). Nu strica nimic in joc, doar se aduna. Implicit
-    sterge doar cele mai vechi de 6 ore (ca sa nu rupa un meci viu).
-
-6 · CURATA JURNALUL DE MECIURI
-    `completed_matches` = un rand per meci terminat, folosit DOAR
-    pentru contorul "meciuri jucate" din panoul de admin. Dupa
-    stergere, contorul ala pica la zero. Nimic altceva nu se atinge.
-
-7 · CURATA CONTURILE ABANDONATE
-    Guesti (conturi anonime) fara activitate, deja stersi din joc,
-    a ramas doar identitatea in Authentication. Definitiv.
-
-──────────────────────────────────────────────────────────────────
-  BUTONUL NUCLEAR
 ──────────────────────────────────────────────────────────────────
 
 9 · RESET TOTAL
     Sterge ABSOLUT TOT din Firebase: fiecare profil, cont, meci,
-    prietenie, mesaj, raport, scor de provocare, eveniment. Dupa
-    asta oricine se conecteaza porneste de la zero, ca un jucator
-    nou. NU se poate anula.
-
-    Sterge si contul TAU de admin din Authentication — dar ramai
-    admin la relogare (regula verifica emailul, nu contul).
-
-    IMPORTANT: inainte de reset, ruleaza comanda 3 pe fiecare
-    telefon de test. Altfel un telefon care se reconecteaza dupa
-    reset isi RE-URCA singur datele in cloud si resetul nu mai e curat.
+    prietenie, mesaj, raport, scor. Dupa asta oricine se conecteaza
+    porneste de la zero. NU se poate anula.
 
     Cere confirmarea "DA" scrisa de mana. Fara "DA", nu sterge nimic.
 
+    Daca vrei resetul cu adevarat curat: intai dezinstaleaza jocul de
+    pe telefoanele de test (altfel un telefon care se reconecteaza
+    isi re-urca datele). Zi-mi si o fac eu.
+
+10 · VEZI RAPOARTELE JUCATORILOR
+    Cand cineva a trimis un report din joc (blocaj, intrebare gresita,
+    alt jucator raportat). Le aduna intr-un fisier. Dupa ce rulezi,
+    spune-mi "am rapoarte" si le citesc si eu ca sa repar.
+
+11 · PUNE / SCOATE MESAJUL DE MENTENANTA
+    Aprinde ecranul "Revenim imediat" peste joc, pentru TOTI jucatorii
+    — cand faci ceva pe server si nu vrei pe nimeni in joc. Il stingi
+    tot de aici cand ai terminat.
+
+    Ca sa vezi cum arata ecranul fara sa-l aprinzi pentru toata lumea:
+    in joc -> Admin -> Debug -> "PREVIEW ECRAN DE MENTENANTA".
+
 ──────────────────────────────────────────────────────────────────
 
-De ce iti trebuie: fisierul  tools\service-account.json  (o cheie
-descarcata o data din Firebase Console -> Project settings ->
-Service accounts). E in .gitignore, nu-l trimite nimanui. Comenzile
-4 si 8 folosesc in schimb  firebase.cmd  (deja instalat si logat).
+Iti trebuie fisierul  tools\service-account.json  (o cheie descarcata
+o data din Firebase Console -> Project settings -> Service accounts).
+E in .gitignore, nu-l trimite nimanui.
