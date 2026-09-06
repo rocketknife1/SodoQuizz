@@ -14,6 +14,7 @@ import '../../models/multiplayer_models.dart';
 import '../../models/question.dart';
 import '../../widgets/blur_image.dart';
 import '../../widgets/next_button.dart';
+import '../../core/cosmetics.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
@@ -506,6 +507,8 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                     photoUrl: players[i].photoUrl,
                     avatarSeed: players[i].avatarSeed,
                     avatarStyle: players[i].avatarStyle,
+                    frame: frameFromId(players[i].equippedFrame),
+                    titleId: players[i].equippedTitle,
                     size: 48,
                     ringColor: i == 0
                         ? AppColors.coin

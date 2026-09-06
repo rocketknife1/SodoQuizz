@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../core/cosmetics.dart';
 import '../core/betting.dart';
 import '../core/electric_chair.dart';
 import '../core/rock_paper_scissors.dart';
@@ -205,6 +206,8 @@ class MultiplayerService {
               isHost: true,
               bet: stake,
               avatarStyle: avatarStyle,
+              equippedFrame: myFrame.value.name,
+              equippedTitle: myTitle.value.name,
             ).toMap(),
           );
     });
@@ -291,6 +294,8 @@ class MultiplayerService {
             score: 0,
             bet: info.stake,
             avatarStyle: avatarStyle,
+            equippedFrame: myFrame.value.name,
+            equippedTitle: myTitle.value.name,
           ).toMap(),
         ));
     // Fara asta, `firestore.rules` m-ar refuza la prima scriere de rundă: cine

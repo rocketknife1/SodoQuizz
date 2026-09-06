@@ -457,6 +457,12 @@ class MatchPlayer {
   /// sau nu (altfel un jucător norocos l-ar păstra la nesfârșit).
   final bool nextQuestionBonus;
 
+  /// Cosmeticele echipate (id-uri de enum — vezi core/cosmetics.dart), ca
+  /// adversarii să-ţi vadă rama şi titlul în lobby şi în badge-ul de meci.
+  /// Profilurile/clienţii vechi cad pe default.
+  final String equippedFrame;
+  final String equippedTitle;
+
   const MatchPlayer({
     required this.id,
     required this.name,
@@ -469,6 +475,8 @@ class MatchPlayer {
     this.bet = 0,
     this.finished = false,
     this.avatarStyle = '',
+    this.equippedFrame = 'none',
+    this.equippedTitle = 'novice',
     this.hp = tanksMaxHp,
     this.damageDealt = 0,
     this.obstaclesCleared = 0,
@@ -491,6 +499,8 @@ class MatchPlayer {
       bet: data['bet'] as int? ?? 0,
       finished: data['finished'] as bool? ?? false,
       avatarStyle: data['avatarStyle'] as String? ?? '',
+      equippedFrame: data['equippedFrame'] as String? ?? 'none',
+      equippedTitle: data['equippedTitle'] as String? ?? 'novice',
       hp: data['hp'] as int? ?? tanksMaxHp,
       damageDealt: data['damageDealt'] as int? ?? 0,
       obstaclesCleared: data['obstaclesCleared'] as int? ?? 0,
@@ -509,6 +519,8 @@ class MatchPlayer {
         'bet': bet,
         'finished': finished,
         'avatarStyle': avatarStyle,
+        'equippedFrame': equippedFrame,
+        'equippedTitle': equippedTitle,
         // scrise pentru toate modurile, ca fișa de jucător să aibă aceeași
         // formă peste tot; în afara Quizz Tanks nu le citește nimeni.
         'hp': hp,

@@ -23,8 +23,8 @@ class PlayerBadge extends StatelessWidget {
   final Frame frame;
 
   /// Titlul cosmetic (vezi core/cosmetics.dart). Default `'novice'` = gol.
-  /// `MatchPlayer` nu carea inca `equippedTitle`, deci badge-ul de meci ramane
-  /// pe default pana la o extindere viitoare (Task 8).
+  /// `MatchPlayer` carea `equippedFrame`/`equippedTitle` din 2026-09-06, deci
+  /// badge-ul de meci arata rama si titlul adversarului.
   final String titleId;
 
   const PlayerBadge({

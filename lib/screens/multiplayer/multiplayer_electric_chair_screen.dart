@@ -13,6 +13,7 @@ import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../../core/cosmetics.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
@@ -484,6 +485,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                   photoUrl: p.photoUrl,
                   avatarSeed: p.avatarSeed,
                   avatarStyle: p.avatarStyle,
+                  frame: frameFromId(p.equippedFrame),
+                  titleId: p.equippedTitle,
                   size: 46,
                   ringColor: p.id == _myId ? AppColors.blue : (p.isHost ? AppColors.coin : null),
                   scoreChip: _livesChip(p),

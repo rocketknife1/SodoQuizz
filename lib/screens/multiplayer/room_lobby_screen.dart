@@ -18,6 +18,7 @@ import '../../widgets/entrance_item.dart';
 import '../../widgets/match_stake_dialog.dart';
 import '../../widgets/moderation_sheet.dart';
 import '../../widgets/network_scan_animation.dart';
+import '../../core/cosmetics.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/space_background.dart';
 import 'multiplayer_electric_chair_screen.dart';
@@ -645,6 +646,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                     photoUrl: p.photoUrl,
                     avatarSeed: p.avatarSeed,
                     avatarStyle: p.avatarStyle,
+                    frame: frameFromId(p.equippedFrame),
+                    titleId: p.equippedTitle,
                     size: 58,
                     ringColor: p.isHost
                         ? AppColors.coin
