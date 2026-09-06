@@ -16,6 +16,7 @@ import '../widgets/avatar.dart';
 import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
 import 'friend_chat_screen.dart';
+import 'multiplayer/leaderboard_screen.dart' show showPlayerProfileSheet;
 
 /// Ecran de Prieteni — codul propriu (generat lazy, vezi
 /// PlayerProfileService.getOrCreateFriendCode), adăugare prin cod (cerere +
@@ -502,14 +503,19 @@ class _FriendRow extends StatelessWidget {
         decoration: BoxDecoration(color: Colors.white.withAlpha(12), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white24)),
         child: Row(
           children: [
-            AvatarWithLeagueBadge(
-              size: 36,
-              label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-              accentColor: pickAvatarColor(profile.avatarSeed),
-              photoUrl: profile.photoUrl,
-              style: avatarStyleFromId(profile.avatarStyle),
-              frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
-              tier: peakTier,
+            // Tap pe avatar = fișa publică a prietenului (nivel, statistici,
+            // ramă, titlu); restul rândului rămâne pe deschiderea firului.
+            GestureDetector(
+              onTap: () => showPlayerProfileSheet(context, profile),
+              child: AvatarWithLeagueBadge(
+                size: 36,
+                label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                accentColor: pickAvatarColor(profile.avatarSeed),
+                photoUrl: profile.photoUrl,
+                style: avatarStyleFromId(profile.avatarStyle),
+                frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
+                tier: peakTier,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(

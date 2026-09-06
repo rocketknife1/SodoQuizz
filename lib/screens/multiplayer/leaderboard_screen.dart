@@ -244,7 +244,7 @@ String _modeTitle(String gameModeId) => gameModeId == 'higherLower' ? 'Higher or
 IconData _modeIcon(String gameModeId) => gameModeId == 'higherLower' ? Icons.swap_vert_rounded : Icons.emoji_events_rounded;
 Color _modeColor(String gameModeId) => gameModeId == 'higherLower' ? AppColors.purple : AppColors.orange;
 
-void _showBreakdown(BuildContext context, PlayerProfile p) {
+void showPlayerProfileSheet(BuildContext context, PlayerProfile p) {
   showModalBottomSheet(
     context: context,
     backgroundColor: const Color(0xFF1a1a2e),
@@ -525,7 +525,7 @@ class _AllPlayersTabState extends State<_AllPlayersTab> {
                 profile: p,
                 isMe: p.uid == me,
                 showLastActive: true,
-                onTap: () => _showBreakdown(context, p),
+                onTap: () => showPlayerProfileSheet(context, p),
               );
             },
           ),
@@ -591,7 +591,7 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
                 profile: p,
                 isMe: p.uid == me,
                 showLastActive: false,
-                onTap: () => _showBreakdown(context, p),
+                onTap: () => showPlayerProfileSheet(context, p),
               );
             },
           ),
@@ -694,7 +694,7 @@ class _FriendsLeaderboardTabState extends State<_FriendsLeaderboardTab> {
                 profile: p,
                 isMe: p.uid == me,
                 showLastActive: false,
-                onTap: () => _showBreakdown(context, p),
+                onTap: () => showPlayerProfileSheet(context, p),
               );
             },
           ),
