@@ -1653,6 +1653,7 @@ class MultiplayerService {
     required MatchGameMode gameMode,
     required int stake,
     required List<RematchParticipant> participants,
+    bool keepInLobby = false,
   }) async {
     if (PlayerProfileService.instance.amIBanned.value) return false;
     final me = currentPlayerId;
@@ -1664,6 +1665,7 @@ class MultiplayerService {
           participants: participants,
           acceptedIds: [me],
           status: 'pending',
+          keepInLobby: keepInLobby,
         ).toMap()));
     return true;
   }
@@ -1738,13 +1740,22 @@ class MultiplayerService {
       );
     }
     await batch.commit();
-    await startMatch(ref.id);
+    // „Party" ([RematchOffer.keepInLobby]): camera rămâne în lobby, ca gazda
+    // să schimbe modul (vezi [setRoomGameMode]) înainte de următorul meci.
+    if (!offer.keepInLobby) await startMatch(ref.id);
     await _db.collection('rematch_offers').doc(offer.matchId).update({
       'status': 'started',
       'newMatchId': ref.id,
     });
     return ref.id;
   }
+
+  /// Schimbarea modului dintr-o cameră aflată în lobby — doar gazda o
+  /// folosește, din [RoomLobbyScreen]. Toți ceilalți văd schimbarea prin
+  /// abonamentul la documentul de meci, iar plecarea la joc citește oricum
+  /// modul din acel document în clipa START-ului, deci nu se poate desincroniza.
+  Future<void> setRoomGameMode(String matchId, MatchGameMode mode) =>
+      _db.collection('matches').doc(matchId).update({'gameMode': mode.name});
 
   // ─── Meci (comun ambelor fluxuri) ───────────────────────────────────────
 

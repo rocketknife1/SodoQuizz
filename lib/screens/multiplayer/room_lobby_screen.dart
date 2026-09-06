@@ -289,6 +289,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                               interval: const Interval(0.08, 0.55, curve: Curves.easeOutBack),
                               child: _buildCodeBanner(info?.code, players),
                             ),
+                            if (widget.isHost && info != null) _buildModePicker(info.gameMode),
                             if (info?.gameMode == MatchGameMode.higherLower) _buildGameModeBanner(),
                             if (info?.gameMode == MatchGameMode.obby) _buildObbyBanner(players.length),
                             if (info?.gameMode == MatchGameMode.electricChair) _buildElectricChairBanner(players.length),
@@ -755,6 +756,64 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
   /// Face aşteptarea în lobby socială fără să scrii. (Emote-uri ÎN meci =
   /// extindere separată — vezi RETENŢIE #8.)
   static const _quickEmotes = ['👋', '😂', '🔥', '😎', '😱', '🤝'];
+
+  /// Numele scurt al fiecărui mod, pentru pastilele de mai jos. Dialogul de la
+  /// crearea camerei le arată pe larg (icoană + descriere); aici e loc doar de
+  /// nume, iar bannerele de sub selector explică oricum modul ales.
+  static String _modeLabel(MatchGameMode m) => switch (m) {
+        MatchGameMode.classic => tr('Clasic', 'Classic'),
+        MatchGameMode.higherLower => 'Higher & Lower',
+        MatchGameMode.quizzTanks => 'Quizz Tanks',
+        MatchGameMode.obby => 'Obby',
+        MatchGameMode.rockPaperScissors => tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
+        MatchGameMode.electricChair => tr('Scaunul Electric', 'Electric Chair'),
+      };
+
+  /// Gazda schimbă modul FĂRĂ să închidă camera — asta ține un grup împreună
+  /// între partide, în loc să se împrăștie după fiecare meci. Ceilalți văd
+  /// schimbarea imediat, prin același abonament la documentul de meci.
+  Widget _buildModePicker(MatchGameMode current) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SizedBox(
+        height: 34,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          itemCount: MatchGameMode.values.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (_, i) {
+            final m = MatchGameMode.values[i];
+            final selected = m == current;
+            return GestureDetector(
+              onTap: selected
+                  ? null
+                  : () => MultiplayerService.instance.setRoomGameMode(widget.matchId, m).catchError((e) {
+                        debugPrint('RoomLobbyScreen: schimbarea modului a esuat: $e');
+                      }),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.blue.withAlpha(90) : Colors.white.withAlpha(14),
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(color: selected ? AppColors.blue : Colors.white24, width: selected ? 1.4 : 1),
+                ),
+                child: Text(
+                  _modeLabel(m),
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.white70,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
 
   Widget _buildQuickEmotes() {
     return SizedBox(

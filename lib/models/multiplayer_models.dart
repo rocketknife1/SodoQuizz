@@ -624,6 +624,12 @@ class RematchOffer {
   final String? newMatchId;
   final String? declinedBy;
 
+  /// „Party": camera nouă se oprește în LOBBY în loc să pornească meciul, ca
+  /// gazda să poată schimba modul între partide (vezi
+  /// MultiplayerService.launchRematch). Revanșa obișnuită rămâne `false` —
+  /// acolo toată lumea a acceptat deja exact meciul care urmează.
+  final bool keepInLobby;
+
   const RematchOffer({
     required this.matchId,
     required this.hostId,
@@ -634,6 +640,7 @@ class RematchOffer {
     required this.status,
     this.newMatchId,
     this.declinedBy,
+    this.keepInLobby = false,
   });
 
   factory RematchOffer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -654,6 +661,7 @@ class RematchOffer {
       status: data['status'] as String? ?? 'pending',
       newMatchId: data['newMatchId'] as String?,
       declinedBy: data['declinedBy'] as String?,
+      keepInLobby: data['keepInLobby'] as bool? ?? false,
     );
   }
 
@@ -666,6 +674,7 @@ class RematchOffer {
         'status': status,
         'newMatchId': newMatchId,
         'declinedBy': declinedBy,
+        'keepInLobby': keepInLobby,
         'createdAt': FieldValue.serverTimestamp(),
       };
 }

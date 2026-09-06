@@ -26,6 +26,7 @@ import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
+import 'room_lobby_screen.dart';
 
 /// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
 /// cu `leaderboard_screen.dart` (rânduri rang+avatar+nume+scor).
@@ -442,7 +443,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     );
   }
 
-  Future<void> _requestRematch() async {
+  /// [keepInLobby] = „party": aceeași cerere și aceiași participanți, doar că
+  /// grupul aterizează în lobby în loc de meci, iar gazda alege acolo alt mod.
+  Future<void> _requestRematch({bool keepInLobby = false}) async {
     final ok = await MultiplayerService.instance.offerRematch(
       matchId: widget.matchId,
       gameMode: widget.gameMode,
@@ -451,6 +454,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         for (final p in _originalPlayers)
           RematchParticipant(id: p.id, name: p.name, avatarSeed: p.avatarSeed, photoUrl: p.photoUrl, avatarStyle: p.avatarStyle),
       ],
+      keepInLobby: keepInLobby,
     );
     if (!ok) _showBanBlocked();
   }
@@ -490,6 +494,24 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     _navigatedToRematch = true;
     final newMatchId = offer.newMatchId!;
     final gameMode = offer.gameMode;
+    if (offer.keepInLobby) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Navigator.pushReplacement(
+          context,
+          // Gazda camerei NOI e cine a cerut party-ul, nu cine era gazda
+          // meciului tocmai încheiat — vezi [launchRematch], care scrie
+          // `hostId: offer.hostId` în documentul nou.
+          MaterialPageRoute(
+            builder: (_) => RoomLobbyScreen(
+              matchId: newMatchId,
+              isHost: offer.hostId == MultiplayerService.instance.currentPlayerId,
+            ),
+          ),
+        );
+      });
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -541,6 +563,12 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                     ),
                   ),
                 _rematchButton(tr('🔁 Cere revanșă', '🔁 Request rematch'), _requestRematch),
+                const SizedBox(height: 8),
+                _rematchButton(
+                  tr('🎉 Rămâneți împreună (alt mod)', '🎉 Stay together (other mode)'),
+                  () => _requestRematch(keepInLobby: true),
+                  color: AppColors.play,
+                ),
               ],
             ),
           );
@@ -576,7 +604,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: Text(
-              tr('Ai acceptat revanșa — aștept ceilalți jucători ($accepted/$total)', 'Rematch accepted — waiting for the others ($accepted/$total)'),
+              offer.keepInLobby
+                  ? tr('Ai acceptat — aștept ceilalți jucători ($accepted/$total)', 'Accepted — waiting for the others ($accepted/$total)')
+                  : tr('Ai acceptat revanșa — aștept ceilalți jucători ($accepted/$total)', 'Rematch accepted — waiting for the others ($accepted/$total)'),
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
             ),
@@ -595,7 +625,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             child: Column(
               children: [
                 Text(
-                  tr('🔁 $hostName vrea revanșă!', '🔁 $hostName wants a rematch!'),
+                  offer.keepInLobby
+                      ? tr('🎉 $hostName vrea să rămâneți împreună!', '🎉 $hostName wants to keep the party going!')
+                      : tr('🔁 $hostName vrea revanșă!', '🔁 $hostName wants a rematch!'),
                   textAlign: TextAlign.center,
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 13),
                 ),
@@ -626,12 +658,12 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     );
   }
 
-  Widget _rematchButton(String label, VoidCallback onPressed) {
+  Widget _rematchButton(String label, VoidCallback onPressed, {Color color = AppColors.blue}) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
         onPressed: onPressed,
-        style: ElevatedButton.styleFrom(backgroundColor: AppColors.blue, padding: const EdgeInsets.symmetric(vertical: 14)),
+        style: ElevatedButton.styleFrom(backgroundColor: color, padding: const EdgeInsets.symmetric(vertical: 14)),
         child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
