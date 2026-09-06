@@ -233,33 +233,32 @@ class _SweepBar extends StatelessWidget {
       child: SizedBox(
         height: 4,
         width: 180,
-        child: AnimatedBuilder(
-          animation: t,
-          builder: (_, __) {
-            // Segmentul are ~40% din lățime; pleacă din afara cadrului stânga
-            // și iese prin dreapta, apoi reia.
-            final x = -0.4 + t.value * 1.4;
-            return Stack(
-              children: [
-                Container(color: Colors.white.withValues(alpha: 0.10)),
-                Align(
-                  alignment: Alignment(x * 2 - 1, 0),
-                  child: FractionallySizedBox(
-                    widthFactor: 0.4,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [
-                          AppColors.purple.withValues(alpha: 0.0),
-                          AppColors.purple,
-                          AppColors.purple.withValues(alpha: 0.0),
-                        ]),
-                      ),
-                    ),
+        child: Stack(
+          children: [
+            Container(color: Colors.white.withValues(alpha: 0.10)),
+            // Segmentul luminos = 40% din bară. Pleacă ascuns complet în
+            // stânga (translație -1 din propria lățime) și iese complet prin
+            // dreapta (translație 2.5 = 1/0.4), apoi reia — un „indeterminate".
+            FractionallySizedBox(
+              widthFactor: 0.4,
+              child: AnimatedBuilder(
+                animation: t,
+                builder: (_, child) => FractionalTranslation(
+                  translation: Offset(t.value * 3.5 - 1.0, 0),
+                  child: child,
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: [
+                      AppColors.purple.withValues(alpha: 0.0),
+                      AppColors.purple,
+                      AppColors.purple.withValues(alpha: 0.0),
+                    ]),
                   ),
                 ),
-              ],
-            );
-          },
+              ),
+            ),
+          ],
         ),
       ),
     );
