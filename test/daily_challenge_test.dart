@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/daily_challenge.dart';
 import 'package:guess_it/models/question.dart';
 
-Question _q(String id) => Question(
+Question _q(String id, {String? image = 'assets/x.jpg', String? formula}) => Question(
       id: id,
       answer: 'a',
       hint1: '',
@@ -13,6 +13,8 @@ Question _q(String id) => Question(
       category: 'C',
       color: const Color(0xFF000000),
       maxPoints: 100,
+      imageAssetPath: image,
+      formula: formula,
     );
 
 void main() {
@@ -42,6 +44,19 @@ void main() {
     final tiny = [_q('x'), _q('y')];
     expect(pickDailyChallenge(tiny, DateTime(2026, 9, 6)).length, 2);
     expect(pickDailyChallenge(const [], DateTime(2026, 9, 6)), isEmpty);
+  });
+
+  test('exclude intrebarile fara poza si cele pe formula', () {
+    final mixed = [
+      _q('foto1'),
+      _q('foto2'),
+      _q('noimg', image: null),
+      _q('formula', formula: 'x^2'),
+    ];
+    final picked = pickDailyChallenge(mixed, DateTime(2026, 9, 6)).map((q) => q.id).toList();
+    expect(picked, containsAll(['foto1', 'foto2']));
+    expect(picked, isNot(contains('noimg')));
+    expect(picked, isNot(contains('formula')));
   });
 
   test('recompensa: 40/corect, +150 bonus doar la perfect', () {

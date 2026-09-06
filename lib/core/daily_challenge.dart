@@ -30,13 +30,19 @@ int dailyChallengeSeed(DateTime day) =>
     stableHash('provocarea-zilei-${dailyChallengeDateKey(day)}');
 
 /// Alege [dailyChallengeQuestionCount] întrebări din [pool], determinist pe
-/// [day]. Nu modifică [pool]. Dacă pool-ul are mai puţine întrebări decât
-/// [dailyChallengeQuestionCount], le întoarce pe toate (amestecate).
+/// [day]. Nu modifică [pool].
+///
+/// Doar întrebări cu POZĂ reală: cele fără imagine (categorii noi, întrebările
+/// pe formulă din Matematică) arată un placeholder „Va urma" în [BlurImage] —
+/// n-au ce căuta într-o provocare cu miză. Dacă după filtrare rămân mai puţine
+/// de [dailyChallengeQuestionCount], le întoarce pe toate câte sunt.
 List<Question> pickDailyChallenge(List<Question> pool, DateTime day) {
-  if (pool.isEmpty) return const [];
-  final copy = List<Question>.of(pool);
-  stableShuffle(copy, dailyChallengeSeed(day));
-  return copy.take(dailyChallengeQuestionCount).toList();
+  final eligible = pool
+      .where((q) => q.imageAssetPath != null && q.formula == null)
+      .toList();
+  if (eligible.isEmpty) return const [];
+  stableShuffle(eligible, dailyChallengeSeed(day));
+  return eligible.take(dailyChallengeQuestionCount).toList();
 }
 
 /// Recompensa în monede pentru [correct] răspunsuri corecte (din
