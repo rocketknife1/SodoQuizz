@@ -90,9 +90,15 @@ repeți. Adăugarea de conținut nu repară asta.
    `lossPoints=8` — puncte cumulate, nu Elo. Nu simți un „urcuș", nu vezi un
    număr care crește/scade cu skill-ul. Un rating vizibil + matchmaking pe
    rating ar da sens modului Ranked.
-6. **Recompense de sfârșit de sezon.** Ligile + sezoanele există, dar se
-   resetează lazy fără nimic la capăt. Un pachet de recompense (cosmetice +
-   monede) în funcție de liga atinsă = motiv să joci în ultima săptămână.
+6. ✅ **Recompense de sfârșit de sezon** — LIVRAT 2026-09-06. Fără job
+   programat: `SeasonRewardService.snapshotIfSeasonEnded()` (în `main.dart`, la
+   pornire) vede că `seasonKey`-ul de pe profilul propriu e din luna trecută cu
+   puncte > 0 şi îşi salvează local tier-ul atins ÎNAINTE ca primul meci din
+   luna nouă să reseteze totul. Dialog pe Acasă cu revendicare — 100 monede
+   Bronze → 2000 Diamond (`core/season_rewards.dart`), o dată pe sezon. Doar
+   monede (nu cosmetice — alea se recalculează oricum din XP/ligă). Buton debug
+   „SIMULEAZĂ SFÂRȘIT DE SEZON". NEVERIFICAT pe telefon (cere cont admin pt
+   butonul debug, sau aşteptarea unei luni noi).
 7. ✅ **Evenimente limitate cu leaderboard separat** — LIVRAT 2026-09-06.
    Cheia Remote Config `eveniment_activ` (JSON, vezi `core/game_event.dart`) —
    `{id, titlu, categorie, start, sfarsit, bonus}`. Când e activ: card în
