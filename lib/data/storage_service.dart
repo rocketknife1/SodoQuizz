@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -988,6 +989,54 @@ class StorageService {
   static Future<void> setSeasonRewardHandled(String season) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_seasonRewardHandledKey, season);
+  }
+
+  // ─── Jucători recenţi (adversari din meciuri) ─────────────────────────────
+  // Listă locală de până la [_recentOpponentsCap], cel mai recent primul,
+  // deduplicată pe uid. Pentru secţiunea „Adaugă-i ca prieteni" din ecranul
+  // de Prieteni — `completed_matches` NU ţine uid-urile adversarilor, aici e
+  // singurul loc unde se ştiu.
+  static const _recentOpponentsKey = 'recent_opponents';
+  static const _recentOpponentsCap = 15;
+
+  /// O singură cheie, un JSON: listă de `{uid, name, seed, photo?}`.
+  static Future<List<Map<String, String>>> getRecentOpponents() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_recentOpponentsKey);
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final list = jsonDecode(raw) as List;
+      return [
+        for (final e in list)
+          if (e is Map)
+            {
+              'uid': '${e['uid'] ?? ''}',
+              'name': '${e['name'] ?? '?'}',
+              'seed': '${e['seed'] ?? ''}',
+              if (e['photo'] != null && '${e['photo']}'.isNotEmpty)
+                'photo': '${e['photo']}',
+            },
+      ];
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  /// Adaugă adversarii unui meci în capul listei (dedup pe uid, plafonat la
+  /// [_recentOpponentsCap]). [opponents] = intrări cu chei uid/name/seed/photo?.
+  static Future<void> addRecentOpponents(List<Map<String, String>> opponents) async {
+    if (opponents.isEmpty) return;
+    final current = await getRecentOpponents();
+    final seen = <String>{};
+    final merged = <Map<String, String>>[];
+    for (final o in [...opponents, ...current]) {
+      final uid = o['uid'] ?? '';
+      if (uid.isEmpty || !seen.add(uid)) continue;
+      merged.add(o);
+      if (merged.length >= _recentOpponentsCap) break;
+    }
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_recentOpponentsKey, jsonEncode(merged));
   }
 
   // ─── Rate-limit Cultură Generală ([cultureQuizPlayLimit] runde pe ciclu,

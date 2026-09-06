@@ -191,6 +191,18 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         draw: draw,
         ratingDelta: ratingDelta,
       );
+      // Adversarii, pentru secţiunea „Jucători recenţi" din ecranul de
+      // Prieteni (vezi StorageService.addRecentOpponents).
+      await StorageService.addRecentOpponents([
+        for (var i = 0; i < sorted.length; i++)
+          if (i != myIndex && sorted[i].id.isNotEmpty)
+            {
+              'uid': sorted[i].id,
+              'name': sorted[i].name,
+              'seed': sorted[i].avatarSeed,
+              if (sorted[i].photoUrl != null) 'photo': sorted[i].photoUrl!,
+            },
+      ]);
       // sorted.length = câți jucători reali au ajuns până la finalul acestui
       // meci — vezi PlayerProfileService.recordCompletedMatch (no-op sub 2).
       await PlayerProfileService.instance.recordCompletedMatch(

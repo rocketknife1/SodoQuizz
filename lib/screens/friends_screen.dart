@@ -9,6 +9,7 @@ import '../data/live_sync.dart';
 import '../data/moderation_service.dart';
 import '../data/multiplayer_service.dart';
 import '../data/player_profile_service.dart';
+import '../data/storage_service.dart';
 import '../models/friend_chat.dart';
 import '../models/multiplayer_models.dart' show pickAvatarColor;
 import '../models/player_profile.dart';
@@ -33,6 +34,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
   late Future<_FriendsData> _dataFuture = _runLoad();
   final _codeController = TextEditingController();
   bool _sending = false;
+
+  /// Uid-urile de adversari recenţi cărora le-am trimis deja cerere în sesiunea
+  /// asta — butonul „Adaugă" devine „Trimisă" fără o reîncărcare.
+  final Set<String> _requestedRecent = {};
 
   /// Un `_load()` e în zbor acum. A doua cerere de reîncărcare cât asta rulează
   /// nu pornește un `_load()` paralel — se pliază prin [_reloadQueued].
@@ -64,6 +69,19 @@ class _FriendsScreenState extends State<FriendsScreen> {
       final tb = b.lastActive?.millisecondsSinceEpoch ?? 0;
       return tb.compareTo(ta);
     });
+    // Adversari recenţi care nu-s deja prieteni / cu cerere primită / blocaţi.
+    final friendUids = {for (final f in friends) f.uid};
+    final requestUids = {for (final r in (results[1] as List<FriendRequest>)) r.fromUid};
+    final recent = (await StorageService.getRecentOpponents())
+        .where((o) {
+          final uid = o['uid'] ?? '';
+          return uid.isNotEmpty &&
+              !friendUids.contains(uid) &&
+              !requestUids.contains(uid) &&
+              !ModerationService.instance.isBlocked(uid);
+        })
+        .take(6)
+        .toList();
     // Rezumatele firelor NU se mai cer aici (erau N citiri la fiecare
     // reîncărcare) — vin live prin [_summaries] din LiveSync.
     return _FriendsData(
@@ -74,6 +92,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           .where((r) => !ModerationService.instance.isBlocked(r.fromUid))
           .toList(),
       friends: friends,
+      recentOpponents: recent,
     );
   }
 
@@ -173,6 +192,28 @@ class _FriendsScreenState extends State<FriendsScreen> {
     ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
     super.dispose();
+  }
+
+  /// „Adaugă" pe un adversar recent (are deja uid-ul, nu trece prin cod).
+  Future<void> _addRecent(String uid, String name) async {
+    if (uid.isEmpty || _requestedRecent.contains(uid)) return;
+    setState(() => _requestedRecent.add(uid));
+    final outcome = await PlayerProfileService.instance.sendFriendRequestToUid(uid);
+    if (!mounted) return;
+    final message = switch (outcome) {
+      FriendRequestOutcome.sent => tr('Cerere trimisă către $name.', 'Request sent to $name.'),
+      FriendRequestOutcome.autoAccepted => tr('V-ați adăugat reciproc!', 'You added each other!'),
+      FriendRequestOutcome.alreadyFriends => tr('Sunteți deja prieteni.', 'You are already friends.'),
+      FriendRequestOutcome.notFound => tr('Jucătorul nu mai există.', 'That player is gone.'),
+      FriendRequestOutcome.isSelf => tr('Ăsta ești tu.', "That's you."),
+    };
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    if (outcome == FriendRequestOutcome.notFound || outcome == FriendRequestOutcome.isSelf) {
+      setState(() => _requestedRecent.remove(uid));
+    } else if (outcome == FriendRequestOutcome.autoAccepted ||
+        outcome == FriendRequestOutcome.alreadyFriends) {
+      _scheduleReload();
+    }
   }
 
   Future<void> _sendRequest() async {
@@ -308,6 +349,22 @@ class _FriendsScreenState extends State<FriendsScreen> {
                             _RequestRow(request: r, onAccept: () => _accept(r.fromUid), onDecline: () => _decline(r.fromUid)),
                           const SizedBox(height: 24),
                         ],
+                        if (data.recentOpponents.isNotEmpty) ...[
+                          Text(tr('Jucători recenţi', 'Recent players'),
+                              style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 4),
+                          Text(tr('Ai jucat cu ei. Adaugă-i ca prieteni.',
+                              "You've played against them. Add them as friends."),
+                              style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                          const SizedBox(height: 10),
+                          for (final o in data.recentOpponents)
+                            _RecentOpponentRow(
+                              opponent: o,
+                              requested: _requestedRecent.contains(o['uid']),
+                              onAdd: () => _addRecent(o['uid'] ?? '', o['name'] ?? '?'),
+                            ),
+                          const SizedBox(height: 24),
+                        ],
                         Text(tr('Prietenii tăi (${data.friends.length})', 'Your friends (${data.friends.length})'),
                             style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 10),
@@ -437,11 +494,68 @@ class _FriendsData {
   final List<FriendRequest> requests;
   final List<PlayerProfile> friends;
 
+  /// Adversari din meciuri recente care NU sunt deja prieteni — pentru
+  /// secţiunea „Adaugă-i" (vezi StorageService.getRecentOpponents).
+  final List<Map<String, String>> recentOpponents;
+
   const _FriendsData({
     required this.myCode,
     required this.requests,
     required this.friends,
+    this.recentOpponents = const [],
   });
+}
+
+class _RecentOpponentRow extends StatelessWidget {
+  final Map<String, String> opponent;
+  final bool requested;
+  final VoidCallback onAdd;
+
+  const _RecentOpponentRow({required this.opponent, required this.requested, required this.onAdd});
+
+  @override
+  Widget build(BuildContext context) {
+    final name = opponent['name'] ?? '?';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white12),
+      ),
+      child: Row(
+        children: [
+          Avatar(
+            size: 32,
+            label: name.isNotEmpty ? name[0].toUpperCase() : '?',
+            accentColor: pickAvatarColor(opponent['seed'] ?? name),
+            photoUrl: opponent['photo'],
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(name,
+                maxLines: 1, overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+          ),
+          if (requested)
+            Text(tr('Trimisă', 'Sent'),
+                style: const TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.w700))
+          else
+            TextButton(
+              onPressed: onAdd,
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.teal,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: Size.zero,
+              ),
+              child: Text(tr('Adaugă', 'Add'),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
+            ),
+        ],
+      ),
+    );
+  }
 }
 
 class _RequestRow extends StatelessWidget {
