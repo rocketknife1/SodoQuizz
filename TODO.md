@@ -6,23 +6,36 @@ Ultima curățare: 2026-09-06.
 
 ---
 
-## ✅ NU MAI E COD DE SCRIS — doar testare + AAB
+## ✅ NU MAI E COD DE SCRIS — doar AAB + Data safety
 
-Toată secțiunea RETENȚIE (1-8) e livrată. Ce a mai rămas, în ordine:
+Toată secțiunea RETENȚIE (1-8) e livrată. Testarea cu 2+ jucători e FĂCUTĂ
+(2026-09-06, două/patru contexte Playwright + telefon), până la `db54679`:
 
-1. **Testare cu 2 jucători** (telefon wireless + browser, sau două contexte
-   Playwright — vezi „Testare multiplayer cu jucători automați" mai jos):
-   - reacții rapide ÎN meci (butonul din colț, în toate cele 6 moduri)
-   - „Adversarul se reconectează..." (închide un client în timpul rundei)
-   - party persistentă: REZULTATE → „Rămâneți împreună" → lobby → gazda
-     schimbă modul → START
-   - mișcarea de rating după meci (±, se vede pe profil)
-   - ramă/titlu de-ale adversarului, vizibile în meci și în lobby
-   - clasamentul Provocării Zilei cu 2 intrări
-2. **AAB pentru Play** — `flutter build appbundle --release` (FĂRĂ `REAL_ADS`).
-   Ultimul e din `b805052`; se reconstruiește după toate astea.
-3. **Formularul Data safety** — o singură trecere, la final (secțiunea de mai
-   jos). NU pe bucăți.
+- ✅ reacții rapide ÎN meci — verificate în toate cele 6 moduri (Clasic,
+  Higher & Lower, Quizz Tanks 4j, Obby, Scaunul Electric 4j, PHF). Butonul a
+  fost mutat SUS-DREAPTA (acoperea răspunsul D la Obby jos-dreapta).
+- ✅ „Adversarul se reconectează..." — apare la tăiere, dispare la revenire.
+- ✅ party persistentă — cap-la-cap, inclusiv schimbarea modului între meciuri.
+- ✅ mișcarea de rating — 1052/948 după 5 meciuri, simetric.
+- ✅ ramă/titlu de adversar în meci + lobby.
+- ✅ clasamentul Provocării Zilei cu 2 intrări — DUPĂ ce s-a reparat bug-ul
+  „mereu gol" (lipsea `firestore.indexes.json`, acum deployat).
+- ✅ matchmaking pe rating — imposibil de probat cu 2 conturi (identic cu
+  primul-venit); acoperit cu `test/matchmaking_test.dart` +
+  `test/matchmaking_simulation_test.dart` (240 jucători generați, 80 runde,
+  concordanță rating↔skill 93.7%).
+
+Bug-uri reparate pe drum: clasamentul Provocării Zilei, bannerul de
+reconectare care apărea peste meciul curent, 8 texte hardcodate în română.
+
+Ce a mai rămas:
+
+1. **AAB pentru Play** — `flutter build appbundle --release` (FĂRĂ `REAL_ADS`).
+2. **Formularul Data safety** — o singură trecere, la final. NU pe bucăți.
+3. **(opțional)** curățare date de test din producție —
+   `python tools/purge_stale_matches.py --toate --sterge` +
+   `firebase firestore:delete rematch_offers --recursive --force --project sodoquizz`
+   (blocate de clasificatorul Claude; rulează-le tu). Inofensive.
 
 Restul din fișier = context, decizii care te așteaptă pe tine, și note de
 lucru. Nu sunt task-uri de implementare.
@@ -119,12 +132,15 @@ repeți. Adăugarea de conținut nu repară asta.
      rezultate citeşte ratingul adversarilor şi calculează o deltă pe perechi
      (plafonat ±24/meci, împărţit la nr. adversari). Afişat pe profil. Reguli:
      ±30 max/scriere.
-   - ✅ **Matchmaking pe rating** — LIVRAT 2026-09-06. Ratingul se scrie în
+   - ✅ **Matchmaking pe rating** — LIVRAT 2026-09-06. Logica pură în
+     `core/matchmaking.dart` (`pickOpponentsByRating`). Ratingul se scrie în
      `matchmaking_queue` la intrare (o citire de profil per intrare, nu una
      per candidat la fiecare 1.5s). Capul cozii — cel care așteaptă de cel mai
      mult timp — își alege adversarii cei mai apropiați ca rating. Nimeni nu e
      exclus, doar ordonat, deci nu poate înfometa pe nimeni. Se vede cu adevărat
-     abia la 3+ jucători simultan în coadă; la 2 e identic cu înainte.
+     abia la 3+ jucători simultan în coadă; la 2 e identic cu înainte — de-aia
+     verificarea e prin `test/matchmaking_simulation_test.dart` (240 jucători
+     generați, 80 runde), nu pe teren.
 6. ✅ **Recompense de sfârșit de sezon** — LIVRAT 2026-09-06. Fără job
    programat: `SeasonRewardService.snapshotIfSeasonEnded()` (în `main.dart`, la
    pornire) vede că `seasonKey`-ul de pe profilul propriu e din luna trecută cu
@@ -147,12 +163,13 @@ repeți. Adăugarea de conținut nu repară asta.
    - ✅ **Reacţii rapide în lobby** — LIVRAT 2026-09-06. Rând de 6 emoji
      deasupra chat-ului din cameră, un tap trimite emoji-ul ca mesaj normal
      (canalul de chat existent). Zero Firestore/reguli noi.
-   - ✅ **Emote-uri ÎN meci** — LIVRAT 2026-09-06. Buton în colțul dreapta-jos
-     al ecranului de joc, în toate cele 6 moduri; reacțiile primite urcă
-     deasupra lui și se sting după 3s. Merge pe canalul de chat EXISTENT
-     (`matches/{id}/chat`) — zero infrastructură nouă. Montat prin
-     `MatchOverlay` în slotul `floatingActionButton:`, deci arborii de
-     widgeturi ai ecranelor de joc n-au fost atinși.
+   - ✅ **Emote-uri ÎN meci** — LIVRAT 2026-09-06, verificat cu 2/4 jucători în
+     toate cele 6 moduri. Buton în colțul dreapta-SUS al ecranului de joc (sub
+     bara de sus, ca să nu acopere cronometrul); paleta și reacțiile primite
+     curg în jos. Merge pe canalul de chat EXISTENT (`matches/{id}/chat`) —
+     zero infrastructură nouă. Montat prin `MatchOverlay` +
+     `matchOverlayLocation` în sloturile `floatingActionButton*:`, deci arborii
+     de widgeturi ai ecranelor de joc n-au fost atinși.
 
 **Nivel 3 — scump / are nevoie de bază de jucători pe care n-o ai încă:**
 
@@ -190,11 +207,11 @@ repeți. Adăugarea de conținut nu repară asta.
   fiecare răspuns + bază de jucători). Nu inventez o valoare care n-are date
   în spate. Vezi „Decizii care te așteaptă pe tine".
 
-### Stadiu: punctele 1-8 sunt TOATE livrate (2026-09-06)
+### Stadiu: punctele 1-8 livrate ȘI testate (2026-09-06)
 
-Nu mai există task de cod în secțiunea RETENȚIE. Rămân doar **testările cu 2
-jucători** (vezi secțiunea de mai jos) și punctele 9-12, care sunt blocate pe
-bază de jucători, nu pe cod.
+Nu mai există task de cod în secțiunea RETENȚIE și nici testare deschisă —
+totul e verificat cu 2/4 jucători (Playwright + telefon), până la `db54679`.
+Rămân doar punctele 9-12, blocate pe bază de jucători, nu pe cod.
 
 ---
 
