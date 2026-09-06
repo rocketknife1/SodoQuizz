@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../core/ads_service.dart';
 import '../core/audio.dart';
 import '../core/daily_challenge.dart';
+import '../core/remote_flags.dart';
 import '../core/progression.dart';
 import '../core/reward_collector.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import 'daily_challenge_screen.dart';
+import 'event_screen.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/coin_reward_overlay.dart';
 import '../widgets/collect_all_overlay.dart';
@@ -528,6 +530,10 @@ class _QuestsScreenState extends State<QuestsScreen> {
                 ),
                 const Padding(
                   padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
+                  child: _EventCard(),
+                ),
+                const Padding(
+                  padding: EdgeInsets.fromLTRB(20, 0, 20, 10),
                   child: _DailyChallengeCard(),
                 ),
                 Padding(
@@ -1006,6 +1012,68 @@ class _DailyChallengeCardState extends State<_DailyChallengeCard> {
                     fontSize: 11.5,
                     fontWeight: FontWeight.w900),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Cardul unui eveniment limitat — apare DOAR când `RemoteFlags.activeEvent`
+/// e non-null (un eveniment configurat şi în fereastra lui de timp). Tap →
+/// [EventScreen]. Vezi core/game_event.dart.
+class _EventCard extends StatelessWidget {
+  const _EventCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final e = RemoteFlags.instance.activeEvent;
+    if (e == null) return const SizedBox.shrink();
+    final daysLeft = e.daysLeftAt(DateTime.now());
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context, MaterialPageRoute(builder: (_) => EventScreen(event: e))),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(colors: [
+            AppColors.purple.withAlpha(70),
+            AppColors.orange.withAlpha(40),
+          ]),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: AppColors.purple.withAlpha(130)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.event_rounded, color: AppColors.coin, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(tr(e.titleRo, e.titleEn),
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(
+                    daysLeft > 0
+                        ? tr('Eveniment · încă $daysLeft ${daysLeft == 1 ? 'zi' : 'zile'} · clasament propriu',
+                            'Event · $daysLeft ${daysLeft == 1 ? 'day' : 'days'} left · own leaderboard')
+                        : tr('Eveniment · ultima zi · clasament propriu',
+                            'Event · last day · own leaderboard'),
+                    style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(color: AppColors.coin, borderRadius: BorderRadius.circular(14)),
+              child: Text(tr('VEZI', 'OPEN'),
+                  style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900)),
             ),
           ],
         ),

@@ -1,6 +1,8 @@
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
+import 'game_event.dart';
+
 // ─── Comutatoare de la distanță ───────────────────────────────────────────
 //
 // DE CE EXISTĂ, în cuvintele scopului: „lansez, mai dau un update mic și nu
@@ -39,11 +41,16 @@ class RemoteFlags {
   static const _kRealMoney = 'magazin_bani_reali';
   static const _kPremiumVisible = 'magazin_premium_vizibil';
 
+  /// Evenimentul limitat curent, ca JSON (vezi core/game_event.dart) sau gol.
+  /// Din aici se aprinde/opreşte un eveniment fără build nou.
+  static const _kEvent = 'eveniment_activ';
+
   static const Map<String, dynamic> _defaults = {
     _kMinVersion: '',
     _kMaintenance: '',
     _kRealMoney: false,
     _kPremiumVisible: false,
+    _kEvent: '',
   };
 
   FirebaseRemoteConfig? _rc;
@@ -56,6 +63,21 @@ class RemoteFlags {
   String get maintenanceMessage => _rc?.getString(_kMaintenance) ?? '';
   bool get realMoneyStore => _rc?.getBool(_kRealMoney) ?? false;
   bool get premiumVisible => _rc?.getBool(_kPremiumVisible) ?? false;
+
+  /// Suprascriere DOAR pentru testarea pe telefon (butonul din tabul Debug).
+  /// Când e non-null, [activeEvent] o foloseşte în locul valorii din Remote
+  /// Config. Nu se persistă — dispare la repornire.
+  String? debugEventOverride;
+
+  /// Evenimentul curent DACĂ e configurat ŞI activ acum (între start şi
+  /// sfârşit). `null` altfel — inclusiv pentru un eveniment care încă n-a
+  /// început sau s-a terminat.
+  GameEvent? get activeEvent {
+    final raw = debugEventOverride ?? _rc?.getString(_kEvent) ?? '';
+    final e = parseGameEvent(raw);
+    if (e == null || !e.isLiveAt(DateTime.now())) return null;
+    return e;
+  }
 
   /// Se apelează după `Firebase.initializeApp`. NU se așteaptă după ea la
   /// pornire: valorile implicite sunt bune, iar cele aduse se aplică atunci

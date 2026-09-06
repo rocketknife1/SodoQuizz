@@ -498,6 +498,30 @@ service cloud.firestore {
         && request.resource.data.level is int;
     }
 
+    // Clasamentul unui eveniment limitat (vezi EventService,
+    // core/game_event.dart). `events/{eventId}/scores/{uid}`, `points` se
+    // acumuleaza cu FieldValue.increment.
+    //
+    // Citeste oricine autentificat. Scrie DOAR proprietarul propriul doc, iar
+    // `points` nu poate creste cu mai mult de 50 per scriere (o runda de joc
+    // da cel mult atat) si nu poate scadea. Sub subcolectie de eveniment: nu
+    // atinge `player_profiles`, deci nu pacaleste clasamentul de liga.
+    function eventPointsOk() {
+      return request.resource.data.points is int
+        && request.resource.data.points >= 0
+        && request.resource.data.points <=
+             (resource == null ? 50 : resource.data.points + 50)
+        && (resource == null || request.resource.data.points >= resource.data.points);
+    }
+    match /events/{eventId}/scores/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && eventPointsOk()
+        && request.resource.data.name is string
+        && request.resource.data.level is int;
+    }
+
     // Raportarile trimise de jucatori (vezi ModerationService.submitReport).
     //
     // Scrie oricine, dar numai in numele lui: conditia pe reporterUid opreste

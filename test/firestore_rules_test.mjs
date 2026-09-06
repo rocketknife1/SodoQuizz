@@ -124,6 +124,28 @@ await check('oricine autentificat poate CITI clasamentul de azi', () => assertSu
 await check('jucatorul NU-si poate STERGE scorul (nu rejoaca)', () => assertFails(
   deleteDoc(DC(eu, 'jucator1'))));
 
+console.log('\nCLASAMENT DE EVENIMENT (events/{id}/scores/{uid}):');
+
+const EV = (db, uid) => doc(db, 'events', 'halloween-2026', 'scores', uid);
+
+await check('owner-ul isi creeaza scorul de eveniment (<= 50)', () => assertSucceeds(
+  setDoc(EV(eu, 'jucator1'), { name: 'Eu', points: 30, level: 3 })));
+
+await check('poate acumula (35 + 40 = 75, delta 40 <= 50)', () => assertSucceeds(
+  setDoc(EV(eu, 'jucator1'), { name: 'Eu', points: 70, level: 3 })));
+
+await check('NU poate sari cu mai mult de 50 intr-o scriere', () => assertFails(
+  setDoc(EV(eu, 'jucator1'), { name: 'Eu', points: 999, level: 3 })));
+
+await check('NU poate SCADEA scorul', () => assertFails(
+  setDoc(EV(eu, 'jucator1'), { name: 'Eu', points: 10, level: 3 })));
+
+await check('NU poate scrie scorul altcuiva', () => assertFails(
+  setDoc(EV(eu, 'altul'), { name: 'X', points: 20, level: 1 })));
+
+await check('oricine autentificat citeste clasamentul evenimentului', () => assertSucceeds(
+  getDoc(EV(env.authenticatedContext('strain3').firestore(), 'jucator1'))));
+
 console.log('\nPROFIL NOU:');
 const nou = env.authenticatedContext('jucatorNou').firestore();
 await check('se poate crea de la zero', () => assertSucceeds(

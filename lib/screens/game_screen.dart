@@ -8,11 +8,13 @@ import '../core/review_prompt.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
+import '../core/remote_flags.dart';
 import '../core/lang.dart';
 import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
+import '../data/event_service.dart';
 import '../data/questions.dart';
 import '../data/shop.dart';
 import '../data/storage_service.dart';
@@ -298,8 +300,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // deja plătit cu bonus.
     final pts = correct ? currentQuestionReward : 0;
     final multiplier = correct ? streakMultiplier(streak + 1) : 1.0;
+    // Bonus de eveniment limitat: dacă un eveniment e activ acum şi categoria
+    // asta contează pentru el, monedele se înmulţesc cu `coinBonus` (1.0 =
+    // fără bonus). Vezi RemoteFlags.activeEvent / core/game_event.dart.
+    final event = RemoteFlags.instance.activeEvent;
+    final eventCounts =
+        correct && event != null && event.countsMode(widget.gameModeId);
+    final eventBonus =
+        (event != null && eventCounts) ? event.coinBonus : 1.0;
     final coinsEarned = correct
-        ? (coinsForCorrectAnswer(currentQ.maxPoints) * multiplier).round()
+        ? (coinsForCorrectAnswer(currentQ.maxPoints) * multiplier * eventBonus).round()
         : 0;
     final xpEarned = correct
         ? (xpForCorrectAnswer(currentQ.maxPoints) * multiplier).round()
@@ -344,6 +354,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       if (mounted) setState(() => coinsBalance += coinsEarned);
       await StorageService.addAnsweredId(currentQ.id);
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
+      // Punctele contează şi pentru clasamentul evenimentului curent, dacă e
+      // unul activ pe categoria asta (best-effort, nu blochează runda).
+      if (eventCounts) {
+        EventService.instance.addPoints(event.id, pts);
+      }
       if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
       if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
       if (hintsUsed == 0 && mounted) {

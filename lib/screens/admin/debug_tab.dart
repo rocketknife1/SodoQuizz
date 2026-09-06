@@ -255,6 +255,28 @@ class _DebugTabState extends State<_DebugTab> {
           ),
           const SizedBox(height: 10),
           _buildDevToolButton(
+            icon: Icons.event_rounded,
+            label: 'SIMULEAZĂ UN EVENIMENT (7 zile, Istorie ×1.5)',
+            color: AppColors.purple,
+            onTap: () {
+              final today = DateTime.now();
+              final end = today.add(const Duration(days: 7));
+              String d(DateTime t) =>
+                  '${t.year}-${t.month.toString().padLeft(2, '0')}-${t.day.toString().padLeft(2, '0')}';
+              RemoteFlags.instance.debugEventOverride =
+                  '{"id":"test-${d(today)}","titlu":"Săptămâna Istoriei",'
+                  '"titlu_en":"History Week","descriere":"Categoria Istorie în față. '
+                  'Bonus la monede + clasament propriu.","categorie":"istorie",'
+                  '"start":"${d(today)}","sfarsit":"${d(end)}","bonus":1.5}';
+              RemoteFlags.instance.revision.value++;
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Eveniment simulat. Vezi cardul în Quest-uri.'),
+                backgroundColor: AppColors.teal,
+              ));
+            },
+          ),
+          const SizedBox(height: 10),
+          _buildDevToolButton(
             icon: Icons.bug_report_rounded,
             label: 'TRIMITE UN RAPORT ACUM',
             color: AppColors.play,

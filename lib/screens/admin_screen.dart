@@ -7,6 +7,7 @@ import '../core/progression.dart' show levelForXp;
 import '../core/theme.dart';
 import '../data/admin_chat_service.dart';
 import '../core/admin_reveal.dart';
+import '../core/remote_flags.dart';
 import '../data/moderation_service.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';
