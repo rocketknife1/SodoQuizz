@@ -69,10 +69,17 @@ repeți. Adăugarea de conținut nu repară asta.
    (`dailyChallengeQuestionCount`). Curăţarea colecţiilor `daily_challenges`
    vechi — niciun job încă; se adună câte un doc/jucător/zi. TTL Firestore
    sau un purge lunar când contează.
-3. **Prieteni online / recent players.** `multiplayer_presence` există dar e
-   doar un banner global. Nu vezi CARE prieten e online acum, nu ai listă de
-   „jucători recenți" (doar prieteni). Fără asta, multiplayer-ul cu prieteni
-   depinde de coordonare pe alt canal.
+3. **Prieteni online / recent players.**
+   - ✅ **Indicator „activ acum"** — LIVRAT 2026-09-06. `PlayerProfile.isRecentlyActive`
+     (`lastActive` sub 5 min). Bulină verde pe avatarul prietenului + „Activ acum",
+     prietenii activi sus în listă; același indicator în fișa publică din clasament.
+     Zero citiri Firestore noi. NEVERIFICAT cu un prieten real activ (bază goală).
+   - ⏳ **„Recent players"** — amânat: `completed_matches` NU stochează uid-urile
+     adversarilor. Cere o cale de scriere nouă (salvezi adversarii la finalul
+     meciului) — separat.
+   - Notă: fără heartbeat periodic; `lastActive` se rescrie doar la
+     deschidere/resume/profil. Dacă „activ acum" trebuie mai precis, un
+     `Timer.periodic(~90s)` în `main.dart` peste `ensureProfileHeartbeat`.
 4. **Party persistentă.** Joci un meci cu un prieten → REVANȘĂ merge, dar nu
    poți sta 3-4 într-un lobby și schimba modul între meciuri. Camera se
    închide după meci.
