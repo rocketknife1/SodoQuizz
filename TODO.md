@@ -86,10 +86,15 @@ repeți. Adăugarea de conținut nu repară asta.
 
 **Nivel 2 — mediu, ține oamenii pe termen lung:**
 
-5. **Ladder vizibil cu rating (nu doar ligă pe puncte).** Azi: `winPoints=20`,
-   `lossPoints=8` — puncte cumulate, nu Elo. Nu simți un „urcuș", nu vezi un
-   număr care crește/scade cu skill-ul. Un rating vizibil + matchmaking pe
-   rating ar da sens modului Ranked.
+5. **Ladder vizibil cu rating.**
+   - ✅ **Rating Elo vizibil** — LIVRAT 2026-09-06. `PlayerProfile.rating`
+     (start 1000, `core/elo.dart` K=24). La finalul meciului, ecranul de
+     rezultate citeşte ratingul adversarilor şi calculează o deltă pe perechi
+     (plafonat ±24/meci, împărţit la nr. adversari). Afişat pe profil. Reguli:
+     ±30 max/scriere.
+   - ⏳ **Matchmaking pe rating** — amânat: cere bază de jucători ca să conteze
+     şi atinge coada de matchmaking. De făcut când sunt destui jucători
+     simultan.
 6. ✅ **Recompense de sfârșit de sezon** — LIVRAT 2026-09-06. Fără job
    programat: `SeasonRewardService.snapshotIfSeasonEnded()` (în `main.dart`, la
    pornire) vede că `seasonKey`-ul de pe profilul propriu e din luna trecută cu
