@@ -26,6 +26,36 @@ class RemoteGate extends StatefulWidget {
 
   @override
   State<RemoteGate> createState() => _RemoteGateState();
+
+  /// Deschide ecranul de întreținere pentru probă (buton din Admin → Debug).
+  /// Ca să se vadă exact ce vede jucătorul, fără să atingi Remote Config.
+  static void previewMaintenance(BuildContext context) {
+    Navigator.of(context).push(MaterialPageRoute(
+      fullscreenDialog: true,
+      builder: (_) => Stack(
+        children: [
+          const _BlockingScreen(
+            emoji: '🛠️',
+            title: 'Revenim imediat',
+            body: 'Facem niște treburi la joc. Nu dura mult — încearcă din nou '
+                'peste câteva minute.',
+            showProgress: true,
+          ),
+          // DOAR în preview: o cale de ieșire. Jucătorul real n-are.
+          Positioned(
+            top: 44,
+            right: 12,
+            child: SafeArea(
+              child: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    ));
+  }
 }
 
 class _RemoteGateState extends State<RemoteGate> {
@@ -70,6 +100,10 @@ class _RemoteGateState extends State<RemoteGate> {
             emoji: '🛠️',
             title: tr('Revenim imediat', 'Back shortly'),
             body: maintenance,
+            // Bara care se mișcă = semnalul „lucrăm, nu s-a blocat". Un ecran
+            // de întreținere complet static se citește prea ușor ca „aplicația
+            // e stricată" — exact impresia greșită.
+            showProgress: true,
           );
         }
         return child!;
@@ -79,12 +113,13 @@ class _RemoteGateState extends State<RemoteGate> {
   }
 }
 
-class _BlockingScreen extends StatelessWidget {
+class _BlockingScreen extends StatefulWidget {
   final String emoji;
   final String title;
   final String body;
   final String? actionLabel;
   final VoidCallback? onAction;
+  final bool showProgress;
 
   const _BlockingScreen({
     required this.emoji,
@@ -92,7 +127,34 @@ class _BlockingScreen extends StatelessWidget {
     required this.body,
     this.actionLabel,
     this.onAction,
+    this.showProgress = false,
   });
+
+  @override
+  State<_BlockingScreen> createState() => _BlockingScreenState();
+}
+
+class _BlockingScreenState extends State<_BlockingScreen>
+    with TickerProviderStateMixin {
+  // Icoana se leagănă încet (o cheie care se învârte), nu sare — trebuie să
+  // calmeze, nu să agite.
+  late final AnimationController _wiggle = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2600),
+  )..repeat(reverse: true);
+
+  // Sweep-ul continuu al barei de progres — indeterminat, ca la un download.
+  late final AnimationController _sweep = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _wiggle.dispose();
+    _sweep.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -104,10 +166,18 @@ class _BlockingScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(emoji, style: const TextStyle(fontSize: 60)),
+              AnimatedBuilder(
+                animation: _wiggle,
+                builder: (_, child) => Transform.rotate(
+                  // -0.14 .. +0.14 rad ≈ ±8°, cu easing la capete.
+                  angle: (Curves.easeInOut.transform(_wiggle.value) - 0.5) * 0.28,
+                  child: child,
+                ),
+                child: Text(widget.emoji, style: const TextStyle(fontSize: 60)),
+              ),
               const SizedBox(height: 20),
               Text(
-                title,
+                widget.title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                     color: Colors.white,
@@ -116,24 +186,28 @@ class _BlockingScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                body,
+                widget.body,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                     color: Colors.white70, fontSize: 15, height: 1.5),
               ),
-              if (actionLabel != null) ...[
+              if (widget.showProgress) ...[
+                const SizedBox(height: 26),
+                _SweepBar(_sweep),
+              ],
+              if (widget.actionLabel != null) ...[
                 const SizedBox(height: 28),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: onAction,
+                    onPressed: widget.onAction,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.purple,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text(actionLabel!,
+                    child: Text(widget.actionLabel!,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w800)),
                   ),
@@ -141,6 +215,51 @@ class _BlockingScreen extends StatelessWidget {
               ],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bară subțire cu un segment luminos care alunecă la nesfârșit stânga→dreapta.
+class _SweepBar extends StatelessWidget {
+  final Animation<double> t;
+  const _SweepBar(this.t);
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(3),
+      child: SizedBox(
+        height: 4,
+        width: 180,
+        child: AnimatedBuilder(
+          animation: t,
+          builder: (_, __) {
+            // Segmentul are ~40% din lățime; pleacă din afara cadrului stânga
+            // și iese prin dreapta, apoi reia.
+            final x = -0.4 + t.value * 1.4;
+            return Stack(
+              children: [
+                Container(color: Colors.white.withValues(alpha: 0.10)),
+                Align(
+                  alignment: Alignment(x * 2 - 1, 0),
+                  child: FractionallySizedBox(
+                    widthFactor: 0.4,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [
+                          AppColors.purple.withValues(alpha: 0.0),
+                          AppColors.purple,
+                          AppColors.purple.withValues(alpha: 0.0),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

@@ -33,6 +33,10 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 /build/
+
+# Rapoartele jucatorilor descarcate de tools/view_reports.py — contin uid-uri
+# si urme tehnice, nu au ce cauta in istoric. Se re-genereaza oricand.
+/rapoarte/
 # `/build/` e ancorat la radacina, deci NU acopera si asta — rapoarte generate
 # de Gradle, aparute odata cu AGP 8.11.1 (2026-09-04).
 android/build/

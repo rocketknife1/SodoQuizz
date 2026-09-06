@@ -183,6 +183,13 @@ class _DebugTabState extends State<_DebugTab> {
           ),
           const SizedBox(height: 12),
           _buildDevToolButton(
+            icon: Icons.construction_rounded,
+            label: 'PREVIEW ECRAN DE MENTENANȚĂ',
+            color: AppColors.orange,
+            onTap: () => RemoteGate.previewMaintenance(context),
+          ),
+          const SizedBox(height: 12),
+          _buildDevToolButton(
             icon: Icons.lock_open_rounded,
             label: 'PREVIEW ANIMAȚIE DEBLOCARE',
             color: AppColors.purple,

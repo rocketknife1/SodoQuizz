@@ -63,17 +63,29 @@ COLLECTIONS = [
     # `users/{uid}/fcm_tokens` si sunt sterse automat cand se sterge parintele
     # `users/{uid}` — nu au nevoie de intrare separata aici.
     "room_invites",
+    # Adaugat 6 septembrie 2026, dupa acelasi bug: scriptul lasa in urma exact
+    # ce s-a construit dupa ce a fost scris ultima oara.
+    "bug_reports",       # butonul "Trimite raportul" (crash-uri, blocaje)
+    "admin_threads",     # firul admin<->jucator (fiecare doc are subcol. `messages`)
+    "daily_challenges",  # Provocarea Zilei (fiecare zi are subcol. `scores`)
+    "events",            # evenimente limitate (fiecare are subcol. `scores`)
+    "security_flags",    # semnalele de balanta implauzibila (onBalanceAudit)
+    # `config/admin` tine uid-ul adminului pentru Admin SDK-ul din Functions.
+    # Se re-scrie SINGUR la urmatoarea pornire a aplicatiei adminului
+    # (AdminChatService._publishAdminUidIfAdmin), deci stergerea lui e
+    # auto-reparabila — dar pentru un reset "ca la lansare" il golim si pe el.
+    "config",
 ]
 
 # ATENTIE LA ORICE FEATURE NOU CARE SCRIE O COLECTIE NOUA: lista de mai sus e
 # scrisa de mana si nu se auto-descopera (Firestore nu are "listeaza toate
-# colectiile" fara Admin SDK pe radacina). Cele patru de mai jos au fost
-# adaugate pe 13 august 2026, cand s-a observat ca scriptul lasa in urma exact
-# datele adaugate dupa ce a fost scris: prezenta din multiplayer, ofertele de
-# revansa, conversatiile private dintre prieteni si raportarile de moderare.
-# Un reset care spune "gol" si nu e chiar gol e mai rau decat unul care crapa.
-# Verificare rapida a listei:
+# colectiile" fara Admin SDK pe radacina).
+# Verificare rapida ca lista e completa (trebuie sa nu iasa nimic in plus):
 #   grep -rho "_db.collection('[a-z_]*')" lib/ | sort -u
+#   grep -rho "collection('[a-z_]*')" lib/ | sort -u   # prinde si subcolectiile
+# Subcolectiile (`scores`, `messages`, `players`, `chat`, `fcm_tokens`,
+# `friends`, `friend_requests`, `blocked`, `notifications`) se descopera
+# automat pentru fiecare document parinte, deci NU se pun in lista.
 
 
 def _url(resource_name):
@@ -103,10 +115,19 @@ def session():
 
 
 def list_docs(s, path):
-    """Toate documentele dintr-o colectie, paginat complet."""
+    """Toate documentele dintr-o colectie, paginat complet.
+
+    `showMissing=true` e OBLIGATORIU: `daily_challenges/2026-09-06` sau
+    `admin_threads/{uid}` sunt de multe ori documente FANTOMA — n-au niciun
+    camp, exista doar ca sa tina o subcolectie (`scores`, `messages`). Fara
+    flag-ul asta REST-ul nu le intoarce deloc, deci scriptul nu le descopera
+    subcolectiile si lasa in urma exact scorurile/mesajele — un reset care
+    zice "gol" si nu e. Cu flag-ul, ele apar (fara `createTime`); stergerea
+    unui doc care oricum nu exista e un no-op inofensiv.
+    """
     docs, token = [], None
     while True:
-        params = {"pageSize": 300}
+        params = {"pageSize": 300, "showMissing": "true"}
         if token:
             params["pageToken"] = token
         r = s.get(f"{FIRESTORE}/{_url(path)}", params=params, timeout=90)

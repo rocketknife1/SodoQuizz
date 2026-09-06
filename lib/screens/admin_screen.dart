@@ -21,6 +21,7 @@ import '../models/player_profile.dart';
 import '../widgets/avatar.dart';
 import '../widgets/category_unlock_animation.dart';
 import '../widgets/coin_reward_overlay.dart';
+import '../widgets/remote_gate.dart';
 import 'admin_chat_screen.dart';
 import 'test_images_screen.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
