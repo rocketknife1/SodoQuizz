@@ -114,8 +114,13 @@ repeți. Adăugarea de conținut nu repară asta.
    64/64 pe emulator). Buton debug „SIMULEAZĂ UN EVENIMENT". Recompense la
    final = MANUAL (admin grant) — fără Cloud Function programată (evită Blaze).
    Când vrei un eveniment real: pui cheia în consola Firebase Remote Config.
-8. **Emote-uri / reacții în meci.** Un strat de „prezență" — 4-6 emote-uri pe
-   care le trimiți adversarului în timpul rundei. Ieftin, face meciul social.
+8. **Emote-uri / reacții.**
+   - ✅ **Reacţii rapide în lobby** — LIVRAT 2026-09-06. Rând de 6 emoji
+     deasupra chat-ului din cameră, un tap trimite emoji-ul ca mesaj normal
+     (canalul de chat existent). Zero Firestore/reguli noi.
+   - ⏳ **Emote-uri ÎN meci** — separat: chat-ul există doar în
+     `room_lobby_screen`, nu în ecranele de joc. Ar cere un canal + overlay în
+     ~6 ecrane de joc delicate. De făcut când se poate testa cu 2 jucători.
 
 **Nivel 3 — scump / are nevoie de bază de jucători pe care n-o ai încă:**
 
