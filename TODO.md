@@ -98,11 +98,11 @@ repeți. Adăugarea de conținut nu repară asta.
 **Sisteme mici, dar de bifat înainte de lansare (nu retenție, igienă):**
 
 - Indicator de conexiune / ping în meci + „Adversarul se reconectează..."
-- Profil public — un jucător să poată vedea profilul altuia (azi doar adminul).
-  **Parțial 2026-09-06:** fișa de la tap pe un jucător în clasament arată acum
-  nivel/meciuri/winrate/streak + ramă/titlu, nu doar punctajul pe moduri.
-  Rămâne: același view accesibil din lista de prieteni (azi tap pe prieten =
-  chat) — cere extras `_showBreakdown` într-un widget comun.
+- ✅ Profil public — GATA 2026-09-06. `showPlayerProfileSheet` (fost
+  `_showBreakdown`): tap pe un jucător în clasament SAU pe avatarul unui
+  prieten în lista de Prieteni → fișa lui (nivel, meciuri, winrate, cel mai
+  bun streak, ramă, titlu, punctaj pe moduri, ultima dată online). Restul
+  rândului de prieten rămâne pe deschiderea firului privat.
 - Leaderboard între prieteni (separat de cel global)
 - Dificultate Easy/Medium/Hard pe întrebare (azi doar „claritate"/blur)
 
