@@ -952,6 +952,44 @@ class StorageService {
     await _recordActivity(prefs);
   }
 
+  // ─── Recompensa de sfârşit de sezon (vezi core/season_rewards.dart) ────────
+  // `_pendingSeasonRewardKey` = "<seasonKey>:<tierIndex>" cât timp e una
+  // nerevendicată; `_seasonRewardHandledKey` = ultimul sezon pe care l-am
+  // fotografiat deja (ca să nu-l re-fotografiez la fiecare pornire).
+  static const _pendingSeasonRewardKey = 'pending_season_reward';
+  static const _seasonRewardHandledKey = 'season_reward_handled';
+
+  static Future<({String season, int tier})?> pendingSeasonReward() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingSeasonRewardKey);
+    if (raw == null || raw.isEmpty) return null;
+    final i = raw.lastIndexOf(':');
+    if (i <= 0) return null;
+    final tier = int.tryParse(raw.substring(i + 1));
+    if (tier == null) return null;
+    return (season: raw.substring(0, i), tier: tier);
+  }
+
+  static Future<void> setPendingSeasonReward(String season, int tier) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingSeasonRewardKey, '$season:$tier');
+  }
+
+  static Future<void> clearPendingSeasonReward() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingSeasonRewardKey);
+  }
+
+  static Future<String> seasonRewardHandledKey() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_seasonRewardHandledKey) ?? '';
+  }
+
+  static Future<void> setSeasonRewardHandled(String season) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_seasonRewardHandledKey, season);
+  }
+
   // ─── Rate-limit Cultură Generală ([cultureQuizPlayLimit] runde pe ciclu,
   // apoi [cultureQuizWindowMinutes] minute de cooldown) ───────────────────
   // Cooldown-ul de [cultureQuizWindowMinutes] pornește o SINGURĂ dată, la

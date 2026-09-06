@@ -34,6 +34,7 @@ import 'data/multiplayer_presence_service.dart';
 import 'data/multiplayer_service.dart';
 import 'data/notification_service.dart';
 import 'data/player_profile_service.dart';
+import 'data/season_reward_service.dart';
 import 'models/player_profile.dart';
 import 'data/storage_service.dart';
 import 'firebase_options.dart';
@@ -115,6 +116,9 @@ void main() async {
     // leaderboard-ul global (vezi PlayerProfileService).
     await MultiplayerService.instance.ensureInitialized();
     unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
+    // Sfârşitul unui sezon — fotografiat ÎNAINTE ca primul meci din luna nouă
+    // să reseteze punctele (vezi data/season_reward_service.dart).
+    unawaited(SeasonRewardService.instance.snapshotIfSeasonEnded());
     // Lista de jucatori blocati, adusa in memorie o data pe sesiune, ca
     // filtrarea chatului sa fie sincrona - vezi ModerationService.blockedIds.
     unawaited(ModerationService.instance.loadBlocked());

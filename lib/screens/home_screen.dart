@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/cosmetics.dart';
 import '../core/lang.dart';
+import '../core/leagues.dart';
+import '../core/season_rewards.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
@@ -59,6 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Breadcrumbs.drop('ecran: Acasa');
     _dataFuture = _loadData();
     _checkStreakMilestones();
+    _checkSeasonReward();
     // Resursele trimise de admin (și resetul de cont) se aplică în fundal, la
     // pornire și la revenirea din fundal — momente în care ecranul ăsta poate
     // fi deja construit, cu cifrele de dinainte. Vezi CloudSyncService.
@@ -164,6 +167,70 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     _refresh();
   }
+
+  /// Recompensa de sfârşit de sezon — un dialog o singură dată pe sezon, când
+  /// [SeasonRewardService] a detectat că sezonul precedent s-a încheiat cu
+  /// puncte (vezi core/season_rewards.dart).
+  Future<void> _checkSeasonReward() async {
+    final pending = await StorageService.pendingSeasonReward();
+    if (pending == null || !mounted) return;
+    final tier = seasonRewardTier(pending.tier);
+    final coins = seasonRewardCoins(pending.tier);
+    final league = leagueForPoints(_pointsForTierFloor(tier));
+    final claim = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1a1a2e),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(league.icon, color: league.color, size: 24),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(tr('Sezonul s-a încheiat', 'Season ended'),
+                  style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        content: Text(
+          tr('Ai terminat sezonul în Liga ${league.name}. Recompensa ta: $coins monede.',
+              'You finished the season in ${league.name} League. Your reward: $coins coins.'),
+          style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
+            child: Text(tr('REVENDICĂ', 'CLAIM'),
+                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    await StorageService.clearPendingSeasonReward();
+    if (claim == true && mounted) {
+      Sfx.rewardPop();
+      await collectRewards(
+        context,
+        coins: coins,
+        xp: 0,
+        lives: 0,
+        coinBadgeKey: _coinBadgeKey,
+        xpBadgeKey: _xpBadgeKey,
+        livesBadgeKey: _livesBadgeKey,
+      );
+      _refresh();
+    }
+  }
+
+  static int _pointsForTierFloor(LeagueTier t) => switch (t) {
+        LeagueTier.bronze => 0,
+        LeagueTier.silver => 100,
+        LeagueTier.gold => 300,
+        LeagueTier.platinum => 700,
+        LeagueTier.diamond => 1500,
+      };
 
   void _refresh() {
     final seq = ++_loadSeq;

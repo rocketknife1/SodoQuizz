@@ -277,6 +277,21 @@ class _DebugTabState extends State<_DebugTab> {
           ),
           const SizedBox(height: 10),
           _buildDevToolButton(
+            icon: Icons.military_tech_rounded,
+            label: 'SIMULEAZĂ SFÂRȘIT DE SEZON (Gold)',
+            color: AppColors.orange,
+            onTap: () async {
+              await StorageService.setPendingSeasonReward('2000-01', 2);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Recompensă de sezon pusă. Revino pe Acasă.'),
+                  backgroundColor: AppColors.teal,
+                ));
+              }
+            },
+          ),
+          const SizedBox(height: 10),
+          _buildDevToolButton(
             icon: Icons.bug_report_rounded,
             label: 'TRIMITE UN RAPORT ACUM',
             color: AppColors.play,
