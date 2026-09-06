@@ -283,9 +283,19 @@ void showPlayerProfileSheet(BuildContext context, PlayerProfile p) {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(Icons.access_time_rounded, color: Colors.white38, size: 14),
+                Icon(p.isRecentlyActive ? Icons.circle : Icons.access_time_rounded,
+                    color: p.isRecentlyActive ? const Color(0xFF2ECC71) : Colors.white38,
+                    size: p.isRecentlyActive ? 9 : 14),
                 const SizedBox(width: 4),
-                Text(tr('Ultima dată online: ${_formatLastActive(p.lastActive)}', 'Last online: ${_formatLastActive(p.lastActive)}'), style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                Text(
+                  p.isRecentlyActive
+                      ? tr('Activ acum', 'Active now')
+                      : tr('Ultima dată online: ${_formatLastActive(p.lastActive)}',
+                          'Last online: ${_formatLastActive(p.lastActive)}'),
+                  style: TextStyle(
+                      color: p.isRecentlyActive ? const Color(0xFF2ECC71) : Colors.white54,
+                      fontSize: 12),
+                ),
               ],
             ),
             const SizedBox(height: 14),

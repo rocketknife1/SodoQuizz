@@ -126,6 +126,17 @@ class PlayerProfile {
 
   double get winrate => matchesPlayed == 0 ? 0 : wins / matchesPlayed;
 
+  /// „Activ acum" — heartbeat-ul de profil (`ensureProfileHeartbeat`) rescrie
+  /// `lastActive` la deschidere/resume/profil, deci un jucător sub 5 minute a
+  /// fost în aplicaţie foarte recent. Nu e prezenţă în timp real (nu există
+  /// heartbeat periodic), dar e semnalul potrivit pentru „cu cine pot juca
+  /// acum".
+  bool get isRecentlyActive {
+    final ts = lastActive;
+    return ts != null &&
+        DateTime.now().difference(ts.toDate()) < const Duration(minutes: 5);
+  }
+
   factory PlayerProfile.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? const {};
     return PlayerProfile(

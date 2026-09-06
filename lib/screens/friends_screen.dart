@@ -55,6 +55,15 @@ class _FriendsScreenState extends State<FriendsScreen> {
       PlayerProfileService.instance.fetchFriends(),
     ]);
     final friends = results[2] as List<PlayerProfile>;
+    // Prietenii activi acum sus în listă (ca să vezi imediat cu cine poţi
+    // juca), restul după cât de recent au fost online.
+    friends.sort((a, b) {
+      final onA = a.isRecentlyActive, onB = b.isRecentlyActive;
+      if (onA != onB) return onA ? -1 : 1;
+      final ta = a.lastActive?.millisecondsSinceEpoch ?? 0;
+      final tb = b.lastActive?.millisecondsSinceEpoch ?? 0;
+      return tb.compareTo(ta);
+    });
     // Rezumatele firelor NU se mai cer aici (erau N citiri la fiecare
     // reîncărcare) — vin live prin [_summaries] din LiveSync.
     return _FriendsData(
@@ -491,6 +500,7 @@ class _FriendRow extends StatelessWidget {
     final peakTier = LeagueTier.values[peakTierIdx.clamp(0, LeagueTier.values.length - 1)];
     final unread = summary?.hasUnreadFor(MultiplayerService.instance.currentPlayerId) ?? false;
     final preview = summary?.lastText ?? '';
+    final online = profile.isRecentlyActive;
     return GestureDetector(
       // Tot rândul deschide firul privat, nu doar iconița — e ținta cea mai
       // ușor de nimerit cu degetul, iar rândul n-avea până acum nicio altă
@@ -507,14 +517,33 @@ class _FriendRow extends StatelessWidget {
             // ramă, titlu); restul rândului rămâne pe deschiderea firului.
             GestureDetector(
               onTap: () => showPlayerProfileSheet(context, profile),
-              child: AvatarWithLeagueBadge(
-                size: 36,
-                label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
-                accentColor: pickAvatarColor(profile.avatarSeed),
-                photoUrl: profile.photoUrl,
-                style: avatarStyleFromId(profile.avatarStyle),
-                frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
-                tier: peakTier,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  AvatarWithLeagueBadge(
+                    size: 36,
+                    label: profile.name.isNotEmpty ? profile.name[0].toUpperCase() : '?',
+                    accentColor: pickAvatarColor(profile.avatarSeed),
+                    photoUrl: profile.photoUrl,
+                    style: avatarStyleFromId(profile.avatarStyle),
+                    frame: validatedFrame(profile.equippedFrame, level: profile.level, leaguePoints: profile.leaguePoints),
+                    tier: peakTier,
+                  ),
+                  if (online)
+                    Positioned(
+                      left: -1,
+                      bottom: -1,
+                      child: Container(
+                        width: 11,
+                        height: 11,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2ECC71),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppColors.bg, width: 2),
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 12),
@@ -558,9 +587,16 @@ class _FriendRow extends StatelessWidget {
                     ),
                   Row(
                     children: [
-                      const Icon(Icons.access_time_rounded, color: Colors.white38, size: 12),
+                      Icon(online ? Icons.circle : Icons.access_time_rounded,
+                          color: online ? const Color(0xFF2ECC71) : Colors.white38, size: online ? 8 : 12),
                       const SizedBox(width: 4),
-                      Text(_formatLastActive(profile.lastActive), style: const TextStyle(color: Colors.white54, fontSize: 11, fontWeight: FontWeight.w600)),
+                      Text(
+                        online ? tr('Activ acum', 'Active now') : _formatLastActive(profile.lastActive),
+                        style: TextStyle(
+                            color: online ? const Color(0xFF2ECC71) : Colors.white54,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ],
