@@ -14,6 +14,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../core/cosmetics.dart';
+import '../../widgets/match_emotes.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
@@ -408,6 +409,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
+        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
         body: SpaceBackground(
           child: SafeArea(
             child: StreamBuilder<MatchInfo>(

@@ -15,6 +15,7 @@ import '../../models/question.dart';
 import '../../widgets/blur_image.dart';
 import '../../widgets/next_button.dart';
 import '../../core/cosmetics.dart';
+import '../../widgets/match_emotes.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
@@ -373,6 +374,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
             ),
           ),
         ),
+        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
       ),
     );
   }

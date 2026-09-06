@@ -13,6 +13,7 @@ import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../../widgets/match_emotes.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
@@ -840,6 +841,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
+        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
