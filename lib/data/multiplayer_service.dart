@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../core/cosmetics.dart';
 import '../core/betting.dart';
 import '../core/electric_chair.dart';
+import '../core/elo.dart';
 import '../core/rock_paper_scissors.dart';
 import '../core/lang.dart';
 import '../core/multiplayer_round.dart';
@@ -1790,11 +1791,16 @@ class MultiplayerService {
   }) async {
     await ensureInitialized();
     final me = currentPlayerId;
+    // Ratingul se scrie ODATĂ, la intrarea în coadă: cel care formează perechea
+    // (vezi [attemptFormMatch]) alege după el, iar altfel ar trebui să citească
+    // profilul fiecărui candidat la fiecare încercare, la fiecare 1.5 secunde.
+    final rating = (await PlayerProfileService.instance.getMyProfile())?.rating ?? eloStartRating;
     await _db.collection('matchmaking_queue').doc(me).set({
       'name': displayName,
       'avatarSeed': me,
       'photoUrl': photoUrl,
       'avatarStyle': avatarStyle,
+      'rating': rating,
       'matchId': null,
       'bet': publicMatchStake,
       'joinedAt': FieldValue.serverTimestamp(),
@@ -1850,6 +1856,11 @@ class MultiplayerService {
       Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
     return docs.where((d) => !_isDeadQueueEntry(d.data()) && d.data()['matchId'] == null).toList();
   }
+
+  /// Ratingul unei intrări din coadă. Intrările scrise de versiuni mai vechi
+  /// n-au câmpul deloc, deci sunt tratate ca jucători noi ([eloStartRating]) —
+  /// altfel ar ateriza toate la 0 și ar părea cei mai slabi din joc.
+  int _queueRating(Map<String, dynamic> data) => data['rating'] as int? ?? eloStartRating;
 
   /// Doar criteriul de TIMP, folosit acolo unde chiar se șterge documentul.
   /// Ținut separat de [_liveQueueDocs] intenționat: o intrare revendicată de
@@ -2043,7 +2054,25 @@ class MultiplayerService {
     if (live.isEmpty || live.first.id != me) return null;
     if (live.length < matchmakingOpponentCount) return null;
 
-    final candidates = live.take(matchmakingOpponentCount).toList();
+    final myRating = _queueRating(live.first.data());
+
+    // Perechea se face pe RATING, nu pe ordinea sosirii: capul cozii (eu, cel
+    // mai vechi în așteptare) își ia adversarii cei mai apropiați ca rating
+    // dintre cei care așteaptă acum. Nimeni nu e exclus — doar ordonat — deci
+    // nu poate înfometa pe nimeni: cine așteaptă cel mai mult ajunge cap de
+    // coadă și formează el meciul.
+    final others = live.skip(1).toList();
+    // Indexul de plecare e ordinea după `joinedAt`; îl ținem ca departajare
+    // fiindcă `List.sort` din Dart NU e stabil — fără el, doi adversari cu
+    // același rating s-ar alege la întâmplare în loc de „cine aștepta de mai
+    // mult timp".
+    final order = {for (var i = 0; i < others.length; i++) others[i].id: i};
+    others.sort((a, b) {
+      final da = (_queueRating(a.data()) - myRating).abs();
+      final db = (_queueRating(b.data()) - myRating).abs();
+      return da != db ? da - db : order[a.id]! - order[b.id]!;
+    });
+    final candidates = [live.first, ...others.take(matchmakingOpponentCount - 1)];
     final offerRef = _db.collection('quickmatch_offers').doc();
     final gameMode = _quickMatchModes[Random().nextInt(_quickMatchModes.length)];
 
