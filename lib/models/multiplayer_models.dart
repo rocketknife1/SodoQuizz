@@ -463,6 +463,22 @@ class MatchPlayer {
   final String equippedFrame;
   final String equippedTitle;
 
+  /// Ultimul semn de viață, împrospătat la [MultiplayerService.matchHeartbeat].
+  /// Lipsește la clienții vechi, care nu-l scriau — de aceea [isReconnecting]
+  /// întoarce `false` când e null, nu „a picat".
+  final Timestamp? lastSeenAt;
+
+  /// Peste atât fără semn de viață, jucătorul e arătat ca „se reconectează".
+  /// 3× [MultiplayerService.matchHeartbeatInterval]: o rețea proastă sare un
+  /// heartbeat destul de des, iar un fals „a picat" în mijlocul rundei sperie
+  /// degeaba.
+  static const reconnectingAfter = Duration(seconds: 45);
+
+  bool get isReconnecting {
+    final ts = lastSeenAt;
+    return ts != null && DateTime.now().difference(ts.toDate()) > reconnectingAfter;
+  }
+
   const MatchPlayer({
     required this.id,
     required this.name,
@@ -483,6 +499,7 @@ class MatchPlayer {
     this.nextQuestionBonus = false,
     this.lives = electricChairMaxLives,
     this.eliminatedAtRound = -1,
+    this.lastSeenAt,
   });
 
   factory MatchPlayer.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -507,6 +524,7 @@ class MatchPlayer {
       nextQuestionBonus: data['nextQuestionBonus'] as bool? ?? false,
       lives: data['lives'] as int? ?? electricChairMaxLives,
       eliminatedAtRound: data['eliminatedAtRound'] as int? ?? -1,
+      lastSeenAt: data['lastSeenAt'] as Timestamp?,
     );
   }
 

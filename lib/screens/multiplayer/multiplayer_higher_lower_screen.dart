@@ -8,7 +8,7 @@ import '../../core/theme.dart';
 import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
-import '../../widgets/match_emotes.dart';
+import '../../widgets/match_overlay.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/round_event_banner.dart';
@@ -266,7 +266,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
+        floatingActionButton: MatchOverlay(matchId: widget.matchId),
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(

@@ -6,7 +6,7 @@ import '../../core/rock_paper_scissors.dart';
 import '../../core/theme.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
-import '../../widgets/match_emotes.dart';
+import '../../widgets/match_overlay.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/countdown_ring.dart';
 import 'multiplayer_results_screen.dart';
@@ -156,7 +156,7 @@ class _MultiplayerRockPaperScissorsScreenState
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF0E1230),
-        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
+        floatingActionButton: MatchOverlay(matchId: widget.matchId),
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
             stream: MultiplayerService.instance.watchMatch(widget.matchId),

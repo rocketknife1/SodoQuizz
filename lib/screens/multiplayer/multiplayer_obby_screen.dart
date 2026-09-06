@@ -15,7 +15,7 @@ import '../../data/culture_questions.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
-import '../../widgets/match_emotes.dart';
+import '../../widgets/match_overlay.dart';
 import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
@@ -496,7 +496,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        floatingActionButton: MatchEmotesOverlay(matchId: widget.matchId),
+        floatingActionButton: MatchOverlay(matchId: widget.matchId),
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
             stream: _matchStream,
