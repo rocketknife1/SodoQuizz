@@ -906,9 +906,10 @@ class StorageService {
     return midnight.difference(now);
   }
 
-  /// Repornește așteptarea pentru următoarea notificare — apelat DOAR când
-  /// jucătorul termină efectiv bonusul (nu la simpla intrare), ca notificarea
-  /// să rămână activă dacă a intrat și a ieșit fără să termine.
+  /// Repornește așteptarea pentru următoarea notificare — apelat la PRIMUL
+  /// RĂSPUNS din rundă (vezi ClippyBonusScreen._select), nu la final. Înainte
+  /// se consuma la final, iar cine ieșea mai devreme reintra imediat, la
+  /// nesfârșit. Simpla intrare pe ecran, fără să răspundă, nu consumă nimic.
   static Future<void> resetClippyCooldown() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_clippyNextReadyKey, DateTime.now().millisecondsSinceEpoch + clippyReadyIntervalSeconds * 1000);

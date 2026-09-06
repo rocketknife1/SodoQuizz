@@ -49,6 +49,9 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
   int _coinsEarned = 0;
   int _xpEarned = 0;
   int _livesEarned = 0;
+  /// Runda a fost deja consumată (cooldown + slot zilnic) — o singură dată
+  /// per intrare pe ecran, la primul răspuns. Vezi [_select].
+  bool _roundConsumed = false;
   bool _collecting = false;
   bool _collected = false;
   Timer? _autoCollectTimer;
@@ -96,6 +99,16 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
 
   Future<void> _select(String opt) async {
     if (answered) return;
+    // Runda se consumă la PRIMUL răspuns, nu la final. Înainte, cine ieșea
+    // înainte de ultima întrebare nu consuma nici cooldown-ul, nici slotul
+    // zilnic — deci putea reintra imediat, la nesfârșit. Primul răspuns, nu
+    // deschiderea ecranului: cine intră și iese fără să joace nu pierde nimic.
+    if (!_roundConsumed) {
+      _roundConsumed = true;
+      await StorageService.resetClippyCooldown();
+      await StorageService.incrementDailyCounter('clippy_rounds');
+      if (!mounted) return;
+    }
     final correct = opt == _current.answer;
     setState(() {
       answered = true;
@@ -120,15 +133,13 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
     if (!mounted) return;
     if (qIndex + 1 >= _questions.length) {
       final perfect = correctCount == _questions.length;
-      // notificarea se "consumă" abia acum, la finalul efectiv al jocului —
-      // dacă jucătorul iese mai devreme (fără să termine), rămâne valabilă.
-      await StorageService.resetClippyCooldown();
-      // bonusul de finalizare există doar cât timp ești sub plafonul zilnic
-      // de runde la rată plină — contorul se incrementează abia acum, ca o
-      // rundă abandonată la jumătate să nu consume un slot.
-      final roundsToday = await StorageService.getDailyCounter('clippy_rounds');
+      // Cooldown-ul și slotul zilnic au fost deja consumate la primul răspuns
+      // (vezi mai sus). Aici rămâne doar bonusul de finalizare, care există
+      // cât timp ești sub plafonul zilnic de runde la rată plină. `-1`
+      // fiindcă runda curentă e deja numărată.
+      final roundsToday =
+          (await StorageService.getDailyCounter('clippy_rounds')) - 1;
       final withinDailyCap = roundsToday < clippyFullRateDailyRounds;
-      await StorageService.incrementDailyCounter('clippy_rounds');
       final playsLeft = await StorageService.clippyPlaysLeftToday();
       if (!mounted) return;
       setState(() {
