@@ -80,7 +80,7 @@ class MatchPrizeTable extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text('Locul ${index + 1}',
+            child: Text(tr('Locul ${index + 1}', 'Place ${index + 1}'),
                 style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
           ),
           Text('💰$prize',

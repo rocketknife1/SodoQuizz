@@ -9,6 +9,7 @@ import '../core/electric_chair.dart';
 import '../core/elo.dart';
 import '../core/rock_paper_scissors.dart';
 import '../core/lang.dart';
+import '../core/matchmaking.dart';
 import '../core/multiplayer_round.dart';
 import '../core/obby.dart';
 import '../core/powerups.dart';
@@ -2086,23 +2087,17 @@ class MultiplayerService {
 
     final myRating = _queueRating(live.first.data());
 
-    // Perechea se face pe RATING, nu pe ordinea sosirii: capul cozii (eu, cel
-    // mai vechi în așteptare) își ia adversarii cei mai apropiați ca rating
-    // dintre cei care așteaptă acum. Nimeni nu e exclus — doar ordonat — deci
-    // nu poate înfometa pe nimeni: cine așteaptă cel mai mult ajunge cap de
-    // coadă și formează el meciul.
+    // Perechea se face pe RATING, nu pe ordinea sosirii — vezi
+    // [pickOpponentsByRating] pentru de ce asta nu înfometează pe nimeni.
+    // `live` e ordonată după `joinedAt`, deci indicii întorși respectă
+    // vechimea în coadă la rating egal.
     final others = live.skip(1).toList();
-    // Indexul de plecare e ordinea după `joinedAt`; îl ținem ca departajare
-    // fiindcă `List.sort` din Dart NU e stabil — fără el, doi adversari cu
-    // același rating s-ar alege la întâmplare în loc de „cine aștepta de mai
-    // mult timp".
-    final order = {for (var i = 0; i < others.length; i++) others[i].id: i};
-    others.sort((a, b) {
-      final da = (_queueRating(a.data()) - myRating).abs();
-      final db = (_queueRating(b.data()) - myRating).abs();
-      return da != db ? da - db : order[a.id]! - order[b.id]!;
-    });
-    final candidates = [live.first, ...others.take(matchmakingOpponentCount - 1)];
+    final picked = pickOpponentsByRating(
+      myRating: myRating,
+      candidateRatings: [for (final d in others) _queueRating(d.data())],
+      count: matchmakingOpponentCount - 1,
+    );
+    final candidates = [live.first, for (final i in picked) others[i]];
     final offerRef = _db.collection('quickmatch_offers').doc();
     final gameMode = _quickMatchModes[Random().nextInt(_quickMatchModes.length)];
 

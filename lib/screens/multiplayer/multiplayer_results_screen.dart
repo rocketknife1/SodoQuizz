@@ -425,7 +425,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   String _betSummary() {
     final delta = _coinsEarned - _myBet;
     final sign = delta >= 0 ? '+' : '';
-    return 'Ai pus 💰$_myBet, ai luat 💰$_coinsEarned  →  $sign$delta';
+    return tr('Ai pus 💰$_myBet, ai luat 💰$_coinsEarned  →  $sign$delta',
+        'You staked 💰$_myBet, you got 💰$_coinsEarned  →  $sign$delta');
   }
 
   void _goHome() {
