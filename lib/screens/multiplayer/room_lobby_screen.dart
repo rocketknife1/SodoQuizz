@@ -305,6 +305,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
                               child: _buildPlayers(players),
                             ),
                             Expanded(child: _buildChat()),
+                            _buildQuickEmotes(),
                             _buildChatInput(),
                             if (widget.isHost)
                               EntranceItem(
@@ -747,6 +748,40 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
           },
         );
       },
+    );
+  }
+
+  /// Reacţii rapide — un tap trimite emoji-ul ca mesaj de chat obişnuit.
+  /// Face aşteptarea în lobby socială fără să scrii. (Emote-uri ÎN meci =
+  /// extindere separată — vezi RETENŢIE #8.)
+  static const _quickEmotes = ['👋', '😂', '🔥', '😎', '😱', '🤝'];
+
+  Widget _buildQuickEmotes() {
+    return SizedBox(
+      height: 40,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: _quickEmotes.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => GestureDetector(
+          onTap: () => MultiplayerService.instance.sendChatMessage(
+            matchId: widget.matchId,
+            senderName: _displayName,
+            text: _quickEmotes[i],
+          ),
+          child: Container(
+            width: 40,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(15),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withAlpha(25)),
+            ),
+            child: Text(_quickEmotes[i], style: const TextStyle(fontSize: 18)),
+          ),
+        ),
+      ),
     );
   }
 
