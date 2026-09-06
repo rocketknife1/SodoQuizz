@@ -93,10 +93,15 @@ repeți. Adăugarea de conținut nu repară asta.
 6. **Recompense de sfârșit de sezon.** Ligile + sezoanele există, dar se
    resetează lazy fără nimic la capăt. Un pachet de recompense (cosmetice +
    monede) în funcție de liga atinsă = motiv să joci în ultima săptămână.
-7. **Evenimente limitate cu leaderboard separat.** „Săptămâna Gaming",
-   „Weekend fotbal", Halloween — o categorie/mod în față 3-7 zile, cu board
-   propriu și recompense. Se controlează din Remote Config (deja avem
-   infrastructura). Cel mai bun raport efect/efort pentru „lumea nu stă pe joc".
+7. ✅ **Evenimente limitate cu leaderboard separat** — LIVRAT 2026-09-06.
+   Cheia Remote Config `eveniment_activ` (JSON, vezi `core/game_event.dart`) —
+   `{id, titlu, categorie, start, sfarsit, bonus}`. Când e activ: card în
+   Quest-uri + ecran (descriere, zile rămase, JOACĂ, clasament), bonus la
+   monede pe categoria evenimentului (`game_screen`), clasament propriu
+   `events/{id}/scores/{uid}` (puncte +max 50/scriere, verificat în reguli,
+   64/64 pe emulator). Buton debug „SIMULEAZĂ UN EVENIMENT". Recompense la
+   final = MANUAL (admin grant) — fără Cloud Function programată (evită Blaze).
+   Când vrei un eveniment real: pui cheia în consola Firebase Remote Config.
 8. **Emote-uri / reacții în meci.** Un strat de „prezență" — 4-6 emote-uri pe
    care le trimiți adversarului în timpul rundei. Ieftin, face meciul social.
 
