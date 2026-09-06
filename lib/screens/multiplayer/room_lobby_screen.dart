@@ -543,12 +543,12 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.danger.withAlpha(140)),
       ),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('🍞', style: TextStyle(fontSize: 16)),
-          SizedBox(width: 8),
-          Text('Mod: Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
+          const Text('🍞', style: TextStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Text(tr('Mod: Higher & Lower', 'Mode: Higher & Lower'), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -568,7 +568,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         children: [
           const Text('🏃', style: TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
-          Text('Mod: Obby • $playerCount/$obbyMaxPlayers',
+          Text(tr('Mod: Obby • $playerCount/$obbyMaxPlayers', 'Mode: Obby • $playerCount/$obbyMaxPlayers'),
               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
@@ -627,7 +627,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         children: [
           const Text('⚡', style: TextStyle(fontSize: 16)),
           const SizedBox(width: 8),
-          Text('Mod: Scaunul Electric • $playerCount/$electricChairPlayerCount',
+          Text(tr('Mod: Scaunul Electric • $playerCount/$electricChairPlayerCount', 'Mode: Electric Chair • $playerCount/$electricChairPlayerCount'),
               style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800)),
         ],
       ),
