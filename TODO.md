@@ -2,7 +2,30 @@
 
 Doar ce e DESCHIS, plus notele de care am nevoie ca să lucrez.
 Ce s-a rezolvat stă în git + memorii, NU aici.
-Ultima curățare: 2026-09-05.
+Ultima curățare: 2026-09-06.
+
+---
+
+## ✅ NU MAI E COD DE SCRIS — doar testare + AAB
+
+Toată secțiunea RETENȚIE (1-8) e livrată. Ce a mai rămas, în ordine:
+
+1. **Testare cu 2 jucători** (telefon wireless + browser, sau două contexte
+   Playwright — vezi „Testare multiplayer cu jucători automați" mai jos):
+   - reacții rapide ÎN meci (butonul din colț, în toate cele 6 moduri)
+   - „Adversarul se reconectează..." (închide un client în timpul rundei)
+   - party persistentă: REZULTATE → „Rămâneți împreună" → lobby → gazda
+     schimbă modul → START
+   - mișcarea de rating după meci (±, se vede pe profil)
+   - ramă/titlu de-ale adversarului, vizibile în meci și în lobby
+   - clasamentul Provocării Zilei cu 2 intrări
+2. **AAB pentru Play** — `flutter build appbundle --release` (FĂRĂ `REAL_ADS`).
+   Ultimul e din `b805052`; se reconstruiește după toate astea.
+3. **Formularul Data safety** — o singură trecere, la final (secțiunea de mai
+   jos). NU pe bucăți.
+
+Restul din fișier = context, decizii care te așteaptă pe tine, și note de
+lucru. Nu sunt task-uri de implementare.
 
 ---
 
@@ -81,9 +104,12 @@ repeți. Adăugarea de conținut nu repară asta.
    - Notă: fără heartbeat periodic; `lastActive` se rescrie doar la
      deschidere/resume/profil. Dacă „activ acum" trebuie mai precis, un
      `Timer.periodic(~90s)` în `main.dart` peste `ensureProfileHeartbeat`.
-4. **Party persistentă.** Joci un meci cu un prieten → REVANȘĂ merge, dar nu
-   poți sta 3-4 într-un lobby și schimba modul între meciuri. Camera se
-   închide după meci.
+4. ✅ **Party persistentă** — LIVRAT 2026-09-06. Buton „🎉 Rămâneți împreună
+   (alt mod)" lângă REVANȘĂ: aceeași ofertă (`rematch_offers`, aceiași
+   participanți, acceptare de la toți), cu steagul `RematchOffer.keepInLobby`.
+   Când e pus, `launchRematch` NU mai apelează `startMatch` — camera nouă se
+   oprește în lobby, unde gazda are un rând de pastile cu cele 6 moduri
+   (`setRoomGameMode`). Zero colecții/reguli noi.
 
 **Nivel 2 — mediu, ține oamenii pe termen lung:**
 
@@ -93,9 +119,12 @@ repeți. Adăugarea de conținut nu repară asta.
      rezultate citeşte ratingul adversarilor şi calculează o deltă pe perechi
      (plafonat ±24/meci, împărţit la nr. adversari). Afişat pe profil. Reguli:
      ±30 max/scriere.
-   - ⏳ **Matchmaking pe rating** — amânat: cere bază de jucători ca să conteze
-     şi atinge coada de matchmaking. De făcut când sunt destui jucători
-     simultan.
+   - ✅ **Matchmaking pe rating** — LIVRAT 2026-09-06. Ratingul se scrie în
+     `matchmaking_queue` la intrare (o citire de profil per intrare, nu una
+     per candidat la fiecare 1.5s). Capul cozii — cel care așteaptă de cel mai
+     mult timp — își alege adversarii cei mai apropiați ca rating. Nimeni nu e
+     exclus, doar ordonat, deci nu poate înfometa pe nimeni. Se vede cu adevărat
+     abia la 3+ jucători simultan în coadă; la 2 e identic cu înainte.
 6. ✅ **Recompense de sfârșit de sezon** — LIVRAT 2026-09-06. Fără job
    programat: `SeasonRewardService.snapshotIfSeasonEnded()` (în `main.dart`, la
    pornire) vede că `seasonKey`-ul de pe profilul propriu e din luna trecută cu
@@ -118,9 +147,12 @@ repeți. Adăugarea de conținut nu repară asta.
    - ✅ **Reacţii rapide în lobby** — LIVRAT 2026-09-06. Rând de 6 emoji
      deasupra chat-ului din cameră, un tap trimite emoji-ul ca mesaj normal
      (canalul de chat existent). Zero Firestore/reguli noi.
-   - ⏳ **Emote-uri ÎN meci** — separat: chat-ul există doar în
-     `room_lobby_screen`, nu în ecranele de joc. Ar cere un canal + overlay în
-     ~6 ecrane de joc delicate. De făcut când se poate testa cu 2 jucători.
+   - ✅ **Emote-uri ÎN meci** — LIVRAT 2026-09-06. Buton în colțul dreapta-jos
+     al ecranului de joc, în toate cele 6 moduri; reacțiile primite urcă
+     deasupra lui și se sting după 3s. Merge pe canalul de chat EXISTENT
+     (`matches/{id}/chat`) — zero infrastructură nouă. Montat prin
+     `MatchOverlay` în slotul `floatingActionButton:`, deci arborii de
+     widgeturi ai ecranelor de joc n-au fost atinși.
 
 **Nivel 3 — scump / are nevoie de bază de jucători pe care n-o ai încă:**
 
@@ -136,10 +168,12 @@ repeți. Adăugarea de conținut nu repară asta.
 
 **Sisteme mici, dar de bifat înainte de lansare (nu retenție, igienă):**
 
-- Indicator de conexiune / ping în meci + „Adversarul se reconectează...".
-  RECONECTAREA TA există deja (`MultiplayerService.reconnectTarget` — ecranul
-  rădăcină te duce înapoi în meci). Lipsește doar semnalul invers: „adversarul
-  a picat / revine".
+- ✅ „Adversarul se reconectează..." — LIVRAT 2026-09-06. Bannerul portocaliu
+  din `MatchOverlay`, în toate cele 6 moduri. Fără scrieri noi: citește
+  `lastSeenAt` de pe `matches/{id}/players/{uid}`, scris deja de
+  `matchHeartbeat`. Prag 45s (3× intervalul de heartbeat). Are și un ceas local
+  de 10s — Firestore trimite snapshot doar la o scriere, iar cine a picat exact
+  asta nu mai face.
 - ✅ Profil public — GATA 2026-09-06. `showPlayerProfileSheet` (fost
   `_showBreakdown`): tap pe un jucător în clasament SAU pe avatarul unui
   prieten în lista de Prieteni → fișa lui (nivel, meciuri, winrate, cel mai
@@ -148,17 +182,19 @@ repeți. Adăugarea de conținut nu repară asta.
 - ✅ Leaderboard între prieteni — EXISTĂ deja: tab-ul „Prieteni" din ecranul
   Clasament (`_FriendsLeaderboardTab`), lista proprie + tu, sortată pe
   punctajul de sezon. Bulletul era stale.
-- Dificultate Easy/Medium/Hard pe întrebare (azi doar „claritate"/blur)
+- ⚠️ Dificultate Easy/Medium/Hard pe întrebare — **NU e task de cod, e
+  decizie de conținut.** Nu există niciun semnal din care să se deducă azi:
+  `maxPoints` e practic constant, iar blur-ul e reglaj vizual, nu dificultate.
+  Ori se etichetează manual ~1.494 de întrebări (muncă de conținut, în xlsx),
+  ori se măsoară din rata reală de răspuns corect (colecție nouă + scriere la
+  fiecare răspuns + bază de jucători). Nu inventez o valoare care n-are date
+  în spate. Vezi „Decizii care te așteaptă pe tine".
 
-### Recomandarea mea de ordine
+### Stadiu: punctele 1-8 sunt TOATE livrate (2026-09-06)
 
-**1 → 2 → 3 → 7 → 6 → 5**, restul pe măsură ce jocul prinde. Punctele 1-3 sunt
-mici, se văd imediat, și rezolvă exact „progresia nu înseamnă nimic + greu să
-joci cu prietenii". Punctul 7 (evenimente) e cel mai bun răspuns direct la
-„lumea nu stă pe joc" — un motiv nou la fiecare 3-7 zile, fără build nou.
-
-Se iau **pe rând**, fiecare cu design înainte de cod. Nu se începe niciunul
-neîntrebat.
+Nu mai există task de cod în secțiunea RETENȚIE. Rămân doar **testările cu 2
+jucători** (vezi secțiunea de mai jos) și punctele 9-12, care sunt blocate pe
+bază de jucători, nu pe cod.
 
 ---
 
