@@ -17,6 +17,33 @@ import 'match_emotes.dart';
 /// ```dart
 /// Scaffold(floatingActionButton: MatchOverlay(matchId: id), ...)
 /// ```
+/// Colţul din DREAPTA-SUS, imediat sub bara de sus a ecranului de joc.
+///
+/// DE CE NU jos-dreapta (unde stătea până pe 2026-09-06): acolo butonul
+/// acoperea a patra variantă de răspuns la Obby — conţinutul ecranelor de joc
+/// coboară până în colţ, iar un `floatingActionButton` pluteşte peste el fără
+/// ca Flutter să rezerve spaţiu.
+///
+/// DE CE nu chiar lipit de margine ([FloatingActionButtonLocation.endTop]):
+/// acolo stau deja cronometrul şi „Runda N/M". Coborârea cu [_belowTopBar]
+/// îl aşază sub ele, tot în dreapta-sus, fără să ascundă nimic.
+class _MatchOverlayLocation extends FloatingActionButtonLocation {
+  const _MatchOverlayLocation();
+
+  static const double _margin = 16;
+  static const double _belowTopBar = 52;
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry g) => Offset(
+        g.scaffoldSize.width - g.floatingActionButtonSize.width - _margin,
+        g.minViewPadding.top + _belowTopBar,
+      );
+}
+
+/// De pus pe `floatingActionButtonLocation:` al fiecărui ecran de joc, alături
+/// de `floatingActionButton: MatchOverlay(...)`.
+const FloatingActionButtonLocation matchOverlayLocation = _MatchOverlayLocation();
+
 class MatchOverlay extends StatelessWidget {
   final String matchId;
 
@@ -27,9 +54,11 @@ class MatchOverlay extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
+      // Butonul stă SUS, iar ce vine peste el curge în jos — invers faţă de
+      // vremea când colţul era jos-dreapta.
       children: [
-        MatchReconnectingBanner(matchId: matchId),
         MatchEmotesOverlay(matchId: matchId),
+        MatchReconnectingBanner(matchId: matchId),
       ],
     );
   }

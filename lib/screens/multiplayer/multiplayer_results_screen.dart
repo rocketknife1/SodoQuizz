@@ -701,7 +701,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                     size: 56,
                   ),
                   const SizedBox(height: 8),
-                  const Text('Clasament final', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  Text(tr('Clasament final', 'Final standings'), style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   if (widget.gameMode == MatchGameMode.quizzTanks)
                     Padding(
                       padding: const EdgeInsets.only(top: 3),
@@ -799,9 +799,9 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                               ),
                               if (widget.gameMode == MatchGameMode.higherLower) ...[
                                 if (p.eliminated)
-                                  const Padding(
-                                    padding: EdgeInsets.only(right: 8),
-                                    child: Text('ELIMINAT', style: TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w800)),
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: Text(tr('ELIMINAT', 'OUT'), style: const TextStyle(color: AppColors.danger, fontSize: 10, fontWeight: FontWeight.w800)),
                                   )
                                 else if (p.breads > 0)
                                   Padding(
@@ -833,7 +833,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                 Padding(
                                   padding: const EdgeInsets.only(right: 8),
                                   child: Text(
-                                    p.eliminated ? '💀 ELIMINAT' : '⚡ ${p.lives}',
+                                    p.eliminated ? tr('💀 ELIMINAT', '💀 OUT') : '⚡ ${p.lives}',
                                     style: TextStyle(
                                       color: p.eliminated ? AppColors.danger : AppColors.coin,
                                       fontSize: 11.5,

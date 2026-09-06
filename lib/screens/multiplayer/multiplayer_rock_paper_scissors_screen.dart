@@ -157,6 +157,7 @@ class _MultiplayerRockPaperScissorsScreenState
       child: Scaffold(
         backgroundColor: const Color(0xFF0E1230),
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
             stream: MultiplayerService.instance.watchMatch(widget.matchId),

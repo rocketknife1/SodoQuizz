@@ -1911,7 +1911,20 @@ class MultiplayerService {
   final ValueNotifier<({String matchId, MatchGameMode gameMode})?> reconnectTarget =
       ValueNotifier(null);
 
+  /// Meciul al carui ECRAN e deschis chiar acum — pus de [markActiveMatch]
+  /// (apelat din `initState`-ul fiecarui ecran de joc) si sters de
+  /// [clearActiveMatch] (apelat pe iesire, prin `leaveMatch`).
+  ///
+  /// DE CE: [checkReconnect] ruleaza la fiecare revenire in prim-plan. In
+  /// browser asta se intampla la orice focus de fereastra, deci bannerul „Ai
+  /// un meci in desfasurare — RECONECTEAZA-TE" aparea PESTE meciul in care
+  /// jucatorul chiar era. Daca procesul moare de tot (cazul real de
+  /// reconectare), campul se pierde odata cu el, deci nu poate bloca bannerul
+  /// atunci cand chiar trebuie sa apara.
+  String? _screenMatchId;
+
   Future<void> markActiveMatch(String matchId, MatchGameMode gameMode) async {
+    _screenMatchId = matchId;
     try {
       await StorageService.setActiveMatch(matchId, gameMode.name);
     } catch (e) {
@@ -1930,6 +1943,7 @@ class MultiplayerService {
     } catch (e) {
       debugPrint('MultiplayerService.clearActiveMatch: $e');
     }
+    if (_screenMatchId == matchId) _screenMatchId = null;
     if (reconnectTarget.value?.matchId == matchId) reconnectTarget.value = null;
   }
 
@@ -1944,6 +1958,11 @@ class MultiplayerService {
         return;
       }
       final (matchId, modeName) = stored;
+      // Sunt CHIAR in ecranul lui — vezi [_screenMatchId]. N-are ce reconecta.
+      if (matchId == _screenMatchId) {
+        reconnectTarget.value = null;
+        return;
+      }
       final me = currentPlayerId;
       if (me.isEmpty) return;
 

@@ -842,6 +842,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       child: Scaffold(
         backgroundColor: AppColors.bg,
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(

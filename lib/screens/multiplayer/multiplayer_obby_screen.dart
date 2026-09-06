@@ -497,6 +497,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       child: Scaffold(
         backgroundColor: AppColors.bg,
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
             stream: _matchStream,

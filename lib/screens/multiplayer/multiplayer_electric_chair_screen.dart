@@ -410,6 +410,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       child: Scaffold(
         backgroundColor: AppColors.bg,
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
         body: SpaceBackground(
           child: SafeArea(
             child: StreamBuilder<MatchInfo>(

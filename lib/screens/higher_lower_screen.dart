@@ -404,7 +404,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
       children: [
         Expanded(child: _arrowButton(label: tr('MAI PUȚIN', 'LOWER'), icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: disabled ? null : () => _choose(false))),
         const SizedBox(width: 12),
-        Expanded(child: _arrowButton(label: 'MAI MULT', icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: disabled ? null : () => _choose(true))),
+        Expanded(child: _arrowButton(label: tr('MAI MULT', 'HIGHER'), icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: disabled ? null : () => _choose(true))),
       ],
     );
   }

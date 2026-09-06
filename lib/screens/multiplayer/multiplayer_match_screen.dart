@@ -375,6 +375,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
           ),
         ),
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
       ),
     );
   }

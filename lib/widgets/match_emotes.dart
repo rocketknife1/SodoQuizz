@@ -21,13 +21,11 @@ bool isEmoteMessage(String text) => matchEmotes.contains(text.trim());
 /// și un emote E un mesaj — doar că se DESENEAZĂ altfel. Zero infrastructură
 /// nouă pentru o funcție de „prezență".
 ///
-/// Se pune ca `floatingActionButton:` pe [Scaffold]-ul ecranului de joc —
-/// slot existent, deci nu cere nicio operație pe arborele de widgeturi:
-/// ```dart
-/// Scaffold(floatingActionButton: MatchEmotesOverlay(matchId: id), ...)
-/// ```
+/// Nu se montează direct: ecranele de joc folosesc [MatchOverlay], care îl
+/// aşază în `floatingActionButton:` împreună cu bannerul de reconectare.
 /// Numele îl află singur (`multiplayerIdentity`) — ecranele nu-l mai pasează.
-/// Butonul stă în colțul din dreapta-jos; reacțiile primite urcă deasupra lui.
+/// Butonul stă în colțul din dreapta-SUS (vezi `matchOverlayLocation`);
+/// paleta şi reacţiile primite curg în jos, sub el.
 class MatchEmotesOverlay extends StatefulWidget {
   final String matchId;
 
@@ -111,35 +109,8 @@ class _MatchEmotesOverlayState extends State<MatchEmotesOverlay> {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisSize: MainAxisSize.min,
       children: [
-          // Reacțiile primite, cea mai nouă jos, lângă buton.
-          for (final f in _floating.reversed.take(4).toList().reversed)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: _EmoteBubble(emoji: f.emoji, who: f.who),
-            ),
-          if (_open)
-            Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xE60B1229),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: Colors.white24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (final e in matchEmotes)
-                    GestureDetector(
-                      onTap: () => _send(e),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
-                        child: Text(e, style: const TextStyle(fontSize: 22)),
-                      ),
-                    ),
-                ],
-              ),
-            ),
+        // Butonul primul: colţul e sus-dreapta, deci tot ce ţine de el —
+        // paleta deschisă şi reacţiile primite — curge în JOS.
         GestureDetector(
           onTap: () => setState(() => _open = !_open),
           child: Container(
@@ -154,6 +125,35 @@ class _MatchEmotesOverlayState extends State<MatchEmotesOverlay> {
                 color: Colors.white, size: 21),
           ),
         ),
+        if (_open)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xE60B1229),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: Colors.white24),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final e in matchEmotes)
+                  GestureDetector(
+                    onTap: () => _send(e),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 4),
+                      child: Text(e, style: const TextStyle(fontSize: 22)),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        // Reacţiile primite, cea mai nouă lipită de buton.
+        for (final f in _floating.reversed.take(4))
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: _EmoteBubble(emoji: f.emoji, who: f.who),
+          ),
       ],
     );
   }
@@ -179,7 +179,7 @@ class _EmoteBubble extends StatelessWidget {
       curve: Curves.easeOutBack,
       builder: (_, t, child) => Opacity(
         opacity: t.clamp(0, 1),
-        child: Transform.scale(scale: 0.6 + 0.4 * t, alignment: Alignment.bottomRight, child: child),
+        child: Transform.scale(scale: 0.6 + 0.4 * t, alignment: Alignment.topRight, child: child),
       ),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

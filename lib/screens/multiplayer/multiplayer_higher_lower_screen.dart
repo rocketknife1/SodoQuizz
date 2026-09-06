@@ -267,6 +267,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       child: Scaffold(
         backgroundColor: AppColors.bg,
         floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButtonLocation: matchOverlayLocation,
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
@@ -514,7 +515,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       children: [
         Expanded(child: _arrowButton(label: tr('MAI PUȚIN', 'LOWER'), icon: Icons.arrow_downward_rounded, color: AppColors.danger, onTap: () => _selectGuess(info, 'lower'))),
         const SizedBox(width: 12),
-        Expanded(child: _arrowButton(label: 'MAI MULT', icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: () => _selectGuess(info, 'higher'))),
+        Expanded(child: _arrowButton(label: tr('MAI MULT', 'HIGHER'), icon: Icons.arrow_upward_rounded, color: AppColors.play, onTap: () => _selectGuess(info, 'higher'))),
       ],
     );
   }
