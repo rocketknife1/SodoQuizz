@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "scores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "correct", "order": "DESCENDING" },
+        { "fieldPath": "ts", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

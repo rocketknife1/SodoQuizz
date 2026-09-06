@@ -364,6 +364,13 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
               padding: EdgeInsets.all(16),
               child: CircularProgressIndicator(color: AppColors.coin, strokeWidth: 2),
             ))
+          else if (_board!.failed)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(tr('Clasamentul nu s-a putut încărca.',
+                  'Could not load the leaderboard.'),
+                  style: const TextStyle(color: Colors.white38, fontSize: 13)),
+            )
           else if (_board!.top.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12),

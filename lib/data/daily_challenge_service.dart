@@ -62,7 +62,19 @@ class DailyChallengeToday {
   /// n-am jucat azi.
   final int? myRankBelowTop;
 
-  const DailyChallengeToday({required this.top, this.me, this.myRankBelowTop});
+  /// Citirea a EȘUAT (fără rețea, index lipsă, reguli). Fără el, un clasament
+  /// gol din eroare arată identic cu unul gol fiindcă n-a jucat nimeni, iar
+  /// ecranul îi spunea jucătorului „ești primul" când de fapt nu știa nimic —
+  /// exact ce s-a întâmplat la proba cu doi jucători din 2026-09-06, unde
+  /// lipsea indexul compus (`correct` desc + `ts`).
+  final bool failed;
+
+  const DailyChallengeToday({
+    required this.top,
+    this.me,
+    this.myRankBelowTop,
+    this.failed = false,
+  });
 }
 
 class DailyChallengeService {
@@ -135,7 +147,7 @@ class DailyChallengeService {
       return DailyChallengeToday(top: top, me: me, myRankBelowTop: rankBelowTop);
     } catch (e) {
       debugPrint('DailyChallengeService.today a esuat: $e');
-      return const DailyChallengeToday(top: []);
+      return const DailyChallengeToday(top: [], failed: true);
     }
   }
 }
