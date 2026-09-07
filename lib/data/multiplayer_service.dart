@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../core/analytics.dart';
 import '../core/cosmetics.dart';
 import '../core/betting.dart';
+import '../core/daily_mode.dart';
 import '../core/electric_chair.dart';
 import '../core/elo.dart';
 import '../core/rock_paper_scissors.dart';
@@ -2055,11 +2056,9 @@ class MultiplayerService {
         .map((s) => _liveQueueDocs(s.docs).length);
   }
 
-  /// Cele două moduri pe care matchmaking-ul public le poate alege aleator —
-  /// NU [MatchGameMode.quizzTanks]: acela cere exact 4 tancuri într-o arenă
-  /// fixă (vezi core/tanks.dart), deci n-are cum să iasă dintr-o pereche 1 la
-  /// 1 formată din coada de Meci Rapid.
-  static const _quickMatchModes = [MatchGameMode.classic, MatchGameMode.higherLower];
+  // „Join Online" nu mai alege aleator: joacă MODUL ZILEI (core/daily_mode.dart),
+  // ales determinist pe dată dintr-o listă 1-la-1 sigură. O singură coadă
+  // recomandată pe zi în loc de un mod aleator din două.
 
   /// Doar clientul cel mai "vechi" din coadă (primul intrat) încearcă să
   /// formeze o ofertă — reduce coliziunile, deși tranzacția de mai jos e
@@ -2107,7 +2106,7 @@ class MultiplayerService {
     );
     final candidates = [live.first, for (final i in picked) others[i]];
     final offerRef = _db.collection('quickmatch_offers').doc();
-    final gameMode = _quickMatchModes[Random().nextInt(_quickMatchModes.length)];
+    final gameMode = modeOfDay();
 
     try {
       await _db.runTransaction((tx) async {

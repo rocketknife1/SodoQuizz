@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/obby.dart';
 import '../../core/betting.dart';
+import '../../core/daily_mode.dart';
 import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
@@ -55,6 +56,11 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// la loc.
   bool _nameSetByAdmin = false;
 
+  /// Modul zilei (core/daily_mode.dart) + starea bonusului lui.
+  final MatchGameMode _dailyMode = modeOfDay();
+  bool _dailyModePlayed = false;
+  bool _dailyModeClaimed = false;
+
   @override
   void initState() {
     super.initState();
@@ -96,6 +102,32 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     // „nume impus din Admin" fără să aștepte repornirea ecranului.
     PlayerProfileService.instance.profileChanged.addListener(_onProfileChanged);
     _checkConnection();
+    _loadDailyMode();
+  }
+
+  Future<void> _loadDailyMode() async {
+    final played = await StorageService.wasDailyModePlayedToday();
+    final claimed = await StorageService.isDailyModeClaimed();
+    if (!mounted) return;
+    setState(() {
+      _dailyModePlayed = played;
+      _dailyModeClaimed = claimed;
+    });
+  }
+
+  Future<void> _claimDailyMode() async {
+    if (_dailyModeClaimed || !_dailyModePlayed) return;
+    await StorageService.claimDailyMode();
+    await StorageService.addCoins(dailyModeCoinReward);
+    await StorageService.addXp(dailyModeXpReward);
+    if (!mounted) return;
+    setState(() => _dailyModeClaimed = true);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(tr(
+          'Bonus modul zilei: +$dailyModeCoinReward monede, +$dailyModeXpReward XP',
+          'Mode of the day bonus: +$dailyModeCoinReward coins, +$dailyModeXpReward XP')),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
   Future<void> _onProfileChanged() async {
@@ -147,6 +179,65 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// Banda de „n-ai internet" — explică DE CE nu merge și dă un buton de
   /// reîncercare, ca userul să nu fie nevoit să iasă și să reintre în ecran
   /// după ce își pornește datele mobile.
+  /// „🔥 AZI: modul zilei" — modul evidențiat în Meci Rapid azi, plus bonusul
+  /// de revendicat după ce l-ai jucat (vezi core/daily_mode.dart).
+  Widget _buildDailyModeBanner() {
+    final label = matchGameModeLabel(_dailyMode);
+    final canClaim = _dailyModePlayed && !_dailyModeClaimed;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.orange.withAlpha(28),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.orange.withAlpha(120)),
+      ),
+      child: Row(
+        children: [
+          const Text('🔥', style: TextStyle(fontSize: 20)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  tr('AZI ÎN MECI RAPID', 'TODAY IN JOIN ONLINE'),
+                  style: const TextStyle(
+                      color: AppColors.orange,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _dailyModeClaimed
+                      ? tr('$label · bonus luat', '$label · bonus claimed')
+                      : _dailyModePlayed
+                          ? tr('$label · bonusul te așteaptă', '$label · bonus waiting')
+                          : tr('$label · joacă unul → +$dailyModeCoinReward monede',
+                              '$label · play one → +$dailyModeCoinReward coins'),
+                  style: const TextStyle(
+                      color: Colors.white, fontSize: 13.5, fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+          if (canClaim)
+            FilledButton(
+              onPressed: _claimDailyMode,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.orange,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                minimumSize: const Size(0, 36),
+              ),
+              child: Text(tr('IA', 'CLAIM'),
+                  style: const TextStyle(fontWeight: FontWeight.w900)),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOfflineBanner() {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
@@ -675,6 +766,13 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                         const SizedBox(height: 14),
                         EntranceItem(
                           controller: _introCtrl,
+                          interval: const Interval(0.4, 0.88, curve: Curves.easeOut),
+                          slideFrom: 1,
+                          child: _buildDailyModeBanner(),
+                        ),
+                        const SizedBox(height: 14),
+                        EntranceItem(
+                          controller: _introCtrl,
                           interval: const Interval(0.42, 0.9, curve: Curves.easeOutBack),
                           slideFrom: 1,
                           // Numărul de jucători deja în căutare, live — ca
@@ -690,7 +788,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                                 title: tr('MECI RAPID', 'JOIN ONLINE'),
                                 subtitle: searching > 0
                                     ? tr('🔎 $searching caută acum un meci', '🔎 $searching searching right now')
-                                    : tr('Te cuplăm cu un adversar real', 'Matched with a real opponent'),
+                                    : tr('Azi: ${matchGameModeLabel(_dailyMode)} · adversar real',
+                                        'Today: ${matchGameModeLabel(_dailyMode)} · real opponent'),
                                 color: AppColors.play,
                                 onTap: _joinOnline,
                                 disabled: _offlineReason != null,

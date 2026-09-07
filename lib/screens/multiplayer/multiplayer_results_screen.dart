@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/analytics.dart';
 import '../../core/betting.dart';
+import '../../core/daily_mode.dart';
 import '../../core/electric_chair.dart';
 import '../../core/elo.dart';
 import '../../core/obby.dart';
@@ -186,6 +187,13 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       }
       if (widget.gameMode == MatchGameMode.quizzTanks) {
         _computeSalvage(sorted, sorted[myIndex]);
+      }
+      // Modul zilei (core/daily_mode.dart): dacă meciul ăsta era în modul
+      // evidențiat azi, deblochează bonusul de revendicat din ecranul
+      // Multiplayer. Nu acordă nimic aici — doar marchează, ca la
+      // „categoria zilei".
+      if (widget.gameMode == modeOfDay()) {
+        await StorageService.markDailyModePlayed();
       }
       // Rating Elo (core/elo.dart): citim ratingul fiecărui adversar acum, la
       // final, şi calculăm o singură deltă din perechile „am terminat peste /

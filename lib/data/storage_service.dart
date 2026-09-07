@@ -1815,6 +1815,41 @@ class StorageService {
     await prefs.setBool(_featuredClaimedKey(), true);
   }
 
+  // ─── Modul zilei (multiplayer) ────────────────────────────────────────────
+  // Același tipar ca „categoria zilei" de mai sus: pick determinist pe zi
+  // (core/daily_mode.dart#modeOfDay), un bonus mic revendicabil O DATĂ pe zi
+  // DUPĂ ce ai terminat o partidă în modul ăla azi. Chei separate pe dată —
+  // se „resetează" singur la miezul nopții pentru că data din cheie se
+  // schimbă.
+
+  static String _dailyModePlayedKey() =>
+      'daily_mode_played_${_dateKey(DateTime.now())}';
+  static String _dailyModeClaimedKey() =>
+      'daily_mode_claimed_${_dateKey(DateTime.now())}';
+
+  static Future<bool> wasDailyModePlayedToday() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_dailyModePlayedKey()) ?? false;
+  }
+
+  /// Se apelează când un meci în modul zilei ajunge la ecranul de rezultate.
+  static Future<void> markDailyModePlayed() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_dailyModePlayedKey(), true);
+  }
+
+  static Future<bool> isDailyModeClaimed() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_dailyModeClaimedKey()) ?? false;
+  }
+
+  /// Doar marchează revendicarea — apelantul scrie monedele/XP-ul, ca la
+  /// [claimFeaturedCategory] și [claimQuest].
+  static Future<void> claimDailyMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_dailyModeClaimedKey(), true);
+  }
+
   // ─── High Score ───────────────────────────────────────────────────────────
 
   static Future<int> getHighScore() async {
