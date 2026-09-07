@@ -3,11 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/widgets/cosmetic_title.dart';
 
 void main() {
-  testWidgets('titlul novice nu afiseaza nimic', (t) async {
+  testWidgets('titlul novice arata „Boboc" (progresia trebuie sa se vada)', (t) async {
     await t.pumpWidget(const MaterialApp(
       home: Scaffold(body: CosmeticTitle(titleId: 'novice')),
     ));
-    expect(find.byType(Text), findsNothing);
+    expect(find.text('Boboc'), findsOneWidget);
   });
 
   testWidgets('un titlu real se afiseaza', (t) async {
@@ -17,10 +17,10 @@ void main() {
     expect(find.text('Le-a Făcut Pe Toate'), findsOneWidget);
   });
 
-  testWidgets('id necunoscut -> nimic (cade pe novice)', (t) async {
+  testWidgets('id necunoscut -> cade pe novice („Boboc")', (t) async {
     await t.pumpWidget(const MaterialApp(
       home: Scaffold(body: CosmeticTitle(titleId: 'inventat')),
     ));
-    expect(find.byType(Text), findsNothing);
+    expect(find.text('Boboc'), findsOneWidget);
   });
 }

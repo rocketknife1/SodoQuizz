@@ -37,7 +37,7 @@ class LevelHeader extends StatefulWidget {
   final String? displayName;
 
   /// Titlul cosmetic echipat (vezi core/cosmetics.dart) - un rand mic sub
-  /// "Level N". `null` sau `'novice'` nu arata nimic.
+  /// "Level N". `null` = nimic; `'novice'` arata „Boboc".
   final String? titleId;
   /// Dacă e dat, numele devine un shortcut direct spre dialogul de schimbare
   /// a numelui (vezi widgets/edit_name_dialog.dart) — `null` când numele nu

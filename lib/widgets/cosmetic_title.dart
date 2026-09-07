@@ -4,8 +4,9 @@ import '../core/cosmetics.dart';
 import '../core/lang.dart';
 
 /// Titlul cosmetic al unui jucător - un rand mic sub nume, oriunde apare
-/// numele (profil, clasament, meci, prieteni). Gol pentru `novice` (titlul
-/// implicit n-are ce arata).
+/// numele (profil, clasament, meci, prieteni). Se arată ȘI „Boboc" (titlul
+/// implicit): altfel un jucător nou nu vede că există sistem de titluri de
+/// deblocat — exact progresia pe care vrem s-o facem vizibilă.
 class CosmeticTitle extends StatelessWidget {
   final String titleId;
   final double fontSize;
@@ -21,7 +22,6 @@ class CosmeticTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = titleFromId(titleId);
-    if (t == PlayerTitle.novice) return const SizedBox.shrink();
     final (ro, en) = titleLabel(t);
     return Text(
       tr(ro, en),
