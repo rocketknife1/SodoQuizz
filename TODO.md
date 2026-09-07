@@ -16,12 +16,13 @@ revenire?" — se **consolidează**, nu se mai îngrămădește. Note GPT: Produ
 
 Ordinea de atac (a mea, ajustată față de a lui):
 
-1. **Analytics de produs — funnel + per-mod.** Firebase Analytics e deja
-   legat. De adăugat ~15 evenimente la punctele care contează:
-   `first_open → first_game → first_multiplayer → first_win →
-   second_session → day2/7/30`, plus per-mod `start/finish/quit/rematch`.
-   **De ce primul:** fără el ghicești ce e „plictisitor". Ieftin, rezolvă
-   deciziile de mai jos cu date, nu cu păreri.
+1. ✅ **Analytics de produs — funnel + per-mod** — LIVRAT 2026-09-07 (`0c5e752`).
+   Pâlnia: `funnel_prima_partida / funnel_primul_multiplayer /
+   funnel_prima_victorie` (o dată pe cont, `hitMilestoneOnce`) + first_open
+   și retenția D1/D7 gratis de la Firebase. Multiplayer: `mp_start`,
+   `mp_final {mod, castigat}`, `mp_revansa {mod, tip}` — nu era măsurat deloc.
+   Abandon = `mp_start − mp_final` pe mod. `categorie_deblocata` wired.
+   **De văzut în Firebase Analytics după ce intră trafic real.**
 
 2. **Async Challenge — „Provoacă un prieten".** Primești 10 întrebări, le
    faci, jocul generează un cod/link (`share_plus` + `app_links` sunt deja
@@ -32,10 +33,12 @@ Ordinea de atac (a mea, ajustată față de a lui):
    Tehnic: mecanica Provocării Zilei + un seed partajabil + un doc de
    scoruri pe id de provocare. Efort mediu.
 
-3. **Personal Records.** Cel mai mare scor, cel mai rapid răspuns, cel mai
-   lung streak, cea mai bună/proastă categorie, „+X% față de acum 7 zile".
-   **De ce:** progres chiar și când nu e nimeni online. Ieftin — jumătate
-   din statistici deja există (streak, winrate), e mai mult stocare + ecran.
+3. **Personal Records.** 🟡 PARȚIAL — tab-ul „Al tău" din Clasament (`0caa9cf`)
+   arată acum multiplayer (rating/meciuri/winrate/streak) + singleplayer
+   (întrebări/nivel/streak login/provocări/roată/planetă) + punctaj pe mod.
+   RĂMÂNE: cel mai mare scor într-o partidă, cel mai rapid răspuns, cea mai
+   bună/proastă categorie (accuracy), „+X% față de acum 7 zile" — astea cer
+   tracking NOU (best-score, fastest-answer, per-categorie accuracy).
 
 4. **Category Mastery.** Nivel per categorie: întrebări întâlnite, accuracy,
    best streak, titlu la mastery 10 („Maestru Auto"). **De ce:** conținutul
