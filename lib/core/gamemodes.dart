@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'lang.dart';
 
-/// Sursa unică de adevăr pentru cele 4 gamemoduri — un singur loc de
-/// editat ca să adaugi/schimbi un mod, în loc să umbli prin mai multe
+/// Sursa unică de adevăr pentru cele 15 categorii de quiz — un singur loc de
+/// editat ca să adaugi/schimbi o categorie, în loc să umbli prin mai multe
 /// fișiere (home screen, loader de întrebări etc).
 ///
 /// Fiecare gamemod își are conținutul într-un singur folder:

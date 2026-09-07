@@ -1,5 +1,5 @@
 name: guess_it
-description: "Ghicește ce se ascunde în poza neclară. 14 categorii și multiplayer live."
+description: "Ghicește ce se ascunde în poza neclară. 15 categorii, 6 moduri multiplayer, provocări zilnice."
 publish_to: 'none'
 
 version: 1.0.1+6
