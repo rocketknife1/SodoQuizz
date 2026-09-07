@@ -192,6 +192,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
     LiveSync.instance.friendUids.removeListener(_onFriendListChanged);
     ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
+    _challengeCodeController.dispose();
     super.dispose();
   }
 
@@ -341,6 +342,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         _buildMyCodeCard(data.myCode),
                         const SizedBox(height: 20),
                         _buildAddField(),
+                        const SizedBox(height: 12),
+                        _buildChallengeCodeField(),
                         const SizedBox(height: 24),
                         if (data.requests.isNotEmpty) ...[
                           Text('Cereri primite (${data.requests.length})',
@@ -442,6 +445,53 @@ class _FriendsScreenState extends State<FriendsScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  final _challengeCodeController = TextEditingController();
+
+  /// „Ai primit un cod de provocare?" — intrarea prin COD (deep link-ul
+  /// `guessit://challenge/<id>` merge doar pe Android; codul merge peste tot,
+  /// inclusiv când prietenul a trimis doar textul).
+  Widget _buildChallengeCodeField() {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _challengeCodeController,
+            textCapitalization: TextCapitalization.characters,
+            maxLength: 6,
+            style: const TextStyle(color: Colors.white, letterSpacing: 2),
+            decoration: InputDecoration(
+              counterText: '',
+              hintText: tr('Cod de provocare', 'Challenge code'),
+              hintStyle: const TextStyle(color: Colors.white38),
+              filled: true,
+              fillColor: AppColors.card,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+              prefixIcon: const Icon(Icons.sports_kabaddi_rounded, color: AppColors.orange, size: 18),
+            ),
+            onSubmitted: (_) => _openChallengeCode(),
+          ),
+        ),
+        const SizedBox(width: 10),
+        ElevatedButton(
+          onPressed: _openChallengeCode,
+          style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
+          child: Text(tr('Intră', 'Enter')),
+        ),
+      ],
+    );
+  }
+
+  void _openChallengeCode() {
+    final code = _challengeCodeController.text.trim().toUpperCase();
+    if (code.isEmpty) return;
+    _challengeCodeController.clear();
+    FocusScope.of(context).unfocus();
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AsyncChallengeScreen(challengeId: code)),
     );
   }
 
