@@ -1843,6 +1843,34 @@ class StorageService {
     return {for (final id in modes) id: prefs.getInt('leaderboard_pts_$id') ?? 0};
   }
 
+  /// Tot ce arată tab-ul „Al tău" din Clasament despre partea LOCALĂ
+  /// (singleplayer + progresie zilnică) — restul (meciuri, winrate, rating)
+  /// vine din profilul public. Un singur `await` de prefs, nu opt gettere.
+  static Future<
+      ({
+        int intrebariIntalnite,
+        int nivel,
+        int streakLogin,
+        int provocariZilei,
+        int roataRotita,
+        int planetePerfecte,
+        int hinturiFolosite,
+        int questeRevendicate,
+      })> personalLocalStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    int lifetime(String m) => prefs.getInt('lifetime_$m') ?? 0;
+    return (
+      intrebariIntalnite: (prefs.getStringList(_answeredKey) ?? const []).length,
+      nivel: levelForXp(prefs.getInt(_xpKey) ?? 0),
+      streakLogin: prefs.getInt(_streakCountKey) ?? 0,
+      provocariZilei: prefs.getInt(_dailyChallengesTotalKey) ?? 0,
+      roataRotita: lifetime('wheel_spin'),
+      planetePerfecte: lifetime('planet_perfect'),
+      hinturiFolosite: prefs.getInt(_hintsUsedTotalKey) ?? 0,
+      questeRevendicate: prefs.getInt(_questsClaimedTotalKey) ?? 0,
+    );
+  }
+
   /// Timpul rămas până la resetul ciclului curent.
   static Future<Duration> leaderboardPeriodRemaining() async {
     final prefs = await SharedPreferences.getInstance();

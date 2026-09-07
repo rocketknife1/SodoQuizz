@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/cosmetics.dart';
+import '../../core/elo.dart';
 import '../../core/gamemodes.dart';
 import '../../core/leagues.dart';
 import '../../core/lang.dart';
@@ -17,16 +18,16 @@ import '../../widgets/league_badge.dart';
 import '../../widgets/pressable.dart';
 import '../../widgets/space_background.dart';
 
-/// Clasament — 4 taburi: "Toți jucătorii" (roster complet, inclusiv cei
-/// offline de mult, cu ultima oră online — vezi [_AllPlayersTab]),
-/// "Leaderboard" (doar userii activi recent — vezi [_GlobalLeaderboardTab]),
-/// "Prieteni" (doar lista proprie de prieteni + tu, vezi
-/// [_FriendsLeaderboardTab] — rivalitatea PERSONALĂ din planul de viitor,
-/// punctul 1) — toate trei alimentate de PlayerProfileService/player_profiles
-/// din Firestore, sortate după PUNCTAJUL DE SEZON ([effectiveSeasonPoints]),
-/// nu cel pe viață; "Al tău" (vezi [_MyStatsTab]) e strict local — punctajul
-/// propriu pe ciclul curent de [StorageService.leaderboardPeriodHours]h, pe
-/// categorie.
+/// Clasament — 3 taburi:
+/// - **Leaderboard** ([_GlobalLeaderboardTab]) — TOŢI jucătorii înregistraţi
+///   (`fetchAllPlayers`), sortaţi după punctajul de sezon; cei inactivi cad
+///   singuri la coadă (sezonul lor e vechi → [effectiveSeasonPoints] = 0).
+///   Înainte erau două taburi separate („Toţi" + „Leaderboard") — redundant.
+/// - **Prieteni** ([_FriendsLeaderboardTab]) — doar lista proprie + tu.
+/// - **Al tău** ([_MyStatsTab]) — progresul PROPRIU: multiplayer (meciuri,
+///   winrate, rating, streak, ligă) din profilul public + singleplayer
+///   (întrebări, nivel, streak login, provocări, roată, planetă) din local +
+///   punctaj pe mod în ciclul curent.
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
 
@@ -35,7 +36,7 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProviderStateMixin {
-  late final TabController _tabController = TabController(length: 4, vsync: this);
+  late final TabController _tabController = TabController(length: 3, vsync: this);
   /// Intrarea în cascadă a antetului + tab bar-ului — aceeași senzație ca în
   /// Multiplayer, ca ecranul să nu apară dintr-o bucată.
   late final AnimationController _introCtrl;
@@ -158,7 +159,6 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
                     labelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w800),
                     unselectedLabelStyle: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600),
                     tabs: [
-                      Tab(text: tr('Toți', 'All')),
                       const Tab(text: 'Leaderboard'),
                       Tab(text: tr('Prieteni', 'Friends')),
                       Tab(text: tr('Al tău', 'Yours')),
@@ -174,7 +174,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: const [_AllPlayersTab(), _GlobalLeaderboardTab(), _FriendsLeaderboardTab(), _MyStatsTab()],
+                  children: const [_GlobalLeaderboardTab(), _FriendsLeaderboardTab(), _MyStatsTab()],
                 ),
               ),
             ],
@@ -480,17 +480,18 @@ class _PlayerRow extends StatelessWidget {
   }
 }
 
-/// Roster COMPLET — toți userii (Google sau Guest) care au intrat vreodată
-/// în joc, indiferent cât timp au stat departe, cu data+ora ultimei
-/// prezențe online (vezi PlayerProfileService.fetchAllPlayers).
-class _AllPlayersTab extends StatefulWidget {
-  const _AllPlayersTab();
+/// Leaderboard-ul unic — TOŢI jucătorii înregistraţi (`fetchAllPlayers`),
+/// sortaţi după punctajul de sezon. Cine e inactiv de mult are sezonul vechi,
+/// deci [effectiveSeasonPoints] = 0 şi cade singur la coadă — nu mai e nevoie
+/// de un tab separat „Toţi" care făcea aproape acelaşi lucru.
+class _GlobalLeaderboardTab extends StatefulWidget {
+  const _GlobalLeaderboardTab();
 
   @override
-  State<_AllPlayersTab> createState() => _AllPlayersTabState();
+  State<_GlobalLeaderboardTab> createState() => _GlobalLeaderboardTabState();
 }
 
-class _AllPlayersTabState extends State<_AllPlayersTab> {
+class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
   late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchAllPlayers();
 
   Future<void> _refresh() async {
@@ -516,73 +517,7 @@ class _AllPlayersTabState extends State<_AllPlayersTab> {
               children: [
                 const SizedBox(height: 120),
                 Center(
-                  child: Text(tr('Niciun jucător înregistrat momentan.', 'No registered players right now.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
-                ),
-              ],
-            ),
-          );
-        }
-        return RefreshIndicator(
-          onRefresh: _refresh,
-          color: AppColors.orange,
-          child: ListView.builder(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            itemCount: players.length,
-            itemBuilder: (context, i) {
-              final p = players[i];
-              return _PlayerRow(
-                rank: i + 1,
-                profile: p,
-                isMe: p.uid == me,
-                showLastActive: true,
-                onTap: () => showPlayerProfileSheet(context, p),
-              );
-            },
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Leaderboard-ul global filtrat — doar userii activi în ultimele
-/// [PlayerProfileService.leaderboardFreshness] (progresul celor inactivi
-/// rămâne salvat, revin automat aici dacă redevin activi — vezi
-/// PlayerProfileService.fetchLeaderboard).
-class _GlobalLeaderboardTab extends StatefulWidget {
-  const _GlobalLeaderboardTab();
-
-  @override
-  State<_GlobalLeaderboardTab> createState() => _GlobalLeaderboardTabState();
-}
-
-class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
-  late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchLeaderboard();
-
-  Future<void> _refresh() async {
-    setState(() => _future = PlayerProfileService.instance.fetchLeaderboard());
-    await _future;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<PlayerProfile>>(
-      future: _future,
-      builder: (context, snap) {
-        if (!snap.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.orange));
-        }
-        final players = snap.data!;
-        final me = MultiplayerService.instance.currentPlayerId;
-        if (players.isEmpty) {
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            color: AppColors.orange,
-            child: ListView(
-              children: [
-                const SizedBox(height: 120),
-                Center(
-                  child: Text(tr('Niciun jucător activ momentan.', 'No active players right now.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
+                  child: Text(tr('Niciun jucător înregistrat momentan.', 'No registered players yet.'), style: const TextStyle(color: Colors.white38, fontSize: 13)),
                 ),
               ],
             ),
@@ -720,10 +655,9 @@ String _formatPeriod(Duration d) {
   return '${h}h ${m}m';
 }
 
-/// Punctajul tău propriu, strict local (nu vine din Firestore) — totalul pe
-/// ciclul curent de [StorageService.leaderboardPeriodHours]h și defalcarea
-/// pe fiecare categorie, exact cum arăta vechiul ecran "Clasamentul tău"
-/// înainte de leaderboard-ul global (vezi git 3a2514d).
+/// Progresul TĂU, într-un singur loc — ce vede un jucător când vrea să știe
+/// „unde am ajuns": multiplayer (profil public) + singleplayer / progresie
+/// zilnică (local) + punctajul pe mod în ciclul curent.
 class _MyStatsTab extends StatefulWidget {
   const _MyStatsTab();
 
@@ -735,9 +669,27 @@ class _MyStatsTabState extends State<_MyStatsTab> {
   late Future<_MyStatsData> _future = _load();
 
   static Future<_MyStatsData> _load() async {
-    final points = await StorageService.getAllLeaderboardPoints();
-    final periodRemaining = await StorageService.leaderboardPeriodRemaining();
-    return _MyStatsData(points: points, periodRemaining: periodRemaining);
+    final results = await Future.wait([
+      PlayerProfileService.instance.getMyProfile(),
+      StorageService.getAllLeaderboardPoints(),
+      StorageService.leaderboardPeriodRemaining(),
+      StorageService.personalLocalStats(),
+    ]);
+    return _MyStatsData(
+      profile: results[0] as PlayerProfile?,
+      points: results[1] as Map<String, int>,
+      periodRemaining: results[2] as Duration,
+      local: results[3] as ({
+        int intrebariIntalnite,
+        int nivel,
+        int streakLogin,
+        int provocariZilei,
+        int roataRotita,
+        int planetePerfecte,
+        int hinturiFolosite,
+        int questeRevendicate,
+      }),
+    );
   }
 
   Future<void> _refresh() async {
@@ -754,33 +706,80 @@ class _MyStatsTabState extends State<_MyStatsTab> {
         if (data == null) {
           return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }
+        final p = data.profile;
+        final l = data.local;
+        final seasonPts = p == null
+            ? 0
+            : effectiveSeasonPoints(seasonKey: p.seasonKey, seasonPoints: p.seasonPoints);
+        final league = leagueForPoints(seasonPts);
         return RefreshIndicator(
           onRefresh: _refresh,
           color: AppColors.orange,
           child: ListView(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             children: [
+              // ── Multiplayer ──────────────────────────────────────────────
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [AppColors.orange, Color(0xFFFFB020)]),
+                  gradient: const LinearGradient(colors: [AppColors.blue, Color(0xFF3B5BDB)]),
                   borderRadius: BorderRadius.circular(20),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.sports_esports_rounded, color: Colors.white, size: 26),
+                        const SizedBox(width: 10),
+                        Text(tr('Multiplayer', 'Multiplayer'),
+                            style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w700)),
+                        const Spacer(),
+                        Text('${p?.rating ?? eloStartRating}',
+                            style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w900)),
+                        const SizedBox(width: 4),
+                        const Text('rating', style: TextStyle(color: Colors.white54, fontSize: 11)),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    if ((p?.matchesPlayed ?? 0) == 0)
+                      Text(tr('Încă n-ai jucat un meci multiplayer.',
+                          'You have not played a multiplayer match yet.'),
+                          style: const TextStyle(color: Colors.white60, fontSize: 12))
+                    else
+                      Row(
+                        children: [
+                          _MiniStat(label: tr('meciuri', 'matches'), value: '${p!.matchesPlayed}'),
+                          _MiniStat(label: tr('victorii', 'wins'), value: '${p.wins}'),
+                          _MiniStat(label: 'winrate', value: '${(p.winrate * 100).round()}%'),
+                          _MiniStat(label: tr('cel mai lung streak', 'best streak'), value: '${p.longestStreak}'),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // ── Ligă + sezon ─────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: league.color.withAlpha(120)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.emoji_events_rounded, color: Colors.white, size: 36),
-                    const SizedBox(width: 14),
+                    Icon(league.icon, color: league.color, size: 26),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(tr('Puncte în acest ciclu', 'Points this cycle'), style: const TextStyle(color: Colors.white70, fontSize: 12)),
-                          Text('${data.total} puncte', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 4),
+                          Text(league.name, style: TextStyle(color: league.color, fontSize: 15, fontWeight: FontWeight.w800)),
                           Text(
-                            tr('Se resetează în ${_formatPeriod(data.periodRemaining)}',
-                                'Resets in ${_formatPeriod(data.periodRemaining)}'),
-                            style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.w600),
+                            tr('$seasonPts puncte de sezon · reset în ${_formatPeriod(data.periodRemaining)}',
+                                '$seasonPts season points · resets in ${_formatPeriod(data.periodRemaining)}'),
+                            style: const TextStyle(color: Colors.white54, fontSize: 11),
                           ),
                         ],
                       ),
@@ -789,11 +788,44 @@ class _MyStatsTabState extends State<_MyStatsTab> {
                 ),
               ),
               const SizedBox(height: 18),
-              Text(tr('Puncte pe categorie (ciclul curent)', 'Points per category (current cycle)'), style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              // ── Singleplayer / progresie ─────────────────────────────────
+              Text(tr('Singleplayer & progresie', 'Singleplayer & progress'),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
               const SizedBox(height: 10),
-              // Higher or Lower nu face parte din gameModes (altă mecanică,
-              // fără poze/blur) — rândul lui e adăugat manual, nu prin bucla
-              // de mai jos.
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(12),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        _MiniStat(label: tr('întrebări văzute', 'questions seen'), value: '${l.intrebariIntalnite}'),
+                        _MiniStat(label: tr('nivel', 'level'), value: '${l.nivel}'),
+                        _MiniStat(label: tr('streak login', 'login streak'), value: '${l.streakLogin}'),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        _MiniStat(label: tr('provocări zilei', 'daily challenges'), value: '${l.provocariZilei}'),
+                        _MiniStat(label: tr('roata', 'wheel spins'), value: '${l.roataRotita}'),
+                        _MiniStat(label: tr('planete perfecte', 'perfect planets'), value: '${l.planetePerfecte}'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              // ── Punctaj pe mod (ciclul curent) ───────────────────────────
+              Text(tr('Punctaj pe mod (ciclul curent)', 'Score per mode (current cycle)'),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              // Higher or Lower nu face parte din gameModes (altă mecanică),
+              // rândul lui e adăugat manual.
               _ModeScoreRow(
                 color: AppColors.purple,
                 icon: Icons.swap_vert_rounded,
@@ -811,9 +843,24 @@ class _MyStatsTabState extends State<_MyStatsTab> {
 }
 
 class _MyStatsData {
+  final PlayerProfile? profile;
   final Map<String, int> points;
   final Duration periodRemaining;
-  _MyStatsData({required this.points, required this.periodRemaining});
+  final ({
+    int intrebariIntalnite,
+    int nivel,
+    int streakLogin,
+    int provocariZilei,
+    int roataRotita,
+    int planetePerfecte,
+    int hinturiFolosite,
+    int questeRevendicate,
+  }) local;
 
-  int get total => points.values.fold(0, (sum, v) => sum + v);
+  _MyStatsData({
+    required this.profile,
+    required this.points,
+    required this.periodRemaining,
+    required this.local,
+  });
 }
