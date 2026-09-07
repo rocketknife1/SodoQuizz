@@ -450,35 +450,59 @@ class _FriendsScreenState extends State<FriendsScreen> {
 
   final _challengeCodeController = TextEditingController();
 
-  /// „Ai primit un cod de provocare?" — intrarea prin COD (deep link-ul
-  /// `guessit://challenge/<id>` merge doar pe Android; codul merge peste tot,
-  /// inclusiv când prietenul a trimis doar textul).
+  /// „Provoacă un prieten" — două acțiuni într-un rând: butonul mare pornește
+  /// o provocare NOUĂ (joci → primești un cod de trimis), câmpul primește un
+  /// cod de la altcineva (deep link-ul `guessit://challenge/<id>` merge doar
+  /// pe Android; codul merge peste tot).
   Widget _buildChallengeCodeField() {
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Expanded(
-          child: TextField(
-            controller: _challengeCodeController,
-            textCapitalization: TextCapitalization.characters,
-            maxLength: 6,
-            style: const TextStyle(color: Colors.white, letterSpacing: 2),
-            decoration: InputDecoration(
-              counterText: '',
-              hintText: tr('Cod de provocare', 'Challenge code'),
-              hintStyle: const TextStyle(color: Colors.white38),
-              filled: true,
-              fillColor: AppColors.card,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              prefixIcon: const Icon(Icons.sports_kabaddi_rounded, color: AppColors.orange, size: 18),
-            ),
-            onSubmitted: (_) => _openChallengeCode(),
+        ElevatedButton.icon(
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AsyncChallengeScreen()),
+          ),
+          icon: const Icon(Icons.sports_kabaddi_rounded, size: 18),
+          label: Text(tr('PROVOACĂ UN PRIETEN', 'CHALLENGE A FRIEND')),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.orange,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
         ),
-        const SizedBox(width: 10),
-        ElevatedButton(
-          onPressed: _openChallengeCode,
-          style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16)),
-          child: Text(tr('Intră', 'Enter')),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _challengeCodeController,
+                textCapitalization: TextCapitalization.characters,
+                maxLength: 6,
+                style: const TextStyle(color: Colors.white, letterSpacing: 2),
+                decoration: InputDecoration(
+                  counterText: '',
+                  hintText: tr('Ai primit un cod?', 'Got a code?'),
+                  hintStyle: const TextStyle(color: Colors.white38),
+                  filled: true,
+                  fillColor: AppColors.card,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                ),
+                onSubmitted: (_) => _openChallengeCode(),
+              ),
+            ),
+            const SizedBox(width: 10),
+            OutlinedButton(
+              onPressed: _openChallengeCode,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.orange,
+                side: const BorderSide(color: AppColors.orange),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+              ),
+              child: Text(tr('Intră', 'Enter')),
+            ),
+          ],
         ),
       ],
     );
@@ -507,7 +531,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
             style: const TextStyle(color: Colors.white, letterSpacing: 2),
             decoration: InputDecoration(
               counterText: '',
-              hintText: 'Cod prieten',
+              hintText: tr('Cod prieten', 'Friend code'),
               hintStyle: const TextStyle(color: Colors.white38),
               filled: true,
               fillColor: AppColors.card,
