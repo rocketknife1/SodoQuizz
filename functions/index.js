@@ -34,6 +34,7 @@ const { getMessaging } = require("firebase-admin/messaging");
 const { getAuth } = require("firebase-admin/auth");
 const {
   onDocumentCreated,
+  onDocumentUpdated,
   onDocumentWritten,
 } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
@@ -302,6 +303,33 @@ exports.onAdminMessage = onDocumentCreated(
       body: text || "Ti-a scris un jucator.",
       // `withUid` spune aplicatiei ca sunt adminul si al cui fir sa deschida.
       data: { type: "admin_chat", withUid: playerUid },
+    });
+  }
+);
+
+// ─── Provocare async: adversarul a raspuns ──────────────────────────────────
+// `challenges/{id}` — creatorul joaca la creare, un singur adversar poate
+// raspunde (opponentUid trece din null la un uid). Cand se intampla, anuntam
+// creatorul cu rezultatul. `onDocumentUpdated`: creatorul e deja in doc de la
+// creare, deci ne intereseaza doar tranzitia.
+exports.onChallengeAnswered = onDocumentUpdated(
+  "challenges/{id}",
+  async (event) => {
+    const before = event.data && event.data.before && event.data.before.data();
+    const after = event.data && event.data.after && event.data.after.data();
+    if (!before || !after) return;
+    if (before.opponentUid || !after.opponentUid) return; // nu e tranzitia care ne intereseaza
+
+    const creator = after.creatorUid;
+    if (!creator) return;
+    const oppName = String(after.opponentName || "Cineva").slice(0, 40);
+    const my = asInt(after.creatorScore);
+    const their = asInt(after.opponentScore);
+    const verdict = their > my ? "te-a intrecut" : their < my ? "n-a reusit" : "egalitate";
+    await sendToUser(creator, {
+      title: "⚔️ Raspuns la provocarea ta",
+      body: `${oppName} ${verdict}: ${their} vs ${my}.`,
+      data: { type: "challenge", challengeId: event.params.id },
     });
   }
 );

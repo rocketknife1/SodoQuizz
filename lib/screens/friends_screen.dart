@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 import '../core/cosmetics.dart';
 import '../core/leagues.dart';
+import 'async_challenge_screen.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/live_sync.dart';
@@ -392,6 +393,10 @@ class _FriendsScreenState extends State<FriendsScreen> {
                                   : _summaries[f.uid],
                               onRemove: () => _remove(f.uid),
                               onOpenChat: () => _openChat(f),
+                              onChallenge: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const AsyncChallengeScreen()),
+                              ),
                             ),
                       ],
                     ),
@@ -594,11 +599,13 @@ class _FriendRow extends StatelessWidget {
   final FriendChatSummary? summary;
   final VoidCallback onRemove;
   final VoidCallback onOpenChat;
+  final VoidCallback onChallenge;
 
   const _FriendRow({
     required this.profile,
     required this.onRemove,
     required this.onOpenChat,
+    required this.onChallenge,
     this.summary,
   });
 
@@ -715,6 +722,11 @@ class _FriendRow extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            IconButton(
+              onPressed: onChallenge,
+              icon: const Icon(Icons.sports_kabaddi_rounded, color: AppColors.orange, size: 19),
+              tooltip: tr('Provoacă', 'Challenge'),
             ),
             IconButton(
               onPressed: onOpenChat,

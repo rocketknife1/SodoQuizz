@@ -25,6 +25,7 @@ import 'data/push_service.dart';
 import 'data/auth_service.dart';
 import 'screens/multiplayer/room_lobby_screen.dart';
 import 'screens/admin_chat_screen.dart';
+import 'screens/async_challenge_screen.dart';
 import 'screens/friends_screen.dart';
 import 'screens/friend_chat_screen.dart';
 import 'data/live_sync.dart';
@@ -223,7 +224,14 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
       ..onOpenRoom = _openInvitedRoom
       ..onOpenChat = _openChatWith
       ..onOpenAdminChat = _openAdminChat
+      ..onOpenChallenge = _openChallenge
       ..start();
+  }
+
+  void _openChallenge(String id) {
+    _navigatorKey.currentState?.push(MaterialPageRoute(
+      builder: (_) => AsyncChallengeScreen(challengeId: id),
+    ));
   }
 
   /// Tap pe o invitatie in camera: intram DIRECT in ea, nu doar deschidem
@@ -333,12 +341,29 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     if (Firebase.apps.isEmpty) return;
     final appLinks = AppLinks();
     appLinks.getInitialLink().then((uri) {
-      if (uri != null) _handleFriendInviteUri(uri);
+      if (uri != null) _handleDeepLink(uri);
     });
     _linkSub = appLinks.uriLinkStream.listen(
-      _handleFriendInviteUri,
-      onError: (e) => debugPrint('Ascultarea link-urilor de invitatie a esuat: $e'),
+      _handleDeepLink,
+      onError: (e) => debugPrint('Ascultarea link-urilor a esuat: $e'),
     );
+  }
+
+  /// `guessit://addfriend/<cod>` sau `guessit://challenge/<id>`.
+  void _handleDeepLink(Uri uri) {
+    if (uri.scheme != 'guessit') return;
+    if (uri.host == 'addfriend') {
+      _handleFriendInviteUri(uri);
+    } else if (uri.host == 'challenge') {
+      final id = uri.pathSegments.isNotEmpty ? uri.pathSegments.first : '';
+      if (id.isNotEmpty) {
+        MultiplayerService.instance.ensureInitialized().then((_) {
+          _navigatorKey.currentState?.push(MaterialPageRoute(
+            builder: (_) => AsyncChallengeScreen(challengeId: id),
+          ));
+        });
+      }
+    }
   }
 
   /// [uri] arată `guessit://addfriend/<cod>` — codul e primul segment de

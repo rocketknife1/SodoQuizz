@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../core/async_challenge.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/progression.dart';
@@ -1002,6 +1003,45 @@ class StorageService {
     await _recordActivity(prefs);
   }
 
+  // ─── Async Challenge — progres local per provocare ────────────────────────
+  // Ca la Provocarea Zilei: se scrie după FIECARE răspuns, ca o închidere a
+  // aplicației în timpul provocării adversarului să reia de unde a rămas —
+  // nu de la un start curat cu care ar putea „reroll-ui" un început prost.
+  // Întrebările sunt deterministe pe id-ul provocării, deci reluarea dă exact
+  // aceleași întrebări. `"<nextIndex>:<score>:<correct>:<gata0/1>"`.
+  static Future<void> recordChallengeProgress(
+      String challengeId, int nextIndex, int score, int correct,
+      {bool done = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+        'challenge_prog_$challengeId', '$nextIndex:$score:$correct:${done ? 1 : 0}');
+  }
+
+  static Future<({int nextIndex, int score, int correct, bool done})?>
+      challengeProgressFor(String challengeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('challenge_prog_$challengeId');
+    if (raw == null) return null;
+    final p = raw.split(':');
+    if (p.length < 4) return null;
+    return (
+      nextIndex: int.tryParse(p[0]) ?? 0,
+      score: int.tryParse(p[1]) ?? 0,
+      correct: int.tryParse(p[2]) ?? 0,
+      done: p[3] == '1',
+    );
+  }
+
+  /// Câte provocări câștigate azi au adus deja recompensă (plafon
+  /// [challengeRewardedPerDay] — vezi core/async_challenge.dart). Întoarce
+  /// `true` dacă a MAI rămas loc și incrementează contorul.
+  static Future<bool> claimChallengeRewardSlot() async {
+    final n = await getDailyCounter('challenge_rewarded');
+    if (n >= challengeRewardedPerDay) return false;
+    await incrementDailyCounter('challenge_rewarded');
+    return true;
+  }
+
   // ─── Recompensa de sfârşit de sezon (vezi core/season_rewards.dart) ────────
   // `_pendingSeasonRewardKey` = "<seasonKey>:<tierIndex>" cât timp e una
   // nerevendicată; `_seasonRewardHandledKey` = ultimul sezon pe care l-am
@@ -1965,6 +2005,7 @@ class StorageService {
           'streak_30' => streak,
           'wheel_28' => lifetime('wheel_spin'),
           'mp_wins_23' => lifetime('mp_win'),
+          'challenge_wins_15' => lifetime('challenge_win'),
           'no_hint_250' => lifetime('no_hint_correct'),
           'culture_600' => lifetime('culture_quiz_correct'),
           'clippy_perfect_47' => lifetime('clippy_perfect'),

@@ -1732,6 +1732,15 @@ const List<Achievement> achievements = [
     icon: Icons.visibility_off_rounded,
   ),
   Achievement(
+    id: 'challenge_wins_15',
+    title: 'Aruncătorul de mănuși',
+    description: 'Câștigă 15 provocări trimise prietenilor',
+    target: 15,
+    coinReward: 1740,
+    xpReward: 410,
+    icon: Icons.sports_kabaddi_rounded,
+  ),
+  Achievement(
     id: 'culture_600',
     title: 'Enciclopedia ambulantă',
     description: '600 de răspunsuri corecte la Cultură Generală',

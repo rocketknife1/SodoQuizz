@@ -1,6 +1,14 @@
 # Async Challenge — „Provoacă un prieten"
 
-**Statut:** DRAFT, așteaptă OK de la user înainte de plan/implementare.
+**Statut:** APROBAT 2026-09-07. Decizii user:
+1. Intrarea: **buton „provoacă" pe fiecare rând de prieten** din ecranul Prieteni.
+2. **10 întrebări** (feeling de meci, nu de mini-quiz).
+3. Recompensă: **câștigător 120 monede + XP** (scalat pe nivel), perdant 20 XP,
+   remiză ambii 60 monede. **Plafon: 5 provocări recompensate/zi** pe fiecare
+   parte (creator care câștigă / adversar care câștigă) — a 6-a tot se joacă,
+   fără recompensă. Fără miză pe monede.
+4. **Titlu nou „Provocatoru'" / „The Challenger"** la **15 provocări câștigate**
+   (metric `challenge_win`, ca `mp_wins_23`).
 
 ## Ce e
 

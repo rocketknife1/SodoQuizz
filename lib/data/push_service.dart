@@ -43,6 +43,9 @@ class PushService {
   /// mi-a scris jucatorul ala.
   void Function(String playerUid)? onOpenAdminChat;
 
+  /// Adversarul a raspuns la o provocare async (vezi onChallengeAnswered).
+  void Function(String challengeId)? onOpenChallenge;
+
   bool _started = false;
 
   bool get _supported => !kIsWeb && Platform.isAndroid;
@@ -150,6 +153,9 @@ class PushService {
         // Fara `withUid` = raspunsul adminului catre mine, deci firul meu.
         // Cu `withUid` = sunt adminul, iar acela e jucatorul care mi-a scris.
         onOpenAdminChat?.call(data['withUid'] ?? '');
+      case 'challenge':
+        final id = data['challengeId'] ?? '';
+        if (id.isNotEmpty) onOpenChallenge?.call(id);
       default:
         // „friend_request", „system" și notificările locale (roata etc.) nu
         // au destinație proprie — deschiderea aplicației e tot ce trebuia.
