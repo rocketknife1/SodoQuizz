@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/async_challenge.dart';
+import '../core/category_mastery.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
 import '../core/progression.dart';
@@ -1959,6 +1960,153 @@ class StorageService {
     );
   }
 
+  // ─── Măiestrie pe categorie (#4 retenție) ────────────────────────────────
+  // Per categorie de quiz: câte întrebări ai văzut, câte corect, cel mai lung
+  // streak atins în ea. Alimentează ecranul „Măiestrie" și partea de
+  // „categoria cea mai bună/proastă" din tab-ul „Al tău". Un singur șir
+  // compact per categorie (`seen:correct:bestStreak`), ca la
+  // `challenge_prog_<id>` — nu merită o structură mai grea pentru trei
+  // numere.
+
+  static String _catStatsKey(String modeId) => 'cat_stats_$modeId';
+
+  /// Se apelează la FIECARE răspuns dintr-o partidă single-player.
+  /// [currentStreak] e streak-ul DUPĂ răspunsul ăsta (0 dacă a greșit).
+  static Future<void> recordCategoryAnswer(
+    String modeId, {
+    required bool correct,
+    required int currentStreak,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final parts = (prefs.getString(_catStatsKey(modeId)) ?? '0:0:0').split(':');
+    var seen = int.tryParse(parts[0]) ?? 0;
+    var ok = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    var best = int.tryParse(parts.length > 2 ? parts[2] : '0') ?? 0;
+    seen += 1;
+    if (correct) ok += 1;
+    if (currentStreak > best) best = currentStreak;
+    await prefs.setString(_catStatsKey(modeId), '$seen:$ok:$best');
+  }
+
+  static Future<({int seen, int correct, int bestStreak})> categoryStats(
+      String modeId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final parts = (prefs.getString(_catStatsKey(modeId)) ?? '0:0:0').split(':');
+    return (
+      seen: int.tryParse(parts[0]) ?? 0,
+      correct: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+      bestStreak: int.tryParse(parts.length > 2 ? parts[2] : '0') ?? 0,
+    );
+  }
+
+  /// Statisticile pentru toate categoriile deodată — un singur `await`.
+  static Future<Map<String, ({int seen, int correct, int bestStreak})>>
+      allCategoryStats(Iterable<String> modeIds) async {
+    final prefs = await SharedPreferences.getInstance();
+    final out = <String, ({int seen, int correct, int bestStreak})>{};
+    for (final id in modeIds) {
+      final parts = (prefs.getString(_catStatsKey(id)) ?? '0:0:0').split(':');
+      out[id] = (
+        seen: int.tryParse(parts[0]) ?? 0,
+        correct: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+        bestStreak: int.tryParse(parts.length > 2 ? parts[2] : '0') ?? 0,
+      );
+    }
+    return out;
+  }
+
+  /// Câte categorii sunt „stăpânite" acum (vezi core/category_mastery.dart).
+  /// Enumeră cheile `cat_stats_*` direct — nu are nevoie de lista de moduri.
+  static Future<int> masteredCategoryCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    var n = 0;
+    for (final k in prefs.getKeys()) {
+      if (!k.startsWith('cat_stats_')) continue;
+      final parts = (prefs.getString(k) ?? '').split(':');
+      if (parts.length < 2) continue;
+      final seen = int.tryParse(parts[0]) ?? 0;
+      final correct = int.tryParse(parts[1]) ?? 0;
+      if (isCategoryMastered(seen: seen, correct: correct)) n++;
+    }
+    return n;
+  }
+
+  // ─── Recorduri personale (#3 retenție) ───────────────────────────────────
+  // Cel mai rapid răspuns corect (milisecunde) + un instantaneu săptămânal
+  // pentru „+X față de acum 7 zile". `updateHighScore` / `updateModeHighScore`
+  // acopereau deja „cel mai mare scor".
+
+  static const _fastestAnswerKey = 'fastest_answer_ms';
+
+  /// [ms] = timpul de la afișarea întrebării la răspunsul corect. Ignoră
+  /// valorile absurde (< 200 ms = tap dublu / bug), păstrează minimul.
+  static Future<void> recordAnswerSpeed(int ms) async {
+    if (ms < 200) return;
+    final prefs = await SharedPreferences.getInstance();
+    final cur = prefs.getInt(_fastestAnswerKey) ?? 1 << 30;
+    if (ms < cur) await prefs.setInt(_fastestAnswerKey, ms);
+  }
+
+  /// `null` dacă n-a răspuns corect niciodată.
+  static Future<int?> fastestAnswerMs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getInt(_fastestAnswerKey);
+    return (v == null || v >= 1 << 30) ? null : v;
+  }
+
+  static const _weeklySnapshotKey = 'weekly_progress_snapshot';
+
+  /// Instantaneu {epochMs, answered, correct} luat cel mult o dată pe zi.
+  /// Păstrează maximum 8 intrări (~o săptămână + o zi), FIFO. Din ele iese
+  /// „+X întrebări față de acum 7 zile" fără un contor cu istoric complet.
+  static Future<void> maybeTakeWeeklySnapshot({
+    required int answered,
+    required int correct,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_weeklySnapshotKey) ?? [];
+    final now = DateTime.now();
+    if (raw.isNotEmpty) {
+      final lastMs = int.tryParse(raw.last.split(':').first) ?? 0;
+      final last = DateTime.fromMillisecondsSinceEpoch(lastMs);
+      if (now.difference(last).inHours < 20) return; // deja azi
+    }
+    raw.add('${now.millisecondsSinceEpoch}:$answered:$correct');
+    while (raw.length > 8) {
+      raw.removeAt(0);
+    }
+    await prefs.setStringList(_weeklySnapshotKey, raw);
+  }
+
+  /// Delta față de cel mai vechi instantaneu de acum ≥ ~6 zile (sau cel mai
+  /// vechi disponibil). `null` dacă nu există istoric suficient.
+  static Future<({int answered, int correct, int days})?> weeklyDelta({
+    required int answered,
+    required int correct,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_weeklySnapshotKey) ?? [];
+    if (raw.isEmpty) return null;
+    final now = DateTime.now();
+    ({int ms, int answered, int correct})? pick;
+    for (final s in raw) {
+      final p = s.split(':');
+      final ms = int.tryParse(p[0]) ?? 0;
+      final ageDays = now.difference(DateTime.fromMillisecondsSinceEpoch(ms)).inDays;
+      if (ageDays >= 6) {
+        pick = (ms: ms, answered: int.tryParse(p[1]) ?? 0, correct: int.tryParse(p[2]) ?? 0);
+        break; // raw e cronologic; primul ≥6 zile e cel mai vechi util
+      }
+    }
+    pick ??= () {
+      final p = raw.first.split(':');
+      return (ms: int.tryParse(p[0]) ?? 0, answered: int.tryParse(p[1]) ?? 0, correct: int.tryParse(p[2]) ?? 0);
+    }();
+    final days = now.difference(DateTime.fromMillisecondsSinceEpoch(pick.ms)).inDays;
+    if (days < 1) return null;
+    return (answered: answered - pick.answered, correct: correct - pick.correct, days: days);
+  }
+
   /// Timpul rămas până la resetul ciclului curent.
   static Future<Duration> leaderboardPeriodRemaining() async {
     final prefs = await SharedPreferences.getInstance();
@@ -2029,7 +2177,18 @@ class StorageService {
     final starterPackBought = prefs.getBool(_starterPackBoughtKey) ?? false;
     final streak = prefs.getInt(_streakCountKey) ?? 0;
     int lifetime(String metric) => prefs.getInt(_lifetimeMetricKey(metric)) ?? 0;
+    var masteredCategories = 0;
+    for (final k in prefs.getKeys()) {
+      if (!k.startsWith('cat_stats_')) continue;
+      final p = (prefs.getString(k) ?? '').split(':');
+      if (p.length < 2) continue;
+      if (isCategoryMastered(
+          seen: int.tryParse(p[0]) ?? 0, correct: int.tryParse(p[1]) ?? 0)) {
+        masteredCategories++;
+      }
+    }
     return (Achievement a) => switch (a.id) {
+          'category_master_3' => masteredCategories,
           'correct_50' || 'correct_150' || 'correct_400' => answeredCount,
           'level_5' || 'level_15' => level,
           'all_modes' => modesPlayed,

@@ -38,6 +38,7 @@ enum PlayerTitle {
   fidel,
   omDeCultura,
   provocatoru,
+  colectionarDiplome,
 }
 
 /// Enum → string prin `.name`, drumul invers aici. `orElse` pe default: un id
@@ -96,6 +97,7 @@ bool ownsTitle(PlayerTitle t,
     PlayerTitle.fidel => achievements.contains('streak_30'),
     PlayerTitle.omDeCultura => achievements.contains('culture_600'),
     PlayerTitle.provocatoru => achievements.contains('challenge_wins_15'),
+    PlayerTitle.colectionarDiplome => achievements.contains('category_master_3'),
   };
 }
 
@@ -159,6 +161,7 @@ String frameLabel(Frame f) => switch (f) {
       PlayerTitle.fidel => ('Vine Zilnic', 'Never Misses'),
       PlayerTitle.omDeCultura => ('Om de Cultură', 'Cultured'),
       PlayerTitle.provocatoru => ('Aruncătoru\' de Mănuși', 'The Challenger'),
+      PlayerTitle.colectionarDiplome => ('Colecționar de Diplome', 'Diploma Collector'),
     };
 
 /// Textul arătat pe un item BLOCAT în picker („de ce nu-l pot pune").
@@ -190,6 +193,7 @@ String titleRequirement(PlayerTitle t) => switch (t) {
       PlayerTitle.fidel => 'Streak de 30 de zile',
       PlayerTitle.omDeCultura => '600 de întrebări de cultură',
       PlayerTitle.provocatoru => '15 provocări câștigate',
+      PlayerTitle.colectionarDiplome => '3 categorii stăpânite',
     };
 
 // ─── Ce am echipat pe TELEFONUL ăsta ─────────────────────────────────────

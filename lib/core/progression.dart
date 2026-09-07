@@ -1741,6 +1741,15 @@ const List<Achievement> achievements = [
     icon: Icons.sports_kabaddi_rounded,
   ),
   Achievement(
+    id: 'category_master_3',
+    title: 'Colecționar de diplome',
+    description: 'Stăpânește 3 categorii (60 de întrebări, 60%+ corect)',
+    target: 3,
+    coinReward: 1490,
+    xpReward: 360,
+    icon: Icons.workspace_premium_rounded,
+  ),
+  Achievement(
     id: 'culture_600',
     title: 'Enciclopedia ambulantă',
     description: '600 de răspunsuri corecte la Cultură Generală',

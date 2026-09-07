@@ -190,6 +190,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     });
   }
 
+  /// Momentul afișării întrebării curente — pentru „cel mai rapid răspuns"
+  /// (vezi StorageService.recordAnswerSpeed).
+  DateTime _questionShownAt = DateTime.now();
+
   void _initQuestion() {
     hintsUsed = 0;
     answered = false;
@@ -197,6 +201,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     _fiftyFiftyOptions = null;
     _hintGuessOption = null;
     _hintGuessPercent = null;
+    _questionShownAt = DateTime.now();
     currentQuestionReward = _questionRewards[currentQ.id] ??
         calculateSessionQuestionReward(currentQ.maxPoints, Random());
   }
@@ -348,7 +353,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (mounted) await bumpQuestMetric(context, 'answer_count', 1);
     _sessionAnswered++;
     if (correct) _sessionCorrect++;
+    // Măiestrie pe categorie (#4): FIECARE răspuns, corect sau nu. `streak`
+    // e deja actualizat mai sus (0 la greșeală).
+    await StorageService.recordCategoryAnswer(widget.gameModeId,
+        correct: correct, currentStreak: streak);
     if (correct) {
+      await StorageService.recordAnswerSpeed(
+          DateTime.now().difference(_questionShownAt).inMilliseconds);
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(xpEarned);
       if (mounted) setState(() => coinsBalance += coinsEarned);
@@ -476,6 +487,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // vezi core/review_prompt.dart pentru de ce momentul conteaza mai mult
     // decat insistenta.
     unawaited(ReviewPrompt.maybeAsk(correct: _sessionCorrect, total: qIndex));
+    // Instantaneu săptămânal pentru „+X față de acum 7 zile" din tab-ul „Al
+    // tău" (#3). Cel mult o dată pe zi — vezi StorageService.
+    unawaited(() async {
+      final answered = (await StorageService.getAnsweredIds()).length;
+      final correct = await StorageService.getLifetimeMetric('correct_count');
+      await StorageService.maybeTakeWeeklySnapshot(
+          answered: answered, correct: correct);
+    }());
     await _settleExitReward();
     if (!mounted) return;
     Navigator.pushReplacement(

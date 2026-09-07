@@ -674,27 +674,89 @@ class _MyStatsTabState extends State<_MyStatsTab> {
       StorageService.getAllLeaderboardPoints(),
       StorageService.leaderboardPeriodRemaining(),
       StorageService.personalLocalStats(),
+      StorageService.getHighScore(),
+      StorageService.fastestAnswerMs(),
+      StorageService.allCategoryStats(
+          gameModes.where((m) => !m.locked).map((m) => m.id)),
     ]);
+    final local = results[3] as ({
+      int intrebariIntalnite,
+      int nivel,
+      int streakLogin,
+      int provocariZilei,
+      int roataRotita,
+      int planetePerfecte,
+      int hinturiFolosite,
+      int questeRevendicate,
+    });
+    final catStats =
+        results[6] as Map<String, ({int seen, int correct, int bestStreak})>;
+    final totalCorrect = catStats.values.fold(0, (a, s) => a + s.correct);
     return _MyStatsData(
       profile: results[0] as PlayerProfile?,
       points: results[1] as Map<String, int>,
       periodRemaining: results[2] as Duration,
-      local: results[3] as ({
-        int intrebariIntalnite,
-        int nivel,
-        int streakLogin,
-        int provocariZilei,
-        int roataRotita,
-        int planetePerfecte,
-        int hinturiFolosite,
-        int questeRevendicate,
-      }),
+      local: local,
+      highScore: results[4] as int,
+      fastestMs: results[5] as int?,
+      catStats: catStats,
+      weeklyDelta: await StorageService.weeklyDelta(
+          answered: local.intrebariIntalnite, correct: totalCorrect),
     );
   }
 
   Future<void> _refresh() async {
     setState(() => _future = _load());
     await _future;
+  }
+
+  Widget _buildRecords(_MyStatsData data) {
+    final fastest = data.fastestMs;
+    final wd = data.weeklyDelta;
+    final best = data.bestCategory;
+    final worst = data.worstCategory;
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withAlpha(12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _MiniStat(
+                  label: tr('cel mai mare scor', 'best score'),
+                  value: '${data.highScore}'),
+              _MiniStat(
+                  label: tr('cel mai rapid răspuns', 'fastest answer'),
+                  value: fastest == null
+                      ? '—'
+                      : '${(fastest / 1000).toStringAsFixed(1)}s'),
+              _MiniStat(
+                  label: tr('în 7 zile', 'in 7 days'),
+                  value: wd == null ? '—' : '+${wd.answered}'),
+            ],
+          ),
+          if (best != null || worst != null) ...[
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                if (best != null)
+                  _MiniStat(
+                      label: tr('cea mai bună categorie', 'best category'),
+                      value: '${best.mode.title} · ${best.accuracy}%'),
+                if (worst != null && worst.mode.id != best?.mode.id)
+                  _MiniStat(
+                      label: tr('de exersat', 'needs work'),
+                      value: '${worst.mode.title} · ${worst.accuracy}%'),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   @override
@@ -819,6 +881,12 @@ class _MyStatsTabState extends State<_MyStatsTab> {
                 ),
               ),
               const SizedBox(height: 18),
+              // ── Recorduri personale (#3) ─────────────────────────────────
+              Text(tr('Recordurile tale', 'Your records'),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 10),
+              _buildRecords(data),
+              const SizedBox(height: 18),
               // ── Punctaj pe mod (ciclul curent) ───────────────────────────
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,
@@ -870,10 +938,39 @@ class _MyStatsData {
     int questeRevendicate,
   }) local;
 
+  /// Recorduri personale (#3).
+  final int highScore;
+  final int? fastestMs;
+  final Map<String, ({int seen, int correct, int bestStreak})> catStats;
+  final ({int answered, int correct, int days})? weeklyDelta;
+
   _MyStatsData({
     required this.profile,
     required this.points,
     required this.periodRemaining,
     required this.local,
+    required this.highScore,
+    required this.fastestMs,
+    required this.catStats,
+    required this.weeklyDelta,
   });
+
+  /// Categoria cu cea mai bună acuratețe dintre cele cu destule răspunsuri
+  /// (≥15), și cea mai slabă. `null` dacă nu sunt suficiente date.
+  ({GameMode mode, int accuracy})? get bestCategory => _extremeCategory(best: true);
+  ({GameMode mode, int accuracy})? get worstCategory => _extremeCategory(best: false);
+
+  ({GameMode mode, int accuracy})? _extremeCategory({required bool best}) {
+    ({GameMode mode, int accuracy})? pick;
+    for (final m in gameModes.where((m) => !m.locked)) {
+      final s = catStats[m.id];
+      if (s == null || s.seen < 15) continue;
+      final acc = (s.correct * 100 / s.seen).round();
+      if (pick == null ||
+          (best ? acc > pick.accuracy : acc < pick.accuracy)) {
+        pick = (mode: m, accuracy: acc);
+      }
+    }
+    return pick;
+  }
 }

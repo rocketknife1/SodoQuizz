@@ -14,6 +14,7 @@ import '../data/google_web_signin_button.dart';
 import '../data/player_profile_service.dart';
 import '../data/questions.dart';
 import '../data/storage_service.dart';
+import 'category_mastery_screen.dart';
 import '../models/player_profile.dart';
 import '../widgets/appearance_sheet.dart';
 import '../widgets/avatar.dart';
@@ -337,6 +338,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const NotificationDot(borderColor: AppColors.card),
                         ],
                         const Spacer(),
+                        const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () async {
+                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const CategoryMasteryScreen()));
+                    if (!mounted) return;
+                    setState(() => _dataFuture = _load());
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                    decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.workspace_premium_rounded, color: AppColors.teal, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(tr('Măiestrie pe categorii', 'Category mastery'), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
                         const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white38, size: 16),
                       ],
                     ),
