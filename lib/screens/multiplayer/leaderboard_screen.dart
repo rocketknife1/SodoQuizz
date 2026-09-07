@@ -777,8 +777,7 @@ class _MyStatsTabState extends State<_MyStatsTab> {
                         children: [
                           Text(league.name, style: TextStyle(color: league.color, fontSize: 15, fontWeight: FontWeight.w800)),
                           Text(
-                            tr('$seasonPts puncte de sezon · reset în ${_formatPeriod(data.periodRemaining)}',
-                                '$seasonPts season points · resets in ${_formatPeriod(data.periodRemaining)}'),
+                            tr('$seasonPts puncte de sezon', '$seasonPts season points'),
                             style: const TextStyle(color: Colors.white54, fontSize: 11),
                           ),
                         ],
@@ -821,8 +820,22 @@ class _MyStatsTabState extends State<_MyStatsTab> {
               ),
               const SizedBox(height: 18),
               // ── Punctaj pe mod (ciclul curent) ───────────────────────────
-              Text(tr('Punctaj pe mod (ciclul curent)', 'Score per mode (current cycle)'),
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(tr('Punctaj pe mod', 'Score per mode'),
+                      style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      tr('reset în ${_formatPeriod(data.periodRemaining)}',
+                          'resets in ${_formatPeriod(data.periodRemaining)}'),
+                      style: const TextStyle(color: Colors.white38, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 10),
               // Higher or Lower nu face parte din gameModes (altă mecanică),
               // rândul lui e adăugat manual.
