@@ -70,6 +70,9 @@ COLLECTIONS = [
     "daily_challenges",  # Provocarea Zilei (fiecare zi are subcol. `scores`)
     "events",            # evenimente limitate (fiecare are subcol. `scores`)
     "security_flags",    # semnalele de balanta implauzibila (onBalanceAudit)
+    # Adaugat 7 septembrie 2026 odata cu Async Challenge ("Provoaca un
+    # prieten"): un doc `challenges/{id}` per provocare, fara subcolectii.
+    "challenges",
     # `config/admin` tine uid-ul adminului pentru Admin SDK-ul din Functions.
     # Se re-scrie SINGUR la urmatoarea pornire a aplicatiei adminului
     # (AdminChatService._publishAdminUidIfAdmin), deci stergerea lui e
@@ -149,11 +152,27 @@ def sub_collections(s, doc_name):
     return r.json().get("collectionIds", [])
 
 
+def root_collection_ids(s):
+    """Toate colectiile de nivel 1, direct de la Firestore.
+
+    Contul de serviciu e credentiala de admin, deci `:listCollectionIds` pe
+    RADACINA bazei merge — nu mai depindem de lista scrisa de mana ca sa
+    prindem colectiile noi (`challenges` a scapat pana pe 7 sept. 2026).
+    Lista COLLECTIONS ramane ca sa golim si documentele-fantoma / colectiile
+    momentan goale pe care descoperirea nu le vede.
+    """
+    r = s.post(f"{FIRESTORE}:listCollectionIds", json={"pageSize": 300}, timeout=90)
+    if r.status_code != 200:
+        return []
+    return r.json().get("collectionIds", [])
+
+
 def collect_targets(s):
     """Toate documentele de sters, subcolectiile inaintea parintilor."""
     targets = []
     per_collection = {}
-    for coll in COLLECTIONS:
+    all_collections = list(dict.fromkeys(list(COLLECTIONS) + root_collection_ids(s)))
+    for coll in all_collections:
         docs = list_docs(s, coll)
         per_collection[coll] = len(docs)
         for d in docs:
@@ -241,6 +260,18 @@ def main():
                 afailed += 1
                 print(f"  ESUAT {a['localId']}: HTTP {r.status_code} {r.text[:120]}")
         print(f"  {len(accounts) - afailed}/{len(accounts)} conturi sterse")
+
+    # Verificare finala: chiar nu a mai ramas nimic in Firestore?
+    leftover = []
+    for coll in root_collection_ids(s):
+        n = len(list_docs(s, coll))
+        if n:
+            leftover.append(f"{coll} ({n})")
+    if leftover:
+        print("\n  ATENTIE — au ramas documente in: " + ", ".join(leftover))
+        failed += 1
+    else:
+        print("\n  Verificat: nicio colectie de nivel 1 nu mai are documente.")
 
     print("\n" + "=" * 64)
     if failed or afailed:
