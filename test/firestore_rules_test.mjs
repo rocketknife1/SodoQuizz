@@ -158,6 +158,32 @@ await check('NU poate scrie scorul altcuiva', () => assertFails(
 await check('oricine autentificat citeste clasamentul evenimentului', () => assertSucceeds(
   getDoc(EV(env.authenticatedContext('strain3').firestore(), 'jucator1'))));
 
+console.log('\nPROVOCARE ASYNC (challenges/{id}):');
+const CH = (db, id) => doc(db, 'challenges', id);
+const advDb = env.authenticatedContext('adversar1').firestore();
+
+await check('creatorul isi creeaza provocarea cu propriul scor', () => assertSucceeds(
+  setDoc(CH(eu, 'CH0001'), { creatorUid: 'jucator1', creatorName: 'Eu', creatorScore: 5000, creatorCorrect: 7 })));
+
+await check('NU poti crea o provocare pe numele altcuiva', () => assertFails(
+  setDoc(CH(eu, 'CH0002'), { creatorUid: 'altcineva', creatorName: 'X', creatorScore: 9999, creatorCorrect: 10 })));
+
+await check('NU poti crea deja cu un adversar pus', () => assertFails(
+  setDoc(CH(eu, 'CH0003'), { creatorUid: 'jucator1', creatorName: 'Eu', creatorScore: 100, creatorCorrect: 1, opponentUid: 'x' })));
+
+await check('adversarul isi scrie scorul o data', () => assertSucceeds(
+  updateDoc(CH(advDb, 'CH0001'), { opponentUid: 'adversar1', opponentName: 'Adv', opponentScore: 6000, opponentCorrect: 8 })));
+
+await check('creatorul NU-si poate rescrie propriul scor', () => assertFails(
+  updateDoc(CH(eu, 'CH0001'), { creatorScore: 99999 })));
+
+const adv2Db = env.authenticatedContext('adversar2').firestore();
+await check('un al doilea adversar NU poate suprascrie provocarea deja revendicata', () => assertFails(
+  updateDoc(CH(adv2Db, 'CH0001'), { opponentUid: 'adversar2', opponentName: 'A2', opponentScore: 1, opponentCorrect: 0 })));
+
+await check('oricine autentificat citeste o provocare', () => assertSucceeds(
+  getDoc(CH(env.authenticatedContext('strain4').firestore(), 'CH0001'))));
+
 console.log('\nPROFIL NOU:');
 const nou = env.authenticatedContext('jucatorNou').firestore();
 await check('se poate crea de la zero', () => assertSucceeds(
