@@ -1,6 +1,8 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 
+import '../data/storage_service.dart';
+
 // ─── Analytics: PUȚINE evenimente, alese ──────────────────────────────────
 //
 // Tentația la analytics e să trimiți tot „ca să avem". Aia nu e măsurare, e
@@ -10,9 +12,16 @@ import 'package:flutter/foundation.dart';
 //
 //   „intră lumea și se întoarce?"      → retenția D1/D7, calculată automat
 //                                         de Firebase din first_open + sesiuni
-//   „ajung să joace, sau se pierd?"    → gameStarted vs gameFinished
-//   „ce moduri sunt de fapt folosite?" → parametrul `mod`
-//   „economia se mișcă?"               → categoryUnlocked, wheelSpun
+//   „ajung să joace, sau se pierd?"    → joc_start vs joc_final
+//   „descoperă multiplayer-ul?"        → pâlnia funnel_* (o dată pe cont)
+//   „ce moduri sunt folosite/lăsate?"  → mp_start / mp_final / mp_revansa, cu `mod`
+//   „economia se mișcă?"               → categorie_deblocata, roata_rotita
+//
+// PÂLNIA (funnel_*) e cheia pentru „e plictisitor": arată UNDE pică oamenii
+// — instalează dar nu joacă? joacă singleplayer dar nu descoperă multiplayer?
+// joacă multiplayer dar nu câștigă niciodată și pleacă? Firebase dă gratis
+// first_open + retenția; astea sunt reperele dintre ele. Fiecare se trimite
+// O SINGURĂ DATĂ pe cont (vezi StorageService.hitMilestoneOnce).
 //
 // Reperele publice pentru un joc: D1 sănătos e 25-33%, D7 e 6-14%. Sub 20%
 // la D1 se repară onboarding-ul înaintea oricărui alt lucru.
@@ -58,8 +67,20 @@ class Analytics {
 
   /// La singleplayer, categoria ESTE modul (`gameModeId`: cartoon, logouri,
   /// matematica...), deci un singur parametru — nu doi identici.
-  void gameStarted(String categorie) =>
-      _log('joc_start', {'categorie': categorie});
+  void gameStarted(String categorie) {
+    _log('joc_start', {'categorie': categorie});
+    _milestone('prima_partida', 'funnel_prima_partida');
+  }
+
+  /// Trimite `funnel_<name>` o singură dată pe cont. Fire-and-forget: dacă
+  /// StorageService pică, pierdem o măsurătoare, nu blocăm jocul.
+  void _milestone(String key, String eventName) {
+    StorageService.hitMilestoneOnce(key).then((first) {
+      if (first) _log(eventName);
+    }).catchError((Object e) {
+      debugPrint('Analytics._milestone($key) a esuat: $e');
+    });
+  }
 
   void gameFinished({
     required String categorie,
@@ -72,10 +93,22 @@ class Analytics {
   void categoryUnlocked(String categorie) =>
       _log('categorie_deblocata', {'categorie': categorie});
 
-  void multiplayerStarted(String mod) => _log('mp_start', {'mod': mod});
+  void multiplayerStarted(String mod) {
+    _log('mp_start', {'mod': mod});
+    _milestone('primul_multiplayer', 'funnel_primul_multiplayer');
+  }
 
-  void multiplayerFinished({required String mod, required bool castigat}) =>
-      _log('mp_final', {'mod': mod, 'castigat': castigat ? 1 : 0});
+  /// Se apelează DOAR la finalul natural (ecranul de rezultate). Un meci
+  /// început fără `mp_final` = abandon — `mp_start` minus `mp_final`, pe `mod`,
+  /// e chiar rata de abandon pe mod, fără un eveniment separat.
+  void multiplayerFinished({required String mod, required bool castigat}) {
+    _log('mp_final', {'mod': mod, 'castigat': castigat ? 1 : 0});
+    if (castigat) _milestone('prima_victorie', 'funnel_prima_victorie');
+  }
+
+  /// „Ce moduri fac oamenii să vrea încă unul" — `tip` = revanșă sau party.
+  void multiplayerRematch({required String mod, required String tip}) =>
+      _log('mp_revansa', {'mod': mod, 'tip': tip});
 
   /// Câți pași a apucat să vadă din tutorial înainte să intre în joc. Dacă
   /// mulți sar de la primul, tutorialul e de refăcut, nu jocul.

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import '../core/analytics.dart';
 import '../core/cosmetics.dart';
 import '../core/betting.dart';
 import '../core/electric_chair.dart';
@@ -1924,8 +1925,15 @@ class MultiplayerService {
   /// atunci cand chiar trebuie sa apara.
   String? _screenMatchId;
 
+  /// matchId-urile pentru care s-a trimis deja `mp_start` în sesiunea asta —
+  /// o reconectare la același meci nu mai numără o dată (vezi [markActiveMatch]).
+  final Set<String> _mpStartLogged = {};
+
   Future<void> markActiveMatch(String matchId, MatchGameMode gameMode) async {
     _screenMatchId = matchId;
+    if (_mpStartLogged.add(matchId)) {
+      Analytics.instance.multiplayerStarted(gameMode.name);
+    }
     try {
       await StorageService.setActiveMatch(matchId, gameMode.name);
     } catch (e) {

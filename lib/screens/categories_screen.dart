@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../core/analytics.dart';
 import '../core/audio.dart';
 import '../core/gamemodes.dart';
 import '../core/lang.dart';
@@ -156,6 +157,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
       );
       return;
     }
+    // tier 0 -> primul batch = chiar deblocarea categoriei (vezi
+    // unlockNextQuestionBatch); doar atunci trimitem evenimentul de economie.
+    if (stats.unlocked == 0) Analytics.instance.categoryUnlocked(mode.id);
     await bumpQuestMetric(context, 'question_batch_unlocked', 1);
     if (!mounted) return;
     await bumpQuestMetric(context, 'shop_spend', 1);

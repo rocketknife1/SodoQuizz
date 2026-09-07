@@ -358,6 +358,19 @@ class StorageService {
     await prefs.setInt(_activityEventsKey, (prefs.getInt(_activityEventsKey) ?? 0) + 1);
   }
 
+  /// `true` DOAR prima dată când e apelat cu [key] — pentru evenimentele de
+  /// pâlnie din Analytics („prima partidă", „primul multiplayer", „prima
+  /// victorie"), care trebuie trimise o singură dată pe cont, nu la fiecare
+  /// meci. Strict local: dacă cineva reinstalează, pâlnia lui repornește —
+  /// acceptabil, e o măsurătoare agregată, nu o stare de joc.
+  static Future<bool> hitMilestoneOnce(String key) async {
+    final prefs = await SharedPreferences.getInstance();
+    final k = 'milestone_$key';
+    if (prefs.getBool(k) ?? false) return false;
+    await prefs.setBool(k, true);
+    return true;
+  }
+
   // ─── Monede ──────────────────────────────────────────────────────────────
 
   static Future<int> getCoins() async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import '../../core/analytics.dart';
 import '../../core/betting.dart';
 import '../../core/electric_chair.dart';
 import '../../core/elo.dart';
@@ -153,6 +154,10 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       final outcome = matchOutcomeForScore(myScore: myRank, allScores: [for (final p in sorted) _rankValue(p)]);
       final draw = outcome.draw;
       final won = outcome.won;
+
+      // Meciul a ajuns la ecranul de rezultate = s-a terminat natural. Un
+      // `mp_start` fără `mp_final` pe același `mod` e un abandon (vezi Analytics).
+      Analytics.instance.multiplayerFinished(mod: widget.gameMode.name, castigat: won);
 
       final stake = _tableStake(sorted);
       final prizes = matchPrizesForRanking(
@@ -483,6 +488,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     final allAccepted = offer.participants.every((p) => offer.acceptedIds.contains(p.id));
     if (!allAccepted) return;
     _launchingRematch = true;
+    Analytics.instance.multiplayerRematch(
+        mod: widget.gameMode.name, tip: offer.keepInLobby ? 'party' : 'revansa');
     MultiplayerService.instance.launchRematch(offer).catchError((e) {
       _launchingRematch = false;
       debugPrint('MultiplayerResultsScreen: launchRematch a esuat: $e');
