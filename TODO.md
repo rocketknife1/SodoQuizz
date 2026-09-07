@@ -30,7 +30,10 @@ Ordinea de atac (a mea, ajustată față de a lui):
    primește EXACT aceeași rundă → rezultat comparativ + recompense
    (120/60/0 monede + XP, plafon 5/zi). Push la creator când răspunde
    (`onChallengeAnswered`). Titlu nou „Aruncătoru' de Mănuși" la 15 câștigate.
-   Reguli + funcție deployate. **De testat cu 2 conturi.**
+   Reguli + funcție deployate. ✅ VERIFICAT cap-la-cap 2026-09-07 (telefon
+   creează → browser intră cu codul → ACELEAȘI 10 întrebări → „YOU WON"
+   1840 vs 890 → push la creator 1/1). Bug reparat pe drum (`39566d2`):
+   creatorul și adversarul primeau seturi diferite de întrebări.
 
 3. **Personal Records.** 🟡 PARȚIAL — tab-ul „Al tău" din Clasament (`0caa9cf`)
    arată acum multiplayer (rating/meciuri/winrate/streak) + singleplayer
