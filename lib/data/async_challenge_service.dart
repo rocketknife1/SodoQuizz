@@ -1,9 +1,6 @@
-import 'dart:math';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../core/async_challenge.dart';
 import 'auth_service.dart';
 import 'multiplayer_service.dart';
 
@@ -71,18 +68,17 @@ class AsyncChallengeService {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('challenges');
 
-  final _rnd = Random();
-
-  String _newId() =>
-      List.generate(6, (_) => asyncChallengeAlphabet[_rnd.nextInt(asyncChallengeAlphabet.length)]).join();
-
-  /// Creează provocarea cu scorul creatorului deja jucat. Întoarce id-ul, sau
-  /// `null` dacă scrierea a eșuat.
-  Future<String?> create({required int score, required int correct}) async {
+  /// Creează provocarea cu [id] (generat pe client ÎNAINTE de joc, ca să
+  /// derive aceleași întrebări) și scorul creatorului deja jucat. `false`
+  /// dacă scrierea a eșuat.
+  Future<bool> create({
+    required String id,
+    required int score,
+    required int correct,
+  }) async {
     final uid = MultiplayerService.instance.currentPlayerId;
-    if (uid.isEmpty) return null;
+    if (uid.isEmpty) return false;
     final me = await AuthService.instance.multiplayerIdentity();
-    final id = _newId();
     try {
       await _col.doc(id).set({
         'creatorUid': uid,
@@ -95,10 +91,10 @@ class AsyncChallengeService {
         'creatorTitle': me.equippedTitle,
         'createdAt': FieldValue.serverTimestamp(),
       });
-      return id;
+      return true;
     } catch (e) {
       debugPrint('AsyncChallengeService.create a esuat: $e');
-      return null;
+      return false;
     }
   }
 

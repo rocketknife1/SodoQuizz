@@ -86,10 +86,11 @@ class _AsyncChallengeScreenState extends State<AsyncChallengeScreen> {
     if (!mounted) return;
 
     if (_amCreatorFlow) {
-      _questions = pickAsyncChallenge(pool, 'placeholder');
-      // pentru creator, id-ul (și deci întrebările reale) se fixează abia la
-      // finalul jocului — dar folosim un set determinist pe un id temporar
-      // ca jocul să pornească acum. Regenerăm cu id-ul real la _finishCreator.
+      // Id-ul se fixează ACUM, nu la final: creatorul trebuie să joace exact
+      // întrebarile pe care le va primi adversarul (aceeași `pickAsyncChallenge`
+      // pe același id).
+      _id = newAsyncChallengeId();
+      _questions = pickAsyncChallenge(pool, _id!);
       setState(() => _phase = _Phase.intro);
       return;
     }
@@ -210,13 +211,14 @@ class _AsyncChallengeScreenState extends State<AsyncChallengeScreen> {
 
   Future<void> _finishCreator() async {
     setState(() => _phase = _Phase.sending);
-    final id = await AsyncChallengeService.instance.create(score: _score, correct: _correct);
+    final id = _id!; // fixat în _boot(), aceleași întrebări ca adversarul
+    final ok = await AsyncChallengeService.instance
+        .create(id: id, score: _score, correct: _correct);
     if (!mounted) return;
-    if (id == null) {
+    if (!ok) {
       setState(() => _phase = _Phase.result); // eroare de rețea
       return;
     }
-    _id = id;
     Analytics.instance.multiplayerRematch(mod: 'challenge', tip: 'creat');
     _startWatching(id);
     setState(() {

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../models/question.dart';
 import 'stable_hash.dart';
 
@@ -17,6 +19,15 @@ const int asyncChallengeQuestionCount = 10;
 /// Alfabetul codului de provocare — fără caractere ambigue (0/O, 1/I/L),
 /// același ca la codul de prieten.
 const String asyncChallengeAlphabet = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+/// Un id nou de provocare (6 caractere). Generat pe client ÎNAINTE ca
+/// creatorul să joace — trebuie să fie același id din care se derivă
+/// întrebările lui ȘI ale adversarului, altfel joacă seturi diferite.
+String newAsyncChallengeId([Random? rnd]) {
+  final r = rnd ?? Random();
+  return List.generate(
+      6, (_) => asyncChallengeAlphabet[r.nextInt(asyncChallengeAlphabet.length)]).join();
+}
 
 /// Sămânța deterministă a unei provocări, derivată din id-ul ei.
 int asyncChallengeSeed(String challengeId) =>

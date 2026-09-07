@@ -1,5 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/async_challenge.dart';
+import 'package:guess_it/models/question.dart';
+
+Question _q(String id) => Question(
+      id: id,
+      answer: 'a',
+      hint1: '',
+      hint2: '',
+      hint3: '',
+      categoryId: 'c',
+      category: 'C',
+      color: const Color(0xFF000000),
+      maxPoints: 100,
+      imageAssetPath: 'assets/x.jpg',
+    );
 
 void main() {
   group('asyncChallengeSeed', () {
@@ -32,6 +47,31 @@ void main() {
     });
     test('perdantul nu ia monede', () {
       expect(challengeCoinReward(ChallengeOutcome.lost), 0);
+    });
+  });
+
+  group('pickAsyncChallenge', () {
+    final pool = List.generate(200, (i) => _q('q$i'));
+
+    test('acelasi id -> exact aceleasi 10 intrebari (creator == adversar)', () {
+      final creator = pickAsyncChallenge(pool, 'SYHZCR').map((q) => q.id).toList();
+      final opponent = pickAsyncChallenge(pool, 'SYHZCR').map((q) => q.id).toList();
+      expect(creator.length, asyncChallengeQuestionCount);
+      expect(creator, opponent);
+    });
+
+    test('id-uri diferite -> selectii diferite', () {
+      final a = pickAsyncChallenge(pool, 'AAAAAA').map((q) => q.id).toList();
+      final b = pickAsyncChallenge(pool, 'BBBBBB').map((q) => q.id).toList();
+      expect(a, isNot(b));
+    });
+
+    test('newAsyncChallengeId da 6 caractere din alfabet', () {
+      final id = newAsyncChallengeId();
+      expect(id.length, 6);
+      for (final c in id.split('')) {
+        expect(asyncChallengeAlphabet.contains(c), isTrue);
+      }
     });
   });
 
