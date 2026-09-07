@@ -24,14 +24,13 @@ Ordinea de atac (a mea, ajustată față de a lui):
    Abandon = `mp_start − mp_final` pe mod. `categorie_deblocata` wired.
    **De văzut în Firebase Analytics după ce intră trafic real.**
 
-2. **Async Challenge — „Provoacă un prieten".** Primești 10 întrebări, le
-   faci, jocul generează un cod/link (`share_plus` + `app_links` sunt deja
-   în pubspec). Prietenul intră când poate și primește EXACT aceeași rundă.
-   La final: scorul tău vs al lui. Fără boți, fără meci fals, fără
-   simultaneitate. **De ce e cel mai important:** singura formă de
-   multiplayer care merge la 0 jucători online — exact gaura de 4/10.
-   Tehnic: mecanica Provocării Zilei + un seed partajabil + un doc de
-   scoruri pe id de provocare. Efort mediu.
+2. ✅ **Async Challenge — „Provoacă un prieten"** — LIVRAT 2026-09-07
+   (`b7cb9ce`). Buton ⚔️ pe fiecare rând de prieten → joci 10 întrebări →
+   share cod (`guessit://challenge/<id>`). Prietenul intră când poate,
+   primește EXACT aceeași rundă → rezultat comparativ + recompense
+   (120/60/0 monede + XP, plafon 5/zi). Push la creator când răspunde
+   (`onChallengeAnswered`). Titlu nou „Aruncătoru' de Mănuși" la 15 câștigate.
+   Reguli + funcție deployate. **De testat cu 2 conturi.**
 
 3. **Personal Records.** 🟡 PARȚIAL — tab-ul „Al tău" din Clasament (`0caa9cf`)
    arată acum multiplayer (rating/meciuri/winrate/streak) + singleplayer
