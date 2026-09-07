@@ -30,8 +30,15 @@ import 'home_screen.dart';
 //   5. La prima pornire vine singur; pe urmă se poate revedea oricând din
 //      Setări → „Revezi tutorialul".
 //
-// Douăsprezece pagini, în patru grupe: cum se joacă (3), resursele (2), ce e
-// pe ecranul principal (3), multiplayer și puteri (4).
+// La PRIMA pornire arată doar patru pagini: ghicești poza / alegi din patru /
+// mai repede = mai multe puncte / acum joacă. Fără monede, gems, roată,
+// Clippy, planetă, multiplayer sau puteri — alea se descoperă în joc, iar un
+// tutorial de douăsprezece ecrane înaintea primei partide e exact frecarea
+// care pică retenția zilei 1.
+//
+// Versiunea LUNGĂ (douăsprezece pagini, patru grupe: cum se joacă / resurse /
+// ecranul principal / multiplayer + puteri) rămâne, dar numai la „Revezi
+// tutorialul" din Setări, unde omul a cerut-o explicit ca referință.
 
 class WelcomeScreen extends StatefulWidget {
   /// `true` cand e deschis din Setari („Revezi tutorialul"), nu la prima
@@ -48,10 +55,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   final _pages = PageController();
   int _index = 0;
 
-  /// Indexul ultimei pagini. Se ține aici, nu numărat din `children`, ca
-  /// bulinele de jos și textul butonului să nu se desincronizeze niciodată
-  /// de conținut — dacă adaugi o pagină, schimbi ȘI cifra asta.
-  static const _last = 11;
+  /// Paginile arătate acum: patru la prima pornire, douăsprezece la revizionare.
+  List<Widget> get _pageList =>
+      widget.asReplay ? _replayPages : _firstRunPages;
+  int get _last => _pageList.length - 1;
 
   @override
   void initState() {
@@ -110,7 +117,99 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: PageView(
                   controller: _pages,
                   onPageChanged: (i) => setState(() => _index = i),
-                  children: const [
+                  children: _pageList,
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i <= _last; i++)
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                      width: i == _index ? 20 : 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: i == _index ? AppColors.purple : Colors.white24,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: FilledButton(
+                    onPressed: () {
+                      if (_index >= _last) {
+                        _finish();
+                      } else {
+                        _pages.nextPage(
+                          duration: const Duration(milliseconds: 280),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    },
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _index >= _last
+                          ? AppColors.play
+                          : AppColors.purple,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18)),
+                    ),
+                    child: Text(
+                      _index < _last
+                          ? tr('Mai departe', 'Next')
+                          : widget.asReplay
+                              ? tr('Gata', 'Done')
+                              : tr('HAI SĂ JUCĂM!', "LET'S PLAY!"),
+                      style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Prima pornire — patru pagini, nimic despre economie sau multiplayer.
+  static const List<Widget> _firstRunPages = [
+    _Step(
+      art: _BlurredPhotoArt(),
+      text: 'Vezi o poză neclară.',
+      textEn: 'You see a blurry photo.',
+    ),
+    _Step(
+      art: _AnswersArt(),
+      text: 'Alegi una din patru.',
+      textEn: 'You pick one of four.',
+    ),
+    _Step(
+      art: _SpeedArt(),
+      text: 'Mai repede răspunzi, mai multe puncte.',
+      textEn: 'The faster you answer, the more points.',
+      sub: 'Poza se limpezește pe măsură ce trece timpul — răspunde din blur.',
+      subEn: 'The photo sharpens as time passes — answer while it is still blurry.',
+    ),
+    _Step(
+      art: _PlayNowArt(),
+      text: 'Gata. Acum joacă prima rundă.',
+      textEn: "That's it. Now play your first round.",
+      sub: 'Restul — monede, moduri, prieteni — le descoperi din joc.',
+      subEn: 'The rest — coins, modes, friends — you discover as you play.',
+    ),
+  ];
+
+  /// „Revezi tutorialul" din Setări — versiunea lungă, ca referință.
+  static const List<Widget> _replayPages = [
                     // ── Cum se joacă (3) ──
                     _Step(
                       art: _BlurredPhotoArt(),
@@ -195,68 +294,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       textEn: 'What each one does.',
                       titleFirst: true,
                     ),
-                  ],
-                ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 0; i <= _last; i++)
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      margin: const EdgeInsets.symmetric(horizontal: 2.5),
-                      width: i == _index ? 20 : 6,
-                      height: 6,
-                      decoration: BoxDecoration(
-                        color: i == _index ? AppColors.purple : Colors.white24,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 22, 24, 28),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 60,
-                  child: FilledButton(
-                    onPressed: () {
-                      if (_index >= _last) {
-                        _finish();
-                      } else {
-                        _pages.nextPage(
-                          duration: const Duration(milliseconds: 280),
-                          curve: Curves.easeOutCubic,
-                        );
-                      }
-                    },
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _index >= _last
-                          ? AppColors.play
-                          : AppColors.purple,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18)),
-                    ),
-                    child: Text(
-                      _index < _last
-                          ? tr('Mai departe', 'Next')
-                          : widget.asReplay
-                              ? tr('Gata', 'Done')
-                              : tr('HAI SĂ JUCĂM!', "LET'S PLAY!"),
-                      style: const TextStyle(
-                          fontSize: 19,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  ];
 }
 
 class _Step extends StatelessWidget {
@@ -642,6 +680,91 @@ class _PowerUpListArt extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Primul-run pasul 3 — viteza. Un cronometru cu săgeata în sus și „+puncte",
+/// fără nicio referire la monedă: aici omul învață regula (repede = mult), nu
+/// valuta.
+class _SpeedArt extends StatelessWidget {
+  const _SpeedArt();
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+        width: 220,
+        height: 165,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Container(
+              width: 128,
+              height: 128,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.play.withAlpha(38),
+                border: Border.all(color: AppColors.play, width: 4),
+              ),
+              child: const Icon(Icons.timer_rounded,
+                  color: AppColors.play, size: 68),
+            ),
+            Positioned(
+              top: 10,
+              right: 18,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppColors.coin,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.arrow_upward_rounded,
+                        color: Colors.white, size: 16),
+                    Text('puncte',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14)),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+}
+
+/// Primul-run pasul 4 — butonul JOACĂ de pe ecranul principal, ca omul să
+/// știe unde apasă imediat ce iese din tutorial.
+class _PlayNowArt extends StatelessWidget {
+  const _PlayNowArt();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        width: 210,
+        height: 74,
+        decoration: BoxDecoration(
+          color: AppColors.play,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(color: AppColors.play.withAlpha(90), blurRadius: 24),
+          ],
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.play_arrow_rounded, color: Colors.white, size: 34),
+            SizedBox(width: 8),
+            Text('JOACĂ',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 22,
+                    letterSpacing: 1)),
+          ],
+        ),
+      );
 }
 
 /// Pasul 1 — o „poză" neclară cu semn de întrebare. Nu o imagine reală: nu
