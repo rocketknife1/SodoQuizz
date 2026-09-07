@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../core/analytics.dart';
 import '../core/cosmetics.dart';
+import '../core/abandon_policy.dart';
 import '../core/betting.dart';
 import '../core/daily_mode.dart';
 import '../core/electric_chair.dart';
@@ -1578,7 +1579,10 @@ class MultiplayerService {
   /// + documentul meciului) — altfel meciurile terminate s-ar acumula la
   /// nesfârșit în Firestore, fără niciun cleanup automat (nu avem Cloud
   /// Functions/TTL configurate).
-  Future<void> leaveMatch(String matchId) async {
+  /// [abandoned] = ieșire cu butonul înapoi din mijlocul unui meci, nu prin
+  /// ecranul de rezultate. Doar atunci se aplică politica de abandon
+  /// (core/abandon_policy.dart): meci pierdut + pas spre cooldown la ranked.
+  Future<void> leaveMatch(String matchId, {bool abandoned = false}) async {
     // Am iesit intentionat — nu mai e nimic de „reconectat" (vezi
     // markActiveMatch/checkReconnect).
     await clearActiveMatch(matchId);
@@ -1591,6 +1595,9 @@ class MultiplayerService {
       await _deleteMatch(matchRef);
       return;
     }
+    if (abandoned && info.status == MatchStatus.playing) {
+      await _recordAbandon(matchRef, info);
+    }
     await matchRef.collection('players').doc(me).delete();
     // Nu doar "mai există vreun document" — o fantomă (aplicație oprită
     // brusc, fără trecere prin leaveMatch) rămâne la nesfârșit altfel, iar
@@ -1598,6 +1605,37 @@ class MultiplayerService {
     final remaining = await matchRef.collection('players').get();
     if (remaining.docs.every((d) => _isDeadMatchPlayer(d.data()))) {
       await _deleteMatch(matchRef);
+    }
+  }
+
+  /// Doar modurile care vin din coada de Meci Rapid (1 la 1, ranked) — vezi
+  /// core/daily_mode.dart#dailyModePool. Abandonul unei camere private cu
+  /// prietenii nu strică nimic public, deci nu se penalizează.
+  static const _rankedAbandonModes = [
+    MatchGameMode.classic,
+    MatchGameMode.higherLower,
+    MatchGameMode.rockPaperScissors,
+  ];
+
+  Future<void> _recordAbandon(
+      DocumentReference<Map<String, dynamic>> matchRef, MatchInfo info) async {
+    if (info.mode != MatchMode.public) return;
+    if (!_rankedAbandonModes.contains(info.gameMode)) return;
+    try {
+      final mine = await matchRef.collection('players').doc(currentPlayerId).get();
+      final d = mine.data() ?? const {};
+      // Deja gata / deja eliminat = nu e un abandon, e o ieșire normală.
+      if (d['finished'] == true || d['eliminated'] == true) return;
+      await StorageService.recordMpAbandon();
+      await PlayerProfileService.instance.recordMatchResult(
+        gameModeId: info.gameMode.name,
+        won: false,
+        draw: false,
+        ratingDelta: -abandonRatingPenalty,
+      );
+      Analytics.instance.multiplayerFinished(mod: info.gameMode.name, castigat: false);
+    } catch (e) {
+      debugPrint('MultiplayerService._recordAbandon a esuat: $e');
     }
   }
 

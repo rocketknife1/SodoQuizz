@@ -2015,6 +2015,30 @@ class StorageService {
     return out;
   }
 
+  // ─── Abandonuri multiplayer (#6) ────────────────────────────────────────
+
+  static const _mpAbandonsKey = 'mp_abandons_ms';
+
+  /// Marchează un abandon acum. Păstrează ultimele 12 (mult peste fereastra
+  /// de o oră din core/abandon_policy.dart).
+  static Future<void> recordMpAbandon() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_mpAbandonsKey) ?? [];
+    raw.add('${DateTime.now().millisecondsSinceEpoch}');
+    while (raw.length > 12) {
+      raw.removeAt(0);
+    }
+    await prefs.setStringList(_mpAbandonsKey, raw);
+  }
+
+  static Future<List<int>> mpAbandonTimestamps() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_mpAbandonsKey) ?? [])
+        .map((s) => int.tryParse(s) ?? 0)
+        .where((v) => v > 0)
+        .toList();
+  }
+
   /// Câte categorii sunt „stăpânite" acum (vezi core/category_mastery.dart).
   /// Enumeră cheile `cat_stats_*` direct — nu are nevoie de lista de moduri.
   static Future<int> masteredCategoryCount() async {

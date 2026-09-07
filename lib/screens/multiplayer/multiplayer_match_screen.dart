@@ -172,7 +172,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     _left = true;
     _ticker?.cancel();
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId);
+      await MultiplayerService.instance.leaveMatch(widget.matchId, abandoned: true);
     } catch (e) {
       debugPrint('MultiplayerMatchScreen._leave: leaveMatch a esuat: $e');
     } finally {

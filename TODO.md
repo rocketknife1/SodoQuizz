@@ -35,35 +35,33 @@ Ordinea de atac (a mea, ajustată față de a lui):
    1840 vs 890 → push la creator 1/1). Bug reparat pe drum (`39566d2`):
    creatorul și adversarul primeau seturi diferite de întrebări.
 
-3. **Personal Records.** 🟡 PARȚIAL — tab-ul „Al tău" din Clasament (`0caa9cf`)
-   arată acum multiplayer (rating/meciuri/winrate/streak) + singleplayer
-   (întrebări/nivel/streak login/provocări/roată/planetă) + punctaj pe mod.
-   RĂMÂNE: cel mai mare scor într-o partidă, cel mai rapid răspuns, cea mai
-   bună/proastă categorie (accuracy), „+X% față de acum 7 zile" — astea cer
-   tracking NOU (best-score, fastest-answer, per-categorie accuracy).
+3. ✅ **Personal Records** — LIVRAT 2026-09-08. Tab-ul „Al tău" are acum
+   secțiunea „Recordurile tale": cel mai mare scor, cel mai rapid răspuns
+   corect, cea mai bună/slabă categorie (accuracy), „+X întrebări în 7
+   zile" (instantaneu săptămânal, o dată/zi, FIFO 8). Tracking nou:
+   `recordAnswerSpeed`, `recordCategoryAnswer`, `maybeTakeWeeklySnapshot`.
 
-4. **Category Mastery.** Nivel per categorie: întrebări întâlnite, accuracy,
-   best streak, titlu la mastery 10 („Maestru Auto"). **De ce:** conținutul
-   devine progres, nu combustibil consumabil — „mai joc ca să termin
-   categoria", nu „mai joc pentru monede". Efort mediu (contoare per
-   categorie + ecran). Se leagă de titlurile care există deja.
+4. ✅ **Category Mastery** — LIVRAT 2026-09-08. `core/category_mastery.dart`:
+   per categorie (întrebări văzute / accuracy / cel mai lung streak),
+   „stăpânită" la 60 răspunsuri + 60%+. Ecran nou „Măiestrie pe categorii"
+   din Profil. Titlu nou „Colecționar de Diplome" la 3 categorii
+   (achievement `category_master_3`).
 
-5. **Modul zilei în multiplayer.** „🔥 AZI: TANKS" — ales determinist pe
-   dată, cu bonus XP + clasament separat. „Join Online" te bagă în modul
-   ăla. **De ce:** o coadă recomandată în loc de 6 goale; jucătorul nou nu
-   învață 6 moduri deodată. Ieftin — același tipar ca „categoria zilei".
+5. ✅ **Modul zilei în multiplayer** — LIVRAT 2026-09-08.
+   `core/daily_mode.dart#modeOfDay` determinist dintr-un pool 1-la-1
+   (Clasic / Higher & Lower / Piatra-Hartie). Join Online joacă modul
+   zilei (nu mai alege aleator). Banner „🔥 AZI ÎN MECI RAPID" + bonus flat
+   20 monede / 8 XP o dată/zi. FĂRĂ clasament separat — sezonul acoperă deja.
 
-6. **Politică de abandon în multiplayer.** Deconectare temporară →
-   reconectare permisă (există deja). Abandon definitiv (heartbeat mort peste
-   prag) → meci PIERDUT. Abandonuri repetate → cooldown la ranked. **De ce:**
-   altfel „își dă seama că pierde → închide jocul", iar adversarul rămâne
-   agățat. Se leagă de filozofia anti-reluare de acum
-   (`guess-it-anti-replay`). Efort mediu.
+6. ✅ **Politică de abandon în multiplayer** — LIVRAT 2026-09-08.
+   `core/abandon_policy.dart`: ieșire dintr-un meci ranked încă `playing`,
+   fără scor final → meci PIERDUT (rating −12). 3 abandonuri într-o oră →
+   Meci Rapid blocat 10 min (camerele cu cod rămân). Adversarul care
+   abandonează era deja gestionat (timeout 12s la rezultate).
 
-7. **Onboarding mai strâns.** Tutorialul de 3 pași există. GPT vrea 4 pași
-   și-atât: „ghicește poza / răspunde rapid / mai rapid = mai multe puncte /
-   acum joacă primul meci". Fără monede/gems/quest-uri în tutorial. Efort
-   mic — rafinare, nu construcție.
+7. ✅ **Onboarding mai strâns** — LIVRAT 2026-09-08. Prima pornire: 4 pagini
+   (ghicești poza / alegi din patru / mai repede = mai multe puncte / acum
+   joacă). Versiunea de 12 pagini rămâne la „Revezi tutorialul" din Setări.
 
 **Val 2 (după ce sunt date din analytics):**
 - Server-authoritative pe partea competitivă (vezi secțiunea de decizii)
@@ -111,40 +109,39 @@ deci simplificarea e aliniată. Polish, nu blocant.
 - **Curățare colecții care se adună** — `daily_challenges/{dată}/scores` +
   `events/{id}/scores` cresc cu ~1 doc/jucător/zi. Purge lunar sau TTL
   Firestore când contează.
-- **Titlul „Boboc" nu se afișează pe cont nou** — INTENȚIONAT azi
-  (`cosmetic_title.dart` întoarce `SizedBox.shrink()` pentru `novice`).
-  Consecință: un jucător nou nu vede că există sistem de titluri. DECIZIE:
-  îl arătăm și pe „Boboc" (titlu amuzant, gen „Fresh Meat" din LoL) sau
-  rămâne ascuns?
+- ✅ **Titlul „Boboc"** — REZOLVAT 2026-09-08: se arată și „Boboc" /
+  „Fresh Meat" pe cont nou, ca progresia de titluri să fie vizibilă.
 
 ---
 
 ## Decizii care te așteaptă pe TINE
 
-- **IAP / magazin cu bani reali** — GPT: NU rușa. Întâi dovada că oamenii
-  joacă (install → first game → second game → return), abia apoi plăți.
-  IAP în closed testing = doar pentru validare tehnică, nu ca să transformi
-  jocul într-o economie agresivă. Pasul ZERO = validarea bonului pe server.
-  Detalii: memoria `guess-it-iap-prerequisites`.
+Astea trei NU sunt fix-uri rapide — fiecare cere fie Blaze activ, fie o
+decizie de timing la lansare, fie trafic real de date. Nu se ating solo,
+fără o sesiune dedicată. Stare, 2026-09-08:
 
-- **Miza pe monede în multiplayer = gambling-adjacent** (observație GPT
-  nouă). Azi e ok (monede virtuale), dar dacă monedele devin cumpărabile,
-  „pui miză, câștigătorul ia potul" seamănă cu pariuri. GPT: monetizează
-  cosmetice/bundle-uri/convenience, ține rezultatul competitiv INDEPENDENT
-  de miză. De cântărit înainte de IAP.
+- **IAP / magazin cu bani reali** — BLOCAT pe: (1) dovada că oamenii joacă
+  (install → first game → second game → return) din analytics; (2) validarea
+  bonului pe server = pasul ZERO, cere Cloud Functions + Blaze. GPT: IAP în
+  closed testing doar pt validare tehnică, nu economie agresivă. Detalii:
+  memoria `guess-it-iap-prerequisites`. Când te apuci: sesiune separată.
 
-- **Dificultate Easy/Medium/Hard** — GPT confirmă: NU manual la început.
-  După trafic: estimată din date (95% corect → Easy, 70% → Medium,
-  40% → Hard, 15% → Extreme), ajustată cu timpul mediu, apoi corectat
-  manual cazurile bizare.
+- **Miza pe monede în multiplayer = gambling-adjacent** — de cântărit ÎNAINTE
+  de IAP: dacă monedele devin cumpărabile, „pui miză, câștigătorul ia potul"
+  seamănă cu pariuri. GPT: monetizează cosmetice/convenience, ține rezultatul
+  competitiv INDEPENDENT de miză. Decizie de design, nu de cod, acum.
 
-- **`users/{uid}` / rating / league points scriabile de client** — GPT:
-  🟡 acceptabil pentru closed testing, 🔴 obligatoriu de reparat la lansare
-  serioasă. Regula de aur GPT (mai bună decât „rescrie economia"):
-  XP tolerant · cosmetice client-cache ok · **ranking competitiv → server** ·
-  **monedă premium → server** · **cumpărături → server** ·
-  **revendicări de recompense → server**. Doar partea competitivă +
-  bani-adiacentă, nu tot stratul de economie.
+- **Dificultate Easy/Medium/Hard** — NIMIC de construit acum: GPT + planul
+  spun explicit „NU manual la început". Se estimează din date DUPĂ trafic
+  (95% corect → Easy … 15% → Extreme), apoi corectat manual cazurile bizare.
+  Blocat pe trafic, nu pe muncă.
+
+- **`users/{uid}` / rating / league points scriabile de client** — 🟡 ok
+  pentru closed testing, 🔴 obligatoriu la lansare serioasă. Regula de aur
+  GPT: XP tolerant · cosmetice client-cache ok · **ranking competitiv →
+  server** · **monedă premium → server** · **cumpărături → server** ·
+  **revendicări de recompense → server**. Șantier separat, cere Blaze;
+  NU e „rescrie economia", doar partea competitivă + bani-adiacentă.
 
 ---
 

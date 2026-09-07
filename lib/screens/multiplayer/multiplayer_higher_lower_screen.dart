@@ -162,7 +162,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     if (_left) return;
     _left = true;
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId);
+      await MultiplayerService.instance.leaveMatch(widget.matchId, abandoned: true);
     } catch (e) {
       debugPrint('MultiplayerHigherLowerScreen._leave: leaveMatch a esuat: $e');
     } finally {

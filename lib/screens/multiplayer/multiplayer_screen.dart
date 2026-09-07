@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/obby.dart';
+import '../../core/abandon_policy.dart';
 import '../../core/betting.dart';
 import '../../core/daily_mode.dart';
 import '../../core/electric_chair.dart';
@@ -441,6 +442,21 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// MatchmakingScreen._leave.
   Future<void> _joinOnline() async {
     if (_busy) return;
+    // Politica de abandon (#6): prea multe ieșiri din meciuri ranked într-un
+    // interval scurt → pauză de la coada publică. Camerele cu cod rămân
+    // permise.
+    final cooldown = abandonCooldownRemaining(
+        await StorageService.mpAbandonTimestamps(), DateTime.now());
+    if (cooldown > Duration.zero && mounted) {
+      final mins = cooldown.inMinutes + 1;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(tr(
+            'Ai abandonat prea multe meciuri. Meci Rapid revine în ~$mins min. Poți juca acum pe cod, cu prietenii.',
+            'Too many abandoned matches. Join Online is back in ~$mins min. You can still play friends with a code.')),
+        duration: const Duration(seconds: 4),
+      ));
+      return;
+    }
     try {
       await MultiplayerService.instance.ensureInitialized();
       if (!mounted) return;
