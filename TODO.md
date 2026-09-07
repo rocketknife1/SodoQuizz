@@ -131,10 +131,12 @@ fără o sesiune dedicată. Stare, 2026-09-08:
   seamănă cu pariuri. GPT: monetizează cosmetice/convenience, ține rezultatul
   competitiv INDEPENDENT de miză. Decizie de design, nu de cod, acum.
 
-- **Dificultate Easy/Medium/Hard** — NIMIC de construit acum: GPT + planul
-  spun explicit „NU manual la început". Se estimează din date DUPĂ trafic
-  (95% corect → Easy … 15% → Extreme), apoi corectat manual cazurile bizare.
-  Blocat pe trafic, nu pe muncă.
+- **Dificultate Easy/Medium/Hard** — 🟡 INFRA GATA 2026-09-08.
+  `core/question_difficulty.dart` (estimare din acuratețe + timp),
+  `question_stats/{id}` scris din single-player, tab „Dificultate" în Admin.
+  Ce lipsește: TRAFIC. Fără jucători, `question_stats` rămâne gol. Când vine,
+  dificultatea apare singură în Admin; de acolo se corectează manual cazurile
+  bizare. Nimic de mai făcut solo.
 
 - **`users/{uid}` / rating / league points scriabile de client** — 🟡 ok
   pentru closed testing, 🔴 obligatoriu la lansare serioasă. Regula de aur

@@ -15,6 +15,7 @@ import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/event_service.dart';
+import '../data/question_stats_service.dart';
 import '../data/questions.dart';
 import '../data/shop.dart';
 import '../data/storage_service.dart';
@@ -353,13 +354,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (mounted) await bumpQuestMetric(context, 'answer_count', 1);
     _sessionAnswered++;
     if (correct) _sessionCorrect++;
+    final answerMs = DateTime.now().difference(_questionShownAt).inMilliseconds;
     // Măiestrie pe categorie (#4): FIECARE răspuns, corect sau nu. `streak`
     // e deja actualizat mai sus (0 la greșeală).
     await StorageService.recordCategoryAnswer(widget.gameModeId,
         correct: correct, currentStreak: streak);
+    // Telemetrie per întrebare (estimarea dificultății) — best-effort, doar
+    // single-player: cel mai curat semnal, fără presiune de timp.
+    QuestionStatsService.instance
+        .recordAnswer(currentQ.id, correct: correct, ms: answerMs);
     if (correct) {
-      await StorageService.recordAnswerSpeed(
-          DateTime.now().difference(_questionShownAt).inMilliseconds);
+      await StorageService.recordAnswerSpeed(answerMs);
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(xpEarned);
       if (mounted) setState(() => coinsBalance += coinsEarned);

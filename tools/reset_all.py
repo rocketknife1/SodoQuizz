@@ -73,6 +73,9 @@ COLLECTIONS = [
     # Adaugat 7 septembrie 2026 odata cu Async Challenge ("Provoaca un
     # prieten"): un doc `challenges/{id}` per provocare, fara subcolectii.
     "challenges",
+    # Adaugat 8 septembrie 2026: telemetria per intrebare pentru estimarea
+    # dificultatii (core/question_difficulty.dart). `question_stats/{id}`.
+    "question_stats",
     # `config/admin` tine uid-ul adminului pentru Admin SDK-ul din Functions.
     # Se re-scrie SINGUR la urmatoarea pornire a aplicatiei adminului
     # (AdminChatService._publishAdminUidIfAdmin), deci stergerea lui e

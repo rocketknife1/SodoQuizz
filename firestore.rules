@@ -581,6 +581,16 @@ service cloud.firestore {
       allow read, update, delete: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
+    // Telemetrie per intrebare (de cate ori aratata / corect / suma timpilor)
+    // pentru estimarea dificultatii — vezi core/question_difficulty.dart.
+    // Permisiv dinadins: e telemetrie, nu economie. Cel mai rau caz e o
+    // eticheta de dificultate stramba, corectata manual din Admin. Scrierile
+    // sunt doar FieldValue.increment din client (question_stats_service.dart).
+    match /question_stats/{questionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
     // Chat privat intre doi prieteni (vezi FriendChatService) — separat de
     // chatul din camera multiplayer, care ramane sub matches/{matchId}/chat.
     //

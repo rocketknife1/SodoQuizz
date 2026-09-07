@@ -4,7 +4,12 @@ import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import '../core/progression.dart' show levelForXp;
+import '../core/gamemodes.dart';
+import '../core/question_difficulty.dart';
 import '../core/theme.dart';
+import '../data/question_stats_service.dart';
+import '../data/questions.dart';
+import '../models/question.dart';
 import '../data/admin_chat_service.dart';
 import '../core/admin_reveal.dart';
 import '../core/remote_flags.dart';
@@ -37,6 +42,7 @@ part 'admin/rooms_tab.dart';
 part 'admin/messages_tab.dart';
 part 'admin/debug_tab.dart';
 part 'admin/stats_tab.dart';
+part 'admin/difficulty_tab.dart';
 
 /// Panou vizibil DOAR pentru contul de admin (vezi profile_screen.dart,
 /// randul care navigheaza aici, ascuns pentru oricine altcineva). Opt
@@ -63,7 +69,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     /// Se deschide pe „Azi", nu pe „Jucători": prima intrebare cand intru in
   /// panou e daca a intrat cineva in joc azi. Rosterul complet e la un tap
   /// distanta, in stanga.
-  late final TabController _tabController = TabController(length: 9, initialIndex: 1, vsync: this);
+  late final TabController _tabController = TabController(length: 10, initialIndex: 1, vsync: this);
 
   @override
   void dispose() {
@@ -104,12 +110,13 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                 Tab(text: 'Camere'),
                 Tab(text: 'Debug'),
                 Tab(text: 'Statistici'),
+                Tab(text: 'Dificultate'),
               ],
             ),
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_PlayersTab(), _NewTodayTab(), _MessagesTab(), _ReportsTab(), _BugReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab()],
+                children: const [_PlayersTab(), _NewTodayTab(), _MessagesTab(), _ReportsTab(), _BugReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab(), _DifficultyTab()],
               ),
             ),
           ],
