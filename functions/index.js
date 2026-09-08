@@ -440,3 +440,8 @@ exports.onBalanceAudit = onDocumentWritten("users/{uid}", async (event) => {
     logger.warn(`nu am putut scrie security_flags/${uid}: ${e}`);
   }
 });
+
+// --- Achizitii cu bani reali ----------------------------------------------
+// Cerut ABIA AICI, la finalul fisierului, ca `initializeApp()` de sus sa fi
+// rulat deja: iap.js ia `getFirestore()` lenes, dar tot e mai putin subtil asa.
+exports.validatePurchase = require("./iap").validatePurchase;

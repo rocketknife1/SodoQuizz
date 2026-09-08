@@ -375,6 +375,59 @@ await env.withSecurityRulesDisabled((ctx) => setDoc(P(ctx.firestore(), 'deSters2
 await check('un jucator oarecare NU poate sterge profilul altuia', () => assertFails(
   deleteDoc(P(jucator, 'deSters2'))));
 
+console.log('\nACHIZITII CU BANI REALI (entitlements / purchase_*):');
+
+const strainIap = env.authenticatedContext('strainIap').firestore();
+
+// Drepturile permanente: le pune DOAR functia de validare a bonului.
+await env.withSecurityRulesDisabled((ctx) => setDoc(
+  doc(ctx.firestore(), 'entitlements', 'jucator1'),
+  { noAdsForever: true, starterPackBought: false }));
+
+await check('imi citesc propriile drepturi cumparate', () => assertSucceeds(
+  getDoc(doc(eu, 'entitlements', 'jucator1'))));
+await check('NU-mi pot acorda singur "fara reclame"', () => assertFails(
+  setDoc(doc(eu, 'entitlements', 'jucator1'), { noAdsForever: true }, { merge: true })));
+await check('NU-mi pot sterge drepturile ca sa le recumpar', () => assertFails(
+  deleteDoc(doc(eu, 'entitlements', 'jucator1'))));
+await check('un strain NU-mi vede drepturile', () => assertFails(
+  getDoc(doc(strainIap, 'entitlements', 'jucator1'))));
+await check('adminul vede drepturile oricui', () => assertSucceeds(
+  getDoc(doc(adminCtx, 'entitlements', 'jucator1'))));
+
+// Jurnalul anti-replay: complet invizibil clientilor.
+await env.withSecurityRulesDisabled((ctx) => setDoc(
+  doc(ctx.firestore(), 'purchase_tokens', 'hash1'), { uid: 'jucator1', productId: 'gems_130' }));
+
+await check('nimeni nu citeste jurnalul de bonuri', () => assertFails(
+  getDoc(doc(eu, 'purchase_tokens', 'hash1'))));
+await check('nimeni nu scrie in jurnalul de bonuri', () => assertFails(
+  setDoc(doc(eu, 'purchase_tokens', 'hash2'), { uid: 'jucator1' })));
+await check('adminul citeste jurnalul de bonuri', () => assertSucceeds(
+  getDoc(doc(adminCtx, 'purchase_tokens', 'hash1'))));
+
+// Cutia postala a consumabilelor: proprietarul citeste si sterge la consum,
+// dar NU poate crea unul singur (altfel si-ar scrie "gems: 999999").
+await env.withSecurityRulesDisabled((ctx) => setDoc(
+  doc(ctx.firestore(), 'purchase_grants', 'jucator1', 'pending', 'hash1'),
+  { productId: 'gems_130', gems: 130 }));
+
+await check('imi citesc cumparatura in asteptare', () => assertSucceeds(
+  getDoc(doc(eu, 'purchase_grants', 'jucator1', 'pending', 'hash1'))));
+await check('imi listez cumparaturile in asteptare', () => assertSucceeds(
+  getDocs(collection(eu, 'purchase_grants', 'jucator1', 'pending'))));
+await check('NU-mi pot fabrica o cumparatura in asteptare', () => assertFails(
+  setDoc(doc(eu, 'purchase_grants', 'jucator1', 'pending', 'fabricat'), { gems: 999999 })));
+await check('o sterg dupa ce am aplicat-o', () => assertSucceeds(
+  deleteDoc(doc(eu, 'purchase_grants', 'jucator1', 'pending', 'hash1'))));
+await check('un strain NU-mi vede cumparaturile', () => assertFails(
+  getDoc(doc(strainIap, 'purchase_grants', 'jucator1', 'pending', 'hash1'))));
+
+await check('plafonul de incercari e invizibil', () => assertFails(
+  getDoc(doc(eu, 'purchase_attempts', 'jucator1'))));
+await check('bonurile FALSE de test nu se pot crea din client', () => assertFails(
+  setDoc(doc(eu, 'purchase_fixtures', 'oricare'), { purchaseState: 0 })));
+
 console.log(`\n=== ${pass} trec, ${fail} pica ===`);
 await env.cleanup();
 process.exit(fail === 0 ? 0 : 1);

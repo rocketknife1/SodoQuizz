@@ -652,6 +652,56 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
     }
 
+    // --- Achizitii cu bani reali (vezi functions/iap.js) --------------------
+    //
+    // Dreptul PERMANENT cumparat cu bani (fara reclame pe veci, pachetul de
+    // start). ADEVARUL E AICI, nu in SharedPreferences: telefonul se
+    // reinstaleaza, contul nu. Aplicatia doar OGLINDESTE documentul asta in
+    // local (StorageService.setNoAdsForever), ca restul jocului sa citeasca mai
+    // departe sincron, fara sa astepte reteaua.
+    //
+    // Scris DOAR de `validatePurchase`, dupa ce a verificat bonul la Google —
+    // acelasi tipar server-only ca `security_flags`. Daca proprietarul ar putea
+    // scrie aici, plata ar deveni optionala: un client modificat si-ar pune
+    // singur `noAdsForever: true`.
+    match /entitlements/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      allow write: if false;
+    }
+
+    // Jurnalul anti-replay: fiecare purchaseToken deja onorat, o singura data,
+    // legat de un singur cont. Contine bonuri Google — nu-l vede nimeni in
+    // afara de Admin SDK si de admin.
+    match /purchase_tokens/{tokenHash} {
+      allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      allow write: if false;
+    }
+
+    // Cutia postala a resurselor CONSUMABILE cumparate (gems, vieti, hints).
+    // Acelasi tipar ca `admin_grants` de mai sus, cu o diferenta esentiala de
+    // proiectare: acolo documentul se sterge INAINTE de a se aplica (un cadou
+    // pierdut e preferabil unuia dublat). Aici jucatorul a PLATIT, deci se
+    // sterge abia DUPA ce resursele au intrat efectiv in sold — dublarea e
+    // impiedicata de jurnalul local, nu de stergerea prealabila.
+    match /purchase_grants/{uid}/pending/{tokenHash} {
+      allow read, delete: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null && request.auth.token.email == 'dragosssx@gmail.com';
+      allow write: if false;
+    }
+
+    // Plafonul de incercari de validare, per cont. Pur server.
+    match /purchase_attempts/{uid} {
+      allow read, write: if false;
+    }
+
+    // Bonuri FALSE pentru teste, citite de verificatorul fals din iap.js cand
+    // ruleaza sub emulator. In productie colectia nu exista si nimeni n-o poate
+    // crea — daca ar putea, si-ar fabrica singur bonuri valide.
+    match /purchase_fixtures/{tokenHash} {
+      allow read, write: if false;
+    }
+
     // Firul de mesaje dintre un jucator si administrator (vezi
     // AdminChatService). Canalul de feedback din joc, in DOUA sensuri.
     //
