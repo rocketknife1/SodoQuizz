@@ -735,6 +735,15 @@ class StorageService {
     _adminAnswerRevealKey,
     _multiplayerInfoSeenKey,
     _noAdsForeverKey,
+    // Din 2026-09-08 pachetul de start e o achiziție cu bani reali, la fel ca
+    // „fără reclame" de deasupra: dacă un reset l-ar șterge, jucătorul l-ar
+    // putea cumpăra a doua oară (e `oneTimeOnly`), ceea ce e chiar mai rău
+    // decât să-l piardă.
+    _starterPackBoughtKey,
+    // Lista achizițiilor deja aplicate. Fără ea, un reset ar face ca fiecare
+    // cumpărătură încă neștearsă din cutia poștală să se aplice A DOUA OARĂ la
+    // următoarea pornire — vezi [isPurchaseApplied].
+    _iapAppliedKey,
     // Limba e preferință de afișare, nu progres — un reset de cont n-are de ce
     // să repună jocul în română unui jucător străin.
     _languageKey,
@@ -2021,6 +2030,90 @@ class StorageService {
 
   /// Marchează un abandon acum. Păstrează ultimele 12 (mult peste fereastra
   /// de o oră din core/abandon_policy.dart).
+  // ─── Jurnalul achizițiilor cu bani reali ─────────────────────────────────
+  //
+  // Serverul a verificat bonul la Google și a lăsat resursele într-o cutie
+  // poștală (`purchase_grants/{uid}/pending/{grantId}` — vezi functions/iap.js).
+  // Aici se aplică efectiv în sold. Problema e că între „am aplicat" și „am
+  // șters documentul" aplicația poate muri, iar pe Android chiar moare des.
+  //
+  // DE CE NU TIPARUL DE LA `admin_grants`: acolo documentul se șterge ÎNAINTE
+  // de aplicare, cu argumentul explicit că un cadou pierdut e preferabil unuia
+  // dublat (vezi CloudSyncService.consumePendingGrant). Pentru o achiziție
+  // PLĂTITĂ prejudecata e exact pe dos: pierderea e inacceptabilă. Deci se
+  // aplică ÎNTÂI, se șterge DUPĂ, iar dublarea e oprită de jurnalul ăsta.
+  //
+  // Cum: `iap_journal_<grantId>` ține pașii deja aplicați cât timp aplicarea e
+  // în curs; la final intrarea dispare și id-ul intră în [_iapAppliedKey], o
+  // listă FIFO care acoperă fereastra dintre „aplicat" și „șters din cloud".
+  // O întrerupere oriunde lasă exact urma din care se poate relua, fără să se
+  // reaplice ce a intrat deja.
+
+  static const _iapJournalPrefix = 'iap_journal_';
+  static const _iapAppliedKey = 'iap_applied';
+
+  /// Câte id-uri de achiziție se rețin. Doar ca să nu crească la nesfârșit —
+  /// fereastra reală (aplicat → șters din cloud) e de secunde.
+  static const _iapAppliedCap = 60;
+
+  /// `true` dacă achiziția a fost deja aplicată integral pe telefonul ăsta.
+  static Future<bool> isPurchaseApplied(String grantId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_iapAppliedKey) ?? const []).contains(grantId);
+  }
+
+  /// Deschide jurnalul pentru o achiziție. Idempotent: dacă există deja o
+  /// intrare (aplicare întreruptă), o păstrează cu pașii ei.
+  static Future<void> beginPurchaseJournal(String grantId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final k = '$_iapJournalPrefix$grantId';
+    if (!prefs.containsKey(k)) await prefs.setStringList(k, <String>[]);
+  }
+
+  /// Pașii deja aplicați pentru achiziția asta (gems / hearts / hints / ...).
+  static Future<Set<String>> journalSteps(String grantId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList('$_iapJournalPrefix$grantId') ?? const []).toSet();
+  }
+
+  /// Marchează un pas ca aplicat. Se apelează DUPĂ scrierea în sold, ca o
+  /// întrerupere între cele două să ducă la reluarea pasului, nu la sărirea
+  /// lui — a da de două ori o resursă e mai bine decât a nu o da deloc, iar
+  /// pasul e oricum re-aplicat doar dacă marcajul lipsește.
+  static Future<void> markJournalStep(String grantId, String step) async {
+    final prefs = await SharedPreferences.getInstance();
+    final k = '$_iapJournalPrefix$grantId';
+    final steps = prefs.getStringList(k) ?? <String>[];
+    if (!steps.contains(step)) {
+      steps.add(step);
+      await prefs.setStringList(k, steps);
+    }
+  }
+
+  /// Închide jurnalul: intrarea dispare, id-ul intră în lista de aplicate.
+  static Future<void> endPurchaseJournal(String grantId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final applied = prefs.getStringList(_iapAppliedKey) ?? <String>[];
+    if (!applied.contains(grantId)) {
+      applied.add(grantId);
+      while (applied.length > _iapAppliedCap) {
+        applied.removeAt(0);
+      }
+      await prefs.setStringList(_iapAppliedKey, applied);
+    }
+    await prefs.remove('$_iapJournalPrefix$grantId');
+  }
+
+  /// Achizițiile rămase la jumătate (aplicația a murit în timpul aplicării).
+  /// Citite la pornire, ca să fie reluate — vezi PurchaseService.
+  static Future<List<String>> unfinishedPurchaseJournals() async {
+    final prefs = await SharedPreferences.getInstance();
+    return [
+      for (final k in prefs.getKeys())
+        if (k.startsWith(_iapJournalPrefix)) k.substring(_iapJournalPrefix.length),
+    ];
+  }
+
   static Future<void> recordMpAbandon() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getStringList(_mpAbandonsKey) ?? [];
