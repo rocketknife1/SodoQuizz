@@ -110,6 +110,30 @@ void main() {
     });
   });
 
+  // Paza pentru reparatia de conformitate din 2026-09-08: niciun produs
+  // platit cu bani reali nu are voie sa dea MONEDE, fiindca monedele se
+  // mizeaza in multiplayer (core/betting.dart) — „cumperi jetoane si le
+  // pariezi" e gambling-adjacent si poate duce la respingere/suspendare in
+  // Play. Daca cineva adauga la loc `coins:` intr-un pachet, pica aici.
+  group('conformitate: bani reali nu cumpara monede', () {
+    test('niciun pachet nu da monede', () {
+      for (final b in bundles) {
+        expect(b.coins, 0, reason: '${b.productId} da ${b.coins} monede');
+      }
+    });
+
+    test('nici oferta fara reclame', () {
+      expect(noAdsBundle.coins, 0);
+    });
+
+    test('pachetele tot dau ceva peste gems', () {
+      for (final b in [...bundles, noAdsBundle]) {
+        expect(b.hearts + b.hints, greaterThan(0),
+            reason: '${b.productId} nu mai adauga nimic peste gems');
+      }
+    });
+  });
+
   group('cadoul de gems', () {
     test('e fix cat o treapta de categorie', () {
       expect(gemGiftGems, questionUnlockGemsPrice(1));

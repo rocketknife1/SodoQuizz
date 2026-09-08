@@ -260,6 +260,21 @@ class Bundle {
 // buzunare — și fiecare dă mai multe gems decât ai lua pe aceiași bani din
 // [gemPacks], PLUS monede/vieți/hints; de-aia sunt „pachete", nu doar gems
 // cu alt nume.
+// NICIUN produs platit nu mai da MONEDE (2026-09-08). De ce: monedele se
+// mizeaza in multiplayer (core/betting.dart, matchPot — „pui miza,
+// castigatorul ia potul"), iar „cumperi jetoane cu bani reali si le pariezi"
+// e fix tiparul pe care Google il trateaza ca gambling-adjacent — risc de
+// respingere la review sau suspendare dupa lansare.
+//
+// Gems-urile NU se mizeaza nicaieri (verificat: core/betting.dart nu contine
+// gems deloc; in multiplayer apar doar ca recompensa, la salvage-ul de
+// Quizz Tanks), deci lantul bani-reali -> jeton -> pariu e rupt complet.
+//
+// Valoarea monedelor scoase s-a compensat in VIETI si HINT-URI — resursele
+// care chiar se termina si care sunt motivul real de cumparare; monedele
+// erau oricum partea cea mai slaba a pachetului, fiindca le castigi jucand.
+// Gems-urile au ramas neatinse, ca raporturile aparate de
+// test/shop_pricing_test.dart sa nu se schimbe.
 const List<Bundle> bundles = [
   Bundle(
     productId: 'bundle_starter',
@@ -271,9 +286,8 @@ const List<Bundle> bundles = [
     // minte — prins de test/shop_pricing_test.dart, unde prima varianta
     // (260 gems) iesea sub Pachetul Campion.
     gems: 340,
-    coins: 3000,
-    hearts: 15,
-    hints: 35,
+    hearts: 22,
+    hints: 55,
     priceRon: 9.99,
     oneTimeOnly: true,
   ),
@@ -284,9 +298,8 @@ const List<Bundle> bundles = [
     subtitle: 'Un plus solid pentru orice sesiune',
     subtitleEn: 'A solid boost for any session',
     gems: 520,
-    coins: 5000,
-    hearts: 25,
-    hints: 60,
+    hearts: 36,
+    hints: 90,
     priceRon: 19.99,
   ),
   Bundle(
@@ -296,9 +309,8 @@ const List<Bundle> bundles = [
     subtitle: 'Pentru cine joacă mult',
     subtitleEn: 'For people who play a lot',
     gems: 1200,
-    coins: 12000,
-    hearts: 60,
-    hints: 150,
+    hearts: 85,
+    hints: 220,
     priceRon: 39.99,
   ),
 ];
@@ -316,9 +328,8 @@ const Bundle noAdsBundle = Bundle(
   subtitle: 'Reclamele forțate rămân dezactivate definitiv, plus un bonus imediat',
   subtitleEn: 'Forced ads stay off for good, plus an instant bonus',
   gems: 150,
-  coins: 1500,
-  hearts: 10,
-  hints: 25,
+  hearts: 14,
+  hints: 40,
   priceRon: 24.99,
   permanentNoAds: true,
 );

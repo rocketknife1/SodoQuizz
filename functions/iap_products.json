@@ -1,0 +1,45 @@
+{
+  "_comentariu": [
+    "SURSA ADEVARULUI pentru ce se acorda la o achizitie. Serverul NU are voie sa creada",
+    "clientul cand spune 'da-mi 1050 gems' — exact asta e gaura pe care o inchidem.",
+    "Trebuie sa ramana identic cu lib/data/shop.dart; testul test/iap_catalog_test.dart",
+    "compara bidirectional si pica daca cele doua diverg.",
+    "",
+    "'consumable' NU e o setare din Play Console (Play are un singur tip de produs) — e",
+    "decizia noastra: daca nu consumam tokenul, Play insusi impune 'o singura data per",
+    "cont Google' SI il face restaurabil la reinstalare. De-aia bundle_starter, care e",
+    "oneTimeOnly in shop.dart, e non-consumabil aici.",
+    "",
+    "NICIUN produs nu da 'coins' — vezi comentariul din lib/data/shop.dart (monedele se",
+    "mizeaza in multiplayer, deci a le vinde pe bani reali e gambling-adjacent)."
+  ],
+  "gems_130":   { "priceRon": 4.99,  "consumable": true, "grant": { "gems": 130 } },
+  "gems_390":   { "priceRon": 12.99, "consumable": true, "grant": { "gems": 390 } },
+  "gems_1050":  { "priceRon": 29.99, "consumable": true, "grant": { "gems": 1050 } },
+
+  "lives_10":   { "priceRon": 2.99,  "consumable": true, "grant": { "hearts": 10 } },
+  "lives_30":   { "priceRon": 6.99,  "consumable": true, "grant": { "hearts": 30 } },
+  "lives_unlimited_24h": { "priceRon": 9.99, "consumable": true, "grant": { "unlimitedLivesHours": 24 } },
+
+  "hints_25":   { "priceRon": 2.99,  "consumable": true, "grant": { "hints": 25 } },
+  "hints_70":   { "priceRon": 6.99,  "consumable": true, "grant": { "hints": 70 } },
+  "hints_175":  { "priceRon": 14.99, "consumable": true, "grant": { "hints": 175 } },
+
+  "bundle_starter": {
+    "priceRon": 9.99, "consumable": false, "entitlement": "starterPackBought",
+    "grant": { "gems": 340, "hearts": 22, "hints": 55 }
+  },
+  "bundle_aventurier": {
+    "priceRon": 19.99, "consumable": true,
+    "grant": { "gems": 520, "hearts": 36, "hints": 90 }
+  },
+  "bundle_campion": {
+    "priceRon": 39.99, "consumable": true,
+    "grant": { "gems": 1200, "hearts": 85, "hints": 220 }
+  },
+
+  "no_ads_forever": {
+    "priceRon": 24.99, "consumable": false, "entitlement": "noAdsForever",
+    "grant": { "gems": 150, "hearts": 14, "hints": 40 }
+  }
+}
