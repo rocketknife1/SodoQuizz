@@ -120,16 +120,34 @@ Astea trei NU sunt fix-uri rapide — fiecare cere fie Blaze activ, fie o
 decizie de timing la lansare, fie trafic real de date. Nu se ating solo,
 fără o sesiune dedicată. Stare, 2026-09-08:
 
-- **IAP / magazin cu bani reali** — BLOCAT pe: (1) dovada că oamenii joacă
-  (install → first game → second game → return) din analytics; (2) validarea
-  bonului pe server = pasul ZERO, cere Cloud Functions + Blaze. GPT: IAP în
-  closed testing doar pt validare tehnică, nu economie agresivă. Detalii:
-  memoria `guess-it-iap-prerequisites`. Când te apuci: sesiune separată.
+- **IAP / magazin cu bani reali** — 🟡 CODUL E GATA (2026-09-08), aprinderea
+  depinde de tine. Ce s-a construit: `validatePurchase` (Cloud Function care
+  verifică bonul la Google, anti-replay, confirmă ea însăși în cele 3 zile),
+  catalog pe server (`functions/iap_products.json`) cu test de sincronizare cu
+  `shop.dart`, drepturi permanente în `entitlements/{uid}` cu restaurare pe alt
+  telefon, jurnal local care aplică o achiziție EXACT o dată chiar dacă moare
+  aplicația la mijloc, `in_app_purchase` + permisiunea BILLING, buton
+  „Restaurează achizițiile".
+  RĂMÂNE LA TINE, în consolă (vezi planul complet):
+  1. Activează `androidpublisher.googleapis.com` în Cloud Console.
+  2. Play Console → Setup → API access → leagă proiectul `sodoquizz`, apoi dă
+     acces contului de serviciu (propagare 24-48h; până atunci API-ul dă
+     401/403 — e normal, nu e bug).
+  3. Creează cele 13 produse cu ID-urile EXACTE din `shop.dart` (sunt
+     imutabile) și activează-le.
+  4. License testers + un build pe Internal testing (produsele nu se rezolvă
+     fără un build publicat pe o pistă).
+  5. Abia apoi aprinzi `magazin_bani_reali` din Remote Config.
+  Killswitch-ul e neatins: `realMoneyStoreEnabled = false`, magazinul arată
+  „În curând".
 
-- **Miza pe monede în multiplayer = gambling-adjacent** — de cântărit ÎNAINTE
-  de IAP: dacă monedele devin cumpărabile, „pui miză, câștigătorul ia potul"
-  seamănă cu pariuri. GPT: monetizează cosmetice/convenience, ține rezultatul
-  competitiv INDEPENDENT de miză. Decizie de design, nu de cod, acum.
+- ✅ **Miza pe monede = gambling-adjacent** — REZOLVAT 2026-09-08. Niciun
+  produs plătit nu mai dă MONEDE (erau 3000/5000/12000 în pachete + 1500 la
+  „fără reclame"); valoarea s-a compensat în vieți și hint-uri, la aceleași
+  prețuri. Verificat că gems-urile nu se mizează nicăieri (`core/betting.dart`
+  nu le conține deloc), deci lanțul bani-reali → jeton → pariu e rupt complet.
+  Trei teste păzesc regula. Miza pe monede CÂȘTIGATE rămâne — e în regulă,
+  n-are legătură cu bani reali.
 
 - **Dificultate Easy/Medium/Hard** — 🟡 INFRA GATA 2026-09-08.
   `core/question_difficulty.dart` (estimare din acuratețe + timp),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,9 @@ import '../core/reward_collector.dart';
 import '../core/theme.dart';
 import '../data/shop.dart';
 import '../core/remote_flags.dart';
+import '../data/auth_service.dart';
+import '../data/iap_service.dart';
+import '../data/purchase_service.dart';
 import '../data/storage_service.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/coin_reward_overlay.dart';
@@ -30,6 +34,7 @@ class _ShopScreenState extends State<ShopScreen> {
   int _hintPacksBoughtToday = 0;
   bool _noAdsOwned = false;
   bool _starterPackBought = false;
+  bool _hasGoogleAccount = false;
   bool _loading = true;
   bool _busy = false;
   int _loadSeq = 0;
@@ -38,6 +43,11 @@ class _ShopScreenState extends State<ShopScreen> {
   final _gemsBadgeKey = GlobalKey();
   final _hintsBadgeKey = GlobalKey();
   final GlobalKey<AppBottomNavBarState> _navBarKey = GlobalKey();
+
+  /// Plasa de siguranță care deblochează butoanele dacă plata se lungește
+  /// (aprobare de părinte, transfer bancar) — vezi [_startRealPurchase].
+  Timer? _busyTimeout;
+  StreamSubscription<AppliedPurchase>? _appliedSub;
 
   @override
   void initState() {
@@ -48,11 +58,43 @@ class _ShopScreenState extends State<ShopScreen> {
     // premiu încasat în fundal, sau salvarea coborâtă din cloud. Vezi
     // StorageService.balanceRevision.
     StorageService.balanceRevision.addListener(_loadState);
+    // Animația de recompensă pentru achiziții pornește de AICI, nu din
+    // handlerul butonului: resursele sosesc pe cutia poștală, deci pot veni și
+    // la câteva secunde după plată, sau chiar la o pornire ulterioară.
+    _appliedSub = PurchaseService.instance.onApplied.listen(_celebrate);
+  }
+
+  Future<void> _celebrate(AppliedPurchase a) async {
+    _busyTimeout?.cancel();
+    if (!mounted) return;
+    setState(() => _busy = false);
+    await collectRewards(
+      context,
+      coins: 0,
+      xp: 0,
+      lives: a.hearts,
+      hints: a.hints,
+      hintsUncapped: true,
+      hintsBadgeKey: _hintsBadgeKey,
+      gems: a.gems,
+      gemsBadgeKey: _gemsBadgeKey,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: GlobalKey(),
+      livesBadgeKey: _livesBadgeKey,
+      onEachImpact: () { _refreshBalances(); },
+    );
+    if (!mounted) return;
+    await _loadState();
+    if (!mounted) return;
+    // Pachetul de start poate debloca o realizare, ca înainte.
+    await checkAchievements(context);
   }
 
   @override
   void dispose() {
     StorageService.balanceRevision.removeListener(_loadState);
+    _busyTimeout?.cancel();
+    _appliedSub?.cancel();
     super.dispose();
   }
 
@@ -79,6 +121,9 @@ class _ShopScreenState extends State<ShopScreen> {
       _hintPacksBoughtToday = results[6] as int;
       _noAdsOwned = results[7] as bool;
       _starterPackBought = results[8] as bool;
+      // Guest = uid anonim, care se schimba la reinstalare; de-aia primeste
+      // indemnul de conectare de sub zona premium.
+      _hasGoogleAccount = AuthService.instance.isSignedIn;
       _loading = false;
     });
   }
@@ -186,7 +231,7 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  // ─── Bani reali (simulat — vezi shop.dart) ────────────────────────────────
+  // ─── Bani reali (Google Play Billing) ─────────────────────────────────────
 
   Future<bool> _confirmPurchase(String itemLabel, double priceRon) async {
     // Gate-ul de publicare: cât timp billing-ul real nu e integrat, nicio
@@ -233,9 +278,9 @@ class _ShopScreenState extends State<ShopScreen> {
         content: Text(
           tr(
             'Preț: ${formatRon(priceRon)}\n\n'
-                'Magazinul de plăți reale nu e conectat încă în acest build — nu se percepe nicio sumă, achiziția e doar simulată pentru testare.',
+                'Plata se face prin Google Play. Prețul final, cu taxele din țara ta, apare în fereastra Google.',
             'Price: ${formatRon(priceRon)}\n\n'
-                'The real-money shop is not connected yet in this build — nothing is charged, the purchase is only simulated for testing.',
+                'Payment goes through Google Play. The final price, including your country taxes, is shown in the Google sheet.',
           ),
           style: const TextStyle(color: Colors.white70),
         ),
@@ -251,51 +296,47 @@ class _ShopScreenState extends State<ShopScreen> {
     return confirmed == true;
   }
 
-  Future<void> _buyGemPack(GemPack pack) async {
+  /// Toate cele cinci butoane de bani reali trec pe aici. Ce se acordă NU se
+  /// mai decide local: se deschide fluxul Google, iar resursele intră în sold
+  /// abia după ce serverul a verificat bonul (vezi functions/iap.js) și le-a
+  /// lăsat în cutia poștală, de unde le ia PurchaseService.
+  ///
+  /// De-aia nu mai există aici niciun `collectRewards` — animația pornește din
+  /// abonamentul la [PurchaseService.onApplied], ca să meargă și când
+  /// cumpărătura sosește cu ecranul închis sau de pe alt telefon.
+  Future<void> _startRealPurchase(String productId, String label, double priceRon) async {
     if (_busy) return;
-    if (!await _confirmPurchase('${pack.gems} gems', pack.priceRon)) return;
+    if (!await _confirmPurchase(label, priceRon)) return;
     if (!mounted) return;
     setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    await collectRewards(
-      context,
-      coins: 0,
-      xp: 0,
-      lives: 0,
-      gems: pack.gems,
-      gemsBadgeKey: _gemsBadgeKey,
-      coinBadgeKey: GlobalKey(),
-      xpBadgeKey: GlobalKey(),
-      livesBadgeKey: GlobalKey(),
-      onEachImpact: () { _refreshBalances(); },
+    final started = await IapService.instance.buy(
+      productId,
+      accountId: PurchaseService.instance.accountId,
     );
     if (!mounted) return;
-    setState(() => _busy = false);
-    await _loadState();
+    if (!started) {
+      setState(() => _busy = false);
+      _toast(tr('Nu am putut deschide plata. Încearcă din nou.',
+          'Could not open the payment. Try again.'));
+      return;
+    }
+    // `_busy` se stinge la sosirea recompensei sau la expirarea plasei de
+    // siguranță de mai jos — o plată poate dura (aprobare de părinte, transfer
+    // bancar), iar butonul n-are voie să rămână blocat pe veci.
+    _busyTimeout?.cancel();
+    _busyTimeout = Timer(const Duration(seconds: 90), () {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      _toast(tr('Dacă plata a mers, resursele sosesc imediat.',
+          'If the payment went through, your items arrive shortly.'));
+    });
   }
 
-  Future<void> _buyLivesPack(LivesPack pack) async {
-    if (_busy) return;
-    if (!await _confirmPurchase(tr('${pack.lives} vieți', '${pack.lives} lives'), pack.priceRon)) return;
-    if (!mounted) return;
-    setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    await collectRewards(
-      context,
-      coins: 0,
-      xp: 0,
-      lives: pack.lives,
-      livesBadgeKey: _livesBadgeKey,
-      coinBadgeKey: GlobalKey(),
-      xpBadgeKey: GlobalKey(),
-      onEachImpact: () { _refreshBalances(); },
-    );
-    if (!mounted) return;
-    setState(() => _busy = false);
-    await _loadState();
-  }
+  Future<void> _buyGemPack(GemPack pack) =>
+      _startRealPurchase(pack.productId, '${pack.gems} gems', pack.priceRon);
+
+  Future<void> _buyLivesPack(LivesPack pack) => _startRealPurchase(
+      pack.productId, tr('${pack.lives} vieți', '${pack.lives} lives'), pack.priceRon);
 
   /// Eticheta treptei dintr-o rubrică cu trei prețuri. Toate rubricile de
   /// bani reali sunt acum construite la fel — mic / mediu / mare — iar
@@ -307,76 +348,41 @@ class _ShopScreenState extends State<ShopScreen> {
         _ => tr('Cea mai bună valoare', 'Best value'),
       };
 
-  Future<void> _buyUnlimitedLives24h() async {
-    if (_busy) return;
-    if (!await _confirmPurchase(tr('Vieți nelimitate 24h', 'Unlimited lives 24h'), unlimitedLives24hPriceRon)) return;
-    if (!mounted) return;
-    setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    await StorageService.activateUnlimitedLives(const Duration(hours: 24));
-    if (!mounted) return;
-    setState(() => _busy = false);
-    Sfx.rewardPop();
-    _toast(tr('Vieți nelimitate activate pentru 24h!', 'Unlimited lives activated for 24h!'));
-    await _loadState();
-  }
+  Future<void> _buyUnlimitedLives24h() => _startRealPurchase(
+      unlimitedLives24hProductId,
+      tr('Vieți nelimitate 24h', 'Unlimited lives 24h'),
+      unlimitedLives24hPriceRon);
 
-  Future<void> _buyHintPackReal(HintPackReal pack) async {
-    if (_busy) return;
-    if (!await _confirmPurchase('${pack.hints} hints', pack.priceRon)) return;
-    if (!mounted) return;
-    setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (!mounted) return;
-    await collectRewards(
-      context,
-      coins: 0,
-      xp: 0,
-      lives: 0,
-      hints: pack.hints,
-      hintsUncapped: true,
-      hintsBadgeKey: _hintsBadgeKey,
-      coinBadgeKey: GlobalKey(),
-      xpBadgeKey: GlobalKey(),
-      livesBadgeKey: GlobalKey(),
-      onEachImpact: () { _refreshBalances(); },
-    );
-    if (!mounted) return;
-    setState(() => _busy = false);
-    await _loadState();
-  }
+  Future<void> _buyHintPackReal(HintPackReal pack) =>
+      _startRealPurchase(pack.productId, '${pack.hints} hints', pack.priceRon);
 
   Future<void> _buyBundle(Bundle b) async {
-    if (_busy) return;
+    // Google refuză oricum a doua cumpărare a unui neconsumabil
+    // („ITEM_ALREADY_OWNED"), dar mai bine nu-l trimitem degeaba prin flux.
     if (b.oneTimeOnly && _starterPackBought) return;
     if (b.permanentNoAds && _noAdsOwned) return;
-    if (!await _confirmPurchase(b.title, b.priceRon)) return;
-    if (!mounted) return;
+    // Marcajele „fără reclame" / „pachet luat" NU se mai scriu aici: adevărul
+    // stă în `entitlements/{uid}`, iar PurchaseService le oglindește local
+    // după ce serverul a validat bonul. Altfel un client modificat și-ar
+    // acorda singur perkul permanent.
+    await _startRealPurchase(b.productId, b.title, b.priceRon);
+  }
+
+  /// Cerută de Google pentru produsele permanente: fără ea, un jucător care
+  /// schimbă telefonul își pierde „fără reclame pe veci" plătit cu 24,99 lei.
+  Future<void> _restorePurchases() async {
+    if (_busy) return;
     setState(() => _busy = true);
-    await Future.delayed(const Duration(milliseconds: 900));
-    if (b.permanentNoAds) await StorageService.setNoAdsForever();
-    if (b.oneTimeOnly) await StorageService.setStarterPackBought();
-    if (!mounted) return;
-    await collectRewards(
-      context,
-      coins: b.coins,
-      xp: 0,
-      lives: b.hearts,
-      hints: b.hints,
-      hintsUncapped: true,
-      hintsBadgeKey: _hintsBadgeKey,
-      gems: b.gems,
-      gemsBadgeKey: _gemsBadgeKey,
-      coinBadgeKey: _coinBadgeKey,
-      xpBadgeKey: GlobalKey(),
-      livesBadgeKey: _livesBadgeKey,
-      onEachImpact: () { _refreshBalances(); },
-    );
+    await IapService.instance.restore();
+    await Future<void>.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     setState(() => _busy = false);
-    if (b.oneTimeOnly) await checkAchievements(context);
-    if (!mounted) return;
     await _loadState();
+    if (!mounted) return;
+    _toast(_noAdsOwned || _starterPackBought
+        ? tr('Achizițiile au fost restaurate.', 'Purchases restored.')
+        : tr('Nu am găsit achiziții de restaurat pe contul ăsta.',
+            'No purchases found for this account.'));
   }
 
   void _toast(String message) {
@@ -609,6 +615,34 @@ class _ShopScreenState extends State<ShopScreen> {
                                       ),
                                   ],
                                 ),
+                                const SizedBox(height: 14),
+                                // Restaurarea e ceruta de Google pentru
+                                // produsele permanente: fara ea, cine schimba
+                                // telefonul isi pierde "fara reclame pe veci".
+                                Center(
+                                  child: TextButton.icon(
+                                    onPressed: _busy ? null : _restorePurchases,
+                                    icon: const Icon(Icons.restore_rounded,
+                                        color: Colors.white54, size: 18),
+                                    label: Text(
+                                      tr('Restaurează achizițiile', 'Restore purchases'),
+                                      style: const TextStyle(color: Colors.white54, fontSize: 13),
+                                    ),
+                                  ),
+                                ),
+                                // Un Guest primeste uid nou la reinstalare, deci
+                                // consumabilele cumparate se pierd definitiv.
+                                // Se spune INAINTE de plata, nu dupa.
+                                if (!_hasGoogleAccount)
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+                                    child: Text(
+                                      tr('Conectează-te cu Google ca achizițiile să te urmeze pe orice telefon.',
+                                          'Sign in with Google so your purchases follow you to any phone.'),
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(color: Colors.white38, fontSize: 11.5, height: 1.35),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),

@@ -1,6 +1,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Google Play Billing. Biblioteca (com.android.billingclient, adusa de
+         in_app_purchase) o declara si ea in manifestul propriu, deci ar merge
+         si fara linia asta - dar atunci permisiunea apare in APK "de nicaieri".
+         Aici e explicita si documentata. Vezi lib/data/iap_service.dart. -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
     <!-- Notificari pe telefon (vezi lib/data/device_notification_service.dart).
          POST_NOTIFICATIONS e ceruta de la Android 13 incolo si trebuie ceruta
          SI la rulare, nu doar declarata aici.

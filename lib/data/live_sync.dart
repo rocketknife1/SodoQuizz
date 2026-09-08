@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../models/friend_chat.dart';
 import 'admin_chat_service.dart';
 import 'cloud_sync_service.dart';
+import 'purchase_service.dart';
 import 'friend_chat_service.dart';
 import 'moderation_service.dart';
 import 'multiplayer_service.dart';
@@ -71,6 +72,7 @@ class LiveSync {
     NotificationService.instance.startLive();
     ModerationService.instance.startLive();
     AdminChatService.instance.startLive();
+    PurchaseService.instance.startLive();
     instance._startFriendWatchers();
   }
 
@@ -80,6 +82,7 @@ class LiveSync {
     NotificationService.instance.stopLive();
     ModerationService.instance.stopLive();
     AdminChatService.instance.stopLive();
+    PurchaseService.instance.stopLive();
     instance._stopFriendWatchers();
   }
 

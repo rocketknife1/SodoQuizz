@@ -34,6 +34,10 @@ dependencies:
   package_info_plus: ^9.0.1
   firebase_remote_config: ^6.6.0
   in_app_review: ^2.0.12
+  in_app_purchase: ^3.3.0
+  cloud_functions: ^6.4.0
+  crypto: ^3.0.7
+  in_app_purchase_android: ^0.5.3
 
 dev_dependencies:
   flutter_test:
