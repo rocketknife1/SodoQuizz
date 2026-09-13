@@ -4,6 +4,7 @@ import '../../core/audio.dart';
 import '../../core/lang.dart';
 import '../../core/rock_paper_scissors.dart';
 import '../../core/theme.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/match_overlay.dart';
@@ -23,7 +24,9 @@ import 'multiplayer_results_screen.dart';
 /// și fără power-up-uri.
 class MultiplayerRockPaperScissorsScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerRockPaperScissorsScreen({super.key, required this.matchId});
+  /// Meci cu boți (data/bot_match.dart) — null într-un meci online normal.
+  final BotMatch? bot;
+  const MultiplayerRockPaperScissorsScreen({super.key, required this.matchId, this.bot});
 
   @override
   State<MultiplayerRockPaperScissorsScreen> createState() =>
@@ -32,6 +35,8 @@ class MultiplayerRockPaperScissorsScreen extends StatefulWidget {
 
 class _MultiplayerRockPaperScissorsScreenState
     extends State<MultiplayerRockPaperScissorsScreen> {
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
   int _lastRoundIndex = -1;
   bool _resolving = false;
   bool _navigatedToResults = false;
@@ -54,12 +59,12 @@ class _MultiplayerRockPaperScissorsScreenState
     super.initState();
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
-    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.rockPaperScissors);
+    _mp.markActiveMatch(widget.matchId, MatchGameMode.rockPaperScissors);
     _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
-      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+      _mp.matchHeartbeat(widget.matchId);
     });
   }
 
@@ -82,7 +87,7 @@ class _MultiplayerRockPaperScissorsScreenState
     if (_left) return;
     _left = true;
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId, abandoned: true);
+      await _mp.leaveMatch(widget.matchId, abandoned: true);
     } catch (e) {
       debugPrint('MultiplayerRockPaperScissorsScreen._leave: $e');
     } finally {
@@ -92,17 +97,17 @@ class _MultiplayerRockPaperScissorsScreenState
 
   void _choose(MatchInfo info, String choice) {
     if (info.roundPhase != RoundPhase.answering) return;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
     Sfx.tileSelect();
-    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
   }
 
   Future<void> _tryResolve(MatchInfo info) async {
     if (_resolving) return;
     _resolving = true;
     try {
-      await MultiplayerService.instance.resolveRockPaperScissorsRound(
+      await _mp.resolveRockPaperScissorsRound(
         matchId: widget.matchId,
         roundIndex: info.roundIndex,
       );
@@ -127,7 +132,7 @@ class _MultiplayerRockPaperScissorsScreenState
       }
     } else if (info.roundPhase == RoundPhase.revealed) {
       _advanceTimer ??= Timer(const Duration(seconds: rpsRevealSeconds), () {
-        MultiplayerService.instance
+        _mp
             .advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
       });
     }
@@ -140,6 +145,7 @@ class _MultiplayerRockPaperScissorsScreenState
           context,
           MaterialPageRoute(
             builder: (_) => MultiplayerResultsScreen(
+                bot: widget.bot,
                 matchId: widget.matchId, gameMode: MatchGameMode.rockPaperScissors),
           ),
         );
@@ -156,18 +162,18 @@ class _MultiplayerRockPaperScissorsScreenState
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF0E1230),
-        floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButton: widget.bot == null ? MatchOverlay(matchId: widget.matchId) : null,
         floatingActionButtonLocation: matchOverlayLocation,
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
-            stream: MultiplayerService.instance.watchMatch(widget.matchId),
+            stream: _mp.watchMatch(widget.matchId),
             builder: (context, matchSnap) {
               final info = matchSnap.data;
               if (info == null) {
                 return const Center(child: CircularProgressIndicator());
               }
               return StreamBuilder<List<MatchPlayer>>(
-                stream: MultiplayerService.instance.watchPlayers(widget.matchId),
+                stream: _mp.watchPlayers(widget.matchId),
                 builder: (context, playersSnap) {
                   final players = playersSnap.data ?? const <MatchPlayer>[];
                   _onData(info, players);
@@ -182,7 +188,7 @@ class _MultiplayerRockPaperScissorsScreenState
   }
 
   Widget _buildBody(MatchInfo info, List<MatchPlayer> players) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final answering = info.roundPhase == RoundPhase.answering;
     final myChoice = info.roundAnswers[me];
     final secondsLeft = _secondsLeftFor(info);

@@ -13,6 +13,8 @@ import '../../core/reward_collector.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
 import '../../core/theme.dart';
+import '../../core/bot_brain.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_activity_service.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
@@ -22,6 +24,7 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/avatar.dart';
 import '../home_screen.dart';
 import '../loading_screen.dart';
+import '../bot_match_setup_screen.dart';
 import 'multiplayer_electric_chair_screen.dart';
 import 'multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer_higher_lower_screen.dart';
@@ -35,13 +38,22 @@ import 'room_lobby_screen.dart';
 class MultiplayerResultsScreen extends StatefulWidget {
   final String matchId;
   final MatchGameMode gameMode;
-  const MultiplayerResultsScreen({super.key, required this.matchId, this.gameMode = MatchGameMode.classic});
+
+  /// Meci cu boți: fără pot, rating, clasament sau revanșă — doar recompensa
+  /// mică din core/bot_brain.dart, cu plafon pe zi.
+  final BotMatch? bot;
+  const MultiplayerResultsScreen({super.key, required this.matchId, this.gameMode = MatchGameMode.classic, this.bot});
 
   @override
   State<MultiplayerResultsScreen> createState() => _MultiplayerResultsScreenState();
 }
 
 class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
+  /// Meci cu boți jucat după [botRewardedMatchesPerDay] — nu mai dă nimic azi.
+  bool _botCapReached = false;
+
   late final Future<List<MatchPlayer>> _future = _load();
   int _coinsEarned = 0;
   int _xpEarned = 0;
@@ -80,7 +92,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   List<MatchPlayer> _originalPlayers = const [];
   bool _amHost = false;
   late final Stream<RematchOffer?> _rematchStream =
-      MultiplayerService.instance.watchRematchOffer(widget.matchId);
+      _mp.watchRematchOffer(widget.matchId);
   bool _launchingRematch = false;
   bool _navigatedToRematch = false;
 
@@ -122,8 +134,10 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   @override
   void dispose() {
     _pendingOfferTicker?.cancel();
-    MultiplayerService.instance.lastFinishedMatchId.value =
-        _navigatedToRematch ? null : widget.matchId;
+    if (widget.bot == null) {
+      MultiplayerService.instance.lastFinishedMatchId.value =
+          _navigatedToRematch ? null : widget.matchId;
+    }
     super.dispose();
   }
 
@@ -163,10 +177,17 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   Future<List<MatchPlayer>> _load() async {
     final players = await _awaitFinalScores();
     final sorted = List.of(players)..sort((a, b) => _rankValue(b).compareTo(_rankValue(a)));
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final myIndex = sorted.indexWhere((p) => p.id == me);
     _originalPlayers = sorted;
     _amHost = myIndex != -1 && sorted[myIndex].isHost;
+    final bot = widget.bot;
+    if (bot != null) {
+      if (myIndex != -1) await _rewardBotMatch(bot, sorted, myIndex);
+      await _mp.leaveMatch(widget.matchId);
+      bot.dispose();
+      return sorted;
+    }
     if (myIndex != -1) {
       // `score` rămas mic, pentru XP; `myRank` e cifra folosită la
       // sortare/premii — la orice mod în afară de Scaunul Electric sunt
@@ -276,9 +297,30 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       // anterioare (ștergere țintită, fără listare — vezi serviciul).
       await MultiplayerActivityService.instance.sweepMine();
     }
-    await MultiplayerService.instance.leaveMatch(widget.matchId);
+    await _mp.leaveMatch(widget.matchId);
     return sorted;
   }
+
+  Future<void> _rewardBotMatch(BotMatch bot, List<MatchPlayer> sorted, int myIndex) async {
+    _myPlace = myIndex + 1;
+    if (await StorageService.getDailyCounter(_botRewardCounter) >= botRewardedMatchesPerDay) {
+      _botCapReached = true;
+      return;
+    }
+    await StorageService.incrementDailyCounter(_botRewardCounter);
+    final reward = botMatchReward(
+      place: myIndex,
+      totalPlayers: sorted.length,
+      difficulty: bot.settings.difficulty,
+      botCount: bot.settings.botCount,
+    );
+    _coinsEarned = reward.coins;
+    _xpEarned = reward.xp;
+    await StorageService.addCoins(reward.coins);
+    await StorageService.addXp(reward.xp);
+  }
+
+  static const _botRewardCounter = 'bot_matches';
 
   /// Cât așteptăm ca toată lumea de la masă să-și scrie scorul final înainte
   /// să împărțim pool-ul. Necesar de când modul Clasic e o cursă cronometrată:
@@ -289,7 +331,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   static const _finalScoreWait = Duration(seconds: 12);
 
   Future<List<MatchPlayer>> _awaitFinalScores() async {
-    final stream = MultiplayerService.instance.watchPlayers(widget.matchId);
+    final stream = _mp.watchPlayers(widget.matchId);
     // Higher or Lower nu are "scor final scris la fluier": acolo meciul se
     // încheie prin eliminare, iar scorurile sunt deja definitive în Firestore.
     if (widget.gameMode != MatchGameMode.classic) return stream.first;
@@ -476,7 +518,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     // un banner care n-o să mai pornească niciodată nimic (fără gazdă în
     // ecran, nimeni nu mai apelează launchRematch).
     if (_amHost) {
-      MultiplayerService.instance.cancelRematchOffer(widget.matchId).catchError((_) {});
+      _mp.cancelRematchOffer(widget.matchId).catchError((_) {});
     }
     Navigator.pushAndRemoveUntil(
       context,
@@ -488,7 +530,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// [keepInLobby] = „party": aceeași cerere și aceiași participanți, doar că
   /// grupul aterizează în lobby în loc de meci, iar gazda alege acolo alt mod.
   Future<void> _requestRematch({bool keepInLobby = false}) async {
-    final ok = await MultiplayerService.instance.offerRematch(
+    final ok = await _mp.offerRematch(
       matchId: widget.matchId,
       gameMode: widget.gameMode,
       stake: _tableStake(_originalPlayers),
@@ -502,7 +544,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   }
 
   Future<void> _acceptRematch() async {
-    final ok = await MultiplayerService.instance.acceptRematchOffer(widget.matchId);
+    final ok = await _mp.acceptRematchOffer(widget.matchId);
     if (!ok) _showBanBlocked();
   }
 
@@ -526,7 +568,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     _launchingRematch = true;
     Analytics.instance.multiplayerRematch(
         mod: widget.gameMode.name, tip: offer.keepInLobby ? 'party' : 'revansa');
-    MultiplayerService.instance.launchRematch(offer).catchError((e) {
+    _mp.launchRematch(offer).catchError((e) {
       _launchingRematch = false;
       debugPrint('MultiplayerResultsScreen: launchRematch a esuat: $e');
       return '';
@@ -549,7 +591,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           MaterialPageRoute(
             builder: (_) => RoomLobbyScreen(
               matchId: newMatchId,
-              isHost: offer.hostId == MultiplayerService.instance.currentPlayerId,
+              isHost: offer.hostId == _mp.currentPlayerId,
             ),
           ),
         );
@@ -580,7 +622,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   Widget _buildRematchSection() {
     // Sub 2 foști jucători n-are cu cine se relua meciul.
     if (_originalPlayers.length < 2) return const SizedBox.shrink();
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     return StreamBuilder<RematchOffer?>(
       stream: _rematchStream,
       builder: (context, snap) {
@@ -654,7 +696,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: () => MultiplayerService.instance.cancelRematchOffer(widget.matchId),
+                  onPressed: () => _mp.cancelRematchOffer(widget.matchId),
                   child: Text(tr('Anulează', 'Cancel'), style: const TextStyle(color: Colors.white54)),
                 ),
               ],
@@ -697,7 +739,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => MultiplayerService.instance.declineRematchOffer(widget.matchId),
+                        onPressed: () => _mp.declineRematchOffer(widget.matchId),
                         child: Text(tr('Refuz', 'Decline'), style: const TextStyle(color: Colors.white70)),
                       ),
                     ),
@@ -716,6 +758,31 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildBotFooter(int tableSize) {
+    final bot = widget.bot!;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+      child: Column(
+        children: [
+          Text(
+            _botCapReached
+                ? tr('Locul $_myPlace din $tableSize • plafonul de azi e atins, meciurile cu boți nu mai dau recompense până mâine',
+                    'Place $_myPlace of $tableSize • daily cap reached, bot matches give no rewards until tomorrow')
+                : tr('Locul $_myPlace din $tableSize • meci cu boți, nu contează la clasament',
+                    'Place $_myPlace of $tableSize • bot match, not ranked'),
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.white54, fontSize: 11.5, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          _rematchButton(
+            tr('🤖 Joacă din nou', '🤖 Play again'),
+            () => launchBotMatch(context, bot.settings, replace: true),
+          ),
+        ],
+      ),
     );
   }
 
@@ -749,7 +816,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
               if (_firstWinBonus || !_salvage.isEmpty) {
                 WidgetsBinding.instance.addPostFrameCallback((_) => _playRewardAnimations());
               }
-              final me = MultiplayerService.instance.currentPlayerId;
+              final me = _mp.currentPlayerId;
               final players = snap.data!;
               return Column(
                 children: [
@@ -916,7 +983,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                       },
                     ),
                   ),
-                  _buildRematchSection(),
+                  if (widget.bot == null) _buildRematchSection() else _buildBotFooter(players.length),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
                     child: SizedBox(

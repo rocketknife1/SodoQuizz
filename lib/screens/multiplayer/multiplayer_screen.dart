@@ -14,6 +14,7 @@ import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../bot_match_setup_screen.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/edit_name_dialog.dart';
 import '../../widgets/entrance_item.dart';
@@ -825,6 +826,23 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                             color: AppColors.orange,
                             onTap: _joinWithCode,
                             disabled: _offlineReason != null,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        EntranceItem(
+                          controller: _introCtrl,
+                          interval: const Interval(0.6, 1.0, curve: Curves.easeOutBack),
+                          slideFrom: 1,
+                          // Merge și fără internet: boții rulează pe telefon.
+                          child: _ActionTile(
+                            icon: Icons.smart_toy_rounded,
+                            title: tr('JOACĂ CU BOȚI', 'PLAY WITH BOTS'),
+                            subtitle: tr('Orice mod, 1-6 boți, fără internet', 'Any mode, 1-6 bots, no internet'),
+                            color: AppColors.purple,
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const BotMatchSetupScreen()),
+                            ),
                           ),
                         ),
                         if (_busy) ...[

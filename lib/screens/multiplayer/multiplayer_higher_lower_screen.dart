@@ -79,6 +79,8 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     final currentIds = players.map((p) => p.id).toSet();
     if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
       for (final id in _seenPlayerIds.difference(currentIds)) {
+        // Propria plecare nu se anunță — documentul meu dispare chiar când ies.
+        if (id == MultiplayerService.instance.currentPlayerId) continue;
         if (_announcedLeftIds.add(id)) {
           final name = _playerNamesCache[id] ?? '?';
           WidgetsBinding.instance.addPostFrameCallback((_) {

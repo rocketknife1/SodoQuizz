@@ -12,6 +12,7 @@ import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
@@ -34,17 +35,21 @@ import '../../core/breadcrumbs.dart';
 /// cu personajele care au răspuns corect sărind peste obstacolul din față.
 class MultiplayerObbyScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerObbyScreen({super.key, required this.matchId});
+  /// Meci cu boți (data/bot_match.dart) — null într-un meci online normal.
+  final BotMatch? bot;
+  const MultiplayerObbyScreen({super.key, required this.matchId, this.bot});
 
   @override
   State<MultiplayerObbyScreen> createState() => _MultiplayerObbyScreenState();
 }
 
 class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with SingleTickerProviderStateMixin {
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
   late final List<CultureQuestion> _pool = _buildPool();
 
-  late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
-  late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
+  late final Stream<MatchInfo> _matchStream = _mp.watchMatch(widget.matchId);
+  late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
 
   late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
 
@@ -117,7 +122,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     Breadcrumbs.drop('ecran: Meci Obby');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
-    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.obby);
+    _mp.markActiveMatch(widget.matchId, MatchGameMode.obby);
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi ObbySfx pentru de ce.
     ObbySfx.preload();
@@ -141,7 +146,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       }
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
-      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+      _mp.matchHeartbeat(widget.matchId);
     });
   }
 
@@ -180,7 +185,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     if (_left) return;
     _left = true;
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId);
+      await _mp.leaveMatch(widget.matchId);
     } catch (e) {
       debugPrint('MultiplayerObbyScreen._leave: leaveMatch a esuat: $e');
     } finally {
@@ -191,9 +196,9 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   void _selectAnswer(MatchInfo info, MatchPlayer? myPlayer, List<MatchPlayer> players, String answer) {
     if (info.roundPhase != RoundPhase.answering) return;
     if (myPlayer == null || myPlayer.obstaclesCleared >= obbyObstacleCount) return;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
-    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: answer);
+    _mp.submitRoundAnswer(matchId: widget.matchId, answer: answer);
 
     // Recompensa imediată (punctul 4 din planul de viitor): corectitudinea
     // se știe PE LOC — întrebarea și răspunsul corect sunt deja pe telefon
@@ -201,14 +206,18 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // rundei (asta poate dura până la [obbyRoundSeconds]s), altfel
     // recompensa n-ar mai fi "imediată", ar fi tot una cu premiul de final.
     if (answer == _questionFor(info.roundIndex).answer) {
-      StorageService.addCoins(obbyInstantCoinsPerCorrect);
-      setState(() => _instantCoinsThisMatch += obbyInstantCoinsPerCorrect);
-      if (mounted) {
-        CoinRewardOverlay.show(
-          context,
-          amount: obbyInstantCoinsPerCorrect,
-          targetKey: _coinPillKey,
-        );
+      // Cu boți nu: ar fi o fermă de monede fără plafon (recompensa lor e doar
+      // cea de la final, vezi core/bot_brain.dart#botMatchReward).
+      if (widget.bot == null) {
+        StorageService.addCoins(obbyInstantCoinsPerCorrect);
+        setState(() => _instantCoinsThisMatch += obbyInstantCoinsPerCorrect);
+        if (mounted) {
+          CoinRewardOverlay.show(
+            context,
+            amount: obbyInstantCoinsPerCorrect,
+            targetKey: _coinPillKey,
+          );
+        }
       }
       _maybeGrantPowerUp(info, players, me);
     }
@@ -264,11 +273,11 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
         }
       case PowerUp.jetpack:
-        MultiplayerService.instance.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
+        _mp.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.sabotage:
-        MultiplayerService.instance.useObbySabotage(matchId: widget.matchId);
+        _mp.useObbySabotage(matchId: widget.matchId);
       case PowerUp.peek:
-        showPeekResults(context, info, myId: MultiplayerService.instance.currentPlayerId, playerNames: _playerNames);
+        showPeekResults(context, info, myId: _mp.currentPlayerId, playerNames: _playerNames);
       default:
         break;
     }
@@ -281,7 +290,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     if (_resolving) return;
     _resolving = true;
     try {
-      await MultiplayerService.instance.closeObbyAnswering(
+      await _mp.closeObbyAnswering(
         matchId: widget.matchId,
         roundIndex: info.roundIndex,
         correctAnswer: _questionFor(info.roundIndex).answer,
@@ -296,7 +305,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     if (_resolvingChoices) return;
     _resolvingChoices = true;
     try {
-      await MultiplayerService.instance.resolveObbyChoices(
+      await _mp.resolveObbyChoices(
         matchId: widget.matchId,
         roundIndex: info.roundIndex,
       );
@@ -309,14 +318,14 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// trimite nimic, la fel ca la alegerea țintei din Quizz Tanks.
   void _choosePlatform(MatchInfo info, int index) {
     if (info.roundPhase != RoundPhase.choosing) return;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (!info.roundWinnerIds.contains(me)) return;
     if (info.roundPlatformChoices.containsKey(me)) return;
     // Confirmarea se aude ACUM, nu când vine snapshot-ul înapoi din
     // Firestore: la o conexiune slabă, un „toc" întârziat cu o secundă se
     // simte ca o apăsare care n-a fost înregistrată.
     ObbySfx.pick();
-    MultiplayerService.instance.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
+    _mp.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
   }
 
   void _onPlatformChosenFromGame(int index) {
@@ -328,7 +337,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// la fiecare rebuild al StreamBuilder-ului. [ObbyGame.applyRoundState] e
   /// idempotent, deci a-l chema des (inclusiv fără schimbări) e sigur.
   void _feedGame(MatchInfo info, List<MatchPlayer> players) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final revealing = info.roundPhase == RoundPhase.revealed;
     final racers = [
       for (final p in players)
@@ -363,7 +372,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   }
 
   bool _iAmChoosing(MatchInfo info) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     return info.roundPhase == RoundPhase.choosing && info.roundWinnerIds.contains(me);
   }
 
@@ -378,7 +387,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   void _playRevealSfx(MatchInfo info, List<MatchPlayer> players) {
     if (_playedRevealSfx) return;
     _playedRevealSfx = true;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     switch (_outcomeFor(info, me)) {
       case ObbyRoundOutcome.jumped:
         var myCleared = 0;
@@ -472,7 +481,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       // Tanks).
       if (info.status != MatchStatus.finished) {
         _advanceTimer ??= Timer(const Duration(seconds: obbyRevealSeconds), () {
-          MultiplayerService.instance.advanceObbyRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+          _mp.advanceObbyRound(matchId: widget.matchId, roundIndex: info.roundIndex);
         });
       }
     }
@@ -484,7 +493,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId, gameMode: MatchGameMode.obby),
+            builder: (_) => MultiplayerResultsScreen(bot: widget.bot,matchId: widget.matchId, gameMode: MatchGameMode.obby),
           ),
         );
       });
@@ -502,7 +511,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButton: widget.bot == null ? MatchOverlay(matchId: widget.matchId) : null,
         floatingActionButtonLocation: matchOverlayLocation,
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
@@ -517,7 +526,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                 builder: (context, playersSnap) {
                   final players = playersSnap.data ?? const <MatchPlayer>[];
                   _onData(info, players);
-                  final me = MultiplayerService.instance.currentPlayerId;
+                  final me = _mp.currentPlayerId;
                   MatchPlayer? myPlayer;
                   for (final p in players) {
                     if (p.id == me) {
@@ -710,7 +719,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // Odată ce am răspuns, ecranul ăsta nu se mai vede deloc — camera trece
     // pe scena 3rd-person (vezi switch-ul din [build] + [_buildWaitingCaption]),
     // deci nu mai e nevoie de un mesaj "ai răspuns" aici.
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
 
     // Bonusul câștigat în runda trecută se vede ABIA aici: două variante în
     // loc de patru. Până acum, câmpul era scris și stins corect în Firestore,
@@ -807,7 +816,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// cazul "nu sunt eu cel care alege" arată acum legenda scurtă de sub
   /// scena 3rd-person, vezi [_buildWaitingCaption].
   Widget _buildChoosingScene(MatchInfo info) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final myChoice = info.roundPlatformChoices[me];
 
     return Stack(
@@ -938,7 +947,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   /// Textul de sub scenă: întâi ce am pățit EU (ăsta e ce caută ochiul), apoi
   /// cine a mai trecut obstacolul.
   String _revealSummary(MatchInfo info, List<MatchPlayer> players) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (info.roundWinnerIds.contains(me)) {
       if (_advancedThisRound(info, me)) {
         return tr('✓ Placa a ținut! Bonus la întrebarea următoare.',

@@ -18,6 +18,7 @@ import '../core/obby.dart';
 import '../core/powerups.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
+import 'local_firestore.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
 
@@ -65,7 +66,7 @@ int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
 /// de rețea — doar impune un plafon minim, nu adaugă timp peste una lentă.
 const _writePace = Duration(milliseconds: 350);
 
-Future<T> _paced<T>(Future<T> Function() action) async {
+Future<T> _pacedWrite<T>(Future<T> Function() action) async {
   final results = await Future.wait([action(), Future<void>.delayed(_writePace)]);
   return results[0] as T;
 }
@@ -122,7 +123,16 @@ class MultiplayerService {
 
   bool _initialized = false;
 
+  /// Pauza dintre scrieri protejează cota Firestore; baza din memorie n-are
+  /// cotă, iar cu 6 boți pauza ar fi ținut pornirea meciului câteva secunde.
+  Future<T> _paced<T>(Future<T> Function() action) => isLocal ? action() : _pacedWrite(action);
+
   FirebaseFirestore get _db => _localDb ?? FirebaseFirestore.instance;
+
+  /// Baza din memorie nu înțelege `FieldValue.arrayUnion` (opac pe web) —
+  /// primește echivalentul ei, vezi data/local_firestore.dart.
+  Object _arrayUnion(List<Object?> elements) =>
+      isLocal ? LocalArrayUnion(elements) : FieldValue.arrayUnion(elements);
 
   /// Asigură o identitate (Google, dacă userul e logat prin Cont în Profil,
   /// altfel anonimă) — LAZY, doar când multiplayer-ul chiar e folosit.
@@ -325,7 +335,7 @@ class MultiplayerService {
     // scriere in care cineva se adauga singur, iar regula o permite EXACT in
     // forma asta (doar propriul uid, doar prin arrayUnion).
     await _paced(() => doc.reference.update({
-          'playerIds': FieldValue.arrayUnion([me]),
+          'playerIds': _arrayUnion([me]),
         }));
     return info;
   }
@@ -1766,7 +1776,7 @@ class MultiplayerService {
     await _paced(() => _db
         .collection('rematch_offers')
         .doc(matchId)
-        .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+        .update({'acceptedIds': _arrayUnion([currentPlayerId])}));
     return true;
   }
 
@@ -2248,7 +2258,7 @@ class MultiplayerService {
   Future<void> acceptQuickMatchOffer(String offerId) => _paced(() => _db
       .collection('quickmatch_offers')
       .doc(offerId)
-      .update({'acceptedIds': FieldValue.arrayUnion([currentPlayerId])}));
+      .update({'acceptedIds': _arrayUnion([currentPlayerId])}));
 
   /// Refuzul unui SINGUR jucător anulează oferta pentru amândoi — fiecare
   /// client, la rândul lui, reintră singur în coada de căutare (vezi

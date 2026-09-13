@@ -11,6 +11,7 @@ import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../core/cosmetics.dart';
@@ -38,7 +39,9 @@ import '../../core/breadcrumbs.dart';
 /// tocmai cel care ar fi trebuit s-o facă.
 class MultiplayerElectricChairScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerElectricChairScreen({super.key, required this.matchId});
+  /// Meci cu boți (data/bot_match.dart) — null într-un meci online normal.
+  final BotMatch? bot;
+  const MultiplayerElectricChairScreen({super.key, required this.matchId, this.bot});
 
   @override
   State<MultiplayerElectricChairScreen> createState() => _MultiplayerElectricChairScreenState();
@@ -46,8 +49,10 @@ class MultiplayerElectricChairScreen extends StatefulWidget {
 
 class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChairScreen>
     with SingleTickerProviderStateMixin {
-  late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
-  late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
+  late final Stream<MatchInfo> _matchStream = _mp.watchMatch(widget.matchId);
+  late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
 
   /// Câți jucători mai au vieți, actualizat în [_onData]. Poarta puterilor
   /// care n-au sens la doi — vezi `powerUpMinLivePlayers`.
@@ -150,7 +155,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     return choices;
   }
 
-  String get _myId => MultiplayerService.instance.currentPlayerId;
+  String get _myId => _mp.currentPlayerId;
 
   @override
   void initState() {
@@ -158,7 +163,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     Breadcrumbs.drop('ecran: Meci Scaunul Electric');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
-    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.electricChair);
+    _mp.markActiveMatch(widget.matchId, MatchGameMode.electricChair);
     // O data pe secunda, NU la 250ms. Nimic din ecranul asta nu se schimba mai des de o data pe secunda:
     // singurul consumator de timp e cronometrul, care numara in secunde.
     // Tick-ul asta exista doar pentru cronometru; la 250ms reconstruia tot
@@ -169,7 +174,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
-      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+      _mp.matchHeartbeat(widget.matchId);
     });
   }
 
@@ -197,7 +202,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (_left) return;
     _left = true;
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId);
+      await _mp.leaveMatch(widget.matchId);
     } catch (e) {
       debugPrint('MultiplayerElectricChairScreen._leave: leaveMatch a esuat: $e');
     } finally {
@@ -209,7 +214,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (info.roundPhase != RoundPhase.answering) return;
     if (info.roundAnswers.containsKey(_myId)) return;
     Sfx.tileSelect();
-    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
   }
 
   void _pickTarget(MatchInfo info, String targetId) {
@@ -225,7 +230,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (target == null) return;
     if (!info.roundWinnerIds.contains(_myId) || info.roundChairChoices.containsKey(_myId)) return;
     Sfx.tileSelect();
-    MultiplayerService.instance.submitElectricChairChoice(
+    _mp.submitElectricChairChoice(
       matchId: widget.matchId,
       targetId: target,
       questionIndex: questionIndex,
@@ -266,11 +271,11 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       case PowerUp.shield:
       case PowerUp.piercingShock:
       case PowerUp.reflect:
-        MultiplayerService.instance.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
+        _mp.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.allyShield:
-        MultiplayerService.instance.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+        _mp.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
       case PowerUp.repairKit:
-        MultiplayerService.instance.useElectricChairRepairKit(matchId: widget.matchId);
+        _mp.useElectricChairRepairKit(matchId: widget.matchId);
       case PowerUp.peek:
         showPeekResults(context, info, myId: _myId, playerNames: _playerNames);
       default:
@@ -320,7 +325,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (!info.roundChairAssignments.containsKey(_myId)) return;
     if (info.roundChairAnswers.containsKey(_myId)) return;
     Sfx.tileSelect();
-    MultiplayerService.instance.submitChairAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitChairAnswer(matchId: widget.matchId, answer: choice);
   }
 
   /// Aceeași frână ca la Quizz Tanks: `build` rulează de câteva ori pe
@@ -336,13 +341,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     _resolving = true;
     try {
       if (info.roundPhase == RoundPhase.answering) {
-        await MultiplayerService.instance.closeElectricChairAnswering(
+        await _mp.closeElectricChairAnswering(
           matchId: widget.matchId,
           roundIndex: info.roundIndex,
           correctAnswer: _questionFor(info.roundIndex).answer,
         );
       } else if (info.roundPhase == RoundPhase.targeting) {
-        await MultiplayerService.instance.resolveElectricChairTargeting(
+        await _mp.resolveElectricChairTargeting(
           matchId: widget.matchId,
           roundIndex: info.roundIndex,
         );
@@ -351,7 +356,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
           for (final entry in info.roundChairAssignments.entries)
             entry.key: _chairQuestionFor(info.roundIndex, entry.value).answer,
         };
-        await MultiplayerService.instance.resolveElectricChairRound(
+        await _mp.resolveElectricChairRound(
           matchId: widget.matchId,
           roundIndex: info.roundIndex,
           correctAnswers: correctAnswers,
@@ -371,6 +376,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     final currentIds = players.map((p) => p.id).toSet();
     if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
       for (final id in _seenPlayerIds.difference(currentIds)) {
+        // Propria plecare nu se anunță — documentul meu dispare chiar când ies.
+        if (id == _mp.currentPlayerId) continue;
         if (_announcedLeftIds.add(id)) {
           final name = _playerNames[id] ?? '?';
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -424,7 +431,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       _advanceTimer ??= Timer(
         Duration(seconds: electricChairRevealSecondsFor(anyoneTested: info.roundChairOutcomes.isNotEmpty)),
         () {
-          MultiplayerService.instance.advanceElectricChairRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+          _mp.advanceElectricChairRound(matchId: widget.matchId, roundIndex: info.roundIndex);
         },
       );
     }
@@ -438,7 +445,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId, gameMode: MatchGameMode.electricChair),
+              builder: (_) => MultiplayerResultsScreen(bot: widget.bot,matchId: widget.matchId, gameMode: MatchGameMode.electricChair),
             ),
           );
         },
@@ -455,7 +462,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButton: widget.bot == null ? MatchOverlay(matchId: widget.matchId) : null,
         floatingActionButtonLocation: matchOverlayLocation,
         body: SpaceBackground(
           child: SafeArea(

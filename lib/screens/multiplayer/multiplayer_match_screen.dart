@@ -8,6 +8,7 @@ import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
 import '../../core/theme.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../data/questions.dart';
 import '../../models/multiplayer_models.dart';
@@ -43,13 +44,17 @@ import '../../core/breadcrumbs.dart';
 /// nu valoarea lor (vezi core/betting.dart).
 class MultiplayerMatchScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerMatchScreen({super.key, required this.matchId});
+  /// Meci cu boți (data/bot_match.dart) — null într-un meci online normal.
+  final BotMatch? bot;
+  const MultiplayerMatchScreen({super.key, required this.matchId, this.bot});
 
   @override
   State<MultiplayerMatchScreen> createState() => _MultiplayerMatchScreenState();
 }
 
 class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
   List<Question> _questions = const [];
   bool _loading = true;
   int _qIndex = 0;
@@ -96,10 +101,10 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     Breadcrumbs.drop('ecran: Meci Clasic');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
-    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.classic);
+    _mp.markActiveMatch(widget.matchId, MatchGameMode.classic);
     _load();
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
-      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+      _mp.matchHeartbeat(widget.matchId);
     });
   }
 
@@ -130,7 +135,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   Future<void> _startClock() async {
     DateTime? startedAt;
     try {
-      startedAt = await MultiplayerService.instance
+      startedAt = await _mp
           .watchMatch(widget.matchId)
           .map((m) => m.startedAt?.toDate())
           .firstWhere((t) => t != null)
@@ -156,7 +161,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     // NU se scrie la fiecare răspuns.
     if (!_midSynced && left <= multiplayerMatchSeconds ~/ 2) {
       _midSynced = true;
-      MultiplayerService.instance.updateScore(matchId: widget.matchId, score: _myScore);
+      _mp.updateScore(matchId: widget.matchId, score: _myScore);
     }
 
     if (left <= 0) _finish();
@@ -172,7 +177,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     _left = true;
     _ticker?.cancel();
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId, abandoned: true);
+      await _mp.leaveMatch(widget.matchId, abandoned: true);
     } catch (e) {
       debugPrint('MultiplayerMatchScreen._leave: leaveMatch a esuat: $e');
     } finally {
@@ -189,14 +194,14 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     _ticker?.cancel();
     _left = true; // rezultatele preiau curatenia finala, nu mai trecem si prin leaveMatch
     try {
-      await MultiplayerService.instance.finishWithScore(matchId: widget.matchId, score: _myScore);
+      await _mp.finishWithScore(matchId: widget.matchId, score: _myScore);
     } catch (e) {
       debugPrint('MultiplayerMatchScreen._finish: scrierea scorului final a esuat: $e');
     }
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId)),
+      MaterialPageRoute(builder: (_) => MultiplayerResultsScreen(bot: widget.bot,matchId: widget.matchId)),
     );
   }
 
@@ -227,7 +232,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   /// ([catchUpBoostFor]). Rangul e calculat din ultima listă de jucători
   /// văzută de rândul de sus, nu dintr-o interogare nouă.
   void _maybeGrantPowerUp() {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (me.isEmpty) return;
     final players = _lastPlayers;
     final total = players.isEmpty ? 1 : players.length;
@@ -380,7 +385,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
             ),
           ),
         ),
-        floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButton: widget.bot == null ? MatchOverlay(matchId: widget.matchId) : null,
         floatingActionButtonLocation: matchOverlayLocation,
       ),
     );
@@ -495,11 +500,11 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     return SizedBox(
       height: 96,
       child: StreamBuilder<List<MatchPlayer>>(
-        stream: MultiplayerService.instance.watchPlayers(widget.matchId),
+        stream: _mp.watchPlayers(widget.matchId),
         builder: (context, snap) {
           final players = List.of(snap.data ?? const <MatchPlayer>[]);
           _lastPlayers = players;
-          final me = MultiplayerService.instance.currentPlayerId;
+          final me = _mp.currentPlayerId;
           // propriul scor e mereu cel local (instant), al celorlalți e
           // ultimul publicat — vezi sincronizarea de la jumătatea meciului
           int scoreOf(MatchPlayer p) => p.id == me ? _myScore : p.score;

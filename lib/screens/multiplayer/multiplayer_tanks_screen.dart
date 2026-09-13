@@ -11,6 +11,7 @@ import '../../core/stable_hash.dart';
 import '../../core/tanks.dart';
 import '../../core/theme.dart';
 import '../../data/culture_questions.dart';
+import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/match_overlay.dart';
@@ -41,17 +42,21 @@ import '../../core/breadcrumbs.dart';
 /// tocmai gazda.
 class MultiplayerTanksScreen extends StatefulWidget {
   final String matchId;
-  const MultiplayerTanksScreen({super.key, required this.matchId});
+  /// Meci cu boți (data/bot_match.dart) — null într-un meci online normal.
+  final BotMatch? bot;
+  const MultiplayerTanksScreen({super.key, required this.matchId, this.bot});
 
   @override
   State<MultiplayerTanksScreen> createState() => _MultiplayerTanksScreenState();
 }
 
 class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with SingleTickerProviderStateMixin {
+  MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
+
   late final List<CultureQuestion> _pool = _buildPool();
 
-  late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
-  late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
+  late final Stream<MatchInfo> _matchStream = _mp.watchMatch(widget.matchId);
+  late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
 
   /// Câți jucători sunt încă în viață (tanc nedistrus), actualizat în
   /// [_onData]. Ține poarta puterilor care n-au sens la 1v1 — vezi
@@ -223,7 +228,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     Breadcrumbs.drop('ecran: Meci Tancuri');
     // Reconectare: daca aplicatia moare in mijlocul meciului, butonul
     // de reconectare stie unde sa te intoarca (vezi MultiplayerService).
-    MultiplayerService.instance.markActiveMatch(widget.matchId, MatchGameMode.quizzTanks);
+    _mp.markActiveMatch(widget.matchId, MatchGameMode.quizzTanks);
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi TankSfx pentru de ce.
     TankSfx.preload();
@@ -240,7 +245,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
-      MultiplayerService.instance.matchHeartbeat(widget.matchId);
+      _mp.matchHeartbeat(widget.matchId);
     });
   }
 
@@ -272,7 +277,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     if (_left) return;
     _left = true;
     try {
-      await MultiplayerService.instance.leaveMatch(widget.matchId);
+      await _mp.leaveMatch(widget.matchId);
     } catch (e) {
       debugPrint('MultiplayerTanksScreen._leave: leaveMatch a esuat: $e');
     } finally {
@@ -282,10 +287,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   void _answer(MatchInfo info, String choice) {
     if (info.roundPhase != RoundPhase.answering) return;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
     Sfx.tileSelect();
-    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
   }
 
   /// Consumă power-up-ul curent.
@@ -319,7 +324,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     // răspuns deja, n-are ce ascunde. O păstrez pentru runda următoare în
     // loc s-o consum în gol (recenzie 2026-09-01).
     if (p == PowerUp.fiftyFifty &&
-        info.roundAnswers.containsKey(MultiplayerService.instance.currentPlayerId)) {
+        info.roundAnswers.containsKey(_mp.currentPlayerId)) {
       notifyPowerUpNoEffect(context);
       return;
     }
@@ -338,16 +343,16 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         stableShuffle(wrong, stableHash('${widget.matchId}#${info.roundIndex}#5050'));
         setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
       case PowerUp.repairKit:
-        MultiplayerService.instance.useTanksRepairKit(matchId: widget.matchId);
+        _mp.useTanksRepairKit(matchId: widget.matchId);
       case PowerUp.megaRocket:
       case PowerUp.doubleShot:
       case PowerUp.shield:
       case PowerUp.reflect:
-        MultiplayerService.instance.submitTanksPowerUp(matchId: widget.matchId, powerUp: p);
+        _mp.submitTanksPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.allyShield:
-        MultiplayerService.instance.useTanksAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+        _mp.useTanksAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
       case PowerUp.peek:
-        showPeekResults(context, info, myId: MultiplayerService.instance.currentPlayerId, playerNames: _playerNames);
+        showPeekResults(context, info, myId: _mp.currentPlayerId, playerNames: _playerNames);
       default:
         break;
     }
@@ -363,7 +368,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   void _maybeGrantPowerUp(MatchInfo info, List<MatchPlayer> players) {
     if (_powerUpRolledRound == info.roundIndex) return;
     _powerUpRolledRound = info.roundIndex;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (!info.roundWinnerIds.contains(me)) return;
     final ranked = List.of(players)..sort((a, b) => b.damageDealt.compareTo(a.damageDealt));
     final total = ranked.isEmpty ? 1 : ranked.length;
@@ -395,7 +400,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
 
   void _pickTarget(MatchInfo info, String targetId) {
     if (info.roundPhase != RoundPhase.targeting) return;
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     if (!info.roundWinnerIds.contains(me) || info.roundTargets.containsKey(me)) return;
 
     // Lovitură dublă: prima apăsare doar reține ținta, a doua trimite ambele
@@ -407,7 +412,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         return;
       }
       TankSfx.lock();
-      MultiplayerService.instance.submitTanksTarget(
+      _mp.submitTanksTarget(
         matchId: widget.matchId,
         targetId: _firstDoubleTarget!,
         secondTargetId: targetId,
@@ -416,7 +421,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     }
 
     TankSfx.lock();
-    MultiplayerService.instance.submitTanksTarget(matchId: widget.matchId, targetId: targetId);
+    _mp.submitTanksTarget(matchId: widget.matchId, targetId: targetId);
   }
 
   /// Închiderea fazei de răspuns și tragerea propriu-zisă merg prin aceeași
@@ -434,13 +439,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     _resolving = true;
     try {
       if (info.roundPhase == RoundPhase.answering) {
-        await MultiplayerService.instance.closeTanksAnswering(
+        await _mp.closeTanksAnswering(
           matchId: widget.matchId,
           roundIndex: info.roundIndex,
           correctAnswer: _questionFor(info.roundIndex).answer,
         );
       } else if (info.roundPhase == RoundPhase.targeting) {
-        await MultiplayerService.instance.resolveTanksRound(
+        await _mp.resolveTanksRound(
           matchId: widget.matchId,
           roundIndex: info.roundIndex,
         );
@@ -501,6 +506,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final currentIds = players.map((p) => p.id).toSet();
     if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
       for (final id in _seenPlayerIds.difference(currentIds)) {
+        // Propria plecare nu se anunță — documentul meu dispare chiar când ies.
+        if (id == _mp.currentPlayerId) continue;
         if (_announcedLeftIds.add(id)) {
           final name = _playerNames[id] ?? '?';
           WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -560,7 +567,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       // cum să se uite în același timp și la cronometru.
       if (!_playedAlarm && !allAnswered && _secondsLeftFor(info) <= 2) {
         _playedAlarm = true;
-        final me = MultiplayerService.instance.currentPlayerId;
+        final me = _mp.currentPlayerId;
         final iAmOut = players.any((p) => p.id == me && p.eliminated);
         if (!info.roundAnswers.containsKey(me) && !iAmOut) TankSfx.alarm();
       }
@@ -591,7 +598,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _advanceTimer ??= Timer(
         Duration(seconds: tanksRevealSecondsFor(anyShots: info.roundShots.isNotEmpty)),
         () {
-          MultiplayerService.instance.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
+          _mp.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
         },
       );
     }
@@ -610,7 +617,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => MultiplayerResultsScreen(matchId: widget.matchId, gameMode: MatchGameMode.quizzTanks),
+            builder: (_) => MultiplayerResultsScreen(bot: widget.bot,matchId: widget.matchId, gameMode: MatchGameMode.quizzTanks),
           ),
         );
       });
@@ -635,7 +642,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final shots = info.roundShots;
     final seeds = {for (final p in players) p.id: p.avatarSeed};
     final names = {for (final p in players) p.id: p.name};
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
 
     // Reflexii. `resolveTanksVolleys` scrie DOUĂ intrări pentru o reflexie:
     // trăgător→reflector (ratată) și reflector→trăgător (lovește). Le lipim
@@ -892,7 +899,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       },
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        floatingActionButton: MatchOverlay(matchId: widget.matchId),
+        floatingActionButton: widget.bot == null ? MatchOverlay(matchId: widget.matchId) : null,
         floatingActionButtonLocation: matchOverlayLocation,
         body: Container(
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
@@ -919,6 +926,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                     // întrebare ar fi tratată ca încă un buton de apăsat.
                     if (info.roundPhase == RoundPhase.targeting) {
                       return _TargetingView(
+                        myId: _mp.currentPlayerId,
                         info: info,
                         players: players,
                         question: _questionFor(info.roundIndex),
@@ -1150,7 +1158,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                     child: _TankCard(
                       player: players[i],
                       facingRight: i % layout.cols == 0,
-                      isMe: players[i].id == MultiplayerService.instance.currentPlayerId,
+                      isMe: players[i].id == _mp.currentPlayerId,
                       hasAnswered: info.roundAnswers.containsKey(players[i].id),
                       showAnswerTicks: info.roundPhase == RoundPhase.answering,
                       isFiring: info.roundPhase == RoundPhase.revealed &&
@@ -1236,7 +1244,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final t = _fire.value * tanksRevealSeconds;
     final showAt = _drainStart + _drainDuration + 0.15;
     if (t < showAt) return const SizedBox.shrink();
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final names = <String>[];
     var iAmWrecked = false;
     for (final p in players) {
@@ -1291,7 +1299,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   // ─── Întrebarea și variantele ─────────────────────────────────────────
 
   Widget _buildBottomPanel(MatchInfo info, List<MatchPlayer> players) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = _mp.currentPlayerId;
     final iAmDestroyed = players.any((p) => p.id == me && p.eliminated);
     final question = _questionFor(info.roundIndex);
     final revealed = info.roundPhase == RoundPhase.revealed;
@@ -1399,7 +1407,10 @@ class _TargetingView extends StatelessWidget {
   /// desenează sub conținut, deasupra dezvăluirii răspunsului.
   final Widget inventory;
 
+  final String myId;
+
   const _TargetingView({
+    required this.myId,
     required this.info,
     required this.players,
     required this.question,
@@ -1411,7 +1422,7 @@ class _TargetingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final me = MultiplayerService.instance.currentPlayerId;
+    final me = myId;
     final iAmShooter = info.roundWinnerIds.contains(me);
     final submitted = info.roundTargets[me];
     final iHaveDoubleShot = info.roundPowerUps[me] == PowerUp.doubleShot.name;
