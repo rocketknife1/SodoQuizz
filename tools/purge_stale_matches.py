@@ -37,7 +37,6 @@ RULARE (din radacina proiectului):
     python tools/purge_stale_matches.py --ore 24       # alta fereastra
     python tools/purge_stale_matches.py --toate        # ignora vechimea
 
-Sau, mai simplu, dublu-click pe "Curata camere blocate.bat".
 """
 import os
 import sys

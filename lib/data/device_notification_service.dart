@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -157,14 +158,33 @@ class DeviceNotificationService {
       final android = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       final granted = await android?.requestNotificationsPermission() ?? false;
-      // Alarmele exacte sunt o permisiune SEPARATĂ pe Android 14+. Fără ea,
-      // programarea exactă e refuzata si cadem pe una inexacta (vezi [_schedule]).
-      await android?.requestExactAlarmsPermission();
+      await _askExactAlarmsOnce(android);
       return granted;
     } catch (e) {
       debugPrint('DeviceNotificationService.requestPermission a esuat: $e');
       return false;
     }
+  }
+
+  /// Alarmele exacte (SCHEDULE_EXACT_ALARM) — O SINGURĂ DATĂ pe instalare.
+  ///
+  /// Cu ele, „roata e gata" vine fix la minut; fără ele, [_schedule] cade pe
+  /// programare inexactă și Android o poate amâna câteva minute (până la
+  /// ~15). Pe Android 14+ sunt refuzate din oficiu, iar
+  /// `requestExactAlarmsPermission` deschide ecranul de setări al sistemului.
+  /// Până pe 2026-09-11 nu se vedea, fiindcă USE_EXACT_ALARM le dădea
+  /// automat; scoasă aia (politica Play o permite doar aplicațiilor de
+  /// ceas/calendar), cererea necondiționată arunca userul în setări la
+  /// FIECARE pornire. Acum: întrebăm o dată, și doar dacă lipsesc.
+  static const _exactAlarmsAskedKey = 'exact_alarms_asked_v1';
+
+  Future<void> _askExactAlarmsOnce(AndroidFlutterLocalNotificationsPlugin? android) async {
+    if (android == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_exactAlarmsAskedKey) ?? false) return;
+    await prefs.setBool(_exactAlarmsAskedKey, true); // înainte: nu mai întrebăm nici dacă ceva pică
+    if (await android.canScheduleExactNotifications() ?? true) return;
+    await android.requestExactAlarmsPermission();
   }
 
   AndroidNotificationDetails get _details => const AndroidNotificationDetails(

@@ -274,6 +274,25 @@ const Map<PowerUp, int> powerUpDurationRounds = {
   PowerUp.allyShield: 2, // cerință explicită a userului
 };
 
+/// Câți jucători ÎN VIAȚĂ trebuie să fie la masă ca puterea să aibă sens.
+/// Cine nu apare aici merge la orice număr de jucători.
+///
+/// [PowerUp.allyShield] apără pe ALTCINEVA, ales automat (cel mai slăbit).
+/// La 1v1 „altcineva" e chiar adversarul: puterea îl face invulnerabil exact
+/// pe cel pe care vrei să-l lovești. Bug raportat live de pe telefon
+/// (2026-09-09). De la 3 jucători în sus alegerea redevine o decizie reală —
+/// ții în viață pe cel slăbit ca să nu câștige liderul.
+const Map<PowerUp, int> powerUpMinLivePlayers = {
+  PowerUp.allyShield: 3,
+};
+
+/// Sunt destui jucători în viață ca [p] să facă ceva? Vezi
+/// [powerUpMinLivePlayers]. Se verifică în DOUĂ momente, pentru că numărul
+/// de jucători scade în timpul meciului: la acordare (nu intră în pool) și
+/// la folosire (poate fi în inventar de când mai erau 3 în viață).
+bool powerUpHasEnoughPlayers(PowerUp p, int livePlayers) =>
+    livePlayers >= (powerUpMinLivePlayers[p] ?? 0);
+
 /// Multiplicatorul de daune al [PowerUp.megaRocket] — cerut explicit ca
 /// „mega rachetă", deci trebuie să se SIMTĂ, nu doar să fie cu puțin peste
 /// o lovitură obișnuită. La 3.5× din maximul normal, o mega rachetă ia cam
@@ -370,15 +389,23 @@ bool grantsPowerUp({
 }
 
 /// CARE power-up primește, dintre cele valabile în modul curent.
+///
+/// [livePlayers] = câți jucători sunt încă în viață ACUM (inclusiv cel care
+/// primește puterea). Puterile care n-au sens la atâția jucători nici nu
+/// intră în pool — vezi [powerUpMinLivePlayers].
 PowerUp powerUpFor({
   required String matchId,
   required int roundIndex,
   required String playerId,
   required String gameModeId,
+  required int livePlayers,
 }) {
   final pool = [
     for (final p in PowerUp.values)
-      if (p != PowerUp.none && (powerUpModes[p]?.contains(gameModeId) ?? false)) p,
+      if (p != PowerUp.none &&
+          (powerUpModes[p]?.contains(gameModeId) ?? false) &&
+          powerUpHasEnoughPlayers(p, livePlayers))
+        p,
   ];
   if (pool.isEmpty) return PowerUp.none;
   final pick = stableHash('$matchId#$roundIndex#$playerId#which') % pool.length;

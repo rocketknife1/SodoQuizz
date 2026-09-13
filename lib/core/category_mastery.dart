@@ -15,9 +15,6 @@ import 'dart:math';
 const int masterySeenTarget = 60;
 const double masteryMinAccuracy = 0.6;
 
-/// Câte categorii stăpânite deblochează titlul „Colecționar de Diplome".
-const int masteryTitleCategories = 3;
-
 bool isCategoryMastered({required int seen, required int correct}) {
   if (seen < masterySeenTarget) return false;
   return correct / seen >= masteryMinAccuracy;

@@ -53,11 +53,6 @@ class IapService {
 
   bool get ready => _started;
 
-  /// Prețul localizat venit de la Play (ex. „19,99 RON"). Gol până când
-  /// [start] a apucat să interogheze magazinul — până atunci se afișează
-  /// prețul din `shop.dart`.
-  String? localizedPrice(String productId) => _products[productId]?.price;
-
   /// Pornește ascultarea fluxului de achiziții. [onPurchases] primește tot ce
   /// vine de la Play: cumpărături noi, cele restaurate, erorile.
   ///

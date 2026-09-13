@@ -217,17 +217,6 @@ class ModerationService {
     }
   }
 
-  /// Câte raportări încă nerezolvate — pentru bulina de pe tab-ul de admin.
-  Future<int> pendingReportCount() async {
-    try {
-      final agg = await _db.collection('reports').where('handled', isEqualTo: false).count().get();
-      return agg.count ?? 0;
-    } catch (e) {
-      debugPrint('ModerationService.pendingReportCount a esuat: $e');
-      return 0;
-    }
-  }
-
   Future<bool> markReportHandled(String reportId, {bool handled = true}) async {
     try {
       await _db.collection('reports').doc(reportId).set({'handled': handled}, SetOptions(merge: true));

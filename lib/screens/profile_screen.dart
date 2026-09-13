@@ -45,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ascultăm rezultatul pe acest stream. Abonare o singură dată la nivel de
   // ecran (nu la fiecare deschidere a sheet-ului) ca să nu pierdem
   // evenimentul dacă vine chiar în clipa în care sheet-ul se închide.
-  StreamSubscription<GoogleSignInAuthenticationEvent>? _googleWebSub;
+  StreamSubscription<GoogleSignInAccount?>? _googleWebSub;
 
   @override
   void initState() {
@@ -59,11 +59,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // PlayerProfileService.startLive) — reîncărcăm ca numele nou să apară pe loc.
     PlayerProfileService.instance.profileChanged.addListener(_refreshBalances);
     if (kIsWeb) {
-      AuthService.instance.ensureGoogleInitialized();
-      _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((event) {
-        if (event is GoogleSignInAuthenticationEventSignIn) {
-          _completeWebGoogleSignIn(event.user);
-        }
+      _googleWebSub = AuthService.instance.googleAuthenticationEvents.listen((account) {
+        if (account != null) _completeWebGoogleSignIn(account);
       });
     }
   }
@@ -677,8 +674,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   /// înghețat câteva secunde între tap și rezultat, mai ales quand cloud-ul
   /// suprascrie progresul local (poate pierde progres de Guest, merită
   /// feedback vizibil cât se întâmplă). Blocant (fără dismiss/back), la fel
-  /// ca celelalte dialoguri de tranziție obligatorie din joc (ex.
-  /// GameScreen._showCategoryExitDialog).
+  /// ca celelalte dialoguri de tranziție obligatorie din joc.
   void _showSyncingDialog() {
     showDialog<void>(
       context: context,

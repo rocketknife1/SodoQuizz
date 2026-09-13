@@ -848,7 +848,7 @@ class StorageService {
   // ─── Cadoul de gems „din partea casei" ────────────────────────────────────
   // Era un simplu MESAJ care se stingea singur când scădea soldul. Acum e un
   // buton de revendicat, care revine la [gemGiftCooldownHours] (vezi
-  // core/shop_gifts.dart pentru cât și DE CE atât).
+  // data/shop.dart (gemGiftCooldownHours) pentru cât și DE CE atât).
   //
   // Acelaşi tipar ca la roată: timestamp, nu dată calendaristică — cine
   // revendică seara nu trebuie să aştepte până a doua zi dimineaţa.
@@ -861,16 +861,6 @@ class StorageService {
     if (last == null) return true;
     final elapsed = DateTime.now().millisecondsSinceEpoch - last;
     return elapsed >= const Duration(hours: gemGiftCooldownHours).inMilliseconds;
-  }
-
-  /// Timpul rămas până la următorul cadou (zero dacă e deja disponibil).
-  static Future<Duration> gemGiftTimeRemaining() async {
-    final prefs = await SharedPreferences.getInstance();
-    final last = prefs.getInt(_gemGiftTimestampKey);
-    if (last == null) return Duration.zero;
-    final elapsed = DateTime.now().millisecondsSinceEpoch - last;
-    final remaining = const Duration(hours: gemGiftCooldownHours).inMilliseconds - elapsed;
-    return remaining > 0 ? Duration(milliseconds: remaining) : Duration.zero;
   }
 
   /// ȚINE MINTE că s-a revendicat — gems-ii îi scrie apelantul, aceeași
@@ -1758,7 +1748,7 @@ class StorageService {
   }
 
   /// Varianta CITIRE, fără să scrie nimic — folosită de banner-ul "Categoria
-  /// zilei" (vezi CategoriesScreen, PLAN_DE_VIITOR.md punctul 5) ca să știe
+  /// zilei" (vezi CategoriesScreen, Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 5) ca să știe
   /// dacă butonul de revendicare poate fi apăsat, fără să afecteze contorul
   /// real de "moduri jucate azi" pe care se bazează quest-ul.
   static Future<bool> wasModePlayedToday(String gameModeId) async {
@@ -1802,7 +1792,7 @@ class StorageService {
 
   // ─── Categoria zilei ────────────────────────────────────────────────────
   //
-  // Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — cea mai mică variantă
+  // Conținut rotativ (Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 5) — cea mai mică variantă
   // reală care se putea face: o categorie evidențiată, aleasă determinist pe
   // zi (vezi core/gamemodes.dart#featuredGameModeToday), cu un bonus mic,
   // revendicabil O SINGURĂ dată pe zi, DUPĂ ce ai jucat-o măcar o dată azi
@@ -2132,22 +2122,6 @@ class StorageService {
         .toList();
   }
 
-  /// Câte categorii sunt „stăpânite" acum (vezi core/category_mastery.dart).
-  /// Enumeră cheile `cat_stats_*` direct — nu are nevoie de lista de moduri.
-  static Future<int> masteredCategoryCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    var n = 0;
-    for (final k in prefs.getKeys()) {
-      if (!k.startsWith('cat_stats_')) continue;
-      final parts = (prefs.getString(k) ?? '').split(':');
-      if (parts.length < 2) continue;
-      final seen = int.tryParse(parts[0]) ?? 0;
-      final correct = int.tryParse(parts[1]) ?? 0;
-      if (isCategoryMastered(seen: seen, correct: correct)) n++;
-    }
-    return n;
-  }
-
   // ─── Recorduri personale (#3 retenție) ───────────────────────────────────
   // Cel mai rapid răspuns corect (milisecunde) + un instantaneu săptămânal
   // pentru „+X față de acum 7 zile". `updateHighScore` / `updateModeHighScore`
@@ -2239,11 +2213,6 @@ class StorageService {
   static Future<void> incrementHintsUsedTotal() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_hintsUsedTotalKey, (prefs.getInt(_hintsUsedTotalKey) ?? 0) + 1);
-  }
-
-  static Future<Set<String>> getModesEverPlayed() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_modesEverPlayedKey)?.toSet() ?? {};
   }
 
   static Future<void> recordModeEverPlayed(String gameModeId) async {
@@ -2385,7 +2354,7 @@ class StorageService {
   /// altfel cel cu ținta mai mare ar rămâne sub prag.
   ///
   /// Realizările nu au un progres stocat separat — se calculează live din
-  /// contoarele reale (vezi [_achievementProgressResolver]), deci aici doar
+  /// contoarele reale (vezi [achievementProgressResolver]), deci aici doar
   /// aducem acele contoare la nivelul necesar (niciodată în jos, doar dacă
   /// sunt deja sub prag).
   ///
@@ -2441,11 +2410,6 @@ class StorageService {
     final generated = 'Jucator${100 + DateTime.now().millisecondsSinceEpoch % 900}';
     await prefs.setString(_displayNameKey, generated);
     return generated;
-  }
-
-  static Future<void> setDisplayName(String name) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_displayNameKey, name);
   }
 
   /// Numele pe care jucătorul chiar și l-a ales, sau `''` dacă n-a ales

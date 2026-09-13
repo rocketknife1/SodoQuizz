@@ -53,6 +53,18 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
   late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
 
+  /// Câți jucători sunt încă în viață (tanc nedistrus), actualizat în
+  /// [_onData]. Ține poarta puterilor care n-au sens la 1v1 — vezi
+  /// `powerUpMinLivePlayers` din core/powerups.dart.
+  int _livePlayers = 0;
+
+  /// Id-urile jucătorilor văzuți la ultima citire — ca să observăm cine
+  /// dispare din `watchPlayers` cât meciul încă se joacă (vezi
+  /// [notifyPlayerLeft]). [_announcedLeftIds] evită un al doilea anunț dacă
+  /// `_onData` rulează din nou (StreamBuilder poate re-emite des).
+  Set<String> _seenPlayerIds = const {};
+  final Set<String> _announcedLeftIds = {};
+
   /// Controlerul întregului spectacol de după rundă (tunuri, proiectile,
   /// impacturi, bare care scad, epave). Rulează exact [tanksRevealSeconds],
   /// iar toți timpii de mai jos sunt secunde în interiorul lui.
@@ -311,6 +323,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       notifyPowerUpNoEffect(context);
       return;
     }
+    // Scutul pe aliat poate fi în inventar de când mai erau 3 tancuri în
+    // viață. Dacă între timp am rămas 1v1, „aliatul cel mai slăbit" e chiar
+    // adversarul — l-aș face invulnerabil exact când vreau să-l lovesc.
+    if (!powerUpHasEnoughPlayers(p, _livePlayers)) {
+      notifyPowerUpNeedsMorePlayers(context);
+      return; // păstrează puterea pentru un meci/rundă cu mai mulți în viață
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
@@ -359,7 +378,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       totalPlayers: total,
     );
     if (!granted) return;
-    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'quizzTanks');
+    final picked = powerUpFor(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      gameModeId: 'quizzTanks',
+      livePlayers: players.where((p) => !p.eliminated).length,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _myPowerUps.add(picked));
@@ -467,10 +492,32 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// Apelat din build, ca RoomLobbyScreen._maybeNavigateToMatch și
   /// MultiplayerHigherLowerScreen._onData: pornește/oprește animații,
   /// cere rezolvarea rundei, navighează la rezultate.
+  /// Cine a dispărut din listă între o citire și următoarea — [leaveMatch]
+  /// îi șterge documentul din `players` imediat ce apasă înapoi, deci pentru
+  /// cel rămas jucătorul respectiv dispare pur și simplu. Anunțăm explicit
+  /// (tancul dispărut de la masă) în loc să-l lăsăm să dispară în tăcere din clasament —
+  /// bug raportat live de pe telefon (2026-09-09), mai vizibil la 1v1.
+  void _detectPlayersWhoLeft(MatchInfo info, List<MatchPlayer> players) {
+    final currentIds = players.map((p) => p.id).toSet();
+    if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
+      for (final id in _seenPlayerIds.difference(currentIds)) {
+        if (_announcedLeftIds.add(id)) {
+          final name = _playerNames[id] ?? '?';
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) notifyPlayerLeft(context, name);
+          });
+        }
+      }
+    }
+    _seenPlayerIds = currentIds;
+  }
+
   void _onData(MatchInfo info, List<MatchPlayer> players) {
     for (final p in players) {
       _playerNames[p.id] = p.name;
     }
+    _livePlayers = players.where((p) => !p.eliminated).length;
+    _detectPlayersWhoLeft(info, players);
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _hpAtRoundStart
@@ -684,6 +731,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
           flightDuration: _flightDuration * 1.8,
           color: pickAvatarColor(seeds[s.byId] ?? s.byId),
           reflectBackTo: from,
+          // Chiar dacă s-a întors în trăgător, rămâne o mega rachetă vizual —
+          // adversarul care are Reflexie nu-i schimbă natura proiectilului.
+          isMegaRocket: info.roundPowerUps[s.byId] == PowerUp.megaRocket.name,
         );
         flights.add(flight);
         if (s.byId == me) {
@@ -730,6 +780,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         blockedByShield: blocked,
         splitPoint: splitPoint,
         splitLead: sj != null && i < sj,
+        isMegaRocket: info.roundPowerUps[s.byId] == PowerUp.megaRocket.name,
       );
       flights.add(flight);
       if (s.byId == me) {

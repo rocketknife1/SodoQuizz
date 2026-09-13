@@ -247,7 +247,13 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
       totalPlayers: total,
     );
     if (!granted) return;
-    _myPowerUp = powerUpFor(matchId: widget.matchId, roundIndex: _qIndex, playerId: me, gameModeId: 'classic');
+    _myPowerUp = powerUpFor(
+      matchId: widget.matchId,
+      roundIndex: _qIndex,
+      playerId: me,
+      gameModeId: 'classic',
+      livePlayers: total, // Classic n-are eliminari: toti raman in joc
+    );
     Sfx.rewardPop();
   }
 

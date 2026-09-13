@@ -178,7 +178,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
   /// String. Nu se poate confunda cu un nume tastat: butonul „Salvează"
   /// întoarce mereu textul cu `trim()`, deci nimic din câmp nu poate ieși cu
   /// spații la capete.
-  static const _unlockSentinel = ' ::unlock:: ';
+  static const _unlockSentinel = '\u0000::unlock::\u0000';
 
   void _copyUid() {
     Clipboard.setData(ClipboardData(text: widget.profile.uid));

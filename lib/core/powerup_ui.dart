@@ -83,6 +83,40 @@ void notifyPowerUpNoEffect(BuildContext context) {
     ));
 }
 
+/// Puterea are nevoie de mai mulți jucători în viață (azi doar
+/// [PowerUp.allyShield], care la 1v1 ar apăra chiar adversarul — vezi
+/// `powerUpMinLivePlayers`). NU se consumă: rămâne în inventar.
+void notifyPowerUpNeedsMorePlayers(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      content: Text(tr(
+        'N-ai pe cine apăra — la doi jucători ar apăra adversarul. O păstrezi.',
+        'Nobody to protect — with two players it would shield your opponent. You keep it.',
+      )),
+    ));
+}
+
+/// Un adversar/coechipier a plecat din meci CÂT ÎNCĂ SE JOACĂ — dispărut din
+/// `watchPlayers` (leaveMatch îi șterge documentul, vezi
+/// MultiplayerService.leaveMatch) fără să fi terminat runda. Fără mesajul
+/// ăsta, jucătorul rămas dispărea din listă/clasament în tăcere — la 1v1
+/// mai ales, arăta ca un bug, nu ca „a ieșit celălalt". Bug raportat live
+/// de pe telefon (2026-09-09).
+void notifyPlayerLeft(BuildContext context, String name) {
+  if (!context.mounted) return;
+  InAppNotification.showInfo(
+    context,
+    title: tr('A ieșit din meci', 'Left the match'),
+    message: tr('$name a părăsit meciul.', '$name left the match.'),
+    icon: Icons.logout_rounded,
+    color: AppColors.danger,
+    duration: const Duration(seconds: 4),
+  );
+}
+
 /// Anunță jucătorul că tocmai a primit un power-up.
 void announcePowerUp(BuildContext context, PowerUp p) {
   if (!context.mounted) return;

@@ -197,7 +197,7 @@ GameMode gameModeById(String id) => gameModes.firstWhere((m) => m.id == id);
 
 // ─── Categoria zilei ────────────────────────────────────────────────────
 //
-// Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — pilotul cel mai simplu
+// Conținut rotativ (Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 5) — pilotul cel mai simplu
 // care rămâne totuși REAL: o categorie evidențiată, aleasă determinist pe
 // zi (aceeași pentru toți jucătorii, ca o "temă a zilei"), cu un mic bonus
 // de revendicat DUPĂ ce ai jucat-o (vezi CategoriesScreen și

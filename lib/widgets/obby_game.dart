@@ -407,10 +407,6 @@ class ObbyGame extends FlameGame with TapCallbacks {
   }
 }
 
-extension on Iterable<ObbyRacerData> {
-  ObbyRacerData? get firstOrNull => isEmpty ? null : first;
-}
-
 // ─── Componente ──────────────────────────────────────────────────────────
 
 /// Un câmp de stele, generat o singură dată la construcție — NU la fiecare

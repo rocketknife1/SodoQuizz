@@ -230,7 +230,13 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       totalPlayers: total,
     );
     if (!granted) return;
-    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'obby');
+    final picked = powerUpFor(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      gameModeId: 'obby',
+      livePlayers: players.where((p) => !p.eliminated).length,
+    );
     setState(() => _myPowerUp = picked);
     Sfx.rewardPop();
     announcePowerUp(context, picked);

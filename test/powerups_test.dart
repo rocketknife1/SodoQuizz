@@ -62,16 +62,38 @@ void main() {
   group('power-up-uri', () {
     test('e determinist: acelasi jucator, aceeasi runda, acelasi power-up', () {
       for (var round = 1; round <= 20; round++) {
-        final a = powerUpFor(matchId: 'M1', roundIndex: round, playerId: 'p1', gameModeId: 'obby');
-        final b = powerUpFor(matchId: 'M1', roundIndex: round, playerId: 'p1', gameModeId: 'obby');
+        final a = powerUpFor(matchId: 'M1', roundIndex: round, playerId: 'p1', gameModeId: 'obby', livePlayers: 4);
+        final b = powerUpFor(matchId: 'M1', roundIndex: round, playerId: 'p1', gameModeId: 'obby', livePlayers: 4);
         expect(a, b);
       }
+    });
+
+    test('la 1v1 nu se acorda Scut pe Aliat — ar apara chiar adversarul', () {
+      // Bug gasit pe telefon (2026-09-09): la doi jucatori, „cel mai slabit
+      // aliat" e singurul adversar, deci puterea il facea invulnerabil.
+      for (final mode in ['quizzTanks', 'electricChair']) {
+        for (var round = 1; round <= 200; round++) {
+          final p = powerUpFor(
+            matchId: 'M', roundIndex: round, playerId: 'p$round', gameModeId: mode, livePlayers: 2);
+          expect(p, isNot(PowerUp.allyShield), reason: 'Scut pe Aliat a aparut la 1v1 in $mode');
+        }
+      }
+    });
+
+    test('de la 3 jucatori in sus Scutul pe Aliat redevine posibil', () {
+      var seen = false;
+      for (var m = 0; m < 200 && !seen; m++) {
+        seen = powerUpFor(
+                matchId: 'match$m', roundIndex: 3, playerId: 'p1', gameModeId: 'quizzTanks', livePlayers: 3) ==
+            PowerUp.allyShield;
+      }
+      expect(seen, isTrue, reason: 'Scutul pe Aliat a disparut complet, nu doar de la 1v1');
     });
 
     test('nu se acorda niciodata unui power-up dintr-un mod strain', () {
       for (final mode in ['quizzTanks', 'obby', 'electricChair', 'higherLower']) {
         for (var round = 1; round <= 60; round++) {
-          final p = powerUpFor(matchId: 'M', roundIndex: round, playerId: 'p$round', gameModeId: mode);
+          final p = powerUpFor(matchId: 'M', roundIndex: round, playerId: 'p$round', gameModeId: mode, livePlayers: 4);
           if (p == PowerUp.none) continue;
           expect(powerUpModes[p], contains(mode), reason: '$p a aparut in modul $mode');
         }

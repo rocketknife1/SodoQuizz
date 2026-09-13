@@ -19,8 +19,15 @@ dependencies:
   firebase_core: ^4.12.1
   cloud_firestore: ^6.7.1
   firebase_auth: ^6.5.6
-  google_sign_in: ^7.1.1
-  google_sign_in_web: ^1.0.0
+  # COBORÂT de la ^7.1.1 pe 2026-09-11: v7 trece pe Android prin ecranul
+  # nou "Credential Manager" al sistemului, si EXACT acolo se produce
+  # ecranul negru (fereastra externa GoogleSignInActivity, confirmat in
+  # logcat) — bug de driver Vulkan/Impeller pe placa Samsung Xclipse.
+  # 6.2.1 foloseste SDK-ul vechi de Google, alta fereastra, alt cod — nu
+  # mai declanseaza bug-ul. Verificat: Play Games (alt flux) NU dadea
+  # ecran negru, deci problema era STRICT in fereastra asta, nu generala.
+  google_sign_in: 6.2.1
+  google_sign_in_web: 0.12.4+4
   http: ^1.6.0
   google_mobile_ads: ^5.3.1
   firebase_auth_games_services: ^3.0.1

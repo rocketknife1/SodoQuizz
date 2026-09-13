@@ -61,7 +61,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
   /// dea cadoul de două ori.
   bool _claiming = false;
 
-  /// Categoria evidențiată azi (conținut rotativ, PLAN_DE_VIITOR.md punctul
+  /// Categoria evidențiată azi (conținut rotativ, Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul
   /// 5) — calculată o singură dată la montare, nu la fiecare build: nu se
   /// schimbă cât timp stai pe ecran, iar `DateTime.now()` direct în build ar
   /// fi doar zgomot.
@@ -587,7 +587,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     setState(() => _featuredFuture = _loadFeaturedClaimState());
   }
 
-  /// Conținut rotativ (PLAN_DE_VIITOR.md punctul 5) — categoria evidențiată
+  /// Conținut rotativ (Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 5) — categoria evidențiată
   /// azi, aceeași pentru toți jucătorii (vezi [_featured] și
   /// core/gamemodes.dart#featuredGameModeToday). Trei stări: încă nejucată
   /// azi (doar anunț), jucată dar nerevendicată (buton activ), deja

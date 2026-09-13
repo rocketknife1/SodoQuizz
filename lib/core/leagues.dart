@@ -5,7 +5,7 @@ import 'lang.dart';
 /// cum urcă/coboară punctele. Pragurile sunt de playtesting, nu literă de
 /// lege — ușor de ajustat aici, într-un singur loc.
 ///
-/// De la [currentSeasonKey] încoace (2026-08-23, PLAN_DE_VIITOR.md punctul
+/// De la [currentSeasonKey] încoace (2026-08-23, Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul
 /// 1), există DOUĂ feluri de puncte pe fiecare profil:
 ///  - [PlayerProfile.leaguePoints] — cumulat pe viață, NU se resetează
 ///    niciodată. Rămâne sursa pentru "cel mai bun rezultat vreodată" și

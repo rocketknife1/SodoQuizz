@@ -1,4 +1,5 @@
 import '../models/multiplayer_models.dart';
+import 'daily_challenge.dart';
 import 'lang.dart';
 import 'stable_hash.dart';
 
@@ -37,16 +38,9 @@ const List<MatchGameMode> dailyModePool = [
 const int dailyModeCoinReward = 20;
 const int dailyModeXpReward = 8;
 
-/// Cheia zilei — `2026-09-08`, oră locală, la fel ca restul „zilnicelor".
-String dailyModeDateKey(DateTime day) {
-  final m = day.month.toString().padLeft(2, '0');
-  final d = day.day.toString().padLeft(2, '0');
-  return '${day.year}-$m-$d';
-}
-
 /// Modul evidențiat azi — același pentru toată lumea.
 MatchGameMode modeOfDay([DateTime? now]) {
-  final key = dailyModeDateKey(now ?? DateTime.now());
+  final key = dailyChallengeDateKey(now ?? DateTime.now());
   final idx = stableHash('modul-zilei-$key').abs() % dailyModePool.length;
   return dailyModePool[idx];
 }

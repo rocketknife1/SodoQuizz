@@ -100,12 +100,29 @@ const int higherLowerPointsPerWin = 10;
 /// atât camerele private (cu `code`) cât și meciurile de matchmaking public
 /// (fără cod) — vezi [MatchInfo].
 class MultiplayerService {
-  MultiplayerService._();
+  MultiplayerService._()
+      : _localDb = null,
+        _localPlayerId = null;
+
+  /// Meci cu boți: aceeași logică, pe o bază de date din memorie, cu identitate
+  /// dată de apelant. Fiecare bot are propria instanță peste ACEEAȘI bază, deci
+  /// joacă prin exact aceleași metode ca un client real. Vezi data/bot_match.dart.
+  MultiplayerService.local({required FirebaseFirestore db, required String playerId})
+      : _localDb = db,
+        _localPlayerId = playerId;
+
   static final instance = MultiplayerService._();
+
+  final FirebaseFirestore? _localDb;
+  final String? _localPlayerId;
+
+  /// Adevărat în meciurile cu boți — nimic nu atinge Firestore-ul real,
+  /// clasamentul, rating-ul sau reconectarea.
+  bool get isLocal => _localDb != null;
 
   bool _initialized = false;
 
-  FirebaseFirestore get _db => FirebaseFirestore.instance;
+  FirebaseFirestore get _db => _localDb ?? FirebaseFirestore.instance;
 
   /// Asigură o identitate (Google, dacă userul e logat prin Cont în Profil,
   /// altfel anonimă) — LAZY, doar când multiplayer-ul chiar e folosit.
@@ -121,7 +138,7 @@ class MultiplayerService {
   /// des decât un cont Google: el chiar trebuie să facă login anonim în acel
   /// moment, pe când contul Google e deja autentificat de la pornire.
   Future<void> ensureInitialized() async {
-    if (_initialized) return;
+    if (_initialized || isLocal) return;
     Object? lastError;
     for (var attempt = 1; attempt <= 3; attempt++) {
       try {
@@ -162,7 +179,7 @@ class MultiplayerService {
         text.contains('unreachable');
   }
 
-  String get currentPlayerId => FirebaseAuth.instance.currentUser?.uid ?? '';
+  String get currentPlayerId => _localPlayerId ?? FirebaseAuth.instance.currentUser?.uid ?? '';
 
   String _randomCode() {
     final rnd = Random();
@@ -656,7 +673,7 @@ class MultiplayerService {
   /// aleagă", scris deja de [closeObbyAnswering] — aceeași graniță de
   /// încredere ca între [closeTanksAnswering] și [resolveTanksRound].
   ///
-  /// Aici se aplică și cele două evenimente de rundă din PLAN_DE_VIITOR.md
+  /// Aici se aplică și cele două evenimente de rundă din Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters)
   /// (punctul 3) — [obbyIsDoubleRound] (cine sare azi trece DOUĂ obstacole)
   /// și [obbyIsComebackRound] (ultimul din clasament, la penultima rundă,
   /// pleacă mereu cu bonus la runda finală, indiferent cum îi iese placa
@@ -963,6 +980,11 @@ class MultiplayerService {
     try {
       await _db.runTransaction((tx) async {
         final playersSnap = await matchRef.collection('players').get();
+        // Ultima poartă a regulii „nu la 1v1": ecranul o verifică deja, dar
+        // aici se decide efectiv scrierea, cu datele proaspete din tranzacție
+        // (vezi `powerUpMinLivePlayers`).
+        final live = playersSnap.docs.where((d) => d.data()['eliminated'] != true).length;
+        if (!powerUpHasEnoughPlayers(PowerUp.allyShield, live)) return;
         String? weakestId;
         var weakestHp = 1 << 30;
         for (final doc in playersSnap.docs) {
@@ -997,6 +1019,24 @@ class MultiplayerService {
           if (data['eliminated'] == true) return;
           final hp = data['hp'] as int? ?? tanksMaxHp;
           tx.update(ref, {'hp': (hp + repairKitHp).clamp(0, tanksMaxHp)});
+        }));
+  }
+
+  /// [PowerUp.repairKit] la Scaunul Electric: [repairKitLives] vieți înapoi,
+  /// instant, plafonat la [electricChairMaxLives]; nu învie un eliminat.
+  /// Până pe 2026-09-10 puterea putea pica în modul ăsta (e în pool, vezi
+  /// `powerUpModes`), dar ecranul n-avea caz pentru ea: se consuma și nu
+  /// făcea nimic.
+  Future<void> useElectricChairRepairKit({required String matchId}) {
+    final me = currentPlayerId;
+    final ref = _db.collection('matches').doc(matchId).collection('players').doc(me);
+    return _paced(() => _db.runTransaction((tx) async {
+          final doc = await tx.get(ref);
+          if (!doc.exists) return;
+          final data = doc.data()!;
+          if (data['eliminated'] == true) return;
+          final lives = data['lives'] as int? ?? electricChairMaxLives;
+          tx.update(ref, {'lives': (lives + repairKitLives).clamp(0, electricChairMaxLives)});
         }));
   }
 
@@ -1497,6 +1537,8 @@ class MultiplayerService {
     try {
       await _db.runTransaction((tx) async {
         final playersSnap = await matchRef.collection('players').get();
+        final live = playersSnap.docs.where((d) => d.data()['eliminated'] != true).length;
+        if (!powerUpHasEnoughPlayers(PowerUp.allyShield, live)) return;
         String? weakestId;
         var weakestLives = 1 << 30;
         for (final doc in playersSnap.docs) {
@@ -1619,7 +1661,7 @@ class MultiplayerService {
 
   Future<void> _recordAbandon(
       DocumentReference<Map<String, dynamic>> matchRef, MatchInfo info) async {
-    if (info.mode != MatchMode.public) return;
+    if (isLocal || info.mode != MatchMode.public) return;
     if (!_rankedAbandonModes.contains(info.gameMode)) return;
     try {
       final mine = await matchRef.collection('players').doc(currentPlayerId).get();
@@ -1969,6 +2011,7 @@ class MultiplayerService {
   final Set<String> _mpStartLogged = {};
 
   Future<void> markActiveMatch(String matchId, MatchGameMode gameMode) async {
+    if (isLocal) return;
     _screenMatchId = matchId;
     if (_mpStartLogged.add(matchId)) {
       Analytics.instance.multiplayerStarted(gameMode.name);
@@ -1982,6 +2025,7 @@ class MultiplayerService {
   }
 
   Future<void> clearActiveMatch(String matchId) async {
+    if (isLocal) return;
     try {
       final stored = await StorageService.getActiveMatch();
       // Nu sterge daca intre timp am intrat in ALT meci (revansa imediata).

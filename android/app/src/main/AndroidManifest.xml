@@ -10,16 +10,19 @@
     <!-- Notificari pe telefon (vezi lib/data/device_notification_service.dart).
          POST_NOTIFICATIONS e ceruta de la Android 13 incolo si trebuie ceruta
          SI la rulare, nu doar declarata aici.
-         SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM: notificarile noastre sunt
-         legate de momente exacte (roata s-a resetat la fix 24h de la ultimul
-         spin, planeta la fix 12h). Fara ele, Android amana declansarea cu
-         zeci de minute ca sa economiseasca bateria, iar "e gata acum" ar
-         ajunge cand nu mai e adevarat.
+         SCHEDULE_EXACT_ALARM: notificarile noastre sunt legate de momente
+         exacte (roata s-a resetat la fix 24h de la ultimul spin, planeta la
+         fix 12h). Fara ea, Android amana declansarea cu zeci de minute ca sa
+         economiseasca bateria. Se cere si la rulare; daca userul o refuza,
+         DeviceNotificationService._schedule cade pe programare inexacta.
+         USE_EXACT_ALARM a fost SCOASA pe 2026-09-10: Google Play o permite
+         doar aplicatiilor de ceas desteptator/calendar, deci un joc care o
+         declara risca respingerea la review. Nu adauga nimic fata de
+         SCHEDULE_EXACT_ALARM + rezerva inexacta de mai sus.
          RECEIVE_BOOT_COMPLETED: alarmele programate se pierd la repornirea
          telefonului; cu ea, pluginul le reprogrameaza singur. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application
@@ -50,7 +53,7 @@
             </intent-filter>
             <!-- Link de invitație prieteni: guessit://addfriend/<cod> — schemă
                  proprie, nu Android App Link, ca să nu ceară assetlinks.json
-                 găzduit pe GH Pages (vezi docs/deploy). Ținta e citită în
+                 găzduit pe GH Pages (vezi docs/build.md). Ținta e citită în
                  main.dart, GuessItApp._listenForDeepLinks, cu pachetul app_links. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
@@ -64,25 +67,39 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- IMPELLER PORNIT — retestat 2026-09-01, bug-ul nu se mai reproduce.
-             ISTORIC: renderer-ul Impeller (Vulkan) a fost OPRIT aici o
-             perioadă, din cauza unui ecran negru după login-ul Google.
-             Simptom: după ce alegeai contul în fereastra nativă Google,
-             ecranul rămânea complet negru dar muzica mergea (deci aplicația
-             trăia, doar desenul era mort); doar o repornire completă îl
-             recupera. Cauza: pe GPU-uri Samsung Xclipse, Impeller pierdea
-             suprafața de desen când aplicația era readusă în față de o
-             Activitate externă — iar fereastra Google e exact asta.
-             RETESTAT pe Samsung SM-S908B (Xclipse), Flutter 3.27.4: login
-             Google complet + ciclu fundal/prim-plan, fără niciun ecran negru
-             și fără nicio eroare Impeller/Vulkan în logcat. Reactivat.
-             DACĂ REAPARE: pune la loc pe "false" — un ecran negru fără niciun
-             mesaj e mult mai rău decât o pierdere mică de fps. Simptomul e
-             insidios (logcat curat, nicio excepție), deci nu-l căuta în codul
-             Dart, nu e acolo. -->
+        <!-- FLAG MORT din Flutter 3.44+ (mai 2026): Skia a fost eliminat de
+             pe Android 10+, Impeller/Vulkan e acum obligatoriu — acest
+             meta-data e ignorat, orice valoare ai pune aici. Verificat live
+             2026-09-10: cu "false" aici, bug-ul de ecran negru la login
+             Google (vezi mai jos) s-a reprodus IDENTIC — deci flag-ul nu mai
+             ține. Confirmat și din sursa Flutter (dev blog/GitHub): "the
+             opt-out through EnableImpeller is deprecated and going away".
+             Rămâne pe "true" doar ca să nu sugereze cuiva că "false" ar
+             rezolva ceva — nu rezolvă, pe versiunea asta de Flutter.
+             ISTORIC: renderer-ul Impeller (Vulkan) pierde suprafața de
+             desen pe GPU-uri Samsung Xclipse când aplicația e readusă în
+             față de o Activitate externă (fereastra Google e cazul confirmat
+             de mine). Simptom: ecran negru complet, dar audio continuă
+             (motorul trăiește, doar desenul moare); logcat curat, nicio
+             excepție. NU exista fix la nivel de cod Dart găsit până acum —
+             vezi [[project_guess_it_impeller_blackscreen_bug]]. Singura
+             recuperare: repornire completă (`adb shell am force-stop
+             com.dragosssx.guessit` + relansare). -->
         <meta-data
             android:name="io.flutter.embedding.android.EnableImpeller"
             android:value="true" />
+        <!-- Impeller pe OpenGL ES, NU pe Vulkan (2026-09-11). Bug-ul de ecran
+             negru la revenirea din fereastra Google e în backend-ul Vulkan pe
+             GPU-uri Samsung Xclipse. Flutter 3.47 nu mai permite oprirea
+             Impeller, dar încă citește cheia asta (verificat în flutter.jar,
+             FlutterEngineFlags: cheia "ImpellerBackend" devine flag-ul de motor
+             impeller-backend). Atenție: în comentariile XML nu au voie două
+             liniuțe la rând, altfel manifestul nu se mai parsează.
+             Downgrade-ul la 3.27.4 NU e posibil: in_app_purchase_android 0.5.x
+             (plățile reale) cere Dart 3.12 = Flutter 3.44+. -->
+        <meta-data
+            android:name="io.flutter.embedding.android.ImpellerBackend"
+            android:value="opengles" />
         <!-- AdMob App ID real, din consola AdMob (app "Sodo Quizz"). -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

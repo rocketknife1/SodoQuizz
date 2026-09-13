@@ -559,6 +559,15 @@ class ShotFlight {
   /// dinainte de [splitPoint] (celălalt îl sare, ca să nu iasă dublu).
   final bool splitLead;
 
+  /// [PowerUp.megaRocket] — cerut explicit ca proiectilul „să se simtă"
+  /// diferit, nu doar să dea mai multe daune (vezi
+  /// core/powerups.dart#megaRocketDamageMultiplier). Cerere de pe telefon,
+  /// 2026-09-09: „vreau sa fie diferentiata de proiectilele normale".
+  /// Schimbă doar desenul ([_paintShell]/[_paintImpact]) — daunele sunt deja
+  /// decise în MultiplayerService.resolveTanksRound, aici nu se calculează
+  /// nimic, doar se arată altfel.
+  final bool isMegaRocket;
+
   const ShotFlight({
     required this.from,
     required this.to,
@@ -574,6 +583,7 @@ class ShotFlight {
     this.blockedByShield = false,
     this.splitPoint,
     this.splitLead = false,
+    this.isMegaRocket = false,
   });
 
   bool get isSplit => splitPoint != null;
@@ -769,6 +779,10 @@ class TankShotsPainter extends CustomPainter {
   }
 
   void _paintShell(Canvas canvas, ShotFlight f, double t) {
+    if (f.isMegaRocket) {
+      _paintMegaShell(canvas, f, t);
+      return;
+    }
     final pos = f.pointAt(t);
     final tail = f.pointAt((t - 0.16).clamp(0.0, 1.0));
 
@@ -785,6 +799,47 @@ class TankShotsPainter extends CustomPainter {
     canvas.drawCircle(pos, 2.0, Paint()..color = f.color);
   }
 
+  /// [PowerUp.megaRocket]: coadă de foc portocaliu-roșu, mult mai lungă și
+  /// mai groasă decât un obuz normal (culoarea trăgătorului dispare complet
+  /// din desen — asta e ce trebuie să se vadă de la distanță, „e diferit",
+  /// nu doar mai gros), plus un nucleu care pulsează și scântei care cad din
+  /// coadă, ca o rachetă adevărată, nu un glonț mai mare.
+  void _paintMegaShell(Canvas canvas, ShotFlight f, double t) {
+    final pos = f.pointAt(t);
+    const fire = Color(0xFFFF6A2B);
+    const core = Color(0xFFFFE082);
+
+    // Coadă lungă, în trei straturi de lățime/opacitate descrescătoare —
+    // o singură linie cu gradient arăta ca un fir subțire, nu ca o flacără.
+    for (final (frac, width, alpha) in const [(0.55, 11.0, 60), (0.38, 7.0, 110), (0.22, 4.0, 200)]) {
+      final tail = f.pointAt((t - frac).clamp(0.0, 1.0));
+      canvas.drawLine(
+        tail,
+        pos,
+        Paint()
+          ..strokeCap = StrokeCap.round
+          ..strokeWidth = width
+          ..shader = LinearGradient(colors: [fire.withAlpha(0), fire.withAlpha(alpha)])
+              .createShader(Rect.fromPoints(tail, pos)),
+      );
+    }
+
+    // Scântei care rămân în urmă, de-a lungul cozii — statice pe traiectoria
+    // deja parcursă (determinist din [t], ca desenul să nu tremure între
+    // cadre consecutive).
+    for (var i = 1; i <= 4; i++) {
+      final sparkFrac = (t - 0.08 * i).clamp(0.0, 1.0);
+      if (sparkFrac <= 0) continue;
+      final sparkPos = f.pointAt(sparkFrac) + Offset(sin(sparkFrac * 47 + i) * 3, cos(sparkFrac * 39 + i) * 3);
+      canvas.drawCircle(sparkPos, 1.6, Paint()..color = AppColors.coin.withAlpha((160 - i * 25).clamp(0, 255)));
+    }
+
+    final pulse = 0.7 + 0.3 * sin(t * 40);
+    canvas.drawCircle(pos, 11 * pulse, Paint()..color = fire.withAlpha(70));
+    canvas.drawCircle(pos, 6, Paint()..color = fire);
+    canvas.drawCircle(pos, 3.2, Paint()..color = core);
+  }
+
   void _paintImpact(Canvas canvas, ShotFlight f, double t) {
     final fade = (1 - t);
     if (f.intercepted) {
@@ -794,23 +849,38 @@ class TankShotsPainter extends CustomPainter {
     // La o reflexie, explozia e în TRĂGĂTOR (f.landing), nu în reflector.
     final at = f.landing;
     if (f.hit) {
+      // Mega rachetă: explozie mult mai mare, un inel dublu (unda de șoc +
+      // miezul de foc) și de două ori mai multe schije — trebuie să se
+      // simtă din prima privire că lovitura asta nu e ca celelalte.
+      final scale = f.isMegaRocket ? 1.9 : 1.0;
       // inel de explozie + schije
-      final r = 6 + t * 26;
+      final r = (6 + t * 26) * scale;
       canvas.drawCircle(
         at,
         r,
         Paint()
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 3.5 * fade
+          ..strokeWidth = 3.5 * fade * scale
           ..color = AppColors.orange.withAlpha((220 * fade).round()),
       );
+      if (f.isMegaRocket) {
+        canvas.drawCircle(
+          at,
+          r * 0.78,
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2.4 * fade
+            ..color = const Color(0xFFFF3B30).withAlpha((200 * fade).round()),
+        );
+      }
       canvas.drawCircle(at, r * 0.55, Paint()..color = Colors.white.withAlpha((160 * fade * fade).round()));
       final spark = Paint()
         ..strokeCap = StrokeCap.round
-        ..strokeWidth = 2.4 * fade
+        ..strokeWidth = 2.4 * fade * scale
         ..color = AppColors.coin.withAlpha((230 * fade).round());
-      for (var i = 0; i < 7; i++) {
-        final a = i * (2 * pi / 7) + f.damage;
+      final sparkCount = f.isMegaRocket ? 14 : 7;
+      for (var i = 0; i < sparkCount; i++) {
+        final a = i * (2 * pi / sparkCount) + f.damage;
         canvas.drawLine(
           at + Offset(cos(a), sin(a)) * (r * 0.5),
           at + Offset(cos(a), sin(a)) * (r * 1.15),
@@ -884,8 +954,8 @@ class TankShotsPainter extends CustomPainter {
       f.landing,
       '-${f.damage}',
       t,
-      AppColors.danger,
-      fontSize: 17,
+      f.isMegaRocket ? const Color(0xFFFF6A2B) : AppColors.danger,
+      fontSize: f.isMegaRocket ? 24 : 17,
     );
   }
 

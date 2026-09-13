@@ -40,12 +40,6 @@ class PlayerProfileService {
   FirebaseFirestore get _db => FirebaseFirestore.instance;
   CollectionReference<Map<String, dynamic>> get _col => _db.collection('player_profiles');
 
-  /// Userii inactivi de mai mult timp dispar din LISTA leaderboard-ului
-  /// (filtrare client-side, ca _openRoomFreshness din multiplayer_service.dart)
-  /// dar doc-ul lor nu se șterge niciodată — punctele revin vizibile automat
-  /// dacă redevin activi (heartbeat-ul le actualizează lastActive).
-  static const leaderboardFreshness = Duration(days: 3);
-
   /// Numere de playtesting, nu literă de lege — puncte de ligă cumulate pe
   /// viață (fără sezoane în v1).
   static const winPoints = 20;
@@ -202,6 +196,12 @@ class PlayerProfileService {
       // identitatea se citește DUPĂ adoptarea numelui impus, ca scrierea de
       // mai jos să plece deja cu el
       final identity = await AuthService.instance.multiplayerIdentity();
+      // Identitatea s-a schimbat cât am așteptat rețeaua (un login a trecut de
+      // la anonim la Google): documentul de mai sus e al identității VECHI,
+      // posibil deja aruncate. A scrie acum ar reînvia un profil orfan — vezi
+      // AuthService.signInInProgress. Heartbeat-ul identității noi îl face
+      // chiar login-ul, la final.
+      if (_uid != uid) return;
       await ref.set({
         'name': identity.name,
         'photoUrl': identity.photoUrl,
@@ -243,7 +243,7 @@ class PlayerProfileService {
   /// server-side, fără Cloud Functions în acest proiect, la fel ca restul
   /// multiplayer-ului (ex. attemptFormMatch în multiplayer_service.dart).
   ///
-  /// De la sezoane încoace (2026-08-23, PLAN_DE_VIITOR.md punctul 1), scrie
+  /// De la sezoane încoace (2026-08-23, Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 1), scrie
   /// și partea de sezon: [PlayerProfile.seasonPoints]/[PlayerProfile.seasonKey]/
   /// [PlayerProfile.seasonBestTierIndex] — vezi core/leagues.dart pentru cum
   /// se resetează lazy, fără job programat. Dacă asta chiar tocmai a
@@ -717,24 +717,6 @@ class PlayerProfileService {
     }
   }
 
-  /// Leaderboard global — top [limit] după puncte de ligă, filtrat la userii
-  /// activi în ultimele [leaderboardFreshness] (client-side, fără index
-  /// compus, fără Cloud Functions).
-  Future<List<PlayerProfile>> fetchLeaderboard({int limit = 100}) async {
-    unawaited(_sweepStaleGuests());
-    try {
-      final snap = await _col.orderBy('leaguePoints', descending: true).limit(limit).get();
-      final cutoff = DateTime.now().subtract(leaderboardFreshness);
-      return snap.docs
-          .map(PlayerProfile.fromDoc)
-          .where((p) => p.lastActive != null && p.lastActive!.toDate().isAfter(cutoff))
-          .toList();
-    } catch (e) {
-      debugPrint('PlayerProfileService.fetchLeaderboard a esuat: $e');
-      return [];
-    }
-  }
-
   /// TOȚI jucătorii înregistrați vreodată, fără filtrul de prospețime din
   /// [fetchLeaderboard] — pentru tab-ul "Toți jucătorii", care arată și data
   /// ultimei prezențe online a fiecăruia (spre deosebire de leaderboard-ul
@@ -1190,7 +1172,7 @@ class PlayerProfileService {
 
   /// Curățare oportunistă a conturilor Guest abandonate — rulează cel mult o
   /// dată pe sesiune (nu la fiecare deschidere a leaderboard-ului), fără
-  /// blocarea UI-ului (fire-and-forget din [fetchLeaderboard]). Fără Cloud
+  /// blocarea UI-ului (fire-and-forget din [fetchAllPlayers]). Fără Cloud
   /// Functions în acest proiect (vezi memoria de deploy), orice client activ
   /// face treaba asta.
   ///

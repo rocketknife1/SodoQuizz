@@ -85,11 +85,6 @@ class RoomActivity {
 
   int get playerCount => players.length;
 
-  bool get isExpired {
-    final e = expiresAt;
-    return e != null && e.toDate().isBefore(DateTime.now());
-  }
-
   /// Cât timp a mai rămas până la ștergere — null dacă a trecut deja.
   Duration? get timeLeft {
     final e = expiresAt;

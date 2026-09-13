@@ -71,7 +71,3 @@ int challengeCoinReward(ChallengeOutcome o) => switch (o) {
       ChallengeOutcome.draw => challengeDrawCoins,
       ChallengeOutcome.lost => 0,
     };
-
-/// Câte provocări trebuie câștigate pentru titlul „Provocatoru'" — metric
-/// `challenge_win`, la fel ca `mp_wins_23` (vezi core/cosmetics.dart).
-const int challengeTitleWins = 15;

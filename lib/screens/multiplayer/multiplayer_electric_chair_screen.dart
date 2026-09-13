@@ -49,6 +49,17 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
   late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
 
+  /// Câți jucători mai au vieți, actualizat în [_onData]. Poarta puterilor
+  /// care n-au sens la doi — vezi `powerUpMinLivePlayers`.
+  int _livePlayers = 0;
+
+  /// Id-urile jucătorilor văzuți la ultima citire — ca să observăm cine
+  /// dispare din `watchPlayers` cât meciul încă se joacă (vezi
+  /// [notifyPlayerLeft]). [_announcedLeftIds] evită un al doilea anunț dacă
+  /// `_onData` rulează din nou (StreamBuilder poate re-emite des).
+  Set<String> _seenPlayerIds = const {};
+  final Set<String> _announcedLeftIds = {};
+
   /// Pool-ul întrebărilor PROPRII de rundă — aceeași idee ca la Quizz Tanks:
   /// amestecat o singură dată, determinist din matchId, ca toți clienții să
   /// vadă aceeași întrebare la aceeași rundă.
@@ -238,6 +249,11 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
     }
+    // Ultimii doi rămași: „cel mai slăbit coechipier" e chiar adversarul.
+    if (!powerUpHasEnoughPlayers(p, _livePlayers)) {
+      notifyPowerUpNeedsMorePlayers(context);
+      return;
+    }
     Sfx.tileSelect();
     switch (p) {
       case PowerUp.fiftyFifty:
@@ -253,6 +269,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         MultiplayerService.instance.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
       case PowerUp.allyShield:
         MultiplayerService.instance.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
+      case PowerUp.repairKit:
+        MultiplayerService.instance.useElectricChairRepairKit(matchId: widget.matchId);
       case PowerUp.peek:
         showPeekResults(context, info, myId: _myId, playerNames: _playerNames);
       default:
@@ -282,7 +300,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       totalPlayers: total,
     );
     if (!granted) return;
-    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'electricChair');
+    final picked = powerUpFor(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      gameModeId: 'electricChair',
+      livePlayers: players.where((p) => !p.eliminated).length,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _myPowerUp = picked);
@@ -338,10 +362,32 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     }
   }
 
+  /// Cine a dispărut din listă între o citire și următoarea — [leaveMatch]
+  /// îi șterge documentul din `players` imediat ce apasă înapoi, deci pentru
+  /// cel rămas jucătorul respectiv dispare pur și simplu. Anunțăm explicit
+  /// (scaunul rămas gol) în loc să-l lăsăm să dispară în tăcere din clasament —
+  /// bug raportat live de pe telefon (2026-09-09), mai vizibil la 1v1.
+  void _detectPlayersWhoLeft(MatchInfo info, List<MatchPlayer> players) {
+    final currentIds = players.map((p) => p.id).toSet();
+    if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
+      for (final id in _seenPlayerIds.difference(currentIds)) {
+        if (_announcedLeftIds.add(id)) {
+          final name = _playerNames[id] ?? '?';
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) notifyPlayerLeft(context, name);
+          });
+        }
+      }
+    }
+    _seenPlayerIds = currentIds;
+  }
+
   void _onData(MatchInfo info, List<MatchPlayer> players) {
     for (final p in players) {
       _playerNames[p.id] = p.name;
     }
+    _livePlayers = players.where((p) => !p.eliminated).length;
+    _detectPlayersWhoLeft(info, players);
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _pendingTargetId = null;
@@ -867,10 +913,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       ),
     );
   }
-}
-
-extension _FirstOrNull<T> on Iterable<T> {
-  T? get firstOrNull => isEmpty ? null : first;
 }
 
 class _CountdownBar extends StatelessWidget {

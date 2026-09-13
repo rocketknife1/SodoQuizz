@@ -1,9 +1,8 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_games_services/firebase_auth_games_services.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:http/http.dart' as http;
 import '../firebase_options.dart';
 import '../core/display_name.dart';
 import '../core/progression.dart';
@@ -11,13 +10,6 @@ import 'cloud_sync_service.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
 import '../core/error_reporting.dart';
-
-/// Scope suplimentar necesar ca Google chiar să trimită poza de profil —
-/// API-ul nou de "Sign in with Google" (Credential Manager) NU o include
-/// în tokenul de bază, doar numele/email-ul (verificat direct: tokenul
-/// brut nu are deloc câmpul "picture"). Cu acest scope autorizat, luăm
-/// poza printr-un apel separat la endpoint-ul de userinfo al Google.
-const _profileScope = 'https://www.googleapis.com/auth/userinfo.profile';
 
 /// Aruncată când login-ul cu Google eșuează (Firebase neconfigurat încă,
 /// fără rețea etc.) — UI-ul o prinde și arată un mesaj scurt, nu crash.
@@ -38,7 +30,34 @@ class AuthService {
   AuthService._();
   static final instance = AuthService._();
 
-  bool _googleInitialized = false;
+  /// `true` cât rulează un login (Google sau Play Games), din clipa în care
+  /// se deschide fereastra de cont până după ce identitatea finală e gata.
+  ///
+  /// De ce contează: fereastra Google e o Activitate externă, deci aplicația
+  /// trece prin fundal și revine. La revenire, main.dart cheamă heartbeat-ul
+  /// de profil — iar în acel moment userul curent e ÎNCĂ identitatea anonimă.
+  /// Dacă login-ul ajunge pe un cont Google care exista deja, identitatea
+  /// anonimă e aruncată ([_discardAnonymousIdentity]), dar scrierea
+  /// heartbeat-ului putea ateriza DUPĂ ștergere și reînvia profilul
+  /// `JucatorXXX` — pe care apoi nu-l mai putea șterge nimeni (contul Auth
+  /// era deja dus). Bug găsit în date pe 2026-09-10: profil public fără cont
+  /// Auth, atins exact în secunda login-ului. main.dart sare peste heartbeat
+  /// și push cât timp e `true`.
+  bool get signInInProgress => _signInInProgress;
+  bool _signInInProgress = false;
+
+  /// Rulează un login sub [signInInProgress], apoi face heartbeat-ul sărit
+  /// la revenirea din fereastra de cont — pe identitatea FINALĂ, nu pe cea
+  /// anonimă de dinainte.
+  Future<void> _guardSignIn(Future<void> Function() body) async {
+    _signInInProgress = true;
+    try {
+      await body();
+    } finally {
+      _signInInProgress = false;
+    }
+    unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
+  }
 
   /// Firebase poate fi neconfigurat pentru platforma curentă (ex. web, unde
   /// firebase_options.dart încă are valori placeholder — vezi comentariul
@@ -107,95 +126,57 @@ class AuthService {
     );
   }
 
-  /// Cere autorizare pentru scope-ul de profil și ia poza direct de la
-  /// endpoint-ul de userinfo al Google — necesar pentru ca noul API de
-  /// Sign in with Google (Credential Manager) nu trimite poza în tokenul
-  /// de bază. Poate cere încă o confirmare Google (o singură dată, prima
-  /// oară); eșuează silențios (fără poză) dacă userul refuză sau nu are net.
-  Future<String?> _fetchGooglePhotoUrl(GoogleSignInAccount account) async {
-    try {
-      final headers = await account.authorizationClient.authorizationHeaders(
-        [_profileScope],
-        promptIfNecessary: true,
-      );
-      if (headers == null) return null;
-      final response = await http.get(Uri.parse('https://www.googleapis.com/oauth2/v3/userinfo'), headers: headers);
-      if (response.statusCode != 200) return null;
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['picture'] as String?;
-    } catch (e) {
-      debugPrint('AuthService._fetchGooglePhotoUrl a esuat: $e');
-      return null;
-    }
-  }
+  /// Instanța clasică (SDK vechi de Google, NU Credential Manager) — vezi
+  /// nota de la `google_sign_in:` din pubspec.yaml pentru de ce s-a coborât
+  /// de la v7. Pe web cere `clientId`, pe Android `serverClientId` (ca să
+  /// verifice id-token-ul) — assertion-ul pluginului interzice explicit
+  /// combinația inversă pe web. E același client OAuth "Web" auto-creat de
+  /// Google/Firebase, deci refolosim aceeași valoare pe ambele platforme.
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: kIsWeb ? googleSignInServerClientId : null,
+    serverClientId: kIsWeb ? null : googleSignInServerClientId,
+  );
 
-  /// Pornește fluxul de alegere cont Google și întoarce credențiala Firebase
-  /// rezultată — folosit atât la [signInWithGoogle] (unde avem nevoie și de
-  /// [GoogleSignInAccount] pentru nume/poză), cât și la reautentificarea
-  /// cerută de [deleteAccount] când sesiunea curentă e prea veche pentru
-  /// operația sensibilă de ștergere ("requires-recent-login").
-  /// Idempotent — sigur de apelat de mai multe ori (ex. din UI, înainte de a
-  /// randa butonul Google pe web — vezi [googleAuthenticationEvents]).
-  Future<void> ensureGoogleInitialized() async {
-    if (_googleInitialized) return;
-    // Pe web, pluginul cere propriul client OAuth ("clientId") ca sa
-    // porneasca fluxul din browser - si NU accepta deloc serverClientId
-    // acolo (assertion: "serverClientId is not supported on Web").
-    // Android e invers: are nevoie de serverClientId (ca sa verifice
-    // id-token-ul), nu de clientId (vine din google-services.json). In
-    // acest proiect e acelasi client "Web" auto-creat de Google/Firebase,
-    // deci refolosim aceeasi valoare pe fiecare platforma unde e ceruta.
-    await GoogleSignIn.instance.initialize(
-      clientId: kIsWeb ? googleSignInServerClientId : null,
-      serverClientId: kIsWeb ? null : googleSignInServerClientId,
-    );
-    _googleInitialized = true;
-  }
-
-  Future<({AuthCredential credential, GoogleSignInAccount account})> _authenticateGoogle() async {
-    await ensureGoogleInitialized();
-    final account = await GoogleSignIn.instance.authenticate();
-    final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
+  Future<({AuthCredential credential, GoogleSignInAccount account})?> _authenticateGoogle() async {
+    final account = await _googleSignIn.signIn(); // null = userul a renunțat (nu e eroare)
+    if (account == null) return null;
+    final auth = await account.authentication;
+    final credential = GoogleAuthProvider.credential(idToken: auth.idToken, accessToken: auth.accessToken);
     return (credential: credential, account: account);
   }
 
-  /// Pe web pluginul refuză explicit [GoogleSignIn.authenticate] (aruncă
-  /// `UnimplementedError: authenticate is not supported on the web` —
-  /// verificat live, e limitare reală a SDK-ului Google, nu bug al nostru).
-  /// Google impune ca userul să apese butonul LOR randat direct în DOM
-  /// (protecție anti-clickjacking), nu unul al nostru care pornește fluxul
-  /// din cod. Fluxul devine deci pasiv: randăm butonul Google (vezi
-  /// data/google_web_signin_button.dart), iar UI-ul ascultă acest stream
-  /// pentru evenimentul de sign-in și apelează [completeWebGoogleSignIn].
-  Stream<GoogleSignInAuthenticationEvent> get googleAuthenticationEvents => GoogleSignIn.instance.authenticationEvents;
+  /// Pe web `signIn()` programatic e interzis de Google (politica GIS/FedCM
+  /// anti-clickjacking) — userul trebuie să apese butonul LOR randat direct
+  /// în DOM (vezi data/google_web_signin_button.dart). Fluxul devine deci
+  /// pasiv: randăm butonul, iar UI-ul ascultă acest stream pentru contul
+  /// apărut și apelează [completeWebGoogleSignIn].
+  Stream<GoogleSignInAccount?> get googleAuthenticationEvents => _googleSignIn.onCurrentUserChanged;
 
   /// Continuarea fluxului de web, apelată de UI după ce
-  /// [googleAuthenticationEvents] a emis un [GoogleSignInAuthenticationEventSignIn].
-  Future<void> completeWebGoogleSignIn(GoogleSignInAccount account) async {
-    final credential = GoogleAuthProvider.credential(idToken: account.authentication.idToken);
-    try {
-      await _finishGoogleSignIn(account, credential);
-    } catch (e) {
-      debugPrint('AuthService.completeWebGoogleSignIn a esuat: $e');
-      throw const AccountUnavailableException();
-    }
-  }
+  /// [googleAuthenticationEvents] a emis un cont.
+  Future<void> completeWebGoogleSignIn(GoogleSignInAccount account) => _guardSignIn(() async {
+        try {
+          final auth = await account.authentication;
+          final credential = GoogleAuthProvider.credential(idToken: auth.idToken, accessToken: auth.accessToken);
+          await _finishGoogleSignIn(account, credential);
+        } catch (e) {
+          debugPrint('AuthService.completeWebGoogleSignIn a esuat: $e');
+          throw const AccountUnavailableException();
+        }
+      });
 
-  Future<void> signInWithGoogle() async {
-    try {
-      final auth = await _authenticateGoogle();
-      await _finishGoogleSignIn(auth.account, auth.credential);
-    } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) return; // userul a renuntat, nu e o eroare
-      debugPrint('AuthService.signInWithGoogle a esuat: $e');
-      throw const AccountUnavailableException();
-    } catch (e, s) {
-      reportError(e, s, unde: 'AuthService.signInWithGoogle');
-      throw const AccountUnavailableException();
-    }
-  }
+  Future<void> signInWithGoogle() => _guardSignIn(() async {
+        try {
+          final auth = await _authenticateGoogle();
+          if (auth == null) return; // userul a renunțat, nu e o eroare
+          await _finishGoogleSignIn(auth.account, auth.credential);
+        } catch (e, s) {
+          reportError(e, s, unde: 'AuthService.signInWithGoogle');
+          throw const AccountUnavailableException();
+        }
+      });
 
-  /// Partea comună fluxurilor mobil (authenticate() direct) și web (buton
+  /// Partea comună fluxurilor mobil (signIn() direct) și web (buton
   /// randat + [googleAuthenticationEvents]): leagă/loghează în Firebase,
   /// sincronizează numele/poza și cloud save-ul.
   Future<void> _finishGoogleSignIn(GoogleSignInAccount account, AuthCredential credential) async {
@@ -229,7 +210,7 @@ class AuthService {
     } else {
       await FirebaseAuth.instance.signInWithCredential(credential);
     }
-    final photoUrl = account.photoUrl ?? await _fetchGooglePhotoUrl(account);
+    final photoUrl = account.photoUrl; // v6.x o trimite direct, spre deosebire de v7/Credential Manager
     // FirebaseAuth seteaza displayName/photoURL doar la crearea contului -
     // le rescriem explicit din contul Google curent, ca sa fie mereu live.
     await FirebaseAuth.instance.currentUser?.updateProfile(
@@ -295,7 +276,9 @@ class AuthService {
   /// Aceeași grijă ca la Google pentru identitatea anonimă a multiplayer-ului:
   /// legăm (link) în loc de sign-in curat, ca uid-ul — și tot ce s-a acumulat
   /// sub el — să rămână al aceluiași jucător.
-  Future<void> signInWithPlayGames() async {
+  Future<void> signInWithPlayGames() => _guardSignIn(_signInWithPlayGames);
+
+  Future<void> _signInWithPlayGames() async {
     try {
       final anonymous = FirebaseAuth.instance.currentUser;
       var linked = false;
@@ -338,7 +321,7 @@ class AuthService {
 
   Future<void> signOut() async {
     try {
-      await GoogleSignIn.instance.signOut();
+      await _googleSignIn.signOut();
     } catch (_) {
       // ignorat - oricum ne deconectam din Firebase mai jos.
     }
@@ -413,6 +396,7 @@ class AuthService {
       // Un cont anonim nu poate cere reautentificare (n-are cu ce), deci
       // ramura asta e strict pentru conturile cu login.
       final auth = await _authenticateGoogle();
+      if (auth == null) rethrow; // userul a renuntat la reautentificare
       await user.reauthenticateWithCredential(auth.credential);
       await user.delete();
     }
@@ -421,7 +405,7 @@ class AuthService {
       await StorageService.resetAll();
     } else {
       try {
-        await GoogleSignIn.instance.signOut();
+        await _googleSignIn.signOut();
       } catch (_) {
         // ignorat - la fel ca in signOut().
       }

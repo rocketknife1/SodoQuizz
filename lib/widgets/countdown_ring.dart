@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// Inel de numărătoare inversă pentru Daily Challenge — arc colorat
-/// (verde → portocaliu → roșu pe măsură ce timpul scade) cu secundele
-/// rămase afișate în mijloc. Folosit doar în modul cronometrat, nu în
-/// gamemodurile normale.
+/// Inel de numărătoare inversă — arc colorat (verde → portocaliu → roșu pe
+/// măsură ce timpul scade) cu secundele rămase afișate în mijloc. Folosit în
+/// toate modurile cu cronometru (Daily Challenge, Higher & Lower, provocări,
+/// multiplayer).
 class CountdownRing extends StatelessWidget {
   final int secondsLeft;
   final int totalSeconds;

@@ -589,7 +589,9 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
         // măsoară costul lor.
         state == AppLifecycleState.hidden) {
       LiveSync.instance.stop();
-      CloudSyncService.instance.push();
+      // Fereastra de cont Google/Play Games trimite aplicația în fundal în
+      // mijlocul login-ului — vezi AuthService.signInInProgress.
+      if (!AuthService.instance.signInInProgress) CloudSyncService.instance.push();
       Music.pauseForBackground();
       // Reprogramam alarmele TOCMAI cand plecam din aplicatie: aia e clipa in
       // care starea de pe telefon (cat mai are roata, planeta, Clippy) e cea
@@ -598,7 +600,10 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       LiveSync.instance.start();
       Music.resumeFromBackground();
-      PlayerProfileService.instance.ensureProfileHeartbeat();
+      // Revenirea din fereastra de cont, cu login-ul încă în curs: heartbeat-ul
+      // l-ar scrie pe identitatea anonimă pe cale să fie aruncată. Îl face
+      // AuthService la finalul login-ului — vezi signInInProgress.
+      if (!AuthService.instance.signInInProgress) PlayerProfileService.instance.ensureProfileHeartbeat();
       // `consumePendingGrant` NU se mai cheamă aici: abonamentul din LiveSync
       // îl declanșează singur, iar reatașarea aduce oricum un snapshot
       // proaspăt cu tot ce s-a schimbat cât aplicația era în fundal.

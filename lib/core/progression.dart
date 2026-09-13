@@ -1408,8 +1408,6 @@ const List<Quest> allQuests = [
   ..._hardQuests
 ];
 
-Quest questById(String id) => allQuests.firstWhere((q) => q.id == id);
-
 // ─── Rotația săptămânală de quest-uri ──────────────────────────────────────
 // Cerința: nu tot catalogul deodată, ci 12 pe zi în timpul săptămânii și mai
 // multe în weekend, DIFERITE de la o zi la alta și fără repetare în cadrul

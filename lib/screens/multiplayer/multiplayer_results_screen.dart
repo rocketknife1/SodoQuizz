@@ -48,7 +48,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
 
   /// Bonusul "Prima victorie a zilei" — vezi StorageService.canClaimFirstWinOfDay.
   /// Suma efectivă (monede/XP) e adăugată de collectRewards chiar când
-  /// pornește animația (vezi _maybePlayFirstWinAnimation), nu aici — la fel
+  /// pornește animația, nu aici — la fel
   /// ca la orice alt apel collectRewards din aplicație (quests_screen.dart
   /// etc.), ca reîmprospătarea balanței să fie sincronă cu animația.
   bool _firstWinBonus = false;
@@ -84,6 +84,33 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   bool _launchingRematch = false;
   bool _navigatedToRematch = false;
 
+  /// Momentul în care oferta curentă a devenit `pending` — ca gazda să nu
+  /// aștepte la nesfârșit "0/1 au acceptat" fără niciun semn dacă celălalt
+  /// jucător a plecat deja din aplicație (revanșa nu are cum să știe asta
+  /// direct, doar să nu se mai prefacă după un timp că răspunsul mai vine).
+  /// Bug raportat live de pe telefon (2026-09-09): gazda apăsa "Cere
+  /// revanșă" fără să afle niciodată că celălalt ieșise deja.
+  DateTime? _pendingOfferSince;
+  static const _pendingOfferWarnAfter = Duration(seconds: 25);
+  Timer? _pendingOfferTicker;
+
+  /// Pornește/oprește ticker-ul de mai sus, apelat la fiecare emisie din
+  /// [_rematchStream]. StreamBuilder nu se reconstruiește singur doar
+  /// pentru că trece timpul — fără ticker, avertismentul de mai jos n-ar
+  /// apărea niciodată cât nu se schimbă nimic în ofertă.
+  void _trackPendingOffer(RematchOffer? offer) {
+    if (offer == null || offer.status != 'pending') {
+      _pendingOfferSince = null;
+      _pendingOfferTicker?.cancel();
+      _pendingOfferTicker = null;
+      return;
+    }
+    _pendingOfferSince ??= DateTime.now();
+    _pendingOfferTicker ??= Timer.periodic(const Duration(seconds: 5), (_) {
+      if (mounted) setState(() {});
+    });
+  }
+
   /// Predă mai departe rădăcinii aplicației meciul tocmai părăsit, ca oferta
   /// de revanșă să fie ascultată și după ce ecranul ăsta dispare — vezi
   /// [MultiplayerService.lastFinishedMatchId] și main.dart. Fără asta, cine
@@ -94,6 +121,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   /// veche e deja consumată, iar rădăcina n-are ce urmări în ea.
   @override
   void dispose() {
+    _pendingOfferTicker?.cancel();
     MultiplayerService.instance.lastFinishedMatchId.value =
         _navigatedToRematch ? null : widget.matchId;
     super.dispose();
@@ -557,6 +585,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       stream: _rematchStream,
       builder: (context, snap) {
         final offer = snap.data;
+        _trackPendingOffer(offer);
         if (offer != null) {
           _maybeLaunchRematch(offer);
           _maybeNavigateToRematch(offer);
@@ -599,6 +628,12 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         final accepted = offer.acceptedIds.length;
         final total = offer.participants.length;
         if (_amHost) {
+          // N-avem cum să știm SIGUR că celălalt a plecat (nicio prezență
+          // urmărită pe ecranul de rezultate) — dar după atâta tăcere e mai
+          // cinstit să spunem că poate n-a mai rămas nimeni să răspundă,
+          // decât să lăsăm "Aștept..." să pară că încă se întâmplă ceva.
+          final waitedTooLong = _pendingOfferSince != null &&
+              DateTime.now().difference(_pendingOfferSince!) > _pendingOfferWarnAfter;
           return Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
             child: Column(
@@ -607,6 +642,16 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                   tr('Aștept jucătorii... $accepted/$total au acceptat', 'Waiting for players... $accepted/$total accepted'),
                   style: const TextStyle(color: Colors.white70, fontSize: 12.5, fontWeight: FontWeight.w600),
                 ),
+                if (waitedTooLong)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      tr('Poate au ieșit deja din aplicație — nu mai apuci răspuns.',
+                          "They may have already left the app — you might not get an answer."),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: AppColors.danger, fontSize: 11.5, fontWeight: FontWeight.w600),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 TextButton(
                   onPressed: () => MultiplayerService.instance.cancelRematchOffer(widget.matchId),

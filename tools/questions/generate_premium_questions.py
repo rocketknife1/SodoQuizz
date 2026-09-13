@@ -3,7 +3,7 @@ masini (Masini de Lux), celebritati, sport (Fotbal & Sport), romania.
 
 50 de intrebari per mod (cat promite shop-ul: "intrebari": 50), format identic
 cu mecanica/medical: 4 variante, 3 hinturi, dificultate, imagine_cautare
-(termen EN pentru Wikipedia — folosit de tools/fetch_question_images.py).
+(termen EN pentru Wikipedia — folosit de tools/images/fetch_question_images.py).
 
 Rulare: python tools/questions/generate_premium_questions.py
 """

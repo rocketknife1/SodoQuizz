@@ -175,7 +175,7 @@ bool obbyMatchIsOver({
 
 // ─── Evenimente de rundă ────────────────────────────────────────────────
 //
-// Din planul de viitor (PLAN_DE_VIITOR.md, punctul 3): bucla "răspunzi →
+// Din planul de viitor (Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters), punctul 3): bucla "răspunzi →
 // alegi → sari" devine previzibilă după 3-4 meciuri, chiar dacă are trei
 // pași — creierul memorează tiparul, nu evenimentul. Cele două de mai jos
 // sunt pilotul cerut acolo, pe Obby: rup tiparul FĂRĂ niciun câmp nou în

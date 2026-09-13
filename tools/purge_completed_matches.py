@@ -36,7 +36,6 @@ RULARE (din radacina proiectului):
                                                             # mai vechi de 7 zile
     python tools/purge_completed_matches.py --zile 7 --sterge
 
-Sau, mai simplu, dublu-click pe "Curata meciuri terminate.bat".
 """
 import os
 import sys

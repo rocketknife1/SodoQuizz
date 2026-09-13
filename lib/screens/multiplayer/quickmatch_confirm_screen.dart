@@ -135,7 +135,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
             MatchGameMode.higherLower => MultiplayerHigherLowerScreen(matchId: matchId),
             MatchGameMode.quizzTanks => MultiplayerTanksScreen(matchId: matchId),
             // matchmaking public nu formează niciodată o ofertă Obby sau
-            // Scaunul Electric (vezi MultiplayerService._quickMatchModes) -
+            // Scaunul Electric (vezi core/daily_mode.dart#dailyModePool) -
             // cazuri moarte, dar switch-ul trebuie exhaustiv.
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),

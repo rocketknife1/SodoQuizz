@@ -114,6 +114,90 @@ deci simplificarea e aliniată. Polish, nu blocant.
 
 ---
 
+## SESIUNEA 2026-09-10/11 — necommitat, în lucru
+
+Working tree are ~45 fișiere modificate. Ce e făcut și starea fiecărui lucru:
+
+- **Singleplayer cu boți (CEL MAI IMPORTANT, cerut de user)** — toate modurile
+  multiplayer (Classic, Quizz Tanks, Obby, Scaunul Electric, Piatră-Foarfece)
+  jucabile solo vs 1-6 boți, dificultate 1-5. AZI: doar Higher & Lower merge
+  solo. NEÎNCEPUT — următorul task.
+- **Fix conturi orfane** — SCRIS (auth_service.dart + multiplayer_service.dart
+  + player_profile_service.dart), necommitat. Cauza: la revenirea din fereastra
+  Google, appul rescria profilul sub identitatea guest; login-ul ștergea
+  guest-ul; dacă scrierea ateriza după ștergere, profilul reînvia orfan.
+  NEVERIFICAT — login-ul Google dă ecran negru Impeller (vezi mai jos) și
+  n-am putut duce fluxul până la capăt pe telefon. De verificat: după un
+  login care se termină, `player_profiles` NU mai are guest-ul vechi.
+- **App Check debug token — STABIL, unul singur / platformă** — acum se
+  regenerează la fiecare instalare clean și trebuie reînregistrat manual prin
+  API (pierdere de timp în fiecare sesiune). De făcut: token FIX pus prin
+  `--dart-define` sau string resource în `android/app/src/debug/`, înregistrat
+  o dată, valabil pentru totdeauna. La fel pentru web (unul singur, nu per
+  sesiune). Ținta: exact 2 token-uri în Firebase Console, permanente.
+- **USE_EXACT_ALARM scoasă** din manifest (risc respingere Play) — FĂCUT,
+  build trece, necommitat.
+- **CI rulează toate testele** (`.github/workflows/flutter_ci.yml`) — era
+  doar `widget_test.dart`, acum `flutter test` — FĂCUT, necommitat.
+- **Audit cod mort** — 14 funcții fără apelanți șterse, 3 dubluri, 15
+  comentarii spre fișiere inexistente, 6 poze fără întrebare, NUL brut în
+  player_detail.dart, `tools/firestore_cleanup.py` reînviat, Trusa de
+  Reparații la Scaunul Electric (era în pool dar nu făcea nimic) — FĂCUT,
+  `flutter analyze` + 452 teste trec, necommitat.
+- **Ștergerea tuturor jucătorilor** (cerută de user) — scriptul e gata
+  (`tools/wipe_players.py`, probă făcută: 23 jucători, păstrează contul
+  Google al adminului). NERULAT — clasificatorul cere ca userul să pornească
+  ștergerea în masă cu `!`.
+- **Figma** — pluginul e instalat dar cere autorizare (OAuth). Userul vrea
+  rezolvat. Se face din `/mcp` într-o sesiune interactivă → figma →
+  autentificare în browser. Claude nu poate face OAuth-ul singur.
+- **FIX PROPUS pentru ecranul negru: întoarcere la Flutter 3.27.4** (versiunea
+  cu care login-ul Google MERGEA pe telefon). Upgrade-ul la 3.47.2 s-a făcut
+  pe 2026-09-04 (commit `0ae555f`), NU la reinstalare; reinstalarea doar a
+  scos la iveală. Din 3.44 Skia e scos de pe Android → `EnableImpeller=false`
+  nu mai are efect.
+  Sub 3.44 flag-ul funcționează. Pași: pin Flutter 3.27.4 (în C:\flutter
+  `git checkout 3.27.4` sau fvm), revert triada Gradle/AGP/Kotlin la ce era
+  înainte (vezi git log pe android/), `EnableImpeller=false` la loc, `flutter
+  clean`, build, test login pe telefon. ~1h. NU rescriere în alt limbaj.
+  ATENȚIE: la ultimul test (2026-09-11 02:58) login-ul NU s-a terminat nici
+  pe dedesubt (profilul Google avea lastActive de ieri) — deci poate fi mai
+  mult decât randare; de verificat după downgrade.
+- **ORDINEA STABILITĂ CU USERUL (2026-09-11):** 1) downgrade Flutter 3.27.4
+  (ecranul negru) → 2) APK de RELEASE pe telefon ca să vadă animațiile reale
+  (debug e mult mai lent, poate jumătate din sacadare dispare) → 3) șlefuit
+  animațiile rămase urâte cu Rive/Lottie (bucle curate) și Flame (tancuri,
+  Obby) → 4) singleplayer cu boți. Decis: RĂMÂNEM pe Flutter — Unity/Kotlin
+  discutate și respinse (rescriere de luni; Unity mai prost la 80% din joc =
+  meniuri/quiz, Kotlin pierde web + iPhone). Sacadarea vine din build debug +
+  prea multe setState (vezi Datorie tehnică) + animații scrise de mână, NU
+  din Flutter.
+- **Unity „doar în colțuri" (cerut de user, 2026-09-11)** — de instalat
+  Unity Hub (`winget install Unity.UnityHub`) + un Editor LTS (câțiva GB,
+  cere cont Unity — login-ul îl face userul). User e începător total în
+  Unity. Folosire propusă: Unity NU intră în aplicație (flutter_unity_widget
+  = +20-50 MB la APK și build fragil, nu merită pentru un efect). În schimb:
+  efectul (ex. „evaporare" de praf/particule) se face în Unity și se EXPORTĂ
+  ca secvență de cadre / sprite sheet / video scurt, care se redă în Flutter.
+  Alternativa mai ușoară, de comparat înainte: particule direct în Flutter
+  (Flame `ParticleSystemComponent` sau CustomPainter) ori Rive/Lottie. De
+  făcut DUPĂ downgrade + testul în release.
+  CUM LUCREZ EU ÎN UNITY (userul NU știe Unity, nu vrea să atingă editorul):
+  totul din linia de comandă — `Unity.exe -batchmode -projectPath <p>
+  -executeMethod <EditorScript>.Build -quit`. Scripturi C# de editor care
+  creează scena + ParticleSystem prin cod, simulează cadru cu cadru și
+  randează PNG cu fundal transparent (Camera → RenderTexture → ReadPixels).
+  Verificare: Read pe PNG-uri, ca la capturile de pe telefon. Singurul pas
+  al userului: login în Unity Hub + activare licență Personal (o dată,
+  ~10 min, ghidat). Proiectul Unity stă SEPARAT: `D:\proiecte\unity-efecte`,
+  nu în SodoQuizz. În Flutter intră doar cadrele exportate.
+- **Impeller blackscreen la login Google** — REAPĂRUT pe Flutter 3.47,
+  `EnableImpeller=false` e flag mort din Flutter 3.44+. Bug de driver Vulkan
+  (Samsung Xclipse), fără fix de cod. Recuperare: force-stop + relansare.
+  Vezi memoria `project_guess_it_impeller_blackscreen_bug`.
+
+---
+
 ## Decizii care te așteaptă pe TINE
 
 Astea trei NU sunt fix-uri rapide — fiecare cere fie Blaze activ, fie o

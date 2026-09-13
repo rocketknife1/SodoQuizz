@@ -25,5 +25,8 @@ jobs:
       - name: Run analyzer
         run: flutter analyze
 
-      - name: Run widget tests
-        run: flutter test test/widget_test.dart
+      # Toate testele din test/, nu doar widget_test.dart — pana pe 2026-09-10
+      # CI-ul rula exact fisierul din commit-ul initial, iar celelalte 50
+      # (logica de joc, economie, power-up-uri, tancuri...) nu rulau niciodata.
+      - name: Run all tests
+        run: flutter test

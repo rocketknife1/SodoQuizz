@@ -302,7 +302,7 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
                               (2 * dt)) *
                           _finalAngle;
                       // radiani parcurși într-un cadru (durata totală a
-                      // animației e `_spinDuration`)
+                      // animației e `_spinMs`)
                       final perFrame = speed * (1 / 60) / (_spinMs / 1000);
                       final ghosts = perFrame.abs() < 0.012 ? 0 : 4;
 

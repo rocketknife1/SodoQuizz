@@ -11,9 +11,12 @@ poate citi lista de conturi din Auth. Asa raman documente fantoma in
 CUM FUNCTIONEAZA, fara Cloud Functions si fara service account:
  1. `firebase auth:export` da lista de UID-uri care CHIAR exista in Auth
     (foloseste login-ul tau din CLI);
- 2. `player_profiles` se listeaza prin API-ul REST Firestore, autentificat cu
-    un cont anonim temporar (regulile permit citirea profilurilor publice
-    oricui e autentificat). Contul temporar se sterge singur la final;
+ 2. `player_profiles` si `users` se listeaza prin API-ul REST Firestore,
+    autentificat cu cheia de cont de serviciu (tools/service-account.json).
+    Pana pe 2026-09-10 se folosea un cont anonim temporar, dar din 2026-09-04
+    Firestore e pe App Check "Enforce", iar un client fara token App Check
+    primeste 403 — scriptul murise tacut. Contul de serviciu e acces de admin,
+    ocoleste si regulile, si App Check;
  3. ce e in Firestore dar nu in Auth = orfan, se sterge cu
     `firebase firestore:delete` (care ruleaza cu drepturi de admin, deci
     trece peste reguli).
@@ -22,11 +25,8 @@ RULARE (din radacina proiectului):
     python tools/firestore_cleanup.py            # doar raporteaza, nu sterge
     python tools/firestore_cleanup.py --sterge   # sterge efectiv
 
-LIMITARE cunoscuta: colectia `users` nu poate fi LISTATA (regulile o tin
-strict privata, fiecare user isi vede doar propriul document, si asa trebuie
-sa ramana). Scriptul incearca totusi sa stearga `users/{uid}` pentru fiecare
-orfan gasit in `player_profiles`, ceea ce acopera cazul normal — un cont are
-mereu si profil public, si cloud-save.
+Cu contul de serviciu, colectia `users` (cloud-save, privata pentru clienti)
+se poate lista si ea, deci se prind si cloud-save-urile orfane fara profil.
 """
 import io
 import json
@@ -43,22 +43,7 @@ import os
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", line_buffering=True)
 
 PROJECT_ID = "sodoquizz"
-# Cheia web publica din lib/firebase_options.dart — e menita sa fie publica
-# (nu da niciun drept peste ce permit regulile), de-aia poate sta aici.
-WEB_API_KEY = "AIzaSyAG1yZlVrHq1bFFT-HTJbvSjJC0sGUPnfU"
-
-IDENTITY = "https://identitytoolkit.googleapis.com/v1"
 FIRESTORE = f"https://firestore.googleapis.com/v1/projects/{PROJECT_ID}/databases/(default)/documents"
-
-
-def _post(url: str, payload: dict) -> dict:
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=30) as r:
-        return json.loads(r.read().decode())
 
 
 def _get(url: str, token: str) -> dict:
@@ -102,11 +87,24 @@ def auth_uids() -> set[str]:
     return {u["localId"] for u in data.get("users", [])}
 
 
-def profile_ids(token: str) -> list[str]:
-    """Id-urile documentelor din player_profiles (paginat)."""
+def service_token() -> str:
+    """Token OAuth din tools/service-account.json (acces admin la Firestore)."""
+    from google.auth.transport.requests import Request
+    from google.oauth2 import service_account
+    key = os.path.join("tools", "service-account.json")
+    if not os.path.exists(key):
+        raise SystemExit(f"Lipseste {key} — vezi tools/purge_accounts.py pentru cum se obtine.")
+    creds = service_account.Credentials.from_service_account_file(
+        key, scopes=["https://www.googleapis.com/auth/datastore"])
+    creds.refresh(Request())
+    return creds.token
+
+
+def doc_ids(collection: str, token: str) -> list[str]:
+    """Id-urile documentelor dintr-o colectie de la radacina (paginat)."""
     ids, page = [], None
     while True:
-        url = f"{FIRESTORE}/player_profiles?pageSize=300&mask.fieldPaths=name"
+        url = f"{FIRESTORE}/{collection}?pageSize=300&mask.fieldPaths=__name__"
         if page:
             url += f"&pageToken={page}"
         data = _get(url, token)
@@ -124,23 +122,13 @@ def main() -> int:
     live = auth_uids()
     print(f"     {len(live)} cont(uri) active")
 
-    print("2/3  citesc profilurile din Firestore...")
-    session = _post(f"{IDENTITY}/accounts:signUp?key={WEB_API_KEY}", {"returnSecureToken": True})
-    token, temp_uid = session["idToken"], session["localId"]
-    try:
-        profiles = profile_ids(token)
-    finally:
-        # contul temporar nu trebuie sa ramana in urma noastra
-        try:
-            _post(f"{IDENTITY}/accounts:delete?key={WEB_API_KEY}", {"idToken": token})
-        except urllib.error.URLError as exc:
-            print(f"     ATENTIE: contul temporar {temp_uid} n-a putut fi sters: {exc}")
-    # contul temporar apare in lista de profiluri doar daca a apucat sa scrie
-    # un heartbeat, ceea ce nu face — dar il excludem oricum, din prudenta.
-    profiles = [p for p in profiles if p != temp_uid]
-    print(f"     {len(profiles)} profil(uri)")
+    print("2/3  citesc profilurile si cloud-save-urile din Firestore...")
+    token = service_token()
+    profiles = doc_ids("player_profiles", token)
+    saves = doc_ids("users", token)
+    print(f"     {len(profiles)} profil(uri), {len(saves)} cloud-save(uri)")
 
-    orphans = sorted(set(profiles) - live)
+    orphans = sorted((set(profiles) | set(saves)) - live)
     print(f"3/3  {len(orphans)} orfan(i) (in Firestore, dar fara cont in Auth)")
     if not orphans:
         print("\nNimic de curatat.")

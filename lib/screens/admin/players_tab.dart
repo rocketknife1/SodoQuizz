@@ -6,8 +6,7 @@
 // care se lucrează la el în practică.
 part of '../admin_screen.dart';
 
-/// Roster complet, cu acțiuni de admin — copiat după `_AllPlayersTab` din
-/// leaderboard_screen.dart (același `fetchAllPlayers`), plus grant/ban.
+/// Roster complet, cu acțiuni de admin (pe `fetchAllPlayers`), plus grant/ban.
 class _PlayersTab extends StatefulWidget {
   const _PlayersTab();
 

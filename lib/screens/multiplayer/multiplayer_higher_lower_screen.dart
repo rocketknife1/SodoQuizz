@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
+import '../../core/powerup_ui.dart';
 import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
@@ -59,6 +60,35 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   Timer? _tickTimer;
   Timer? _heartbeatTimer;
   final Set<String> _announcedEliminated = {};
+
+  /// Cache de nume + id-urile văzute la ultima citire, doar pentru
+  /// [_detectPlayersWhoLeft] — spre deosebire de `_announcedEliminated`
+  /// (jucătorul rămâne în listă, doar `eliminated=true`), cine PLEACĂ din
+  /// meci dispare complet din `players` ([MultiplayerService.leaveMatch]
+  /// îi șterge documentul), deci numele trebuie ținut minte dinainte.
+  final Map<String, String> _playerNamesCache = {};
+  Set<String> _seenPlayerIds = const {};
+  final Set<String> _announcedLeftIds = {};
+
+  /// Vezi omologul din MultiplayerTanksScreen/MultiplayerElectricChairScreen
+  /// — bug raportat live de pe telefon (2026-09-09), mai vizibil la 1v1.
+  void _detectPlayersWhoLeft(MatchInfo info, List<MatchPlayer> players) {
+    for (final p in players) {
+      _playerNamesCache[p.id] = p.name;
+    }
+    final currentIds = players.map((p) => p.id).toSet();
+    if (_seenPlayerIds.isNotEmpty && info.status == MatchStatus.playing) {
+      for (final id in _seenPlayerIds.difference(currentIds)) {
+        if (_announcedLeftIds.add(id)) {
+          final name = _playerNamesCache[id] ?? '?';
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) notifyPlayerLeft(context, name);
+          });
+        }
+      }
+    }
+    _seenPlayerIds = currentIds;
+  }
 
   /// Power-up câștigat pentru runda anterioară — vezi core/powerups.dart.
   /// [_powerUpRolledRound] ține minte pentru ce rundă s-a tras deja, ca
@@ -150,7 +180,13 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
       totalPlayers: total,
     );
     if (!granted) return;
-    final picked = powerUpFor(matchId: widget.matchId, roundIndex: info.roundIndex, playerId: me, gameModeId: 'higherLower');
+    final picked = powerUpFor(
+      matchId: widget.matchId,
+      roundIndex: info.roundIndex,
+      playerId: me,
+      gameModeId: 'higherLower',
+      livePlayers: players.where((p) => !p.eliminated).length,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       setState(() => _myPowerUp = picked);
@@ -203,6 +239,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
   /// navigare) derivate din datele live — apelat din build(), la fel ca
   /// RoomLobbyScreen._maybeNavigateToMatch.
   void _onData(MatchInfo info, List<MatchPlayer> players) {
+    _detectPlayersWhoLeft(info, players);
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
       _showWinners = false;
