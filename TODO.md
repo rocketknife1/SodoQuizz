@@ -84,7 +84,8 @@ deci simplificarea e aliniată. Polish, nu blocant.
 
 ## Înainte de a trimite un build în Play
 
-1. **AAB nou** — `flutter build appbundle --release` (FĂRĂ `REAL_ADS`).
+1. **AAB nou** — `flutter build appbundle --release --dart-define=REAL_ADS=true`
+   (vezi `docs/build.md` — AAB-ul de Play e SINGURUL build cu reclame reale).
    Cel vechi e din `b805052`, dinainte de tot ce s-a livrat după.
 2. **Formularul Data safety** — o singură trecere, toată lista deodată:
    deja declarat (email, nume, progres) + Crashlytics („Crash logs" +
@@ -121,19 +122,18 @@ deci simplificarea e aliniată. Polish, nu blocant.
   dificultate 1-5, fără internet. Aceleași ecrane ca online, pe o bază din
   memorie (`data/local_firestore.dart`). Recompensă mică, plafon 5/zi, nu
   atinge clasamentul. Verificat în browser toate 5 modurile până la rezultate.
-- **Fix conturi orfane** — SCRIS (auth_service.dart + multiplayer_service.dart
-  + player_profile_service.dart), commitat în `1730f73`. Cauza: la revenirea din fereastra
-  Google, appul rescria profilul sub identitatea guest; login-ul ștergea
-  guest-ul; dacă scrierea ateriza după ștergere, profilul reînvia orfan.
-  NEVERIFICAT — login-ul merge acum, dar APK-ul sideloadat n-are token App
-  Check înregistrat, deci nu scrie nimic în Firestore (PERMISSION_DENIED) și
-  testul nu dovedește nimic. Se verifică după tokenul fix (punctul de mai jos).
-- **App Check debug token — STABIL, unul singur / platformă** — acum se
-  regenerează la fiecare instalare clean și trebuie reînregistrat manual prin
-  API (pierdere de timp în fiecare sesiune). De făcut: token FIX pus prin
-  `--dart-define` sau string resource în `android/app/src/debug/`, înregistrat
-  o dată, valabil pentru totdeauna. La fel pentru web (unul singur, nu per
-  sesiune). Ținta: exact 2 token-uri în Firebase Console, permanente.
+- ✅ **Fix conturi orfane** — REVIZUIT 2026-09-14, arată corect: `signInInProgress`
+  acoperă TOATE punctele care ar fi putut rescrie profilul în timpul
+  login-ului (heartbeat la resume, push la resume, heartbeat-ul propriu al
+  `_guardSignIn` la final, cu identitatea deja finală). N-am reușit o
+  reproducere live pe telefon (cere exact timing-ul ferestrei Google externe,
+  iar App Check pe un APK sideloadat local cere token de debug reînregistrat
+  la fiecare instalare — vezi punctul de mai jos). Nu blochează testerii:
+  ei intră prin Play (Play Integrity), fără niciun token de debug.
+- **App Check debug token** — NU mai e pe drumul critic. Contează doar pentru
+  mine, la teste locale pe APK sideloadat (se regenerează la fiecare
+  instalare clean, trebuie reînregistrat manual). Testerii din Play Internal
+  Testing nu ating asta deloc — App Check merge automat prin Play Integrity.
 - ✅ USE_EXACT_ALARM scoasă, CI rulează toate testele, audit cod mort — commitate în `1730f73`.
 - **Ștergerea tuturor jucătorilor** (cerută de user) — scriptul e gata
   (`tools/wipe_players.py`, probă făcută: 23 jucători, păstrează contul
@@ -168,6 +168,45 @@ deci simplificarea e aliniată. Polish, nu blocant.
   al userului: login în Unity Hub + activare licență Personal (o dată,
   ~10 min, ghidat). Proiectul Unity stă SEPARAT: `D:\proiecte\unity-efecte`,
   nu în SodoQuizz. În Flutter intră doar cadrele exportate.
+
+---
+
+## SESIUNEA 2026-09-14 (după boți) — commitată în `b330b04`
+
+- ✅ **Bug găsit și reparat, raportat de user**: la orice mod cu rundă
+  sincronizată (Piatră-Hârtie-Foarfecă etc.), dacă doi jucători termină
+  aproape simultan, scrierile lor intră în conflict și ecranul de rezultate
+  al unuia dintre ei rămânea blocat pe spinner PENTRU TOTDEAUNA — `leaveMatch`
+  era singurul apel din `MultiplayerResultsScreen._load()` fără try/catch.
+  Reprodus live cu doi jucători reali în browser, apoi reparat: try/catch +
+  timeout 10s pe `leaveMatch`, plus o ramură de eroare în `FutureBuilder`
+  (buton „Acasă" în loc de spinner etern, pentru orice altă excepție viitoare
+  asemănătoare). Rămâne un cost de eficiență nereparat: contenția însăși
+  (ambii clienți încearcă să rezolve/șteargă în aceeași clipă) tot generează
+  reîncercări în Firestore — nu blochează userul, dar merită o zi separată de
+  arbitrat printr-un singur „rezolvator" în loc de oricine.
+
+---
+
+## GATA DE TESTERI — ce rămâne e doar în consola ta
+
+Cod-ul e la punctul unde nu mai am ce repara solo fără trafic real sau fără
+acces la Play Console. Ordinea în care ai de făcut, ca să deschizi testarea:
+
+1. **AAB nou pentru Play** — `flutter build appbundle --release
+   --dart-define=REAL_ADS=true` (vezi `docs/build.md`). Cel din Play e din
+   `b805052`, dinainte de boți, retenție val 1+2, IAP.
+2. **Formularul Data safety** — o singură trecere (vezi lista completă la
+   „Înainte de a trimite un build în Play", punctul 2, mai sus). Play
+   Console → App content.
+3. **Urcă AAB-ul pe Internal Testing**, adaugă-i pe testeri ca License
+   testers. App Check merge automat acolo (Play Integrity) — fără nimic de
+   configurat de partea mea.
+4. IAP-ul rămâne STINS (`realMoneyStoreEnabled=false`) — pornește-l abia după
+   ce ai testeri și ai trecut prin pașii din secțiunea IAP de mai jos.
+
+Restul de mai jos (polish Home, animații, Unity, datorie tehnică) NU
+blochează — le fac oricând, pe rând, fără presiune.
 
 ---
 
