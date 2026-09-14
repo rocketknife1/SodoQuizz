@@ -326,6 +326,15 @@ class AuthService {
       // ignorat - oricum ne deconectam din Firebase mai jos.
     }
     await FirebaseAuth.instance.signOut();
+    // Identitate anonimă nouă, imediat — același motiv ca la [deleteAccount]:
+    // `MultiplayerService.ensureInitialized` are zăvorul deja închis de la
+    // pornire, deci până la repornire jucătorul rămânea fără uid (multiplayer
+    // cu eroare, absent din clasament).
+    try {
+      await FirebaseAuth.instance.signInAnonymously();
+    } catch (e) {
+      debugPrint('AuthService.signOut: identitatea anonima noua a esuat: $e');
+    }
   }
 
   /// Șterge definitiv contul curent — cerință Play Console: orice cont care

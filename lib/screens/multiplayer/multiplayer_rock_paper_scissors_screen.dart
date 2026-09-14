@@ -37,6 +37,11 @@ class _MultiplayerRockPaperScissorsScreenState
     extends State<MultiplayerRockPaperScissorsScreen> {
   MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
 
+  // O singură dată per ecran: create în build, se abonau din nou la fiecare
+  // tick de o secundă (un ascultător Firestore nou, citiri facturate în plus).
+  late final Stream<MatchInfo> _matchStream = _mp.watchMatch(widget.matchId);
+  late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
+
   int _lastRoundIndex = -1;
   bool _resolving = false;
   bool _navigatedToResults = false;
@@ -166,14 +171,14 @@ class _MultiplayerRockPaperScissorsScreenState
         floatingActionButtonLocation: matchOverlayLocation,
         body: SafeArea(
           child: StreamBuilder<MatchInfo>(
-            stream: _mp.watchMatch(widget.matchId),
+            stream: _matchStream,
             builder: (context, matchSnap) {
               final info = matchSnap.data;
               if (info == null) {
                 return const Center(child: CircularProgressIndicator());
               }
               return StreamBuilder<List<MatchPlayer>>(
-                stream: _mp.watchPlayers(widget.matchId),
+                stream: _playersStream,
                 builder: (context, playersSnap) {
                   final players = playersSnap.data ?? const <MatchPlayer>[];
                   _onData(info, players);

@@ -55,6 +55,10 @@ class MultiplayerMatchScreen extends StatefulWidget {
 class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
 
+  // O singură dată per ecran: creat în build, se abona din nou la fiecare
+  // tick de o secundă al cronometrului (ascultător Firestore nou de fiecare dată).
+  late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
+
   List<Question> _questions = const [];
   bool _loading = true;
   int _qIndex = 0;
@@ -500,7 +504,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     return SizedBox(
       height: 96,
       child: StreamBuilder<List<MatchPlayer>>(
-        stream: _mp.watchPlayers(widget.matchId),
+        stream: _playersStream,
         builder: (context, snap) {
           final players = List.of(snap.data ?? const <MatchPlayer>[]);
           _lastPlayers = players;

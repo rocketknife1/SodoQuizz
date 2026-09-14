@@ -44,6 +44,11 @@ class MultiplayerHigherLowerScreen extends StatefulWidget {
 class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScreen> {
   late final List<HigherLowerItem> _pool = _buildPool();
 
+  // O singură dată per ecran: create în build, se abonau din nou la fiecare
+  // tick de o secundă (un ascultător Firestore nou, citiri facturate în plus).
+  late final Stream<MatchInfo> _matchStream = MultiplayerService.instance.watchMatch(widget.matchId);
+  late final Stream<List<MatchPlayer>> _playersStream = MultiplayerService.instance.watchPlayers(widget.matchId);
+
   List<HigherLowerItem> _buildPool() {
     final pool = List.of(higherLowerItems);
     stableShuffle(pool, stableHash(widget.matchId));
@@ -311,14 +316,14 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
           decoration: const BoxDecoration(gradient: AppColors.spaceGradient),
           child: SafeArea(
             child: StreamBuilder<MatchInfo>(
-              stream: MultiplayerService.instance.watchMatch(widget.matchId),
+              stream: _matchStream,
               builder: (context, matchSnap) {
                 final info = matchSnap.data;
                 if (info == null) {
                   return const Center(child: CircularProgressIndicator(color: AppColors.blue));
                 }
                 return StreamBuilder<List<MatchPlayer>>(
-                  stream: MultiplayerService.instance.watchPlayers(widget.matchId),
+                  stream: _playersStream,
                   builder: (context, playersSnap) {
                     final players = playersSnap.data ?? const <MatchPlayer>[];
                     _onData(info, players);
