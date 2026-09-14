@@ -248,6 +248,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
   /// opt == null înseamnă că a expirat timpul fără răspuns ales.
   Future<void> _select(String? opt) async {
     if (answered) return;
+    // Sincron, înainte de await-ul de mai jos: la prima întrebare o apăsare
+    // dublă număra răspunsul (și monedele) de două ori.
+    answered = true;
     _questionTimer?.cancel();
     // Slotul rundei se consumă la PRIMUL răspuns, nu la finalul ei. Altfel,
     // cine răspundea la câteva întrebări și închidea aplicația din recente

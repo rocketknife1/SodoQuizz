@@ -119,6 +119,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
 
   Future<void> _claimDailyMode() async {
     if (_dailyModeClaimed || !_dailyModePlayed) return;
+    // Marcat sincron: o apăsare dublă rapidă plătea bonusul de două ori.
+    _dailyModeClaimed = true;
     await StorageService.claimDailyMode();
     await StorageService.addCoins(dailyModeCoinReward);
     await StorageService.addXp(dailyModeXpReward);

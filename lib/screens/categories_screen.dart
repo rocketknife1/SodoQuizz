@@ -578,13 +578,21 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
   /// Aplică efectiv bonusul (StorageService, nu doar marcajul de
   /// revendicare) — aceeași convenție ca [claimQuest]/[_upgrade]: metoda de
   /// storage doar ȚINE MINTE că s-a revendicat, apelantul scrie banii.
+  bool _claimingFeatured = false;
+
   Future<void> _claimFeatured() async {
+    // Setat sincron: o apăsare dublă rapidă plătea bonusul de două ori.
+    if (_claimingFeatured) return;
+    _claimingFeatured = true;
     await StorageService.addCoins(featuredCategoryCoinReward);
     await StorageService.addXp(featuredCategoryXpReward);
     await StorageService.claimFeaturedCategory();
     Sfx.rewardPop();
     if (!mounted) return;
-    setState(() => _featuredFuture = _loadFeaturedClaimState());
+    setState(() {
+      _featuredFuture = _loadFeaturedClaimState();
+      _claimingFeatured = false;
+    });
   }
 
   /// Conținut rotativ (Planul de Viitor v1 (livrat 2026-08-23; fișierul a fost șters) punctul 5) — categoria evidențiată

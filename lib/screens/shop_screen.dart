@@ -153,6 +153,9 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   Future<void> _claimDaily() async {
+    // Închis sincron: o apăsare dublă rapidă dădea viețile de două ori.
+    if (!_canClaimDaily) return;
+    setState(() => _canClaimDaily = false);
     final granted = await StorageService.claimDailyReward();
     if (!mounted) return;
     await bumpQuestMetric(context, 'daily_lives_claimed', 1);

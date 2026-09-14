@@ -99,6 +99,9 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
 
   Future<void> _select(String opt) async {
     if (answered) return;
+    // Sincron, înainte de await-ul de mai jos: la prima întrebare o apăsare
+    // dublă număra răspunsul (și monedele) de două ori.
+    answered = true;
     // Runda se consumă la PRIMUL răspuns, nu la final. Înainte, cine ieșea
     // înainte de ultima întrebare nu consuma nici cooldown-ul, nici slotul
     // zilnic — deci putea reintra imediat, la nesfârșit. Primul răspuns, nu

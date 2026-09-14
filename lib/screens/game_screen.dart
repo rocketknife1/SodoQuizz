@@ -298,6 +298,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
   Future<void> _resolveAnswer(bool correct) async {
     if (answered) return;
+    // Blocat SINCRON, înainte de primul await: două apăsări rapide pe variante
+    // diferite treceau amândouă de verificare (−2 vieți, sau monede + penalizare).
+    answered = true;
     // Punctele (scor de sesiune / record / clasament) rămân neschimbate;
     // monedele și XP-ul au acum formule proprii, decuplate de puncte (vezi
     // game_helpers.dart — XP-ul egal cu punctele era motivul pentru care se
@@ -342,6 +345,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _shakeController.forward(from: 0);
       }
     });
+
+    // Viața pierdută se salvează PRIMA: cine ieșea imediat după un răspuns
+    // greșit scăpa de penalizare (scrierea era la capătul unui lanț de await-uri).
+    if (!correct && !unlimited) await StorageService.setLives(lives);
 
     if (lives <= 0 && !unlimited) {
       Future.delayed(const Duration(seconds: 1), _showGameOver);
@@ -397,8 +404,6 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await StorageService.updateHighScore(score);
       await StorageService.updateModeHighScore(widget.gameModeId, score);
       await _checkAchievements();
-    } else {
-      await StorageService.setLives(lives);
     }
     await _checkSessionMilestone();
   }

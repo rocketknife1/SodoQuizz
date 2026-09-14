@@ -213,6 +213,9 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
 
   Future<void> _pick(String option) async {
     if (_answered || _finished) return;
+    // Sincron, înainte de await-ul de mai jos: la prima întrebare o apăsare
+    // dublă număra răspunsul de două ori.
+    _answered = true;
     // Rularea se consumă ACUM, la primul răspuns — nu la colectare. Înainte,
     // cine ieșea înainte de final o primea înapoi și putea reintra la
     // nesfârșit cu 2/2. Tot aici (o singură dată per rulare) se bifează și

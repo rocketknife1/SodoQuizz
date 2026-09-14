@@ -181,6 +181,9 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
       _lastHapticSegment = null;
     });
     Sfx.tileSelect();
+    // Tura se consumă ÎNAINTE de animație: premiul e deja decis, iar cine
+    // vedea roata oprindu-se pe ceva slab putea închide aplicația și roti din nou.
+    await StorageService.recordRingSpin();
     await _spin.forward(from: 0);
 
     final prize = _prizes[resultIndex];
@@ -192,7 +195,6 @@ class _WheelSpinDialogState extends State<WheelSpinDialog> with SingleTickerProv
     if (prize.unlimitedLives != null) {
       await StorageService.activateUnlimitedLives(prize.unlimitedLives!);
     }
-    await StorageService.recordRingSpin();
     Analytics.instance.wheelSpun();
     if (mounted) await bumpQuestMetric(context, 'wheel_spin', 1);
     Sfx.rewardPop();
