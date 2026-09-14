@@ -188,6 +188,28 @@ deci simplificarea e aliniată. Polish, nu blocant.
 
 ---
 
+## AUDIT COMPLET 2026-09-14 — ce s-a reparat (commit-uri `6cdccee`…`922081b`)
+
+- Nou: ecran „Cum te cheamă?" după tutorial la prima pornire.
+- Multiplayer: revanșa crea monede din nimic; Scaunul Electric număra greșit
+  viețile la lovituri duble; Mega Racheta făcea 0 daune la eschivă; răspuns
+  întârziat ateriza în runda următoare; ceas greșit golea coada tuturor;
+  meci încheiat putea porni rundă nouă; ascultători Firestore refăcuți la
+  fiecare secundă (RPS, H&L, Clasic).
+- Economie: roata se putea re-roti închizând aplicația; apăsare dublă =
+  recompensă dublă (categoria zilei, modul zilei, vieți din Shop, prima
+  întrebare la Planetă/Cultură/Clippy); în joc, două variante apăsate rapid
+  sau ieșirea imediată ocoleau pierderea vieții.
+- Conturi: după Deconectare jucătorul rămânea fără identitate până la repornire.
+- Dialoguri: Back pierdea recompensa de sezon / lăsa Game Over fără ieșire.
+- Siguranță: blocarea nu oprea notificările push — reparat în functions/index.js,
+  **NEDEPLOYAT** (`firebase.cmd deploy --only functions --project sodoquizz`).
+- Verificat curat: 1494 întrebări (răspuns în variante, poze, id-uri), 89/89
+  teste de reguli Firestore, indexuri, rambursarea mizelor, FutureBuilder-e.
+- Rămas (mic): ofertele de revanșă/Meci Rapid nu se șterg din Firestore.
+
+---
+
 ## GATA DE TESTERI — ce rămâne e doar în consola ta
 
 Cod-ul e la punctul unde nu mai am ce repara solo fără trafic real sau fără
