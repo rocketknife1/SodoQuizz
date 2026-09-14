@@ -495,7 +495,7 @@ class MultiplayerService {
       await _db.runTransaction((tx) async {
         final doc = await tx.get(matchRef);
         final data = doc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
+        if (data == null || data['status'] == MatchStatus.finished.name || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
           return;
         }
         tx.update(matchRef, {
@@ -817,7 +817,7 @@ class MultiplayerService {
       await _db.runTransaction((tx) async {
         final doc = await tx.get(matchRef);
         final data = doc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
+        if (data == null || data['status'] == MatchStatus.finished.name || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
           return;
         }
         tx.update(matchRef, {
@@ -1521,7 +1521,7 @@ class MultiplayerService {
       await _db.runTransaction((tx) async {
         final doc = await tx.get(matchRef);
         final data = doc.data();
-        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
+        if (data == null || data['status'] == MatchStatus.finished.name || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.revealed.name) {
           return;
         }
         tx.update(matchRef, {

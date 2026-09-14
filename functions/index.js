@@ -173,6 +173,23 @@ async function displayName(uid) {
   }
 }
 
+/** `true` daca [recipient] l-a blocat pe [sender] (vezi ModerationService,
+ * player_profiles/{uid}/blocked/{blockedUid}). Blocarea ascunde mesajele in
+ * aplicatie, dar push-ul trimis de functii ocolea asta: cine era blocat putea
+ * hartui in continuare prin notificari, cu tot textul mesajului. La eroare de
+ * citire trimitem (o notificare in plus e mai putin grav decat una pierduta). */
+async function isBlocked(recipient, sender) {
+  if (!recipient || !sender) return false;
+  try {
+    const doc = await db.collection("player_profiles").doc(recipient)
+      .collection("blocked").doc(sender).get();
+    return doc.exists;
+  } catch (e) {
+    logger.warn(`nu am putut verifica blocarea ${recipient}<-${sender}: ${e}`);
+    return false;
+  }
+}
+
 // ─── Mesaj privat intre prieteni ────────────────────────────────────────────
 // Id-ul firului e "uidA_uidB", sortat alfabetic (vezi FriendChatService si
 // regula din firestore.rules) — destinatarul e celalalt din pereche.
@@ -187,6 +204,7 @@ exports.onFriendMessage = onDocumentCreated(
     const parts = String(event.params.threadId).split("_");
     const recipient = parts.find((p) => p && p !== senderId);
     if (!recipient) return;
+    if (await isBlocked(recipient, senderId)) return;
 
     const name = await displayName(senderId);
     const text = String(msg.text || "").slice(0, 120);
@@ -206,6 +224,7 @@ exports.onFriendRequest = onDocumentCreated(
   async (event) => {
     const { uid, fromUid } = event.params;
     if (uid === fromUid) return;
+    if (await isBlocked(uid, fromUid)) return;
     const name = await displayName(fromUid);
     await sendToUser(uid, {
       title: "👋 Cerere de prietenie",
@@ -239,6 +258,10 @@ exports.onRoomInvite = onDocumentCreated(
   async (event) => {
     const inv = event.data && event.data.data();
     if (!inv || !inv.toUid || !inv.matchId) return;
+    if (await isBlocked(inv.toUid, inv.fromUid)) {
+      try { await event.data.ref.delete(); } catch (_) { /* se sterge oricum la reset */ }
+      return;
+    }
     const name = await displayName(inv.fromUid || "");
     await sendToUser(inv.toUid, {
       title: "🎮 Te-a invitat la o partida",
