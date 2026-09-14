@@ -331,6 +331,16 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final unlimited =
         correct ? _unlimitedLives : await StorageService.hasUnlimitedLives();
 
+    // Viața pierdută se calculează și se salvează ÎNAINTE de orice altceva,
+    // chiar dacă ecranul s-a închis între timp: cine ieșea imediat după un
+    // răspuns greșit scăpa de penalizare. Doar plafon inferior — vieți peste
+    // 5 (bonusuri) nu se retează înapoi; cu vieți nelimitate nu scade deloc.
+    if (!correct && !unlimited) {
+      lives = lives > 0 ? lives - 1 : 0;
+      await StorageService.setLives(lives);
+    }
+    if (!mounted) return;
+
     setState(() {
       answered = true;
       _unlimitedLives = unlimited;
@@ -338,19 +348,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         score += pts;
         streak++;
       } else {
-        // doar plafon inferior — dacă viețile sunt peste 5 (bonus din
-        // Cultură Generală / milestone-uri de sesiune), scăderea nu trebuie
-        // să le reteze înapoi la 5. Cât timp vieți nelimitate e activ, nu
-        // scade deloc.
-        if (!unlimited) lives = lives > 0 ? lives - 1 : 0;
         streak = 0;
         _shakeController.forward(from: 0);
       }
     });
-
-    // Viața pierdută se salvează PRIMA: cine ieșea imediat după un răspuns
-    // greșit scăpa de penalizare (scrierea era la capătul unui lanț de await-uri).
-    if (!correct && !unlimited) await StorageService.setLives(lives);
 
     if (lives <= 0 && !unlimited) {
       Future.delayed(const Duration(seconds: 1), _showGameOver);
