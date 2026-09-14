@@ -184,7 +184,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     final bot = widget.bot;
     if (bot != null) {
       if (myIndex != -1) await _rewardBotMatch(bot, sorted, myIndex);
-      await _mp.leaveMatch(widget.matchId);
+      await _safeLeaveMatch();
       bot.dispose();
       return sorted;
     }
@@ -297,8 +297,28 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       // anterioare (ștergere țintită, fără listare — vezi serviciul).
       await MultiplayerActivityService.instance.sweepMine();
     }
-    await _mp.leaveMatch(widget.matchId);
+    await _safeLeaveMatch();
     return sorted;
+  }
+
+  /// [MultiplayerService.leaveMatch] era singurul apel din [_load] fără
+  /// try/catch — un ecran de rezultate atârnă la nesfârșit pe spinner dacă
+  /// viitorul lui `_load` nu se termină NICIODATĂ (`FutureBuilder` verifică
+  /// doar `hasData`, nu și `hasError`). BUG GĂSIT LIVE 2026-09-14: când doi
+  /// jucători termină în aceeași clipă un mod cu rundă sincronizată (Piatră-
+  /// Hârtie-Foarfecă etc.), tranzacția care rezolvă ultima rundă intră în
+  /// conflict cu ștergerea camerei de către celălalt client — SDK-ul
+  /// Firestore poate reîncerca `leaveMatch`/`_deleteMatch` mult peste cele
+  /// 30s implicite ale unei tranzacții, iar apelul nefiind prins ținea tot
+  /// ecranul de rezultate blocat, nu doar curățenia camerei. Timeout-ul de
+  /// mai jos garantează că userul ajunge oricum la clasament, chiar dacă
+  /// ștergerea camerei rămase eșuează sau întârzie.
+  Future<void> _safeLeaveMatch() async {
+    try {
+      await _mp.leaveMatch(widget.matchId).timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint('MultiplayerResultsScreen._safeLeaveMatch: $e');
+    }
   }
 
   Future<void> _rewardBotMatch(BotMatch bot, List<MatchPlayer> sorted, int myIndex) async {
@@ -810,6 +830,18 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           child: FutureBuilder<List<MatchPlayer>>(
             future: _future,
             builder: (context, snap) {
+              // Plasă de siguranță: dacă totuși ceva neprevăzut aruncă în
+              // `_load` (vezi [_safeLeaveMatch] pentru cazul deja găsit),
+              // userul primește un buton spre Acasă, nu un spinner etern.
+              if (snap.hasError) {
+                debugPrint('MultiplayerResultsScreen: _load a esuat: ${snap.error}');
+                return Center(
+                  child: ElevatedButton(
+                    onPressed: _goHome,
+                    child: Text(tr('Acasă', 'Home')),
+                  ),
+                );
+              }
               if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator(color: AppColors.blue));
               }
