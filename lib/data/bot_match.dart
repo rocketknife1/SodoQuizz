@@ -201,8 +201,9 @@ class BotMatch {
     if (info.roundPhase != RoundPhase.answering) return;
     for (final bot in _bots) {
       if (info.roundAnswers.containsKey(bot.currentPlayerId)) continue;
-      _act(bot, phaseKey, rpsRoundSeconds, (_) => bot.submitRoundAnswer(
+      _act(bot, phaseKey, rpsRoundSeconds, (i) => bot.submitRoundAnswer(
             matchId: matchId,
+            roundIndex: i.roundIndex,
             answer: botPickRps(humanHistory: _humanRps, difficulty: settings.difficulty, rnd: _rnd),
           ));
     }
@@ -212,6 +213,7 @@ class BotMatch {
     final q = _questionFor(info.roundIndex);
     return bot.submitRoundAnswer(
       matchId: matchId,
+      roundIndex: info.roundIndex,
       answer: botPickAnswer(correct: q.answer, choices: q.choices, difficulty: settings.difficulty, rnd: _rnd),
     );
   }
@@ -226,13 +228,13 @@ class BotMatch {
       } else if (info.roundPhase == RoundPhase.targeting &&
           info.roundWinnerIds.contains(id) &&
           !info.roundTargets.containsKey(id)) {
-        _act(bot, phaseKey, tanksTargetSeconds, (_) async {
+        _act(bot, phaseKey, tanksTargetSeconds, (i) async {
           final target = botPickTarget(
             hpById: {for (final p in _players) if (p.id != id && !p.eliminated) p.id: p.hp},
             difficulty: settings.difficulty,
             rnd: _rnd,
           );
-          if (target != null) await bot.submitTanksTarget(matchId: matchId, targetId: target);
+          if (target != null) await bot.submitTanksTarget(matchId: matchId, roundIndex: i.roundIndex, targetId: target);
         });
       }
     }
@@ -259,6 +261,7 @@ class BotMatch {
                 };
           return bot.submitObbyChoice(
             matchId: matchId,
+            roundIndex: i.roundIndex,
             platformIndex: botPickPlatform(
               platformCount: obbyPlatformChoiceCount,
               safeIndices: safe,
@@ -281,7 +284,7 @@ class BotMatch {
       } else if (info.roundPhase == RoundPhase.targeting &&
           info.roundWinnerIds.contains(id) &&
           !info.roundChairChoices.containsKey(id)) {
-        _act(bot, phaseKey, electricChairTargetSeconds, (_) async {
+        _act(bot, phaseKey, electricChairTargetSeconds, (i) async {
           final target = botPickTarget(
             hpById: {for (final p in _players) if (p.id != id && !p.eliminated) p.id: p.lives},
             difficulty: settings.difficulty,
@@ -290,6 +293,7 @@ class BotMatch {
           if (target == null) return;
           await bot.submitElectricChairChoice(
             matchId: matchId,
+            roundIndex: i.roundIndex,
             targetId: target,
             questionIndex: _rnd.nextInt(electricChairCandidateCount),
           );
@@ -303,6 +307,7 @@ class BotMatch {
           final q = _chairPool[(start + assignment.questionIndex) % _chairPool.length];
           return bot.submitChairAnswer(
             matchId: matchId,
+            roundIndex: i.roundIndex,
             answer: botPickAnswer(correct: q.answer, choices: q.choices, difficulty: settings.difficulty, rnd: _rnd),
           );
         });

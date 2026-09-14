@@ -290,7 +290,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
     Sfx.tileSelect();
-    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: choice);
   }
 
   /// Consumă power-up-ul curent.
@@ -414,6 +414,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       TankSfx.lock();
       _mp.submitTanksTarget(
         matchId: widget.matchId,
+        roundIndex: info.roundIndex,
         targetId: _firstDoubleTarget!,
         secondTargetId: targetId,
       );
@@ -421,7 +422,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     }
 
     TankSfx.lock();
-    _mp.submitTanksTarget(matchId: widget.matchId, targetId: targetId);
+    _mp.submitTanksTarget(matchId: widget.matchId, roundIndex: info.roundIndex, targetId: targetId);
   }
 
   /// Închiderea fazei de răspuns și tragerea propriu-zisă merg prin aceeași

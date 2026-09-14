@@ -198,7 +198,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     if (myPlayer == null || myPlayer.obstaclesCleared >= obbyObstacleCount) return;
     final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
-    _mp.submitRoundAnswer(matchId: widget.matchId, answer: answer);
+    _mp.submitRoundAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: answer);
 
     // Recompensa imediată (punctul 4 din planul de viitor): corectitudinea
     // se știe PE LOC — întrebarea și răspunsul corect sunt deja pe telefon
@@ -325,7 +325,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // Firestore: la o conexiune slabă, un „toc" întârziat cu o secundă se
     // simte ca o apăsare care n-a fost înregistrată.
     ObbySfx.pick();
-    _mp.submitObbyChoice(matchId: widget.matchId, platformIndex: index);
+    _mp.submitObbyChoice(matchId: widget.matchId, roundIndex: info.roundIndex, platformIndex: index);
   }
 
   void _onPlatformChosenFromGame(int index) {

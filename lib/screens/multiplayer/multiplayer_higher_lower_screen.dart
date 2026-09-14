@@ -212,7 +212,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     if (info.roundPhase != RoundPhase.answering) return;
     final me = MultiplayerService.instance.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
-    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, answer: guess);
+    MultiplayerService.instance.submitRoundAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: guess);
   }
 
   Future<void> _tryResolve(MatchInfo info) async {

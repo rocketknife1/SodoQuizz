@@ -214,7 +214,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (info.roundPhase != RoundPhase.answering) return;
     if (info.roundAnswers.containsKey(_myId)) return;
     Sfx.tileSelect();
-    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: choice);
   }
 
   void _pickTarget(MatchInfo info, String targetId) {
@@ -232,6 +232,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     Sfx.tileSelect();
     _mp.submitElectricChairChoice(
       matchId: widget.matchId,
+      roundIndex: info.roundIndex,
       targetId: target,
       questionIndex: questionIndex,
     );
@@ -325,7 +326,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (!info.roundChairAssignments.containsKey(_myId)) return;
     if (info.roundChairAnswers.containsKey(_myId)) return;
     Sfx.tileSelect();
-    _mp.submitChairAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitChairAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: choice);
   }
 
   /// Aceeași frână ca la Quizz Tanks: `build` rulează de câteva ori pe

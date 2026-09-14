@@ -100,7 +100,7 @@ class _MultiplayerRockPaperScissorsScreenState
     final me = _mp.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) return;
     Sfx.tileSelect();
-    _mp.submitRoundAnswer(matchId: widget.matchId, answer: choice);
+    _mp.submitRoundAnswer(matchId: widget.matchId, roundIndex: info.roundIndex, answer: choice);
   }
 
   Future<void> _tryResolve(MatchInfo info) async {

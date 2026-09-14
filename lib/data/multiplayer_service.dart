@@ -403,9 +403,12 @@ class MultiplayerService {
   /// Lower, textul variantei alese la Quizz Tanks. Ceilalți văd că ai
   /// răspuns (cheia există în `roundAnswers`), nu și CE ai răspuns: nimeni
   /// nu se uită la harta răspunsurilor înainte de rezolvarea rundei.
-  Future<void> submitRoundAnswer({required String matchId, required String answer}) {
+  Future<void> submitRoundAnswer({required String matchId, required int roundIndex, required String answer}) {
     final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundAnswers.$me': answer}));
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundAnswers.$me': answer,
+          'roundStamps.roundAnswers.$me': roundIndex, // vezi freshRoundEntries
+        }));
   }
 
   /// Calculează rezultatul rundei curente — poate fi apelată de ORICE
@@ -437,7 +440,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja rezolvată de alt client - nimic de facut
         }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
         final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
         for (final id in playerIds) {
           playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
@@ -539,7 +542,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja rezolvată de alt client
         }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
         final choices = {for (final id in playerIds) id: (answers[id] as String?) ?? ''};
         final gained = rpsRoundScores(choices);
 
@@ -611,7 +614,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja închisă de alt client
         }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
         // Firestore cere ca TOATE citirile unei tranzacții să se termine
         // înainte de orice scriere — de-aia colectăm toate documentele
         // aici, într-o singură trecere, și scriem abia mai jos, într-o a
@@ -664,10 +667,12 @@ class MultiplayerService {
   }
 
   /// Placa aleasă de jucătorul curent, din faza de alegere.
-  Future<void> submitObbyChoice({required String matchId, required int platformIndex}) {
+  Future<void> submitObbyChoice({required String matchId, required int roundIndex, required int platformIndex}) {
     final me = currentPlayerId;
-    return _paced(() =>
-        _db.collection('matches').doc(matchId).update({'roundPlatformChoices.$me': platformIndex}));
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundPlatformChoices.$me': platformIndex,
+          'roundStamps.roundPlatformChoices.$me': roundIndex,
+        }));
   }
 
   /// Sare efectiv: pentru fiecare jucător calificat se compară placa aleasă cu
@@ -703,7 +708,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.choosing.name) {
           return; // deja rezolvată de alt client - nimic de facut
         }
-        final rawChoices = data['roundPlatformChoices'] as Map? ?? const {};
+        final rawChoices = freshRoundEntries(data, 'roundPlatformChoices', roundIndex);
         final winnerIds = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
         final activePowerUps = Map<String, dynamic>.from(data['roundPowerUps'] as Map? ?? const {});
         final sabotaged = Map<String, dynamic>.from(data['roundSabotage'] as Map? ?? const {});
@@ -901,7 +906,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja închisă de alt client
         }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
         // „Reparații pe teren": toți cei încă în viață primesc puțin HP
         // înapoi ÎNAINTE de foc — vezi core/tanks.dart tanksFieldRepairsHeal.
         final fieldRepairs = roundEventFor(matchId: matchId, roundIndex: roundIndex, gameModeId: 'quizzTanks') == RoundEvent.fieldRepairs;
@@ -961,12 +966,16 @@ class MultiplayerService {
   /// o singură lovitură cu daune mărite.
   Future<void> submitTanksTarget({
     required String matchId,
+    required int roundIndex,
     required String targetId,
     String? secondTargetId,
   }) {
     final me = currentPlayerId;
     final value = secondTargetId == null ? targetId : '$targetId$tanksTargetSeparator$secondTargetId';
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundTargets.$me': value}));
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundTargets.$me': value,
+          'roundStamps.roundTargets.$me': roundIndex,
+        }));
   }
 
   /// Activează un power-up pentru runda curentă — citit de [resolveTanksRound]
@@ -1079,7 +1088,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.targeting.name) {
           return; // deja rezolvată de alt client - nimic de facut
         }
-        final targets = Map<String, dynamic>.from(data['roundTargets'] as Map? ?? const {});
+        final targets = freshRoundEntries(data, 'roundTargets', roundIndex);
         // Lista țintașilor E lista celor care au răspuns corect, scrisă de
         // [closeTanksAnswering] — deci tot din ea se citește și cine e „în
         // gardă" la apărare, fără să mai comparăm răspunsurile a doua oară.
@@ -1213,7 +1222,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
           return; // deja închisă de alt client
         }
-        final answers = Map<String, dynamic>.from(data['roundAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
 
         final attackers = <String>[];
         var aliveCount = 0;
@@ -1262,12 +1271,14 @@ class MultiplayerService {
   /// atacatorul curent, din ecranul de alegere.
   Future<void> submitElectricChairChoice({
     required String matchId,
+    required int roundIndex,
     required String targetId,
     required int questionIndex,
   }) {
     final me = currentPlayerId;
     return _paced(() => _db.collection('matches').doc(matchId).update({
           'roundChairChoices.$me': ChairChoice(targetId: targetId, questionIndex: questionIndex).toMap(),
+          'roundStamps.roundChairChoices.$me': roundIndex,
         }));
   }
 
@@ -1289,7 +1300,7 @@ class MultiplayerService {
         if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.targeting.name) {
           return; // deja închisă de alt client
         }
-        final rawChoices = Map<String, dynamic>.from(data['roundChairChoices'] as Map? ?? const {});
+        final rawChoices = freshRoundEntries(data, 'roundChairChoices', roundIndex);
         final attackers = List<String>.from(data['roundWinnerIds'] as List? ?? const []);
 
         final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
@@ -1351,9 +1362,12 @@ class MultiplayerService {
   }
 
   /// Răspunsul victimei curente la întrebarea aleasă pentru ea.
-  Future<void> submitChairAnswer({required String matchId, required String answer}) {
+  Future<void> submitChairAnswer({required String matchId, required int roundIndex, required String answer}) {
     final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundChairAnswers.$me': answer}));
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundChairAnswers.$me': answer,
+          'roundStamps.roundChairAnswers.$me': roundIndex,
+        }));
   }
 
   /// Rezolvă scaunul: fiecare victimă din [MatchInfo.roundChairAssignments]
@@ -1383,7 +1397,7 @@ class MultiplayerService {
           for (final e in (data['roundChairAssignments'] as Map? ?? const {}).entries)
             e.key as String: ChairAssignment.fromMap(Map<String, dynamic>.from(e.value as Map)),
         };
-        final answers = Map<String, dynamic>.from(data['roundChairAnswers'] as Map? ?? const {});
+        final answers = freshRoundEntries(data, 'roundChairAnswers', roundIndex);
         // Power-up-uri de-o rundă (scut propriu, șoc perforant) — vezi
         // [submitElectricChairPowerUp]; scut de aliat separat mai jos,
         // fiindcă ține 2 runde și nu se resetează la fiecare rundă.
@@ -1654,12 +1668,15 @@ class MultiplayerService {
     if (abandoned && info.status == MatchStatus.playing) {
       await _recordAbandon(matchRef, info);
     }
+    final mine = await matchRef.collection('players').doc(me).get();
     await matchRef.collection('players').doc(me).delete();
     // Nu doar "mai există vreun document" — o fantomă (aplicație oprită
     // brusc, fără trecere prin leaveMatch) rămâne la nesfârșit altfel, iar
     // camera nu se mai șterge niciodată. Vezi [_isDeadMatchPlayer].
     final remaining = await matchRef.collection('players').get();
-    if (remaining.docs.every((d) => _isDeadMatchPlayer(d.data()))) {
+    final mineData = mine.data();
+    final serverNow = _serverNow([if (mineData != null) mineData, for (final d in remaining.docs) d.data()]);
+    if (remaining.docs.every((d) => _isDeadMatchPlayer(d.data(), serverNow))) {
       await _deleteMatch(matchRef);
     }
   }
@@ -1961,8 +1978,26 @@ class MultiplayerService {
   /// jucători reali ar fi intrat după tine — iar contorul afișa oameni care
   /// nu existau.
   List<QueryDocumentSnapshot<Map<String, dynamic>>> _liveQueueDocs(
-      Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs) {
-    return docs.where((d) => !_isDeadQueueEntry(d.data()) && d.data()['matchId'] == null).toList();
+      Iterable<QueryDocumentSnapshot<Map<String, dynamic>>> docs, {DateTime? now}) {
+    final ref = now ?? DateTime.now();
+    return docs.where((d) => !_isDeadQueueEntry(d.data(), ref) && d.data()['matchId'] == null).toList();
+  }
+
+  static Timestamp? _seenAt(Map<String, dynamic> data) =>
+      (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
+
+  /// „Acum" după ceasul SERVERULUI: cel mai recent semn de viață din [datas].
+  /// Folosit oriunde se ȘTERGE pe criteriu de vechime — un telefon cu ceasul
+  /// dat înainte cu peste un minut vedea toate intrările drept moarte și
+  /// golea coada tuturor (sau camera celorlalți). Cine face ștergerea are
+  /// mereu propriul semn de viață proaspăt printre ele.
+  static DateTime _serverNow(Iterable<Map<String, dynamic>> datas) {
+    DateTime? latest;
+    for (final d in datas) {
+      final t = _seenAt(d)?.toDate();
+      if (t != null && (latest == null || t.isAfter(latest))) latest = t;
+    }
+    return latest ?? DateTime.now();
   }
 
   /// Ratingul unei intrări din coadă. Intrările scrise de versiuni mai vechi
@@ -1976,14 +2011,14 @@ class MultiplayerService {
   /// client poate să nu-și fi citit încă `matchId`-ul, iar dacă i se șterge
   /// documentul de sub el nu mai află niciodată în ce ofertă a intrat și
   /// rămâne să caute singur, în timp ce adversarul îl așteaptă la confirmare.
-  bool _isDeadQueueEntry(Map<String, dynamic> data) {
+  bool _isDeadQueueEntry(Map<String, dynamic> data, DateTime now) {
     // `lastSeenAt` lipsește la intrările scrise de versiuni mai vechi ale
     // jocului — se cade înapoi pe `joinedAt`. Amândouă null înseamnă un
     // document abia scris, căruia serverul nu i-a confirmat încă
     // timestamp-ul: ăla e nou, nu vechi.
-    final seen = (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
+    final seen = _seenAt(data);
     if (seen == null) return false;
-    return seen.toDate().isBefore(DateTime.now().subtract(_queueFreshness));
+    return seen.toDate().isBefore(now.subtract(_queueFreshness));
   }
 
   /// Cât de des își împrospătează semnul de viață un jucător aflat într-un
@@ -2122,10 +2157,10 @@ class MultiplayerService {
     }
   }
 
-  bool _isDeadMatchPlayer(Map<String, dynamic> data) {
-    final seen = (data['lastSeenAt'] as Timestamp?) ?? (data['joinedAt'] as Timestamp?);
+  bool _isDeadMatchPlayer(Map<String, dynamic> data, DateTime now) {
+    final seen = _seenAt(data);
     if (seen == null) return false;
-    return seen.toDate().isBefore(DateTime.now().subtract(_matchPlayerFreshness));
+    return seen.toDate().isBefore(now.subtract(_matchPlayerFreshness));
   }
 
   /// Streamul propriei intrări din coadă — când un alt client (liderul)
@@ -2173,12 +2208,13 @@ class MultiplayerService {
     // din interogare: Firestore n-are cum să filtreze aici după prospețime
     // fără un index pe care oricum l-ar strica ordonarea după `joinedAt`.
     final queueSnap = await _db.collection('matchmaking_queue').orderBy('joinedAt').limit(20).get();
-    final live = _liveQueueDocs(queueSnap.docs);
+    final serverNow = _serverNow(queueSnap.docs.map((d) => d.data()));
+    final live = _liveQueueDocs(queueSnap.docs, now: serverNow);
 
     // Curățenie oportunistă, DOAR pe cele moarte de timp (vezi
     // [_isDeadQueueEntry]): fantomele rămase blochează coada pentru toată
     // lumea, iar nimeni altcineva nu le mai șterge vreodată.
-    for (final d in queueSnap.docs.where((d) => _isDeadQueueEntry(d.data()))) {
+    for (final d in queueSnap.docs.where((d) => _isDeadQueueEntry(d.data(), serverNow))) {
       // fire-and-forget: dacă eșuează, reîncercăm la următorul tick
       d.reference.delete().catchError((e) {
         debugPrint('MultiplayerService.attemptFormMatch: nu s-a putut sterge intrarea moarta ${d.id}: $e');

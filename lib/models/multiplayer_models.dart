@@ -123,6 +123,26 @@ class ChairAssignment {
   Map<String, dynamic> toMap() => {'a': attackerIds, 's': sourceAttackerId, 'q': questionIndex};
 }
 
+/// Intrările din câmpul de rundă [field] (`roundAnswers`, `roundTargets`...)
+/// care chiar aparțin rundei [roundIndex].
+///
+/// De ce: o scriere pornită în ultima clipă, pe net lent sau offline, poate
+/// ajunge DUPĂ ce runda s-a rezolvat și s-a golit — și ateriza în runda
+/// următoare: vot pe care jucătorul nu l-a dat, iar ecranul îl considera deja
+/// răspuns și nu-l mai lăsa să aleagă. Fiecare scriere nouă pune alături
+/// `roundStamps.<field>.<uid> = runda`; intrările cu altă rundă se ignoră.
+/// Intrările FĂRĂ ștampilă (clienți vechi) rămân valabile.
+Map<String, dynamic> freshRoundEntries(Map<String, dynamic> data, String field, int roundIndex) {
+  final raw = Map<String, dynamic>.from(data[field] as Map? ?? const {});
+  final stamps = (data['roundStamps'] as Map?)?[field];
+  if (stamps is! Map) return raw;
+  raw.removeWhere((id, _) {
+    final stamp = stamps[id];
+    return stamp is num && stamp.toInt() != roundIndex;
+  });
+  return raw;
+}
+
 /// Un meci multiplayer (cameră privată SAU matchmaking public) — un singur
 /// model deservește ambele fluxuri, vezi planul de arhitectură: o cameră
 /// privată e doar un meci creat cu un [code] vizibil, unul public e creat
@@ -283,6 +303,7 @@ class MatchInfo {
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? const {};
+    final round = (data['roundIndex'] as num?)?.toInt() ?? 0;
     return MatchInfo(
       id: doc.id,
       mode: (data['mode'] as String?) == 'private' ? MatchMode.private : MatchMode.public,
@@ -304,12 +325,12 @@ class MatchInfo {
         (m) => m.name == data['gameMode'],
         orElse: () => MatchGameMode.classic,
       ),
-      roundIndex: data['roundIndex'] as int? ?? 0,
+      roundIndex: round,
       roundPhase: RoundPhase.values.firstWhere(
         (p) => p.name == data['roundPhase'],
         orElse: () => RoundPhase.answering,
       ),
-      roundAnswers: Map<String, String>.from(data['roundAnswers'] as Map? ?? const {}),
+      roundAnswers: Map<String, String>.from(freshRoundEntries(data, 'roundAnswers', round)),
       roundWinnerIds: List<String>.from(data['roundWinnerIds'] as List? ?? const []),
       roundStartedAt: data['roundStartedAt'] as Timestamp?,
       roundShots: [
@@ -318,23 +339,23 @@ class MatchInfo {
       ],
       roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
       roundShieldedIds: List<String>.from(data['roundShieldedIds'] as List? ?? const []),
-      roundTargets: Map<String, String>.from(data['roundTargets'] as Map? ?? const {}),
+      roundTargets: Map<String, String>.from(freshRoundEntries(data, 'roundTargets', round)),
       roundPowerUps: Map<String, String>.from(data['roundPowerUps'] as Map? ?? const {}),
       // (x as num).toInt() nu `as int`: Firestore poate întoarce un întreg
       // scris de pe web ca `double`, iar un cast direct ar arunca.
       roundPlatformChoices: {
-        for (final e in (data['roundPlatformChoices'] as Map? ?? const {}).entries)
-          e.key as String: (e.value as num).toInt(),
+        for (final e in freshRoundEntries(data, 'roundPlatformChoices', round).entries)
+          e.key: (e.value as num).toInt(),
       },
       roundChairChoices: {
-        for (final e in (data['roundChairChoices'] as Map? ?? const {}).entries)
-          e.key as String: ChairChoice.fromMap(Map<String, dynamic>.from(e.value as Map)),
+        for (final e in freshRoundEntries(data, 'roundChairChoices', round).entries)
+          e.key: ChairChoice.fromMap(Map<String, dynamic>.from(e.value as Map)),
       },
       roundChairAssignments: {
         for (final e in (data['roundChairAssignments'] as Map? ?? const {}).entries)
           e.key as String: ChairAssignment.fromMap(Map<String, dynamic>.from(e.value as Map)),
       },
-      roundChairAnswers: Map<String, String>.from(data['roundChairAnswers'] as Map? ?? const {}),
+      roundChairAnswers: Map<String, String>.from(freshRoundEntries(data, 'roundChairAnswers', round)),
       roundChairOutcomes: {
         for (final e in (data['roundChairOutcomes'] as Map? ?? const {}).entries)
           e.key as String: e.value as bool,

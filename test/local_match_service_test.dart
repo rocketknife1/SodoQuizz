@@ -16,8 +16,8 @@ void main() {
     final infos = <MatchInfo>[];
     final sub = me.watchMatch(room.id).listen(infos.add);
 
-    await me.submitRoundAnswer(matchId: room.id, answer: 'rock');
-    await bot.submitRoundAnswer(matchId: room.id, answer: 'scissors');
+    await me.submitRoundAnswer(matchId: room.id, roundIndex: 0, answer: 'rock');
+    await bot.submitRoundAnswer(matchId: room.id, roundIndex: 0, answer: 'scissors');
     await me.resolveRockPaperScissorsRound(matchId: room.id, roundIndex: 0);
     // al doilea apel pe aceeasi runda trebuie sa fie no-op (garda din tranzactie)
     await bot.resolveRockPaperScissorsRound(matchId: room.id, roundIndex: 0);
@@ -46,5 +46,23 @@ void main() {
     final stream = me.watchPlayers(room.id);
     expect((await stream.first).single.id, 'eu');
     expect((await stream.first).single.id, 'eu');
+  });
+
+  test('un raspuns intarziat din runda trecuta nu blocheaza runda noua', () async {
+    final db = LocalFirestore();
+    final me = MultiplayerService.local(db: db, playerId: 'eu');
+    final bot = MultiplayerService.local(db: db, playerId: 'bot_1');
+    final room = await me.createRoom(displayName: 'Eu', gameMode: MatchGameMode.rockPaperScissors);
+    await bot.joinRoomById(matchId: room.id, displayName: 'Bot');
+    await me.startMatch(room.id);
+    await me.submitRoundAnswer(matchId: room.id, roundIndex: 0, answer: 'rock');
+    await bot.submitRoundAnswer(matchId: room.id, roundIndex: 0, answer: 'paper');
+    await me.resolveRockPaperScissorsRound(matchId: room.id, roundIndex: 0);
+    await me.advanceSyncRound(matchId: room.id, roundIndex: 0);
+    // scrierea botului pentru runda 0 ajunge abia acum, in runda 1
+    await bot.submitRoundAnswer(matchId: room.id, roundIndex: 0, answer: 'scissors');
+    final info = await me.watchMatch(room.id).first;
+    expect(info.roundIndex, 1);
+    expect(info.roundAnswers.containsKey('bot_1'), isFalse);
   });
 }
