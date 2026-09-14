@@ -180,7 +180,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final claim = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
+      // Back-ul telefonului închidea dialogul cu `null`, iar recompensa se
+      // ștergea oricum mai jos — pierdută fără să fi fost revendicată.
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
         backgroundColor: const Color(0xFF1a1a2e),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
@@ -206,6 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
           ),
         ],
+      ),
       ),
     );
     await StorageService.clearPendingSeasonReward();

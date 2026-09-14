@@ -164,6 +164,8 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     await StorageService.recordModeEverPlayed(widget.gameModeId);
     await _checkAchievements();
 
+    // Cine iese cât încă se încarcă întrebările nu mai are ecran de actualizat.
+    if (!mounted) return;
     setState(() {
       lives = savedLives;
       hintsBalance = savedHints;
@@ -714,7 +716,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => StatefulBuilder(
+      // Back-ul închidea Game Over și lăsa jucătorul în joc cu 0 vieți, fără
+      // nicio acțiune posibilă (sau pierdea recompensa reclamei în curs).
+      builder: (dialogContext) => PopScope(
+        canPop: false,
+        child: StatefulBuilder(
         builder: (dialogContext, setDialogState) => AlertDialog(
           backgroundColor: const Color(0xFF1a1a2e),
           shape:
@@ -828,6 +834,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
             ),
           ],
         ),
+      ),
       ),
     );
   }
