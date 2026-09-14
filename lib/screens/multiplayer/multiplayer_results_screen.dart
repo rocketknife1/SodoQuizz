@@ -553,7 +553,10 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     final ok = await _mp.offerRematch(
       matchId: widget.matchId,
       gameMode: widget.gameMode,
-      stake: _tableStake(_originalPlayers),
+      // Fără miză: nimeni nu plătește la revanșă (launchRematch doar așază
+      // jucătorii), deci o miză aici ar fi împărțit un pot inexistent —
+      // monede create din nimic la fiecare revanșă.
+      stake: 0,
       participants: [
         for (final p in _originalPlayers)
           RematchParticipant(id: p.id, name: p.name, avatarSeed: p.avatarSeed, photoUrl: p.photoUrl, avatarStyle: p.avatarStyle),

@@ -484,6 +484,10 @@ TanksRoundOutcome resolveTanksVolleys({
 
     for (final (t, focusMult) in volley) {
       var roll = rollTankShot(targetAnsweredCorrectly: shooters.contains(t), rnd: rng, dodgeBonus: dodgeBonus);
+      // Mega Racheta nu se poate evita: o eschivă reușită dădea 0 daune × 3.5.
+      if (!roll.hit && shooterPower == PowerUp.megaRocket) {
+        roll = TankShotRoll(hit: true, damage: tanksDamageMin + rng.nextInt(tanksDamageMax - tanksDamageMin + 1));
+      }
       if (roll.hit && damageMultiplier != 1.0) {
         roll = TankShotRoll(hit: true, damage: (roll.damage * damageMultiplier).round());
       }

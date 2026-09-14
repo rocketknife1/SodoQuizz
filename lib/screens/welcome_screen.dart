@@ -6,7 +6,7 @@ import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/storage_service.dart';
 import '../widgets/space_background.dart';
-import 'home_screen.dart';
+import 'choose_name_screen.dart';
 
 // ─── Primele zece secunde ─────────────────────────────────────────────────
 //
@@ -73,18 +73,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
   }
 
   Future<void> _finish() async {
-    // Se marcheaza si la revizionare: e oricum deja marcat, iar asa nu conteaza
-    // pe ce cale a ajuns aici.
-    await StorageService.setIntroSeen();
     Analytics.instance.tutorialFinished(pasi: _index + 1);
-    if (!mounted) return;
     if (widget.asReplay) {
-      Navigator.pop(context);
+      await StorageService.setIntroSeen();
+      if (mounted) Navigator.pop(context);
       return;
     }
+    // Prima pornire: tutorialul se marchează ca văzut abia după ce omul își
+    // alege numele (vezi ChooseNameScreen).
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const HomeScreen()),
+      MaterialPageRoute(builder: (_) => const ChooseNameScreen()),
     );
   }
 

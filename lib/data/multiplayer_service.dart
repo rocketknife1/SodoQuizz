@@ -1407,7 +1407,11 @@ class MultiplayerService {
 
         final outcomes = <String, bool>{};
         final scoreGain = <String, int>{for (final id in playerIds) id: 0};
-        final newlyEliminated = <String>{};
+        // Un jucător poate fi atins de mai multe ori în aceeași rundă (reflexie
+        // ca atacator + șoc ca victimă). Schimbările de viață se ADUNĂ aici și
+        // se scriu o singură dată — două `tx.update` pe `lives`, calculate
+        // fiecare din valoarea de la începutul rundei, se suprascriau.
+        final lifeDelta = <String, int>{};
         for (final entry in assignments.entries) {
           final victimId = entry.key;
           final assignment = entry.value;
@@ -1430,14 +1434,7 @@ class MultiplayerService {
             for (final attackerId in assignment.attackerIds) {
               final aDoc = docs[attackerId];
               if (aDoc == null || !aDoc.exists || aDoc.data()!['eliminated'] == true) continue;
-              final lives = (aDoc.data()!['lives'] as int? ?? electricChairMaxLives) - 1;
-              final eliminated = lives <= 0;
-              if (eliminated) newlyEliminated.add(attackerId);
-              tx.update(aDoc.reference, {
-                'lives': lives < 0 ? 0 : lives,
-                'eliminated': eliminated,
-                if (eliminated) 'eliminatedAtRound': roundIndex,
-              });
+              lifeDelta[attackerId] = (lifeDelta[attackerId] ?? 0) - 1;
             }
             continue; // victima nu ia puncte de apărare pentru un scut-noroc
           }
@@ -1445,33 +1442,40 @@ class MultiplayerService {
             scoreGain[victimId] = (scoreGain[victimId] ?? 0) + electricChairPointsPerDefense;
             // Siguranță: scapi de pe scaun, primești o viață înapoi.
             if (event == RoundEvent.groundedFuse) {
-              final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) + 1;
-              tx.update(victimDoc.reference, {'lives': lives.clamp(0, electricChairMaxLives)});
+              lifeDelta[victimId] = (lifeDelta[victimId] ?? 0) + 1;
             }
           } else {
             // Supratensiune: scaunul ia DOUĂ vieți, nu una.
             final livesLost = event == RoundEvent.overcharge ? 2 : 1;
-            final lives = (victimDoc.data()!['lives'] as int? ?? electricChairMaxLives) - livesLost;
-            final eliminated = lives <= 0;
-            if (eliminated) newlyEliminated.add(victimId);
-            tx.update(victimDoc.reference, {
-              'lives': lives < 0 ? 0 : lives,
-              'eliminated': eliminated,
-              // câte runde a rezistat — vezi core/electric_chair.dart
-              // `electricChairRankKey`, care citește exact câmpul ăsta ca să
-              // claseze corect "ultimul rămas în viață" la final.
-              if (eliminated) 'eliminatedAtRound': roundIndex,
-            });
+            lifeDelta[victimId] = (lifeDelta[victimId] ?? 0) - livesLost;
             for (final attackerId in assignment.attackerIds) {
               scoreGain[attackerId] = (scoreGain[attackerId] ?? 0) + electricChairPointsPerShock;
             }
           }
         }
+        final newlyEliminated = <String>{};
         for (final id in playerIds) {
+          final doc = docs[id]!;
+          final data = doc.data();
+          if (data == null) continue;
+          final update = <String, Object>{};
+          final delta = lifeDelta[id] ?? 0;
+          if (delta != 0) {
+            final start = data['lives'] as int? ?? electricChairMaxLives;
+            final lives = (start + delta).clamp(0, electricChairMaxLives);
+            update['lives'] = lives;
+            if (lives <= 0) {
+              newlyEliminated.add(id);
+              update['eliminated'] = true;
+              // câte runde a rezistat — vezi core/electric_chair.dart
+              // `electricChairRankKey`, care citește exact câmpul ăsta ca să
+              // claseze corect "ultimul rămas în viață" la final.
+              update['eliminatedAtRound'] = roundIndex;
+            }
+          }
           final gained = scoreGain[id] ?? 0;
-          if (gained == 0) continue;
-          final base = docs[id]!.data()?['score'] as int? ?? 0;
-          tx.update(docs[id]!.reference, {'score': base + gained});
+          if (gained != 0) update['score'] = (data['score'] as int? ?? 0) + gained;
+          if (update.isNotEmpty) tx.update(doc.reference, update);
         }
 
         var aliveCount = 0;
