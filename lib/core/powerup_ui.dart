@@ -15,6 +15,15 @@ import 'theme.dart';
 /// jucătorului curent și harta de nume. Restul era identic caracter cu
 /// caracter.
 
+/// Mesajele scurte de refuz de mai jos arătau toate la fel — o singură formă.
+void _snack(BuildContext context, String ro, String en) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 2), content: Text(tr(ro, en))));
+}
+
 /// „Spionajul": arată răspunsurile celorlalți jucători din runda curentă.
 void showPeekResults(
   BuildContext context,
@@ -26,7 +35,9 @@ void showPeekResults(
   final others = info.roundAnswers.entries.where((e) => e.key != myId).toList();
   final line = others.isEmpty
       ? tr('Nimeni n-a răspuns încă.', 'Nobody has answered yet.')
-      : others.map((e) => '${playerNames[e.key] ?? '?'}: ${e.value}').join('  ·  ');
+      : others
+          .map((e) => '${playerNames[e.key] ?? '?'}: ${e.value}')
+          .join('  ·  ');
   InAppNotification.showInfo(
     context,
     title: tr('👁️ Spionaj', '👁️ Peek'),
@@ -38,66 +49,40 @@ void showPeekResults(
 }
 
 /// Power-up folosit prea târziu în rundă (nu mai e utilizabil în faza curentă).
-void notifyPowerUpTooLate(BuildContext context) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      content: Text(tr(
-        'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
-        'Too late for that power-up — use it at the start of the round.',
-      )),
-    ));
-}
+void notifyPowerUpTooLate(BuildContext context) => _snack(
+    context,
+    'Prea târziu pentru puterea asta — folosește-o la începutul rundei.',
+    'Too late for that power-up — use it at the start of the round.');
 
 /// Ai folosit deja o putere în runda asta — regula e una pe rundă.
 /// Mesaj separat de [notifyPowerUpTooLate]: până la recenzia din 2026-09-01
 /// ambele situații spuneau „prea târziu", ceea ce n-avea nicio legătură cu
 /// motivul real al refuzului.
-void notifyPowerUpAlreadyUsed(BuildContext context) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      content: Text(tr(
-        'Ai folosit deja o putere runda asta — mai ai voie una la runda următoare.',
-        'You already used a power-up this round — you get another one next round.',
-      )),
-    ));
-}
+void notifyPowerUpAlreadyUsed(BuildContext context) => _snack(
+    context,
+    'Ai folosit deja o putere runda asta — mai ai voie una la runda următoare.',
+    'You already used a power-up this round — you get another one next round.');
 
 /// Puterea nu mai are ce face acum (ex. 50/50 după ce ai răspuns deja).
 /// NU se consumă: jucătorul o păstrează pentru runda următoare.
-void notifyPowerUpNoEffect(BuildContext context) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      content: Text(tr(
-        'N-are ce face acum — ai răspuns deja. O păstrezi.',
-        'Nothing to do right now — you already answered. You keep it.',
-      )),
-    ));
-}
+void notifyPowerUpNoEffect(BuildContext context) => _snack(
+    context,
+    'N-are ce face acum — ai răspuns deja. O păstrezi.',
+    'Nothing to do right now — you already answered. You keep it.');
+
+/// Trusa de reparații la viață plină n-ar repara nimic. NU se consumă.
+void notifyPowerUpFullHealth(BuildContext context) => _snack(
+    context,
+    'Ai viața plină — n-ai ce repara. O păstrezi.',
+    'Already at full health — nothing to repair. You keep it.');
 
 /// Puterea are nevoie de mai mulți jucători în viață (azi doar
 /// [PowerUp.allyShield], care la 1v1 ar apăra chiar adversarul — vezi
 /// `powerUpMinLivePlayers`). NU se consumă: rămâne în inventar.
-void notifyPowerUpNeedsMorePlayers(BuildContext context) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      content: Text(tr(
-        'N-ai pe cine apăra — la doi jucători ar apăra adversarul. O păstrezi.',
-        'Nobody to protect — with two players it would shield your opponent. You keep it.',
-      )),
-    ));
-}
+void notifyPowerUpNeedsMorePlayers(BuildContext context) => _snack(
+    context,
+    'N-ai pe cine apăra — la doi jucători ar apăra adversarul. O păstrezi.',
+    'Nobody to protect — with two players it would shield your opponent. You keep it.');
 
 /// Confirmă sabotajul (Obby) — spune CUI i s-a stricat placa. Fără mesajul
 /// ăsta puterea dispărea din inventar și jucătorul n-avea idee ce s-a
@@ -107,7 +92,8 @@ void notifySabotageApplied(BuildContext context, String victimName) {
   InAppNotification.showInfo(
     context,
     title: tr('🕳️ Sabotaj', '🕳️ Sabotage'),
-    message: tr('I-ai stricat placa bună lui $victimName.', "You ruined $victimName's good platform."),
+    message: tr('I-ai stricat placa bună lui $victimName.',
+        "You ruined $victimName's good platform."),
     icon: Icons.dangerous_rounded,
     color: AppColors.danger,
     duration: const Duration(seconds: 3),
@@ -116,18 +102,10 @@ void notifySabotageApplied(BuildContext context, String victimName) {
 
 /// Sabotajul (Obby) n-a avut pe cine ținti — toți ceilalți au terminat deja
 /// cursa. NU se consumă: rămâne în inventar.
-void notifySabotageNoTarget(BuildContext context) {
-  if (!context.mounted) return;
-  ScaffoldMessenger.of(context)
-    ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(
-      duration: const Duration(seconds: 2),
-      content: Text(tr(
-        'N-ai pe cine sabota — ceilalți au terminat deja cursa. O păstrezi.',
-        'Nobody to sabotage — everyone else already finished the course. You keep it.',
-      )),
-    ));
-}
+void notifySabotageNoTarget(BuildContext context) => _snack(
+    context,
+    'N-ai pe cine sabota — ceilalți au terminat deja cursa. O păstrezi.',
+    'Nobody to sabotage — everyone else already finished the course. You keep it.');
 
 /// Un adversar/coechipier a plecat din meci CÂT ÎNCĂ SE JOACĂ — dispărut din
 /// `watchPlayers` (leaveMatch îi șterge documentul, vezi
@@ -155,7 +133,8 @@ void announcePowerUp(BuildContext context, PowerUp p) {
   InAppNotification.showInfo(
     context,
     title: tr('Ai primit o putere!', 'Power-up received!'),
-    message: '${tr(t.$1, t.$2)} — ${tr('apasă pastila din bară ca s-o folosești', 'tap the chip up top to use it')}',
+    message:
+        '${tr(t.$1, t.$2)} — ${tr('apas-o în bara de jos ca s-o folosești', 'tap it in the bar at the bottom to use it')}',
     icon: Icons.bolt_rounded,
     color: AppColors.purple,
   );

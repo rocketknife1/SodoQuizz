@@ -59,6 +59,9 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   /// care n-au sens la doi — vezi `powerUpMinLivePlayers`.
   int _livePlayers = 0;
 
+  /// Trusa de reparații n-are efect la viață plină — vezi [_usePowerUp].
+  bool _atFullHealth = false;
+
   /// Id-urile jucătorilor văzuți la ultima citire — ca să observăm cine
   /// dispare din `watchPlayers` cât meciul încă se joacă (vezi
   /// [notifyPlayerLeft]). [_announcedLeftIds] evită un al doilea anunț dacă
@@ -271,6 +274,10 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       notifyPowerUpNeedsMorePlayers(context);
       return;
     }
+    if (p == PowerUp.repairKit && _atFullHealth) {
+      notifyPowerUpFullHealth(context);
+      return;
+    }
     Sfx.tileSelect();
     // Scrierile care afectează deznodământul verifică ÎN tranzacție, pe
     // server, că runda n-a trecut deja — `applied=false` = „prea târziu",
@@ -423,6 +430,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       _playerNames[p.id] = p.name;
     }
     _livePlayers = players.where((p) => !p.eliminated).length;
+    _atFullHealth = players.any((p) => p.id == _myId && p.lives >= electricChairMaxLives);
     _detectPlayersWhoLeft(info, players);
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;

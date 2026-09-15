@@ -63,6 +63,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// `powerUpMinLivePlayers` din core/powerups.dart.
   int _livePlayers = 0;
 
+  /// Trusa de reparații n-are efect la viață plină — vezi [_usePowerUp].
+  bool _atFullHealth = false;
+
   /// Id-urile jucătorilor văzuți la ultima citire — ca să observăm cine
   /// dispare din `watchPlayers` cât meciul încă se joacă (vezi
   /// [notifyPlayerLeft]). [_announcedLeftIds] evită un al doilea anunț dacă
@@ -335,6 +338,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       notifyPowerUpNeedsMorePlayers(context);
       return; // păstrează puterea pentru un meci/rundă cu mai mulți în viață
     }
+    if (p == PowerUp.repairKit && _atFullHealth) {
+      notifyPowerUpFullHealth(context);
+      return;
+    }
     Sfx.tileSelect();
     // Scrierile cu efect la rezolvarea rundei (`submitTanksPowerUp`) verifică
     // ÎN tranzacție, pe server, că runda n-a trecut deja între apăsare și
@@ -539,6 +546,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       _playerNames[p.id] = p.name;
     }
     _livePlayers = players.where((p) => !p.eliminated).length;
+    _atFullHealth = players.any((p) => p.id == _mp.currentPlayerId && p.hp >= tanksMaxHp);
     _detectPlayersWhoLeft(info, players);
     if (info.roundIndex != _lastRoundIndex) {
       _lastRoundIndex = info.roundIndex;
