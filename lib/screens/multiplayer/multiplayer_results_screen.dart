@@ -134,6 +134,17 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   @override
   void dispose() {
     _pendingOfferTicker?.cancel();
+    // Ieșire înainte să pornească animația: bonusul de primă victorie e deja
+    // marcat ca luat în [_load], deci recompensele se scriu direct.
+    // O singură scriere pe fiecare sold: două addCoins în paralel citesc
+    // același sold vechi și una dintre sume se pierde.
+    if (!_rewardAnimationFired && (_firstWinBonus || !_salvage.isEmpty)) {
+      StorageService.addCoins((_firstWinBonus ? multiplayerFirstWinBonusCoins : 0) + _salvage.coins);
+      if (_firstWinBonus) StorageService.addXp(multiplayerFirstWinBonusXp);
+      if (_salvage.hearts > 0) StorageService.addLivesUncapped(_salvage.hearts);
+      if (_salvage.hints > 0) StorageService.addHints(_salvage.hints);
+      if (_salvage.gems > 0) StorageService.addGems(_salvage.gems);
+    }
     if (widget.bot == null) {
       MultiplayerService.instance.lastFinishedMatchId.value =
           _navigatedToRematch ? null : widget.matchId;
@@ -408,11 +419,15 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
   Future<void> _playRewardAnimations() async {
     if (_rewardAnimationFired) return;
     _rewardAnimationFired = true;
+    // Contextul se ia ACUM, cât ecranul e montat: dacă jucătorul iese în
+    // timpul animației, collectRewards tot scrie restul (sare doar peste
+    // animații). Înainte, `if (!mounted) return` pierdea prada de la Tanks.
+    final ctx = context;
     await WidgetsBinding.instance.endOfFrame;
-    if (!mounted) return;
     if (_firstWinBonus) {
       await collectRewards(
-        context,
+        // ignore: use_build_context_synchronously — collectRewards verifică singur `mounted`
+        ctx,
         coins: multiplayerFirstWinBonusCoins,
         xp: multiplayerFirstWinBonusXp,
         lives: 0,
@@ -421,9 +436,10 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
         livesBadgeKey: GlobalKey(),
       );
     }
-    if (!mounted || _salvage.isEmpty) return;
+    if (_salvage.isEmpty) return;
     await collectRewards(
-      context,
+      // ignore: use_build_context_synchronously — vezi mai sus
+      ctx,
       coins: _salvage.coins,
       xp: 0,
       lives: _salvage.hearts,
