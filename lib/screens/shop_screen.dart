@@ -82,6 +82,7 @@ class _ShopScreenState extends State<ShopScreen> {
       xpBadgeKey: GlobalKey(),
       livesBadgeKey: _livesBadgeKey,
       onEachImpact: () { _refreshBalances(); },
+      alreadyApplied: true, // PurchaseService a scris deja resursele
     );
     if (!mounted) return;
     await _loadState();

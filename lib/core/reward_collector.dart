@@ -27,6 +27,10 @@ Future<void> collectRewards(
   int gems = 0,
   GlobalKey? gemsBadgeKey,
   VoidCallback? onEachImpact,
+  /// Resursele sunt DEJA scrise de apelant — doar animația. Fără asta,
+  /// Shop-ul dubla fiecare achiziție: PurchaseService le aplică (cu jurnal),
+  /// apoi collectRewards le mai scria o dată.
+  bool alreadyApplied = false,
 }) async {
   assert(hints <= 0 || hintsBadgeKey != null, 'hintsBadgeKey e obligatoriu daca hints > 0');
   assert(gems <= 0 || gemsBadgeKey != null, 'gemsBadgeKey e obligatoriu daca gems > 0');
@@ -39,7 +43,7 @@ Future<void> collectRewards(
     required VoidCallback impactSound,
   }) async {
     if (amount <= 0) return;
-    await applyReward();
+    if (!alreadyApplied) await applyReward();
     if (!context.mounted) return;
 
     final impactCompleter = Completer<void>();

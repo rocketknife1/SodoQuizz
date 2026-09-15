@@ -127,13 +127,15 @@ class _HomeScreenState extends State<HomeScreen> {
   /// — fiecare resursă zboară spre pastila ei, exact ca la colectarea unui
   /// quest (vezi [collectRewards]).
   Future<void> _claimLevelRewards() async {
+    final ctx = context; // revendicarea e salvată: recompensa se scrie și dacă ecranul dispare
     final reward = await StorageService.claimAllPendingLevelRewards();
-    if (!mounted || reward.isEmpty) {
-      _refresh();
+    if (reward.isEmpty) {
+      if (mounted) _refresh();
       return;
     }
     await collectRewards(
-      context,
+      // ignore: use_build_context_synchronously — collectRewards verifică singur `mounted`
+      ctx,
       coins: reward.coins,
       xp: 0,
       lives: reward.hearts,
