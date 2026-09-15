@@ -1811,6 +1811,7 @@ class MultiplayerService {
   }) async {
     if (PlayerProfileService.instance.amIBanned.value) return false;
     final me = currentPlayerId;
+    _purgeStaleOffers('rematch_offers');
     await _paced(() => _db.collection('rematch_offers').doc(matchId).set(RematchOffer(
           matchId: matchId,
           hostId: me,
@@ -1839,6 +1840,20 @@ class MultiplayerService {
         .doc(matchId)
         .update({'acceptedIds': _arrayUnion([currentPlayerId])}));
     return true;
+  }
+
+  /// Ofertele încheiate (`started`/`cancelled`) NU se pot șterge pe loc —
+  /// ceilalți jucători le citesc statusul și `newMatchId`. Fără curățenie se
+  /// adunau la nesfârșit, deci la fiecare ofertă nouă ștergem în fundal
+  /// câteva mai vechi de o oră. Best-effort: o eroare aici nu oprește oferta.
+  void _purgeStaleOffers(String collection) {
+    if (isLocal) return;
+    final cutoff = Timestamp.fromDate(DateTime.now().subtract(const Duration(hours: 1)));
+    _db.collection(collection).where('createdAt', isLessThan: cutoff).limit(20).get().then((snap) {
+      for (final d in snap.docs) {
+        d.reference.delete().catchError((Object _) {});
+      }
+    }).catchError((Object e) => debugPrint('MultiplayerService._purgeStaleOffers($collection): $e'));
   }
 
   /// Refuzul unui SINGUR jucător anulează cererea pentru toată lumea — gazda
@@ -2277,6 +2292,7 @@ class MultiplayerService {
       count: matchmakingOpponentCount - 1,
     );
     final candidates = [live.first, for (final i in picked) others[i]];
+    _purgeStaleOffers('quickmatch_offers');
     final offerRef = _db.collection('quickmatch_offers').doc();
     final gameMode = modeOfDay();
 

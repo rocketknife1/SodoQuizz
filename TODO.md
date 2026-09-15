@@ -206,7 +206,7 @@ deci simplificarea e aliniată. Polish, nu blocant.
   **NEDEPLOYAT** (`firebase.cmd deploy --only functions --project sodoquizz`).
 - Verificat curat: 1494 întrebări (răspuns în variante, poze, id-uri), 89/89
   teste de reguli Firestore, indexuri, rambursarea mizelor, FutureBuilder-e.
-- Rămas (mic): ofertele de revanșă/Meci Rapid nu se șterg din Firestore.
+- ✅ Ofertele de revanșă/Meci Rapid: se curăță la fiecare ofertă nouă (> 1 oră).
 
 ---
 
