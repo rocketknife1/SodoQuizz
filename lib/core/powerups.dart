@@ -53,8 +53,6 @@ enum RoundEvent {
   /// Punctele/efectul rundei se dublează pentru toată lumea.
   doubleOrNothing,
 
-  /// Cine răspunde PRIMUL corect primește un bonus în plus.
-  firstBloodBonus,
 
   /// Variantele sunt amestecate mai agresiv / întrebarea e „grea".
   suddenDeath,
@@ -91,9 +89,10 @@ enum RoundEvent {
 /// din `MatchGameMode.name` — ținute ca string ca `core/` să nu depindă de
 /// `models/` (aceeași graniță ca în restul fișierelor din core).
 const Map<RoundEvent, Set<String>> roundEventModes = {
-  RoundEvent.doubleOrNothing: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
-  RoundEvent.firstBloodBonus: {'quizzTanks', 'obby', 'electricChair', 'higherLower'},
-  RoundEvent.suddenDeath: {'quizzTanks', 'obby', 'electricChair', 'higherLower', 'classic'},
+  // Doar unde efectul e chiar aplicat: bannerul promitea „rundă dublă" /
+  // „moarte subită" și la Tanks/Obby/Scaun, unde nu se întâmpla nimic.
+  RoundEvent.doubleOrNothing: {'higherLower', 'classic'},
+  RoundEvent.suddenDeath: {'higherLower', 'classic'},
   RoundEvent.powerUpRain: {'quizzTanks', 'obby', 'electricChair'},
   RoundEvent.battleFog: {'quizzTanks'},
   RoundEvent.heavyShells: {'quizzTanks'},
@@ -108,7 +107,6 @@ const Map<RoundEvent, Set<String>> roundEventModes = {
 /// Perechea (ro, en) — apelantul alege prin `tr()`, ca restul aplicației.
 const Map<RoundEvent, (String, String)> roundEventTitles = {
   RoundEvent.doubleOrNothing: ('🔥 Rundă Dublă', '🔥 Double Round'),
-  RoundEvent.firstBloodBonus: ('⚡ Primul Sânge', '⚡ First Blood'),
   RoundEvent.suddenDeath: ('💀 Moarte Subită', '💀 Sudden Death'),
   RoundEvent.powerUpRain: ('🎁 Ploaie de Power-Up', '🎁 Power-Up Rain'),
   RoundEvent.battleFog: ('🌫️ Ceață de Luptă', '🌫️ Battle Fog'),
@@ -124,7 +122,6 @@ const Map<RoundEvent, (String, String)> roundEventTitles = {
 /// jucătorul să nu trebuiască să ghicească regula nouă în 15 secunde.
 const Map<RoundEvent, (String, String)> roundEventDescriptions = {
   RoundEvent.doubleOrNothing: ('Runda asta valorează dublu.', 'This round counts double.'),
-  RoundEvent.firstBloodBonus: ('Primul care răspunde corect ia un power-up.', 'First correct answer gets a power-up.'),
   RoundEvent.suddenDeath: ('Fără a doua șansă runda asta.', 'No second chances this round.'),
   RoundEvent.powerUpRain: ('Toată lumea primește un power-up!', 'Everyone gets a power-up!'),
   RoundEvent.battleFog: ('Toată lumea evită mai ușor.', 'Everyone dodges more easily.'),
@@ -380,7 +377,9 @@ bool grantsPowerUp({
   required bool wonRound,
   required int myRank,
   required int totalPlayers,
+  RoundEvent event = RoundEvent.none,
 }) {
+  if (event == RoundEvent.powerUpRain) return true; // „toată lumea primește"
   if (!wonRound) return false;
   final boost = catchUpBoostFor(myRank: myRank, totalPlayers: totalPlayers);
   final threshold = (powerUpDropChance * boost * 1000).round().clamp(0, 1000);

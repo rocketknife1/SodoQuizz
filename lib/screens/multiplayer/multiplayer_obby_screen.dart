@@ -215,7 +215,12 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // (vezi _questionFor), nu vin de la server. Nu se așteaptă rezolvarea
     // rundei (asta poate dura până la [obbyRoundSeconds]s), altfel
     // recompensa n-ar mai fi "imediată", ar fi tot una cu premiul de final.
-    if (answer == _questionFor(info.roundIndex).answer) {
+    final correct = answer == _questionFor(info.roundIndex).answer;
+    // „Ploaie de Power-Up": primește și cine a greșit (vezi grantsPowerUp).
+    if (!correct && roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'obby') == RoundEvent.powerUpRain) {
+      _maybeGrantPowerUp(info, players, me);
+    }
+    if (correct) {
       // Cu boți nu: ar fi o fermă de monede fără plafon (recompensa lor e doar
       // cea de la final, vezi core/bot_brain.dart#botMatchReward).
       if (widget.bot == null) {
@@ -247,6 +252,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       wonRound: true,
       myRank: rank,
       totalPlayers: total,
+      event: roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'obby'),
     );
     if (!granted) return;
     final picked = powerUpFor(

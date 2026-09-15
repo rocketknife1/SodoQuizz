@@ -98,7 +98,7 @@ class RoundEventBanner extends StatelessWidget {
   static Color _colorFor(RoundEvent e) => switch (e) {
         RoundEvent.fieldRepairs || RoundEvent.groundedFuse || RoundEvent.powerUpRain => AppColors.play,
         RoundEvent.suddenDeath || RoundEvent.overcharge || RoundEvent.asteroidStorm => AppColors.danger,
-        RoundEvent.doubleOrNothing || RoundEvent.heavyShells || RoundEvent.firstBloodBonus => AppColors.orange,
+        RoundEvent.doubleOrNothing || RoundEvent.heavyShells => AppColors.orange,
         RoundEvent.battleFog || RoundEvent.lowGravity => AppColors.purple,
         RoundEvent.none => Colors.transparent,
       };

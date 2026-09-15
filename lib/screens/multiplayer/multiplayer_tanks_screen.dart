@@ -380,7 +380,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     if (_powerUpRolledRound == info.roundIndex) return;
     _powerUpRolledRound = info.roundIndex;
     final me = _mp.currentPlayerId;
-    if (!info.roundWinnerIds.contains(me)) return;
+    final event = roundEventFor(matchId: widget.matchId, roundIndex: info.roundIndex, gameModeId: 'quizzTanks');
+    final rain = event == RoundEvent.powerUpRain && players.any((p) => p.id == me && !p.eliminated);
+    if (!rain && !info.roundWinnerIds.contains(me)) return;
     final ranked = List.of(players)..sort((a, b) => b.damageDealt.compareTo(a.damageDealt));
     final total = ranked.isEmpty ? 1 : ranked.length;
     var rank = ranked.indexWhere((p) => p.id == me);
@@ -392,6 +394,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       wonRound: true,
       myRank: rank,
       totalPlayers: total,
+      event: event,
     );
     if (!granted) return;
     final picked = powerUpFor(

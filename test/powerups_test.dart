@@ -217,4 +217,20 @@ void main() {
           reason: 'ultimul din clasament trebuie sa primeasca power-up-uri mai des decat liderul');
     });
   });
+
+  test('Ploaie de Power-Up dă putere și celui care a pierdut runda', () {
+    expect(
+      grantsPowerUp(matchId: 'm', roundIndex: 3, playerId: 'p', wonRound: false, myRank: 0, totalPlayers: 4, event: RoundEvent.powerUpRain),
+      isTrue,
+    );
+  });
+
+  test('evenimentele fără efect implementat nu apar în modul respectiv', () {
+    for (final mode in ['quizzTanks', 'obby', 'electricChair']) {
+      for (var r = 1; r < 400; r++) {
+        final e = roundEventFor(matchId: 'meci', roundIndex: r, gameModeId: mode);
+        expect(e, isNot(anyOf(RoundEvent.doubleOrNothing, RoundEvent.suddenDeath)));
+      }
+    }
+  });
 }
