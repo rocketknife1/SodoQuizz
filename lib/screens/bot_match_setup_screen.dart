@@ -9,11 +9,18 @@ import '../data/bot_match.dart';
 import '../models/multiplayer_models.dart';
 import '../widgets/solid_menu_button.dart';
 import '../widgets/space_background.dart';
+import 'higher_lower_screen.dart';
 import 'multiplayer/multiplayer_electric_chair_screen.dart';
 import 'multiplayer/multiplayer_match_screen.dart';
 import 'multiplayer/multiplayer_obby_screen.dart';
 import 'multiplayer/multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer/multiplayer_tanks_screen.dart';
+
+/// Modurile arătate pe ecranul de start — [botMatchModes] (cele cu boți
+/// reali) plus Higher or Lower, care e deja solo prin natura lui (nu are
+/// adversar de bătut, doar un cronometru), deci apasă direct pe modul lui
+/// existent, fără [BotMatch].
+const List<MatchGameMode> _setupModes = [...botMatchModes, MatchGameMode.higherLower];
 
 /// Pornește un meci cu boți și deschide ecranul modului. [replace] = din
 /// ecranul de rezultate („Joacă din nou"), ca butonul înapoi să nu ducă la
@@ -88,6 +95,10 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
 
   Future<void> _start() async {
     if (_starting) return;
+    if (_mode == MatchGameMode.higherLower) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
+      return;
+    }
     setState(() => _starting = true);
     try {
       await launchBotMatch(context, BotMatchSettings(mode: _mode, botCount: _bots, difficulty: _difficulty));
@@ -135,24 +146,27 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
                     ),
                     const SizedBox(height: 16),
                     _sectionTitle(tr('MODUL', 'MODE')),
-                    for (final m in botMatchModes) _modeTile(m),
-                    const SizedBox(height: 14),
-                    _sectionTitle(tr('BOȚI', 'BOTS')),
-                    _chipRow(
-                      count: botMaxCount - botMinCount + 1,
-                      selected: _bots - botMinCount,
-                      label: (i) => '${i + botMinCount}',
-                      onTap: (i) => setState(() => _bots = i + botMinCount),
-                    ),
-                    const SizedBox(height: 18),
-                    _sectionTitle(tr('DIFICULTATE • ${_difficultyLabel(_difficulty)}',
-                        'DIFFICULTY • ${_difficultyLabel(_difficulty)}')),
-                    _chipRow(
-                      count: botMaxDifficulty - botMinDifficulty + 1,
-                      selected: _difficulty - botMinDifficulty,
-                      label: (i) => '★' * (i + 1),
-                      onTap: (i) => setState(() => _difficulty = i + botMinDifficulty),
-                    ),
+                    for (final m in _setupModes) _modeTile(m),
+                    // Higher or Lower e deja solo — nu are boți de ales.
+                    if (_mode != MatchGameMode.higherLower) ...[
+                      const SizedBox(height: 14),
+                      _sectionTitle(tr('BOȚI', 'BOTS')),
+                      _chipRow(
+                        count: botMaxCount - botMinCount + 1,
+                        selected: _bots - botMinCount,
+                        label: (i) => '${i + botMinCount}',
+                        onTap: (i) => setState(() => _bots = i + botMinCount),
+                      ),
+                      const SizedBox(height: 18),
+                      _sectionTitle(tr('DIFICULTATE • ${_difficultyLabel(_difficulty)}',
+                          'DIFFICULTY • ${_difficultyLabel(_difficulty)}')),
+                      _chipRow(
+                        count: botMaxDifficulty - botMinDifficulty + 1,
+                        selected: _difficulty - botMinDifficulty,
+                        label: (i) => '★' * (i + 1),
+                        onTap: (i) => setState(() => _difficulty = i + botMinDifficulty),
+                      ),
+                    ],
                   ],
                 ),
               ),

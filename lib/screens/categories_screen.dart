@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/analytics.dart';
 import '../core/audio.dart';
@@ -7,7 +6,6 @@ import '../core/lang.dart';
 import '../core/progression.dart';
 import '../core/quest_bump.dart';
 import '../core/theme.dart';
-import '../data/higher_lower_data.dart';
 import '../data/questions.dart';
 import '../data/shop.dart';
 import '../data/storage_service.dart';
@@ -17,7 +15,6 @@ import '../widgets/entrance_item.dart';
 import '../widgets/pressable.dart';
 import '../widgets/space_background.dart';
 import 'bot_match_setup_screen.dart';
-import 'higher_lower_screen.dart';
 import 'loading_screen.dart';
 import '../core/breadcrumbs.dart';
 
@@ -298,142 +295,9 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     );
   }
 
-  /// Card special pentru "Higher or Lower" — vizual diferit de
-  /// [CategoryCard] (fără planetă/inel de progres, care n-au sens pentru un
-  /// mod arcade de streak), dar cu aceleași proporții/rotunjimi, ca lista
-  /// să rămână coerentă. Recordul se citește direct din storage (aceeași
-  /// infrastructură de high-score per mod ca la celelalte gamemoduri).
-  Widget _buildHigherLowerCard() {
-    return FutureBuilder<int>(
-      future: StorageService.getModeHighScore(higherLowerModeId),
-      builder: (context, snapshot) {
-        final best = snapshot.data ?? 0;
-        return Pressable(
-          onTap: () {
-            Sfx.tileSelect();
-            Navigator.push(context,
-                MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
-          },
-          child: AnimatedBuilder(
-            animation: _liveCtrl,
-            builder: (context, child) {
-              final breathe = (sin(_liveCtrl.value * 2 * pi) + 1) / 2;
-              return Container(
-                padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(16),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                      color: AppColors.purple.withAlpha(150), width: 1.4),
-                  boxShadow: [
-                    BoxShadow(
-                        color: AppColors.purple.withAlpha((50 + breathe * 45).round()),
-                        blurRadius: 14 + breathe * 8,
-                        spreadRadius: -3)
-                  ],
-                ),
-                child: child,
-              );
-            },
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 58,
-                  height: 58,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                            color: Colors.black.withAlpha(70),
-                            shape: BoxShape.circle),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(Icons.arrow_upward_rounded,
-                              color: AppColors.play, size: 20),
-                          Icon(Icons.arrow_downward_rounded,
-                              color: AppColors.danger, size: 20),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                                color: AppColors.purple,
-                                borderRadius: BorderRadius.circular(8)),
-                            child: Text(tr('NOU', 'NEW'),
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.5)),
-                          ),
-                          const SizedBox(width: 7),
-                          const Expanded(
-                            child: Text(
-                              'Higher or Lower',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15.5,
-                                  fontWeight: FontWeight.w800),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        tr('Ce se caută mai mult? Ai 10 secunde să ghicești.',
-                            'Which one is searched more? You have 10 seconds to guess.'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            color: Colors.white54,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.emoji_events_rounded,
-                        color: AppColors.coin, size: 20),
-                    const SizedBox(height: 2),
-                    Text('$best',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800)),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   /// Card pentru meciurile cu boți — aceleași moduri ca în Multiplayer
-  /// (Clasic, Piatră-Hârtie-Foarfecă, Tancuri, Scaunul Electric, Obby), dar
-  /// jucate singur, pe telefon.
+  /// (Clasic, Piatră-Hârtie-Foarfecă, Tancuri, Scaunul Electric, Obby) plus
+  /// Higher or Lower (deja solo prin natura lui), toate jucate pe telefon.
   Widget _buildBotMatchCard() {
     return Pressable(
       onTap: () {
@@ -783,30 +647,22 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-                      itemCount: gameModes.length + 2,
+                      itemCount: gameModes.length + 1,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, i) {
-                        // primul rând e cardul special "Higher or Lower" —
-                        // mecanică total diferită (fără poze/blur), nu face
-                        // parte din gameModes, deci nu e afectat de gating cu
-                        // Gems / progres pe întrebări ca restul categoriilor.
+                        // primul rând e cardul "Joacă cu boți" — modurile de
+                        // multiplayer (+ Higher or Lower) jucate singur,
+                        // contra boților sau contra cronometrului; merge și
+                        // fără internet, nu face parte din gameModes, deci
+                        // nu e afectat de gating cu Gems ca restul categoriilor.
                         if (i == 0) {
                           return EntranceItem(
                             controller: _introCtrl,
                             interval: _stagger(0),
-                            child: _buildHigherLowerCard(),
-                          );
-                        }
-                        // al doilea rând: modurile de multiplayer jucate
-                        // singur, contra boților (merge și fără internet).
-                        if (i == 1) {
-                          return EntranceItem(
-                            controller: _introCtrl,
-                            interval: _stagger(1),
                             child: _buildBotMatchCard(),
                           );
                         }
-                        final mode = gameModes[i - 2];
+                        final mode = gameModes[i - 1];
                         final s = stats?[mode.id];
                         final tier = s?.tier ?? 0;
                         final total = s?.total ?? 0;
