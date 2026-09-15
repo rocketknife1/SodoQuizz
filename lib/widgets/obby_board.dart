@@ -209,9 +209,11 @@ class _BoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cols = max(racers.length, 3);
     const rows = obbyObstacleCount + 1; // rândul 0 = start, ultimul = final
-    // Loc sus pentru banner/întrebare, jos pentru bara de puteri.
-    final area = Rect.fromLTRB(12, size.height * 0.08, size.width - 12, size.height * 0.86);
-    final cell = min(area.width / cols, area.height / rows);
+    // Loc sus pentru legenda de fază, jos pentru rezumatul rundei. Pătratele
+    // au un plafon: pe ecran mare tabla stă compactă, nu umple tot.
+    final area = Rect.fromLTRB(12, 56, size.width - 12, size.height - 64);
+    final cell = min(min(area.width / cols, area.height / rows), 56.0);
+    if (cell < 6) return; // spațiu prea mic (tastatură/ecran mic) — nimic de desenat
     final origin = Offset(area.center.dx - cell * cols / 2, area.center.dy - cell * rows / 2);
     Rect cellRect(int c, double r) =>
         Rect.fromLTWH(origin.dx + c * cell, origin.dy + (rows - 1 - r) * cell, cell, cell);

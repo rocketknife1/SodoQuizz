@@ -52,6 +52,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
   late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
 
   MatchInfo? _latestInfo;
+  final GlobalKey _boardKey = GlobalKey();
 
   int _lastRoundIndex = -1;
   bool _showAdvance = false;
@@ -372,6 +373,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
     final revealT = (elapsed / _revealSpanSeconds).clamp(0.0, 1.0);
     return ObbyBoard(
+      key: _boardKey,
       phase: phase,
       racers: racers,
       myChoice: info.roundPlatformChoices[me],
@@ -547,8 +549,12 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
                   return Column(
                     children: [
                       _buildTopBar(info),
+                      // Cât se răspunde: întrebarea SUS, tabla dedesubt — nu
+                      // una peste alta (pionii pleacă de jos, exact sub
+                      // variante). Cerința userului.
+                      if (info.roundPhase == RoundPhase.answering && !iAnswered)
+                        _buildAnsweringScene(info, myPlayer, players),
                       Expanded(
-                        // Tabla 2D e MEREU vizibilă — inclusiv sub întrebare.
                         child: ClipRect(
                           child: Stack(
                             children: [
@@ -561,7 +567,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
                                       tr('Ceilalți își aleg placa...', 'The others are picking their platform...')),
                                   RoundPhase.answering when iAnswered => _buildWaitingCaption(
                                       tr('✓ Ai răspuns! Aștepți ceilalți concurenți...', '✓ You answered! Waiting for the other racers...')),
-                                  _ => _buildAnsweringScene(info, myPlayer, players),
+                                  _ => const SizedBox.shrink(),
                                 },
                               ),
                             ],
@@ -667,18 +673,15 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
   // deasupra capului (vezi _RunnerComponent.render).
 
   Widget _buildAnsweringScene(MatchInfo info, MatchPlayer? myPlayer, List<MatchPlayer> players) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildQuestion(info),
-            const SizedBox(height: 10),
-            _buildActionArea(info, myPlayer, players),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildQuestion(info),
+          const SizedBox(height: 10),
+          _buildActionArea(info, myPlayer, players),
+        ],
       ),
     );
   }
