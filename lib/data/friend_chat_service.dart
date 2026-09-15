@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../core/chat_filter.dart';
 import '../models/friend_chat.dart';
+import 'firestore_batch.dart';
 import 'multiplayer_service.dart';
 
 /// Chatul privat dintre doi prieteni — complet separat de chatul din camera
@@ -160,12 +161,7 @@ class FriendChatService {
     final threadId = threadIdFor(me, otherUid);
     try {
       final messages = await _thread(threadId).collection('messages').get();
-      final batch = _db.batch();
-      for (final doc in messages.docs) {
-        batch.delete(doc.reference);
-      }
-      batch.delete(_thread(threadId));
-      await batch.commit();
+      await deleteInChunks(_db, [for (final d in messages.docs) d.reference, _thread(threadId)]);
     } catch (e) {
       debugPrint('FriendChatService.deleteThreadWith a esuat: $e');
     }

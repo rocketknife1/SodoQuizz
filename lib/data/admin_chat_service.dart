@@ -8,6 +8,7 @@ import '../core/chat_filter.dart';
 import '../models/admin_message.dart';
 import 'auth_service.dart';
 import 'multiplayer_service.dart';
+import 'firestore_batch.dart';
 
 /// Firul de mesaje dintre un jucător și administrator — canalul de feedback
 /// din joc, în DOUĂ sensuri.
@@ -204,12 +205,7 @@ class AdminChatService {
     if (playerUid.isEmpty) return;
     try {
       final messages = await _thread(playerUid).collection('messages').get();
-      final batch = _db.batch();
-      for (final doc in messages.docs) {
-        batch.delete(doc.reference);
-      }
-      batch.delete(_thread(playerUid));
-      await batch.commit();
+      await deleteInChunks(_db, [for (final d in messages.docs) d.reference, _thread(playerUid)]);
     } catch (e) {
       debugPrint('AdminChatService.deleteThreadOf a esuat: $e');
     }

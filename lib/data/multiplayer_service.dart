@@ -18,6 +18,7 @@ import '../core/obby.dart';
 import '../core/powerups.dart';
 import '../core/tanks.dart';
 import '../models/multiplayer_models.dart';
+import 'firestore_batch.dart';
 import 'local_firestore.dart';
 import 'player_profile_service.dart';
 import 'storage_service.dart';
@@ -1755,15 +1756,7 @@ class MultiplayerService {
   Future<void> _deleteMatch(DocumentReference<Map<String, dynamic>> matchRef) async {
     final players = await matchRef.collection('players').get();
     final chat = await matchRef.collection('chat').get();
-    final batch = _db.batch();
-    for (final d in players.docs) {
-      batch.delete(d.reference);
-    }
-    for (final d in chat.docs) {
-      batch.delete(d.reference);
-    }
-    batch.delete(matchRef);
-    await batch.commit();
+    await deleteInChunks(_db, [for (final d in [...players.docs, ...chat.docs]) d.reference, matchRef]);
   }
 
   // ─── Revanșă ─────────────────────────────────────────────────────────────
