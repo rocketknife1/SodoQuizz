@@ -64,6 +64,9 @@ class _DailyChallengeScreenState extends State<DailyChallengeScreen> {
   @override
   void dispose() {
     _autoCollect?.cancel();
+    // Ieșire în cele 10s dinaintea colectării automate: runda e deja
+    // înregistrată (nu se mai poate rejuca), deci monedele se scriu direct.
+    if (!_collected && !_collecting && _coins > 0) StorageService.addCoins(_coins);
     super.dispose();
   }
 

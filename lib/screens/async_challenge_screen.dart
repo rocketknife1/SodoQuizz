@@ -78,6 +78,13 @@ class _AsyncChallengeScreenState extends State<AsyncChallengeScreen> {
   void dispose() {
     _tick?.cancel();
     _watchSub?.cancel();
+    // Ieșire fără COLECTEAZĂ: locul din plafonul zilnic s-a consumat deja în
+    // [_applyRewards], deci recompensa se scrie direct, fără animație — altfel
+    // Back sau „Provocare nouă" o pierdeau cu totul.
+    if (!_collected && !_collecting) {
+      if (_pendingXp > 0) StorageService.addXp(_pendingXp);
+      if (_coinsWon > 0) StorageService.addCoins(_coinsWon);
+    }
     super.dispose();
   }
 

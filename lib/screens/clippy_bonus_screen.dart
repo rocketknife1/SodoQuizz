@@ -76,6 +76,13 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
   @override
   void dispose() {
     _autoCollectTimer?.cancel();
+    // Ieșire cu Back de pe ecranul de recompensă: timerul de mai sus murea
+    // odată cu ecranul, deci recompensa nu se mai aplica deloc.
+    if (_phase == _ClippyPhase.finished && !_collected && !_collecting) {
+      if (_xpEarned > 0) StorageService.addXp(_xpEarned);
+      if (_coinsEarned > 0) StorageService.addCoins(_coinsEarned);
+      if (_livesEarned > 0) StorageService.addLivesUncapped(_livesEarned);
+    }
     super.dispose();
   }
 
