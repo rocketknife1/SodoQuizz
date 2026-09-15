@@ -16,6 +16,7 @@ import '../widgets/category_unlock_animation.dart';
 import '../widgets/entrance_item.dart';
 import '../widgets/pressable.dart';
 import '../widgets/space_background.dart';
+import 'bot_match_setup_screen.dart';
 import 'higher_lower_screen.dart';
 import 'loading_screen.dart';
 import '../core/breadcrumbs.dart';
@@ -430,6 +431,69 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     );
   }
 
+  /// Card pentru meciurile cu boți — aceleași moduri ca în Multiplayer
+  /// (Clasic, Piatră-Hârtie-Foarfecă, Tancuri, Scaunul Electric, Obby), dar
+  /// jucate singur, pe telefon.
+  Widget _buildBotMatchCard() {
+    return Pressable(
+      onTap: () {
+        Sfx.tileSelect();
+        Navigator.push(context,
+            MaterialPageRoute(builder: (_) => const BotMatchSetupScreen()));
+      },
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withAlpha(16),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.blue.withAlpha(150), width: 1.4),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(70), shape: BoxShape.circle),
+              child: const Icon(Icons.smart_toy_rounded,
+                  color: AppColors.blue, size: 30),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    tr('Joacă cu boți', 'Play with bots'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15.5,
+                        fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    tr('Modurile din multiplayer, singur contra 1-6 boți.',
+                        'Multiplayer modes, solo against 1-6 bots.'),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right_rounded, color: Colors.white54),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Un rând din tabelul de recompensă al dialogului de intrare: câte corecte
   /// și ce iei înapoi, cu culoarea care spune dacă e pierdere, recuperare sau
   /// profit — fără s-o mai citească nimeni din text.
@@ -719,7 +783,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                   Expanded(
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 6, 16, 20),
-                      itemCount: gameModes.length + 1,
+                      itemCount: gameModes.length + 2,
                       separatorBuilder: (_, __) => const SizedBox(height: 10),
                       itemBuilder: (context, i) {
                         // primul rând e cardul special "Higher or Lower" —
@@ -733,7 +797,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
                             child: _buildHigherLowerCard(),
                           );
                         }
-                        final mode = gameModes[i - 1];
+                        // al doilea rând: modurile de multiplayer jucate
+                        // singur, contra boților (merge și fără internet).
+                        if (i == 1) {
+                          return EntranceItem(
+                            controller: _introCtrl,
+                            interval: _stagger(1),
+                            child: _buildBotMatchCard(),
+                          );
+                        }
+                        final mode = gameModes[i - 2];
                         final s = stats?[mode.id];
                         final tier = s?.tier ?? 0;
                         final total = s?.total ?? 0;
