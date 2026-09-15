@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:flame/game.dart' show GameWidget;
 import 'package:flutter/material.dart';
 import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
@@ -19,7 +18,7 @@ import '../../models/multiplayer_models.dart';
 import '../../widgets/match_overlay.dart';
 import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
-import '../../widgets/obby_game.dart';
+import '../../widgets/obby_board.dart';
 import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
@@ -32,7 +31,7 @@ import '../../core/breadcrumbs.dart';
 ///
 /// Diferența e doar vizuală: în [RoundPhase.answering] fiecare jucător își
 /// vede propriul personaj într-un colț, așteptând; în [RoundPhase.revealed]
-/// camera trece la 3rd-person (ca CJ din San Andreas) și arată toată pista,
+/// tabla 2D arată toată cursa,
 /// cu personajele care au răspuns corect sărind peste obstacolul din față.
 class MultiplayerObbyScreen extends StatefulWidget {
   final String matchId;
@@ -44,7 +43,7 @@ class MultiplayerObbyScreen extends StatefulWidget {
   State<MultiplayerObbyScreen> createState() => _MultiplayerObbyScreenState();
 }
 
-class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with SingleTickerProviderStateMixin {
+class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
   MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
 
   late final List<CultureQuestion> _pool = _buildPool();
@@ -52,12 +51,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   late final Stream<MatchInfo> _matchStream = _mp.watchMatch(widget.matchId);
   late final Stream<List<MatchPlayer>> _playersStream = _mp.watchPlayers(widget.matchId);
 
-  late final AnimationController _anim = AnimationController(vsync: this, duration: const Duration(seconds: 2))..repeat();
-
-  /// Jocul Flame — o singură instanță pentru tot ecranul, creată o dată și
-  /// hrănită cu date noi la fiecare snapshot (vezi [_onData]/[_feedGame]).
-  /// NU importă multiplayer_service.dart, primește doar acest callback.
-  late final ObbyGame _game = ObbyGame(onPlatformChosen: _onPlatformChosenFromGame);
   MatchInfo? _latestInfo;
 
   int _lastRoundIndex = -1;
@@ -73,9 +66,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Timer? _lateSfxTimer;
   DateTime? _revealedAtLocal;
 
-  /// Ultima secunda in care s-a reconstruit ecranul — vezi tick-ul adaptiv
-  /// din [initState].
-  int _lastTickSecond = -1;
   bool _playedRevealSfx = false;
 
   List<String>? _cachedChoices;
@@ -136,24 +126,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi ObbySfx pentru de ce.
     ObbySfx.preload();
-    // Tick ADAPTIV. Sub-secunda e nevoie DOAR cat ruleaza animatia de
-    // dezvaluire (saritura alergatorilor, vezi `_revealSpanSeconds`) — acolo
-    // pozitia se calculeaza din milisecunde. In faza de raspuns, care e cea
-    // mai lunga, conteaza doar cronometrul in secunde.
-    //
-    // Inainte era `setState` la fiecare 100ms indiferent de faza: TOT ecranul
-    // (lista de jucatori, avatarele si scena Flame din jur) se reconstruia de
-    // 10 ori pe secunda degeaba. Verificarea de expirare a rundei ramane
-    // corecta, fiindca reconstruim in continuare cel putin o data pe secunda.
-    _tickTimer = Timer.periodic(const Duration(milliseconds: 100), (_) {
-      if (!mounted) return;
-      final now = DateTime.now();
-      final animating = _revealedAtLocal != null &&
-          now.difference(_revealedAtLocal!).inMilliseconds < (_revealSpanSeconds * 1000).round() + 200;
-      if (animating || now.second != _lastTickSecond) {
-        _lastTickSecond = now.second;
-        setState(() {});
-      }
+    // O dată pe secundă ajunge: cronometrele sunt în secunde, iar tabla
+    // (widgets/obby_board.dart) își animă singură deznodământul.
+    _tickTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() {});
     });
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
       _mp.matchHeartbeat(widget.matchId);
@@ -167,7 +143,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     _advanceTimer?.cancel();
     _heartbeatTimer?.cancel();
     _lateSfxTimer?.cancel();
-    _anim.dispose();
     super.dispose();
   }
 
@@ -368,10 +343,8 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     if (info != null) _choosePlatform(info, index);
   }
 
-  /// Hrănește jocul Flame cu snapshot-ul curent — apelat din [_onData], deci
-  /// la fiecare rebuild al StreamBuilder-ului. [ObbyGame.applyRoundState] e
-  /// idempotent, deci a-l chema des (inclusiv fără schimbări) e sigur.
-  void _feedGame(MatchInfo info, List<MatchPlayer> players) {
+  /// Tabla 2D pentru snapshot-ul curent.
+  Widget _buildBoard(MatchInfo info, List<MatchPlayer> players) {
     final me = _mp.currentPlayerId;
     final revealing = info.roundPhase == RoundPhase.revealed;
     final racers = [
@@ -398,11 +371,13 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     };
     final elapsed = _revealedAtLocal == null ? 0.0 : DateTime.now().difference(_revealedAtLocal!).inMilliseconds / 1000.0;
     final revealT = (elapsed / _revealSpanSeconds).clamp(0.0, 1.0);
-    _game.applyRoundState(
+    return ObbyBoard(
       phase: phase,
       racers: racers,
       myChoice: info.roundPlatformChoices[me],
       revealT: revealT,
+      revealDuration: Duration(milliseconds: (_revealSpanSeconds * 1000).round()),
+      onPlatformChosen: _onPlatformChosenFromGame,
     );
   }
 
@@ -534,7 +509,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       });
     }
 
-    _feedGame(info, players);
   }
 
   @override
@@ -574,23 +548,11 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                     children: [
                       _buildTopBar(info),
                       Expanded(
-                        // Scena Flame e MEREU vizibilă acum — inclusiv sub
-                        // întrebare. UN SINGUR GameWidget pentru tot ecranul:
-                        // două instanțe pe același joc (una per fază) aruncau
-                        // la fiecare schimbare de fază.
-                        //
-                        // ClipRect e OBLIGATORIU aici, nu decorativ: fără el,
-                        // GameWidget pictează în afara dreptunghiului pe care
-                        // i-l dă Expanded (confirmat live — bara de sus
-                        // dispărea complet cât timp GameWidget era pe ecran,
-                        // deși în arborele de widget-uri stă DEDESUBTUL ei).
-                        // Stack.clipBehavior nu ajunge să oprească asta,
-                        // fiindcă Flame nu respectă mereu constrângerile
-                        // normale de layout ale Flutter.
+                        // Tabla 2D e MEREU vizibilă — inclusiv sub întrebare.
                         child: ClipRect(
                           child: Stack(
                             children: [
-                              Positioned.fill(child: GameWidget(game: _game)),
+                              Positioned.fill(child: _buildBoard(info, players)),
                               Positioned.fill(
                                 child: switch (info.roundPhase) {
                                   RoundPhase.revealed => _buildRaceScene(info, players, myPlayer),
@@ -764,7 +726,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     }
 
     // Odată ce am răspuns, ecranul ăsta nu se mai vede deloc — camera trece
-    // pe scena 3rd-person (vezi switch-ul din [build] + [_buildWaitingCaption]),
+    // pe tabla 2D (vezi switch-ul din [build] + [_buildWaitingCaption]),
     // deci nu mai e nevoie de un mesaj "ai răspuns" aici.
     final me = _mp.currentPlayerId;
 
@@ -838,7 +800,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
 
   /// Legenda mică din partea de sus a ecranului cât camera stă pe mine, dar
   /// nu sunt eu cel care acționează chiar acum — cerută explicit de user, ca
-  /// să nu mai acopere scena 3rd-person cu un text centrat, opac, pe tot
+  /// să nu mai acopere tabla 2D cu un text centrat, opac, pe tot
   /// ecranul (asta era comportamentul vechi cât alții alegeau placa).
   Widget _buildWaitingCaption(String text) {
     return Align(
@@ -854,21 +816,18 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
-  // ─── Faza de alegere a plăcii ───────────────────────────────────────────
-  // PROVIZORIU (etapa 1): butoane simple. Se înlocuiesc cu plăci desenate în
-  // scena Flame, dar rămân ca variantă de rezervă
-  // (tap direct), nu se aruncă.
+  // ─── Faza de alegere a pătratului (↖ ▲ ↗, pe tabla 2D) ──────────────────
 
   /// Apelată DOAR când eu sunt cel care alege (vezi switch-ul din [build]) —
   /// cazul "nu sunt eu cel care alege" arată acum legenda scurtă de sub
-  /// scena 3rd-person, vezi [_buildWaitingCaption].
+  /// tabla 2D, vezi [_buildWaitingCaption].
   Widget _buildChoosingScene(MatchInfo info) {
     final me = _mp.currentPlayerId;
     final myChoice = info.roundPlatformChoices[me];
 
     return Stack(
       children: [
-        // scena Flame (personajul + cele 3 plăci) e montată o
+        // tabla 2D (pătratul meu + cele 3 din față) e montată o
         // singură dată, mai sus în build — aici doar suprapunem UI-ul.
         Positioned(
           left: 16,
@@ -884,43 +843,20 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                 child: Column(
                   children: [
                     Text(
-                      tr('Ai răspuns corect! Pe ce placă sari?', 'Correct! Which platform do you jump on?'),
+                      tr('Ai răspuns corect! Pe ce pătrat sari?', 'Correct! Which square do you jump to?'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      tr('Una din ele e falsă și cazi prin ea. Apasă placa pe care vrei să sari.',
-                          'One of them is fake and you fall through. Tap the platform you want to jump on.'),
+                      tr('Unul din ele e fals și cazi prin el. Apasă ↖ ▲ sau ↗.',
+                          'One of them is fake and you fall through. Tap ↖ ▲ or ↗.'),
                       textAlign: TextAlign.center,
                       style: const TextStyle(color: Colors.white54, fontSize: 11.5, fontWeight: FontWeight.w600, height: 1.3),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-        ),
-        // butoane de rezervă — aceeași alegere ca tap-ul direct pe placă din
-        // scenă, pentru accesibilitate și pentru cazul rar în care Flame nu
-        // randează corect pe un device anume.
-        Positioned(
-          left: 16,
-          right: 16,
-          bottom: 220,
-          child: Row(
-            children: [
-              for (var i = 0; i < obbyPlatformChoiceCount; i++) ...[
-                if (i > 0) const SizedBox(width: 10),
-                Expanded(
-                  child: _platformButton(
-                    index: i,
-                    selected: myChoice == i,
-                    locked: myChoice != null,
-                    onTap: () => _choosePlatform(info, i),
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -940,37 +876,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
     );
   }
 
-  Widget _platformButton({
-    required int index,
-    required bool selected,
-    required bool locked,
-    required VoidCallback onTap,
-  }) {
-    // stânga/centru/dreapta, în ordinea în care vor sta și plăcile în scenă
-    const labels = ['◀', '▲', '▶'];
-    final color = selected ? AppColors.play : AppColors.teal;
-    return GestureDetector(
-      onTap: locked ? null : onTap,
-      child: Opacity(
-        opacity: locked && !selected ? 0.35 : 1,
-        child: Container(
-          height: 96,
-          decoration: BoxDecoration(
-            color: color.withAlpha(selected ? 60 : 30),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: color, width: selected ? 2.4 : 1.4),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            labels[index % labels.length],
-            style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── Faza de reveal: cameră 3rd-person pe toată pista ───────────────────
+  // ─── Faza de reveal: tabla comună ───────────────────
 
   /// A trecut jucătorul [id] obstacolul în runda tocmai încheiată?
   ///
@@ -1015,8 +921,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   Widget _buildRaceScene(MatchInfo info, List<MatchPlayer> players, MatchPlayer? myPlayer) {
     return Stack(
       children: [
-        // camera 3rd-person (ObbyGame._buildRevealScene / camera.follow) e
-        // montată o singură dată mai sus în build.
+        // tabla (widgets/obby_board.dart) e montată o singură dată mai sus în build.
         Positioned(
           left: 0,
           right: 0,

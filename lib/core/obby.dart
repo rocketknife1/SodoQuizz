@@ -35,9 +35,8 @@ const int obbyObstacleCount = 7;
 
 /// Câți jucători încap într-o cameră de Obby. Urcat de la 6 la 10 la
 /// cererea explicită a userului (toate modurile trebuie să accepte 10) —
-/// pista/camera 3rd-person deja urmărea doar personajul propriu, deci
-/// generalizează fără nicio schimbare de cod (vezi widgets/obby_game.dart
-/// `_laneXFor`, calculat din `_racers.length`, nu dintr-un plafon fix).
+/// tabla 2D are câte o coloană pe jucător, calculată din numărul lor (vezi
+/// widgets/obby_board.dart), nu dintr-un plafon fix.
 const int obbyMaxPlayers = 10;
 
 /// Cât timp are fiecare rundă înainte ca cei ce n-au răspuns încă să fie
