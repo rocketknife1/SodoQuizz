@@ -19,7 +19,10 @@ void main() {
 
   test('Scaunul Electric: boții aleg victime, răspund pe scaun, se pierd vieți', () async {
     final match = await BotMatch.start(
-      const BotMatchSettings(mode: MatchGameMode.electricChair, botCount: 3, difficulty: 5),
+      // Dificultatea 3, nu 5: la 88% precizie victimele scăpau aproape mereu de
+      // pe scaun, iar sub încărcarea suitei complete testul pica uneori pe
+      // „nimeni n-a pierdut vreo viață" — noroc, nu bug.
+      const BotMatchSettings(mode: MatchGameMode.electricChair, botCount: 3, difficulty: 3),
       displayName: 'Eu',
     );
     final svc = match.service;
