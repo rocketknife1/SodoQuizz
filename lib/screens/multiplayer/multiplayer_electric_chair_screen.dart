@@ -17,6 +17,7 @@ import '../../models/multiplayer_models.dart';
 import '../../core/cosmetics.dart';
 import '../../widgets/match_overlay.dart';
 import '../../widgets/player_badge.dart';
+import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/space_background.dart';
 import 'multiplayer_results_screen.dart';
@@ -99,8 +100,15 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
 
   /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
   /// celelalte moduri deja cablate. Vezi [_maybeGrantPowerUp]/[_usePowerUp].
-  PowerUp _myPowerUp = PowerUp.none;
+  ///
+  /// LISTĂ, nu un singur slot: o putere nouă venită cât încă aveai una
+  /// nefolosită o ștergea în tăcere — bug reparat la Quizz Tanks în
+  /// 2026-09-01 (vezi widgets/powerup_inventory.dart), extins aici acum.
+  List<PowerUp> _myPowerUps = [];
   int? _powerUpRolledRound;
+
+  /// Runda în care s-a folosit deja o putere — regula „una pe rundă".
+  int? _powerUpUsedRound;
   Set<String> _hiddenChoices = const {};
 
   /// uid → nume, reîmprospătat la fiecare [_onData] — pentru banner-ul de la
@@ -248,12 +256,15 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
   /// [PowerUp.reflect] se scrie pe `roundPowerUps` și întoarce șocul spre
   /// atacatori la [MultiplayerService.resolveElectricChairRound].
   /// [PowerUp.peek] e efect local — arată ce au răspuns ceilalți.
-  void _usePowerUp(MatchInfo info) {
-    final p = _myPowerUp;
-    if (p == PowerUp.none) return;
+  Future<void> _usePowerUp(MatchInfo info, PowerUp p) async {
+    if (p == PowerUp.none || !_myPowerUps.contains(p)) return;
     if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
       notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
+    }
+    if (_powerUpUsedRound == info.roundIndex) {
+      notifyPowerUpAlreadyUsed(context);
+      return;
     }
     // Ultimii doi rămași: „cel mai slăbit coechipier" e chiar adversarul.
     if (!powerUpHasEnoughPlayers(p, _livePlayers)) {
@@ -261,6 +272,12 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       return;
     }
     Sfx.tileSelect();
+    // Scrierile care afectează deznodământul verifică ÎN tranzacție, pe
+    // server, că runda n-a trecut deja — `applied=false` = „prea târziu",
+    // exact bug-ul raportat live: scut folosit pe sine, viață pierdută
+    // oricum, fiindcă scrierea ajungea DUPĂ ce runda se rezolvase deja (vezi
+    // [MultiplayerService._submitRoundPowerUp]).
+    var applied = true;
     switch (p) {
       case PowerUp.fiftyFifty:
         if (info.roundPhase == RoundPhase.answering && !info.roundAnswers.containsKey(_myId)) {
@@ -272,7 +289,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       case PowerUp.shield:
       case PowerUp.piercingShock:
       case PowerUp.reflect:
-        _mp.submitElectricChairPowerUp(matchId: widget.matchId, powerUp: p);
+        applied = await _mp.submitElectricChairPowerUp(matchId: widget.matchId, roundIndex: info.roundIndex, powerUp: p);
       case PowerUp.allyShield:
         _mp.useElectricChairAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
       case PowerUp.repairKit:
@@ -282,7 +299,15 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       default:
         break;
     }
-    setState(() => _myPowerUp = PowerUp.none);
+    if (!applied) {
+      if (mounted) notifyPowerUpTooLate(context);
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _myPowerUps = _myPowerUps.where((x) => x != p).toList();
+      _powerUpUsedRound = info.roundIndex;
+    });
   }
 
   /// Vezi core/powerups.dart — acordat cui a răspuns corect la propria
@@ -315,7 +340,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      setState(() => _myPowerUp = picked);
+      setState(() => _myPowerUps = [..._myPowerUps, picked]);
       Sfx.rewardPop();
       announcePowerUp(context, picked);
     });
@@ -482,6 +507,17 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                         _buildTopBar(info),
                         _buildPlayerStrip(players),
                         Expanded(child: _buildPhaseContent(info, players)),
+                        // Jos, nu sus (unde acoperea numele/scorul jucătorilor
+                        // pe telefoane mici) — cerință directă a userului.
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: PowerUpBar(
+                            powerUps: _myPowerUps,
+                            usedThisRound: _powerUpUsedRound == info.roundIndex,
+                            usableNow: (p) => powerUpUsableInPhase(p, info.roundPhase.name),
+                            onUse: (p) => _usePowerUp(info, p),
+                          ),
+                        ),
                       ],
                     );
                   },
@@ -511,7 +547,6 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
               const SizedBox(width: 6),
               Text(tr('SCAUNUL ELECTRIC', 'ELECTRIC CHAIR'), style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 0.8, fontSize: 14)),
               const Spacer(),
-              PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
               const SizedBox(width: 8),
               Text(tr('Runda ${info.roundIndex + 1}', 'Round ${info.roundIndex + 1}'), style: const TextStyle(color: Colors.white54, fontSize: 12, fontWeight: FontWeight.w700)),
             ],

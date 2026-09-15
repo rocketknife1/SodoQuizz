@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/admin_reveal.dart';
 import '../../core/audio.dart';
 import '../../core/game_helpers.dart';
+import '../../core/powerup_ui.dart';
 import '../../core/powerups.dart';
 import '../../core/stable_hash.dart';
 import '../../core/lang.dart';
@@ -18,6 +19,7 @@ import '../../widgets/next_button.dart';
 import '../../core/cosmetics.dart';
 import '../../widgets/match_overlay.dart';
 import '../../widgets/player_badge.dart';
+import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 import '../../core/breadcrumbs.dart';
@@ -269,20 +271,26 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   /// Consumă power-up-ul curent. [PowerUp.fiftyFifty] e singurul valabil
   /// pentru Classic (vezi `powerUpModes` din core/powerups.dart), deci are
   /// efect real; restul modurilor au propriile power-uri, cu efecte proprii.
+  ///
+  /// ÎNAINTE: dacă apăsai după ce răspunseseși deja, puterea se ștergea
+  /// oricum (`_myPowerUp = PowerUp.none` era necondiționat) — dispărea fără
+  /// niciun efect și fără niciun mesaj. Acum se păstrează și userul e
+  /// anunțat, la fel ca la celelalte moduri (`notifyPowerUpNoEffect`).
   void _usePowerUp() {
     final p = _myPowerUp;
     if (p == PowerUp.none) return;
+    if (_answered) {
+      notifyPowerUpNoEffect(context);
+      return;
+    }
     Sfx.tileSelect();
     setState(() {
       switch (p) {
         case PowerUp.fiftyFifty:
-          if (!_answered) {
-            final q = _current;
-            final wrong = q.choices.where((c) => c != q.answer).toList();
-            stableShuffle(wrong, stableHash(q.id) + _qIndex + 1);
-            _hiddenOptions = wrong.take(max(0, wrong.length - 1)).toSet();
-          }
-          break;
+          final q = _current;
+          final wrong = q.choices.where((c) => c != q.answer).toList();
+          stableShuffle(wrong, stableHash(q.id) + _qIndex + 1);
+          _hiddenOptions = wrong.take(max(0, wrong.length - 1)).toSet();
         default:
           break;
       }
@@ -363,14 +371,6 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                 _buildPlayersRow(),
                 _buildTimerBar(),
                 RoundEventBanner(event: _event, compact: true),
-                if (_myPowerUp != PowerUp.none)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: PowerUpChip(powerUp: _myPowerUp, onTap: _usePowerUp),
-                    ),
-                  ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -385,6 +385,18 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                     ),
                   ),
                 ),
+                // Jos, nu sus (unde concura cu bara de timp) — cerință
+                // directă a userului.
+                if (_myPowerUp != PowerUp.none)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: PowerUpBar(
+                      powerUps: [_myPowerUp],
+                      usedThisRound: false,
+                      usableNow: (_) => !_answered,
+                      onUse: (_) => _usePowerUp(),
+                    ),
+                  ),
               ],
             ),
           ),

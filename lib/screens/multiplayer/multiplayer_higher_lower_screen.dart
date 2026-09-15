@@ -10,6 +10,7 @@ import '../../data/higher_lower_data.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/match_overlay.dart';
+import '../../widgets/powerup_inventory.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/round_event_banner.dart';
@@ -148,15 +149,25 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     return (_roundTotalSeconds - elapsed).clamp(0, _roundTotalSeconds);
   }
 
-  void _usePowerUp() {
-    final p = _myPowerUp;
-    if (p == PowerUp.none) return;
+  /// [p] doar ca semnătură comună cu [PowerUpBar.onUse] — Higher & Lower are
+  /// un singur power-up posibil ([PowerUp.fiftyFifty]), n-are sens un
+  /// parametru neutilizat de tip `void Function()`.
+  ///
+  /// ÎNAINTE: puterea se ștergea oricum după `revealed` — apăsată prea
+  /// târziu, n-avea niciun efect (numărul e deja arătat) și niciun mesaj.
+  /// Acum se păstrează pentru runda următoare, la fel ca la celelalte
+  /// moduri.
+  void _usePowerUp(MatchInfo info, PowerUp p) {
+    if (p == PowerUp.none || p != _myPowerUp) return;
+    if (info.roundPhase != RoundPhase.answering) {
+      notifyPowerUpNoEffect(context);
+      return;
+    }
     Sfx.tileSelect();
     setState(() {
       switch (p) {
         case PowerUp.fiftyFifty:
           _peekActive = true;
-          break;
         default:
           break;
       }
@@ -365,6 +376,18 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                             ),
                           ),
                         ),
+                        // Jos, nu sus (unde concura cu titlul modului) —
+                        // cerință directă a userului.
+                        if (_myPowerUp != PowerUp.none)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: PowerUpBar(
+                              powerUps: [_myPowerUp],
+                              usedThisRound: false,
+                              usableNow: (_) => info.roundPhase == RoundPhase.answering,
+                              onUse: (p) => _usePowerUp(info, p),
+                            ),
+                          ),
                       ],
                     );
                   },
@@ -385,8 +408,6 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
           IconButton(onPressed: _leave, icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
           const SizedBox(width: 4),
           const Text('Higher & Lower', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
-          const Spacer(),
-          PowerUpChip(powerUp: _myPowerUp, onTap: _usePowerUp),
         ],
       ),
     );

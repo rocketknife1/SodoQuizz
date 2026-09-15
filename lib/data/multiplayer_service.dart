@@ -836,13 +836,42 @@ class MultiplayerService {
     }
   }
 
+  /// Scrie `roundPowerUps.<eu> = powerUp` DOAR dacă runda [roundIndex] e încă
+  /// activă și în fază care acceptă [powerUp] — verificat ÎN tranzacție, cu
+  /// datele proaspete de pe server, nu cu ce vedea clientul când a apăsat.
+  ///
+  /// De ce: un `update()` simplu (cum era înainte) putea ajunge la Firestore
+  /// DUPĂ ce runda se rezolvase deja pe server (alt client/bot a fost mai
+  /// rapid) — puterea dispărea din inventar (clientul o consuma optimist),
+  /// dar nu apuca să facă nimic. Bug raportat live: scut folosit pe sine la
+  /// Scaunul Electric, răspuns greșit, viață pierdută oricum — scutul se
+  /// „mâncase" fără să apere. Acum, dacă runda a trecut deja, scrierea nu se
+  /// întâmplă și `false` spune apelantului să PĂSTREZE puterea (vezi
+  /// `notifyPowerUpTooLate` în fiecare ecran).
+  Future<bool> _submitRoundPowerUp({
+    required String matchId,
+    required int roundIndex,
+    required PowerUp powerUp,
+  }) {
+    final me = currentPlayerId;
+    final matchRef = _db.collection('matches').doc(matchId);
+    return _paced(() => _db.runTransaction<bool>((tx) async {
+          final doc = await tx.get(matchRef);
+          final data = doc.data();
+          if (data == null || data['roundIndex'] != roundIndex) return false;
+          final phase = data['roundPhase'] as String?;
+          if (phase == null || !powerUpUsableInPhase(powerUp, phase)) return false;
+          tx.update(matchRef, {'roundPowerUps.$me': powerUp.name});
+          return true;
+        }));
+  }
+
   /// Activează [PowerUp.jetpack] pentru runda curentă — [resolveObbyChoices]
   /// îl citește de pe `roundPowerUps`, la fel ca mega rachetă/scut la Quizz
-  /// Tanks și Scaunul Electric.
-  Future<void> submitObbyPowerUp({required String matchId, required PowerUp powerUp}) {
-    final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
-  }
+  /// Tanks și Scaunul Electric. Întoarce `false` dacă runda s-a închis între
+  /// apăsare și scriere — vezi [_submitRoundPowerUp].
+  Future<bool> submitObbyPowerUp({required String matchId, required int roundIndex, required PowerUp powerUp}) =>
+      _submitRoundPowerUp(matchId: matchId, roundIndex: roundIndex, powerUp: powerUp);
 
   /// [PowerUp.sabotage]: „îi muți cuiva o placă bună în placă falsă" —
   /// ținta se alege AUTOMAT (cine conduce cursa acum, exclus eu însumi),
@@ -850,29 +879,41 @@ class MultiplayerService {
   /// fereastră nouă de alegere doar pentru un power-up, iar liderul e oricum
   /// ținta evidentă a unui sabotaj. Efectul se anulează dacă victima are ea
   /// însăși [PowerUp.jetpack] runda asta — vezi [resolveObbyChoices].
-  Future<void> useObbySabotage({required String matchId}) async {
+  /// Întoarce id-ul victimei sabotate (ca ecranul să spună CUI i-a strâns
+  /// placa — reclamație a userului: „am sabotaj, nu știu ce face") sau
+  /// `null` dacă n-a avut pe cine sabota SAU runda [roundIndex] s-a închis
+  /// între apăsare și scriere (verificat ÎN tranzacție — vezi
+  /// [_submitRoundPowerUp] pentru aceeași cursă la celelalte puteri).
+  Future<String?> useObbySabotage({required String matchId, required int roundIndex}) async {
     final me = currentPlayerId;
     final matchRef = _db.collection('matches').doc(matchId);
     try {
-      await _db.runTransaction((tx) async {
+      return await _db.runTransaction<String?>((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex) return null;
+        final phase = data['roundPhase'] as String?;
+        if (phase == null || !powerUpUsableInPhase(PowerUp.sabotage, phase)) return null;
         final playersSnap = await matchRef.collection('players').get();
         String? leaderId;
         var leaderCleared = -1;
         for (final doc in playersSnap.docs) {
           if (doc.id == me) continue;
-          final data = doc.data();
-          final cleared = data['obstaclesCleared'] as int? ?? 0;
+          final pdata = doc.data();
+          final cleared = pdata['obstaclesCleared'] as int? ?? 0;
           if (cleared >= obbyObstacleCount) continue; // deja la final - nimic de sabotat
           if (cleared > leaderCleared || (cleared == leaderCleared && doc.id.compareTo(leaderId ?? '') < 0)) {
             leaderCleared = cleared;
             leaderId = doc.id;
           }
         }
-        if (leaderId == null) return;
+        if (leaderId == null) return null;
         tx.update(matchRef, {'roundSabotage.$leaderId': true});
+        return leaderId;
       });
     } catch (e) {
       debugPrint('MultiplayerService.useObbySabotage a esuat: $e');
+      return null;
     }
   }
 
@@ -981,11 +1022,10 @@ class MultiplayerService {
   /// Activează un power-up pentru runda curentă — citit de [resolveTanksRound]
   /// la calculul loviturilor (mega rachetă, scut). O singură dată pe rundă,
   /// scris pe câmp separat de `roundTargets`, ca activarea să nu depindă de
-  /// ordinea în care ajung cele două scrieri.
-  Future<void> submitTanksPowerUp({required String matchId, required PowerUp powerUp}) {
-    final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
-  }
+  /// ordinea în care ajung cele două scrieri. Întoarce `false` dacă runda s-a
+  /// închis între apăsare și scriere — vezi [_submitRoundPowerUp].
+  Future<bool> submitTanksPowerUp({required String matchId, required int roundIndex, required PowerUp powerUp}) =>
+      _submitRoundPowerUp(matchId: matchId, roundIndex: roundIndex, powerUp: powerUp);
 
   /// [PowerUp.allyShield] la Quizz Tanks: apără AUTOMAT tancul cel mai
   /// slăbit (cel mai puțin HP), nu unul ales manual — exact convenția de la
@@ -1548,11 +1588,11 @@ class MultiplayerService {
 
   /// Activează [PowerUp.shield] (propriu) sau [PowerUp.piercingShock]
   /// (pe atac) pentru runda curentă — [resolveElectricChairRound] le citește
-  /// de acolo, la fel ca [submitTanksPowerUp] pentru Quizz Tanks.
-  Future<void> submitElectricChairPowerUp({required String matchId, required PowerUp powerUp}) {
-    final me = currentPlayerId;
-    return _paced(() => _db.collection('matches').doc(matchId).update({'roundPowerUps.$me': powerUp.name}));
-  }
+  /// de acolo, la fel ca [submitTanksPowerUp] pentru Quizz Tanks. Întoarce
+  /// `false` dacă runda s-a închis între apăsare și scriere — vezi
+  /// [_submitRoundPowerUp].
+  Future<bool> submitElectricChairPowerUp({required String matchId, required int roundIndex, required PowerUp powerUp}) =>
+      _submitRoundPowerUp(matchId: matchId, roundIndex: roundIndex, powerUp: powerUp);
 
   /// [PowerUp.allyShield]: apără AUTOMAT cel mai slăbit coechipier (mai
   /// puține vieți), nu unul ales manual — evită o fereastră nouă de alegere

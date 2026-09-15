@@ -99,6 +99,36 @@ void notifyPowerUpNeedsMorePlayers(BuildContext context) {
     ));
 }
 
+/// Confirmă sabotajul (Obby) — spune CUI i s-a stricat placa. Fără mesajul
+/// ăsta puterea dispărea din inventar și jucătorul n-avea idee ce s-a
+/// întâmplat („am sabotaj, nu știu ce face" — reclamație directă a userului).
+void notifySabotageApplied(BuildContext context, String victimName) {
+  if (!context.mounted) return;
+  InAppNotification.showInfo(
+    context,
+    title: tr('🕳️ Sabotaj', '🕳️ Sabotage'),
+    message: tr('I-ai stricat placa bună lui $victimName.', "You ruined $victimName's good platform."),
+    icon: Icons.dangerous_rounded,
+    color: AppColors.danger,
+    duration: const Duration(seconds: 3),
+  );
+}
+
+/// Sabotajul (Obby) n-a avut pe cine ținti — toți ceilalți au terminat deja
+/// cursa. NU se consumă: rămâne în inventar.
+void notifySabotageNoTarget(BuildContext context) {
+  if (!context.mounted) return;
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(
+      duration: const Duration(seconds: 2),
+      content: Text(tr(
+        'N-ai pe cine sabota — ceilalți au terminat deja cursa. O păstrezi.',
+        'Nobody to sabotage — everyone else already finished the course. You keep it.',
+      )),
+    ));
+}
+
 /// Un adversar/coechipier a plecat din meci CÂT ÎNCĂ SE JOACĂ — dispărut din
 /// `watchPlayers` (leaveMatch îi șterge documentul, vezi
 /// MultiplayerService.leaveMatch) fără să fi terminat runda. Fără mesajul

@@ -20,6 +20,7 @@ import '../../widgets/match_overlay.dart';
 import '../../widgets/coin_reward_overlay.dart';
 import '../../widgets/countdown_ring.dart';
 import '../../widgets/obby_game.dart';
+import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 import '../../core/breadcrumbs.dart';
@@ -88,12 +89,21 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
   int _instantCoinsThisMatch = 0;
   final GlobalKey _coinPillKey = GlobalKey();
 
-  /// Power-up-ul curent (core/powerups.dart) — acordat direct în
+  /// Inventarul de puteri (core/powerups.dart) — acordate direct în
   /// [_selectAnswer] cu răspuns corect, nu prin [_onData]: apelul e din
   /// tap-ul jucătorului, deci nu rulează în timpul unui build ca la
   /// celelalte moduri, iar `info.roundAnswers` deja împiedică o a doua
   /// acordare pe aceeași rundă.
-  PowerUp _myPowerUp = PowerUp.none;
+  ///
+  /// LISTĂ, nu un singur slot: până la recenzia asta, o putere nouă venită
+  /// cât încă aveai una nefolosită o ștergea în tăcere — exact bug-ul
+  /// reparat la Quizz Tanks în 2026-09-01 (vezi widgets/powerup_inventory.dart),
+  /// dar rămas nereparat aici.
+  List<PowerUp> _myPowerUps = [];
+
+  /// Runda în care s-a folosit deja o putere — regula rămâne „una pe rundă"
+  /// (vezi widgets/powerup_inventory.dart), acum explicită și aici.
+  int? _powerUpUsedRound;
   Set<String> _hiddenChoices = const {};
 
   /// uid → nume, reîmprospătat la fiecare [_onData] — pentru [PowerUp.peek].
@@ -246,24 +256,31 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
       gameModeId: 'obby',
       livePlayers: players.where((p) => !p.eliminated).length,
     );
-    setState(() => _myPowerUp = picked);
+    setState(() => _myPowerUps = [..._myPowerUps, picked]);
     Sfx.rewardPop();
     announcePowerUp(context, picked);
   }
 
-  /// Consumă power-up-ul curent. [PowerUp.jetpack] și [PowerUp.sabotage] se
-  /// scriu pe Firestore ([MultiplayerService.submitObbyPowerUp]/
+  /// Consumă puterea [p] din inventar. [PowerUp.jetpack] și [PowerUp.sabotage]
+  /// se scriu pe Firestore ([MultiplayerService.submitObbyPowerUp]/
   /// [MultiplayerService.useObbySabotage]) — [resolveObbyChoices] le
   /// citește de-acolo la calculul plăcilor, la fel ca mega rachetă/scut la
   /// Quizz Tanks și Scaunul Electric.
-  void _usePowerUp(MatchInfo info) {
-    final p = _myPowerUp;
-    if (p == PowerUp.none) return;
+  Future<void> _usePowerUp(MatchInfo info, PowerUp p) async {
+    if (p == PowerUp.none || !_myPowerUps.contains(p)) return;
     if (!powerUpUsableInPhase(p, info.roundPhase.name)) {
       notifyPowerUpTooLate(context);
       return; // păstrează puterea — nu o consuma pe o scriere care se pierde
     }
+    if (_powerUpUsedRound == info.roundIndex) {
+      notifyPowerUpAlreadyUsed(context);
+      return;
+    }
     Sfx.tileSelect();
+    // Scrierile care afectează rezolvarea rundei verifică ÎN tranzacție, pe
+    // server, că runda n-a trecut deja — `applied=false` = „prea târziu",
+    // puterea rămâne în inventar (vezi [MultiplayerService._submitRoundPowerUp]).
+    var applied = true;
     switch (p) {
       case PowerUp.fiftyFifty:
         if (info.roundPhase == RoundPhase.answering) {
@@ -273,15 +290,27 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
           setState(() => _hiddenChoices = wrong.take(max(0, wrong.length - 1)).toSet());
         }
       case PowerUp.jetpack:
-        _mp.submitObbyPowerUp(matchId: widget.matchId, powerUp: p);
+        applied = await _mp.submitObbyPowerUp(matchId: widget.matchId, roundIndex: info.roundIndex, powerUp: p);
+        if (!applied && mounted) notifyPowerUpTooLate(context);
       case PowerUp.sabotage:
-        _mp.useObbySabotage(matchId: widget.matchId);
+        final victimId = await _mp.useObbySabotage(matchId: widget.matchId, roundIndex: info.roundIndex);
+        applied = victimId != null;
+        if (!applied) {
+          if (mounted) notifySabotageNoTarget(context);
+        } else if (mounted) {
+          notifySabotageApplied(context, _playerNames[victimId] ?? '?');
+        }
       case PowerUp.peek:
         showPeekResults(context, info, myId: _mp.currentPlayerId, playerNames: _playerNames);
       default:
         break;
     }
-    setState(() => _myPowerUp = PowerUp.none);
+    if (!applied) return; // păstrează puterea — mesajul de motiv a fost deja arătat
+    if (!mounted) return;
+    setState(() {
+      _myPowerUps = _myPowerUps.where((x) => x != p).toList();
+      _powerUpUsedRound = info.roundIndex;
+    });
   }
 
   /// Închide faza de răspuns. Nu mai acordă progres direct: cine a răspuns
@@ -571,6 +600,19 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                           ),
                         ),
                       ),
+                      // Jos, nu sus (unde acoperea textul întrebării pe
+                      // telefoane mici) — cerință directă a userului. `X`
+                      // pe puterile care n-au fereastră ACUM în faza curentă
+                      // (vezi powerUpUsableInPhase).
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: PowerUpBar(
+                          powerUps: _myPowerUps,
+                          usedThisRound: _powerUpUsedRound == info.roundIndex,
+                          usableNow: (p) => powerUpUsableInPhase(p, info.roundPhase.name),
+                          onUse: (p) => _usePowerUp(info, p),
+                        ),
+                      ),
                     ],
                   );
                 },
@@ -614,7 +656,6 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> with Sing
                 ),
               ),
               const Spacer(),
-              PowerUpChip(powerUp: _myPowerUp, onTap: () => _usePowerUp(info)),
               const SizedBox(width: 8),
               Text(
                 tr('Runda ${(info.roundIndex + 1).clamp(1, obbyObstacleCount)}/$obbyObstacleCount',

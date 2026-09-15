@@ -258,7 +258,7 @@ const Map<PowerUp, (String, String)> powerUpDescriptions = {
   PowerUp.megaRocket: ('Lovitură uriașă, imposibil de evitat.', 'Huge hit, impossible to dodge.'),
   PowerUp.doubleShot: ('Două proiectile — alege ținta fiecăruia.', 'Two shots — aim each one.'),
   PowerUp.piercingShock: ('Trece prin scutul victimei.', 'Goes through the victim shield.'),
-  PowerUp.sabotage: ('Strici placa bună a cuiva.', "Ruin someone's good platform."),
+  PowerUp.sabotage: ('Liderul cursei primește o placă falsă runda asta.', 'The race leader gets a fake platform this round.'),
   PowerUp.shield: ('Blochezi loviturile primite runda asta.', 'Block incoming hits this round.'),
   PowerUp.allyShield: ('Aperi pe altcineva 2 runde.', 'Protect someone else for 2 rounds.'),
   PowerUp.reflect: ('Cine te lovește încasează el.', 'Whoever hits you takes it instead.'),

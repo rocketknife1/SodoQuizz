@@ -307,7 +307,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   ///  - [PowerUp.reflect]: se scrie pe `roundPowerUps`, întoarce lovitura la
   ///    rezolvare.
   ///  - [PowerUp.peek]: efect local — arată ce au răspuns ceilalți acum.
-  void _usePowerUp(MatchInfo info, PowerUp p) {
+  Future<void> _usePowerUp(MatchInfo info, PowerUp p) async {
     if (p == PowerUp.none || !_myPowerUps.contains(p)) return;
     // Fereastra de fază se verifică ÎNAINTEA regulii „una pe rundă": dacă
     // puterea n-ar fi mers oricum acum, ăsta e motivul real al refuzului.
@@ -336,6 +336,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       return; // păstrează puterea pentru un meci/rundă cu mai mulți în viață
     }
     Sfx.tileSelect();
+    // Scrierile cu efect la rezolvarea rundei (`submitTanksPowerUp`) verifică
+    // ÎN tranzacție, pe server, că runda n-a trecut deja între apăsare și
+    // scriere — `applied=false` înseamnă „prea târziu", nu „a eșuat".
+    var applied = true;
     switch (p) {
       case PowerUp.fiftyFifty:
         final q = _questionFor(info.roundIndex);
@@ -348,7 +352,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       case PowerUp.doubleShot:
       case PowerUp.shield:
       case PowerUp.reflect:
-        _mp.submitTanksPowerUp(matchId: widget.matchId, powerUp: p);
+        applied = await _mp.submitTanksPowerUp(matchId: widget.matchId, roundIndex: info.roundIndex, powerUp: p);
       case PowerUp.allyShield:
         _mp.useTanksAllyShield(matchId: widget.matchId, roundIndex: info.roundIndex);
       case PowerUp.peek:
@@ -356,6 +360,13 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       default:
         break;
     }
+    if (!applied) {
+      // Runda s-a închis chiar în clipa scrierii — puterea rămâne în
+      // inventar, nu se arde pe nimic.
+      if (mounted) notifyPowerUpTooLate(context);
+      return;
+    }
+    if (!mounted) return;
     setState(() {
       _myPowerUps.remove(p);
       _powerUpUsedRound = info.roundIndex;
@@ -940,9 +951,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                         // la recenzia din 2026-09-01 dispărea din cadru
                         // exact în faza în care primeai anunțul „ai primit o
                         // putere" — deci nu se putea folosi.
-                        inventory: PowerUpInventory(
+                        inventory: PowerUpBar(
                           powerUps: _myPowerUps,
                           usedThisRound: _powerUpUsedRound == info.roundIndex,
+                          usableNow: (p) => powerUpUsableInPhase(p, info.roundPhase.name),
                           onUse: (p) => _usePowerUp(info, p),
                         ),
                       );
@@ -964,9 +976,10 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                             Expanded(child: _buildArena(info, players)),
                             // Sub tancuri, nu în colțul din dreapta sus: aici
                             // se uită oricum jucătorul între runde.
-                            PowerUpInventory(
+                            PowerUpBar(
                               powerUps: _myPowerUps,
                               usedThisRound: _powerUpUsedRound == info.roundIndex,
+                              usableNow: (p) => powerUpUsableInPhase(p, info.roundPhase.name),
                               onUse: (p) => _usePowerUp(info, p),
                             ),
                             _buildBottomPanel(info, players),
