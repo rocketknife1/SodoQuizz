@@ -12,13 +12,16 @@ part of '../admin_screen.dart';
 /// jucători — astea sunt tehnice: le scrie sistemul, nu omul. Vezi
 /// data/bug_report_service.dart pentru ce conține fiecare.
 class _BugReportsTab extends StatefulWidget {
-  const _BugReportsTab();
+  const _BugReportsTab({super.key});
 
   @override
   State<_BugReportsTab> createState() => _BugReportsTabState();
 }
 
-class _BugReportsTabState extends State<_BugReportsTab> {
+class _BugReportsTabState extends State<_BugReportsTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _future;
 
   @override
@@ -34,6 +37,12 @@ class _BugReportsTabState extends State<_BugReportsTab> {
         .limit(100)
         .get();
     return snap.docs;
+  }
+
+  Future<void> _refresh() async {
+    final f = _load();
+    setState(() => _future = f);
+    await f;
   }
 
   Future<void> _setResolved(String id, bool value) async {
@@ -59,9 +68,10 @@ class _BugReportsTabState extends State<_BugReportsTab> {
               child: CircularProgressIndicator(color: AppColors.orange));
         }
         if (snap.hasError) {
-          return const _InfoCard(
-            icon: Icons.wifi_off_rounded,
-            text: 'Nu am putut citi rapoartele. Verifică internetul și încearcă din nou.',
+          // Motivul real, nu mereu „verifică internetul" — vezi firestoreErrorText.
+          return _InfoCard(
+            icon: Icons.error_outline_rounded,
+            text: 'Nu am putut citi rapoartele. ${firestoreErrorText(snap.error)}',
           );
         }
         final docs = snap.data ?? const [];

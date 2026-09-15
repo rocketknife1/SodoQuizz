@@ -17,6 +17,7 @@ import '../../widgets/entrance_item.dart';
 import '../../widgets/league_badge.dart';
 import '../../widgets/pressable.dart';
 import '../../widgets/space_background.dart';
+import '../../widgets/refresh_button.dart';
 
 /// Clasament — 3 taburi:
 /// - **Leaderboard** ([_GlobalLeaderboardTab]) — TOŢI jucătorii înregistraţi
@@ -37,6 +38,7 @@ class LeaderboardScreen extends StatefulWidget {
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProviderStateMixin {
   late final TabController _tabController = TabController(length: 3, vsync: this);
+  final _tabKeys = List.generate(3, (_) => GlobalKey());
   /// Intrarea în cascadă a antetului + tab bar-ului — aceeași senzație ca în
   /// Multiplayer, ca ecranul să nu apară dintr-o bucată.
   late final AnimationController _introCtrl;
@@ -130,6 +132,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
                         child: const Text('CLASAMENT',
                             style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: 0.6)),
                       ),
+                      const Spacer(),
+                      RefreshButton(onRefresh: () async {
+                        final state = _tabKeys[_tabController.index].currentState;
+                        if (state is _Refreshable) await state.refresh();
+                      }),
                     ],
                   ),
                 ),
@@ -174,7 +181,11 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> with TickerProvid
               Expanded(
                 child: TabBarView(
                   controller: _tabController,
-                  children: const [_GlobalLeaderboardTab(), _FriendsLeaderboardTab(), _MyStatsTab()],
+                  children: [
+                    _GlobalLeaderboardTab(key: _tabKeys[0]),
+                    _FriendsLeaderboardTab(key: _tabKeys[1]),
+                    _MyStatsTab(key: _tabKeys[2]),
+                  ],
                 ),
               ),
             ],
@@ -485,13 +496,16 @@ class _PlayerRow extends StatelessWidget {
 /// deci [effectiveSeasonPoints] = 0 şi cade singur la coadă — nu mai e nevoie
 /// de un tab separat „Toţi" care făcea aproape acelaşi lucru.
 class _GlobalLeaderboardTab extends StatefulWidget {
-  const _GlobalLeaderboardTab();
+  const _GlobalLeaderboardTab({super.key});
 
   @override
   State<_GlobalLeaderboardTab> createState() => _GlobalLeaderboardTabState();
 }
 
-class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
+class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> with _Refreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchAllPlayers();
 
   Future<void> _refresh() async {
@@ -553,13 +567,16 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> {
 /// "te-a depășit cineva" (vezi PlayerProfileService._notifyOvertakes): dacă
 /// cineva apare aici, poate declanșa/primi acea notificare.
 class _FriendsLeaderboardTab extends StatefulWidget {
-  const _FriendsLeaderboardTab();
+  const _FriendsLeaderboardTab({super.key});
 
   @override
   State<_FriendsLeaderboardTab> createState() => _FriendsLeaderboardTabState();
 }
 
-class _FriendsLeaderboardTabState extends State<_FriendsLeaderboardTab> {
+class _FriendsLeaderboardTabState extends State<_FriendsLeaderboardTab> with _Refreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<PlayerProfile>> _future = _load();
 
   static Future<List<PlayerProfile>> _load() async {
@@ -659,13 +676,16 @@ String _formatPeriod(Duration d) {
 /// „unde am ajuns": multiplayer (profil public) + singleplayer / progresie
 /// zilnică (local) + punctajul pe mod în ciclul curent.
 class _MyStatsTab extends StatefulWidget {
-  const _MyStatsTab();
+  const _MyStatsTab({super.key});
 
   @override
   State<_MyStatsTab> createState() => _MyStatsTabState();
 }
 
-class _MyStatsTabState extends State<_MyStatsTab> {
+class _MyStatsTabState extends State<_MyStatsTab> with _Refreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<_MyStatsData> _future = _load();
 
   static Future<_MyStatsData> _load() async {
@@ -973,4 +993,9 @@ class _MyStatsData {
     }
     return pick;
   }
+}
+
+/// Un tab de clasament care știe să se reîncarce — chemat de butonul din antet.
+mixin _Refreshable<T extends StatefulWidget> on State<T> {
+  Future<void> refresh();
 }

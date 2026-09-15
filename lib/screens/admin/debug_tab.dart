@@ -11,7 +11,7 @@ part of '../admin_screen.dart';
 /// înlocuite manual (TestImagesScreen.testQuestionIds), fără să afecteze
 /// scorul real; UNLIMITED umple resursele la maxim, pentru testare rapidă.
 class _DebugTab extends StatefulWidget {
-  const _DebugTab();
+  const _DebugTab({super.key});
 
   @override
   State<_DebugTab> createState() => _DebugTabState();

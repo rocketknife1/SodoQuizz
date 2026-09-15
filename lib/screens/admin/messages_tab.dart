@@ -13,7 +13,7 @@ part of '../admin_screen.dart';
 /// documentul-cap al firului: altfel lista ar fi cerut un query ordonat in
 /// subcolectia fiecarui fir, la fiecare deschidere a tabului.
 class _MessagesTab extends StatelessWidget {
-  const _MessagesTab();
+  const _MessagesTab({super.key});
 
   static String _when(Timestamp? ts) {
     if (ts == null) return '';

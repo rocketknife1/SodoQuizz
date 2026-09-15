@@ -6,13 +6,16 @@
 part of '../admin_screen.dart';
 
 class _DifficultyTab extends StatefulWidget {
-  const _DifficultyTab();
+  const _DifficultyTab({super.key});
 
   @override
   State<_DifficultyTab> createState() => _DifficultyTabState();
 }
 
-class _DifficultyTabState extends State<_DifficultyTab> {
+class _DifficultyTabState extends State<_DifficultyTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<_DifficultyData> _future = _load();
   String _categoryFilter = '';
   QuestionDifficulty? _diffFilter;

@@ -18,13 +18,16 @@ part of '../admin_screen.dart';
 /// fiecare „rezolvată" la timpul ei, arată altfel decât unul reclamat o dată,
 /// și doar istoricul păstrat face diferența vizibilă.
 class _ReportsTab extends StatefulWidget {
-  const _ReportsTab();
+  const _ReportsTab({super.key});
 
   @override
   State<_ReportsTab> createState() => _ReportsTabState();
 }
 
-class _ReportsTabState extends State<_ReportsTab> {
+class _ReportsTabState extends State<_ReportsTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<PlayerReport>> _future = ModerationService.instance.fetchReports();
 
   Future<void> _refresh() async {

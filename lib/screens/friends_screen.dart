@@ -19,6 +19,7 @@ import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
 import 'friend_chat_screen.dart';
 import 'multiplayer/leaderboard_screen.dart' show showPlayerProfileSheet;
+import '../widgets/refresh_button.dart';
 
 /// Ecran de Prieteni — codul propriu (generat lazy, vezi
 /// PlayerProfileService.getOrCreateFriendCode), adăugare prin cod (cerere +
@@ -322,6 +323,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
                   const SizedBox(width: 4),
                   Text(tr('Prieteni', 'Friends'), style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  RefreshButton(onRefresh: _reload),
                 ],
               ),
             ),

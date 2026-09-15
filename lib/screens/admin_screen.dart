@@ -31,6 +31,8 @@ import 'admin_chat_screen.dart';
 import 'test_images_screen.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import '../core/breadcrumbs.dart';
+import '../core/firestore_errors.dart';
+import '../widgets/refresh_button.dart';
 import '../data/bug_report_service.dart';
 import 'welcome_screen.dart';
 
@@ -71,6 +73,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   /// distanta, in stanga.
   late final TabController _tabController = TabController(length: 10, initialIndex: 1, vsync: this);
 
+  /// Chei pe tab-uri, ca butonul de refresh din antet să reîncarce tabul
+  /// deschis (vezi [_AdminRefreshable]). Mesaje și Debug n-au ce reîncărca.
+  final _tabKeys = List.generate(10, (_) => GlobalKey());
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -91,6 +97,11 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
                   IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white70)),
                   const SizedBox(width: 4),
                   const Text('Admin', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  RefreshButton(onRefresh: () async {
+                    final state = _tabKeys[_tabController.index].currentState;
+                    if (state is _AdminRefreshable) await state.refresh();
+                  }),
                 ],
               ),
             ),
@@ -116,7 +127,18 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
             Expanded(
               child: TabBarView(
                 controller: _tabController,
-                children: const [_PlayersTab(), _NewTodayTab(), _MessagesTab(), _ReportsTab(), _BugReportsTab(), _BannedTab(), _RoomsTab(), _DebugTab(), _StatsTab(), _DifficultyTab()],
+                children: [
+                  _PlayersTab(key: _tabKeys[0]),
+                  _NewTodayTab(key: _tabKeys[1]),
+                  _MessagesTab(key: _tabKeys[2]),
+                  _ReportsTab(key: _tabKeys[3]),
+                  _BugReportsTab(key: _tabKeys[4]),
+                  _BannedTab(key: _tabKeys[5]),
+                  _RoomsTab(key: _tabKeys[6]),
+                  _DebugTab(key: _tabKeys[7]),
+                  _StatsTab(key: _tabKeys[8]),
+                  _DifficultyTab(key: _tabKeys[9]),
+                ],
               ),
             ),
           ],
@@ -524,3 +546,8 @@ class _ActionButton extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────
 //  Camere de multiplayer terminate
 // ─────────────────────────────────────────────────────────────────────────
+
+/// Un tab de Admin care știe să se reîncarce — chemat de butonul din antet.
+mixin _AdminRefreshable<T extends StatefulWidget> on State<T> {
+  Future<void> refresh();
+}

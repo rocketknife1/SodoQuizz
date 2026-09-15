@@ -7,6 +7,7 @@ import '../models/app_notification.dart';
 import 'friend_chat_screen.dart';
 import 'friends_screen.dart';
 import 'multiplayer/leaderboard_screen.dart';
+import '../widgets/refresh_button.dart';
 
 /// Panoul deschis de clopoțelul de lângă avatarul din meniul principal:
 /// anunțuri de la administrator, cadourile primite și mesajele/cererile
@@ -42,6 +43,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   void _reload() => setState(() => _future = _load());
+
+  Future<void> _refresh() async {
+    _reload();
+    await _future;
+  }
 
   Future<void> _openNotification(AppNotification n) async {
     switch (n.type) {
@@ -123,6 +129,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   Text(tr('Notificări', 'Notifications'),
                       style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
                   const Spacer(),
+                  RefreshButton(onRefresh: _refresh),
                   IconButton(
                     onPressed: _confirmClear,
                     tooltip: tr('Golește lista', 'Clear list'),

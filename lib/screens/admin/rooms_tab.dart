@@ -13,13 +13,16 @@ part of '../admin_screen.dart';
 /// jucători care n-au mai deschis aplicația (clienții și le șterg singuri pe
 /// ale lor, dar numai când mai pornesc jocul).
 class _RoomsTab extends StatefulWidget {
-  const _RoomsTab();
+  const _RoomsTab({super.key});
 
   @override
   State<_RoomsTab> createState() => _RoomsTabState();
 }
 
-class _RoomsTabState extends State<_RoomsTab> {
+class _RoomsTabState extends State<_RoomsTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<RoomActivity>> _future = _load();
 
   Future<List<RoomActivity>> _load() async {

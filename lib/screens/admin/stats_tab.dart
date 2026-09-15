@@ -7,13 +7,16 @@
 part of '../admin_screen.dart';
 
 class _StatsTab extends StatefulWidget {
-  const _StatsTab();
+  const _StatsTab({super.key});
 
   @override
   State<_StatsTab> createState() => _StatsTabState();
 }
 
-class _StatsTabState extends State<_StatsTab> {
+class _StatsTabState extends State<_StatsTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<_StatsData> _future = _load();
 
   Future<_StatsData> _load() async {

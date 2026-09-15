@@ -8,13 +8,16 @@ part of '../admin_screen.dart';
 
 /// Roster complet, cu acțiuni de admin (pe `fetchAllPlayers`), plus grant/ban.
 class _PlayersTab extends StatefulWidget {
-  const _PlayersTab();
+  const _PlayersTab({super.key});
 
   @override
   State<_PlayersTab> createState() => _PlayersTabState();
 }
 
-class _PlayersTabState extends State<_PlayersTab> {
+class _PlayersTabState extends State<_PlayersTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<PlayerProfile>> _future = PlayerProfileService.instance.fetchAllPlayers();
 
   Future<void> _refresh() async {
@@ -119,13 +122,16 @@ class _PlayersTabState extends State<_PlayersTab> {
 /// Jucătorii al căror profil a fost creat azi — vezi
 /// PlayerProfileService.fetchNewPlayersToday.
 class _NewTodayTab extends StatefulWidget {
-  const _NewTodayTab();
+  const _NewTodayTab({super.key});
 
   @override
   State<_NewTodayTab> createState() => _NewTodayTabState();
 }
 
-class _NewTodayTabState extends State<_NewTodayTab> {
+class _NewTodayTabState extends State<_NewTodayTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   /// Cine a DESCHIS jocul azi, nu doar cine si-a facut cont azi. Asta e
   /// intrebarea pe care si-o pune adminul cand deschide panoul ("a intrat
   /// cineva?"), iar conturile noi sunt oricum o submultime: un cont creat azi
@@ -315,13 +321,16 @@ class _AdminPlayerRow extends StatelessWidget {
 /// căutare. Fără lista asta, un ban dat din greșeală n-avea nicio cale de
 /// întoarcere din aplicație.
 class _BannedTab extends StatefulWidget {
-  const _BannedTab();
+  const _BannedTab({super.key});
 
   @override
   State<_BannedTab> createState() => _BannedTabState();
 }
 
-class _BannedTabState extends State<_BannedTab> {
+class _BannedTabState extends State<_BannedTab> with _AdminRefreshable {
+  @override
+  Future<void> refresh() => _refresh();
+
   late Future<List<BannedPlayer>> _future = PlayerProfileService.instance.fetchBannedPlayers();
 
   Future<void> _refresh() async {

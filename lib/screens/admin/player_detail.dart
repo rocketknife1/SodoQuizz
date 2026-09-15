@@ -231,6 +231,7 @@ class _PlayerDetailScreenState extends State<_PlayerDetailScreen> {
                         ),
                       ),
                     ),
+                    RefreshButton(onRefresh: _refresh),
                     // Deschide firul cu jucatorul asta. Merge si daca el n-a
                     // scris niciodata: firul se creeaza la primul mesaj, iar
                     // documentul-cap poarta uid-ul lui ca nume.
