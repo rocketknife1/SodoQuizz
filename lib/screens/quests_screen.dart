@@ -102,8 +102,11 @@ class _QuestsScreenState extends State<QuestsScreen> {
   Future<void> _claim(Quest q, {int multiplier = 1}) async {
     if (_claiming) return;
     setState(() => _claiming = true);
+    // Contextul se ia înainte de orice `await`: după claimQuest revendicarea e
+    // salvată, deci recompensa TREBUIE scrisă și dacă jucătorul iese între
+    // timp (collectRewards sare singur peste animații când nu e montat).
+    final ctx = context;
     await StorageService.claimQuest(q.id);
-    if (!mounted) return;
     _navBarKey.currentState?.refreshDots();
     // IMPORTANT: _dataFuture nu trebuie NICIODATĂ reasignat la un Future încă
     // nerezolvat în timpul animației — FutureBuilder resetează imediat
@@ -114,28 +117,29 @@ class _QuestsScreenState extends State<QuestsScreen> {
     // să zboare. De-asta folosim Future.value(...) cu date deja cunoscute
     // sincron, niciodată un Future "în zbor".
     final current = await _dataFuture;
-    if (!mounted) return;
     // Gems-ul din quest-uri are un plafon zilnic ([dailyQuestGemCap]) —
     // rezervăm partea care chiar se poate acorda ÎNAINTE de animație, ca
     // numărul care zboară spre pastilă să fie exact cel primit, nu unul
     // promis și netăiat.
     final grantedGems = await StorageService.grantQuestGems(q.gemReward * multiplier);
-    if (!mounted) return;
-    setState(() {
-      _dataFuture = Future.value(_QuestsData(
-        quests: current.quests,
-        level: current.level,
-        xp: current.xp,
-        coins: current.coins,
-        lives: current.lives,
-        hints: current.hints,
-        gems: current.gems,
-        progress: current.progress,
-        claimed: Map<String, bool>.of(current.claimed)..[q.id] = true, // bifa apare pe loc
-      ));
-    });
+    if (mounted) {
+      setState(() {
+        _dataFuture = Future.value(_QuestsData(
+          quests: current.quests,
+          level: current.level,
+          xp: current.xp,
+          coins: current.coins,
+          lives: current.lives,
+          hints: current.hints,
+          gems: current.gems,
+          progress: current.progress,
+          claimed: Map<String, bool>.of(current.claimed)..[q.id] = true, // bifa apare pe loc
+        ));
+      });
+    }
     await collectRewards(
-      context,
+      // ignore: use_build_context_synchronously — vezi `ctx` mai sus
+      ctx,
       coins: q.coinRewardAt(current.level) * multiplier,
       xp: q.xpRewardAt(current.level) * multiplier,
       lives: q.heartReward * multiplier,

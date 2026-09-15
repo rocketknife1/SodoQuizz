@@ -86,27 +86,31 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _claim(Achievement a, {int multiplier = 1}) async {
     if (_claiming) return;
     setState(() => _claiming = true);
+    // Vezi quests_screen.dart._claim: după claimAchievement (o dată în viața
+    // contului) recompensa se scrie chiar dacă jucătorul iese între timp.
+    final ctx = context;
     await StorageService.claimAchievement(a.id);
-    if (!mounted) return;
     // vezi quests_screen.dart — Future.value cu date deja cunoscute, NICIODATĂ
     // un Future încă nerezolvat, ca pastilele de hints/gems să nu dispară
     // (LevelHeader le ascunde când valoarea e null) chiar când animația le
     // caută poziția.
     final current = await _dataFuture;
-    if (!mounted) return;
-    setState(() {
-      _dataFuture = Future.value(_AchievementsData(
-        xp: current.xp,
-        coins: current.coins,
-        lives: current.lives,
-        hints: current.hints,
-        gems: current.gems,
-        progress: current.progress,
-        claimed: Map<String, bool>.of(current.claimed)..[a.id] = true,
-      ));
-    });
+    if (mounted) {
+      setState(() {
+        _dataFuture = Future.value(_AchievementsData(
+          xp: current.xp,
+          coins: current.coins,
+          lives: current.lives,
+          hints: current.hints,
+          gems: current.gems,
+          progress: current.progress,
+          claimed: Map<String, bool>.of(current.claimed)..[a.id] = true,
+        ));
+      });
+    }
     await collectRewards(
-      context,
+      // ignore: use_build_context_synchronously — vezi `ctx` mai sus
+      ctx,
       coins: a.coinReward * multiplier,
       xp: a.xpReward * multiplier,
       lives: a.heartReward * multiplier,
