@@ -447,8 +447,21 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
   /// cea mai mică din joc, fiindcă aici nu există gazdă care să decidă. Se
   /// întoarce integral dacă ieși din coadă fără să fii cuplat cu nimeni — vezi
   /// MatchmakingScreen._leave.
+  /// `_busy` era doar CITIT aici, niciodată setat: un dublu-tap pe MECI RAPID
+  /// deschidea două confirmări și putea lua miza de două ori.
+  bool _joiningOnline = false;
+
   Future<void> _joinOnline() async {
-    if (_busy) return;
+    if (_busy || _joiningOnline) return;
+    _joiningOnline = true;
+    try {
+      await _joinOnlineFlow();
+    } finally {
+      _joiningOnline = false;
+    }
+  }
+
+  Future<void> _joinOnlineFlow() async {
     // Politica de abandon (#6): prea multe ieșiri din meciuri ranked într-un
     // interval scurt → pauză de la coada publică. Camerele cu cod rămân
     // permise.
