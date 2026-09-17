@@ -75,9 +75,11 @@ class BotMatch {
     required String displayName,
     String? photoUrl,
     String avatarStyle = '',
+    @visibleForTesting Random? random,
   }) async {
     final db = LocalFirestore();
-    final rnd = Random();
+    // `random` doar din teste: cu seed fix, cine greșește nu mai e noroc.
+    final rnd = random ?? Random();
     final me = MultiplayerService.local(db: db, playerId: humanId);
     final room = await me.createRoom(
       displayName: displayName,

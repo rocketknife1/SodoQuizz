@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/electric_chair.dart';
 import 'package:guess_it/core/stable_hash.dart';
@@ -19,11 +21,11 @@ void main() {
 
   test('Scaunul Electric: boții aleg victime, răspund pe scaun, se pierd vieți', () async {
     final match = await BotMatch.start(
-      // Dificultatea 3, nu 5: la 88% precizie victimele scăpau aproape mereu de
-      // pe scaun, iar sub încărcarea suitei complete testul pica uneori pe
-      // „nimeni n-a pierdut vreo viață" — noroc, nu bug.
+      // Seed fix + dificultatea 3: altfel „nimeni n-a pierdut vreo viață" pica
+      // din noroc (victimele nimereau toate răspunsurile), nu din vreun bug.
       const BotMatchSettings(mode: MatchGameMode.electricChair, botCount: 3, difficulty: 3),
       displayName: 'Eu',
+      random: Random(7),
     );
     final svc = match.service;
     final id = match.matchId;
@@ -35,7 +37,10 @@ void main() {
 
     final deadline = DateTime.now().add(const Duration(seconds: 70));
     var livesLost = false;
-    while (DateTime.now().isBefore(deadline) && !livesLost) {
+    // Până se văd AMBELE: o viață pierdută poate veni și de la jucătorul uman
+    // pus pe scaun (în test nu răspunde niciodată), înainte ca vreun bot să
+    // fi răspuns pe scaun — oprirea doar pe `livesLost` rata a doua verificare.
+    while (DateTime.now().isBefore(deadline) && !(livesLost && sawChairAnswers)) {
       await Future<void>.delayed(const Duration(milliseconds: 300));
       final info = await svc.watchMatch(id).first;
       final players = await svc.watchPlayers(id).first;
@@ -77,7 +82,7 @@ void main() {
           }
         case RoundPhase.revealed:
           revealAt ??= DateTime.now();
-          livesLost = players.any((p) => p.lives < electricChairMaxLives);
+          livesLost = livesLost || players.any((p) => p.lives < electricChairMaxLives);
           if (DateTime.now().difference(revealAt) > const Duration(seconds: 1)) {
             await svc.advanceElectricChairRound(matchId: id, roundIndex: info.roundIndex);
           }
