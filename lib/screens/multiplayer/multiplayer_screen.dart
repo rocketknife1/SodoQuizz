@@ -39,6 +39,10 @@ class MultiplayerScreen extends StatefulWidget {
 }
 
 class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProviderStateMixin {
+  /// Creat o singură dată: în `build` ar fi redeschis ascultarea Firestore la
+  /// fiecare redesenare (citiri în plus, lista revenind pe încărcare).
+  late final Stream<int> _queueCount = MultiplayerService.instance.watchQueueCount();
+
   String _displayName = '';
   bool _busy = false;
 
@@ -799,7 +803,7 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                           // aici că mai e cineva în coadă, știi dinainte că
                           // meci rapid o să vă cupleze în câteva secunde.
                           child: StreamBuilder<int>(
-                            stream: MultiplayerService.instance.watchQueueCount(),
+                            stream: _queueCount,
                             builder: (context, snap) {
                               final searching = snap.data ?? 0;
                               return _ActionTile(

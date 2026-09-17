@@ -25,6 +25,10 @@ class FriendChatScreen extends StatefulWidget {
 }
 
 class _FriendChatScreenState extends State<FriendChatScreen> {
+  /// Creat o singură dată: în `build` ar fi redeschis ascultarea Firestore la
+  /// fiecare redesenare (citiri în plus, lista revenind pe încărcare).
+  late final Stream<List<FriendMessage>> _messages = FriendChatService.instance.watchMessages(widget.friend.uid);
+
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   bool _sending = false;
@@ -172,7 +176,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
 
   Widget _buildMessages() {
     return StreamBuilder<List<FriendMessage>>(
-      stream: FriendChatService.instance.watchMessages(widget.friend.uid),
+      stream: _messages,
       builder: (context, snap) {
         final messages = snap.data;
         if (messages == null) {

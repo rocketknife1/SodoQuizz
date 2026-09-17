@@ -40,6 +40,10 @@ class AdminChatScreen extends StatefulWidget {
 }
 
 class _AdminChatScreenState extends State<AdminChatScreen> {
+  /// Creat o singură dată: în `build` ar fi redeschis ascultarea Firestore la
+  /// fiecare redesenare (citiri în plus, lista revenind pe încărcare).
+  late final Stream<List<AdminMessage>> _messages = AdminChatService.instance.watchMessages(widget.playerUid);
+
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   bool _sending = false;
@@ -144,7 +148,7 @@ class _AdminChatScreenState extends State<AdminChatScreen> {
 
   Widget _buildMessages() {
     return StreamBuilder<List<AdminMessage>>(
-      stream: AdminChatService.instance.watchMessages(widget.playerUid),
+      stream: _messages,
       builder: (context, snap) {
         // Eroarea se trateaza EXPLICIT, nu se lasa pe seama lui `data == null`:
         // un stream Firestore respins (reguli nedeployate, offline, cont fara

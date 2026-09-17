@@ -31,6 +31,11 @@ class MatchmakingScreen extends StatefulWidget {
 }
 
 class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProviderStateMixin {
+  /// Creat o singură dată: în `build` ar fi redeschis ascultarea Firestore la
+  /// fiecare redesenare (citiri în plus, lista revenind pe încărcare).
+  late final Stream<int> _queueCount = MultiplayerService.instance.watchQueueCount();
+  late final Stream<List<MatchInfo>> _openRooms = MultiplayerService.instance.watchOpenRooms();
+
   late final AnimationController _bounceController;
   /// Fasciculul de radar care se rotește continuu în jurul animației de
   /// rețea — accentul central de "caut activ", nu doar un cerc static.
@@ -309,7 +314,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                         // veste. Un singur format, mereu, nu o formulare
                         // specială doar când mai apare cineva.
                         StreamBuilder<int>(
-                          stream: MultiplayerService.instance.watchQueueCount(),
+                          stream: _queueCount,
                           builder: (context, snap) {
                             final n = snap.data ?? 1;
                             return Container(
@@ -396,7 +401,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
   /// prieten. Doar o bandă orizontală compactă, ca să nu domine ecranul.
   Widget _buildOpenRooms() {
     return StreamBuilder<List<MatchInfo>>(
-      stream: MultiplayerService.instance.watchOpenRooms(),
+      stream: _openRooms,
       builder: (context, snap) {
         final rooms = snap.data ?? const <MatchInfo>[];
         if (rooms.isEmpty) return const SizedBox.shrink();
