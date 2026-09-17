@@ -141,10 +141,23 @@ class _CategoriesScreenState extends State<CategoriesScreen> with TickerProvider
     return Map.fromEntries(entries);
   }
 
+  /// Dublu-tap pe DEBLOCHEAZĂ cumpăra și treapta următoare, pe gems.
+  bool _upgrading = false;
+
   /// Cumpără următoarea treaptă de upgrade pentru [mode] — deblochează chiar
   /// categoria dacă era la tier 0. La succes arată animația de deblocare și
   /// reîncarcă statisticile, ca noul tier să se reflecte imediat în card.
   Future<void> _upgrade(GameMode mode, _ModeStats stats) async {
+    if (_upgrading) return;
+    _upgrading = true;
+    try {
+      await _doUpgrade(mode, stats);
+    } finally {
+      _upgrading = false;
+    }
+  }
+
+  Future<void> _doUpgrade(GameMode mode, _ModeStats stats) async {
     final ok = await StorageService.unlockNextQuestionBatch(mode.id);
     if (!mounted) return;
     if (!ok) {

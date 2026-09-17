@@ -227,8 +227,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     return hintsBalance > 0;
   }
 
+  /// Dublu-tap pe hint: `hintsUsed` crește abia după scrierea asincronă, deci
+  /// fără garda asta două apăsări rapide consumau două hint-uri + taxa de două ori.
+  bool _hintInFlight = false;
+  bool _unlockInFlight = false;
+
   void _addHint() {
-    if (answered || hintsUsed >= maxHintsPerQuestion) return;
+    if (_hintInFlight || answered || hintsUsed >= maxHintsPerQuestion) return;
     final cost = _hintCost;
     if (hintsBalance <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -239,12 +244,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       );
       return;
     }
+    _hintInFlight = true;
     StorageService.spendHint().then((spent) async {
-      if (!mounted || !spent) return;
+      if (!mounted || !spent) {
+        _hintInFlight = false;
+        return;
+      }
       // taxa nu poate depăși niciodată averea (vezi hintCoinCost), deci
       // spendCoins nu are cum să eșueze aici — dar dacă totuși ar eșua,
       // hint-ul rămâne acordat, nu blocăm jucătorul pentru o monedă.
       if (cost > 0) await StorageService.spendCoins(cost);
+      _hintInFlight = false;
       if (!mounted) return;
       setState(() {
         hintsUsed++;
@@ -644,8 +654,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.coin),
             onPressed: () async {
+              // dublu-tap = a doua treaptă cumpărată fără voie
+              if (_unlockInFlight) return;
+              _unlockInFlight = true;
               final ok = await StorageService.unlockNextQuestionBatch(
                   widget.gameModeId);
+              _unlockInFlight = false;
               if (!mounted) return;
               if (ok) {
                 await bumpQuestMetric(context, 'question_batch_unlocked', 1);
