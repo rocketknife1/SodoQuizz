@@ -14,6 +14,7 @@ import '../../data/multiplayer_service.dart';
 import '../../data/player_profile_service.dart';
 import '../../data/storage_service.dart';
 import '../../models/multiplayer_models.dart';
+import '../async_challenge_screen.dart';
 import '../bot_match_setup_screen.dart';
 import '../../widgets/avatar.dart';
 import '../../widgets/edit_name_dialog.dart';
@@ -607,6 +608,58 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
     }
   }
 
+  /// Codul de 6 caractere primit de la cine te-a provocat — vezi
+  /// AsyncChallengeScreen. Link-ul `guessit://challenge/<id>` merge direct
+  /// din SMS/WhatsApp; câmpul ăsta e pentru codul scris de mână.
+  Future<void> _openChallengeCodeDialog() async {
+    final controller = TextEditingController();
+    final code = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: const Color(0xFF141B36),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(22),
+          side: BorderSide(color: Colors.white.withAlpha(30)),
+        ),
+        title: Text(tr('Cod de provocare', 'Challenge code'),
+            style: const TextStyle(color: Colors.white, fontSize: 19, fontWeight: FontWeight.w800)),
+        content: TextField(
+          controller: controller,
+          textCapitalization: TextCapitalization.characters,
+          maxLength: 6,
+          autofocus: true,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, letterSpacing: 4, fontSize: 20, fontWeight: FontWeight.w900),
+          decoration: InputDecoration(
+            counterText: '',
+            hintText: 'A1B2C3',
+            hintStyle: const TextStyle(color: Colors.white24, letterSpacing: 4),
+            filled: true,
+            fillColor: Colors.white.withAlpha(15),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          ),
+          onSubmitted: (_) => Navigator.pop(dialogContext, controller.text.trim()),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(tr('Anulează', 'Cancel'))),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.teal,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: Text(tr('Intră', 'Enter'), style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800)),
+          ),
+        ],
+      ),
+    );
+    if (code == null || code.isEmpty || !mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => AsyncChallengeScreen(challengeId: code.toUpperCase())),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     // Poarta de ban: cat timp `amIBanned` e adevarat, in locul continutului de
@@ -862,6 +915,38 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                               context,
                               MaterialPageRoute(builder: (_) => const BotMatchSetupScreen()),
                             ),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        EntranceItem(
+                          controller: _introCtrl,
+                          interval: const Interval(0.65, 1.0, curve: Curves.easeOutBack),
+                          slideFrom: -1,
+                          // Mutat aici din Prieteni (2026-09-18): e un duel,
+                          // are ce căuta lângă celelalte moduri PvP, nu la
+                          // gestiunea listei de prieteni.
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _ActionTile(
+                                icon: Icons.sports_kabaddi_rounded,
+                                title: tr('PROVOACĂ UN PRIETEN', 'CHALLENGE A FRIEND'),
+                                subtitle: tr('Aceleași întrebări, comparați scorul', 'Same questions, compare scores'),
+                                color: AppColors.teal,
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => const AsyncChallengeScreen()),
+                                ),
+                              ),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _openChallengeCodeDialog,
+                                  child: Text(tr('Ai primit un cod?', 'Got a code?'),
+                                      style: const TextStyle(color: AppColors.teal, fontWeight: FontWeight.w700)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         if (_busy) ...[

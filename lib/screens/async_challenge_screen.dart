@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../core/admin_reveal.dart';
 import '../core/analytics.dart';
 import '../core/async_challenge.dart';
+import '../core/game_pause.dart';
 import '../core/lang.dart';
 import '../core/progression.dart' show multiplayerXpForScore;
 import '../core/quest_bump.dart';
@@ -89,6 +90,11 @@ class _AsyncChallengeScreenState extends State<AsyncChallengeScreen> {
   }
 
   Future<void> _boot() async {
+    // Un jucător complet nou (fără cont, fără să fi deschis vreodată
+    // Multiplayer/Boți) n-are niciun uid — vezi bug-ul găsit 2026-09-18:
+    // adversarul juca toate întrebările, dar scorul nu se salva NICIODATĂ,
+    // silențios, fiindcă `submitOpponentScore` refuză un uid gol.
+    await MultiplayerService.instance.ensureInitialized();
     final pool = await loadAllQuestions();
     if (!mounted) return;
 
@@ -166,6 +172,7 @@ class _AsyncChallengeScreenState extends State<AsyncChallengeScreen> {
         t.cancel();
         return;
       }
+      if (GamePause.instance.isPaused) return;
       setState(() => _secondsLeft--);
       if (_secondsLeft <= 0) {
         t.cancel();

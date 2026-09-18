@@ -61,6 +61,16 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="guessit" android:host="addfriend"/>
             </intent-filter>
+            <!-- Link de "Provoacă un prieten": guessit://challenge/<cod>. Fără
+                 asta, Android nu are deloc cui să dea tap-ul pe link — codul
+                 scris de mână era singura cale care mergea (bug găsit
+                 2026-09-18). Ținta: main.dart, _handleDeepLink. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="guessit" android:host="challenge"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

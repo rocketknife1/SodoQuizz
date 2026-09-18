@@ -193,7 +193,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     LiveSync.instance.friendUids.removeListener(_onFriendListChanged);
     ModerationService.instance.blockedIds.removeListener(_onBlockedChanged);
     _codeController.dispose();
-    _challengeCodeController.dispose();
     super.dispose();
   }
 
@@ -345,8 +344,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
                         _buildMyCodeCard(data.myCode),
                         const SizedBox(height: 20),
                         _buildAddField(),
-                        const SizedBox(height: 12),
-                        _buildChallengeCodeField(),
                         const SizedBox(height: 24),
                         if (data.requests.isNotEmpty) ...[
                           Text('Cereri primite (${data.requests.length})',
@@ -451,76 +448,6 @@ class _FriendsScreenState extends State<FriendsScreen> {
     );
   }
 
-  final _challengeCodeController = TextEditingController();
-
-  /// „Provoacă un prieten" — două acțiuni într-un rând: butonul mare pornește
-  /// o provocare NOUĂ (joci → primești un cod de trimis), câmpul primește un
-  /// cod de la altcineva (deep link-ul `guessit://challenge/<id>` merge doar
-  /// pe Android; codul merge peste tot).
-  Widget _buildChallengeCodeField() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        ElevatedButton.icon(
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const AsyncChallengeScreen()),
-          ),
-          icon: const Icon(Icons.sports_kabaddi_rounded, size: 18),
-          label: Text(tr('PROVOACĂ UN PRIETEN', 'CHALLENGE A FRIEND')),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.orange,
-            foregroundColor: Colors.black,
-            padding: const EdgeInsets.symmetric(vertical: 13),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _challengeCodeController,
-                textCapitalization: TextCapitalization.characters,
-                maxLength: 6,
-                style: const TextStyle(color: Colors.white, letterSpacing: 2),
-                decoration: InputDecoration(
-                  counterText: '',
-                  hintText: tr('Ai primit un cod?', 'Got a code?'),
-                  hintStyle: const TextStyle(color: Colors.white38),
-                  filled: true,
-                  fillColor: AppColors.card,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                ),
-                onSubmitted: (_) => _openChallengeCode(),
-              ),
-            ),
-            const SizedBox(width: 10),
-            OutlinedButton(
-              onPressed: _openChallengeCode,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.orange,
-                side: const BorderSide(color: AppColors.orange),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-              ),
-              child: Text(tr('Intră', 'Enter')),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  void _openChallengeCode() {
-    final code = _challengeCodeController.text.trim().toUpperCase();
-    if (code.isEmpty) return;
-    _challengeCodeController.clear();
-    FocusScope.of(context).unfocus();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => AsyncChallengeScreen(challengeId: code)),
-    );
-  }
 
   Widget _buildAddField() {
     return Row(
