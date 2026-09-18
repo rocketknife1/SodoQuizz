@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../core/admin_reveal.dart';
 import '../core/ads_service.dart';
 import '../core/game_helpers.dart';
+import '../core/game_pause.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/lang.dart';
@@ -231,6 +232,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         timer.cancel();
         return;
       }
+      if (GamePause.instance.isPaused) return;
       final next = secondsLeft - 1;
       if (next <= 0) {
         timer.cancel();

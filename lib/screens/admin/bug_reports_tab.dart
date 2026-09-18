@@ -121,6 +121,7 @@ class _BugReportCardState extends State<_BugReportCard> {
     final firimituri =
         (d['firimituri'] as List?)?.cast<String>() ?? const <String>[];
     final when = (d['trimisLa'] as Timestamp?)?.toDate();
+    final notaOwner = d['notaOwner'] == true;
     final manual = eroare.isEmpty;
 
     return Container(
@@ -138,14 +139,14 @@ class _BugReportCardState extends State<_BugReportCard> {
           Row(
             children: [
               Icon(
-                manual ? Icons.flag_rounded : Icons.bug_report_rounded,
-                color: rezolvat ? Colors.white38 : AppColors.play,
+                notaOwner ? Icons.edit_note_rounded : (manual ? Icons.flag_rounded : Icons.bug_report_rounded),
+                color: rezolvat ? Colors.white38 : (notaOwner ? AppColors.teal : AppColors.play),
                 size: 18,
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  manual ? 'Raportat manual' : 'Eroare în aplicație',
+                  notaOwner ? 'Notă proprie' : (manual ? 'Raportat manual' : 'Eroare în aplicație'),
                   style: TextStyle(
                     color: rezolvat ? Colors.white54 : Colors.white,
                     fontWeight: FontWeight.w800,
@@ -173,8 +174,8 @@ class _BugReportCardState extends State<_BugReportCard> {
               eroare,
               maxLines: _expanded ? null : 2,
               overflow: _expanded ? null : TextOverflow.ellipsis,
-              style: const TextStyle(
-                  color: AppColors.danger, fontSize: 12, height: 1.4),
+              style: TextStyle(
+                  color: notaOwner ? Colors.white : AppColors.danger, fontSize: 12, height: 1.4),
             ),
           ],
           if (_expanded) ...[

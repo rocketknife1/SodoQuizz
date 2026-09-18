@@ -65,6 +65,16 @@ class Breadcrumbs {
   static List<String> snapshot() =>
       [for (final c in _ring) '[${c.at}] ${c.what}'];
 
+  /// Ultimul ecran vizitat, pentru orice are nevoie să știe „unde eram" fără
+  /// un observator de rute separat — vezi OwnerNoteOverlay. `?` dacă niciun
+  /// ecran n-a apucat să se anunțe încă.
+  static String currentScreen() {
+    for (final c in _ring.toList().reversed) {
+      if (c.what.startsWith('ecran: ')) return c.what.substring('ecran: '.length);
+    }
+    return '?';
+  }
+
   static String _format(Duration d) {
     final m = d.inMinutes;
     final s = d.inSeconds % 60;

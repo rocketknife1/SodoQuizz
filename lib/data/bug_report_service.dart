@@ -106,6 +106,18 @@ class BugReportService {
     }
   }
 
+  /// Notă scrisă chiar de owner, pe loc, cât testează jocul — nu vine dintr-o
+  /// eroare, ci dintr-un tap pe iconița din colț (vezi OwnerNoteOverlay).
+  /// Reutilizează exact schema rapoartelor automate (ecran, firimituri,
+  /// versiune), doar cu `eroare` = textul scris de owner și un marcaj
+  /// separat, ca tab-ul de Admin să le arate diferit de erorile reale.
+  Future<bool> sendOwnerNote(String text, {required String screen}) async {
+    final report = await build(screen: screen);
+    report['eroare'] = text;
+    report['notaOwner'] = true;
+    return send(report);
+  }
+
   /// Se apelează la pornire. Golește coada, câte unul; ce nu reușește rămâne
   /// pentru data viitoare.
   Future<void> flushQueue() async {

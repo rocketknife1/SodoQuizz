@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
+import '../core/game_pause.dart';
 import '../core/lang.dart';
 import '../core/theme.dart';
 import '../data/higher_lower_data.dart';
@@ -99,6 +100,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
         timer.cancel();
         return;
       }
+      if (GamePause.instance.isPaused) return;
       final next = _secondsLeft - 1;
       if (next <= 0) {
         timer.cancel();

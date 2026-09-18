@@ -78,4 +78,17 @@ void main() {
     Breadcrumbs.drop('mai tarziu');
     expect(Breadcrumbs.snapshot().last, '[1:15] mai tarziu');
   });
+
+  group('currentScreen — pentru OwnerNoteOverlay', () {
+    test('fara nicio firimitura de ecran, intoarce necunoscut', () {
+      expect(Breadcrumbs.currentScreen(), '?');
+    });
+
+    test('ia ULTIMUL ecran anuntat, nu primul', () {
+      Breadcrumbs.drop('ecran: Acasa');
+      Breadcrumbs.drop('raspuns corect');
+      Breadcrumbs.drop('ecran: Joc');
+      expect(Breadcrumbs.currentScreen(), 'Joc');
+    });
+  });
 }

@@ -12,6 +12,7 @@ import 'core/ads_service.dart';
 import 'core/cosmetics.dart';
 import 'core/analytics.dart';
 import 'widgets/remote_gate.dart';
+import 'widgets/owner_note_button.dart';
 import 'core/remote_flags.dart';
 import 'data/bug_report_service.dart';
 import 'widgets/error_boundary.dart';
@@ -666,9 +667,12 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           // Banner-ul de reconectare sta DEASUPRA oricarui ecran (peste
           // navigator), ca sa apara si daca jucatorul a ajuns inapoi in meniu.
           builder: (context, child) => RemoteGate(
-            child: _ReconnectHost(
+            child: OwnerNoteOverlay(
               navigatorKey: _navigatorKey,
-              child: child ?? const SizedBox.shrink(),
+              child: _ReconnectHost(
+                navigatorKey: _navigatorKey,
+                child: child ?? const SizedBox.shrink(),
+              ),
             ),
           ),
         );
