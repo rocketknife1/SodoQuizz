@@ -30,6 +30,9 @@ class _PlayersTabState extends State<_PlayersTab> with _AdminRefreshable {
     return FutureBuilder<List<PlayerProfile>>(
       future: _future,
       builder: (context, snap) {
+        if (snap.hasError) {
+          return _InfoCard(icon: Icons.error_outline_rounded, text: firestoreErrorText(snap.error));
+        }
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }

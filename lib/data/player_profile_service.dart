@@ -728,8 +728,11 @@ class PlayerProfileService {
       final snap = await _col.orderBy('leaguePoints', descending: true).limit(limit).get();
       return snap.docs.map(PlayerProfile.fromDoc).toList();
     } catch (e) {
+      // NU mai întoarce listă goală: o eroare de server arăta identic cu „niciun
+      // jucător" (bug găsit 2026-09-19, clasament gol pe telefon). Apelanții
+      // arată motivul real — vezi firestoreErrorText.
       debugPrint('PlayerProfileService.fetchAllPlayers a esuat: $e');
-      return [];
+      rethrow;
     }
   }
 

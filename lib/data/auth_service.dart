@@ -319,6 +319,27 @@ class AuthService {
     }
   }
 
+  /// Sesiunea din telefon poate supraviețui contului de pe server (reset
+  /// total, ștergere din Admin). Simptomul e înșelător: nicio eroare, doar
+  /// că orice citire/scriere e refuzată — clasament gol, profil care nu mai
+  /// apare (bug găsit 2026-09-19). Aici o detectăm la pornire și pornim de la
+  /// o identitate anonimă nouă, ca la [signOut]. Progresul local rămâne.
+  Future<void> recoverIfAccountGone() async {
+    if (_signInInProgress) return;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      await user.reload();
+    } on FirebaseAuthException catch (e) {
+      const gone = {'user-not-found', 'user-token-expired', 'user-disabled', 'invalid-user-token'};
+      if (!gone.contains(e.code)) return; // fără net etc. — nu e vina contului
+      debugPrint('AuthService: contul nu mai exista pe server (${e.code}), reiau anonim');
+      await signOut();
+    } catch (_) {
+      // Firebase neconfigurat pe platforma asta — nimic de recuperat
+    }
+  }
+
   Future<void> signOut() async {
     try {
       await _googleSignIn.signOut();

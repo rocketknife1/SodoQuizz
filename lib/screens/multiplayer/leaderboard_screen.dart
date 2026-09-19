@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/cosmetics.dart';
 import '../../core/elo.dart';
+import '../../core/firestore_errors.dart';
 import '../../core/gamemodes.dart';
 import '../../core/leagues.dart';
 import '../../core/lang.dart';
@@ -510,7 +511,11 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> with _Refr
 
   Future<void> _refresh() async {
     setState(() => _future = PlayerProfileService.instance.fetchAllPlayers());
-    await _future;
+    try {
+      await _future;
+    } catch (_) {
+      // eroarea o arată FutureBuilder-ul de mai jos
+    }
   }
 
   @override
@@ -518,6 +523,25 @@ class _GlobalLeaderboardTabState extends State<_GlobalLeaderboardTab> with _Refr
     return FutureBuilder<List<PlayerProfile>>(
       future: _future,
       builder: (context, snap) {
+        if (snap.hasError) {
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.orange,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              children: [
+                const SizedBox(height: 120),
+                const Icon(Icons.error_outline_rounded, color: Colors.white38, size: 36),
+                const SizedBox(height: 12),
+                Text(
+                  tr('Nu am putut încărca clasamentul. ', "Couldn't load the leaderboard. ") + firestoreErrorText(snap.error),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white54, fontSize: 13, height: 1.4),
+                ),
+              ],
+            ),
+          );
+        }
         if (!snap.hasData) {
           return const Center(child: CircularProgressIndicator(color: AppColors.orange));
         }

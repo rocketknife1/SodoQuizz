@@ -117,6 +117,7 @@ void main() async {
     // 100% solo n-ar avea niciodata un uid si n-ar putea aparea in
     // leaderboard-ul global (vezi PlayerProfileService).
     await MultiplayerService.instance.ensureInitialized();
+    await AuthService.instance.recoverIfAccountGone();
     unawaited(PlayerProfileService.instance.ensureProfileHeartbeat());
     // Sfârşitul unui sezon — fotografiat ÎNAINTE ca primul meci din luna nouă
     // să reseteze punctele (vezi data/season_reward_service.dart).
