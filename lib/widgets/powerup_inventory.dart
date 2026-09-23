@@ -6,7 +6,7 @@ import '../core/theme.dart';
 /// Bara de puteri de jos — indiciul text („poți folosi puterile") deasupra
 /// inventarului ([PowerUpInventory]).
 ///
-/// Cerință directă a userului (2026-09-15): fără indiciu, puterile treceau
+/// Decizie de design (2026-09-15): fără indiciu, puterile treceau
 /// neobservate; fără mutarea la fund de ecran, chipul vechi din bara de sus
 /// (`PowerUpChip`, șters odată cu mutarea) acoperea textul
 /// întrebării pe telefoane mici. Apare doar cât ai ceva în inventar; textul
@@ -138,7 +138,7 @@ class PowerUpInventory extends StatelessWidget {
           powerUp: powerUps[i],
           dimmed: usedThisRound,
           // Blocată ACUM (fază greșită), dar nu „folosită" — se marchează
-          // diferit (X, nu doar estompare), cerință directă a userului:
+          // diferit (X, nu doar estompare), decizie de design:
           // „vreau ca puterile sa se marcheze cu X atunci cand e prea
           // tarziu... si astepti alta runda cand pot fi date".
           blocked: !usedThisRound && usableNow != null && !usableNow!(powerUps[i]),

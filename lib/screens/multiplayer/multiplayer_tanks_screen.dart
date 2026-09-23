@@ -89,8 +89,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// ecran) fiindcă ACELAȘI interval e și durata camerei de pe proiectil,
   /// unde chiar ai ce vedea — vezi widgets/tank_pov.dart. Toate cifrele de
   /// aici s-au dublat aproape peste tot (5→9s reveal, vezi
-  /// core/tanks.dart.tanksRevealSeconds) după ce userul a văzut prima
-  /// versiune live pe două ecrane și n-a apucat să citească nimic din ce
+  /// core/tanks.dart.tanksRevealSeconds) după ce am testat prima
+  /// versiune live pe două ecrane și nu apucam să citească nimic din ce
   /// scria pe cadru — nu era o părere, era cronometrată prea strâns.
   static const double _firstShotAt = 0.6;
   static const double _shotStagger = 0.22;

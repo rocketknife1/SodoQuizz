@@ -86,7 +86,7 @@ void notifyPowerUpNeedsMorePlayers(BuildContext context) => _snack(
 
 /// Confirmă sabotajul (Obby) — spune CUI i s-a stricat placa. Fără mesajul
 /// ăsta puterea dispărea din inventar și jucătorul n-avea idee ce s-a
-/// întâmplat („am sabotaj, nu știu ce face" — reclamație directă a userului).
+/// întâmplat („am sabotaj, nu știu ce face" — problemă găsită la testare).
 void notifySabotageApplied(BuildContext context, String victimName) {
   if (!context.mounted) return;
   InAppNotification.showInfo(

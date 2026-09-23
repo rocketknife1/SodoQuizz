@@ -27,8 +27,7 @@ class CollectAllEntry {
 
 /// Rezumatul butonului "Colectează tot": SPRE DEOSEBIRE de [collectRewards]
 /// (o animație separată, secvențială, per resursă — la 5-6 quest-uri
-/// colectate deodată "bubuie telefonul" cu zboruri succesive, la cererea
-/// explicită a userului), aici e O SINGURĂ explozie de nori din care apar
+/// colectate deodată "bubuie telefonul" cu zboruri succesive, prin decizie de design), aici e O SINGURĂ explozie de nori din care apar
 /// SIMULTAN toate iconițele resurselor câștigate, fiecare cu totalul
 /// dedesubt. Balanțele (storage) trebuie scrise ÎNAINTE de a arăta acest
 /// dialog — vezi apelantul (QuestsScreen._collectAll). Când jucătorul apasă

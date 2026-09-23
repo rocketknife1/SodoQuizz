@@ -5,7 +5,7 @@ tools/images/fetch_question_images.py).
 
 Spre deosebire de restul categoriilor, aici numarul de intrebari NU e fixat
 la 100 - fiecare categorie are atatea intrari unice, de calitate, cate au
-existat disponibile (intre ~50 si ~70), la cererea explicita a userului.
+existat disponibile (intre ~50 si ~70), prin decizie de design.
 Daca un item nu are imagine gasita de fetch_question_images.py, jocul arata
 un placeholder text "Va urma" (vezi BlurImage._fallback) in loc sa blocheze
 categoria.

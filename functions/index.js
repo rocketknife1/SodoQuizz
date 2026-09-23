@@ -358,7 +358,7 @@ exports.onChallengeAnswered = onDocumentUpdated(
 );
 
 // ─── Paza balantei: DETECTEAZA, nu blocheaza ────────────────────────────────
-// Problema reala (vezi TODO.md): `users/{uid}` e salvarea din cloud si si-o
+// Problema reala: `users/{uid}` e salvarea din cloud si si-o
 // scrie proprietarul integral, deci un client modificat isi poate pune orice
 // suma. Nu se poate strange din firestore.rules, si motivul e in cod, nu
 // teoretic:

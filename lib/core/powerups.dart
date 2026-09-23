@@ -1,5 +1,5 @@
 /// **Power-up-uri și evenimente de rundă**, comune tuturor modurilor
-/// multiplayer — cerința userului: „zeci de evente și power ups și nebunii
+/// multiplayer — decizia de design: „zeci de evente și power ups și nebunii
 /// de genul să te țină captivat și să se răstoarne meciurile într-o manieră
 /// amuzantă/frustrantă".
 ///
@@ -268,7 +268,7 @@ const Map<PowerUp, (String, String)> powerUpDescriptions = {
 /// Câte runde ține un power-up cu durată. Cele care nu apar aici se consumă
 /// instantaneu, în runda în care sunt folosite.
 const Map<PowerUp, int> powerUpDurationRounds = {
-  PowerUp.allyShield: 2, // cerință explicită a userului
+  PowerUp.allyShield: 2, // decizie de design
 };
 
 /// Câți jucători ÎN VIAȚĂ trebuie să fie la masă ca puterea să aibă sens.
@@ -314,7 +314,7 @@ const int repairKitLives = 1;
 
 /// Șansa de bază ca o rundă să aibă un eveniment. Nu prea des: dacă fiecare
 /// rundă are o regulă nouă, „evenimentul" devine regula, iar surpriza
-/// dispare — exact greșeala pe care userul o descrie ca „devine previzibil
+/// dispare — exact problema observată la testare: jocul „devine previzibil
 /// după 3-4 meciuri".
 const double roundEventChance = 0.28;
 

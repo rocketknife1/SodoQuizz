@@ -46,7 +46,7 @@ import 'multiplayer_round.dart';
 import 'powerups.dart';
 
 /// Câți jucători încap într-o cameră de Scaunul Electric. Urcat de la 5 la
-/// 10 la cererea explicită a userului (toate modurile trebuie să accepte
+/// 10 prin decizie de design (toate modurile trebuie să accepte
 /// 10) — lista de victime posibile și cea de spectatori de pe scaun sunt
 /// deja liste derulabile (vezi MultiplayerElectricChairScreen), deci
 /// generalizează fără nicio schimbare de layout.

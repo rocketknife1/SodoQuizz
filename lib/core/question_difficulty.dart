@@ -3,7 +3,7 @@ import 'lang.dart';
 /// Dificultatea unei întrebări, ESTIMATĂ DIN DATE — nu setată manual.
 ///
 /// De ce nu manual: 1494 de întrebări, iar „mi se pare grea" e subiectiv și
-/// des greșit. GPT + planul de retenție spun explicit: se derivă din
+/// des greșit. Așa că se derivă din
 /// acuratețea reală a jucătorilor (95% corect → ușoară … 15% → extremă),
 /// ajustată cu timpul mediu de răspuns, apoi corectate manual cazurile
 /// bizare din Admin.
@@ -19,7 +19,7 @@ enum QuestionDifficulty { necalibrat, usoara, medie, grea, extrema }
 /// Sub atâtea răspunsuri strânse, nu se dă nicio etichetă.
 const int difficultyMinSample = 30;
 
-/// Pragurile de acuratețe (procent corect) între trepte. Din nota GPT:
+/// Pragurile de acuratețe (procent corect) între trepte:
 /// ~95% → ușoară, ~70% → medie, ~40% → grea, ~15% → extremă. Pragurile
 /// efective sunt la mijlocul intervalelor.
 const double _accEasy = 0.82; // ≥ → ușoară

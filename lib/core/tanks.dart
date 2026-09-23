@@ -59,8 +59,7 @@ import 'dart:math';
 import 'multiplayer_round.dart';
 import 'powerups.dart';
 
-/// Câți jucători încap într-o cameră de Quizz Tanks. Urcat de la 4 la 10 la
-/// cererea explicită a userului (toate modurile trebuie să accepte 10) —
+/// Câți jucători încap într-o cameră de Quizz Tanks. Urcat de la 4 la 10 prin decizie de design (toate modurile trebuie să accepte 10) —
 /// arena nu mai e o grilă fixă 2×2, ci 2 coloane × câte rânduri sunt
 /// necesare pentru [tanksPlayerCount] (vezi
 /// MultiplayerTanksScreen._buildArenaFrame). Camera se poate porni și cu mai
@@ -75,8 +74,7 @@ const int tanksMaxHp = 100;
 /// rundă sincronizată, vezi core/multiplayer_round.dart.
 const int tanksRoundSeconds = sharedRoundAnswerSeconds;
 
-/// Cât durează alegerea țintei. Urcat de la 6 la 10 secunde la cererea
-/// explicită a userului: cardurile de țintă arată acum șansă de lovire,
+/// Cât durează alegerea țintei. Urcat de la 6 la 10 secunde prin decizie de design: cardurile de țintă arată acum șansă de lovire,
 /// daune făcute și etichete tactice (ÎN GARDĂ, CEL MAI PERICULOS, LOVITURĂ
 /// MORTALĂ) — la 6 secunde abia apucai să le citești, darămite să cântărești
 /// între ele. Cine nu apucă să aleagă trage automat — vezi
@@ -91,8 +89,8 @@ const int tanksTargetSeconds = 10;
 /// Urcat de la 4 la 5, apoi la 9 secunde când s-a adăugat camera de pe
 /// proiectil (vezi widgets/tank_pov.dart): pentru cel care trage, secundele
 /// astea nu mai sunt o pauză de privit, ci propria lovitură văzută de pe
-/// obuz. A doua urcare (5→9) a venit după ce userul a văzut prima versiune
-/// rulând live pe două ecrane și n-a apucat să citească nici traiectoria,
+/// obuz. A doua urcare (5→9) a venit după ce am testat prima versiune
+/// live pe două ecrane și n-a apucat să citească nici traiectoria,
 /// nici textul de deznodământ ("-24"/"EVITAT!") — totul se termina înainte
 /// să se fixeze ochiul pe el.
 ///
@@ -133,7 +131,7 @@ int tanksRevealSecondsFor({required bool anyShots}) =>
 const int tanksMaxRounds = 32;
 
 /// Daunele unei lovituri reușite, în HP (= procente din [tanksMaxHp]).
-/// COBORÂTE de la 18-30 la cererea explicită a userului („tancurile dau
+/// COBORÂTE de la 18-30 prin decizie de design („tancurile dau
 /// mult mai puțin damage, să se continue tura mai mult timp") — vezi
 /// comentariul din capul fișierului pentru socoteala completă. La ~10 HP
 /// media pe lovitură, un tanc rezistă ~10 lovituri reușite în loc de ~4.
@@ -447,7 +445,7 @@ TanksRoundOutcome resolveTanksVolleys({
   final damageMultiplier = event == RoundEvent.heavyShells ? tanksHeavyShellsMultiplier : 1.0;
 
   // Un scut (propriu sau de aliat) blochează TOATE loviturile primite în
-  // runda asta, nu doar prima — decizie explicită a userului (2026-09-02):
+  // runda asta, nu doar prima — decizie de design (2026-09-02):
   // „mereu protecția te va proteja și de double shot sau orice lovitură
   // asupra ta în runda aia". Include ambele proiectile ale unei lovituri
   // duble țintite pe același tanc.

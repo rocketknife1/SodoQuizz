@@ -224,8 +224,7 @@ class _DebugTabState extends State<_DebugTab> {
           const SizedBox(height: 10),
           _buildRevealAnswersCard(),
           const SizedBox(height: 16),
-          // Tutorialul si raportul manual stau AICI, nu in Setari — decizie
-          // explicita a userului (2026-09-05): nu vrea unelte tehnice la
+          // Tutorialul si raportul manual stau AICI, nu in Setari — decizie de design (2026-09-05): nu vrea unelte tehnice la
           // vedere pentru jucatori.
           //
           // ATENTIE la ce NU s-a mutat: ecranul de eroare al aplicatiei
@@ -317,7 +316,7 @@ class _DebugTabState extends State<_DebugTab> {
   }
 
   /// Raportul manual: urma tehnică a sesiunii, fără nimic de completat.
-  /// Mutat aici din Setări la cererea userului. Util ca să verifici lanțul
+  /// Mutat aici din Setări, e o unealtă de admin. Util ca să verifici lanțul
   /// fără să aștepți un crash: apeși, apoi te uiți în tabul „Bug-uri".
   Future<void> _sendBugReport(BuildContext context) async {
     Breadcrumbs.drop('a cerut raport din Admin');

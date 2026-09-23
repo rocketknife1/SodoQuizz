@@ -385,8 +385,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                     ),
                   ),
                 ),
-                // Jos, nu sus (unde concura cu bara de timp) — cerință
-                // directă a userului.
+                // Jos, nu sus (unde concura cu bara de timp) — decizie de design.
                 if (_myPowerUp != PowerUp.none)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 4),

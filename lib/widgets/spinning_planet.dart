@@ -189,7 +189,7 @@ class _SpinningPlanetState extends State<SpinningPlanet> with TickerProviderStat
                 ),
                 // Insigna de stare, LIPITĂ DE SFERĂ, sub holograme — ca la
                 // prima implementare. A fost o vreme desenată ultima, peste
-                // tot, ca să rămână mereu lizibilă; userul a cerut explicit
+                // tot, ca să rămână mereu lizibilă; s-a decis explicit
                 // (2026-09-03) întoarcerea: hologramele trebuie să zboare pe
                 // deasupra, chiar dacă din când în când una trece peste text.
                 PlanetStatusBadge(key: _badgeKey, planetSize: widget.size),

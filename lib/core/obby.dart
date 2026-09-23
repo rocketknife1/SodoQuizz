@@ -33,8 +33,7 @@ import 'stable_hash.dart';
 /// deci numărul a fost ales ca meciul să rămână sub ~2 minute și jumătate.
 const int obbyObstacleCount = 7;
 
-/// Câți jucători încap într-o cameră de Obby. Urcat de la 6 la 10 la
-/// cererea explicită a userului (toate modurile trebuie să accepte 10) —
+/// Câți jucători încap într-o cameră de Obby. Urcat de la 6 la 10 prin decizie de design (toate modurile trebuie să accepte 10) —
 /// tabla 2D are câte o coloană pe jucător, calculată din numărul lor (vezi
 /// widgets/obby_board.dart), nu dintr-un plafon fix.
 const int obbyMaxPlayers = 10;

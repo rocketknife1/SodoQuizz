@@ -35,7 +35,7 @@ void main() {
   });
 
   testWidgets('OPT puteri incap fara overflow (deruleaza orizontal)', (tester) async {
-    // "cate vrei" — userul a cerut explicit sa se poata aduna oricate.
+    // "cate vrei" — s-a decis explicit sa se poata aduna oricate.
     await pump(tester, const [
       PowerUp.megaRocket, PowerUp.doubleShot, PowerUp.shield, PowerUp.allyShield,
       PowerUp.reflect, PowerUp.fiftyFifty, PowerUp.peek, PowerUp.repairKit,

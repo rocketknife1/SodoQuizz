@@ -7,8 +7,7 @@ import 'stable_hash.dart';
 /// oameni online în același moment: A joacă 10 întrebări, trimite un cod,
 /// B joacă EXACT aceleași 10 întrebări când poate, se compară scorurile.
 ///
-/// Singura formă de PvP care merge la 0 jucători online simultan (vezi
-/// docs/superpowers/specs/2026-09-07-async-challenge.md).
+/// Singura formă de PvP care merge la 0 jucători online simultan.
 ///
 /// Determinismul (aceleași întrebări pe web și pe telefon) vine din
 /// [stableHash] + [stableShuffle], la fel ca Provocarea Zilei — `Random(seed)`

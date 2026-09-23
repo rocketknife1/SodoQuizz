@@ -9,7 +9,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 // dar nu produc venit și, esențial, nu pot fi raportate niciodată drept
 // trafic invalid, indiferent cine și de câte ori se uită la ele.
 //
-// De ce nu e implicit ID-ul real: APK-ul public (vezi LINKS.md) ajunge la
+// De ce nu e implicit ID-ul real: APK-ul public ajunge la
 // prieteni care testează. Vizionări repetate de pe câteva telefoane, fără
 // trafic real în spate, e exact tiparul pentru care Google suspendă conturi
 // AdMob. Lista [_testDeviceIds] protejează DOAR telefonul de dezvoltare, nu

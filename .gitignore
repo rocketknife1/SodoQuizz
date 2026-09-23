@@ -88,3 +88,15 @@ test/firestore.rules
 # Unelte specifice proiectului (Flutter 3.27.4, JDK 17) + copii de siguranta —
 # tinute AICI, nu in C:\ sau D:\proiecte, la cererea userului. Nu intra in git.
 /.toolchain/
+
+# Notițe de lucru și unelte locale — rămân pe PC, nu fac parte din proiect.
+CLAUDE.md
+.claude/
+TODO.md
+docs/superpowers/
+docs/raport-*.md
+comenzi/
+poze intrebari/
+play_store/ghid_consola.md
+.vscode/
+docs/economie_v3.md

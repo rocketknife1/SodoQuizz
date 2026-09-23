@@ -12,8 +12,8 @@ Ruleaza (din radacina proiectului):
     python tools/view_reports.py            # toate, si nerezolvate si rezolvate
     python tools/view_reports.py --noi      # doar cele cu handled/rezolvat = false
 
-Scrie si un fisier in `rapoarte/` (gitignored) ca sa ramana pentru cand ii
-ceri lui Claude sa repare ceva — el il citeste de acolo.
+Scrie si un fisier in `rapoarte/` (gitignored), ca raportul sa ramana si
+dupa ce inchizi terminalul.
 
 Cheia: `tools/service-account.json` (aceeasi ca la celelalte scripturi).
 """

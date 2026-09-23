@@ -10,9 +10,9 @@ import 'multiplayer_service.dart';
 
 // ─── „Trimite raport": raportul îl scrie SISTEMUL, nu jucătorul ───────────
 //
-// Cerință explicită a userului (2026-09-04): „sistemul va spune reportul, nu
-// userul. User nu are cum să știe ce problemă este, doar să îi pice jocul și
-// să trimită."
+// Decizie de design (2026-09-04): raportul îl scrie aplicația, nu jucătorul.
+// Jucătorul nu are cum să știe ce s-a stricat; el vede doar că jocul s-a
+// blocat și apasă un buton.
 //
 // Deci jucătorul apasă UN buton. Tot ce urmează se compune singur:
 //   ÎNAINTE — firimiturile (vezi core/breadcrumbs.dart): ce ecrane, ce

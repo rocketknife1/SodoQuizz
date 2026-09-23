@@ -1,6 +1,6 @@
 # Cum se construiește aplicația
 
-Notițe de dezvoltare. Partea publică, de postat, e în [LINKS.md](../LINKS.md).
+Notițe de dezvoltare. Prezentarea proiectului e în [README](../README.md).
 
 ## Reclame reale vs. de test
 
@@ -70,13 +70,13 @@ gh release create vX.Y.Z build/app/outputs/flutter-apk/app-release.apk \
    --title "..." --notes "..."
 ```
 
-Linkurile din LINKS.md folosesc `/releases/latest/download/<fisier>`, deci
+Linkurile de descărcare folosesc `/releases/latest/download/<fisier>`, deci
 **nu trebuie actualizate la fiecare versiune** — cât timp numele fișierelor
 rămân aceleași, ele arată automat spre ultima versiune.
 
 UN SINGUR fișier în release: `app-release.apk` (universal, merge pe orice
-arhitectură). Variantele `--split-per-abi` sunt mai mici, dar LINKS.md
-trimite doar spre cel universal — restul ar fi fișiere pe care nu le
+arhitectură). Variantele `--split-per-abi` sunt mai mici, dar linkul
+public trimite doar spre cel universal — restul ar fi fișiere pe care nu le
 descarcă nimeni.
 
 ## Pagina web

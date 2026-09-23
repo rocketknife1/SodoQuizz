@@ -325,7 +325,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final outOfLives = data != null && data.lives == 0;
     return SingleChildScrollView(
       // NU mări padding-ul de jos ca să „faci loc" mascotelor: meniul principal
-      // NU are voie să deruleze, niciodată (regulă explicită a userului,
+      // NU are voie să deruleze, niciodată (regulă de design,
       // 2026-09-03). O încercare cu 130 aici a făcut exact asta. Tot ce se
       // adaugă pe Home trebuie să încapă pe ecran, nu să împingă în scroll.
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),

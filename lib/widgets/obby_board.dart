@@ -39,7 +39,7 @@ class ObbyRacerData {
 /// tabla comună cu toți alergătorii.
 enum ObbyPhase { idle, choosing, waiting, revealed }
 
-/// Obby în 2D, văzut de sus, ca o tablă de șah — cerința userului
+/// Obby în 2D, văzut de sus, ca o tablă de șah — decizia de design
 /// (2026-09-15), în locul scenei 3D Flame, lentă. Fiecare jucător are coloana
 /// lui; un rând = un obstacol, sus e finalul. La alegere vezi cele trei
 /// pătrate din fața ta — diagonală stânga ↖, înainte ▲, diagonală dreapta ↗ —

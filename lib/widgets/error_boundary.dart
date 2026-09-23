@@ -11,7 +11,7 @@ import '../data/bug_report_service.dart';
 // ecran roșu). Ambele îi spun jucătorului „ceva e stricat și nu te privește".
 //
 // Aici îi spunem altceva: nu e vina lui, și poate ajuta cu o apăsare. NU i se
-// cere să descrie nimic — el n-are cum să știe ce s-a rupt (cerința userului).
+// cere să descrie nimic — el n-are cum să știe ce s-a rupt (decizia de design).
 // Raportul se compune singur, cu tot ce s-a întâmplat înainte și după.
 
 /// Înlocuiește ecranul de eroare implicit al Flutter. Se pune o singură dată,

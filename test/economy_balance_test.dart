@@ -48,7 +48,7 @@ void main() {
 
   test('nimeni nu se îneacă: o zi de quest-uri nu poate cumpăra tot magazinul', () {
     // Cheltuiala zilnică maximă posibilă (5 vieți + 3 pachete de hints) e în
-    // jur de 2.750-3.800 de monede, vezi docs/economie_v3.md secțiunea 7.1.
+    // jur de 2.750-3.800 de monede.
     // Dacă o singură zi de quest-uri ar acoperi-o singură, restul economiei
     // (gameplay, Clippy, roată) ar deveni decorativ.
     const maxDailySpend = 2756;
@@ -83,8 +83,7 @@ void main() {
   });
 
   test('hint-ul nu doare niciodată, indiferent de avere', () {
-    // ATENȚIE la o formulare din docs/economie_v3.md secțiunea 3: acolo scrie
-    // că "hint + răspuns corect e mereu profit net". E adevărat DOAR pentru
+    // ATENȚIE: „hint + răspuns corect e mereu profit net" e adevărat DOAR pentru
     // jucătorii săraci. La peste ~2.400 de monede hint-ul costă plafonul (89),
     // iar cel mai valoros răspuns din joc aduce 46 — deci pe hârtie e pierdere.
     //

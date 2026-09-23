@@ -17,7 +17,7 @@ import 'package:flutter/material.dart';
 ///
 /// [FittedBox] cu `scaleDown` micșorează formula EXACT cât trebuie ca să
 /// intre, iar `softWrap: false` o ține pe un singur rând în loc s-o rupă la
-/// mijloc — cerință explicită a userului. O formulă mică e mai bună decât una
+/// mijloc — decizie de design. O formulă mică e mai bună decât una
 /// tăiată sau frântă între „= a²" și „+ b²".
 ///
 /// Formulele scrise pe mai multe rânduri (numele unui matematician sub o

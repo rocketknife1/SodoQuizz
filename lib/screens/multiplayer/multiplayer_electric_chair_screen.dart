@@ -519,7 +519,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                         _buildPlayerStrip(players),
                         Expanded(child: _buildPhaseContent(info, players)),
                         // Jos, nu sus (unde acoperea numele/scorul jucătorilor
-                        // pe telefoane mici) — cerință directă a userului.
+                        // pe telefoane mici) — decizie de design.
                         Padding(
                           padding: const EdgeInsets.only(bottom: 4),
                           child: PowerUpBar(

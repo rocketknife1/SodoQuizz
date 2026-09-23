@@ -23,7 +23,7 @@ import 'storage_service.dart';
 /// Ce NU intră aici: mesajele primite, cererile de prietenie, invitațiile în
 /// cameră. Alea depind de acțiunea ALTUI jucător, iar un client nu poate
 /// trimite o notificare altui client — cere FCM plus ceva server-side care
-/// s-o trimită. Vezi TODO.md, „Piesa 3".
+/// s-o trimită.
 ///
 /// ## Sunetul stă pe CANAL, nu pe mesaj
 ///
@@ -194,7 +194,7 @@ class DeviceNotificationService {
         priority: Priority.high,
         sound: RawResourceAndroidNotificationSound('sodo_notify'),
         playSound: true,
-        // Cerința userului: notificarea RĂMÂNE în bară, nu dispare la tap.
+        // Decizie de design: notificarea RĂMÂNE în bară, nu dispare la tap.
         // O șterge doar el, cu degetul, sau [cancel] când lucrul e consumat.
         autoCancel: false,
         icon: '@mipmap/ic_launcher',

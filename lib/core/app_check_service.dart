@@ -24,8 +24,8 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 // orice cerere fără token App Check valid e refuzată direct de server, nu
 // doar numărată. Auth a rămas pe "Monitoring" (e încă PREVIEW acolo).
 //
-// S-a putut flipa fiindcă userul a renunțat la canalul de APK din GitHub
-// Releases (vezi LINKS.md) — acolo era capcana: APK-ul sideloaded e semnat cu
+// S-a putut flipa fiindcă am renunțat la canalul de APK din GitHub
+// Releases — acolo era capcana: APK-ul sideloaded e semnat cu
 // cheia de upload locală, pe când Play redistribuie binarul semnat cu propria
 // cheie (Play App Signing — de-asta sunt 4 amprente SHA-1 în
 // google-services.json). Play Integrity recunoaște doar ce distribuie Play,
@@ -37,7 +37,7 @@ import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 
 /// Forțează providerul de debug și într-un build `--release`, pentru
 /// verificările pe telefonul de dezvoltare (unde se testează mereu release,
-/// nu debug — vezi CLAUDE.md). Fără el, un APK construit local ar cere
+/// nu debug). Fără el, un APK construit local ar cere
 /// Play Integrity și ar primi mereu refuz, fiindcă nu e binarul distribuit
 /// de Play.
 ///

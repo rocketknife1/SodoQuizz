@@ -37,7 +37,7 @@ class MultiplayerUnavailableException implements Exception {
 /// pentru [MatchGameMode.classic] și [MatchGameMode.higherLower] — celelalte
 /// moduri au propriul plafon (vezi [maxPlayersForMode]).
 ///
-/// Coborât de la 11 la 10 la cererea explicită a userului: toate modurile
+/// Coborât de la 11 la 10 prin decizie de design: toate modurile
 /// trebuie să accepte ACELAȘI plafon de 10, ca regula să fie simplă și
 /// unică, nu un număr diferit memorat separat pentru fiecare mod. Rândul de
 /// avatare de sus rămâne lizibil fiindcă derulează orizontal, iar traficul
@@ -881,7 +881,7 @@ class MultiplayerService {
   /// ținta evidentă a unui sabotaj. Efectul se anulează dacă victima are ea
   /// însăși [PowerUp.jetpack] runda asta — vezi [resolveObbyChoices].
   /// Întoarce id-ul victimei sabotate (ca ecranul să spună CUI i-a strâns
-  /// placa — reclamație a userului: „am sabotaj, nu știu ce face") sau
+  /// placa — problemă găsită la testare: „am sabotaj, nu știu ce face") sau
   /// `null` dacă n-a avut pe cine sabota SAU runda [roundIndex] s-a închis
   /// între apăsare și scriere (verificat ÎN tranzacție — vezi
   /// [_submitRoundPowerUp] pentru aceeași cursă la celelalte puteri).
@@ -2075,7 +2075,7 @@ class MultiplayerService {
 
   // ─── Reconectare într-un meci întrerupt ─────────────────────────────────
   //
-  // Cerinta userului (2026-09-03): daca pierzi legatura in mijlocul unui meci
+  // Decizie de design (2026-09-03): daca pierzi legatura in mijlocul unui meci
   // (minimizezi, cade netul, te omoara sistemul), la revenire sa apara un
   // buton „Reconecteaza" care te baga inapoi.
   //

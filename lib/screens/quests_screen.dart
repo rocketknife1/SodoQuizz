@@ -187,7 +187,7 @@ class _QuestsScreenState extends State<QuestsScreen> {
   /// spre deosebire de [_claim] (o singură recompensă, animată în etape
   /// separate cu [collectRewards]), aici sumăm toate resursele din quest-urile
   /// eligibile, le scriem O SINGURĂ DATĂ în storage, apoi arătăm UN SINGUR
-  /// rezumat ([CollectAllOverlay]) — la cererea explicită a userului, ca să
+  /// rezumat ([CollectAllOverlay]) — prin decizie de design, ca să
   /// nu "bubuie telefonul" cu animații succesive la multe quest-uri deodată.
   Future<void> _collectAll() async {
     if (_claiming) return;

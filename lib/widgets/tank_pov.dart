@@ -35,7 +35,7 @@ import 'tank_art.dart';
 /// explozia sau, la evitare, rostogolirea pe lângă țintă și izbitura în
 /// pământ.
 ///
-/// Urcat de la 0,85 la 1,7 (dublu) la cererea explicită a userului, care a
+/// Urcat de la 0,85 la 1,7 (dublu) prin decizie de design, care a
 /// văzut prima versiune live pe două ecrane și n-a apucat să citească nici
 /// traiectoria, nici textul de deznodământ ("-24"/"EVITAT!") — totul se
 /// termina înainte să se fixeze ochiul pe el. Toate fracțiunile din

@@ -8,7 +8,7 @@
 /// nu patru constante care întâmplător coincid și pot diverge din nou la
 /// prima modificare izolată.
 ///
-/// Urcat de la 12 la 15 la cererea explicită a userului — mai ales Quizz
+/// Urcat de la 12 la 15 prin decizie de design — mai ales Quizz
 /// Tanks avea nevoie de puțin mai mult timp de citit întrebarea. [Clasic]
 /// NU folosește constanta asta: are propriul cronometru de meci întreg
 /// (`multiplayerMatchSeconds`, 60s), neschimbat.

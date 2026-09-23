@@ -21,7 +21,7 @@ const List<String> rpsChoices = [rpsRock, rpsPaper, rpsScissors];
 
 /// Timpul de alegere per rundă — aceeași sursă unică ca toate modurile
 /// sincrone (vezi core/multiplayer_round.dart). O alegere e mai rapidă de
-/// făcut decât un răspuns la o întrebare, dar userul a cerut explicit ca
+/// făcut decât un răspuns la o întrebare, dar s-a decis explicit ca
 /// toate modurile să aibă același timp per rundă.
 const int rpsRoundSeconds = sharedRoundAnswerSeconds;
 

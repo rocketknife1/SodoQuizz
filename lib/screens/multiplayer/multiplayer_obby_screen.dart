@@ -359,7 +359,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
           outcome: revealing ? _outcomeFor(info, p.id) : ObbyRoundOutcome.none,
         ),
     ];
-    // Scena de grup se vede TOT TIMPUL (cerință explicită a userului): toți
+    // Scena de grup se vede TOT TIMPUL (decizie de design): toți
     // jucătorii, unul lângă altul în galaxie, în același cadru comun.
     // Singura excepție e faza de alegere a plăcii, unde fiecare își vede
     // propriile trei plăci — acolo cadrul chiar TREBUIE să fie individual.
@@ -551,7 +551,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
                       _buildTopBar(info),
                       // Cât se răspunde: întrebarea SUS, tabla dedesubt — nu
                       // una peste alta (pionii pleacă de jos, exact sub
-                      // variante). Cerința userului.
+                      // variante). Decizie de design.
                       if (info.roundPhase == RoundPhase.answering && !iAnswered)
                         _buildAnsweringScene(info, myPlayer, players),
                       Expanded(
@@ -575,7 +575,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
                         ),
                       ),
                       // Jos, nu sus (unde acoperea textul întrebării pe
-                      // telefoane mici) — cerință directă a userului. `X`
+                      // telefoane mici) — decizie de design. `X`
                       // pe puterile care n-au fereastră ACUM în faza curentă
                       // (vezi powerUpUsableInPhase).
                       Padding(
@@ -666,7 +666,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
 
   // ─── Faza de răspuns: întrebarea PESTE scena cu toți jucătorii ──────────
   //
-  // Nu mai ascunde scena (cerință explicită a userului): întrebarea și
+  // Nu mai ascunde scena (decizie de design): întrebarea și
   // variantele plutesc peste imaginea comună, jos, ca personajele să rămână
   // vizibile deasupra lor. Personajul din colț a dispărut — n-are rost, îți
   // vezi propriul astronaut chiar în scenă, marcat cu un triunghi alb

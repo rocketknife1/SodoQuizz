@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/data/shop.dart';
 
-/// Preturile din magazin, rescrise 2026-09-01 la cererea userului: accesibile,
+/// Preturile din magazin, rescrise 2026-09-01: accesibile,
 /// tentante, cu mai putine optiuni. Testele de aici apara REGULILE dupa care
 /// au fost alese, nu cifrele in sine — daca cineva schimba un pret asa incat
 /// pachetul mare devine mai prost decat cel mic, trebuie sa pice ceva.

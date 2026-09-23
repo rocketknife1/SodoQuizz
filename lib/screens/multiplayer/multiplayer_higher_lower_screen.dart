@@ -377,7 +377,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                           ),
                         ),
                         // Jos, nu sus (unde concura cu titlul modului) —
-                        // cerință directă a userului.
+                        // decizie de design.
                         if (_myPowerUp != PowerUp.none)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 4),
