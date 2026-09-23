@@ -1080,6 +1080,126 @@ class StorageService {
     await prefs.setString(_seasonRewardHandledKey, season);
   }
 
+  // ─── Săptămâna tematică (vezi core/weekly_event.dart) ─────────────────────
+  // Toate cheile pleacă în cloud-save (exportAll), deci o reinstalare nu
+  // redeschide cursa de azi și nu dă premiul final a doua oară.
+  static const _weeklyRunKey = 'weekly_run';
+  static const _weeklyHonorsKey = 'weekly_honors';
+  static const _pendingWeeklyRewardKey = 'pending_weekly_reward';
+  static const _weeklyRewardHandledKey = 'weekly_reward_handled';
+  static String _weeklyDaysKey(String eventId) => 'weekly_days_$eventId';
+
+  /// Cursa de azi: de unde se reia, câte corecte, câte puncte, seria din
+  /// cursă și dacă e terminată. `null` dacă n-a început-o azi.
+  static Future<({int next, int correct, int points, int streak, bool done})?> weeklyRunFor(
+      String todayKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_weeklyRunKey);
+    if (raw == null) return null;
+    try {
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      if (m['date'] != todayKey) return null;
+      return (
+        next: (m['next'] as num).toInt(),
+        correct: (m['correct'] as num).toInt(),
+        points: (m['points'] as num).toInt(),
+        streak: (m['streak'] as num).toInt(),
+        done: m['done'] == true,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Scris după FIECARE răspuns: o închidere a aplicației reia cursa de unde
+  /// a rămas, nu de la zero — nu se poate „reroll-ui" un început prost.
+  static Future<void> recordWeeklyRun(String todayKey,
+      {required int next, required int correct, required int points, required int streak, bool done = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_weeklyRunKey, jsonEncode({
+      'date': todayKey, 'next': next, 'correct': correct,
+      'points': points, 'streak': streak, 'done': done,
+    }));
+  }
+
+  static Future<void> clearWeeklyRun() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_weeklyRunKey);
+  }
+
+  /// Zilele în care am terminat cursa în evenimentul [eventId].
+  static Future<Set<String>> weeklyDaysPlayed(String eventId) async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_weeklyDaysKey(eventId)) ?? const []).toSet();
+  }
+
+  static Future<void> addWeeklyDayPlayed(String eventId, String dayKey) async {
+    final prefs = await SharedPreferences.getInstance();
+    final days = (prefs.getStringList(_weeklyDaysKey(eventId)) ?? const []).toSet()..add(dayKey);
+    await prefs.setStringList(_weeklyDaysKey(eventId), days.toList()..sort());
+  }
+
+  /// Marcajele de campion / podium câștigate — deblochează titlurile.
+  static Future<Set<String>> weeklyHonors() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(_weeklyHonorsKey) ?? const []).toSet();
+  }
+
+  static Future<void> addWeeklyHonor(String honor) async {
+    final prefs = await SharedPreferences.getInstance();
+    final all = (prefs.getStringList(_weeklyHonorsKey) ?? const []).toSet()..add(honor);
+    await prefs.setStringList(_weeklyHonorsKey, all.toList()..sort());
+  }
+
+  /// Premiul final încă nerevendicat, fotografiat la prima pornire după
+  /// încheierea săptămânii (vezi WeeklyRewardService).
+  static Future<({String eventId, String theme, int rank, int participants, int days, int points})?>
+      pendingWeeklyReward() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_pendingWeeklyRewardKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      return (
+        eventId: m['eventId'] as String,
+        theme: m['theme'] as String? ?? '',
+        rank: (m['rank'] as num).toInt(),
+        participants: (m['participants'] as num).toInt(),
+        days: (m['days'] as num).toInt(),
+        points: (m['points'] as num).toInt(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> setPendingWeeklyReward(
+      {required String eventId, required String theme, required int rank,
+      required int participants, required int days, required int points}) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_pendingWeeklyRewardKey, jsonEncode({
+      'eventId': eventId, 'theme': theme, 'rank': rank,
+      'participants': participants, 'days': days, 'points': points,
+    }));
+  }
+
+  static Future<void> clearPendingWeeklyReward() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_pendingWeeklyRewardKey);
+  }
+
+  /// Ultima săptămână deja fotografiată (ca să nu se refacă la fiecare
+  /// pornire și, după revendicare, să nu reapară).
+  static Future<String> weeklyRewardHandled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_weeklyRewardHandledKey) ?? '';
+  }
+
+  static Future<void> setWeeklyRewardHandled(String eventId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_weeklyRewardHandledKey, eventId);
+  }
+
   // ─── Jucători recenţi (adversari din meciuri) ─────────────────────────────
   // Listă locală de până la [_recentOpponentsCap], cel mai recent primul,
   // deduplicată pe uid. Pentru secţiunea „Adaugă-i ca prieteni" din ecranul
@@ -2339,6 +2459,8 @@ class StorageService {
     return {
       for (final a in achievements)
         if (progressFor(a) >= a.target) a.id,
+      // campion / podium la săptămâna tematică — tot titluri
+      ...await weeklyHonors(),
     };
   }
 

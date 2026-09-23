@@ -2,6 +2,7 @@ import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:flutter/foundation.dart';
 
 import 'game_event.dart';
+import 'weekly_event.dart';
 
 // ─── Comutatoare de la distanță ───────────────────────────────────────────
 //
@@ -69,14 +70,16 @@ class RemoteFlags {
   /// Config. Nu se persistă — dispare la repornire.
   String? debugEventOverride;
 
-  /// Evenimentul curent DACĂ e configurat ŞI activ acum (între start şi
-  /// sfârşit). `null` altfel — inclusiv pentru un eveniment care încă n-a
-  /// început sau s-a terminat.
+  /// Evenimentul de acum. Nu mai e niciodată `null` (tipul rămâne nullable
+  /// ca apelanții vechi să nu se schimbe).
+  /// Un eveniment special din Remote Config (Halloween etc.) are prioritate;
+  /// altfel e mereu activă săptămâna tematică (core/weekly_event.dart).
   GameEvent? get activeEvent {
     final raw = debugEventOverride ?? _rc?.getString(_kEvent) ?? '';
+    final now = DateTime.now();
     final e = parseGameEvent(raw);
-    if (e == null || !e.isLiveAt(DateTime.now())) return null;
-    return e;
+    if (e != null && e.isLiveAt(now)) return e;
+    return weeklyEventFor(now);
   }
 
   /// Se apelează după `Firebase.initializeApp`. NU se așteaptă după ea la

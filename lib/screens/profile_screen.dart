@@ -21,6 +21,7 @@ import '../widgets/avatar.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/cosmetic_title.dart';
 import '../widgets/league_badge.dart';
+import '../widgets/weekly_event_tile.dart';
 import '../widgets/edit_name_dialog.dart';
 import 'achievements_screen.dart';
 import 'admin_screen.dart';
@@ -284,6 +285,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
                 _buildMultiplayerStats(data.multiplayerProfile),
                 const SizedBox(height: 24),
+                const WeeklyEventTile(),
+                const SizedBox(height: 12),
                 GestureDetector(
                   onTap: () async {
                     await Navigator.push(context, MaterialPageRoute(builder: (_) => const FriendsScreen()));

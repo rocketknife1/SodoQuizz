@@ -39,6 +39,9 @@ enum PlayerTitle {
   omDeCultura,
   provocatoru,
   colectionarDiplome,
+  // săptămâna tematică (core/weekly_event.dart)
+  campionulSaptamanii,
+  pePodium,
 }
 
 /// Enum → string prin `.name`, drumul invers aici. `orElse` pe default: un id
@@ -98,6 +101,10 @@ bool ownsTitle(PlayerTitle t,
     PlayerTitle.omDeCultura => achievements.contains('culture_600'),
     PlayerTitle.provocatoru => achievements.contains('challenge_wins_15'),
     PlayerTitle.colectionarDiplome => achievements.contains('category_master_3'),
+    PlayerTitle.campionulSaptamanii => achievements.contains('weekly_champion'),
+    // podiumul îl are și campionul — locul 1 e tot pe podium
+    PlayerTitle.pePodium =>
+      achievements.contains('weekly_podium') || achievements.contains('weekly_champion'),
   };
 }
 
@@ -162,6 +169,8 @@ String frameLabel(Frame f) => switch (f) {
       PlayerTitle.omDeCultura => ('Om de Cultură', 'Cultured'),
       PlayerTitle.provocatoru => ('Aruncătoru\' de Mănuși', 'The Challenger'),
       PlayerTitle.colectionarDiplome => ('Colecționar de Diplome', 'Diploma Collector'),
+      PlayerTitle.campionulSaptamanii => ('Campionul Săptămânii', 'Champion of the Week'),
+      PlayerTitle.pePodium => ('Pe Podium', 'On the Podium'),
     };
 
 /// Textul arătat pe un item BLOCAT în picker („de ce nu-l pot pune").
@@ -194,6 +203,8 @@ String titleRequirement(PlayerTitle t) => switch (t) {
       PlayerTitle.omDeCultura => '600 de întrebări de cultură',
       PlayerTitle.provocatoru => '15 provocări câștigate',
       PlayerTitle.colectionarDiplome => '3 categorii stăpânite',
+      PlayerTitle.campionulSaptamanii => 'Locul 1 la o săptămână tematică',
+      PlayerTitle.pePodium => 'Top 3 la o săptămână tematică',
     };
 
 // ─── Ce am echipat pe TELEFONUL ăsta ─────────────────────────────────────

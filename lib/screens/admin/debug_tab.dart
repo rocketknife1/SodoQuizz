@@ -282,6 +282,52 @@ class _DebugTabState extends State<_DebugTab> {
             },
           ),
           const SizedBox(height: 10),
+          // Săptămâna tematică: premiul final fără să aștepți duminica. Trei
+          // cazuri — campion, top 10, doar participare — ca dialogul fără skip
+          // să se vadă pe fiecare treaptă.
+          for (final (rank, days, label) in [
+            (1, 6, 'LOCUL 1'),
+            (7, 5, 'LOCUL 7'),
+            (30, 2, 'DOAR 2 ZILE'),
+          ]) ...[
+            _buildDevToolButton(
+              icon: Icons.emoji_events_rounded,
+              label: 'SIMULEAZĂ FINAL DE SĂPTĂMÂNĂ ($label)',
+              color: AppColors.coin,
+              onTap: () async {
+                await StorageService.setPendingWeeklyReward(
+                  eventId: 'test-saptamana',
+                  theme: weeklyThemeFor(DateTime.now()),
+                  rank: rank,
+                  participants: 40,
+                  days: days,
+                  points: 1200,
+                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Premiu de săptămână pus. Revino pe Acasă.'),
+                    backgroundColor: AppColors.teal,
+                  ));
+                }
+              },
+            ),
+            const SizedBox(height: 10),
+          ],
+          _buildDevToolButton(
+            icon: Icons.replay_rounded,
+            label: 'RESETEAZĂ CURSA DE AZI',
+            color: AppColors.orange,
+            onTap: () async {
+              await StorageService.clearWeeklyRun();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Cursa de azi se poate juca din nou (doar pe telefonul ăsta).'),
+                  backgroundColor: AppColors.teal,
+                ));
+              }
+            },
+          ),
+          const SizedBox(height: 10),
           _buildDevToolButton(
             icon: Icons.military_tech_rounded,
             label: 'SIMULEAZĂ SFÂRȘIT DE SEZON (Gold)',

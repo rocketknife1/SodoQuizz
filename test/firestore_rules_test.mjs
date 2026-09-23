@@ -158,6 +158,19 @@ await check('NU poate scrie scorul altcuiva', () => assertFails(
 await check('oricine autentificat citeste clasamentul evenimentului', () => assertSucceeds(
   getDoc(EV(env.authenticatedContext('strain3').firestore(), 'jucator1'))));
 
+console.log('\nSĂPTĂMÂNA TEMATICĂ — cursa zilei scrie in acelasi doc (merge, cu camp "days"):');
+
+const WK = (db, uid) => doc(db, 'events', 'saptamana-test', 'scores', uid);
+
+await check('un raspuns din cursa scrie punctele + ziua jucata (merge)', () => assertSucceeds(
+  setDoc(WK(eu, 'jucator1'), { name: 'Eu', points: 22, level: 3, days: { '2026-09-23': true } }, { merge: true })));
+
+await check('al doilea raspuns aceleasi zi: punctele urca, ziua ramane', () => assertSucceeds(
+  setDoc(WK(eu, 'jucator1'), { name: 'Eu', points: 40, level: 3, days: { '2026-09-23': true } }, { merge: true })));
+
+await check('NU poate sari peste plafonul de 50 nici in cursa saptamanii', () => assertFails(
+  setDoc(WK(eu, 'jucator1'), { name: 'Eu', points: 999, level: 3 }, { merge: true })));
+
 console.log('\nPROVOCARE ASYNC (challenges/{id}):');
 const CH = (db, id) => doc(db, 'challenges', id);
 const advDb = env.authenticatedContext('adversar1').firestore();

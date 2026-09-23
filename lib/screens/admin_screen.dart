@@ -13,6 +13,7 @@ import '../models/question.dart';
 import '../data/admin_chat_service.dart';
 import '../core/admin_reveal.dart';
 import '../core/remote_flags.dart';
+import '../core/weekly_event.dart' show weeklyThemeFor;
 import '../data/moderation_service.dart';
 import '../data/multiplayer_activity_service.dart';
 import '../data/player_profile_service.dart';

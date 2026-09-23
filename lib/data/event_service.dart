@@ -87,6 +87,58 @@ class EventService {
     }
   }
 
+  /// Un răspuns din cursa zilei (săptămâna tematică): adaugă [points] (≤ 50,
+  /// cât lasă regula) și bifează ziua [dayKey] ca jucată. Scris și cu 0
+  /// puncte — un răspuns greșit tot înseamnă că ai jucat azi, iar premiul de
+  /// participare ține cont de zile, nu doar de puncte. Best-effort.
+  Future<void> addRunAnswer(String eventId, {required int points, required String dayKey}) async {
+    final uid = MultiplayerService.instance.currentPlayerId;
+    if (uid.isEmpty || eventId.isEmpty) return;
+    final delta = points.clamp(0, 50);
+    try {
+      final id = await AuthService.instance.multiplayerIdentity();
+      await _scores(eventId).doc(uid).set({
+        'name': id.name,
+        'points': FieldValue.increment(delta),
+        'days': {dayKey: true},
+        'avatarStyle': id.avatarStyle,
+        'photoUrl': id.photoUrl,
+        'equippedFrame': id.equippedFrame,
+        'equippedTitle': id.equippedTitle,
+        'level': id.level,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('EventService.addRunAnswer a esuat: $e');
+    }
+  }
+
+  /// Poziția mea finală în [eventId]: locul (1 = primul), câți au participat,
+  /// punctele și zilele jucate. `null` dacă n-am participat sau nu se poate
+  /// citi acum (se reîncearcă la următoarea pornire).
+  Future<({int rank, int participants, int points, int days})?> finalStanding(String eventId) async {
+    final uid = MultiplayerService.instance.currentPlayerId;
+    if (uid.isEmpty) return null;
+    try {
+      final mine = await _scores(eventId).doc(uid).get();
+      if (!mine.exists) return null;
+      final data = mine.data() ?? const {};
+      final points = (data['points'] as num?)?.toInt() ?? 0;
+      final days = (data['days'] as Map?)?.length ?? 0;
+      final above = await _scores(eventId).where('points', isGreaterThan: points).count().get();
+      final all = await _scores(eventId).count().get();
+      return (
+        rank: (above.count ?? 0) + 1,
+        participants: all.count ?? 1,
+        points: points,
+        days: days,
+      );
+    } catch (e) {
+      debugPrint('EventService.finalStanding a esuat: $e');
+      return null;
+    }
+  }
+
   Future<EventLeaderboard> leaderboard({required String eventId, int limit = 20}) async {
     final uid = MultiplayerService.instance.currentPlayerId;
     try {

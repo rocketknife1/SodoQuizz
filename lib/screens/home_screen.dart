@@ -4,6 +4,9 @@ import '../core/cosmetics.dart';
 import '../core/lang.dart';
 import '../core/leagues.dart';
 import '../core/season_rewards.dart';
+import '../core/gamemodes.dart';
+import '../core/progression.dart';
+import '../core/weekly_event.dart';
 import '../core/quest_bump.dart';
 import '../core/reward_collector.dart';
 import '../core/theme.dart';
@@ -11,6 +14,7 @@ import '../data/admin_chat_service.dart';
 import '../data/auth_service.dart';
 import '../data/player_profile_service.dart';
 import '../data/storage_service.dart';
+import '../data/weekly_reward_service.dart';
 import '../widgets/beta_info_balloon.dart';
 import '../widgets/bottom_nav_bar.dart';
 import '../widgets/culture_quiz_panel.dart';
@@ -24,6 +28,7 @@ import '../widgets/notification_bell.dart';
 import '../widgets/solid_menu_button.dart';
 import '../widgets/spinning_planet.dart';
 import '../widgets/space_background.dart';
+import '../widgets/weekly_reward_dialog.dart';
 import 'categories_screen.dart';
 import 'multiplayer/leaderboard_screen.dart';
 import 'multiplayer/multiplayer_screen.dart';
@@ -61,7 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Breadcrumbs.drop('ecran: Acasa');
     _dataFuture = _loadData();
     _checkStreakMilestones();
-    _checkSeasonReward();
+    // unul după altul: două dialoguri fără skip deodată s-ar acoperi
+    _checkSeasonReward().whenComplete(_checkWeeklyReward);
     // Resursele trimise de admin (și resetul de cont) se aplică în fundal, la
     // pornire și la revenirea din fundal — momente în care ecranul ăsta poate
     // fi deja construit, cu cifrele de dinainte. Vezi CloudSyncService.
@@ -166,6 +172,52 @@ class _HomeScreenState extends State<HomeScreen> {
           content: Text(tr(
               '🔥 $best zile la rând! Bonus: +${best * 5} monede, +${best * 10} XP',
               '🔥 $best days in a row! Bonus: +${best * 5} coins, +${best * 10} XP'))),
+    );
+    _refresh();
+  }
+
+  /// Premiul final al săptămânii tematice — dialog fără skip, o singură dată
+  /// pe săptămână (vezi WeeklyRewardService și core/weekly_event.dart).
+  Future<void> _checkWeeklyReward() async {
+    await WeeklyRewardService.instance.snapshotIfWeekEnded();
+    final pending = await StorageService.pendingWeeklyReward();
+    if (pending == null || !mounted) return;
+    final level = levelForXp(await StorageService.getXp());
+    final reward = weeklyRewardFor(
+      rank: pending.rank,
+      participants: pending.participants,
+      daysPlayed: pending.days,
+      level: level,
+    );
+    var themeName = pending.theme;
+    for (final g in gameModes) {
+      if (g.id == pending.theme) themeName = g.title;
+    }
+    if (!mounted) return;
+    final claim = await showWeeklyRewardDialog(
+      context,
+      themeName: themeName,
+      rank: pending.rank,
+      participants: pending.participants,
+      daysPlayed: pending.days,
+      reward: reward,
+    );
+    if (claim != true || !mounted) return;
+    // titlul se scrie înaintea animației: e statut, nu trebuie „colectat"
+    if (reward.honor != null) await StorageService.addWeeklyHonor(reward.honor!);
+    await StorageService.clearPendingWeeklyReward();
+    if (!mounted) return;
+    Sfx.rewardPop();
+    await collectRewards(
+      context,
+      coins: reward.coins,
+      xp: 0,
+      lives: 0,
+      gems: reward.gems,
+      gemsBadgeKey: _gemsBadgeKey,
+      coinBadgeKey: _coinBadgeKey,
+      xpBadgeKey: _xpBadgeKey,
+      livesBadgeKey: _livesBadgeKey,
     );
     _refresh();
   }

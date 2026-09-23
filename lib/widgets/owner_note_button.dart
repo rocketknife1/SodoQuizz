@@ -105,7 +105,9 @@ class _OwnerNoteOverlayState extends State<OwnerNoteOverlay> {
                 right: 0,
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.only(right: 6, top: 4),
+                    // la stânga clopoțelului de notificări de pe Acasă, nu
+                    // peste el — colțul din dreapta e al lui
+                    padding: const EdgeInsets.only(right: 64, top: 4),
                     child: GestureDetector(
                       onTap: _open,
                       child: Container(

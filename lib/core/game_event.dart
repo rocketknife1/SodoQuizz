@@ -39,6 +39,10 @@ class GameEvent {
   /// 1.0..3.0 la parsare — un typo în consolă nu poate da monede la infinit.
   final double coinBonus;
 
+  /// Săptămâna tematică (core/weekly_event.dart): punctele de clasament vin
+  /// DOAR din cursa zilei, nu din jocul liber pe categorie.
+  final bool dailyRunOnly;
+
   const GameEvent({
     required this.id,
     required this.titleRo,
@@ -49,6 +53,7 @@ class GameEvent {
     required this.start,
     required this.end,
     required this.coinBonus,
+    this.dailyRunOnly = false,
   });
 
   bool isLiveAt(DateTime now) => !now.isBefore(start) && now.isBefore(end);

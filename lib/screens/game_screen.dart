@@ -338,8 +338,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // asta contează pentru el, monedele se înmulţesc cu `coinBonus` (1.0 =
     // fără bonus). Vezi RemoteFlags.activeEvent / core/game_event.dart.
     final event = RemoteFlags.instance.activeEvent;
-    final eventCounts =
-        correct && event != null && event.countsMode(widget.gameModeId);
+    // La săptămâna tematică punctele vin doar din cursa zilei, nu din jocul
+    // liber — altfel locul 1 l-ar lua cine are cel mai mult timp.
+    final eventCounts = correct &&
+        event != null &&
+        !event.dailyRunOnly &&
+        event.countsMode(widget.gameModeId);
     final eventBonus =
         (event != null && eventCounts) ? event.coinBonus : 1.0;
     final coinsEarned = correct
