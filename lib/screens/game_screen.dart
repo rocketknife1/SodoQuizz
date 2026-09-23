@@ -7,6 +7,7 @@ import '../core/analytics.dart';
 import '../core/review_prompt.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
+import '../core/game_pause.dart';
 import '../core/gamemodes.dart';
 import '../core/remote_flags.dart';
 import '../core/lang.dart';
@@ -88,6 +89,11 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   bool _exitRewardSettled = false;
   late final AnimationController _shakeController;
 
+  /// Trecerea automată la întrebarea următoare, după răspuns — fără ea
+  /// jucătorul apăsa „Continuă" după fiecare întrebare. Vezi [_scheduleAutoNext].
+  Timer? _autoNextTimer;
+  bool _lastAnswerCorrect = false;
+
   GameMode get mode => gameModeById(widget.gameModeId);
   Question get currentQ => questions.isNotEmpty
       ? questions[qIndex]
@@ -111,6 +117,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     StorageService.balanceRevision.removeListener(_syncBalances);
+    _autoNextTimer?.cancel();
     _shakeController.dispose();
     super.dispose();
   }
@@ -313,6 +320,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Blocat SINCRON, înainte de primul await: două apăsări rapide pe variante
     // diferite treceau amândouă de verificare (−2 vieți, sau monede + penalizare).
     answered = true;
+    // Fixate ACUM: trecerea automată poate schimba întrebarea curentă în timp
+    // ce scrierile de mai jos încă așteaptă, iar atunci `currentQ`, momentul
+    // afișării și hint-urile ar fi deja ale întrebării următoare.
+    final q = currentQ;
+    final shownAt = _questionShownAt;
+    final hintsUsedHere = hintsUsed;
     // Punctele (scor de sesiune / record / clasament) rămân neschimbate;
     // monedele și XP-ul au acum formule proprii, decuplate de puncte (vezi
     // game_helpers.dart — XP-ul egal cu punctele era motivul pentru care se
@@ -330,10 +343,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     final eventBonus =
         (event != null && eventCounts) ? event.coinBonus : 1.0;
     final coinsEarned = correct
-        ? (coinsForCorrectAnswer(currentQ.maxPoints) * multiplier * eventBonus).round()
+        ? (coinsForCorrectAnswer(q.maxPoints) * multiplier * eventBonus).round()
         : 0;
     final xpEarned = correct
-        ? (xpForCorrectAnswer(currentQ.maxPoints) * multiplier).round()
+        ? (xpForCorrectAnswer(q.maxPoints) * multiplier).round()
         : 0;
     // verificat live (nu cache-uit la intrarea în ecran) — dacă bonusul de
     // 24h expiră la mijlocul sesiunii, următorul răspuns greșit trebuie deja
@@ -361,7 +374,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         streak = 0;
         _shakeController.forward(from: 0);
       }
+      _lastAnswerCorrect = correct;
     });
+    _scheduleAutoNext(correct);
 
     if (lives <= 0 && !unlimited) {
       Future.delayed(const Duration(seconds: 1), _showGameOver);
@@ -374,7 +389,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     if (mounted) await bumpQuestMetric(context, 'answer_count', 1);
     _sessionAnswered++;
     if (correct) _sessionCorrect++;
-    final answerMs = DateTime.now().difference(_questionShownAt).inMilliseconds;
+    final answerMs = DateTime.now().difference(shownAt).inMilliseconds;
     // Măiestrie pe categorie (#4): FIECARE răspuns, corect sau nu. `streak`
     // e deja actualizat mai sus (0 la greșeală).
     await StorageService.recordCategoryAnswer(widget.gameModeId,
@@ -382,13 +397,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Telemetrie per întrebare (estimarea dificultății) — best-effort, doar
     // single-player: cel mai curat semnal, fără presiune de timp.
     QuestionStatsService.instance
-        .recordAnswer(currentQ.id, correct: correct, ms: answerMs);
+        .recordAnswer(q.id, correct: correct, ms: answerMs);
     if (correct) {
       await StorageService.recordAnswerSpeed(answerMs);
       await StorageService.addCoins(coinsEarned);
       await StorageService.addXp(xpEarned);
       if (mounted) setState(() => coinsBalance += coinsEarned);
-      await StorageService.addAnsweredId(currentQ.id);
+      await StorageService.addAnsweredId(q.id);
       await StorageService.addLeaderboardPoints(widget.gameModeId, pts);
       // Punctele contează şi pentru clasamentul evenimentului curent, dacă e
       // unul activ pe categoria asta (best-effort, nu blochează runda).
@@ -397,7 +412,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       }
       if (mounted) await bumpQuestMetric(context, 'correct_count', 1);
       if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
-      if (hintsUsed == 0 && mounted) {
+      if (hintsUsedHere == 0 && mounted) {
         await bumpQuestMetric(context, 'no_hint_correct', 1);
       }
       if (streak == 3 && mounted) {
@@ -480,7 +495,35 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     }
   }
 
+  /// După răspuns, jocul trece singur mai departe: la corect repede, la greșit
+  /// după ce ai apucat să vezi varianta bună. Cât e deschisă nota de owner
+  /// (vezi core/game_pause.dart), trecerea așteaptă.
+  void _scheduleAutoNext(bool correct) {
+    _autoNextTimer?.cancel();
+    _autoNextTimer = Timer(
+      correct ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong,
+      _autoNextFire,
+    );
+  }
+
+  void _autoNextFire() {
+    if (!mounted || !answered) return;
+    if (GamePause.instance.isPaused) {
+      _autoNextTimer = Timer(const Duration(milliseconds: 300), _autoNextFire);
+      return;
+    }
+    _advance();
+  }
+
+  /// Trecerea efectivă, fie din cronometru, fie din tap-ul care o grăbește.
+  void _advance() {
+    if (!answered) return;
+    Sfx.next();
+    _nextQuestion();
+  }
+
   void _nextQuestion() {
+    _autoNextTimer?.cancel();
     // dacă viețile au ajuns la 0, dialogul de Game Over e deja programat
     // să apară — nu mai trecem la întrebarea următoare între timp.
     if (lives <= 0) return;
@@ -924,7 +967,12 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               children: [
                 _buildTopBar(),
                 Expanded(
-                  child: SingleChildScrollView(
+                  // După răspuns, un tap oriunde pe întrebare grăbește trecerea
+                  // (variantele sunt deja dezactivate, deci nu fură tap-ul).
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: answered ? _advance : null,
+                    child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
                     child: Column(
                       children: [
@@ -973,14 +1021,17 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         ),
                         const SizedBox(height: 6),
                         _buildRevealRow(q),
-                        // După răspuns, butonul de continuare apare CHIAR aici,
-                        // sub rândul "Claritate" — nu la baza ecranului — ca să
-                        // fie vizibil fără scroll. Nu mai afișăm un banner de
-                        // "Corect/Greșit": varianta corectă e deja evidențiată
-                        // pe grila de opțiuni, deci ar fi redundant.
+                        // După răspuns jocul trece singur mai departe; bara arată
+                        // cât mai e. Nu mai afișăm un banner de „Corect/Greșit":
+                        // varianta corectă e deja evidențiată pe grila de
+                        // opțiuni, deci ar fi redundant.
                         if (answered) ...[
                           const SizedBox(height: 6),
-                          NextButton(onTap: _nextQuestion),
+                          AutoAdvanceBar(
+                            key: ValueKey('auto-next-$qIndex'),
+                            correct: _lastAnswerCorrect,
+                            duration: _lastAnswerCorrect ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong,
+                          ),
                         ],
                         if (hintsUsed > 0 && !answered) ...[
                           const SizedBox(height: 6),
@@ -999,6 +1050,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                         const SizedBox(height: 6),
                       ],
                     ),
+                  ),
                   ),
                 ),
               ],

@@ -16,11 +16,13 @@ import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../widgets/match_overlay.dart';
 import '../../widgets/avatar.dart';
+import '../../widgets/battlefield_backdrop.dart';
 import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import '../../widgets/tank_art.dart';
 import '../../widgets/tank_defence.dart';
 import '../../widgets/tank_pov.dart';
+import '../../widgets/tank_salvo.dart';
 import 'multiplayer_results_screen.dart';
 import '../../core/breadcrumbs.dart';
 
@@ -74,27 +76,26 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   final Set<String> _announcedLeftIds = {};
 
   /// Controlerul întregului spectacol de după rundă (tunuri, proiectile,
-  /// impacturi, bare care scad, epave). Rulează exact [tanksRevealSeconds],
-  /// iar toți timpii de mai jos sunt secunde în interiorul lui.
+  /// impacturi, bare care scad, epave). Durata se fixează pe rundă, din
+  /// [_plan], iar toți timpii de mai jos sunt secunde în interiorul lui.
   late final AnimationController _fire = AnimationController(
     vsync: this,
-    duration: const Duration(seconds: tanksRevealSeconds),
+    duration: const Duration(seconds: tanksEmptyRevealSeconds),
   );
 
-  /// Coregrafia fazei de foc, în secunde. Prima jumătate de secundă e
-  /// pauza în care se citește „FOC!" și se vede cine trage — fără ea,
-  /// proiectilele apar înainte ca ochiul să apuce să găsească tunurile.
-  ///
-  /// Zborul e mai lung decât ar cere arena (un drum de câțiva centimetri pe
-  /// ecran) fiindcă ACELAȘI interval e și durata camerei de pe proiectil,
-  /// unde chiar ai ce vedea — vezi widgets/tank_pov.dart. Toate cifrele de
-  /// aici s-au dublat aproape peste tot (5→9s reveal, vezi
-  /// core/tanks.dart.tanksRevealSeconds) după ce am testat prima
-  /// versiune live pe două ecrane și nu apucam să citească nimic din ce
-  /// scria pe cadru — nu era o părere, era cronometrată prea strâns.
-  static const double _firstShotAt = 0.6;
-  static const double _shotStagger = 0.22;
-  static const double _flightDuration = 1.3;
+  /// Programul fazei de foc: cine în ce scenă, și când. Calculat pe fiecare
+  /// telefon din aceleași `roundShots`, deci identic peste tot — vezi
+  /// core/tanks.dart, buildTankAttackPlan.
+  TankAttackPlan _plan = TankAttackPlan.empty;
+  int _planForRound = -1;
+
+  /// Secunda curentă din faza de foc.
+  double get _t => _fire.value * _plan.revealSeconds;
+
+  /// Prima jumătate de secundă a fazei de foc e pauza în care se citește
+  /// „FOC!" — fără ea, proiectilele apar înainte ca ochiul să apuce să
+  /// găsească tunurile. Momentele obuzelor vin din [_plan].
+  static const double _firstShotAt = tanksFireLeadSeconds;
   static const double _drainDuration = 1.0;
 
   /// Cât de mult se dau în lături, în pixeli, cele două obuze ale unui duel
@@ -102,15 +103,6 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// fără asta s-ar suprapune perfect la mijloc și s-ar citi ca un singur
   /// proiectil care clipește (vezi [ShotFlight.lateral]).
   static const double _duelLateral = 7;
-
-  /// Cât se așteaptă, după ULTIMUL impact, înainte ca barele să înceapă să
-  /// scadă. Nu e o pauză de stil: bullet cam-ul ține ecranul până la
-  /// `impactul meu + tankPovAftermath`, iar dacă barele ar scădea sub el,
-  /// țintașul s-ar întoarce în arenă și ar găsi treaba deja făcută — adică
-  /// exact evenimentul pe care lovitura lui l-a provocat i-ar rămâne
-  /// nevăzut. Fiind puțin mai mare decât [tankPovAftermath] (1,7s), acoperă
-  /// orice proiectil al rundei, nu doar pe al meu.
-  static const double _drainDelayAfterImpacts = 1.9;
 
   Timer? _tick;
   Timer? _advanceTimer;
@@ -128,44 +120,38 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   List<ShotFlight> _flights = const [];
   int _flightsBuiltForRound = -1;
 
-  /// Proiectilul propriu al rundei și tancul în care pleacă — doar ele hrănesc
-  /// camera de pe obuz (vezi [TankPovView]). `null` în rundele în care n-am
-  /// răspuns corect, deci n-am tras: atunci plec în camera de apărare
-  /// ([TankDefenceView]) dacă vine ceva spre mine, altfel rămân pe arenă.
-  ShotFlight? _myFlight;
-  MatchPlayer? _myPovTarget;
-  int _myPovTargetHpAtStart = tanksMaxHp;
+  /// Ce văd eu în fiecare scenă a rundei, după indicele ei din [_plan]:
+  ///  • bombardament (≥2 atacatori pe aceeași țintă): atacatorii → camera de
+  ///    bombardament ([TankSalvoView]), victima → camera de apărare cu toate
+  ///    obuzele — același eveniment, în aceeași secundă, din două părți;
+  ///  • 1 la 1 / duel / lovitură dublă în care trag eu → camera de pe obuz;
+  ///  • 1 la 1 în care sunt ținta → camera de apărare.
+  /// O scenă fără mine lipsește din toate trei: atunci văd arena.
+  final Map<int, _MyPov> _myPovByUnit = {};
+  final Map<int, List<IncomingShell>> _myIncomingByUnit = {};
+  final Map<int, List<SalvoShell>> _salvoByUnit = {};
+  final Map<int, int> _salvoHpStart = {};
 
-  /// A doua țintă a propriei lovituri duble, pentru camera de pe obuz. `null`
-  /// la o tragere obișnuită — vezi [TankPovSecondTarget].
-  TankPovSecondTarget? _myPovSecond;
+  /// Când începe să scadă bara fiecărui tanc lovit: la finalul scenei în
+  /// care a fost lovit, nu toate odată la sfârșitul rundei — așa arena arată
+  /// progresul între scene.
+  final Map<String, double> _drainStartById = {};
 
-  /// Duelul rundei, dacă există: ținta mea a tras, în aceeași clipă, chiar în
-  /// mine. [_myDuelIntercepted] e cazul în care amândoi am ratat — atunci
-  /// obuzele se izbesc între ele la mijlocul drumului (vezi
-  /// [ShotFlight.intercepted]).
-  bool _myDuel = false;
-  bool _myDuelIntercepted = false;
-
-  /// Obuzele care vin spre MINE în runda asta și cât încasez din ele. Lista
-  /// hrănește camera de apărare; totalul se scrie și pe camera de pe obuz,
-  /// pentru cel care trage și e lovit în același timp.
-  List<IncomingShell> _myIncoming = const [];
-  int _myDamageTaken = 0;
+  /// uid → jucător, reîmprospătat la fiecare [_onData].
+  final Map<String, MatchPlayer> _playerById = {};
 
   /// Cum arăt eu în camera de apărare: culoarea, numele (din care iese partea
-  /// în care smucesc la fereală) și viața de la începutul rundei.
+  /// în care smucesc la fereală). Viața vine din [_hpBefore].
   Color _myColor = AppColors.blue;
   String _myName = '';
-  int _myHpAtRoundStart = tanksMaxHp;
   final Set<int> _playedShot = {};
   final Set<int> _playedImpact = {};
   bool _playedAlarm = false;
   bool _playedExplosions = false;
 
-  /// Momentul în care se așază barele de viață și, imediat după, explodează
-  /// epavele — calculat din ultimul impact al rundei (vezi [_ensureFlights]).
-  double _drainStart = 0;
+  /// Momentul în care explodează epavele rundei și apare „X DISTRUS": după
+  /// ce s-a așezat bara ultimului tanc doborât (vezi [_ensureFlights]).
+  double _wreckAt = 0;
   int _pendingDestroyed = 0;
 
   /// Ultima cerere de rezolvare a rundei. Fără ea, `build` rulează de câteva
@@ -235,6 +221,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     // Sunetele modului se încarcă abia acum, nu la pornirea aplicației —
     // vezi TankSfx pentru de ce.
     TankSfx.preload();
+    BattlefieldBackdrop.preload();
     _fire.addListener(_onFireTick);
     // Nicio actualizare Firestore nu vine „din ceas", dar cronometrul de 5
     // secunde trebuie să scadă vizibil în fiecare secundă.
@@ -485,7 +472,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// singură dată — de-aia seturile de indici, nu un simplu contor.
   void _onFireTick() {
     if (_flights.isEmpty) return;
-    final t = _fire.value * tanksRevealSeconds;
+    final t = _t;
     for (var i = 0; i < _flights.length; i++) {
       final f = _flights[i];
       if (t >= f.startAt && _playedShot.add(i)) TankSfx.fire();
@@ -504,7 +491,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     }
     // Explozia tancurilor distruse vine DUPĂ ce s-au terminat impacturile,
     // ca să nu se piardă în ele: e evenimentul cel mai important al rundei.
-    if (!_playedExplosions && t >= _drainStart + _drainDuration) {
+    if (!_playedExplosions && t >= _wreckAt) {
       _playedExplosions = true;
       if (_pendingDestroyed > 0) TankSfx.explode();
     }
@@ -544,6 +531,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   void _onData(MatchInfo info, List<MatchPlayer> players) {
     for (final p in players) {
       _playerNames[p.id] = p.name;
+      _playerById[p.id] = p;
     }
     _livePlayers = players.where((p) => !p.eliminated).length;
     _atFullHealth = players.any((p) => p.id == _mp.currentPlayerId && p.hp >= tanksMaxHp);
@@ -555,13 +543,11 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         ..addEntries(players.map((p) => MapEntry(p.id, p.hp)));
       _flights = const [];
       _flightsBuiltForRound = -1;
-      _myFlight = null;
-      _myPovTarget = null;
-      _myPovSecond = null;
-      _myDuel = false;
-      _myDuelIntercepted = false;
-      _myIncoming = const [];
-      _myDamageTaken = 0;
+      _myPovByUnit.clear();
+      _myIncomingByUnit.clear();
+      _salvoByUnit.clear();
+      _salvoHpStart.clear();
+      _drainStartById.clear();
       _playedShot.clear();
       _playedImpact.clear();
       _playedAlarm = false;
@@ -610,16 +596,19 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (allPicked || _targetSecondsLeftFor(info) <= 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }
-    } else if (info.roundPhase == RoundPhase.revealed && info.status != MatchStatus.finished) {
+    }
+
+    if (info.roundPhase == RoundPhase.revealed) _ensurePlan(info);
+
+    if (info.roundPhase == RoundPhase.revealed && info.status != MatchStatus.finished) {
       // Doar dacă meciul CONTINUĂ: la ultima rundă, o cerere de avansare ar
       // fi pornit degeaba o rundă nouă într-un meci deja încheiat, exact în
       // clipa în care toată lumea pleacă spre clasament.
-      // Durata se ia din rundă, nu din constantă: o rundă în care n-a tras
-      // nimeni (toți au greșit) n-are nicio animație de acoperit, iar
-      // asteptarea completa era timp mort pentru toată masa — vezi
-      // [tanksRevealSecondsFor].
+      // Durata se ia din planul rundei: câte scene are, atât ține. Fiind
+      // calculat din aceleași date pe toate telefoanele, toate ajung la
+      // același moment de avansare.
       _advanceTimer ??= Timer(
-        Duration(seconds: tanksRevealSecondsFor(anyShots: info.roundShots.isNotEmpty)),
+        _revealDuration,
         () {
           _mp.advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
         },
@@ -634,8 +623,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       // Aceeași socoteală ca la avansarea rundei: dacă meciul s-a terminat
       // fără să se tragă (ultimul tanc rămas, sau plafonul de runde atins
       // într-o rundă ratată de toți), n-are ce lovitură decisivă să apuce
-      // cineva să vadă, deci n-are rost să ținem masa pe loc 9 secunde.
-      Future.delayed(Duration(seconds: tanksRevealSecondsFor(anyShots: info.roundShots.isNotEmpty)), () {
+      // cineva să vadă, deci n-are rost să ținem masa pe loc.
+      Future.delayed(_revealDuration, () {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -647,139 +636,108 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     }
   }
 
-  /// Traduce tragerile citite din Firestore în traiectorii pe ecran. Se
-  /// poate face abia când se știe cât de mare e arena, deci se cheamă din
-  /// LayoutBuilder-ul ei — dar exact o dată pe rundă ([_flightsBuiltForRound]).
+  /// Planul rundei — o singură dată pe rundă, cât suntem în faza de foc.
+  /// Nu cere dimensiunea arenei (spre deosebire de [_ensureFlights]), deci
+  /// se face direct din [_onData]: cronometrul de avansare are nevoie de
+  /// durată înainte de primul cadru desenat.
+  void _ensurePlan(MatchInfo info) {
+    if (_planForRound == info.roundIndex) return;
+    _planForRound = info.roundIndex;
+    _plan = buildTankAttackPlan(
+      shots: [
+        for (final s in info.roundShots) ResolvedTankShot(byId: s.byId, atId: s.atId, hit: s.hit, damage: s.damage),
+      ],
+      reflectorIds: {
+        for (final e in info.roundPowerUps.entries)
+          if (e.value == PowerUp.reflect.name) e.key,
+      },
+      doubleShotIds: {
+        for (final e in info.roundPowerUps.entries)
+          if (e.value == PowerUp.doubleShot.name) e.key,
+      },
+    );
+  }
+
+  Duration get _revealDuration => Duration(milliseconds: (_plan.revealSeconds * 1000).round());
+
+  /// Traduce tragerile citite din Firestore în traiectorii pe ecran și în
+  /// ce vede fiecare cameră. Se poate face abia când se știe cât de mare e
+  /// arena, deci se cheamă din LayoutBuilder-ul ei — dar exact o dată pe
+  /// rundă ([_flightsBuiltForRound]).
   ///
-  /// Tot aici se caută **duelurile** — perechile în care doi jucători și-au
-  /// ales țintă unul pe altul. Ele nu schimbă niciun rezultat (zarurile s-au
-  /// aruncat deja, o singură dată, în MultiplayerService.resolveTanksRound),
-  /// dar schimbă punerea în scenă: cei doi trag DEODATĂ, obuzele merg unul pe
-  /// lângă altul, iar dacă amândoi au ratat se izbesc între ele la jumătatea
-  /// drumului în loc să se piardă fiecare pe lângă câte un tanc.
+  /// Momentele vin din [_plan], nu dintr-un decalaj local: un obuz pleacă în
+  /// scena lui, iar scena are aceeași secundă pe toate telefoanele.
+  ///
+  /// Punerea în scenă a **duelului** (cei doi trag DEODATĂ, iar dacă amândoi
+  /// au ratat obuzele se izbesc la mijloc) și a **loviturii duble** (un obuz
+  /// care se desparte) rămâne doar pentru scenele de tipul ăsta. Dacă ținta
+  /// mea e atacată și de alții, e bombardament — acolo fiecare obuz zboară
+  /// separat, ca să se vadă câți au tras.
   void _ensureFlights(MatchInfo info, List<MatchPlayer> players, Map<String, Offset> centers, double arenaWidth) {
     if (_flightsBuiltForRound == info.roundIndex) return;
     if (info.roundPhase != RoundPhase.revealed) return;
+    _ensurePlan(info);
     _flightsBuiltForRound = info.roundIndex;
 
+    final plan = _plan;
     final shots = info.roundShots;
-    final seeds = {for (final p in players) p.id: p.avatarSeed};
-    final names = {for (final p in players) p.id: p.name};
+    final byId = {for (final p in players) p.id: p};
     final me = _mp.currentPlayerId;
+    Color colorOf(String id) => pickAvatarColor(byId[id]?.avatarSeed ?? id);
+    String nameOf(String id) => byId[id]?.name ?? '?';
+    bool mega(String id) => info.roundPowerUps[id] == PowerUp.megaRocket.name;
 
-    // Reflexii. `resolveTanksVolleys` scrie DOUĂ intrări pentru o reflexie:
-    // trăgător→reflector (ratată) și reflector→trăgător (lovește). Le lipim
-    // într-un singur zbor dus-întors: [reflectMerged] ține indicele intrării
-    // „dus" → indicele intrării „întors" (pe care n-o mai desenăm separat).
-    final reflectMerged = <int, int>{};
-    final reflectSkip = <int>{};
-    for (var i = 0; i < shots.length; i++) {
-      for (var j = 0; j < shots.length; j++) {
-        if (i == j) continue;
-        final out = shots[i];
-        final back = shots[j];
-        if (out.byId == back.atId &&
-            out.atId == back.byId &&
-            !out.hit &&
-            back.hit &&
-            info.roundPowerUps[out.atId] == PowerUp.reflect.name) {
-          reflectMerged[i] = j;
-          reflectSkip.add(j);
-        }
-      }
-    }
+    final reflectBack = plan.reflectBackOf.values.toSet();
 
-    // Lovitură dublă pe DOUĂ ținte diferite: `resolveTanksVolleys` scrie două
-    // intrări cu același `byId`. Vizual pleacă UN obuz care se desparte în
-    // două la [_splitAt] din drum — [splitPair] leagă cei doi indici, iar
-    // primul din pereche desenează obuzul comun de dinainte de despărțire.
-    final splitPair = <int, int>{};
-    for (var i = 0; i < shots.length; i++) {
-      if (reflectMerged.containsKey(i) || reflectSkip.contains(i)) continue;
-      if (info.roundPowerUps[shots[i].byId] != PowerUp.doubleShot.name) continue;
-      for (var j = i + 1; j < shots.length; j++) {
-        if (shots[j].byId == shots[i].byId) {
-          splitPair[i] = j;
-          splitPair[j] = i;
-        }
-      }
-    }
-
-    // Perechile de duel. Un jucător trage o singură dată pe rundă, deci
-    // partenerul e unic — nu se poate ajunge la un „triunghi" de dueluri.
-    // O reflexie NU e duel (obuzul e al aceluiași trăgător, dus-întors).
+    // Perechile din scenele de duel și de lovitură dublă.
     final partner = <int, int>{};
-    for (var i = 0; i < shots.length; i++) {
-      if (reflectMerged.containsKey(i) || reflectSkip.contains(i)) continue;
-      for (var j = i + 1; j < shots.length; j++) {
-        if (reflectMerged.containsKey(j) || reflectSkip.contains(j)) continue;
-        if (shots[i].byId == shots[j].atId && shots[i].atId == shots[j].byId) {
-          partner[i] = j;
-          partner[j] = i;
-        }
-      }
-    }
-
-    // Momentul plecării. Tragerile obișnuite rămân decalate ([_shotStagger]),
-    // ca ochiul să apuce să le urmărească pe rând; cele două ale unui duel
-    // primesc ACELAȘI slot, fiindcă pe ele trebuie să le vezi plecând în
-    // aceeași clipă — altfel „s-au întâlnit la mijloc" n-ar avea cum să iasă.
-    final slot = <int, int>{};
-    var nextSlot = 0;
-    for (var i = 0; i < shots.length; i++) {
-      if (slot.containsKey(i) || reflectSkip.contains(i)) continue;
-      slot[i] = nextSlot;
-      final j = partner[i] ?? splitPair[i];
-      if (j != null) slot[j] = nextSlot; // duelul / lovitura dublă pleacă odată
-      nextSlot++;
+    final splitPair = <int, int>{};
+    for (final u in plan.units) {
+      if (u.kind != TankUnitKind.duel && u.kind != TankUnitKind.split) continue;
+      final idx = [for (final i in u.shotIndexes) if (!reflectBack.contains(i) && !plan.reflectBackOf.containsKey(i)) i];
+      if (idx.length != 2) continue;
+      final pair = u.kind == TankUnitKind.duel ? partner : splitPair;
+      pair[idx[0]] = idx[1];
+      pair[idx[1]] = idx[0];
     }
 
     final flights = <ShotFlight>[];
-    // obuzele care vin spre mine, cu poziția atacatorului în arenă („din ce
-    // parte vine"), înainte de a fi așezate pe culoare în camera de apărare
-    final atMe = <({TankShot shot, ShotFlight flight, double lane})>[];
-    var damageTaken = 0;
+    final flightOf = <int, ShotFlight>{};
     for (var i = 0; i < shots.length; i++) {
-      if (reflectSkip.contains(i)) continue; // desenată ca parte din „dus-întors"
+      if (reflectBack.contains(i)) continue; // desenată ca parte din „dus-întors"
+      final timing = plan.timings[i];
+      if (timing == null) continue;
       final s = shots[i];
       final from = centers[s.byId];
       final to = centers[s.atId];
       if (from == null || to == null) continue; // jucător plecat între timp
+      final flightDuration = timing.impactAt - timing.launchAt;
 
-      final bounceIdx = reflectMerged[i];
+      final bounceIdx = plan.reflectBackOf[i];
       if (bounceIdx != null) {
-        // Reflexie: un singur zbor dus-întors. `s` e „dus" (trăgător→reflector,
-        // ratată), `bounce` e „întors" (reflector→trăgător, lovește). Obuzul
-        // explodează în trăgător.
-        final bounce = shots[bounceIdx];
+        // Reflexie: un singur zbor dus-întors, care explodează în trăgător.
+        // Rămâne mega rachetă vizual dacă așa a plecat — Reflexia nu-i
+        // schimbă natura proiectilului.
         final flight = ShotFlight(
           from: from,
           to: to,
           hit: true,
-          damage: bounce.damage,
-          startAt: _firstShotAt + slot[i]! * _shotStagger,
-          flightDuration: _flightDuration * 1.8,
-          color: pickAvatarColor(seeds[s.byId] ?? s.byId),
+          damage: shots[bounceIdx].damage,
+          startAt: timing.launchAt,
+          flightDuration: flightDuration,
+          color: colorOf(s.byId),
           reflectBackTo: from,
-          // Chiar dacă s-a întors în trăgător, rămâne o mega rachetă vizual —
-          // adversarul care are Reflexie nu-i schimbă natura proiectilului.
-          isMegaRocket: info.roundPowerUps[s.byId] == PowerUp.megaRocket.name,
+          isMegaRocket: mega(s.byId),
         );
         flights.add(flight);
-        if (s.byId == me) {
-          _myFlight = flight;
-          _myDuel = false;
-          _myDuelIntercepted = false;
-          damageTaken += bounce.damage; // propriul obuz întors mă lovește
-        }
+        flightOf[i] = flight;
         continue;
       }
 
       final j = partner[i];
       final duel = j != null;
       // Se izbesc între ele doar dacă AMÂNDOUĂ obuzele erau oricum ratate:
-      // altfel am schimba rezultatul rundei dintr-o animație, exact lucrul pe
-      // care modul îl ține strict în tranzacția de rezolvare.
+      // altfel am schimba rezultatul rundei dintr-o animație.
       final intercepted = duel && !s.hit && !shots[j].hit;
       // Lovitură ratată pe un tanc cu scut = OPRITĂ, nu evitată la noroc.
       final blocked = !s.hit && info.roundShieldedIds.contains(s.atId);
@@ -801,106 +759,197 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         to: to,
         hit: s.hit,
         damage: s.damage,
-        startAt: _firstShotAt + slot[i]! * _shotStagger,
-        flightDuration: _flightDuration,
-        color: pickAvatarColor(seeds[s.byId] ?? s.byId),
+        startAt: timing.launchAt,
+        flightDuration: flightDuration,
+        color: colorOf(s.byId),
         lateral: duel && !intercepted && !blocked ? _duelLateral : 0,
         intercepted: intercepted && !blocked,
         meetLead: intercepted && !blocked && i < j,
         blockedByShield: blocked,
         splitPoint: splitPoint,
         splitLead: sj != null && i < sj,
-        isMegaRocket: info.roundPowerUps[s.byId] == PowerUp.megaRocket.name,
+        isMegaRocket: mega(s.byId),
       );
       flights.add(flight);
-      if (s.byId == me) {
-        // Lovitură dublă: camera rămâne pe PRIMUL obuz al perechii, iar al
-        // doilea devine [_myPovSecond]. Fără asta, a doua atribuire ar fi
-        // suprascris-o pe prima și al doilea tanc n-ar fi apărut deloc.
-        final isSecondOfPair = sj != null && !flight.splitLead;
-        if (isSecondOfPair) {
-          for (final p in players) {
-            if (p.id != s.atId) continue;
-            final hpStart = _hpAtRoundStart[p.id] ?? p.hp;
-            _myPovSecond = TankPovSecondTarget(
-              color: pickAvatarColor(p.avatarSeed),
-              name: p.name,
-              damageRatio: 1 - (hpStart / tanksMaxHp),
-              hit: s.hit,
-              damage: s.damage,
-            );
-          }
-        } else {
-          _myFlight = flight;
-          _myDuel = duel;
-          _myDuelIntercepted = intercepted;
-          for (final p in players) {
-            if (p.id == s.atId) {
-              _myPovTarget = p;
-              // viața de la ÎNCEPUTUL rundei: `p.hp` e deja cea de după
-              // lovitura asta, iar camera arată drumul spre ea, nu urmarea.
-              _myPovTargetHpAtStart = _hpAtRoundStart[p.id] ?? p.hp;
-            }
-          }
-        }
-      }
-      if (s.atId == me) {
-        if (s.hit) damageTaken += s.damage;
-        atMe.add((shot: s, flight: flight, lane: ((from.dx - to.dx) / (arenaWidth * 0.5)).clamp(-1.0, 1.0)));
-      }
+      flightOf[i] = flight;
     }
-    _myDamageTaken = damageTaken;
-    // Culoarele din camera de apărare: unul singur vine exact din partea în
-    // care stă atacatorul în arenă; la doi sau trei, poziția reală se
-    // amestecă cu o desfășurare egală, altfel doi adversari din aceeași
-    // coloană ar trimite obuze pe același culoar, unul peste altul.
-    _myIncoming = [
-      for (var k = 0; k < atMe.length; k++)
-        IncomingShell(
-          launchAt: atMe[k].flight.startAt,
-          impactAt: atMe[k].flight.impactAt,
-          hit: atMe[k].shot.hit,
-          damage: atMe[k].shot.damage,
-          color: atMe[k].flight.color,
-          blockedByShield: atMe[k].flight.blockedByShield,
-          shooterName: names[atMe[k].shot.byId] ?? '?',
-          lane: atMe.length == 1
-              ? atMe[k].lane
-              : (atMe[k].lane * 0.5 + (k - (atMe.length - 1) / 2) * 0.5).clamp(-0.92, 0.92),
-        ),
-    ];
+
+    // ── Ce vede fiecare cameră a mea, scenă cu scenă ──
+    for (var k = 0; k < plan.units.length; k++) {
+      final u = plan.units[k];
+      if (!u.participants.contains(me)) continue;
+      final own = [for (final i in u.shotIndexes) if (!reflectBack.contains(i)) i];
+
+      if (u.kind == TankUnitKind.salvo && u.targetId == me) {
+        // Ținta bombardamentului: camera de apărare, cu toate obuzele care
+        // vin spre mine, fiecare dinspre tancul lui.
+        final atMe = [for (final i in own) if (plan.reflectBackOf[i] == null && flightOf[i] != null) i];
+        _myIncomingByUnit[k] = [
+          for (var n = 0; n < atMe.length; n++)
+            IncomingShell(
+              launchAt: flightOf[atMe[n]]!.startAt,
+              impactAt: flightOf[atMe[n]]!.impactAt,
+              hit: shots[atMe[n]].hit,
+              damage: shots[atMe[n]].damage,
+              color: flightOf[atMe[n]]!.color,
+              blockedByShield: flightOf[atMe[n]]!.blockedByShield,
+              shooterName: nameOf(shots[atMe[n]].byId),
+              lane: _laneOf(centers[shots[atMe[n]].byId], centers[me], arenaWidth, n, atMe.length),
+            ),
+        ];
+        continue;
+      }
+
+      if (u.kind == TankUnitKind.salvo) {
+        _salvoByUnit[k] = [
+          for (final i in own)
+            SalvoShell(
+              attackerId: shots[i].byId,
+              attackerName: nameOf(shots[i].byId),
+              color: colorOf(shots[i].byId),
+              launchAt: plan.timings[i]!.launchAt,
+              impactAt: plan.timings[i]!.impactAt,
+              hit: shots[i].hit,
+              damage: plan.reflectBackOf[i] != null ? shots[plan.reflectBackOf[i]!].damage : shots[i].damage,
+              blocked: !shots[i].hit && plan.reflectBackOf[i] == null && info.roundShieldedIds.contains(shots[i].atId),
+              reflected: plan.reflectBackOf[i] != null,
+              megaRocket: mega(shots[i].byId),
+            ),
+        ];
+        _salvoHpStart[k] = _hpBefore(info, u.targetId, u.startAt);
+        continue;
+      }
+
+      // 1 la 1 / duel / lovitură dublă: camera de pe obuz dacă trag eu în
+      // scena asta, altfel camera de apărare dacă sunt ținta.
+      final mine = [for (final i in own) if (shots[i].byId == me && flightOf[i] != null) i];
+      if (mine.isNotEmpty) {
+        final first = mine.firstWhere((i) => splitPair[i] == null || flightOf[i]!.splitLead, orElse: () => mine.first);
+        final target = byId[shots[first].atId];
+        if (target == null) continue;
+        final targetHp = _hpAtRoundStart[target.id] ?? target.hp;
+        TankPovSecondTarget? second;
+        for (final i in mine) {
+          if (i == first) continue;
+          final p = byId[shots[i].atId];
+          if (p == null) continue;
+          second = TankPovSecondTarget(
+            color: pickAvatarColor(p.avatarSeed),
+            name: p.name,
+            damageRatio: 1 - ((_hpAtRoundStart[p.id] ?? p.hp) / tanksMaxHp),
+            hit: shots[i].hit,
+            damage: shots[i].damage,
+          );
+        }
+        var taken = 0;
+        for (final i in u.shotIndexes) {
+          if (shots[i].atId == me && shots[i].hit) taken += shots[i].damage;
+        }
+        final j = partner[first];
+        _myPovByUnit[k] = _MyPov(
+          flight: flightOf[first]!,
+          target: target,
+          targetHpAtStart: targetHp,
+          second: second,
+          duel: j != null,
+          duelIntercepted: j != null && !shots[first].hit && !shots[j].hit,
+          damageTaken: taken,
+        );
+        continue;
+      }
+
+      // Ținta unui singur atacator. Reflexia mea nu intră aici: obuzul se
+      // întoarce în cel care l-a tras, se vede mai bine din arenă.
+      final atMe = [
+        for (final i in own)
+          if (shots[i].atId == me && plan.reflectBackOf[i] == null && flightOf[i] != null) i,
+      ];
+      if (atMe.isEmpty) continue;
+      _myIncomingByUnit[k] = [
+        for (var n = 0; n < atMe.length; n++)
+          IncomingShell(
+            launchAt: flightOf[atMe[n]]!.startAt,
+            impactAt: flightOf[atMe[n]]!.impactAt,
+            hit: shots[atMe[n]].hit,
+            damage: shots[atMe[n]].damage,
+            color: flightOf[atMe[n]]!.color,
+            blockedByShield: flightOf[atMe[n]]!.blockedByShield,
+            shooterName: nameOf(shots[atMe[n]].byId),
+            lane: _laneOf(centers[shots[atMe[n]].byId], centers[me], arenaWidth, n, atMe.length),
+          ),
+      ];
+    }
+
     for (final p in players) {
       if (p.id != me) continue;
       _myColor = pickAvatarColor(p.avatarSeed);
       _myName = p.name;
-      _myHpAtRoundStart = _hpAtRoundStart[p.id] ?? p.hp;
+    }
+
+    final resolved = [
+      for (final s in shots) ResolvedTankShot(byId: s.byId, atId: s.atId, hit: s.hit, damage: s.damage),
+    ];
+    for (final p in players) {
+      final at = plan.drainStartFor(p.id, resolved);
+      if (at != null) _drainStartById[p.id] = at;
     }
     _flights = flights;
     _pendingDestroyed = info.roundDestroyedIds.length;
-    _drainStart = flights.isEmpty
-        ? _firstShotAt
-        : flights.map((f) => f.impactAt).reduce(max) + _drainDelayAfterImpacts;
+    // Epavele explodează după ce s-a așezat bara ultimului tanc doborât.
+    var wreckAt = _firstShotAt;
+    for (final id in info.roundDestroyedIds) {
+      final at = _drainStartById[id];
+      if (at != null) wreckAt = max(wreckAt, at + _drainDuration);
+    }
+    _wreckAt = wreckAt;
+    final duration = _revealDuration;
     // Post-frame din același motiv ca resetul din [_onData]: metoda asta e
     // chemată din build. La `from: 0` valoarea nu se schimbă (controlerul e
     // deja resetat), deci cadrul curent desenează corect timpul zero.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fire.forward(from: 0);
+      if (!mounted) return;
+      _fire.duration = duration;
+      _fire.forward(from: 0);
     });
   }
 
-  /// Cât de „scursă" e bara în clipa asta: 0 cât proiectilele sunt încă în
-  /// aer, 1 după ce s-au așezat toate.
-  double get _drainProgress {
-    if (_flightsBuiltForRound == -1 || _flights.isEmpty) return 1;
-    final t = _fire.value * tanksRevealSeconds;
-    return ((t - _drainStart) / _drainDuration).clamp(0.0, 1.0);
+  /// Viața lui [id] la momentul [at] al fazei de foc: ce avea la începutul
+  /// rundei, minus ce a încasat în scenele de dinainte (de exemplu propriul
+  /// obuz întors de o Reflexie, într-o scenă anterioară).
+  int _hpBefore(MatchInfo info, String id, double at) {
+    var hp = _hpAtRoundStart[id] ?? _playerById[id]?.hp ?? tanksMaxHp;
+    final shots = info.roundShots;
+    for (var i = 0; i < shots.length; i++) {
+      final tm = _plan.timings[i];
+      if (tm != null && shots[i].atId == id && shots[i].hit && tm.impactAt < at) hp -= shots[i].damage;
+    }
+    return hp.clamp(0, tanksMaxHp);
+  }
+
+  /// Din ce parte vine un obuz în camera de apărare: unul singur vine exact
+  /// din partea în care stă atacatorul în arenă; la mai mulți, poziția reală
+  /// se amestecă cu o desfășurare egală, altfel doi adversari din aceeași
+  /// coloană ar trimite obuze pe același culoar.
+  static double _laneOf(Offset? from, Offset? to, double arenaWidth, int k, int count) {
+    final lane = from == null || to == null ? 0.0 : ((from.dx - to.dx) / (arenaWidth * 0.5)).clamp(-1.0, 1.0);
+    if (count == 1) return lane;
+    return (lane * 0.5 + (k - (count - 1) / 2) * 0.5).clamp(-0.92, 0.92);
+  }
+
+  /// Cât de „scursă" e bara unui tanc în clipa asta: 0 până se termină scena
+  /// în care a fost lovit, 1 după. Un tanc nelovit are bara deja așezată.
+  double _drainProgressFor(String id) {
+    if (_flightsBuiltForRound == -1) return 1;
+    final start = _drainStartById[id];
+    if (start == null) return 1;
+    return ((_t - start) / _drainDuration).clamp(0.0, 1.0);
   }
 
   /// Zguduitura ecranului la impact — mică (max 5 px) și scurtă, cât să se
   /// simtă lovitura fără să facă textul ilizibil.
   Offset get _shake {
     if (_flights.isEmpty) return Offset.zero;
-    final t = _fire.value * tanksRevealSeconds;
+    final t = _t;
     var strength = 0.0;
     for (final f in _flights) {
       if (!f.hit) continue;
@@ -1009,60 +1058,93 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     );
   }
 
-  /// Camera cinematică a rundei — una singură, peste tot ecranul, aleasă după
-  /// rolul meu în runda tocmai rezolvată:
+  /// Camera cinematică — peste tot ecranul, aleasă după scena din [_plan] în
+  /// care sunt implicat ACUM (cel mult una o dată; scenele mele vin pe rând):
   ///
-  ///  • **am tras** → camera de pe propriul obuz ([TankPovView]), cu tot cu
-  ///    duel, dacă ținta a tras și ea în mine;
-  ///  • **n-am tras, dar vine ceva spre mine** → camera din spatele propriului
-  ///    tanc ([TankDefenceView]);
-  ///  • **nici una, nici alta** → nimic, rămân pe arenă și văd tabloul întreg.
-  ///
-  /// Ordinea nu e negociabilă: dacă am tras, lovitura MEA e singurul lucru pe
-  /// care l-am decis în runda aia, deci ea are ecranul. Ce am încasat între
-  /// timp se scrie mic, în camera de pe obuz (vezi [TankPovView.damageTaken]),
-  /// și se vede oricum pe bare când se retrage camera.
+  ///  • **bombardament** (≥2 tancuri pe aceeași țintă) → atacatorii în
+  ///    [TankSalvoView] (din spatele tunului, cu ceilalți pe flancuri),
+  ///    victima în [TankDefenceView] cu toate obuzele;
+  ///  • **trag eu, 1 la 1 / duel / lovitură dublă** → camera de pe obuz
+  ///    ([TankPovView]);
+  ///  • **sunt ținta unui singur tanc** → camera de apărare ([TankDefenceView]);
+  ///  • **nicio scenă a mea acum** → arena, cu scena activă în lumină.
   ///
   /// AnimatedBuilder propriu (nu cel al arenei) fiindcă trăiește în afara ei.
   Widget _buildPovOverlay(MatchInfo info) {
     return AnimatedBuilder(
       animation: _fire,
       builder: (context, _) {
-        if (info.roundPhase != RoundPhase.revealed) return const SizedBox.shrink();
-        final t = _fire.value * tanksRevealSeconds;
-        final flight = _myFlight;
-        final target = _myPovTarget;
-        if (flight != null && target != null) {
-          if (t >= TankPovView.endAtFor(flight.impactAt)) return const SizedBox.shrink();
-          return TankPovView(
-            time: t,
-            launchAt: flight.startAt,
-            impactAt: flight.impactAt,
-            hit: flight.hit,
-            damage: flight.damage,
-            blockedByShield: flight.blockedByShield,
-            targetColor: pickAvatarColor(target.avatarSeed),
-            targetName: target.name,
-            targetHp: _myPovTargetHpAtStart,
-            targetDamageRatio: 1 - (_myPovTargetHpAtStart / tanksMaxHp),
-            // culoarea proiectilului e chiar a mea: ShotFlight.color e luată
-            // din avatarSeed-ul celui care trage, iar zborul ăsta e al meu.
-            shooterColor: flight.color,
-            duelIncoming: _myDuel,
-            duelIntercepted: _myDuelIntercepted,
-            damageTaken: _myDamageTaken,
-            second: _myPovSecond,
-          );
-        }
-        if (_myIncoming.isEmpty || t >= TankDefenceView.endAtFor(_myIncoming)) {
+        if (info.roundPhase != RoundPhase.revealed || _flightsBuiltForRound != info.roundIndex) {
           return const SizedBox.shrink();
         }
-        return TankDefenceView(
-          time: t,
-          shells: _myIncoming,
-          myColor: _myColor,
-          myName: _myName,
-          myHp: _myHpAtRoundStart,
+        final t = _t;
+        final me = _mp.currentPlayerId;
+        final unit = _plan.activeUnitFor(me, t);
+        if (unit == null) return const SizedBox.shrink();
+        final k = _plan.units.indexOf(unit);
+        // Intrarea în scenă e o trecere scurtă, nu o tăietură: între scene
+        // ochiul vine din arenă.
+        final enter = ((t - unit.startAt) / 0.2).clamp(0.0, 1.0);
+
+        final salvo = _salvoByUnit[k];
+        if (salvo != null) {
+          final victim = _playerById[unit.targetId];
+          return TankSalvoView(
+            time: t,
+            startAt: unit.startAt,
+            endAt: unit.endAt,
+            victimName: victim?.name ?? '?',
+            victimColor: pickAvatarColor(victim?.avatarSeed ?? unit.targetId),
+            victimHpStart: _salvoHpStart[k] ?? tanksMaxHp,
+            victimDestroyed: info.roundDestroyedIds.contains(unit.targetId),
+            shells: salvo,
+            myId: me,
+            myColor: _myColor,
+            myHp: _hpBefore(info, me, unit.startAt),
+          );
+        }
+
+        final pov = _myPovByUnit[k];
+        if (pov != null) {
+          final flight = pov.flight;
+          if (t >= TankPovView.endAtFor(flight.impactAt)) return const SizedBox.shrink();
+          return Opacity(
+            opacity: enter,
+            child: TankPovView(
+              time: t,
+              launchAt: flight.startAt,
+              impactAt: flight.impactAt,
+              hit: flight.hit,
+              damage: flight.damage,
+              blockedByShield: flight.blockedByShield,
+              targetColor: pickAvatarColor(pov.target.avatarSeed),
+              targetName: pov.target.name,
+              targetHp: pov.targetHpAtStart,
+              targetDamageRatio: 1 - (pov.targetHpAtStart / tanksMaxHp),
+              // culoarea proiectilului e chiar a mea: ShotFlight.color e luată
+              // din avatarSeed-ul celui care trage, iar zborul ăsta e al meu.
+              shooterColor: flight.color,
+              duelIncoming: pov.duel,
+              duelIntercepted: pov.duelIntercepted,
+              damageTaken: pov.damageTaken,
+              second: pov.second,
+            ),
+          );
+        }
+
+        final incoming = _myIncomingByUnit[k];
+        if (incoming == null || t >= TankDefenceView.endAtFor(incoming)) {
+          return const SizedBox.shrink();
+        }
+        return Opacity(
+          opacity: enter,
+          child: TankDefenceView(
+            time: t,
+            shells: incoming,
+            myColor: _myColor,
+            myName: _myName,
+            myHp: _hpBefore(info, me, unit.startAt),
+          ),
         );
       },
     );
@@ -1153,6 +1235,14 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         }
         _ensureFlights(info, players, centers, c.maxWidth);
 
+        // Cine e în scenele care rulează acum. Restul tancurilor se
+        // estompează, ca spectatorul să vadă imediat unde se trage.
+        final revealed = info.roundPhase == RoundPhase.revealed && _flightsBuiltForRound == info.roundIndex;
+        final t = _t;
+        final active = revealed ? _plan.activeUnits(t) : const <TankAttackUnit>[];
+        final inScene = {for (final u in active) ...u.participants};
+        final firing = {for (final u in active) ...u.attackerIds};
+
         final content = Transform.translate(
           offset: _shake,
           child: SizedBox(
@@ -1180,18 +1270,26 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                     top: top + (i ~/ layout.cols) * (cellH + gap),
                     width: cellW,
                     height: cellH,
-                    child: _TankCard(
-                      player: players[i],
-                      facingRight: i % layout.cols == 0,
-                      isMe: players[i].id == _mp.currentPlayerId,
-                      hasAnswered: info.roundAnswers.containsKey(players[i].id),
-                      showAnswerTicks: info.roundPhase == RoundPhase.answering,
-                      isFiring: info.roundPhase == RoundPhase.revealed &&
-                          info.roundShots.any((s) => s.byId == players[i].id) &&
-                          _fire.value * tanksRevealSeconds >= _firstShotAt - 0.3,
-                      previousHp: _hpAtRoundStart[players[i].id] ?? players[i].hp,
-                      drainProgress: _drainProgress,
-                      tankWidth: (cellW * 0.46).clamp(40.0, 96.0),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 250),
+                      opacity: inScene.isEmpty || inScene.contains(players[i].id) ? 1 : 0.4,
+                      child: _TankCard(
+                        player: players[i],
+                        facingRight: i % layout.cols == 0,
+                        isMe: players[i].id == _mp.currentPlayerId,
+                        hasAnswered: info.roundAnswers.containsKey(players[i].id),
+                        showAnswerTicks: info.roundPhase == RoundPhase.answering,
+                        isFiring: firing.contains(players[i].id),
+                        previousHp: _hpAtRoundStart[players[i].id] ?? players[i].hp,
+                        drainProgress: _drainProgressFor(players[i].id),
+                        // Tancul doborât runda asta rămâne în picioare până
+                        // i se golește bara — altfel epava s-ar vedea înaintea
+                        // loviturilor care au făcut-o.
+                        wreckPending: revealed &&
+                            info.roundDestroyedIds.contains(players[i].id) &&
+                            t < _wreckAt,
+                        tankWidth: (cellW * 0.46).clamp(40.0, 96.0),
+                      ),
                     ),
                   ),
                 Positioned.fill(
@@ -1199,7 +1297,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                     child: CustomPaint(
                       painter: TankShotsPainter(
                         flights: _flights,
-                        time: _fire.value * tanksRevealSeconds,
+                        time: t,
                         shieldedCenters: info.roundPhase == RoundPhase.revealed
                             ? [
                                 for (final id in info.roundShieldedIds)
@@ -1232,7 +1330,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// fazei de tragere. Dacă nimeni n-a răspuns corect, scrie asta în loc:
   /// altfel o rundă fără niciun proiectil ar părea un bug.
   Widget _buildFireBanner(MatchInfo info) {
-    final t = _fire.value * tanksRevealSeconds;
+    final t = _t;
     if (t > _firstShotAt + 0.45) return const SizedBox.shrink();
     final noShots = info.roundShots.isEmpty;
     final fade = (1 - (t / (_firstShotAt + 0.45))).clamp(0.0, 1.0);
@@ -1266,8 +1364,8 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
   /// fără ca cineva să apuce să înțeleagă CINE tocmai a ieșit din joc.
   Widget _buildWreckBanner(MatchInfo info, List<MatchPlayer> players) {
     if (info.roundDestroyedIds.isEmpty) return const SizedBox.shrink();
-    final t = _fire.value * tanksRevealSeconds;
-    final showAt = _drainStart + _drainDuration + 0.15;
+    final t = _t;
+    final showAt = _wreckAt + 0.15;
     if (t < showAt) return const SizedBox.shrink();
     final me = _mp.currentPlayerId;
     final names = <String>[];
@@ -1973,6 +2071,38 @@ class _CountdownDial extends StatelessWidget {
 
 /// Cutia unui jucător din arenă: avatar, nume, viață, tanc și starea lui în
 /// runda curentă (a răspuns / trage / e epavă).
+/// Ce arată camera de pe obuz într-o scenă 1 la 1 / duel / lovitură dublă
+/// în care trag eu.
+class _MyPov {
+  final ShotFlight flight;
+  final MatchPlayer target;
+
+  /// Viața țintei la ÎNCEPUTUL rundei: `target.hp` e deja cea de după
+  /// lovitură, iar camera arată drumul spre ea, nu urmarea.
+  final int targetHpAtStart;
+
+  /// A doua țintă a loviturii duble — vezi [TankPovSecondTarget].
+  final TankPovSecondTarget? second;
+
+  /// Ținta mea a tras, în aceeași clipă, chiar în mine; [duelIntercepted] e
+  /// cazul în care amândoi am ratat și obuzele se izbesc la mijloc.
+  final bool duel;
+  final bool duelIntercepted;
+
+  /// Ce încasez eu în aceeași scenă (duel sau propriul obuz întors).
+  final int damageTaken;
+
+  const _MyPov({
+    required this.flight,
+    required this.target,
+    required this.targetHpAtStart,
+    required this.second,
+    required this.duel,
+    required this.duelIntercepted,
+    required this.damageTaken,
+  });
+}
+
 class _TankCard extends StatelessWidget {
   final MatchPlayer player;
   final bool facingRight;
@@ -1984,6 +2114,10 @@ class _TankCard extends StatelessWidget {
   final double drainProgress;
   final double tankWidth;
 
+  /// Doborât runda asta, dar scena în care a fost lovit încă nu s-a
+  /// terminat — rămâne desenat întreg până atunci.
+  final bool wreckPending;
+
   const _TankCard({
     required this.player,
     required this.facingRight,
@@ -1994,13 +2128,19 @@ class _TankCard extends StatelessWidget {
     required this.previousHp,
     required this.drainProgress,
     required this.tankWidth,
+    this.wreckPending = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = pickAvatarColor(player.avatarSeed);
-    final destroyed = player.eliminated;
-    final hpColor = TankHpBar.hpColor(player.hp);
+    final destroyed = player.eliminated && !wreckPending;
+    // Cifra coboară odată cu bara, nu sare la valoarea finală din prima
+    // secundă a fazei de foc.
+    final shownHp = drainProgress >= 1
+        ? player.hp
+        : (previousHp + (player.hp - previousHp) * drainProgress).round();
+    final hpColor = TankHpBar.hpColor(shownHp);
     // Cine trage e încadrat portocaliu, cu strălucire: în trei secunde de
     // haos, ăsta e singurul semn din care înțelegi de ce te-a lovit cineva.
     final border = destroyed
@@ -2083,7 +2223,7 @@ class _TankCard extends StatelessWidget {
                 ),
               ),
               Text(
-                destroyed ? 'KO' : '${player.hp}',
+                destroyed ? 'KO' : '$shownHp',
                 style: TextStyle(
                   color: destroyed ? AppColors.danger : hpColor,
                   fontSize: 12.5,
@@ -2109,7 +2249,7 @@ class _TankCard extends StatelessWidget {
                 width: tankWidth,
                 facingRight: facingRight,
                 destroyed: destroyed,
-                damage: 1 - (player.hp / tanksMaxHp),
+                damage: 1 - (shownHp / tanksMaxHp),
               ),
               if (facingRight) const Spacer(),
               // Starea din runda curentă, lângă tanc: „ARMAT" cât aștepți

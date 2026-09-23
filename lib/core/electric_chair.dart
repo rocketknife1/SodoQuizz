@@ -73,17 +73,28 @@ const int electricChairSeconds = 10;
 /// victima lui.
 const int electricChairCandidateCount = 4;
 
-/// Cât ține ecranul de deznodământ (cine a scăpat, cine a picat la scaun)
-/// înainte ca runda următoare să înceapă automat.
-const int electricChairRevealSeconds = 5;
-
 /// Varianta scurtă, când nimeni n-a fost pus pe scaun (nimeni n-a răspuns
 /// corect la propria întrebare) — n-are ce se anima, doar răspunsul corect
 /// de citit.
 const int electricChairEmptyRevealSeconds = 3;
 
-int electricChairRevealSecondsFor({required bool anyoneTested}) =>
-    anyoneTested ? electricChairRevealSeconds : electricChairEmptyRevealSeconds;
+/// Ritmul scenei scaunului (widgets/electric_chair_scene.dart), jucată pe
+/// rând pentru fiecare victimă: o pauză scurtă, apoi pentru fiecare
+/// [electricChairVerdictAt] secunde de tensiune și verdictul.
+const double electricChairShowdownLead = 0.3;
+const double electricChairVerdictAt = 1.0;
+
+/// Cât ține scena unei victime. Mai scurtă când sunt multe, ca o rundă cu
+/// cinci oameni pe scaun să nu țină masa pe loc un sfert de minut.
+double electricChairSegmentSeconds(int tested) => tested <= 2 ? 2.6 : 1.9;
+
+/// Cât ține deznodământul rundei: scena fiecărei victime plus o secundă și
+/// jumătate cu ultimul verdict în cadru. Toți clienții o calculează din
+/// aceleași date (`roundChairOutcomes`), deci ajung la același moment de
+/// avansare.
+double electricChairRevealSecondsFor({required int tested}) => tested == 0
+    ? electricChairEmptyRevealSeconds.toDouble()
+    : electricChairShowdownLead + tested * electricChairSegmentSeconds(tested) + 1.5;
 
 /// Plafon de runde, ca un meci în care nimeni nu mai nimerește nimic să nu
 /// rămână agățat la nesfârșit.

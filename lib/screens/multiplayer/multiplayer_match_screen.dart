@@ -83,6 +83,11 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   bool _midSynced = false;
   bool _finishing = false;
 
+  /// Trecerea automată la întrebarea următoare, după răspuns — ca în
+  /// singleplayer (vezi GameScreen._scheduleAutoNext).
+  Timer? _autoNext;
+  bool _lastCorrect = false;
+
   /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
   /// celelalte moduri — aici „runda" e chiar întrebarea curentă, fiindcă
   /// Classic n-are rundă sincronizată prin Firestore (fiecare merge în
@@ -117,6 +122,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   @override
   void dispose() {
     _ticker?.cancel();
+    _autoNext?.cancel();
     _heartbeatTimer?.cancel();
     super.dispose();
   }
@@ -230,7 +236,17 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
       _selectedAnswer = opt;
       _myScore += correct ? q.maxPoints * mult : -multiplayerWrongPenalty(q.maxPoints) * mult;
       if (correct) _maybeGrantPowerUp();
+      _lastCorrect = correct;
     });
+    _autoNext?.cancel();
+    _autoNext = Timer(correct ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong, _advance);
+  }
+
+  /// Trecerea efectivă, din cronometru sau din tap-ul care o grăbește.
+  void _advance() {
+    if (!mounted || !_answered || _finishing) return;
+    Sfx.next();
+    _next();
   }
 
   /// Vezi core/powerups.dart — power-up-ul se acordă doar cui a răspuns
@@ -319,6 +335,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   }
 
   void _next() {
+    _autoNext?.cancel();
     if (_qIndex + 1 >= _questions.length) {
       _finish();
       return;
@@ -372,16 +389,28 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                 _buildTimerBar(),
                 RoundEventBanner(event: _event, compact: true),
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: Column(
-                      children: [
-                        BlurImage(color: q.color, answer: q.answer, revealed: _answered, hintsUsed: 0, imageAssetPath: q.imageAssetPath),
-                        const SizedBox(height: 10),
-                        if (_answered) NextButton(onTap: _next) else _buildHintButton(q),
-                        const SizedBox(height: 10),
-                        _buildOptionsGrid(q, opts),
-                      ],
+                  // După răspuns, un tap oriunde grăbește trecerea automată.
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _answered ? _advance : null,
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: Column(
+                        children: [
+                          BlurImage(color: q.color, answer: q.answer, revealed: _answered, hintsUsed: 0, imageAssetPath: q.imageAssetPath),
+                          const SizedBox(height: 10),
+                          if (_answered)
+                            AutoAdvanceBar(
+                              key: ValueKey('auto-next-$_qIndex'),
+                              correct: _lastCorrect,
+                              duration: _lastCorrect ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong,
+                            )
+                          else
+                            _buildHintButton(q),
+                          const SizedBox(height: 10),
+                          _buildOptionsGrid(q, opts),
+                        ],
+                      ),
                     ),
                   ),
                 ),

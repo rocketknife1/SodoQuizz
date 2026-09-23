@@ -81,44 +81,14 @@ const int tanksRoundSeconds = sharedRoundAnswerSeconds;
 /// MultiplayerService.resolveTanksRound.
 const int tanksTargetSeconds = 10;
 
-/// Cât durează spectacolul de după rundă (proiectile în aer, impacturi,
-/// bare care scad, tancuri care explodează) înainte să înceapă runda
-/// următoare. Trebuie să acopere toată coregrafia din
-/// MultiplayerTanksScreen — dacă se scurtează aici, se scurtează și acolo.
-///
-/// Urcat de la 4 la 5, apoi la 9 secunde când s-a adăugat camera de pe
-/// proiectil (vezi widgets/tank_pov.dart): pentru cel care trage, secundele
-/// astea nu mai sunt o pauză de privit, ci propria lovitură văzută de pe
-/// obuz. A doua urcare (5→9) a venit după ce am testat prima versiune
-/// live pe două ecrane și n-a apucat să citească nici traiectoria,
-/// nici textul de deznodământ ("-24"/"EVITAT!") — totul se termina înainte
-/// să se fixeze ochiul pe el.
-///
-/// Bugetul e împărțit așa (secunde de la începutul fazei, vezi și
-/// MultiplayerTanksScreen._firstShotAt/_flightDuration/_drainDelayAfterImpacts
-/// mai jos, care trebuie ținute în pas cu asta): ~0,6 încărcare, ~1,3 zbor,
-/// ~1,7 impact/evitare, apoi barele care scad și epavele care explodează, cu
-/// timp de rămas pentru „cine a fost distrus".
-const int tanksRevealSeconds = 9;
-
 /// Cât ține faza de după rundă când NU s-a tras niciun foc — nimeni n-a
 /// nimerit răspunsul, sau a mai rămas un singur tanc în viață (vezi
 /// MultiplayerService.closeTanksAnswering, care în cazurile astea sare direct
 /// la `revealed`, cu `roundShots` gol).
 ///
-/// Fără constanta asta, toată lumea aștepta [tanksRevealSeconds] întregi
-/// uitându-se la o arenă în care nu zbura nimic: bugetul de 9 secunde e
-/// dimensionat pentru coregrafia completă (încărcare, zbor, impact, bare care
-/// scad, epave care explodează), iar când nu există niciun proiectil, din el
-/// nu se consumă nimic. Rămân doar cât să se citească răspunsul corect.
+/// Rămân doar cât să se citească răspunsul corect. Când s-a tras, durata
+/// vine din programul rundei — vezi [buildTankAttackPlan].
 const int tanksEmptyRevealSeconds = 3;
-
-/// Cât trebuie ținută faza de reveal a rundei curente. Toți clienții o
-/// calculează din ACELEAȘI date publice (`roundShots` din documentul
-/// meciului), deci ajung la aceeași valoare — important, fiindcă fiecare
-/// client își pornește singur cronometrul de avansare a rundei.
-int tanksRevealSecondsFor({required bool anyShots}) =>
-    anyShots ? tanksRevealSeconds : tanksEmptyRevealSeconds;
 
 /// Plafon absolut de runde, ca meciul să nu poată rămâne agățat la
 /// nesfârșit. Se atinge doar în cazul patologic în care nimeni nu mai
@@ -527,5 +497,316 @@ TanksRoundOutcome resolveTanksVolleys({
     damageTaken: incoming,
     damageDealt: dealt,
     destroyed: destroyed,
+  );
+}
+
+// ─── Coregrafia fazei de foc (logică pură) ──────────────────────────────────
+//
+// Tragerile rundei se grupează după ȚINTĂ, în „unități de atac". Toți cei
+// implicați într-o unitate (ținta + atacatorii ei) văd aceeași scenă în
+// aceeași clipă. Unitățile care au un jucător comun se joacă pe rând, pe
+// „sloturi"; cele fără jucători comuni rulează în paralel. Totul se
+// calculează din `roundShots` (aceleași date pe toate telefoanele), deci
+// fiecare client ajunge la exact același program — fără sincronizare în plus.
+
+/// Banner-ul „FOC!" de la începutul fazei, înainte de primul slot.
+const double tanksFireLeadSeconds = 0.6;
+
+/// Cât zboară un obuz. La reflexie (dus-întors) drumul e mai lung.
+const double tanksFlightSeconds = 1.3;
+const double tanksReflectFlightFactor = 1.8;
+
+/// Cât ține camera după impact în scenele 1 la 1 — aceeași valoare ca
+/// `tankPovAftermath` din widgets/tank_pov.dart (verificat în teste).
+const double tanksCamAftermathSeconds = 1.7;
+
+/// Bombardament: pauza de țintire de la începutul scenei, decalajul dintre
+/// obuze și cât rămâne cadrul după ultimul impact (totalul încasat).
+const double tanksSalvoAimSeconds = 0.55;
+const double tanksSalvoStaggerSeconds = 0.16;
+const double tanksSalvoAftermathSeconds = tanksCamAftermathSeconds;
+
+/// 1 la 1: obuzul pleacă aproape imediat — ținta e una singură.
+const double tanksSingleLaunchDelay = 0.25;
+
+/// După ultimul slot: barele se așază și apare „X DISTRUS".
+const double tanksRevealTailSeconds = 2.4;
+
+enum TankUnitKind {
+  /// ≥2 atacatori pe aceeași țintă — scena comună de bombardament.
+  salvo,
+
+  /// Un singur atacator.
+  single,
+
+  /// A trage în B și B în A, fiecare singurul atacator al celuilalt.
+  duel,
+
+  /// Lovitură dublă pe două ținte, fiecare atacată doar de el — un obuz
+  /// care se desparte în două.
+  split,
+}
+
+class TankAttackUnit {
+  final TankUnitKind kind;
+
+  /// Ținta scenei. La duel e primul dintre cei doi (ordinea tragerilor), la
+  /// split e prima dintre cele două ținte.
+  final String targetId;
+
+  /// Atacatorii, în ordinea tragerilor.
+  final List<String> attackerIds;
+
+  /// Indicii din lista de trageri care aparțin unității (inclusiv întoarcerea
+  /// unei reflexii).
+  final List<int> shotIndexes;
+
+  /// Toți cei care văd scena: ținte + atacatori.
+  final Set<String> participants;
+
+  final int slot;
+  final double startAt;
+  final double endAt;
+
+  const TankAttackUnit({
+    required this.kind,
+    required this.targetId,
+    required this.attackerIds,
+    required this.shotIndexes,
+    required this.participants,
+    required this.slot,
+    required this.startAt,
+    required this.endAt,
+  });
+}
+
+class TankShotTiming {
+  final int unitIndex;
+  final double launchAt;
+  final double impactAt;
+  const TankShotTiming({required this.unitIndex, required this.launchAt, required this.impactAt});
+}
+
+class TankAttackPlan {
+  final List<TankAttackUnit> units;
+
+  /// Momentul fiecărei trageri, după indicele ei în `roundShots`.
+  final Map<int, TankShotTiming> timings;
+
+  /// Indicii „întoarcerilor" de reflexie — se desenează ca parte din zborul
+  /// dus-întors al perechii lor, nu separat.
+  final Map<int, int> reflectBackOf;
+
+  /// Cât ține toată faza de foc, în secunde.
+  final double revealSeconds;
+
+  const TankAttackPlan({
+    required this.units,
+    required this.timings,
+    required this.reflectBackOf,
+    required this.revealSeconds,
+  });
+
+  static const empty = TankAttackPlan(
+    units: [],
+    timings: {},
+    reflectBackOf: {},
+    revealSeconds: tanksEmptyRevealSeconds + 0.0,
+  );
+
+  /// Unitatea în care sunt implicat la momentul [t] (cel mult una, fiindcă
+  /// unitățile cu jucători comuni nu împart un slot).
+  TankAttackUnit? activeUnitFor(String playerId, double t) {
+    for (final u in units) {
+      if (t >= u.startAt && t < u.endAt && u.participants.contains(playerId)) return u;
+    }
+    return null;
+  }
+
+  /// Unitățile care rulează la momentul [t].
+  List<TankAttackUnit> activeUnits(double t) =>
+      [for (final u in units) if (t >= u.startAt && t < u.endAt) u];
+
+  /// Când începe să scadă bara lui [playerId]: la finalul ultimei scene în
+  /// care a fost lovit. `null` dacă n-a fost ținta nimănui.
+  double? drainStartFor(String playerId, List<ResolvedTankShot> shots) {
+    double? at;
+    for (final u in units) {
+      final hitHere = u.shotIndexes.any((i) => shots[i].atId == playerId && shots[i].hit);
+      if (hitHere) at = at == null ? u.endAt : max(at, u.endAt);
+    }
+    return at;
+  }
+}
+
+/// Construiește programul fazei de foc din tragerile rundei.
+/// [reflectorIds] = cine avea Reflexie, [doubleShotIds] = cine avea Lovitură
+/// dublă (din `roundPowerUps`).
+TankAttackPlan buildTankAttackPlan({
+  required List<ResolvedTankShot> shots,
+  Set<String> reflectorIds = const {},
+  Set<String> doubleShotIds = const {},
+}) {
+  if (shots.isEmpty) return TankAttackPlan.empty;
+
+  // Reflexii: `resolveTanksVolleys` scrie întoarcerea (R→S, lovește) și
+  // plecarea (S→R, ratată). Întoarcerea se lipește de plecare.
+  final reflectBackOf = <int, int>{};
+  final reflectBack = <int>{};
+  for (var i = 0; i < shots.length; i++) {
+    for (var j = 0; j < shots.length; j++) {
+      if (i == j || reflectBack.contains(j)) continue;
+      final out = shots[i], back = shots[j];
+      if (out.byId == back.atId && out.atId == back.byId && !out.hit && back.hit && reflectorIds.contains(out.atId)) {
+        reflectBackOf[i] = j;
+        reflectBack.add(j);
+        break;
+      }
+    }
+  }
+
+  // Grupare după țintă (fără întoarcerile de reflexie).
+  final byTarget = <String, List<int>>{};
+  for (var i = 0; i < shots.length; i++) {
+    if (reflectBack.contains(i)) continue;
+    byTarget.putIfAbsent(shots[i].atId, () => []).add(i);
+  }
+  Set<String> shootersOf(List<int> idx) => {for (final i in idx) shots[i].byId};
+
+  final drafts = <({TankUnitKind kind, String target, List<int> idx})>[];
+  final used = <String>{};
+  final targets = byTarget.keys.toList()..sort();
+  for (final t in targets) {
+    if (used.contains(t)) continue;
+    final idx = byTarget[t]!;
+    final shooters = shootersOf(idx);
+    if (shooters.length >= 2) {
+      drafts.add((kind: TankUnitKind.salvo, target: t, idx: idx));
+      used.add(t);
+      continue;
+    }
+    final a = shooters.first;
+    // Duel: a e singurul atacator al lui t, iar t singurul atacator al lui a.
+    final back = byTarget[a];
+    if (back != null && !used.contains(a) && shootersOf(back).length == 1 && shootersOf(back).first == t) {
+      drafts.add((kind: TankUnitKind.duel, target: t, idx: [...idx, ...back]..sort()));
+      used..add(t)..add(a);
+      continue;
+    }
+    // Split: a are Lovitură dublă pe două ținte, fiecare atacată doar de el.
+    if (doubleShotIds.contains(a)) {
+      String? other;
+      for (final o in targets) {
+        if (o == t || used.contains(o)) continue;
+        final oi = byTarget[o]!;
+        if (shootersOf(oi).length == 1 && shootersOf(oi).first == a) other = o;
+      }
+      if (other != null) {
+        drafts.add((kind: TankUnitKind.split, target: t, idx: [...idx, ...byTarget[other]!]..sort()));
+        used..add(t)..add(other);
+        continue;
+      }
+    }
+    drafts.add((kind: TankUnitKind.single, target: t, idx: idx));
+    used.add(t);
+  }
+
+  // Ordinea de așezare: bombardamentele mari întâi, apoi restul; departajare
+  // pe țintă — deterministă pe orice telefon.
+  int rank(TankUnitKind k) => switch (k) {
+        TankUnitKind.salvo => 0,
+        TankUnitKind.split => 1,
+        TankUnitKind.duel => 2,
+        TankUnitKind.single => 3,
+      };
+  drafts.sort((x, y) {
+    final r = rank(x.kind).compareTo(rank(y.kind));
+    if (r != 0) return r;
+    if (x.kind == TankUnitKind.salvo) {
+      final s = y.idx.length.compareTo(x.idx.length);
+      if (s != 0) return s;
+    }
+    return x.target.compareTo(y.target);
+  });
+
+  Set<String> participantsOf(List<int> idx) => {
+        for (final i in idx) ...[shots[i].byId, shots[i].atId],
+        for (final i in idx)
+          if (reflectBackOf[i] != null) ...[shots[reflectBackOf[i]!].byId, shots[reflectBackOf[i]!].atId],
+      };
+
+  // Colorare greedy: fiecare unitate în primul slot fără jucători comuni.
+  final slotOf = <int>[];
+  final slotPeople = <Set<String>>[];
+  for (final d in drafts) {
+    final people = participantsOf(d.idx);
+    var s = 0;
+    while (s < slotPeople.length && slotPeople[s].intersection(people).isNotEmpty) {
+      s++;
+    }
+    if (s == slotPeople.length) slotPeople.add({});
+    slotPeople[s].addAll(people);
+    slotOf.add(s);
+  }
+
+  double flightFor(int i) =>
+      reflectBackOf.containsKey(i) ? tanksFlightSeconds * tanksReflectFlightFactor : tanksFlightSeconds;
+
+  double durationOf(({TankUnitKind kind, String target, List<int> idx}) d) {
+    final longest = d.idx.map(flightFor).reduce(max);
+    if (d.kind == TankUnitKind.salvo) {
+      return tanksSalvoAimSeconds + tanksSalvoStaggerSeconds * (d.idx.length - 1) + longest + tanksSalvoAftermathSeconds;
+    }
+    return tanksSingleLaunchDelay + longest + tanksCamAftermathSeconds;
+  }
+
+  final slotLen = List<double>.filled(slotPeople.length, 0);
+  for (var k = 0; k < drafts.length; k++) {
+    slotLen[slotOf[k]] = max(slotLen[slotOf[k]], durationOf(drafts[k]));
+  }
+  final slotStart = <double>[];
+  var cursor = tanksFireLeadSeconds;
+  for (final len in slotLen) {
+    slotStart.add(cursor);
+    cursor += len;
+  }
+
+  final units = <TankAttackUnit>[];
+  final timings = <int, TankShotTiming>{};
+  for (var k = 0; k < drafts.length; k++) {
+    final d = drafts[k];
+    final start = slotStart[slotOf[k]];
+    final attackers = <String>[];
+    for (var n = 0; n < d.idx.length; n++) {
+      final i = d.idx[n];
+      if (!attackers.contains(shots[i].byId)) attackers.add(shots[i].byId);
+      final launch = d.kind == TankUnitKind.salvo
+          ? start + tanksSalvoAimSeconds + tanksSalvoStaggerSeconds * n
+          : start + tanksSingleLaunchDelay;
+      final timing = TankShotTiming(unitIndex: k, launchAt: launch, impactAt: launch + flightFor(i));
+      timings[i] = timing;
+      final back = reflectBackOf[i];
+      if (back != null) timings[back] = timing;
+    }
+    units.add(TankAttackUnit(
+      kind: d.kind,
+      targetId: d.target,
+      attackerIds: attackers,
+      shotIndexes: [
+        ...d.idx,
+        for (final i in d.idx) if (reflectBackOf[i] != null) reflectBackOf[i]!,
+      ],
+      participants: participantsOf(d.idx),
+      slot: slotOf[k],
+      startAt: start,
+      endAt: start + slotLen[slotOf[k]],
+    ));
+  }
+
+  return TankAttackPlan(
+    units: units,
+    timings: timings,
+    reflectBackOf: reflectBackOf,
+    revealSeconds: cursor + tanksRevealTailSeconds,
   );
 }

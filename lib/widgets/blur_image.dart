@@ -25,7 +25,22 @@ class BlurImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sigma = noBlur ? 0.0 : resolveBlurSigma(hintsUsed, revealed: revealed);
+    final target = noBlur ? 0.0 : resolveBlurSigma(hintsUsed, revealed: revealed);
+    // Limpezirea (hint sau răspuns) curge în ~300 ms, nu sare. Cheia pe poză e
+    // obligatorie: fără ea, la întrebarea următoare animația ar porni de la
+    // poza clară spre blur și ar arăta o clipă noua poză clară — adică
+    // răspunsul. Cu cheie nouă, TweenAnimationBuilder pornește direct de la
+    // valoarea finală, fără animație.
+    return TweenAnimationBuilder<double>(
+      key: ValueKey(imageAssetPath ?? answer),
+      tween: Tween(end: target),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+      builder: (context, sigma, _) => _build(sigma),
+    );
+  }
+
+  Widget _build(double sigma) {
     // Imaginea NU trebuie să fie vreodată neagră — blur-ul singur o ascunde.
     // Overlay-ul e doar un dim ușor (max ~55), proporțional cu blur-ul, ca
     // pozele foarte deschise să nu pară "spălate"; scade spre 0 cu hint-uri.
@@ -61,7 +76,11 @@ class BlurImage extends StatelessWidget {
                 if (darkenAlpha > 0) Container(color: Colors.black.withAlpha(darkenAlpha)),
 
                 if (revealed)
-                  Container(
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 250),
+                    builder: (context, o, child) => Opacity(opacity: o, child: child),
+                    child: Container(
                     color: Colors.black.withAlpha(160),
                     alignment: Alignment.center,
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -75,6 +94,7 @@ class BlurImage extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
+                  ),
                   ),
               ],
             ),

@@ -15,6 +15,8 @@ import '../../data/bot_match.dart';
 import '../../data/multiplayer_service.dart';
 import '../../models/multiplayer_models.dart';
 import '../../core/cosmetics.dart';
+import '../../widgets/avatar.dart';
+import '../../widgets/electric_chair_scene.dart';
 import '../../widgets/match_overlay.dart';
 import '../../widgets/player_badge.dart';
 import '../../widgets/powerup_inventory.dart';
@@ -81,6 +83,12 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
 
   Timer? _tick;
   Timer? _advanceTimer;
+
+  /// Ceasul scenei scaunului (widgets/electric_chair_scene.dart). Pornește
+  /// când sosește runda rezolvată; durata ei vine din numărul de victime.
+  late final AnimationController _showdown = AnimationController(vsync: this, duration: const Duration(seconds: 3));
+  int _showdownRound = -1;
+  final Set<int> _verdictSounds = {};
   Timer? _heartbeatTimer;
   int _lastRoundIndex = -1;
   bool _resolving = false;
@@ -194,8 +202,26 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     _tick?.cancel();
     _advanceTimer?.cancel();
     _heartbeatTimer?.cancel();
+    _showdown.dispose();
     super.dispose();
   }
+
+  double get _showdownSeconds => _showdown.duration!.inMilliseconds / 1000;
+
+  /// Un sunet pe verdict, în clipa în care cade: inimă spartă sau scăpare.
+  void _onShowdownTick(MatchInfo info, List<String> order) {
+    final t = _showdown.value * _showdownSeconds;
+    final seg = electricChairSegmentSeconds(order.length);
+    for (var i = 0; i < order.length; i++) {
+      final at = electricChairShowdownLead + i * seg + electricChairVerdictAt;
+      if (t >= at && _verdictSounds.add(i)) {
+        (info.roundChairOutcomes[order[i]] ?? true) ? Sfx.rewardPop() : Sfx.heartHit();
+      }
+    }
+  }
+
+  /// Ordinea victimelor în scenă — aceeași pe orice telefon.
+  List<String> _verdictOrder(MatchInfo info) => info.roundChairOutcomes.keys.toList()..sort();
 
   int _secondsLeft(MatchInfo info, int total) {
     final started = info.roundStartedAt?.toDate();
@@ -464,9 +490,32 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       if (allAnswered || _chairSecondsLeftFor(info) <= 0) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _advancePhase(info));
       }
-    } else if (info.roundPhase == RoundPhase.revealed && info.status != MatchStatus.finished) {
+    }
+
+    final revealDuration = Duration(
+      milliseconds: (electricChairRevealSecondsFor(tested: info.roundChairOutcomes.length) * 1000).round(),
+    );
+    if (info.roundPhase == RoundPhase.revealed && _showdownRound != info.roundIndex && info.roundChairOutcomes.isNotEmpty) {
+      _showdownRound = info.roundIndex;
+      _verdictSounds.clear();
+      final order = _verdictOrder(info);
+      // post-frame: _onData rulează în timpul build-ului
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _showdown
+          ..duration = revealDuration
+          ..forward(from: 0);
+      });
+      void tick() => _onShowdownTick(info, order);
+      _showdown.addListener(tick);
+      Future.delayed(revealDuration + const Duration(milliseconds: 200), () {
+        if (mounted) _showdown.removeListener(tick);
+      });
+    }
+
+    if (info.roundPhase == RoundPhase.revealed && info.status != MatchStatus.finished) {
       _advanceTimer ??= Timer(
-        Duration(seconds: electricChairRevealSecondsFor(anyoneTested: info.roundChairOutcomes.isNotEmpty)),
+        revealDuration,
         () {
           _mp.advanceElectricChairRound(matchId: widget.matchId, roundIndex: info.roundIndex);
         },
@@ -476,7 +525,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
     if (info.status == MatchStatus.finished && !_navigatedToResults) {
       _navigatedToResults = true;
       Future.delayed(
-        Duration(seconds: electricChairRevealSecondsFor(anyoneTested: info.roundChairOutcomes.isNotEmpty)),
+        revealDuration,
         () {
           if (!mounted) return;
           Navigator.pushReplacement(
@@ -918,53 +967,69 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         ),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-      child: ListView(
-        children: [
-          for (final entry in outcomes.entries)
-            Builder(builder: (context) {
-              final player = players.where((p) => p.id == entry.key).firstOrNull;
-              final assignment = info.roundChairAssignments[entry.key];
-              final question = assignment == null ? null : _chairQuestionFor(info.roundIndex, assignment);
-              final survived = entry.value;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: (survived ? AppColors.play : AppColors.danger).withAlpha(30),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: (survived ? AppColors.play : AppColors.danger).withAlpha(140)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(survived ? '✅' : '⚡', style: const TextStyle(fontSize: 16)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(player?.name ?? '?',
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
+    final order = _verdictOrder(info);
+    final byId = {for (final p in players) p.id: p};
+    final verdicts = <ChairShowdownVerdict>[];
+    final avatars = <Widget>[];
+    for (final id in order) {
+      final p = byId[id];
+      final assignment = info.roundChairAssignments[id];
+      final question = assignment == null ? null : _chairQuestionFor(info.roundIndex, assignment);
+      final color = pickAvatarColor(p?.avatarSeed ?? id);
+      verdicts.add(ChairShowdownVerdict(
+        name: p?.name ?? '?',
+        color: color,
+        survived: outcomes[id] ?? true,
+        livesAfter: p?.lives ?? 0,
+        question: question?.question ?? '',
+        answer: question?.answer ?? '',
+        isMe: id == _myId,
+      ));
+      avatars.add(Avatar(
+        size: 80,
+        label: (p?.name.isNotEmpty ?? false) ? p!.name[0].toUpperCase() : '?',
+        accentColor: color,
+        photoUrl: p?.photoUrl,
+        style: avatarStyleFromId(p?.avatarStyle),
+      ));
+    }
+    final seg = electricChairSegmentSeconds(order.length);
+    return AnimatedBuilder(
+      animation: _showdown,
+      builder: (context, _) {
+        final t = _showdown.value * _showdownSeconds;
+        return Column(
+          children: [
+            Expanded(child: ElectricChairShowdown(time: t, verdicts: verdicts, avatars: avatars)),
+            // verdictele deja căzute, mic, ca să rămână la vedere și după ce
+            // scena trece la următoarea victimă
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 8,
+                runSpacing: 6,
+                children: [
+                  for (var i = 0; i < verdicts.length; i++)
+                    if (t >= electricChairShowdownLead + i * seg + electricChairVerdictAt)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: (verdicts[i].survived ? AppColors.play : AppColors.danger).withAlpha(34),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: (verdicts[i].survived ? AppColors.play : AppColors.danger).withAlpha(150)),
                         ),
-                        Text(
-                          survived ? tr('A SCĂPAT', 'SURVIVED') : tr('-1 VIAȚĂ', '-1 LIFE'),
-                          style: TextStyle(
-                              color: survived ? AppColors.play : AppColors.danger, fontWeight: FontWeight.w900, fontSize: 12),
+                        child: Text(
+                          '${verdicts[i].survived ? '✅' : '⚡'} ${verdicts[i].name}',
+                          style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
                         ),
-                      ],
-                    ),
-                    if (question != null) ...[
-                      const SizedBox(height: 6),
-                      Text('${question.question}  →  ${question.answer}',
-                          style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
-                    ],
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
+                      ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

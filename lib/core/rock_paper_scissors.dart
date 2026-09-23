@@ -26,8 +26,9 @@ const List<String> rpsChoices = [rpsRock, rpsPaper, rpsScissors];
 const int rpsRoundSeconds = sharedRoundAnswerSeconds;
 
 /// Câte secunde stă pe ecran dezvăluirea (cine a ales ce) înainte de runda
-/// următoare — la fel ca [higherLowerRevealSeconds].
-const int rpsRevealSeconds = 3;
+/// următoare: ~1 s pumnii care bat „Piatră… Hârtie… Foarfecă!", apoi
+/// mâinile deschise, „+N" la câștigători și scorul care urcă.
+const int rpsRevealSeconds = 4;
 
 /// Primul jucător care ajunge la scorul ăsta câștigă meciul.
 const int rpsTargetScore = 10;

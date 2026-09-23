@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import '../../core/audio.dart';
 import '../../core/lang.dart';
@@ -34,7 +36,7 @@ class MultiplayerRockPaperScissorsScreen extends StatefulWidget {
 }
 
 class _MultiplayerRockPaperScissorsScreenState
-    extends State<MultiplayerRockPaperScissorsScreen> {
+    extends State<MultiplayerRockPaperScissorsScreen> with SingleTickerProviderStateMixin {
   MultiplayerService get _mp => widget.bot?.service ?? MultiplayerService.instance;
 
   // O singură dată per ecran: create în build, se abonau din nou la fiecare
@@ -51,6 +53,15 @@ class _MultiplayerRockPaperScissorsScreenState
   Timer? _heartbeatTimer;
 
   static const _emoji = {rpsRock: '✊', rpsPaper: '✋', rpsScissors: '✌️'};
+
+  /// Ceasul dezvăluirii: pumnii bat de trei ori, apoi se deschid toți
+  /// deodată — vezi [_RpsRevealStage]. Pornește când sosește runda rezolvată.
+  late final AnimationController _reveal = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: rpsRevealSeconds),
+  );
+  int _revealedRound = -1;
+  final Set<int> _pumpSounds = {};
 
   String _labelFor(String choice) => switch (choice) {
         rpsRock => tr('Piatră', 'Rock'),
@@ -71,6 +82,7 @@ class _MultiplayerRockPaperScissorsScreenState
     _heartbeatTimer = Timer.periodic(MultiplayerService.matchHeartbeatInterval, (_) {
       _mp.matchHeartbeat(widget.matchId);
     });
+    _reveal.addListener(_onRevealTick);
   }
 
   @override
@@ -78,7 +90,20 @@ class _MultiplayerRockPaperScissorsScreenState
     _tickTimer?.cancel();
     _advanceTimer?.cancel();
     _heartbeatTimer?.cancel();
+    _reveal.removeListener(_onRevealTick);
+    _reveal.dispose();
     super.dispose();
+  }
+
+  /// Sunetele dezvăluirii, legate de ceasul ei: câte un bătut pentru fiecare
+  /// „Piatră… Hârtie… Foarfecă", apoi pocnetul la deschiderea mâinilor.
+  void _onRevealTick() {
+    final t = _reveal.value * rpsRevealSeconds;
+    for (var k = 0; k < 4; k++) {
+      if (t >= k * _RpsRevealStage.pumpSeconds && _pumpSounds.add(k)) {
+        k < 3 ? Sfx.tileSelect() : Sfx.rewardPop();
+      }
+    }
   }
 
   int _secondsLeftFor(MatchInfo info) {
@@ -135,7 +160,18 @@ class _MultiplayerRockPaperScissorsScreenState
       if (allChosen || timedOut) {
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }
-    } else if (info.roundPhase == RoundPhase.revealed) {
+    }
+
+    if (info.roundPhase == RoundPhase.revealed && _revealedRound != info.roundIndex) {
+      _revealedRound = info.roundIndex;
+      _pumpSounds.clear();
+      // post-frame: _onData rulează în timpul build-ului
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reveal.forward(from: 0);
+      });
+    }
+
+    if (info.roundPhase == RoundPhase.revealed && info.status != MatchStatus.finished) {
       _advanceTimer ??= Timer(const Duration(seconds: rpsRevealSeconds), () {
         _mp
             .advanceSyncRound(matchId: widget.matchId, roundIndex: info.roundIndex);
@@ -144,7 +180,10 @@ class _MultiplayerRockPaperScissorsScreenState
 
     if (info.status == MatchStatus.finished && !_navigatedToResults) {
       _navigatedToResults = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Meciul se termină în aceeași scriere care rezolvă ultima rundă: fără
+      // pauza asta, runda decisivă nu s-ar vedea — ecranul sărea la clasament
+      // exact când trebuiau să se deschidă mâinile.
+      Future.delayed(const Duration(seconds: rpsRevealSeconds), () {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -256,7 +295,17 @@ class _MultiplayerRockPaperScissorsScreenState
             ],
           )
         else
-          _RevealRow(info: info, players: players, emoji: _emoji, labelFor: _labelFor),
+          AnimatedBuilder(
+            animation: _reveal,
+            builder: (context, _) => _RpsRevealStage(
+              time: _reveal.value * rpsRevealSeconds,
+              info: info,
+              players: players,
+              myId: me,
+              emoji: _emoji,
+              labelFor: _labelFor,
+            ),
+          ),
         const SizedBox(height: 24),
         const Divider(color: Colors.white12, height: 1),
         Expanded(
@@ -284,12 +333,17 @@ class _MultiplayerRockPaperScissorsScreenState
                     if (answering && chose)
                       const Icon(Icons.check_circle, color: AppColors.play, size: 18),
                     const SizedBox(width: 8),
-                    Text(
-                      '${p.score}',
-                      style: TextStyle(
-                        color: p.score >= rpsTargetScore ? AppColors.coin : Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
+                    // scorul urcă cifră cu cifră, după ce s-au deschis mâinile
+                    TweenAnimationBuilder<int>(
+                      tween: IntTween(end: p.score),
+                      duration: const Duration(milliseconds: 700),
+                      builder: (context, v, _) => Text(
+                        '$v',
+                        style: TextStyle(
+                          color: v >= rpsTargetScore ? AppColors.coin : Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 18,
+                        ),
                       ),
                     ),
                   ],
@@ -350,50 +404,175 @@ class _ChoiceButton extends StatelessWidget {
   }
 }
 
-class _RevealRow extends StatelessWidget {
+/// **Dezvăluirea**: toți pumnii bat de trei ori pe „Piatră… Hârtie…
+/// Foarfecă!", apoi se deschid în aceeași clipă. Cine a bătut pe cineva
+/// strălucește auriu și primește „+N"; cine a fost bătut se stinge. Timpul
+/// vine din controlerul ecranului, deci totul e o funcție de [time] —
+/// nicio stare proprie.
+class _RpsRevealStage extends StatelessWidget {
+  final double time;
   final MatchInfo info;
   final List<MatchPlayer> players;
+  final String myId;
   final Map<String, String> emoji;
   final String Function(String) labelFor;
-  const _RevealRow({
+  const _RpsRevealStage({
+    required this.time,
     required this.info,
     required this.players,
+    required this.myId,
     required this.emoji,
     required this.labelFor,
   });
 
+  /// Un „bătut" de pumn. Trei bătăi, apoi deschiderea la 3 × [pumpSeconds].
+  static const double pumpSeconds = 0.34;
+  static const double openAt = pumpSeconds * 3;
+
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 14,
-      runSpacing: 10,
+    final gains = rpsRoundScores({for (final p in players) p.id: info.roundAnswers[p.id] ?? ''});
+    final open = time >= openAt;
+    final sinceOpen = time - openAt;
+    final words = [tr('PIATRĂ…', 'ROCK…'), tr('HÂRTIE…', 'PAPER…'), tr('FOARFECĂ!', 'SCISSORS!')];
+    final pump = (time / pumpSeconds).floor().clamp(0, 2);
+    final myGain = gains[myId] ?? 0;
+
+    // bătaia: pumnul urcă și coboară o dată pe fiecare cuvânt
+    final phase = (time % pumpSeconds) / pumpSeconds;
+    final lift = open ? 0.0 : -sin(phase * pi) * 16;
+
+    final String headline;
+    final Color headColor;
+    if (!open) {
+      headline = words[pump];
+      headColor = Colors.white;
+    } else if (myGain > 0) {
+      headline = myGain == 1 ? tr('+1 PUNCT!', '+1 POINT!') : tr('+$myGain PUNCTE!', '+$myGain POINTS!');
+      headColor = AppColors.coin;
+    } else if (players.every((p) => (gains[p.id] ?? 0) == 0)) {
+      headline = tr('EGALITATE', 'DRAW');
+      headColor = Colors.white70;
+    } else {
+      headline = tr('NIMIC RUNDA ASTA', 'NOTHING THIS ROUND');
+      headColor = Colors.white54;
+    }
+    final headPop = open ? Curves.elasticOut.transform((sinceOpen / 0.6).clamp(0.0, 1.0)) : 1.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        for (final p in players)
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                emoji[info.roundAnswers[p.id]] ?? '❔',
-                style: const TextStyle(fontSize: 34),
+        Transform.scale(
+          scale: open ? 0.6 + 0.4 * headPop : 1.0 + (1 - phase) * 0.12,
+          child: Text(
+            headline,
+            style: TextStyle(
+              color: headColor,
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 1.5,
+              shadows: const [Shadow(color: Colors.black87, blurRadius: 10)],
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 12,
+          children: [for (final p in players) _card(p, gains, open, sinceOpen, lift)],
+        ),
+      ],
+    );
+  }
+
+  Widget _card(MatchPlayer p, Map<String, int> gains, bool open, double sinceOpen, double lift) {
+    final choice = info.roundAnswers[p.id] ?? '';
+    final gain = gains[p.id] ?? 0;
+    final beaten = open && gain == 0 && gains.values.any((g) => g > 0);
+    final isMe = p.id == myId;
+    // deschiderea: un pocnet elastic, fiecare carte cu o fracțiune de
+    // întârziere față de vecina ei, ca să se simtă ca un val
+    final order = players.indexOf(p);
+    final pop = open ? Curves.elasticOut.transform(((sinceOpen - order * 0.03) / 0.5).clamp(0.0, 1.0)) : 1.0;
+    final glow = open && gain > 0 ? ((sinceOpen - 0.2) / 0.3).clamp(0.0, 1.0) : 0.0;
+    final dim = beaten ? ((sinceOpen - 0.2) / 0.3).clamp(0.0, 1.0) : 0.0;
+    final plusT = ((sinceOpen - 0.35) / 1.2).clamp(0.0, 1.0);
+
+    return SizedBox(
+      width: 78,
+      height: 118,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          Opacity(
+            opacity: 1 - 0.55 * dim,
+            child: Container(
+              width: 78,
+              height: 104,
+              decoration: BoxDecoration(
+                color: Color.lerp(Colors.white.withAlpha(14), AppColors.coin.withAlpha(46), glow),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Color.lerp(isMe ? AppColors.purple : Colors.white24, AppColors.coin, glow)!,
+                  width: isMe || glow > 0 ? 2 : 1,
+                ),
+                boxShadow: glow > 0
+                    ? [BoxShadow(color: AppColors.coin.withAlpha((110 * glow).round()), blurRadius: 18, spreadRadius: -4)]
+                    : null,
               ),
-              const SizedBox(height: 2),
-              SizedBox(
-                width: 72,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Transform.translate(
+                    offset: Offset(0, lift),
+                    child: Transform.scale(
+                      scale: open ? 0.5 + 0.5 * pop : 1.0,
+                      child: Text(open ? (emoji[choice] ?? '❔') : '✊', style: const TextStyle(fontSize: 36)),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    open ? (choice.isEmpty ? tr('nimic', 'nothing') : labelFor(choice)) : '',
+                    style: const TextStyle(color: Colors.white60, fontSize: 10.5, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 2),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      isMe ? tr('TU', 'YOU') : p.name,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isMe ? AppColors.purple : Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (open && gain > 0 && plusT > 0 && plusT < 1)
+            Positioned(
+              top: -8 - plusT * 34,
+              child: Opacity(
+                opacity: plusT < 0.7 ? 1 : 1 - (plusT - 0.7) / 0.3,
                 child: Text(
-                  p.name,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: info.roundWinnerIds.contains(p.id) ? AppColors.play : Colors.white54,
-                    fontSize: 11,
-                    fontWeight: info.roundWinnerIds.contains(p.id) ? FontWeight.w800 : FontWeight.w400,
+                  '+$gain',
+                  style: const TextStyle(
+                    color: AppColors.coin,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    shadows: [Shadow(color: Colors.black, blurRadius: 8)],
                   ),
                 ),
               ),
-            ],
-          ),
-      ],
+            ),
+        ],
+      ),
     );
   }
 }

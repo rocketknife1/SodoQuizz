@@ -58,6 +58,10 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
   int _lastRoundIndex = -1;
   bool _showWinners = false;
+
+  /// Cât se derulează cifra provocatorului la dezvăluire. Ștampila și
+  /// câștigătorii apar abia după, ca verdictul să vină după număr, nu înainte.
+  static const int _rollMs = 1100;
   bool _resolving = false;
   bool _navigatedToResults = false;
   bool _left = false;
@@ -276,7 +280,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
         WidgetsBinding.instance.addPostFrameCallback((_) => _tryResolve(info));
       }
     } else if (info.roundPhase == RoundPhase.revealed) {
-      _revealDelayTimer ??= Timer(const Duration(milliseconds: 700), () {
+      _revealDelayTimer ??= Timer(const Duration(milliseconds: _rollMs + 150), () {
         if (mounted) setState(() => _showWinners = true);
       });
       _advanceTimer ??= Timer(const Duration(seconds: higherLowerRevealSeconds), () {
@@ -300,7 +304,9 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
     if (info.status == MatchStatus.finished && !_navigatedToResults) {
       _navigatedToResults = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Ultima rundă se rezolvă în aceeași scriere care încheie meciul: fără
+      // pauza asta, cifra decisivă nu s-ar mai derula niciodată.
+      Future.delayed(const Duration(seconds: higherLowerRevealSeconds), () {
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
@@ -365,10 +371,27 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                               children: [
                                 _buildCard(_championFor(info.roundIndex), revealedNumber: true, resultBorder: null),
                                 _buildMiddle(info),
-                                _buildCard(
-                                  _challengerFor(info.roundIndex),
-                                  revealedNumber: revealed || _peekActive,
-                                  resultBorder: revealed && participatedThisRound ? info.roundWinnerIds.contains(me) : null,
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  alignment: Alignment.center,
+                                  children: [
+                                    _buildCard(
+                                      _challengerFor(info.roundIndex),
+                                      revealedNumber: revealed || _peekActive,
+                                      // la dezvăluire cifra se derulează de la zero; la
+                                      // „Trage cu ochiul" apare direct, e doar o privire
+                                      rollKey: revealed ? info.roundIndex : null,
+                                      resultBorder: revealed && participatedThisRound && _showWinners
+                                          ? info.roundWinnerIds.contains(me)
+                                          : null,
+                                    ),
+                                    if (revealed && participatedThisRound && _showWinners)
+                                      Positioned(
+                                        right: 6,
+                                        top: 0,
+                                        child: _ResultStamp(correct: info.roundWinnerIds.contains(me)),
+                                      ),
+                                  ],
                                 ),
                                 const SizedBox(height: 16),
                                 _buildActionArea(info, myPlayer, players),
@@ -479,7 +502,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
     );
   }
 
-  Widget _buildCard(HigherLowerItem item, {required bool revealedNumber, required bool? resultBorder}) {
+  Widget _buildCard(HigherLowerItem item, {required bool revealedNumber, required bool? resultBorder, int? rollKey}) {
     final borderColor = switch (resultBorder) {
       true => AppColors.play,
       false => AppColors.danger,
@@ -516,7 +539,21 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
                     key: const ValueKey('revealed'),
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                     decoration: BoxDecoration(color: AppColors.coin.withAlpha(40), borderRadius: BorderRadius.circular(14)),
-                    child: Text(formatSearchVolume(item.popularity), style: const TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800)),
+                    child: rollKey == null
+                        ? Text(formatSearchVolume(item.popularity), style: const TextStyle(color: AppColors.coin, fontSize: 14, fontWeight: FontWeight.w800))
+                        // Contorul care se derulează — suspansul „mai mult sau
+                        // mai puțin?" ține cât urcă cifra, nu se rezolvă dintr-o
+                        // clipire.
+                        : TweenAnimationBuilder<double>(
+                            key: ValueKey('roll-$rollKey'),
+                            tween: Tween(begin: 0, end: item.popularity),
+                            duration: const Duration(milliseconds: _rollMs),
+                            curve: Curves.easeOutCubic,
+                            builder: (context, v, _) => Text(
+                              formatSearchVolume(v),
+                              style: const TextStyle(color: AppColors.coin, fontSize: 18, fontWeight: FontWeight.w900),
+                            ),
+                          ),
                   )
                 : const Text('❓ ❓ ❓', key: ValueKey('hidden'), style: TextStyle(color: Colors.white38, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: 3)),
           ),
@@ -543,14 +580,14 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
     if (info.roundPhase == RoundPhase.revealed) {
       if (!_showWinners) {
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 20),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54)),
-              SizedBox(height: 8),
-              Text('Generating correct answer and winners...', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w700)),
+              const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white54)),
+              const SizedBox(height: 8),
+              Text(tr('Se numără voturile…', 'Counting the votes…'), style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w700)),
             ],
           ),
         );
@@ -570,9 +607,10 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
 
     final me = MultiplayerService.instance.currentPlayerId;
     if (info.roundAnswers.containsKey(me)) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 20),
-        child: Text('✓ Ai votat! Waiting for opponent response...', style: TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700)),
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Text(tr('✓ Ai votat! Aștepți ceilalți jucători…', '✓ Voted! Waiting for the others…'),
+            style: const TextStyle(color: AppColors.play, fontSize: 14, fontWeight: FontWeight.w700)),
       );
     }
 
@@ -598,6 +636,39 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
             const SizedBox(height: 4),
             Text(label, style: TextStyle(color: color, fontSize: 12.5, fontWeight: FontWeight.w800)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Ștampila de verdict pe cardul provocatorului: cade de sus, puțin
+/// strâmbă, cu un pocnet elastic — „CORECT!" verde sau „GREȘIT" roșu.
+class _ResultStamp extends StatelessWidget {
+  final bool correct;
+  const _ResultStamp({required this.correct});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = correct ? AppColors.play : AppColors.danger;
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 550),
+      curve: Curves.elasticOut,
+      builder: (context, k, child) => Transform.rotate(
+        angle: -0.18,
+        child: Transform.scale(scale: 2.2 - 1.2 * k, child: Opacity(opacity: k.clamp(0.0, 1.0), child: child)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withAlpha(40),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color, width: 2.5),
+        ),
+        child: Text(
+          correct ? tr('CORECT!', 'CORRECT!') : tr('GREȘIT', 'WRONG'),
+          style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900, letterSpacing: 1.5),
         ),
       ),
     );

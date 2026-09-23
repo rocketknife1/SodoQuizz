@@ -7,13 +7,20 @@ import 'package:guess_it/core/electric_chair.dart';
 /// rămână scurtă.
 void main() {
   group('pauza dintre runde la Scaunul Electric', () {
-    test('runda cu cineva pe scaun primeste bugetul intreg', () {
-      expect(electricChairRevealSecondsFor(anyoneTested: true), electricChairRevealSeconds);
+    test('fiecare victima isi primeste scena intreaga, verdictul inclus', () {
+      for (final n in [1, 2, 3, 5]) {
+        final total = electricChairRevealSecondsFor(tested: n);
+        final lastVerdict = electricChairShowdownLead + (n - 1) * electricChairSegmentSeconds(n) + electricChairVerdictAt;
+        expect(total, greaterThan(lastVerdict + 1), reason: '$n victime');
+        expect(electricChairSegmentSeconds(n), greaterThan(electricChairVerdictAt + 0.8));
+      }
+      // cinci oameni pe scaun nu tin masa pe loc un sfert de minut
+      expect(electricChairRevealSecondsFor(tested: 5), lessThan(12));
     });
 
     test('runda fara nimeni pe scaun nu tine masa pe loc degeaba', () {
-      expect(electricChairRevealSecondsFor(anyoneTested: false), electricChairEmptyRevealSeconds);
-      expect(electricChairEmptyRevealSeconds, lessThan(electricChairRevealSeconds));
+      expect(electricChairRevealSecondsFor(tested: 0), electricChairEmptyRevealSeconds);
+      expect(electricChairRevealSecondsFor(tested: 0), lessThan(electricChairRevealSecondsFor(tested: 1)));
     });
 
     test('pauza scurta ramane totusi cat sa se citeasca raspunsul corect', () {
@@ -22,11 +29,8 @@ void main() {
     });
 
     test('toti clientii calculeaza aceeasi valoare din aceleasi date', () {
-      for (final anyoneTested in [true, false]) {
-        expect(
-          electricChairRevealSecondsFor(anyoneTested: anyoneTested),
-          electricChairRevealSecondsFor(anyoneTested: anyoneTested),
-        );
+      for (final n in [0, 1, 4]) {
+        expect(electricChairRevealSecondsFor(tested: n), electricChairRevealSecondsFor(tested: n));
       }
     });
   });

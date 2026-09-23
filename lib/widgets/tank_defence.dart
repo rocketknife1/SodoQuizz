@@ -31,6 +31,7 @@ import 'package:flutter/material.dart';
 import '../core/lang.dart';
 import '../core/tanks.dart';
 import '../core/theme.dart';
+import 'battlefield_backdrop.dart';
 import 'tank_art.dart';
 import 'tank_pov.dart';
 
@@ -166,6 +167,16 @@ class _TankDefencePainter extends CustomPainter {
   /// fiecare redesenare a cadrului.
   double get _dodgeDir => myName.codeUnits.fold<int>(0, (a, b) => a + b).isEven ? 1.0 : -1.0;
 
+  /// Obuzele evitate, în ordinea impactului. Sub bombardament fiecare
+  /// fereală smucește în partea OPUSĂ celei dinainte: cu patru ratări la
+  /// rând, un tanc care ar fugi mereu în aceeași parte ar ieși din cadru.
+  List<IncomingShell> get _dodges => [
+        for (final s in shells)
+          if (!s.hit && !s.blockedByShield) s,
+      ]..sort((a, b) => a.impactAt.compareTo(b.impactAt));
+
+  double _dirOf(int k) => k.isEven ? _dodgeDir : -_dodgeDir;
+
   // ─── Geometria scenei ───────────────────────────────────────────────────
 
   Offset _tankBase(Size size) => Offset(size.width * 0.5, size.height * 0.84);
@@ -176,12 +187,12 @@ class _TankDefencePainter extends CustomPainter {
   Offset _tankShift(Size size, double t) {
     var dx = 0.0;
     var dy = 0.0;
-    for (final s in shells) {
-      if (s.hit || s.blockedByShield) continue;
-      final since = t - (s.impactAt - _dodgeLead);
+    final ds = _dodges;
+    for (var k = 0; k < ds.length; k++) {
+      final since = t - (ds[k].impactAt - _dodgeLead);
       if (since <= 0) continue;
       final e = Curves.easeOutCubic.transform((since / _dodgeSpan).clamp(0.0, 1.0));
-      dx += _dodgeDir * size.width * 0.30 * e;
+      dx += _dirOf(k) * size.width * (ds.length > 1 ? 0.22 : 0.30) * e;
       // urcă puțin în cadru = se depărtează de cameră; fără asta, saltul
       // lateral arată ca o alunecare pe gheață, nu ca un tanc care pleacă
       dy -= size.height * 0.035 * e;
@@ -232,8 +243,10 @@ class _TankDefencePainter extends CustomPainter {
     canvas.save();
     canvas.translate(shake.dx, shake.dy);
 
-    _paintSky(canvas, size, horizon);
-    _paintGround(canvas, size, horizon);
+    if (!BattlefieldBackdrop.paint(canvas, size, horizon)) {
+      _paintSky(canvas, size, horizon);
+      _paintGround(canvas, size, horizon);
+    }
 
     canvas.save();
     canvas.translate(-pan, 0);
@@ -363,8 +376,10 @@ class _TankDefencePainter extends CustomPainter {
   /// lucru care arată CĂ a plecat de pe loc — fără el, tancul pare doar mutat
   /// în altă parte a cadrului.
   void _paintDodgeSmoke(Canvas canvas, Size size) {
-    for (final s in shells) {
-      if (s.hit || s.blockedByShield) continue;
+    final ds = _dodges;
+    for (var k = 0; k < ds.length; k++) {
+      final s = ds[k];
+      final dir = _dirOf(k);
       final since = time - (s.impactAt - _dodgeLead);
       if (since <= 0) continue;
       final life = (since / (_dodgeSpan + 0.7)).clamp(0.0, 1.0);
@@ -380,7 +395,7 @@ class _TankDefencePainter extends CustomPainter {
         final spread = Curves.easeOutCubic.transform(age);
         final at = from +
             Offset(
-              _dodgeDir * size.width * (0.02 + i * 0.030) * (0.5 + spread),
+              dir * size.width * (0.02 + i * 0.030) * (0.5 + spread),
               -size.height * 0.012 * spread * (1 + i * 0.16),
             );
         puff.color = const Color(0xFFC8B49B).withAlpha(((105 - i * 9) * (1 - age)).round().clamp(0, 120));
@@ -404,7 +419,7 @@ class _TankDefencePainter extends CustomPainter {
       canvas,
       Rect.fromCenter(center: center, width: tankW, height: tankH),
       color: myColor,
-      damage: 1 - (myHp / tanksMaxHp),
+      damage: 1 - (_hpNow / tanksMaxHp),
     );
   }
 
@@ -589,6 +604,10 @@ class _TankDefencePainter extends CustomPainter {
   /// așa, fiecare impact rescrie mesajul, iar totalul se vede oricum pe bara
   /// de viață când se retrage camera.
   void _paintOutcome(Canvas canvas, Size size) {
+    if (shells.length > 1) {
+      _paintSalvoOutcome(canvas, size);
+      return;
+    }
     IncomingShell? last;
     for (final s in shells) {
       if (time < s.impactAt) continue;
@@ -653,6 +672,77 @@ class _TankDefencePainter extends CustomPainter {
     );
   }
 
+  /// Deznodământul unui bombardament (două sau mai multe obuze spre mine).
+  /// Fiecare obuz își scrie rezultatul lângă tancul care l-a tras, la
+  /// orizont — „cine cu cât" se citește direct —, iar în mijloc crește
+  /// totalul încasat, lovitură cu lovitură. Un singur mesaj care s-ar
+  /// rescrie la fiecare impact ar clipi de cinci ori într-o secundă.
+  void _paintSalvoOutcome(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+    final lastImpact = shells.map((s) => s.impactAt).reduce(max);
+    final fade = time > lastImpact ? 1 - ((time - lastImpact) / tankPovAftermath).clamp(0.0, 1.0) * 0.3 : 1.0;
+
+    var taken = 0;
+    var landed = 0;
+    IncomingShell? lastHit;
+    for (final s in shells) {
+      if (time < s.impactAt) continue;
+      landed++;
+      final a = ((time - s.impactAt) / 0.15).clamp(0.0, 1.0) * fade;
+      final at = _shooterAt(size, s) - Offset(0, size.width * 0.06);
+      if (s.hit) {
+        taken += s.damage;
+        if (lastHit == null || s.impactAt > lastHit.impactAt) lastHit = s;
+        paintBattleLabel(canvas, at, '−${s.damage}', 16, s.color, alpha: a);
+      } else if (s.blockedByShield) {
+        paintBattleLabel(canvas, at, tr('SCUT', 'SHIELD'), 12, const Color(0xFF7EC8FF), alpha: a);
+      } else {
+        paintBattleLabel(canvas, at, tr('RATAT', 'MISSED'), 12, AppColors.play, alpha: a);
+      }
+    }
+    if (landed == 0) return;
+
+    // blițul scurt al fiecărei lovituri încasate
+    if (lastHit != null) {
+      final flash = (1 - (time - lastHit.impactAt) / (0.10 * _scale)).clamp(0.0, 1.0);
+      if (flash > 0) {
+        canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white.withAlpha((150 * flash).round()));
+      }
+    }
+    if (taken > 0) {
+      paintBattleLabel(canvas, Offset(w / 2, h * 0.22), '−$taken', 64, AppColors.danger, alpha: fade);
+    }
+    final done = time >= lastImpact;
+    final hits = shells.where((s) => s.hit).length;
+    final String line;
+    if (!done) {
+      line = tr('$landed din ${shells.length} obuze au ajuns', '$landed of ${shells.length} shells landed');
+    } else if (hits == 0) {
+      line = tr('Ha, i-am ratat pe toți!', 'Ha, they all missed!');
+    } else {
+      line = tr('$hits din ${shells.length} te-au lovit', '$hits of ${shells.length} hit you');
+    }
+    paintBattleLabel(
+      canvas,
+      Offset(w / 2, h * 0.22 + (taken > 0 ? 48 : 0)),
+      line,
+      hits == 0 && done ? 30 : 16,
+      hits == 0 && done ? AppColors.play : AppColors.orange,
+      alpha: fade,
+    );
+  }
+
+  /// Viața mea în clipa asta: cea de la începutul scenei minus loviturile
+  /// care au ajuns deja.
+  int get _hpNow {
+    var hp = myHp;
+    for (final s in shells) {
+      if (s.hit && time >= s.impactAt) hp -= s.damage;
+    }
+    return hp.clamp(0, tanksMaxHp);
+  }
+
   /// Cifrele din colțuri: cine trage în mine, cât mai are obuzul de zburat,
   /// viața mea. Roșu, nu portocaliu ca la camera de pe obuz — aici nu
   /// țintesc, sunt ținta.
@@ -707,7 +797,7 @@ class _TankDefencePainter extends CustomPainter {
     if (nearest < 1) {
       paintBattleLabel(canvas, Offset(w * 0.20, h - pad - 30), '${(nearest * 420).round()}m', 17, Colors.white, alpha: dim);
     }
-    paintBattleLabel(canvas, Offset(w * 0.80, h - pad - 30), '$myHp HP', 17, TankHpBar.hpColor(myHp), alpha: dim);
+    paintBattleLabel(canvas, Offset(w * 0.80, h - pad - 30), '$_hpNow HP', 17, TankHpBar.hpColor(_hpNow), alpha: dim);
   }
 
   @override
