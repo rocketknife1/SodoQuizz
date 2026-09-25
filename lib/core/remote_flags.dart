@@ -90,9 +90,12 @@ class RemoteFlags {
       final rc = FirebaseRemoteConfig.instance;
       await rc.setDefaults(_defaults);
       _rc = rc;
-      // Un minut între aduceri: destul cât o schimbare făcută în consolă să
-      // ajungă repede la jucători, dar nu atât de des încât să coste cotă.
-      // La prima pornire valorile vin oricum din `_defaults`.
+      // O oră între aduceri: o schimbare făcută în consolă ajunge la jucători
+      // în cel mult o oră, fără să coste cotă. Valoarea adusă rămâne în cache
+      // și peste reporniri — un mesaj de mentenanță stins de curând poate
+      // apărea încă până la o oră pe un telefon care l-a prins aprins; o
+      // reinstalare curată îl șterge. La prima pornire valorile vin din
+      // `_defaults`.
       await rc.setConfigSettings(RemoteConfigSettings(
         fetchTimeout: const Duration(seconds: 8),
         minimumFetchInterval: const Duration(minutes: 60),
