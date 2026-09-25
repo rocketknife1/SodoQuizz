@@ -61,19 +61,22 @@ void main() {
     });
   });
 
-  test('rpsMaxRounds e un plafon rezonabil', () {
-    expect(rpsMaxRounds, greaterThan(rpsTargetScore));
-  });
+  group('durata meciului', () {
+    // Cerința (nota din joc): un meci de vreo 3 minute, oricâți ar fi jucătorii.
+    // Înainte se termina la 10 puncte: sub 2 minute cu 5 jucători, 5-8 minute cu 2.
+    test('cel mai rău caz (toți aleg în ultima secundă) tot nu depășește ~4,5 minute', () {
+      final worst = rpsRounds * (rpsRoundSeconds + rpsRevealSeconds);
+      expect(worst, lessThanOrEqualTo(4.5 * 60));
+    });
 
-  group('rpsWinnerReached', () {
-    test('nimeni sub prag', () {
-      expect(rpsWinnerReached({'a': 8, 'b': 5}), isFalse);
+    test('un meci cu alegeri rapide (~6 s) tot ține cel puțin ~2 minute', () {
+      final quick = rpsRounds * (6 + rpsRevealSeconds);
+      expect(quick, greaterThanOrEqualTo(2 * 60));
     });
-    test('unul atinge pragul', () {
-      expect(rpsWinnerReached({'a': 10, 'b': 5}), isTrue);
-    });
-    test('peste prag', () {
-      expect(rpsWinnerReached({'a': 12, 'b': 5}), isTrue);
+
+    test('media (alegere ~9 s) cade lângă cele 3 minute cerute', () {
+      final typical = rpsRounds * (9 + rpsRevealSeconds);
+      expect(typical, inInclusiveRange(2.5 * 60, 3.5 * 60));
     });
   });
 }

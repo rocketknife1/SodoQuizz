@@ -50,6 +50,13 @@ class IncomingShell {
   /// dom care ține și obuzul care se sparge de el.
   final bool blockedByShield;
 
+  /// **Reflexie** — am scut reflector: obuzul ajunge la mine ([impactAt]),
+  /// se izbește de dom și pleacă înapoi, la cel care l-a tras, până în
+  /// [returnUntil]. Eu nu încasez nimic; trăgătorul își încasează propria
+  /// lovitură.
+  final bool reflected;
+  final double returnUntil;
+
   /// Culoarea celui care trage — aceeași cu a proiectilului lui din arenă,
   /// ca „cine m-a lovit" să se citească din culoare, nu doar din nume.
   final Color color;
@@ -71,6 +78,8 @@ class IncomingShell {
     required this.shooterName,
     this.lane = 0,
     this.blockedByShield = false,
+    this.reflected = false,
+    this.returnUntil = 0,
   });
 }
 
@@ -105,7 +114,7 @@ class TankDefenceView extends StatelessWidget {
   /// cifra asta ca să știe până când ține suprapunerea.
   static double endAtFor(List<IncomingShell> shells) {
     if (shells.isEmpty) return 0;
-    return shells.map((s) => s.impactAt).reduce(max) + tankPovAftermath;
+    return shells.map((s) => s.reflected ? s.returnUntil : s.impactAt).reduce(max) + tankPovAftermath;
   }
 
   @override
@@ -172,7 +181,7 @@ class _TankDefencePainter extends CustomPainter {
   /// rând, un tanc care ar fugi mereu în aceeași parte ar ieși din cadru.
   List<IncomingShell> get _dodges => [
         for (final s in shells)
-          if (!s.hit && !s.blockedByShield) s,
+          if (!s.hit && !s.blockedByShield && !s.reflected) s,
       ]..sort((a, b) => a.impactAt.compareTo(b.impactAt));
 
   double _dirOf(int k) => k.isEven ? _dodgeDir : -_dodgeDir;
@@ -227,7 +236,7 @@ class _TankDefencePainter extends CustomPainter {
   /// arăta ca o eroare de desen.
   Offset _aimAt(Size size, IncomingShell s) {
     final base = _tankBase(size);
-    final at = (s.hit || s.blockedByShield) ? s.impactAt : s.impactAt - _dodgeLead - 0.05;
+    final at = (s.hit || s.blockedByShield || s.reflected) ? s.impactAt : s.impactAt - _dodgeLead - 0.05;
     return base + _tankShift(size, at) + Offset(0, size.height * 0.01);
   }
 
@@ -255,7 +264,7 @@ class _TankDefencePainter extends CustomPainter {
     }
     _paintDodgeSmoke(canvas, size);
     _paintMyTank(canvas, size, shift);
-    if (shells.any((s) => s.blockedByShield)) {
+    if (shells.any((s) => s.blockedByShield || s.reflected)) {
       _paintShieldDome(canvas, size, shift);
     }
     for (final s in shells) {
@@ -348,7 +357,7 @@ class _TankDefencePainter extends CustomPainter {
   /// în clipa plecării. E singurul lucru din cadru care spune DE UNDE vine
   /// obuzul înainte să apuce să crească.
   void _paintShooter(Canvas canvas, Size size, IncomingShell s) {
-    if (time > s.impactAt + 0.5) return;
+    if (time > (s.reflected ? s.returnUntil : s.impactAt) + 0.5) return;
     final at = _shooterAt(size, s);
     final tankW = size.width * 0.13;
     final tankH = tankW * 0.62;
@@ -427,6 +436,10 @@ class _TankDefencePainter extends CustomPainter {
   /// e easeInQuart, nu liniară — la viteza unui obuz, ultimii metri se fac
   /// într-o clipă, iar o apropiere uniformă ar arăta a balon, nu a proiectil.
   void _paintShell(Canvas canvas, Size size, IncomingShell s) {
+    if (s.reflected && time >= s.impactAt) {
+      _paintReturnShell(canvas, size, s);
+      return;
+    }
     final span = max(s.impactAt - s.launchAt, 0.001);
     final q = (time - s.launchAt) / span;
     if (q < 0 || q > 1) return;
@@ -455,6 +468,35 @@ class _TankDefencePainter extends CustomPainter {
     canvas.drawCircle(pos, r * 0.55, Paint()..color = s.color);
   }
 
+  /// Obuzul reflectat, la plecarea de la mine spre cel care l-a tras: pornește
+  /// de la dom, mare, și se face punct la orizont, cu o dâră lungă și rece —
+  /// accelerează (easeInCubic), ca să se citească drept „întors cu forță", nu
+  /// drept un obuz care se retrage.
+  void _paintReturnShell(Canvas canvas, Size size, IncomingShell s) {
+    final r = ((time - s.impactAt) / max(s.returnUntil - s.impactAt, 0.001)).clamp(0.0, 1.0);
+    if (r >= 1) return;
+    final from = _aimAt(size, s) - Offset(0, size.height * 0.03);
+    final to = _shooterAt(size, s);
+    final e = Curves.easeInCubic.transform(r);
+    final pos = Offset.lerp(from, to, e)!;
+    final rad = _lerp(size.width * 0.055, size.width * 0.008, e);
+    // dâra: mult mai lungă decât la un obuz care vine — viteza e ideea
+    final tailE = Curves.easeInCubic.transform((r - 0.32).clamp(0.0, 1.0));
+    final tail = Offset.lerp(from, to, tailE)!;
+    const cold = Color(0xFF9AD4FF);
+    canvas.drawLine(
+      tail,
+      pos,
+      Paint()
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = rad * 1.5
+        ..shader = LinearGradient(colors: [cold.withAlpha(0), cold.withAlpha(230)]).createShader(Rect.fromPoints(tail, pos)),
+    );
+    canvas.drawCircle(pos, rad * 2.4, Paint()..color = cold.withAlpha(60));
+    canvas.drawCircle(pos, rad, Paint()..color = Colors.white);
+    canvas.drawCircle(pos, rad * 0.55, Paint()..color = s.color);
+  }
+
   /// Domul de scut din fața tancului meu — o calotă hexagonală alb-albastră
   /// care pulsează ușor, prezentă toată faza cât un obuz blocat e pe drum.
   void _paintShieldDome(Canvas canvas, Size size, Offset shift) {
@@ -480,6 +522,50 @@ class _TankDefencePainter extends CustomPainter {
     if (after < 0) return;
     final at = _aimAt(size, s);
     final w = size.width;
+
+    if (s.reflected) {
+      // Ricoșeul: mai mare și mai alb decât o simplă oprire de scut — un bliț,
+      // patru inele reci, iar când obuzul ajunge înapoi la trăgător, o
+      // explozie mică la orizont, ca să se vadă că a ars el, nu eu.
+      final t = (after / (0.7 * _scale)).clamp(0.0, 1.0);
+      if (t < 1) {
+        final fade = 1 - t;
+        final flash = (1 - after / (0.10 * _scale)).clamp(0.0, 1.0);
+        if (flash > 0) {
+          canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFBFE4FF).withAlpha((150 * flash).round()));
+        }
+        final domeTop = at - Offset(0, size.height * 0.05);
+        for (var k = 0; k < 4; k++) {
+          canvas.drawCircle(
+            domeTop,
+            w * (0.07 + 0.30 * Curves.easeOutCubic.transform(t)) + k * 10,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = (6 - k * 1.3) * fade
+              ..color = (k == 0 ? Colors.white : const Color(0xFF7EC8FF)).withAlpha((225 * fade).round()),
+          );
+        }
+      }
+      final hitShooter = time - s.returnUntil;
+      if (hitShooter >= 0 && hitShooter < 0.9) {
+        final k = hitShooter / 0.9;
+        final at2 = _shooterAt(size, s);
+        final rr = w * (0.04 + 0.12 * Curves.easeOutCubic.transform(k));
+        canvas.drawCircle(
+          at2,
+          rr,
+          Paint()
+            ..shader = RadialGradient(
+              colors: [
+                Colors.white.withAlpha((240 * (1 - k)).round()),
+                AppColors.orange.withAlpha((210 * (1 - k)).round()),
+                Colors.transparent,
+              ],
+            ).createShader(Rect.fromCircle(center: at2, radius: rr)),
+        );
+      }
+      return;
+    }
 
     if (s.blockedByShield) {
       // Oprit de scut: obuzul se sparge de dom, câteva inele alb-albastre și
@@ -641,6 +727,22 @@ class _TankDefencePainter extends CustomPainter {
       return;
     }
 
+    if (last.reflected) {
+      paintBattleLabel(canvas, Offset(w / 2, h * 0.24 - t * 30), tr('REFLECTAT!', 'REFLECTED!'), 56,
+          const Color(0xFF7EC8FF), alpha: fade);
+      paintBattleLabel(
+        canvas,
+        Offset(w / 2, h * 0.24 + 46 - t * 30),
+        tr('${last.shooterName} și-a încasat propria lovitură', '${last.shooterName} ate their own shell'),
+        14,
+        Colors.white70,
+        alpha: fade,
+        weight: FontWeight.w600,
+        letterSpacing: 0,
+      );
+      return;
+    }
+
     if (last.blockedByShield) {
       paintBattleLabel(canvas, Offset(w / 2, h * 0.24 - t * 30), tr('SCUT!', 'SHIELD!'), 52,
           const Color(0xFF7EC8FF), alpha: fade);
@@ -695,6 +797,8 @@ class _TankDefencePainter extends CustomPainter {
         taken += s.damage;
         if (lastHit == null || s.impactAt > lastHit.impactAt) lastHit = s;
         paintBattleLabel(canvas, at, '−${s.damage}', 16, s.color, alpha: a);
+      } else if (s.reflected) {
+        paintBattleLabel(canvas, at, tr('ÎNTORS', 'BOUNCED'), 12, const Color(0xFF7EC8FF), alpha: a);
       } else if (s.blockedByShield) {
         paintBattleLabel(canvas, at, tr('SCUT', 'SHIELD'), 12, const Color(0xFF7EC8FF), alpha: a);
       } else {

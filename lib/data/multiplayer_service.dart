@@ -522,9 +522,9 @@ class MultiplayerService {
   ///
   /// Fără eliminare, fără „pâini": toți joacă fiecare rundă. Fiecare jucător
   /// primește `+1` pentru fiecare adversar pe care îl bate (vezi
-  /// core/rock_paper_scissors.dart `rpsRoundScores`). Meciul se termină când
-  /// cineva atinge [rpsTargetScore] — restul clasamentului se face după scor
-  /// în [MultiplayerResultsScreen], la fel ca la celelalte moduri cu miză.
+  /// core/rock_paper_scissors.dart `rpsRoundScores`). Meciul are un număr fix
+  /// de runde ([rpsRounds]); clasamentul se face după scor în
+  /// [MultiplayerResultsScreen], la fel ca la celelalte moduri cu miză.
   ///
   /// Jucătorii care n-au apucat să aleagă (AFK) au alegerea goală: nu bat pe
   /// nimeni și sunt bătuți de toți — la fel ca un răspuns greșit la
@@ -562,15 +562,12 @@ class MultiplayerService {
           if (add > 0) winnerIds.add(doc.id);
           if (add != 0) tx.update(doc.reference, {'score': total});
         }
-        // Meciul se termina cand: cineva atinge pragul (rpsTargetScore), SAU
-        // a mai ramas cel mult un jucator (ceilalti au plecat) — fara asta
-        // ultimul ramas ar fi blocat pe ecran la infinit, cu miza pierduta —
-        // SAU s-a atins plafonul de runde (toti aleg mereu la fel = 0 puncte
-        // pe runda, deci fara plafon meciul n-ar avea nicio garantie de
-        // terminare, spre deosebire de HL unde painile forteaza eliminare).
+        // Meciul se termina dupa ultima runda (rpsRounds), SAU cand a mai
+        // ramas cel mult un jucator (ceilalti au plecat) — fara asta ultimul
+        // ramas ar fi blocat pe ecran la infinit, cu miza pierduta.
         final activePlayers = playerDocs.where((d) => d.exists).length;
-        final outOfRounds = roundIndex + 1 >= rpsMaxRounds;
-        final matchOver = rpsWinnerReached(newScores) || activePlayers <= 1 || outOfRounds;
+        final lastRound = roundIndex + 1 >= rpsRounds;
+        final matchOver = activePlayers <= 1 || lastRound;
         tx.update(matchRef, {
           'roundPhase': RoundPhase.revealed.name,
           'roundWinnerIds': winnerIds,

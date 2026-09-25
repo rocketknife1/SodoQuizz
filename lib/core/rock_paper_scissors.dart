@@ -30,15 +30,18 @@ const int rpsRoundSeconds = sharedRoundAnswerSeconds;
 /// mâinile deschise, „+N" la câștigători și scorul care urcă.
 const int rpsRevealSeconds = 4;
 
-/// Primul jucător care ajunge la scorul ăsta câștigă meciul.
-const int rpsTargetScore = 10;
-
-/// Plafon de runde: dacă nimeni n-a atins [rpsTargetScore] până aici, meciul
-/// se încheie și câștigă cine are scorul cel mai mare (departajare în
-/// [MultiplayerResultsScreen], ca la Tanks/Obby). Fără plafon, o masă în care
-/// toți aleg mereu la fel ar rula la nesfârșit — RPS n-are eliminare care să
-/// forțeze un final ca la Higher & Lower.
-const int rpsMaxRounds = 30;
+/// Câte runde are un meci — mereu aceleași, câștigă cine are scorul cel mai
+/// mare la final (departajare în [MultiplayerResultsScreen], ca la
+/// Tanks/Obby).
+///
+/// Înainte meciul se termina când cineva ajungea la 10 puncte, iar cât dura
+/// depindea de câți jucători erau: cu cinci la masă se termina în vreo șase
+/// runde (sub două minute), cu doi erau ~25 de runde (5-8 minute). Cerința e un
+/// meci de ~3 minute, oricâți ar fi: 14 runde × (alegere 3-15 s + dezvăluire
+/// [rpsRevealSeconds] s) dau ~2,5-4,5 minute, cu media în jur de 3. Ca bonus,
+/// meciul are și o garanție de terminare, fără plafon separat: o masă în
+/// care toți aleg mereu la fel nu mai poate rula la nesfârșit.
+const int rpsRounds = 14;
 
 /// `true` dacă [a] bate [b] la piatră-hârtie-foarfecă. Alegerea goală (`''`,
 /// jucătorul n-a apăsat la timp) nu bate nimic și e bătută de orice alegere
@@ -71,6 +74,4 @@ Map<String, int> rpsRoundScores(Map<String, String> choices) {
   return out;
 }
 
-/// `true` dacă vreun jucător a atins pragul de victorie.
-bool rpsWinnerReached(Map<String, int> scores) =>
-    scores.values.any((s) => s >= rpsTargetScore);
+

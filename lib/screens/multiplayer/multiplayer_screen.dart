@@ -421,8 +421,8 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
             _GameModeOption(
               icon: Icons.back_hand_rounded,
               label: tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
-              subtitle: tr('alegere secretă, primul la $rpsTargetScore puncte câștigă',
-                  'secret pick, first to $rpsTargetScore points wins'),
+              subtitle: tr('alegere secretă, $rpsRounds runde (~3 min), scorul cel mai mare câștigă',
+                  'secret pick, $rpsRounds rounds (~3 min), highest score wins'),
               color: AppColors.play,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.rockPaperScissors),
             ),

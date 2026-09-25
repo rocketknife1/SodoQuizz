@@ -17,8 +17,8 @@ import 'multiplayer_results_screen.dart';
 /// Modul Piatră-Hârtie-Foarfecă — cel mai simplu mod multiplayer: nicio
 /// întrebare, nicio poză. Fiecare rundă, toți jucătorii aleg în secret una
 /// din trei (în [rpsRoundSeconds] secunde), apoi se dezvăluie simultan.
-/// Fiecare primește `+1` pentru fiecare adversar bătut; primul la
-/// [rpsTargetScore] câștigă meciul.
+/// Fiecare primește `+1` pentru fiecare adversar bătut; după [rpsRounds]
+/// runde (~3 minute) câștigă cine are scorul cel mai mare.
 ///
 /// Structura urmează Higher & Lower (rundă sincronă, alegere secretă,
 /// rezolvare prin tranzacție pe care o poate încerca orice client — vezi
@@ -237,6 +237,7 @@ class _MultiplayerRockPaperScissorsScreenState
     final myChoice = info.roundAnswers[me];
     final secondsLeft = _secondsLeftFor(info);
     final sorted = List.of(players)..sort((a, b) => b.score.compareTo(a.score));
+    final topScore = sorted.isEmpty ? 0 : sorted.first.score;
 
     return Column(
       children: [
@@ -256,7 +257,8 @@ class _MultiplayerRockPaperScissorsScreenState
                 ),
               ),
               Text(
-                tr('Primul la $rpsTargetScore', 'First to $rpsTargetScore'),
+                tr('Runda ${min(info.roundIndex + 1, rpsRounds)} din $rpsRounds',
+                    'Round ${min(info.roundIndex + 1, rpsRounds)} of $rpsRounds'),
                 style: const TextStyle(color: Colors.white38, fontSize: 12),
               ),
             ],
@@ -340,7 +342,8 @@ class _MultiplayerRockPaperScissorsScreenState
                       builder: (context, v, _) => Text(
                         '$v',
                         style: TextStyle(
-                          color: v >= rpsTargetScore ? AppColors.coin : Colors.white,
+                          // cine conduce e auriu, ca să se vadă cursa
+                          color: p.score == topScore && topScore > 0 ? AppColors.coin : Colors.white,
                           fontWeight: FontWeight.w800,
                           fontSize: 18,
                         ),

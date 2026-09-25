@@ -775,6 +775,27 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
     }
 
     // ── Ce vede fiecare cameră a mea, scenă cu scenă ──
+    // Un obuz care vine spre mine, pentru camera de apărare. La o reflexie
+    // (am scut reflector) obuzul ajunge la mine în prima jumătate a zborului
+    // și pleacă înapoi în a doua — vezi [ShotFlight.reflectPivot].
+    IncomingShell incomingFor(int i, int n, int count) {
+      final f = flightOf[i]!;
+      final reflected = plan.reflectBackOf[i] != null;
+      final span = f.impactAt - f.startAt;
+      return IncomingShell(
+        launchAt: f.startAt,
+        impactAt: reflected ? f.startAt + span * ShotFlight.reflectPivot : f.impactAt,
+        returnUntil: reflected ? f.impactAt : 0,
+        reflected: reflected,
+        hit: shots[i].hit,
+        damage: shots[i].damage,
+        color: f.color,
+        blockedByShield: f.blockedByShield,
+        shooterName: nameOf(shots[i].byId),
+        lane: _laneOf(centers[shots[i].byId], centers[me], arenaWidth, n, count),
+      );
+    }
+
     for (var k = 0; k < plan.units.length; k++) {
       final u = plan.units[k];
       if (!u.participants.contains(me)) continue;
@@ -783,19 +804,9 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
       if (u.kind == TankUnitKind.salvo && u.targetId == me) {
         // Ținta bombardamentului: camera de apărare, cu toate obuzele care
         // vin spre mine, fiecare dinspre tancul lui.
-        final atMe = [for (final i in own) if (plan.reflectBackOf[i] == null && flightOf[i] != null) i];
+        final atMe = [for (final i in own) if (flightOf[i] != null) i];
         _myIncomingByUnit[k] = [
-          for (var n = 0; n < atMe.length; n++)
-            IncomingShell(
-              launchAt: flightOf[atMe[n]]!.startAt,
-              impactAt: flightOf[atMe[n]]!.impactAt,
-              hit: shots[atMe[n]].hit,
-              damage: shots[atMe[n]].damage,
-              color: flightOf[atMe[n]]!.color,
-              blockedByShield: flightOf[atMe[n]]!.blockedByShield,
-              shooterName: nameOf(shots[atMe[n]].byId),
-              lane: _laneOf(centers[shots[atMe[n]].byId], centers[me], arenaWidth, n, atMe.length),
-            ),
+          for (var n = 0; n < atMe.length; n++) incomingFor(atMe[n], n, atMe.length),
         ];
         continue;
       }
@@ -846,7 +857,12 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
           if (shots[i].atId == me && shots[i].hit) taken += shots[i].damage;
         }
         final j = partner[first];
+        // Reflexie: dauna întoarsă e povestea camerei întregi, nu o linie mică
+        // sub ea — o scot din „AI ÎNCASAT", ca să nu apară de două ori.
+        final reflected = plan.reflectBackOf[first] != null;
+        if (reflected) taken = max(0, taken - flightOf[first]!.damage);
         _myPovByUnit[k] = _MyPov(
+          reflected: reflected,
           flight: flightOf[first]!,
           target: target,
           targetHpAtStart: targetHp,
@@ -858,25 +874,15 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         continue;
       }
 
-      // Ținta unui singur atacator. Reflexia mea nu intră aici: obuzul se
-      // întoarce în cel care l-a tras, se vede mai bine din arenă.
+      // Ținta unui singur atacator (inclusiv cu Reflexie: obuzul vine spre mine,
+      // se izbește de dom și pleacă înapoi).
       final atMe = [
         for (final i in own)
-          if (shots[i].atId == me && plan.reflectBackOf[i] == null && flightOf[i] != null) i,
+          if (shots[i].atId == me && flightOf[i] != null) i,
       ];
       if (atMe.isEmpty) continue;
       _myIncomingByUnit[k] = [
-        for (var n = 0; n < atMe.length; n++)
-          IncomingShell(
-            launchAt: flightOf[atMe[n]]!.startAt,
-            impactAt: flightOf[atMe[n]]!.impactAt,
-            hit: shots[atMe[n]].hit,
-            damage: shots[atMe[n]].damage,
-            color: flightOf[atMe[n]]!.color,
-            blockedByShield: flightOf[atMe[n]]!.blockedByShield,
-            shooterName: nameOf(shots[atMe[n]].byId),
-            lane: _laneOf(centers[shots[atMe[n]].byId], centers[me], arenaWidth, n, atMe.length),
-          ),
+        for (var n = 0; n < atMe.length; n++) incomingFor(atMe[n], n, atMe.length),
       ];
     }
 
@@ -1128,6 +1134,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
               duelIntercepted: pov.duelIntercepted,
               damageTaken: pov.damageTaken,
               second: pov.second,
+              reflected: pov.reflected,
             ),
           );
         }
@@ -2092,7 +2099,11 @@ class _MyPov {
   /// Ce încasez eu în aceeași scenă (duel sau propriul obuz întors).
   final int damageTaken;
 
+  /// Ținta avea Reflexie: obuzul ricoșează și mă lovește pe mine.
+  final bool reflected;
+
   const _MyPov({
+    this.reflected = false,
     required this.flight,
     required this.target,
     required this.targetHpAtStart,

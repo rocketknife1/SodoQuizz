@@ -125,6 +125,11 @@ class TankPovView extends StatelessWidget {
   /// tanc, iar al doilea nu apărea deloc.
   final TankPovSecondTarget? second;
 
+  /// **Reflexie** — ținta avea scut reflector: obuzul ricoșează și se întoarce
+  /// în trăgător. [damage] e atunci dauna încasată DE EL, nu de țintă. Vezi
+  /// [_TankPovPainter._paintReflect].
+  final bool reflected;
+
   const TankPovView({
     super.key,
     this.blockedByShield = false,
@@ -142,6 +147,7 @@ class TankPovView extends StatelessWidget {
     this.duelIntercepted = false,
     this.damageTaken = 0,
     this.second,
+    this.reflected = false,
   });
 
   /// Când se retrage camera, în ceasul fazei de foc. Ecranul are nevoie de
@@ -175,6 +181,7 @@ class TankPovView extends StatelessWidget {
             duelIntercepted: duelIntercepted,
             damageTaken: damageTaken,
             second: second,
+            reflected: reflected,
           ),
         ),
       ),
@@ -198,11 +205,13 @@ class _TankPovPainter extends CustomPainter {
   final bool duelIntercepted;
   final int damageTaken;
   final TankPovSecondTarget? second;
+  final bool reflected;
 
   const _TankPovPainter({
     required this.time,
     this.blockedByShield = false,
     this.second,
+    this.reflected = false,
     required this.launchAt,
     required this.impactAt,
     required this.hit,
@@ -248,6 +257,13 @@ class _TankPovPainter extends CustomPainter {
     // deznodăminte diferite, camera n-ar ști după care să se rostogolească.
     if (second != null) {
       _paintDoubleScene(canvas, size, baseHorizon, p, after);
+      return;
+    }
+
+    // Reflexie: altă poveste cu totul (dus → ricoșeu → întors), vezi
+    // [_paintReflect].
+    if (reflected) {
+      _paintReflect(canvas, size, p, after);
       return;
     }
 
@@ -466,6 +482,250 @@ class _TankPovPainter extends CustomPainter {
     canvas.drawCircle(pos, r * 2.2, Paint()..color = targetColor.withAlpha(60));
     canvas.drawCircle(pos, r, Paint()..color = Colors.white);
     canvas.drawCircle(pos, r * 0.55, Paint()..color = targetColor);
+  }
+
+  // ─── Reflexia, văzută de trăgător ───────────────────────────────────────
+
+  /// Fracțiunea din zbor la care obuzul atinge scutul și cotește înapoi — aceeași
+  /// valoare ca [ShotFlight.reflectPivot] din arenă, ca ricoșeul să cadă în
+  /// aceeași clipă pe orice cameră.
+  static const double _reflectPivot = 0.5;
+
+  /// Înghețarea de la izbitura în scut (un „clang" simțit, ca hit-stop-ul din
+  /// jocurile de luptă), apoi întoarcerea camerei.
+  static const double _clangSecs = 0.10;
+  static const double _turnSecs = 0.42;
+
+  /// Povestea, în trei timpi: obuzul zboară spre țintă și pe ea se aprinde un
+  /// scut; se izbește de el și camera se întoarce 180° (rostogolire cu
+  /// viteză); apoi același obuz vine înapoi, mai repede, spre tancul din care
+  /// a plecat. Fără asta, trăgătorul vedea „LOVITURĂ DIRECTĂ" pe o țintă pe care
+  /// de fapt n-a atins-o — daunele erau ale lui.
+  void _paintReflect(Canvas canvas, Size size, double p, double after) {
+    final w = size.width;
+    final h = size.height;
+    final horizon = h * 0.38;
+    final span = max(impactAt - launchAt, 0.001);
+    final since = time - (launchAt + span * _reflectPivot); // < 0 până la izbitură
+    final u = (p / _reflectPivot).clamp(0.0, 1.0);
+    final turnEnd = _clangSecs + _turnSecs;
+
+    if (since < turnEnd) {
+      // dus + hit-stop + rostogolire: aceeași scenă, înghețată la izbitură
+      final k = ((since - _clangSecs) / _turnSecs).clamp(0.0, 1.0);
+      final angle = Curves.easeInOutCubic.transform(k) * pi;
+      canvas.save();
+      if (k > 0) {
+        canvas.translate(w / 2, h / 2);
+        canvas.rotate(angle);
+        canvas.scale(cos(angle).abs() + sin(angle).abs() + 0.04);
+        canvas.translate(-w / 2, -h / 2);
+      }
+      _reflectOutScene(canvas, size, horizon, u, since);
+      canvas.restore();
+      // vântul rostogolirii: liniile de viteză explodează chiar în întoarcere
+      final whip = k > 0 ? sin(k * pi) : 0.0;
+      if (whip > 0.02) _reflectStreaks(canvas, size, 0.6 + 1.2 * whip, const Color(0xFF7EC8FF));
+      _paintNoseCone(canvas, size, min(p, _reflectPivot));
+      if (since >= 0) {
+        _label(canvas, Offset(w / 2, h * 0.30 - since * 24), tr('REFLECTAT!', 'REFLECTED!'), 50, const Color(0xFF7EC8FF),
+            alpha: (1 - (since / (turnEnd + 0.25)).clamp(0.0, 1.0)));
+      }
+      if (since < 0.16 && since >= 0) {
+        final f = 1 - since / 0.16;
+        canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white.withAlpha((215 * f).round()));
+      }
+      _paintVignette(canvas, size, after);
+      _reflectHud(canvas, size, since, u, 1);
+      return;
+    }
+
+    // întors: privim spre tancul nostru, din ce în ce mai mare, mult mai repede
+    final spanB = max(span * (1 - _reflectPivot) - turnEnd, 0.001);
+    final vb = ((since - turnEnd) / spanB).clamp(0.0, 1.0);
+    final grow = Curves.easeInQuart.transform(vb);
+    _paintSky(canvas, size, horizon);
+    _paintGround(canvas, size, horizon, 0.4 + 0.6 * vb, after);
+    // tancul din care am tras, văzut din față, crește spre cameră
+    if (!(after > 0.06)) {
+      final tw = _lerp(w * 0.05, w * 1.3, grow);
+      final th = tw * 0.62;
+      final cy = _lerp(horizon + h * 0.012, horizon + h * 0.30, grow);
+      canvas.drawOval(
+        Rect.fromCenter(center: Offset(w / 2, cy + th * 0.54), width: tw * 0.95, height: th * 0.20),
+        Paint()..color = Colors.black.withAlpha(120),
+      );
+      paintTankInto(canvas, Rect.fromCenter(center: Offset(w / 2, cy), width: tw, height: th),
+          color: shooterColor, facingRight: false);
+    }
+    _paintSpeedLines(canvas, size, 0.55 + 0.45 * vb, after);
+    _reflectStreaks(canvas, size, 0.7 + 0.9 * grow, const Color(0xFF7EC8FF));
+    _paintNoseCone(canvas, size, 1.0);
+    // bliț albastru la revenirea din rostogolire, care ascunde tăietura
+    final settle = (since - turnEnd) / 0.18;
+    if (settle >= 0 && settle < 1) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = const Color(0xFFBFE4FF).withAlpha((200 * (1 - settle)).round()));
+    }
+    if (after >= 0) _reflectImpact(canvas, size, horizon, after);
+    _paintVignette(canvas, size, after);
+    _reflectHud(canvas, size, since, u, 1 - vb);
+  }
+
+  /// Scena „dus": ținta crește, iar pe ea se aprinde scutul. [since] > 0 = după
+  /// izbitură (inelul de șoc se lărgește pe dom).
+  void _reflectOutScene(Canvas canvas, Size size, double horizon, double u, double since) {
+    final w = size.width;
+    final h = size.height;
+    _paintSky(canvas, size, horizon);
+    _paintGround(canvas, size, horizon, u, 0);
+    final approach = Curves.easeInQuart.transform(u);
+    final tw = _lerp(w * 0.05, w * 1.05, approach);
+    final th = tw * 0.62;
+    final cx = w / 2;
+    final cy = _lerp(horizon + h * 0.012, horizon + h * 0.30, approach);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset(cx, cy + th * 0.54), width: tw * 0.95, height: th * 0.20),
+      Paint()..color = Colors.black.withAlpha(120),
+    );
+    paintTankInto(canvas, Rect.fromCenter(center: Offset(cx, cy), width: tw, height: th),
+        color: targetColor, facingRight: true, damage: targetDamageRatio);
+
+    // scutul: apare pe ultima treime a apropierii și pulsează din ce în ce mai tare
+    final glow = Curves.easeOut.transform(((u - 0.45) / 0.4).clamp(0.0, 1.0));
+    if (glow > 0) {
+      final dome = Rect.fromCenter(center: Offset(cx, cy - th * 0.05), width: tw * 1.32, height: th * 1.55);
+      final pulse = 0.75 + 0.25 * sin(time * 22);
+      canvas.drawOval(
+        dome,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              const Color(0xFF7EC8FF).withAlpha((10 * glow).round()),
+              const Color(0xFF7EC8FF).withAlpha((95 * glow * pulse).round()),
+            ],
+            stops: const [0.55, 1.0],
+          ).createShader(dome),
+      );
+      canvas.drawOval(
+        dome,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.6 + 2 * glow
+          ..color = Colors.white.withAlpha((220 * glow).round()),
+      );
+      // fagurele hexagonale ale domului, câteva arce
+      final hex = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = const Color(0xFFBFE4FF).withAlpha((90 * glow).round());
+      for (var i = 1; i < 4; i++) {
+        canvas.drawOval(Rect.fromCenter(center: dome.center, width: dome.width * (1 - i * 0.22), height: dome.height * (1 - i * 0.22)), hex);
+      }
+    }
+    if (since >= 0) {
+      // izbitura: inel de șoc + schije albastre pe suprafața scutului
+      final k = (since / 0.6).clamp(0.0, 1.0);
+      final fade = 1 - k;
+      final r = w * (0.10 + 0.55 * Curves.easeOutCubic.transform(k));
+      canvas.drawCircle(
+        Offset(cx, cy),
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 7 * fade + 1
+          ..color = Colors.white.withAlpha((230 * fade).round()),
+      );
+      final spark = Paint()
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 3 * fade + 0.5
+        ..color = const Color(0xFF9AD4FF).withAlpha((230 * fade).round());
+      for (var i = 0; i < 16; i++) {
+        final a = i * (2 * pi / 16) + 0.2;
+        final d = Offset(cos(a), sin(a));
+        canvas.drawLine(Offset(cx, cy) + d * (r * 0.6), Offset(cx, cy) + d * (r * 1.3), spark);
+      }
+    }
+  }
+
+  /// Dungi de viteză colorate, radiale — „cât de repede se întoarce".
+  void _reflectStreaks(Canvas canvas, Size size, double strength, Color color) {
+    final w = size.width;
+    final c = Offset(w / 2, size.height * 0.5);
+    final paint = Paint()..strokeCap = StrokeCap.round;
+    for (var i = 0; i < 34; i++) {
+      final a = i * (2 * pi / 34) + (i % 5) * 0.13;
+      final r0 = w * (0.18 + ((i * 29) % 60) / 150);
+      final len = w * (0.10 + 0.34 * strength.clamp(0.0, 1.6)) * (0.45 + ((i * 17) % 50) / 90);
+      paint
+        ..strokeWidth = 1.4 + 2.2 * strength.clamp(0.0, 1.5)
+        ..color = color.withAlpha((90 * strength.clamp(0.0, 1.4)).round().clamp(0, 170));
+      final d = Offset(cos(a), sin(a));
+      canvas.drawLine(c + d * r0, c + d * (r0 + len), paint);
+    }
+  }
+
+  /// Izbitura pe propriul tanc: aceeași explozie ca la o lovitură, dar în roșu
+  /// și cu textul care spune de unde a venit dauna.
+  void _reflectImpact(Canvas canvas, Size size, double horizon, double after) {
+    final w = size.width;
+    final h = size.height;
+    final cx = w / 2;
+    final cy = horizon + h * 0.30;
+    final flash = (1 - after / (0.16 * _scale)).clamp(0.0, 1.0);
+    if (flash > 0) {
+      canvas.drawRect(Offset.zero & size, Paint()..color = Colors.white.withAlpha((235 * flash).round()));
+    }
+    final t = (after / (0.72 * _scale)).clamp(0.0, 1.0);
+    final fade = 1 - t;
+    final r = w * (0.10 + 0.90 * Curves.easeOutCubic.transform(t));
+    canvas.drawCircle(
+      Offset(cx, cy),
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Colors.white.withAlpha((250 * fade).round()),
+            AppColors.orange.withAlpha((235 * fade).round()),
+            AppColors.danger.withAlpha((185 * fade).round()),
+            Colors.transparent,
+          ],
+          stops: const [0.0, 0.26, 0.58, 1.0],
+        ).createShader(Rect.fromCircle(center: Offset(cx, cy), radius: r)),
+    );
+    canvas.drawCircle(
+      Offset(cx, cy),
+      r * 1.14,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6 * fade
+        ..color = Colors.white.withAlpha((200 * fade).round()),
+    );
+    _label(canvas, Offset(w / 2, h * 0.30 - t * 34), '-$damage', 68, AppColors.danger, alpha: fade);
+    _label(canvas, Offset(w / 2, h * 0.30 + 50 - t * 34), tr('OBUZ REFLECTAT ÎN TINE', 'SHELL REFLECTED BACK AT YOU'), 17,
+        const Color(0xFF7EC8FF), alpha: fade);
+    _label(canvas, Offset(w / 2, h * 0.30 + 76 - t * 34), tr('$targetName ți-a întors lovitura', '$targetName sent it right back'), 13, Colors.white70,
+        alpha: fade, weight: FontWeight.w600, letterSpacing: 0);
+    // ce s-a încasat în plus, din alte părți (duel, alt atacator) — vezi
+    // [damageTaken]: deja fără reflexia asta
+    _paintTakenLine(canvas, size, after);
+  }
+
+  void _reflectHud(Canvas canvas, Size size, double since, double u, double remaining) {
+    final w = size.width;
+    final h = size.height;
+    const pad = 14.0;
+    final back = since >= _clangSecs + _turnSecs;
+    _label(
+      canvas,
+      Offset(w / 2, pad + 26),
+      back ? tr('ÎNTORS SPRE TINE', 'COMING BACK AT YOU') : tr('ȚINTĂ: ${targetName.toUpperCase()}', 'TARGET: ${targetName.toUpperCase()}'),
+      13,
+      back ? AppColors.danger : AppColors.orange,
+    );
+    if (!back && u > 0.55) {
+      _label(canvas, Offset(w / 2, pad + 46), tr('SCUT REFLECTOR!', 'REFLECTOR SHIELD!'), 11.5, const Color(0xFF7EC8FF));
+    }
+    _label(canvas, Offset(w * 0.20, h - pad - 30), '${(remaining.clamp(0.0, 1.0) * 420).round()}m', 17, Colors.white);
   }
 
   // ─── Lovitura dublă, văzută de trăgător ─────────────────────────────────
@@ -993,5 +1253,5 @@ class _TankPovPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _TankPovPainter oldDelegate) =>
-      oldDelegate.time != time || oldDelegate.hit != hit || oldDelegate.impactAt != impactAt;
+      oldDelegate.time != time || oldDelegate.hit != hit || oldDelegate.impactAt != impactAt || oldDelegate.reflected != reflected;
 }
