@@ -1566,6 +1566,9 @@ class _TargetingView extends StatelessWidget {
     // n-am trimis încă.
     final awaitingSecond = iHaveDoubleShot && !locked && firstDoubleTarget != null;
     final enemies = players.where((p) => p.id != me && !p.eliminated).toList();
+    // Tancul distrus rămâne la meci ca spectator: nu mai e ținta nimănui, deci
+    // nu primește „la adăpost".
+    final spectating = players.any((p) => p.id == me && p.eliminated);
 
     return Container(
       decoration: BoxDecoration(
@@ -1590,12 +1593,12 @@ class _TargetingView extends StatelessWidget {
           Column(
             children: [
               const SizedBox(height: 14),
-              _header(iAmShooter, locked, iHaveDoubleShot, awaitingSecond),
+              _header(iAmShooter, locked, iHaveDoubleShot, awaitingSecond, spectating),
               // Conținutul stă CENTRAT pe verticală: la patru jucători sunt
               // trei cutii și se umple ecranul, dar spre finalul meciului
               // rămâne una singură, iar lipită de titlu arăta a pagină
               // neterminată.
-              Expanded(child: Center(child: iAmShooter ? _targets(enemies, chosen, locked) : _waitingRoom())),
+              Expanded(child: Center(child: iAmShooter ? _targets(enemies, chosen, locked) : _waitingRoom(spectating))),
               inventory,
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 6, 20, 16),
@@ -1608,10 +1611,12 @@ class _TargetingView extends StatelessWidget {
     );
   }
 
-  Widget _header(bool iAmShooter, bool alreadyPicked, bool doubleShot, bool awaitingSecond) {
+  Widget _header(bool iAmShooter, bool alreadyPicked, bool doubleShot, bool awaitingSecond, bool spectating) {
     final color = iAmShooter ? AppColors.danger : AppColors.blue;
     final String titleText;
-    if (!iAmShooter) {
+    if (spectating) {
+      titleText = tr('SPECTATOR', 'SPECTATOR');
+    } else if (!iAmShooter) {
       titleText = tr('LA ADĂPOST!', 'BRACE!');
     } else if (doubleShot && !alreadyPicked) {
       titleText = awaitingSecond
@@ -1621,7 +1626,10 @@ class _TargetingView extends StatelessWidget {
       titleText = tr('ALEGE ȚINTA', 'PICK YOUR TARGET');
     }
     final String subText;
-    if (!iAmShooter) {
+    if (spectating) {
+      subText = tr('Tancul tău e distrus. Urmărește cine rămâne în picioare.',
+          'Your tank is destroyed. Watch who is left standing.');
+    } else if (!iAmShooter) {
       subText = tr('Ai greșit runda asta: nu tragi și eviți mult mai greu.',
           'You missed this round: you do not fire, and you dodge much worse.');
     } else if (alreadyPicked) {
@@ -1701,15 +1709,18 @@ class _TargetingView extends StatelessWidget {
     );
   }
 
-  Widget _waitingRoom() {
+  Widget _waitingRoom(bool spectating) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.crisis_alert_rounded, color: AppColors.orange, size: 54),
+          Icon(spectating ? Icons.visibility_rounded : Icons.crisis_alert_rounded,
+              color: spectating ? Colors.white38 : AppColors.orange, size: 54),
           const SizedBox(height: 14),
           Text(
-            tr('Tunarii te iau la ochi', 'The gunners are taking aim'),
+            spectating
+                ? tr('Tunarii își aleg ținta', 'The gunners are picking targets')
+                : tr('Tunarii te iau la ochi', 'The gunners are taking aim'),
             style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 6),
