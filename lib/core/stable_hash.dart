@@ -68,6 +68,10 @@ class StableRandom implements Random {
 
   StableRandom(int seed) : _state = (seed & 0xFFFFFFFF) == 0 ? 0xDEAD : (seed & 0xFFFFFFFF);
 
+  /// Starea curentă — `StableRandom(state)` continuă exact de aici. Așa un
+  /// joc salvat în Firestore reia secvența de unde a rămas (core/unknown_game.dart).
+  int get state => _state;
+
   int _next() {
     _state = _nextState(_state);
     return _state;

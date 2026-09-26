@@ -13,6 +13,7 @@ import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
+import 'multiplayer_unknown_screen.dart';
 
 /// Pasul de confirmare dintre "Meci Rapid te-a cuplat cu cineva" și
 /// începerea efectivă a jocului — înainte, matchmaking-ul arunca direct în
@@ -140,6 +141,7 @@ class _QuickMatchConfirmScreenState extends State<QuickMatchConfirmScreen> with 
             MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
             MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
+            MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: matchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
           },
         ),

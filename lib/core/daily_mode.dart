@@ -54,4 +54,5 @@ String matchGameModeLabel(MatchGameMode m) => switch (m) {
       MatchGameMode.rockPaperScissors =>
         tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
       MatchGameMode.electricChair => tr('Scaunul Electric', 'Electric Chair'),
+      MatchGameMode.unknown => 'Unknown',
     };

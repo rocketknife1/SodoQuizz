@@ -50,6 +50,7 @@ import 'screens/multiplayer/multiplayer_higher_lower_screen.dart';
 import 'screens/multiplayer/multiplayer_match_screen.dart';
 import 'screens/multiplayer/multiplayer_obby_screen.dart';
 import 'screens/multiplayer/multiplayer_tanks_screen.dart';
+import 'screens/multiplayer/multiplayer_unknown_screen.dart';
 import 'widgets/in_app_notification.dart';
 
 void main() async {
@@ -518,6 +519,7 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
           MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
           MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
+          MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: matchId),
         },
       ),
     );
@@ -725,6 +727,7 @@ class _ReconnectHostState extends State<_ReconnectHost> {
           MatchGameMode.obby => MultiplayerObbyScreen(matchId: matchId),
           MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
           MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
+          MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: matchId),
           MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
         },
       ));

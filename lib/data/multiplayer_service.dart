@@ -16,7 +16,9 @@ import '../core/matchmaking.dart';
 import '../core/multiplayer_round.dart';
 import '../core/obby.dart';
 import '../core/powerups.dart';
+import '../core/stable_hash.dart';
 import '../core/tanks.dart';
+import '../core/unknown_game.dart';
 import '../models/multiplayer_models.dart';
 import 'firestore_batch.dart';
 import 'local_firestore.dart';
@@ -55,6 +57,8 @@ int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
       MatchGameMode.quizzTanks => tanksPlayerCount,
       MatchGameMode.obby => obbyMaxPlayers,
       MatchGameMode.electricChair => electricChairPlayerCount,
+      // 6 culori de pion pe tablă (widgets/unknown_board.dart).
+      MatchGameMode.unknown => unknownMaxPlayers,
       MatchGameMode.classic || MatchGameMode.higherLower || MatchGameMode.rockPaperScissors => matchPlayerCount,
     };
 
@@ -507,6 +511,11 @@ class MultiplayerService {
           'roundShots': <Map<String, dynamic>>[],
           'roundDestroyedIds': <String>[],
           'roundPowerUps': <String, String>{},
+          // Unknown: timpii de răspuns și obiectele sunt ale rundei încheiate.
+          // `roundChoices` NU se golește — alegerile din cufăr/magazin făcute
+          // la finalul rundei se aplică abia la închiderea rundei următoare.
+          'roundAnswerMs': <String, int>{},
+          'roundArms': <String, String>{},
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
@@ -1625,6 +1634,136 @@ class MultiplayerService {
       });
     } catch (e) {
       debugPrint('MultiplayerService.useElectricChairAllyShield a esuat: $e');
+    }
+  }
+
+  // ─── Unknown (cursa 1..60) ──────────────────────────────────────────────
+
+  /// Răspunsul la întrebarea de masă plus în câte milisecunde a venit,
+  /// măsurat de telefonul jucătorului de la apariția întrebării — ordinea
+  /// mutărilor și bonusul „cel mai rapid" nu depind de ceasuri care diferă.
+  Future<void> submitUnknownAnswer({
+    required String matchId,
+    required int roundIndex,
+    required String answer,
+    required int ms,
+  }) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundAnswers.$me': answer,
+          'roundAnswerMs.$me': ms,
+          'roundStamps.roundAnswers.$me': roundIndex,
+          'roundStamps.roundAnswerMs.$me': roundIndex,
+        }));
+  }
+
+  /// Obiectul pregătit pentru mutarea din runda [roundIndex] (null = nimic).
+  Future<void> submitUnknownArm({required String matchId, required int roundIndex, UnknownItem? item}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundArms.$me': item?.name ?? '',
+          'roundStamps.roundArms.$me': roundIndex,
+        }));
+  }
+
+  /// Alegerea de la cufăr/magazin pentru oferta primită în runda
+  /// [offerRound]. Se aplică la închiderea rundei următoare.
+  Future<void> submitUnknownChoice({required String matchId, required int offerRound, required UnknownChoice choice}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundChoices.$me': choice.encode(),
+          'roundStamps.roundChoices.$me': offerRound,
+        }));
+  }
+
+  /// Închide runda de Unknown: aruncă zarurile O SINGURĂ DATĂ și scrie tot
+  /// ce s-a întâmplat (`unknownLog`) plus starea nouă (`unknown`); toate
+  /// ecranele doar animă jurnalul. Apelabilă de ORICE client, cu garda
+  /// obișnuită pe rundă + fază (vezi [resolveHigherLowerRound]).
+  ///
+  /// La prima rundă creează jocul din jucătorii de la masă, sortați după id
+  /// (aceeași ordine indiferent cine rezolvă). Cine a plecat între timp rămâne
+  /// în clasament unde era, dar nu se mai mută. Fără răspuns = greșit (tot un
+  /// zar — nimeni nu rămâne pe loc).
+  Future<void> closeUnknownRound({
+    required String matchId,
+    required int roundIndex,
+    required String correctAnswer,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList()..sort();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null ||
+            data['roundIndex'] != roundIndex ||
+            data['roundPhase'] != RoundPhase.answering.name ||
+            data['status'] == MatchStatus.finished.name) {
+          return; // deja închisă de alt client
+        }
+        // TOATE citirile înaintea oricărei scrieri — cerință Firestore.
+        final docs = <String, DocumentSnapshot<Map<String, dynamic>>>{};
+        for (final id in playerIds) {
+          docs[id] = await tx.get(matchRef.collection('players').doc(id));
+        }
+
+        final raw = data['unknown'];
+        final UnknownGame game;
+        if (raw == null) {
+          final present = [for (final id in playerIds) if (docs[id]!.exists) id];
+          game = UnknownGame(
+            seed: stableHash(matchId),
+            players: [
+              for (final (i, id) in present.indexed)
+                UnknownPlayer(id: id, name: docs[id]!.data()!['name'] as String? ?? '?', isBot: false, colorIndex: i),
+            ],
+          );
+        } else {
+          game = UnknownGame.fromJson(Map<String, dynamic>.from(raw as Map));
+        }
+        for (final p in game.players) {
+          final d = docs[p.id];
+          if (d == null || !d.exists) p.left = true;
+        }
+
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
+        final ms = freshRoundEntries(data, 'roundAnswerMs', roundIndex);
+        final arms = freshRoundEntries(data, 'roundArms', roundIndex);
+        final choices = freshRoundEntries(data, 'roundChoices', roundIndex - 1);
+        final log = game.resolveRound(
+          {
+            for (final e in answers.entries)
+              e.key: UnknownAnswer(
+                correct: e.value == correctAnswer,
+                ms: (ms[e.key] as num?)?.toInt() ?? unknownQuestionSeconds * 1000,
+              ),
+          },
+          arms: {
+            for (final e in arms.entries)
+              for (final item in UnknownItem.values)
+                if (item.name == e.value) e.key: item,
+          },
+          choices: {for (final e in choices.entries) e.key: UnknownChoice.decode(e.value as String? ?? '')},
+        );
+
+        for (final p in game.players) {
+          final d = docs[p.id];
+          if (d == null || !d.exists) continue;
+          // `score` rămâne mic (poziția pe drum) — intră în XP; clasamentul
+          // se face după `unknownRank` (vezi MultiplayerResultsScreen).
+          tx.update(d.reference, {'score': p.pos, 'unknownRank': unknownRankKey(p)});
+        }
+        tx.update(matchRef, {
+          'unknown': game.toJson(),
+          'unknownLog': log.toJson(),
+          'roundPhase': RoundPhase.revealed.name,
+          if (game.isOver) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeUnknownRound a esuat: $e');
     }
   }
 

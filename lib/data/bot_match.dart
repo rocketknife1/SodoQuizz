@@ -12,6 +12,7 @@ import '../core/rock_paper_scissors.dart';
 import '../core/stable_hash.dart';
 import '../core/tanks.dart';
 import '../core/electric_chair.dart';
+import '../core/unknown_game.dart';
 import '../models/multiplayer_models.dart';
 import '../models/question.dart';
 import 'culture_questions.dart';
@@ -35,6 +36,7 @@ const List<MatchGameMode> botMatchModes = [
   MatchGameMode.quizzTanks,
   MatchGameMode.electricChair,
   MatchGameMode.obby,
+  MatchGameMode.unknown,
 ];
 
 /// Un meci multiplayer jucat singur, contra boților, fără internet.
@@ -64,6 +66,10 @@ class BotMatch {
   final Set<String> _scheduled = {};
   final Map<String, int> _humanRps = {};
   int _rpsCountedRound = -1;
+
+  /// Unknown: când a văzut botul fiecare fază — de aici se măsoară în câte
+  /// milisecunde „a răspuns", ca la un telefon real.
+  final Map<String, DateTime> _phaseSeen = {};
   MatchInfo? _info;
   List<MatchPlayer> _players = const [];
   bool _disposed = false;
@@ -188,6 +194,8 @@ class BotMatch {
         _reactObby(info, phaseKey);
       case MatchGameMode.electricChair:
         _reactChair(info, phaseKey);
+      case MatchGameMode.unknown:
+        _reactUnknown(info, phaseKey);
       case MatchGameMode.classic:
       case MatchGameMode.higherLower:
         break;
@@ -208,6 +216,47 @@ class BotMatch {
             roundIndex: i.roundIndex,
             answer: botPickRps(humanHistory: _humanRps, difficulty: settings.difficulty, rnd: _rnd),
           ));
+    }
+  }
+
+  /// Unknown: boții răspund la întrebarea de masă (cu timpul măsurat),
+  /// pregătesc un obiect la începutul rundei și aleg la cufăr/magazin cât se
+  /// animă runda — prin exact aceleași metode ca un jucător real.
+  void _reactUnknown(MatchInfo info, String phaseKey) {
+    final seen = _phaseSeen.putIfAbsent(phaseKey, DateTime.now);
+    final raw = info.unknownState;
+    final game = raw == null ? null : UnknownGame.fromJson(raw);
+    for (final bot in _bots) {
+      final id = bot.currentPlayerId;
+      final me = game?.players.where((p) => p.id == id).firstOrNull;
+      if (me != null && !me.racing) continue;
+      if (info.roundPhase == RoundPhase.answering) {
+        if (!info.roundAnswers.containsKey(id)) {
+          _act(bot, phaseKey, unknownQuestionSeconds, (i) {
+            final q = _questionFor(i.roundIndex);
+            final pick = botPickAnswer(correct: q.answer, choices: q.choices, difficulty: settings.difficulty, rnd: _rnd);
+            return bot.submitUnknownAnswer(
+              matchId: matchId,
+              roundIndex: i.roundIndex,
+              answer: pick,
+              ms: DateTime.now().difference(seen).inMilliseconds,
+            );
+          });
+        }
+        if (game != null && me != null && _scheduled.add('$id#$phaseKey#arm')) {
+          final item = unknownBotArmChoice(game, me);
+          if (item != null) bot.submitUnknownArm(matchId: matchId, roundIndex: info.roundIndex, item: item);
+        }
+      } else if (info.roundPhase == RoundPhase.revealed && game != null && me != null) {
+        final offer = game.pendingOffers[id];
+        if (offer != null && !info.roundChoices.containsKey(id)) {
+          _act(bot, phaseKey, 8, (i) => bot.submitUnknownChoice(
+                matchId: matchId,
+                offerRound: i.roundIndex,
+                choice: unknownBotChoice(me, offer),
+              ));
+        }
+      }
     }
   }
 

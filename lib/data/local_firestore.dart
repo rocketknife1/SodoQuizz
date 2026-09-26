@@ -73,7 +73,35 @@ class LocalFirestore implements FirebaseFirestore {
     return d == null ? null : _copyMap(d);
   }
 
+  /// Firestore-ul real refuză o listă pusă direct într-o listă
+  /// („Nested arrays are not supported") și pică TOATĂ scrierea — o
+  /// tranzacție care încearcă asta eșuează la fiecare reluare, iar meciul
+  /// rămâne blocat. Baza din memorie refuză la fel, ca testele să prindă
+  /// greșeala înainte de un meci real (așa a scăpat 2026-09-26 duelul din
+  /// Unknown, salvat ca `[[a, d]]`).
+  static void _rejectNestedArrays(Object? value, {bool insideList = false}) {
+    if (value is List) {
+      if (insideList) {
+        throw FirebaseException(
+          plugin: 'cloud_firestore',
+          code: 'invalid-argument',
+          message: 'Nested arrays are not supported',
+        );
+      }
+      for (final v in value) {
+        _rejectNestedArrays(v, insideList: true);
+      }
+    } else if (value is Map) {
+      for (final v in value.values) {
+        _rejectNestedArrays(v);
+      }
+    }
+  }
+
   void _apply(List<_Write> writes) {
+    for (final w in writes) {
+      _rejectNestedArrays(w.data);
+    }
     final touched = <String>{};
     for (final w in writes) {
       switch (w.kind) {

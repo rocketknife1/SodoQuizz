@@ -17,13 +17,18 @@ import 'multiplayer/multiplayer_match_screen.dart';
 import 'multiplayer/multiplayer_obby_screen.dart';
 import 'multiplayer/multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer/multiplayer_tanks_screen.dart';
-import 'unknown_game_screen.dart';
+import 'multiplayer/multiplayer_unknown_screen.dart';
 
 /// Modurile arătate pe ecranul de start — [botMatchModes] (cele cu boți
 /// reali) plus Higher or Lower, care e deja solo prin natura lui (nu are
 /// adversar de bătut, doar un cronometru), deci apasă direct pe modul lui
-/// existent, fără [BotMatch].
-const List<MatchGameMode> _setupModes = [...botMatchModes, MatchGameMode.higherLower];
+/// existent, fără [BotMatch]. Unknown are tile-ul lui separat, primul, cu
+/// insigna NOU — vezi [_BotMatchSetupScreenState._unknownTile].
+final List<MatchGameMode> _setupModes = [
+  for (final m in botMatchModes)
+    if (m != MatchGameMode.unknown) m,
+  MatchGameMode.higherLower,
+];
 
 /// Pornește un meci cu boți și deschide ecranul modului. [replace] = din
 /// ecranul de rezultate („Joacă din nou"), ca butonul înapoi să nu ducă la
@@ -43,6 +48,7 @@ Future<void> launchBotMatch(BuildContext context, BotMatchSettings settings, {bo
       MatchGameMode.obby => MultiplayerObbyScreen(matchId: match.matchId, bot: match),
       MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: match.matchId, bot: match),
       MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: match.matchId, bot: match),
+      MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: match.matchId, bot: match),
       MatchGameMode.classic || MatchGameMode.higherLower => MultiplayerMatchScreen(matchId: match.matchId, bot: match),
     },
   );
@@ -65,11 +71,9 @@ class BotMatchSetupScreen extends StatefulWidget {
 }
 
 class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
-  MatchGameMode _mode = MatchGameMode.classic;
+  MatchGameMode _mode = MatchGameMode.unknown;
 
-  /// „Unknown" nu e un mod de meci multiplayer (nu are `MatchGameMode`):
-  /// rulează local, cu boții în același proces — vezi unknown_game_screen.dart.
-  bool _unknown = true;
+  bool get _unknown => _mode == MatchGameMode.unknown;
   int _bots = 3;
   int _difficulty = 2;
   bool _starting = false;
@@ -81,6 +85,7 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
         MatchGameMode.electricChair => Icons.electric_bolt_rounded,
         MatchGameMode.obby => Icons.directions_run_rounded,
         MatchGameMode.higherLower => Icons.compare_arrows_rounded,
+        MatchGameMode.unknown => Icons.flag_rounded,
       };
 
   static Color _colorFor(MatchGameMode m) => switch (m) {
@@ -90,6 +95,7 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
         MatchGameMode.electricChair => AppColors.purple,
         MatchGameMode.obby => AppColors.play,
         MatchGameMode.higherLower => AppColors.gray,
+        MatchGameMode.unknown => AppColors.coin,
       };
 
   static String _difficultyLabel(int d) => switch (d) {
@@ -102,20 +108,14 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
 
   Future<void> _start() async {
     if (_starting) return;
-    if (_unknown) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => UnknownGameScreen(botCount: min(_bots, _unknownMaxBots), difficulty: _difficulty)),
-      );
-      return;
-    }
     if (_mode == MatchGameMode.higherLower) {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const HigherLowerScreen()));
       return;
     }
     setState(() => _starting = true);
     try {
-      await launchBotMatch(context, BotMatchSettings(mode: _mode, botCount: _bots, difficulty: _difficulty));
+      final bots = _unknown ? min(_bots, _unknownMaxBots) : _bots;
+      await launchBotMatch(context, BotMatchSettings(mode: _mode, botCount: bots, difficulty: _difficulty));
     } catch (e) {
       debugPrint('BotMatchSetupScreen._start: $e');
       if (mounted) {
@@ -222,7 +222,7 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
-        onTap: () => setState(() => _unknown = true),
+        onTap: () => setState(() => _mode = MatchGameMode.unknown),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
@@ -267,15 +267,12 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
   }
 
   Widget _modeTile(MatchGameMode m) {
-    final selected = !_unknown && m == _mode;
+    final selected = m == _mode;
     final color = _colorFor(m);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
-        onTap: () => setState(() {
-          _mode = m;
-          _unknown = false;
-        }),
+        onTap: () => setState(() => _mode = m),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),

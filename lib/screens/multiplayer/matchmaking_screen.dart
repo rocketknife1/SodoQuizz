@@ -435,11 +435,19 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                   margin: const EdgeInsets.only(bottom: 2),
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(
-                    color: room.gameMode == MatchGameMode.quizzTanks ? AppColors.orange : AppColors.danger,
+                    color: switch (room.gameMode) {
+                      MatchGameMode.quizzTanks => AppColors.orange,
+                      MatchGameMode.unknown => const Color(0xFFB8860B),
+                      _ => AppColors.danger,
+                    },
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
-                    room.gameMode == MatchGameMode.quizzTanks ? 'TANKS' : 'H&L',
+                    switch (room.gameMode) {
+                      MatchGameMode.quizzTanks => 'TANKS',
+                      MatchGameMode.unknown => '1-60',
+                      _ => 'H&L',
+                    },
                     style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),
                   ),
                 ),

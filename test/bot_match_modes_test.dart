@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guess_it/core/electric_chair.dart';
 import 'package:guess_it/core/stable_hash.dart';
 import 'package:guess_it/core/tanks.dart';
+import 'package:guess_it/core/unknown_game.dart';
 import 'package:guess_it/data/bot_match.dart';
 import 'package:guess_it/data/culture_questions.dart';
 import 'package:guess_it/models/multiplayer_models.dart';
@@ -143,4 +144,55 @@ void main() {
     match.dispose();
     expect(damaged, isTrue);
   }, timeout: const Timeout(Duration(seconds: 90)));
+
+  test('Unknown: boții răspund, aleg la cufăr/magazin, iar cursa avansează', () async {
+    final match = await BotMatch.start(
+      const BotMatchSettings(mode: MatchGameMode.unknown, botCount: 3, difficulty: 5),
+      displayName: 'Eu',
+    );
+    final svc = match.service;
+    final id = match.matchId;
+    final q = pool(id);
+    var lastRound = -1;
+    var botsAnswered = false;
+    var choiceMade = false;
+    DateTime? revealAt;
+    final deadline = DateTime.now().add(const Duration(seconds: 80));
+    while (DateTime.now().isBefore(deadline) && !(botsAnswered && choiceMade)) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final info = await svc.watchMatch(id).first;
+      if (info.status == MatchStatus.finished) break;
+      if (info.roundIndex != lastRound) {
+        lastRound = info.roundIndex;
+        revealAt = null;
+      }
+      final elapsed = DateTime.now().difference(info.roundStartedAt!.toDate()).inSeconds;
+      final bots = ['bot_1', 'bot_2', 'bot_3'];
+      switch (info.roundPhase) {
+        case RoundPhase.answering:
+          if (bots.every(info.roundAnswers.containsKey)) botsAnswered = true;
+          if (bots.every(info.roundAnswers.containsKey) || elapsed >= unknownQuestionSeconds) {
+            await svc.closeUnknownRound(
+                matchId: id, roundIndex: info.roundIndex, correctAnswer: q[info.roundIndex % q.length].answer);
+          }
+        case RoundPhase.revealed:
+          revealAt ??= DateTime.now();
+          final game = UnknownGame.fromJson(info.unknownState!);
+          final botOffers = game.pendingOffers.keys.where(bots.contains).toList();
+          if (botOffers.isNotEmpty && botOffers.every(info.roundChoices.containsKey)) choiceMade = true;
+          // Cât așteaptă și ecranul alegerea: până la 10 s.
+          final waitChoices = botOffers.isNotEmpty && !botOffers.every(info.roundChoices.containsKey);
+          if (DateTime.now().difference(revealAt) > Duration(seconds: waitChoices ? 10 : 1)) {
+            await svc.advanceSyncRound(matchId: id, roundIndex: info.roundIndex);
+          }
+        default:
+          break;
+      }
+    }
+    final info = await svc.watchMatch(id).first;
+    match.dispose();
+    expect(botsAnswered, isTrue);
+    expect(choiceMade || info.status == MatchStatus.finished, isTrue, reason: 'niciun bot n-a apucat să aleagă');
+    expect(UnknownGame.fromJson(info.unknownState!).players.any((p) => p.pos > 0), isTrue);
+  }, timeout: const Timeout(Duration(seconds: 100)));
 }

@@ -6,6 +6,7 @@ import '../../core/daily_mode.dart';
 import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
+import '../../core/unknown_game.dart';
 import '../../core/rock_paper_scissors.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
@@ -434,6 +435,15 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                   'up to $electricChairPlayerCount players, $electricChairMaxLives lives each, pick who goes on the chair'),
               color: AppColors.danger,
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.electricChair),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.flag_rounded,
+              label: 'Unknown',
+              subtitle: tr('$unknownMinPlayers-$unknownMaxPlayers jucători, cursa până la $unknownFinish: scări, șerpi, cufere',
+                  '$unknownMinPlayers-$unknownMaxPlayers players, race to $unknownFinish: ladders, snakes, chests'),
+              color: const Color(0xFFB8860B),
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.unknown),
             ),
           ],
         ),

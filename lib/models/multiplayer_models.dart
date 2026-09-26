@@ -23,8 +23,11 @@ enum MatchStatus { lobby, playing, finished }
 /// vezi core/obby.dart și MultiplayerObbyScreen. [electricChair] e cinci
 /// jucători cu vieți individuale: cine răspunde corect alege pe cineva ȘI o
 /// întrebare din patru pentru el — victima care greșește pierde o viață —
-/// vezi core/electric_chair.dart și MultiplayerElectricChairScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rockPaperScissors }
+/// vezi core/electric_chair.dart și MultiplayerElectricChairScreen. [unknown]
+/// (nume de lucru) e cursa pe numere 1..60 cu șerpi, scări și cufere: toată
+/// masa răspunde deodată, răspunsul dă zarurile — vezi core/unknown_game.dart
+/// și MultiplayerUnknownScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rockPaperScissors, unknown }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
 /// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
@@ -269,6 +272,28 @@ class MatchInfo {
   /// ecranul doar animează, la fel ca [roundShots] la Quizz Tanks.
   final Map<String, bool> roundChairOutcomes;
 
+  /// Doar [MatchGameMode.unknown]: starea întregului joc (poziții, monede,
+  /// artefacte, oferte în așteptare, generatorul aleator) — vezi
+  /// `UnknownGame.toJson`. Scrisă doar de tranzacția care închide runda.
+  final Map<String, dynamic>? unknownState;
+
+  /// Doar [MatchGameMode.unknown]: ce s-a întâmplat în ultima rundă rezolvată
+  /// (`UnknownRoundLog.toJson`) — toți clienții animă exact asta.
+  final Map<String, dynamic>? unknownLog;
+
+  /// Doar [MatchGameMode.unknown]: uid → în câte milisecunde a răspuns, măsurat
+  /// de telefonul lui de la apariția întrebării (nu din ceasuri, care diferă).
+  final Map<String, int> roundAnswerMs;
+
+  /// Doar [MatchGameMode.unknown]: uid → obiectul pregătit pentru mutarea din
+  /// runda asta (`UnknownItem.name`).
+  final Map<String, String> roundArms;
+
+  /// Doar [MatchGameMode.unknown]: uid → alegerea de la cufăr/magazin
+  /// (`UnknownChoice.encode`), făcută cât se animă runda. Ștampilată cu runda
+  /// ofertei, deci poate sosi și în timpul întrebării următoare.
+  final Map<String, String> roundChoices;
+
   const MatchInfo({
     required this.id,
     required this.mode,
@@ -299,6 +324,11 @@ class MatchInfo {
     this.roundChairAssignments = const {},
     this.roundChairAnswers = const {},
     this.roundChairOutcomes = const {},
+    this.unknownState,
+    this.unknownLog,
+    this.roundAnswerMs = const {},
+    this.roundArms = const {},
+    this.roundChoices = const {},
   });
 
   factory MatchInfo.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -360,6 +390,13 @@ class MatchInfo {
         for (final e in (data['roundChairOutcomes'] as Map? ?? const {}).entries)
           e.key as String: e.value as bool,
       },
+      unknownState: data['unknown'] == null ? null : Map<String, dynamic>.from(data['unknown'] as Map),
+      unknownLog: data['unknownLog'] == null ? null : Map<String, dynamic>.from(data['unknownLog'] as Map),
+      roundAnswerMs: {
+        for (final e in freshRoundEntries(data, 'roundAnswerMs', round).entries) e.key: (e.value as num).toInt(),
+      },
+      roundArms: Map<String, String>.from(freshRoundEntries(data, 'roundArms', round)),
+      roundChoices: Map<String, String>.from(freshRoundEntries(data, 'roundChoices', round)),
     );
   }
 
@@ -450,6 +487,12 @@ class MatchPlayer {
   /// timpul meciului (vezi core/electric_chair.dart).
   final int eliminatedAtRound;
 
+  /// Doar [MatchGameMode.unknown]: cheia de clasament (`unknownRankKey` din
+  /// core/unknown_game.dart — sosire, apoi poziție, apoi monede). Ținută
+  /// separat de [score] (care rămâne mic, poziția pe drum) din același motiv
+  /// ca la Scaunul Electric: [score] intră și în XP.
+  final int unknownRank;
+
   /// Miza plătită la intrare — aceeași pentru toți, e miza camerei (vezi
   /// [MatchInfo.stake]). Scrisă o singură dată, la intrare, și citită de TOȚI
   /// clienții la final, ca fiecare să calculeze exact aceeași împărțire.
@@ -520,6 +563,7 @@ class MatchPlayer {
     this.nextQuestionBonus = false,
     this.lives = electricChairMaxLives,
     this.eliminatedAtRound = -1,
+    this.unknownRank = 0,
     this.lastSeenAt,
   });
 
@@ -545,6 +589,7 @@ class MatchPlayer {
       nextQuestionBonus: data['nextQuestionBonus'] as bool? ?? false,
       lives: data['lives'] as int? ?? electricChairMaxLives,
       eliminatedAtRound: data['eliminatedAtRound'] as int? ?? -1,
+      unknownRank: (data['unknownRank'] as num?)?.toInt() ?? 0,
       lastSeenAt: data['lastSeenAt'] as Timestamp?,
     );
   }

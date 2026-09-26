@@ -12,6 +12,7 @@ import '../../core/quest_bump.dart';
 import '../../core/reward_collector.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
+import '../../core/unknown_game.dart';
 import '../../core/theme.dart';
 import '../../core/bot_brain.dart';
 import '../../data/bot_match.dart';
@@ -31,6 +32,7 @@ import 'multiplayer_higher_lower_screen.dart';
 import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
+import 'multiplayer_unknown_screen.dart';
 import 'room_lobby_screen.dart';
 
 /// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
@@ -181,9 +183,13 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
     return eloDelta(myRating: myRating, opponentRatings: oppRatings, beat: beat);
   }
 
-  int _rankValue(MatchPlayer p) => widget.gameMode == MatchGameMode.electricChair
-      ? electricChairRankKey(eliminated: p.eliminated, eliminatedAtRound: p.eliminatedAtRound, score: p.score)
-      : p.score;
+  int _rankValue(MatchPlayer p) => switch (widget.gameMode) {
+        MatchGameMode.electricChair =>
+          electricChairRankKey(eliminated: p.eliminated, eliminatedAtRound: p.eliminatedAtRound, score: p.score),
+        // Sosire, apoi poziție, apoi monede — vezi core/unknown_game.dart unknownRankKey.
+        MatchGameMode.unknown => p.unknownRank,
+        _ => p.score,
+      };
 
   Future<List<MatchPlayer>> _load() async {
     final players = await _awaitFinalScores();
@@ -649,6 +655,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: newMatchId),
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
             MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: newMatchId),
+            MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: newMatchId),
           },
         ),
       );
@@ -1023,9 +1030,14 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                               // La Quizz Tanks "punctele" chiar SUNT daunele
                               // (vezi resolveTanksRound), deci se scriu ca
                               // atare — „82 pct" n-ar fi spus nimic despre ce
-                              // s-a întâmplat în meci.
+                              // s-a întâmplat în meci. La Unknown scorul e
+                              // poziția pe drum: 🏁 = a ajuns, 📍n = câmpul.
                               Text(
-                                widget.gameMode == MatchGameMode.quizzTanks ? '${p.damageDealt} dmg' : '${p.score} pct',
+                                switch (widget.gameMode) {
+                                  MatchGameMode.quizzTanks => '${p.damageDealt} dmg',
+                                  MatchGameMode.unknown => p.score >= unknownFinish ? '🏁' : '📍${p.score}',
+                                  _ => '${p.score} pct',
+                                },
                                 style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),
                               ),
                             ],
