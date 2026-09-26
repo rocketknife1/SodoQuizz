@@ -236,7 +236,7 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
               Container(
                 padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.star_rounded, color: Color(0xFF0B1229), size: 20),
+                child: const Icon(Icons.flag_rounded, color: Color(0xFF0B1229), size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -244,7 +244,7 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Unknown', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
-                    Text(tr('Insula stelelor: zaruri, cufere, dueluri', 'Star island: dice, chests, duels'),
+                    Text(tr('Cursa până la 60: scări, șerpi, cufere', 'Race to 60: ladders, snakes, chests'),
                         style: const TextStyle(color: Colors.white60, fontSize: 11.5)),
                   ],
                 ),
