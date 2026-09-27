@@ -51,6 +51,8 @@ import 'screens/multiplayer/multiplayer_match_screen.dart';
 import 'screens/multiplayer/multiplayer_obby_screen.dart';
 import 'screens/multiplayer/multiplayer_tanks_screen.dart';
 import 'screens/multiplayer/multiplayer_unknown_screen.dart';
+import 'screens/multiplayer/multiplayer_flash_screen.dart';
+import 'screens/multiplayer/multiplayer_impostor_screen.dart';
 import 'widgets/in_app_notification.dart';
 
 void main() async {
@@ -520,6 +522,8 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
           MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
           MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
           MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: matchId),
+          MatchGameMode.flash => MultiplayerFlashScreen(matchId: matchId),
+          MatchGameMode.impostor => MultiplayerImpostorScreen(matchId: matchId),
         },
       ),
     );
@@ -728,6 +732,8 @@ class _ReconnectHostState extends State<_ReconnectHost> {
           MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: matchId),
           MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: matchId),
           MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: matchId),
+          MatchGameMode.flash => MultiplayerFlashScreen(matchId: matchId),
+          MatchGameMode.impostor => MultiplayerImpostorScreen(matchId: matchId),
           MatchGameMode.classic => MultiplayerMatchScreen(matchId: matchId),
         },
       ));

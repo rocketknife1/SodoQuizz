@@ -438,6 +438,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                     color: switch (room.gameMode) {
                       MatchGameMode.quizzTanks => AppColors.orange,
                       MatchGameMode.unknown => const Color(0xFFB8860B),
+                      MatchGameMode.flash => const Color(0xFFFFD54F),
+                      MatchGameMode.impostor => const Color(0xFF7B2CBF),
                       _ => AppColors.danger,
                     },
                     borderRadius: BorderRadius.circular(6),
@@ -446,6 +448,8 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
                     switch (room.gameMode) {
                       MatchGameMode.quizzTanks => 'TANKS',
                       MatchGameMode.unknown => '1-60',
+                      MatchGameMode.flash => 'FLASH',
+                      MatchGameMode.impostor => 'SPY',
                       _ => 'H&L',
                     },
                     style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800),

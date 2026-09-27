@@ -28,6 +28,8 @@ import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
 import 'multiplayer_unknown_screen.dart';
+import 'multiplayer_flash_screen.dart';
+import 'multiplayer_impostor_screen.dart';
 import '../../core/breadcrumbs.dart';
 
 /// Lobby-ul unei camere private: cod vizibil, jucători live, premiile mesei
@@ -207,6 +209,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: widget.matchId),
             MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: widget.matchId),
             MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: widget.matchId),
+            MatchGameMode.flash => MultiplayerFlashScreen(matchId: widget.matchId),
+            MatchGameMode.impostor => MultiplayerImpostorScreen(matchId: widget.matchId),
           },
         ),
       );
@@ -770,6 +774,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         MatchGameMode.rockPaperScissors => tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
         MatchGameMode.electricChair => tr('Scaunul Electric', 'Electric Chair'),
         MatchGameMode.unknown => 'Unknown',
+        MatchGameMode.flash => 'Fulgerul',
+        MatchGameMode.impostor => 'Impostorul',
       };
 
   /// Gazda schimbă modul FĂRĂ să închidă camera — asta ține un grup împreună

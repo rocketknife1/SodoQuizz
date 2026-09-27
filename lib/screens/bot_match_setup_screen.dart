@@ -18,6 +18,8 @@ import 'multiplayer/multiplayer_obby_screen.dart';
 import 'multiplayer/multiplayer_rock_paper_scissors_screen.dart';
 import 'multiplayer/multiplayer_tanks_screen.dart';
 import 'multiplayer/multiplayer_unknown_screen.dart';
+import 'multiplayer/multiplayer_flash_screen.dart';
+import 'multiplayer/multiplayer_impostor_screen.dart';
 
 /// Modurile arătate pe ecranul de start — [botMatchModes] (cele cu boți
 /// reali) plus Higher or Lower, care e deja solo prin natura lui (nu are
@@ -49,6 +51,8 @@ Future<void> launchBotMatch(BuildContext context, BotMatchSettings settings, {bo
       MatchGameMode.electricChair => MultiplayerElectricChairScreen(matchId: match.matchId, bot: match),
       MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: match.matchId, bot: match),
       MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: match.matchId, bot: match),
+      MatchGameMode.flash => MultiplayerFlashScreen(matchId: match.matchId, bot: match),
+      MatchGameMode.impostor => MultiplayerImpostorScreen(matchId: match.matchId, bot: match),
       MatchGameMode.classic || MatchGameMode.higherLower => MultiplayerMatchScreen(matchId: match.matchId, bot: match),
     },
   );
@@ -86,6 +90,8 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
         MatchGameMode.obby => Icons.directions_run_rounded,
         MatchGameMode.higherLower => Icons.compare_arrows_rounded,
         MatchGameMode.unknown => Icons.flag_rounded,
+        MatchGameMode.flash => Icons.bolt_rounded,
+        MatchGameMode.impostor => Icons.theater_comedy_rounded,
       };
 
   static Color _colorFor(MatchGameMode m) => switch (m) {
@@ -96,6 +102,8 @@ class _BotMatchSetupScreenState extends State<BotMatchSetupScreen> {
         MatchGameMode.obby => AppColors.play,
         MatchGameMode.higherLower => AppColors.gray,
         MatchGameMode.unknown => AppColors.coin,
+        MatchGameMode.flash => const Color(0xFFFFD54F),
+        MatchGameMode.impostor => const Color(0xFF7B2CBF),
       };
 
   static String _difficultyLabel(int d) => switch (d) {

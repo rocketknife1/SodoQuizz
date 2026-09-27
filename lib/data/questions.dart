@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+import '../core/flash_game.dart';
 import '../core/gamemodes.dart';
+import '../core/impostor_game.dart';
 import '../models/question.dart';
 
 Color _parseColor(String hexColor) {
@@ -62,4 +64,34 @@ Future<List<Question>> _loadQuestionsForMode(GameMode mode) async {
   }
 
   return questions;
+}
+
+Future<List<Question>>? _imagePoolCache;
+
+/// Toate întrebările CU poză (adică orice categorie în afară de formulele de
+/// la Matematică), într-o ordine CANONICĂ (sortate după id) — aceeași pe
+/// telefon și pe web, fiindcă vin din același JSON. Folosită de Fulgerul și
+/// Impostorul (core/flash_game.dart, core/impostor_game.dart): fiecare rundă
+/// își face propriul amestec determinist plecând de la ordinea asta fixă.
+Future<List<Question>> imagePool() async {
+  if (_imagePoolCache != null) return _imagePoolCache!;
+  final all = await loadAllQuestions();
+  final imgs = all.where((q) => q.imageAssetPath != null).toList()..sort((a, b) => a.id.compareTo(b.id));
+  _imagePoolCache = Future.value(imgs);
+  return imgs;
+}
+
+List<FlashPic> flashPicsFrom(List<Question> pool) =>
+    [for (final q in pool) FlashPic(id: q.id, answer: q.answer, imagePath: q.imageAssetPath!)];
+
+/// [pool] grupat pe categorie, pentru Impostorul — ordinea din fiecare listă
+/// rămâne cea canonică (sortată după id), moștenită din [pool].
+Map<String, List<ImpostorPic>> impostorPicsByCategory(List<Question> pool) {
+  final map = <String, List<ImpostorPic>>{};
+  for (final q in pool) {
+    map.putIfAbsent(q.categoryId, () => []).add(
+          ImpostorPic(id: q.id, answer: q.answer, imagePath: q.imageAssetPath!, categoryId: q.categoryId),
+        );
+  }
+  return map;
 }

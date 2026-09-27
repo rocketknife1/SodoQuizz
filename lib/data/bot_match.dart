@@ -13,6 +13,8 @@ import '../core/stable_hash.dart';
 import '../core/tanks.dart';
 import '../core/electric_chair.dart';
 import '../core/unknown_game.dart';
+import '../core/flash_game.dart';
+import '../core/impostor_game.dart';
 import '../models/multiplayer_models.dart';
 import '../models/question.dart';
 import 'culture_questions.dart';
@@ -37,6 +39,8 @@ const List<MatchGameMode> botMatchModes = [
   MatchGameMode.electricChair,
   MatchGameMode.obby,
   MatchGameMode.unknown,
+  MatchGameMode.flash,
+  MatchGameMode.impostor,
 ];
 
 /// Un meci multiplayer jucat singur, contra boților, fără internet.
@@ -196,6 +200,10 @@ class BotMatch {
         _reactChair(info, phaseKey);
       case MatchGameMode.unknown:
         _reactUnknown(info, phaseKey);
+      case MatchGameMode.flash:
+        _reactFlash(info, phaseKey);
+      case MatchGameMode.impostor:
+        _reactImpostor(info, phaseKey);
       case MatchGameMode.classic:
       case MatchGameMode.higherLower:
         break;
@@ -256,6 +264,73 @@ class BotMatch {
                 choice: unknownBotChoice(me, offer),
               ));
         }
+      }
+    }
+  }
+
+  /// Fulgerul: botul ține minte grila exact ca un jucător real ar trebui —
+  /// o recalculează local (aceeași sămânță, același pool cu poze), din care
+  /// [flashBotGuess] alege corect cu o probabilitate care scade cu grila.
+  void _reactFlash(MatchInfo info, String phaseKey) {
+    if (info.roundPhase != RoundPhase.answering) return;
+    for (final bot in _bots) {
+      final id = bot.currentPlayerId;
+      if (info.roundAnswers.containsKey(id)) continue;
+      _act(bot, phaseKey, flashAnswerSeconds, (i) async {
+        final pool = flashPicsFrom(await imagePool());
+        final round = const FlashGame().gridFor(pool: pool, seed: stableHash(matchId), round: i.roundIndex);
+        final guess = flashBotGuess(round, _rnd);
+        await bot.submitRoundAnswer(matchId: matchId, roundIndex: i.roundIndex, answer: '$guess');
+      });
+    }
+  }
+
+  /// Impostorul: cuvântul fiecăruia (real sau al impostorului) și cine e
+  /// impostorul se recalculează local, exact ca la ecranul unui om — vezi
+  /// core/impostor_game.dart pentru de ce e sigur cross-platform (numai
+  /// [StableRandom]). În faza de indicii botul alege unul dintre cele
+  /// adevărate; la vot, citește indiciile deja trimise de ceilalți.
+  void _reactImpostor(MatchInfo info, String phaseKey) {
+    if (info.roundPhase == RoundPhase.answering) {
+      for (final bot in _bots) {
+        final id = bot.currentPlayerId;
+        if (info.roundAnswers.containsKey(id)) continue;
+        _act(bot, phaseKey, impostorClueSeconds, (i) async {
+          final byCat = impostorPicsByCategory(await imagePool());
+          final impostorId = const ImpostorGame().impostorFor(info.playerIds, stableHash(matchId), i.roundIndex);
+          final (real, fake) =
+              const ImpostorGame().wordsFor(byCategory: byCat, seed: stableHash(matchId), round: i.roundIndex);
+          final myWord = id == impostorId ? fake.answer : real.answer;
+          final clue = impostorBotPickClue(impostorCluesFor(myWord), _rnd);
+          await bot.submitRoundAnswer(matchId: matchId, roundIndex: i.roundIndex, answer: clue.encode());
+        });
+      }
+    } else if (info.roundPhase == RoundPhase.voting) {
+      for (final bot in _bots) {
+        final id = bot.currentPlayerId;
+        if (info.roundVotes.containsKey(id)) continue;
+        _act(bot, phaseKey, impostorVoteSeconds, (i) async {
+          final byCat = impostorPicsByCategory(await imagePool());
+          final impostorId = const ImpostorGame().impostorFor(info.playerIds, stableHash(matchId), i.roundIndex);
+          final (real, fake) =
+              const ImpostorGame().wordsFor(byCategory: byCat, seed: stableHash(matchId), round: i.roundIndex);
+          final myWord = id == impostorId ? fake.answer : real.answer;
+          final others = info.playerIds.where((pid) => pid != id).toList();
+          if (others.isEmpty) return;
+          final clueByPlayer = <String, ImpostorClue>{
+            for (final e in info.roundAnswers.entries)
+              if (e.key != id) e.key: ImpostorClue.decode(e.value),
+          };
+          final vote = impostorBotVote(
+            myId: id,
+            myWord: myWord,
+            otherIds: others,
+            clueByPlayer: clueByPlayer,
+            difficulty: settings.difficulty,
+            rnd: _rnd,
+          );
+          await bot.submitImpostorVote(matchId: matchId, roundIndex: i.roundIndex, accusedId: vote);
+        });
       }
     }
   }

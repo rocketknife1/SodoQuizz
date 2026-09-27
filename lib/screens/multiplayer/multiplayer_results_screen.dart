@@ -33,6 +33,8 @@ import 'multiplayer_match_screen.dart';
 import 'multiplayer_obby_screen.dart';
 import 'multiplayer_tanks_screen.dart';
 import 'multiplayer_unknown_screen.dart';
+import 'multiplayer_flash_screen.dart';
+import 'multiplayer_impostor_screen.dart';
 import 'room_lobby_screen.dart';
 
 /// Clasamentul final al jucătorilor reali dintr-un meci — stil consecvent
@@ -188,6 +190,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
           electricChairRankKey(eliminated: p.eliminated, eliminatedAtRound: p.eliminatedAtRound, score: p.score),
         // Sosire, apoi poziție, apoi monede — vezi core/unknown_game.dart unknownRankKey.
         MatchGameMode.unknown => p.unknownRank,
+        MatchGameMode.impostor => p.score,
         _ => p.score,
       };
 
@@ -656,6 +659,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
             MatchGameMode.classic => MultiplayerMatchScreen(matchId: newMatchId),
             MatchGameMode.rockPaperScissors => MultiplayerRockPaperScissorsScreen(matchId: newMatchId),
             MatchGameMode.unknown => MultiplayerUnknownScreen(matchId: newMatchId),
+            MatchGameMode.flash => MultiplayerFlashScreen(matchId: newMatchId),
+            MatchGameMode.impostor => MultiplayerImpostorScreen(matchId: newMatchId),
           },
         ),
       );
@@ -1036,6 +1041,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                 switch (widget.gameMode) {
                                   MatchGameMode.quizzTanks => '${p.damageDealt} dmg',
                                   MatchGameMode.unknown => p.score >= unknownFinish ? '🏁' : '📍${p.score}',
+                                  MatchGameMode.flash || MatchGameMode.impostor => '${p.score} pct',
                                   _ => '${p.score} pct',
                                 },
                                 style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),

@@ -675,6 +675,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
       case RoundPhase.revealed:
         return _buildRevealedPhase(info, players);
       case RoundPhase.choosing:
+      case RoundPhase.voting:
         return const SizedBox.shrink(); // fază care nu aparține acestui mod
     }
   }

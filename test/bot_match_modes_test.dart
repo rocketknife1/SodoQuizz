@@ -5,6 +5,9 @@ import 'package:guess_it/core/electric_chair.dart';
 import 'package:guess_it/core/stable_hash.dart';
 import 'package:guess_it/core/tanks.dart';
 import 'package:guess_it/core/unknown_game.dart';
+import 'package:guess_it/core/flash_game.dart';
+import 'package:guess_it/core/impostor_game.dart';
+import 'package:guess_it/data/questions.dart';
 import 'package:guess_it/data/bot_match.dart';
 import 'package:guess_it/data/culture_questions.dart';
 import 'package:guess_it/models/multiplayer_models.dart';
@@ -14,6 +17,8 @@ import 'package:guess_it/models/multiplayer_models.dart';
 /// Verifică faptul că boții chiar acționează în fiecare fază și că meciul
 /// progresează — nu echilibrul.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   List<CultureQuestion> pool(String seed) {
     final p = List.of(cultureQuestions);
     stableShuffle(p, stableHash(seed));
@@ -195,4 +200,85 @@ void main() {
     expect(choiceMade || info.status == MatchStatus.finished, isTrue, reason: 'niciun bot n-a apucat să aleagă');
     expect(UnknownGame.fromJson(info.unknownState!).players.any((p) => p.pos > 0), isTrue);
   }, timeout: const Timeout(Duration(seconds: 100)));
+
+  test('Fulgerul: boții memorează grila și răspund singuri', () async {
+    final match = await BotMatch.start(
+      const BotMatchSettings(mode: MatchGameMode.flash, botCount: 3, difficulty: 5),
+      displayName: 'Eu',
+    );
+    final svc = match.service;
+    final id = match.matchId;
+    final pics = flashPicsFrom(await imagePool());
+    final bots = ['bot_1', 'bot_2', 'bot_3'];
+    var botsAnswered = false;
+    var advanced = false;
+    final deadline = DateTime.now().add(const Duration(seconds: 60));
+    while (DateTime.now().isBefore(deadline) && !(botsAnswered && advanced)) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final info = await svc.watchMatch(id).first;
+      if (info.status == MatchStatus.finished) break;
+      final elapsed = DateTime.now().difference(info.roundStartedAt!.toDate()).inMilliseconds;
+      switch (info.roundPhase) {
+        case RoundPhase.answering:
+          if (bots.every(info.roundAnswers.containsKey)) botsAnswered = true;
+          final revealMs = flashRevealMsFor(info.roundIndex);
+          if (bots.every(info.roundAnswers.containsKey) || elapsed >= revealMs + flashAnswerSeconds * 1000) {
+            final grid = const FlashGame().gridFor(pool: pics, seed: stableHash(id), round: info.roundIndex);
+            await svc.closeFlashRound(
+                matchId: id, roundIndex: info.roundIndex, correctIndex: grid.targetIndex, points: flashPointsFor(info.roundIndex));
+          }
+        case RoundPhase.revealed:
+          advanced = true;
+          await svc.advanceSyncRound(matchId: id, roundIndex: info.roundIndex);
+        default:
+          break;
+      }
+    }
+    match.dispose();
+    expect(botsAnswered, isTrue);
+    expect(advanced, isTrue);
+  }, timeout: const Timeout(Duration(seconds: 90)));
+
+  test('Impostorul: boții aleg indicii și votează singuri', () async {
+    final match = await BotMatch.start(
+      const BotMatchSettings(mode: MatchGameMode.impostor, botCount: 3, difficulty: 5),
+      displayName: 'Eu',
+    );
+    final svc = match.service;
+    final id = match.matchId;
+    final bots = ['bot_1', 'bot_2', 'bot_3'];
+    var cluesGiven = false;
+    var votesGiven = false;
+    var advanced = false;
+    final deadline = DateTime.now().add(const Duration(seconds: 60));
+    while (DateTime.now().isBefore(deadline) && !(cluesGiven && votesGiven && advanced)) {
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      final info = await svc.watchMatch(id).first;
+      if (info.status == MatchStatus.finished) break;
+      final elapsed = DateTime.now().difference(info.roundStartedAt!.toDate()).inSeconds;
+      switch (info.roundPhase) {
+        case RoundPhase.answering:
+          if (bots.every(info.roundAnswers.containsKey)) cluesGiven = true;
+          if (bots.every(info.roundAnswers.containsKey) || elapsed >= impostorClueSeconds) {
+            await svc.closeImpostorClues(matchId: id, roundIndex: info.roundIndex);
+          }
+        case RoundPhase.voting:
+          final impostorId = const ImpostorGame().impostorFor(info.playerIds, stableHash(id), info.roundIndex);
+          final votingBots = bots.where((b) => b != impostorId).toList();
+          if (votingBots.every(info.roundVotes.containsKey)) votesGiven = true;
+          if (votingBots.every(info.roundVotes.containsKey) || elapsed >= impostorVoteSeconds) {
+            await svc.closeImpostorVoting(matchId: id, roundIndex: info.roundIndex, impostorId: impostorId);
+          }
+        case RoundPhase.revealed:
+          advanced = true;
+          await svc.advanceSyncRound(matchId: id, roundIndex: info.roundIndex);
+        default:
+          break;
+      }
+    }
+    match.dispose();
+    expect(cluesGiven, isTrue);
+    expect(votesGiven, isTrue);
+    expect(advanced, isTrue);
+  }, timeout: const Timeout(Duration(seconds: 90)));
 }

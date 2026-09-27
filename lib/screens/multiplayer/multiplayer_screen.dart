@@ -7,6 +7,8 @@ import '../../core/electric_chair.dart';
 import '../../core/lang.dart';
 import '../../core/tanks.dart';
 import '../../core/unknown_game.dart';
+import '../../core/flash_game.dart';
+import '../../core/impostor_game.dart';
 import '../../core/rock_paper_scissors.dart';
 import '../../core/theme.dart';
 import '../../data/auth_service.dart';
@@ -444,6 +446,24 @@ class _MultiplayerScreenState extends State<MultiplayerScreen> with TickerProvid
                   '$unknownMinPlayers-$unknownMaxPlayers players, race to $unknownFinish: ladders, snakes, chests'),
               color: const Color(0xFFB8860B),
               onTap: () => Navigator.pop(dialogContext, MatchGameMode.unknown),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.bolt_rounded,
+              label: tr('Fulgerul', 'Flash'),
+              subtitle: tr('$flashRounds runde, poze de ținut minte, grila crește',
+                  '$flashRounds rounds, memorize the pictures, the grid grows'),
+              color: const Color(0xFFFFD54F),
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.flash),
+            ),
+            const SizedBox(height: 10),
+            _GameModeOption(
+              icon: Icons.theater_comedy_rounded,
+              label: tr('Impostorul', 'The Impostor'),
+              subtitle: tr('$impostorMinPlayers-$impostorMaxPlayers jucători, toți au același cuvânt în afară de unul',
+                  '$impostorMinPlayers-$impostorMaxPlayers players, everyone shares a word except one'),
+              color: const Color(0xFF7B2CBF),
+              onTap: () => Navigator.pop(dialogContext, MatchGameMode.impostor),
             ),
           ],
         ),

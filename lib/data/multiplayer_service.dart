@@ -19,6 +19,8 @@ import '../core/powerups.dart';
 import '../core/stable_hash.dart';
 import '../core/tanks.dart';
 import '../core/unknown_game.dart';
+import '../core/flash_game.dart';
+import '../core/impostor_game.dart';
 import '../models/multiplayer_models.dart';
 import 'firestore_batch.dart';
 import 'local_firestore.dart';
@@ -59,6 +61,10 @@ int maxPlayersForMode(MatchGameMode mode) => switch (mode) {
       MatchGameMode.electricChair => electricChairPlayerCount,
       // 6 culori de pion pe tablă (widgets/unknown_board.dart).
       MatchGameMode.unknown => unknownMaxPlayers,
+      // Fulgerul: grila crește la 3×3, deci 9 e și plafonul de jucători
+      // (o culoare de reper pe grilă per jucător ar deveni ilizibilă peste).
+      MatchGameMode.flash => 9,
+      MatchGameMode.impostor => impostorMaxPlayers,
       MatchGameMode.classic || MatchGameMode.higherLower || MatchGameMode.rockPaperScissors => matchPlayerCount,
     };
 
@@ -516,6 +522,9 @@ class MultiplayerService {
           // la finalul rundei se aplică abia la închiderea rundei următoare.
           'roundAnswerMs': <String, int>{},
           'roundArms': <String, String>{},
+          // Impostor: voturile rundei încheiate — golite aici, ca la
+          // roundAnswers de mai sus.
+          'roundVotes': <String, String>{},
           'roundStartedAt': FieldValue.serverTimestamp(),
         });
       });
@@ -1764,6 +1773,140 @@ class MultiplayerService {
       });
     } catch (e) {
       debugPrint('MultiplayerService.closeUnknownRound a esuat: $e');
+    }
+  }
+
+  // ─── Fulgerul (memorie pe grilă de poze) ─────────────────────────────────
+
+  /// Închide runda de Fulgerul: [correctIndex] (poziția din grilă unde stătea
+  /// poza-țintă) e calculat LOCAL de clientul care apelează, din același
+  /// pool + sămânță pe care le are orice telefon (vezi core/flash_game.dart)
+  /// — exact ca [correctAnswer] la [closeTanksAnswering]. Fără eliminare:
+  /// scorul se adună pe [flashRounds] runde fixe.
+  Future<void> closeFlashRound({
+    required String matchId,
+    required int roundIndex,
+    required int correctIndex,
+    required int points,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return; // deja rezolvată de alt client
+        }
+        final answers = freshRoundEntries(data, 'roundAnswers', roundIndex);
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
+        final winnerIds = <String>[];
+        for (final doc in playerDocs) {
+          if (!doc.exists) continue;
+          if (answers[doc.id] != '$correctIndex') continue;
+          winnerIds.add(doc.id);
+          final score = (doc.data()!['score'] as int? ?? 0) + points;
+          tx.update(doc.reference, {'score': score});
+        }
+        final outOfRounds = roundIndex + 1 >= flashRounds;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          'roundWinnerIds': winnerIds,
+          if (outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeFlashRound a esuat: $e');
+    }
+  }
+
+  // ─── Impostorul (deducție socială) ───────────────────────────────────────
+
+  /// Închide faza de indicii: cine a ales deja (sau a expirat timpul) trece
+  /// la vot. Apelabilă de orice client, cu aceeași gardă anti-cursă ca la
+  /// celelalte moduri sincronizate.
+  Future<void> closeImpostorClues({required String matchId, required int roundIndex}) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    try {
+      await _db.runTransaction((tx) async {
+        final doc = await tx.get(matchRef);
+        final data = doc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.answering.name) {
+          return;
+        }
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.voting.name,
+          'roundVotes': <String, String>{},
+          'roundStartedAt': FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeImpostorClues a esuat: $e');
+    }
+  }
+
+  /// Votul propriu — pe cine crezi că e impostorul.
+  Future<void> submitImpostorVote({required String matchId, required int roundIndex, required String accusedId}) {
+    final me = currentPlayerId;
+    return _paced(() => _db.collection('matches').doc(matchId).update({
+          'roundVotes.$me': accusedId,
+          'roundStamps.roundVotes.$me': roundIndex,
+        }));
+  }
+
+  /// Închide votul: [impostorId] e calculat LOCAL de clientul care apelează
+  /// (rotație deterministă peste [MatchInfo.playerIds] — vezi
+  /// core/impostor_game.dart `impostorFor`), exact ca [correctAnswer] la
+  /// Tancuri. Scrie punctele rundei; fără eliminare, ca la Piatră-Hârtie-
+  /// Foarfecă.
+  Future<void> closeImpostorVoting({
+    required String matchId,
+    required int roundIndex,
+    required String impostorId,
+  }) async {
+    final matchRef = _db.collection('matches').doc(matchId);
+    final playerIds = (await matchRef.collection('players').get()).docs.map((d) => d.id).toList();
+    if (playerIds.isEmpty) return;
+    try {
+      await _db.runTransaction((tx) async {
+        final matchDoc = await tx.get(matchRef);
+        final data = matchDoc.data();
+        if (data == null || data['roundIndex'] != roundIndex || data['roundPhase'] != RoundPhase.voting.name) {
+          return; // deja rezolvată de alt client
+        }
+        final votes = freshRoundEntries(data, 'roundVotes', roundIndex);
+        final playerDocs = <DocumentSnapshot<Map<String, dynamic>>>[];
+        for (final id in playerIds) {
+          playerDocs.add(await tx.get(matchRef.collection('players').doc(id)));
+        }
+        final present = [for (final doc in playerDocs) if (doc.exists) doc.id];
+        final result = const ImpostorGame().resolveVotes(
+          impostorId: impostorId,
+          playerIds: present,
+          votes: {for (final e in votes.entries) e.key: e.value as String},
+        );
+        for (final doc in playerDocs) {
+          if (!doc.exists) continue;
+          final gained = result.scores[doc.id] ?? 0;
+          if (gained == 0) continue;
+          final score = (doc.data()!['score'] as int? ?? 0) + gained;
+          tx.update(doc.reference, {'score': score});
+        }
+        final outOfRounds = roundIndex + 1 >= impostorRounds;
+        tx.update(matchRef, {
+          'roundPhase': RoundPhase.revealed.name,
+          // Cine a votat corect, ca reveal-ul să știe pe cine să evidențieze
+          // — reutilizăm [roundWinnerIds] la fel ca la celelalte moduri.
+          'roundWinnerIds': result.impostorCaught ? [for (final id in present) if (votes[id] == impostorId) id] : <String>[],
+          if (outOfRounds) 'status': MatchStatus.finished.name,
+        });
+      });
+    } catch (e) {
+      debugPrint('MultiplayerService.closeImpostorVoting a esuat: $e');
     }
   }
 

@@ -26,8 +26,12 @@ enum MatchStatus { lobby, playing, finished }
 /// vezi core/electric_chair.dart și MultiplayerElectricChairScreen. [unknown]
 /// (nume de lucru) e cursa pe numere 1..60 cu șerpi, scări și cufere: toată
 /// masa răspunde deodată, răspunsul dă zarurile — vezi core/unknown_game.dart
-/// și MultiplayerUnknownScreen.
-enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rockPaperScissors, unknown }
+/// și MultiplayerUnknownScreen. [flash] e memoria de scurtă durată: o grilă
+/// de poze apare o clipă, apoi dispare — vezi core/flash_game.dart și
+/// MultiplayerFlashScreen. [impostor] e deducție socială: toți primesc
+/// același cuvânt de ghicit în afară de unul — vezi core/impostor_game.dart
+/// și MultiplayerImpostorScreen.
+enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rockPaperScissors, unknown, flash, impostor }
 
 /// Faza rundei curente în modurile cu rundă SINCRONIZATĂ
 /// ([MatchGameMode.higherLower], [MatchGameMode.quizzTanks] și
@@ -44,14 +48,15 @@ enum MatchGameMode { classic, higherLower, quizzTanks, obby, electricChair, rock
 /// trece doar prin [targeting], niciodată prin [choosing]; Obby doar prin
 /// [choosing], niciodată prin [targeting]. Scaunul Electric refolosește
 /// [targeting] (cine a răspuns corect își alege victima ȘI întrebarea) și
-/// mai trece, în plus, prin [chair] (victima răspunde efectiv). Nicăieri în
-/// aplicație nu există un `switch` exhaustiv pe enum-ul ăsta (doar comparații
-/// `== RoundPhase.X` și `values.firstWhere(orElse:)`), tocmai ca o fază nouă
-/// să nu poată strica modurile care n-o folosesc.
+/// mai trece, în plus, prin [chair] (victima răspunde efectiv). [voting] e
+/// doar la Impostor, între alegerea indiciului ([answering]) și dezvăluire.
+/// Nicăieri în aplicație nu există un `switch` exhaustiv pe enum-ul ăsta
+/// (doar comparații `== RoundPhase.X` și `values.firstWhere(orElse:)`),
+/// tocmai ca o fază nouă să nu poată strica modurile care n-o folosesc.
 ///
 /// Numele valorilor e și ce se scrie în Firestore, deci nu se pot redenumi
 /// fără să rămână în urmă meciurile aflate în desfășurare.
-enum RoundPhase { answering, targeting, choosing, revealed, chair }
+enum RoundPhase { answering, targeting, choosing, revealed, chair, voting }
 
 /// O tragere dintr-o rundă de Quizz Tanks, așa cum a ieșit din zarurile
 /// aruncate O SINGURĂ DATĂ, în tranzacția care rezolvă runda (vezi
@@ -229,6 +234,11 @@ class MatchInfo {
   /// secunde.
   final Map<String, String> roundTargets;
 
+  /// Doar [MatchGameMode.impostor], în faza [RoundPhase.voting]: uid-ul celui
+  /// care votează → uid-ul celui acuzat. Exact ca [roundTargets] la Quizz
+  /// Tanks: doar cine a votat deja apare aici.
+  final Map<String, String> roundVotes;
+
   /// Quizz Tanks / Scaunul Electric / Obby: uid → numele power-up-ului
   /// activat de jucătorul ăla pentru runda curentă (vezi
   /// core/powerups.dart `PowerUp.name`). Se golește la începutul fiecărei
@@ -318,6 +328,7 @@ class MatchInfo {
     this.roundDestroyedIds = const [],
     this.roundShieldedIds = const [],
     this.roundTargets = const {},
+    this.roundVotes = const {},
     this.roundPowerUps = const {},
     this.roundPlatformChoices = const {},
     this.roundChairChoices = const {},
@@ -370,6 +381,7 @@ class MatchInfo {
       roundDestroyedIds: List<String>.from(data['roundDestroyedIds'] as List? ?? const []),
       roundShieldedIds: List<String>.from(data['roundShieldedIds'] as List? ?? const []),
       roundTargets: Map<String, String>.from(freshRoundEntries(data, 'roundTargets', round)),
+      roundVotes: Map<String, String>.from(freshRoundEntries(data, 'roundVotes', round)),
       roundPowerUps: Map<String, String>.from(data['roundPowerUps'] as Map? ?? const {}),
       // (x as num).toInt() nu `as int`: Firestore poate întoarce un întreg
       // scris de pe web ca `double`, iar un cast direct ar arunca.
@@ -420,6 +432,7 @@ class MatchInfo {
         'roundDestroyedIds': <String>[],
         'roundShieldedIds': <String>[],
         'roundTargets': <String, String>{},
+        'roundVotes': <String, String>{},
         'roundPowerUps': <String, String>{},
         'roundPlatformChoices': <String, int>{},
         'roundChairChoices': <String, Map<String, dynamic>>{},
