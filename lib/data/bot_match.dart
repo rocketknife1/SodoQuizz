@@ -257,11 +257,18 @@ class BotMatch {
         }
       } else if (info.roundPhase == RoundPhase.revealed && game != null && me != null) {
         final offer = game.pendingOffers[id];
+        final potionOffers = game.pendingPotions[id];
         if (offer != null && !info.roundChoices.containsKey(id)) {
           _act(bot, phaseKey, 8, (i) => bot.submitUnknownChoice(
                 matchId: matchId,
                 offerRound: i.roundIndex,
                 choice: unknownBotChoice(me, offer),
+              ));
+        } else if (potionOffers != null && !info.roundChoices.containsKey(id)) {
+          _act(bot, phaseKey, 8, (i) => bot.submitUnknownChoice(
+                matchId: matchId,
+                offerRound: i.roundIndex,
+                choice: unknownBotPotionChoice(game, potionOffers, _rnd),
               ));
         }
       }

@@ -44,6 +44,20 @@ UnknownGame _playOut(int seed, int players, {double accuracy = 0.6}) {
               UnknownAnswer(correct: rnd.nextBool(), ms: rnd.nextInt(5000)));
         case UnknownLandingKind.goldenQuestion:
           g.resolveGolden(p, rnd.nextBool());
+        case UnknownLandingKind.potion:
+          if (m.landing.potionOffers.isNotEmpty && rnd.nextBool()) {
+            final effect = m.landing.potionOffers[rnd.nextInt(m.landing.potionOffers.length)];
+            switch (effect) {
+              case UnknownPotionEffect.deadly:
+                p.pos = max(1, p.pos - unknownPotionDeadlySetback);
+              case UnknownPotionEffect.sleep:
+                p.skipNext = true;
+              case UnknownPotionEffect.setback:
+                p.pos = max(1, p.pos - unknownPotionSetback);
+              case UnknownPotionEffect.karma:
+                p.pos = max(1, p.pos - 1);
+            }
+          }
         case UnknownLandingKind.none:
           break;
       }
@@ -519,6 +533,238 @@ void main() {
         if (g.players.any((p) => p.finished)) finished++;
       }
       expect(finished / 200, greaterThan(0.8));
+    });
+  });
+
+  group('catapultă', () {
+    test('16 și 48 sunt catapultă pe tablă', () {
+      expect(unknownTileAt(16), UnknownTile.catapult);
+      expect(unknownTileAt(48), UnknownTile.catapult);
+    });
+
+    test('lansează înainte, în intervalul configurat, o singură dată (fără lanț)', () {
+      final g = _game(players: 2);
+      final p = g.players[0];
+      p.pos = 15;
+      final m = g.move(p, _roll(p, 1));
+      expect(p.pos, inInclusiveRange(16 + unknownCatapultMin, 16 + unknownCatapultMax));
+      expect(m.hops.last.kind, UnknownHopKind.catapult);
+      expect(m.landing.note, UnknownNote.catapult);
+    });
+
+    test('nu trece de finish direct din catapultă', () {
+      final g = _game(players: 2);
+      final p = g.players[0];
+      p.pos = 47;
+      final m = g.move(p, _roll(p, 1));
+      expect(p.pos, lessThan(unknownFinish));
+      expect(m.landing.note, UnknownNote.catapult);
+    });
+
+    test('aceeași sămânță → aceeași distanță de catapultare', () {
+      int landedAt(int seed) {
+        final g = UnknownGame(seed: seed, players: [UnknownPlayer(id: 'a', name: 'A', isBot: false, colorIndex: 0)]);
+        final p = g.players[0];
+        p.pos = 15;
+        g.move(p, _roll(p, 1));
+        return p.pos;
+      }
+
+      expect(landedAt(9), landedAt(9));
+    });
+  });
+
+  group('coliziune (jucător pe jucător)', () {
+    test('a picat pe cineva încă pe drum → declanșează coliziune, indiferent de tipul câmpului', () {
+      final g = _game(players: 2);
+      final a = g.players[0];
+      final b = g.players[1];
+      b.pos = 21; // coins — coliziunea trebuie să coexiste cu monedele
+      a.pos = 19;
+      final m = g.move(a, _roll(a, 2));
+      expect(a.pos, 21);
+      expect(m.landing.collisionOpponentId, b.id);
+      expect(a.coins, greaterThan(unknownStartCoins)); // tot a luat monedele câmpului
+    });
+
+    test('nu se declanșează pe START sau pe câmpul liber', () {
+      final g = _game(players: 2);
+      final a = g.players[0];
+      final b = g.players[1];
+      b.pos = 40;
+      a.pos = 1;
+      final m = g.move(a, _roll(a, 1));
+      expect(m.landing.collisionOpponentId, isNull);
+    });
+
+    test('cine ajunge sau a plecat nu mai declanșează coliziune', () {
+      final g = _game(players: 2);
+      final a = g.players[0];
+      final b = g.players[1];
+      b.pos = 21;
+      b.left = true;
+      a.pos = 19;
+      final m = g.move(a, _roll(a, 2));
+      expect(m.landing.collisionOpponentId, isNull);
+    });
+
+    test('resolveCollision: învinsul pierde pași, nu monede', () {
+      final g = _game(players: 2);
+      final a = g.players[0]..pos = 20;
+      final b = g.players[1]..pos = 20;
+      final coinsBefore = (a.coins, b.coins);
+      final res = g.resolveCollision(
+        a,
+        b,
+        const UnknownAnswer(correct: true, ms: 500),
+        const UnknownAnswer(correct: false, ms: 999),
+      );
+      expect(res.winnerId, a.id);
+      expect(b.pos, 20 - unknownCollisionPushback);
+      expect(a.pos, 20);
+      expect((a.coins, b.coins), coinsBefore);
+    });
+
+    test('resolveCollision: amândoi greșit → fără efect', () {
+      final g = _game(players: 2);
+      final a = g.players[0]..pos = 20;
+      final b = g.players[1]..pos = 20;
+      const miss = UnknownAnswer(correct: false, ms: 1 << 30);
+      final res = g.resolveCollision(a, b, miss, miss);
+      expect(res.winnerId, isNull);
+      expect(a.pos, 20);
+      expect(b.pos, 20);
+    });
+
+    test('o coliziune în așteptare se rezolvă la resolveRound și se golește', () {
+      final g = _game(players: 2);
+      final a = g.players[0]..pos = 20;
+      final b = g.players[1]..pos = 20;
+      g.pendingCollisions.add((a.id, b.id));
+      final log = g.resolveRound({a.id: const UnknownAnswer(correct: true, ms: 100), b.id: const UnknownAnswer(correct: false, ms: 100)});
+      expect(log.collisions, isNotEmpty);
+      expect(log.collisions.first.winnerId, a.id);
+      expect(g.pendingCollisions, isEmpty);
+    });
+  });
+
+  group('vraja de stun', () {
+    test('stunul prinde la runda VIITOARE, nu la asta — indiferent de ordinea din players', () {
+      final g = _game(players: 2);
+      final user = g.players[0];
+      final target = g.players[1]..pos = 5;
+      user.pos = 1;
+      user.items.add(UnknownItem.stun);
+      g.arm(user, UnknownItem.stun);
+      final r1 = g.resolveAnswers(_all(g, correct: true));
+      expect(r1.rolls[target.id]!.skipped, isFalse, reason: 'ținta se mișcă normal chiar în runda în care a fost stunată');
+      expect(target.skipNext, isTrue);
+      final r2 = g.resolveAnswers(_all(g, correct: true));
+      expect(r2.rolls[target.id]!.skipped, isTrue);
+      expect(target.skipNext, isFalse);
+    });
+
+    test('fără nimeni în față: obiectul se întoarce în inventar, nu se pierde', () {
+      final g = _game(players: 2);
+      final leader = g.players[0]..pos = 50;
+      g.players[1].pos = 5;
+      leader.items.add(UnknownItem.stun);
+      g.arm(leader, UnknownItem.stun);
+      g.resolveAnswers(_all(g, correct: true));
+      expect(leader.items, contains(UnknownItem.stun));
+      expect(leader.armed, isNull);
+    });
+  });
+
+  group('poțiuni misterioase', () {
+    test('33 și 56 sunt poțiune pe tablă; oferă 2 efecte diferite din cele 4', () {
+      expect(unknownTileAt(33), UnknownTile.potion);
+      expect(unknownTileAt(56), UnknownTile.potion);
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 32;
+      final m = g.move(p, _roll(p, 1));
+      expect(m.landing.kind, UnknownLandingKind.potion);
+      expect(m.landing.potionOffers.length, 2);
+      expect(m.landing.potionOffers[0], isNot(m.landing.potionOffers[1]));
+    });
+
+    test('aceeași sămânță → aceleași 2 poțiuni oferite', () {
+      List<UnknownPotionEffect> offersFor(int seed) {
+        final g = UnknownGame(seed: seed, players: [UnknownPlayer(id: 'a', name: 'A', isBot: false, colorIndex: 0)]);
+        final p = g.players[0]..pos = 32;
+        return g.move(p, _roll(p, 1)).landing.potionOffers;
+      }
+
+      expect(offersFor(11), offersFor(11));
+    });
+
+    test('efectul sleep: stă o tură; oferta se golește după alegere', () {
+      final g = _game(players: 2);
+      final p = g.players[0];
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.sleep, UnknownPotionEffect.setback];
+      final log = g.resolveRound(_all(g, correct: true), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(g.pendingPotions, isEmpty);
+      final applied = log.choices.firstWhere((c) => c.playerId == p.id);
+      expect(applied.potion, UnknownPotionEffect.sleep);
+      expect(log.moves.firstWhere((m) => m.roll.playerId == p.id).roll.skipped, isTrue);
+    });
+
+    test('efectul setback: câțiva pași înapoi', () {
+      // Verificat pe `prelude` (poziția imediat după poțiune, înainte de
+      // mutarea propriu-zisă a rundei) — zarul care urmează e tot aleator.
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 20;
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.setback, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(log.prelude[p.id]![0], 20 - unknownPotionSetback);
+    });
+
+    test('efectul deadly: mult înapoi', () {
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 30;
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.deadly, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(log.prelude[p.id]![0], 30 - unknownPotionDeadlySetback);
+    });
+
+    test('nu bea nimic → fără efect, dar oferta se consumă', () {
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 20;
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.deadly, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: UnknownChoice.none});
+      expect(g.pendingPotions, isEmpty);
+      final applied = log.choices.firstWhere((c) => c.playerId == p.id);
+      expect(applied.potion, isNull);
+      expect(p.skipNext, isFalse);
+      expect(log.prelude[p.id]![0], 20, reason: 'fără poțiune, poziția nu s-a schimbat înainte de mutare');
+    });
+
+    test('karma: avans mic sau fără avans → efect blând (nu te teleportează)', () {
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 10;
+      g.players[1].pos = 8; // avans mic, sub prag
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.karma, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(log.prelude[p.id]![0], 9);
+    });
+
+    test('karma: lider cu avans mare → teleportat lângă locul 2', () {
+      final g = _game(players: 3);
+      final p = g.players[0]..pos = 30;
+      g.players[1].pos = 10;
+      g.players[2].pos = 5;
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.karma, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(log.prelude[p.id]![0], 9); // lângă locul 2 (10 - 1)
+    });
+
+    test('karma: nu ești lider → efect blând, chiar cu diferență mare', () {
+      final g = _game(players: 2);
+      final p = g.players[0]..pos = 5;
+      g.players[1].pos = 40; // celălalt e mult în față — p NU e lider
+      g.pendingPotions[p.id] = const [UnknownPotionEffect.karma, UnknownPotionEffect.sleep];
+      final log = g.resolveRound(_all(g, correct: false), choices: {p.id: const UnknownChoice(take: '0')});
+      expect(log.prelude[p.id]![0], 4);
     });
   });
 }

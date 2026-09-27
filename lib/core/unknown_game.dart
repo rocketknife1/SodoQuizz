@@ -39,7 +39,39 @@ const int unknownMaxItems = 2;
 const int unknownMinPlayers = 2;
 const int unknownMaxPlayers = 6;
 
-enum UnknownTile { normal, ladder, snake, back3, trap, clover, chest, event, duel, shop, coins, tax, finish }
+/// Catapulta: lansare înainte, cu distanță aleatoare (nu fixă, ca scara).
+const int unknownCatapultMin = 4;
+const int unknownCatapultMax = 9;
+
+/// Coliziunea: cine pică pe cineva încă pe drum îl provoacă la întrebarea
+/// următoare; învinsul pierde pași, nu monede (diferit de duelul de la [UnknownTile.duel]).
+const int unknownCollisionPushback = 4;
+
+/// Poțiunile: cât împinge înapoi fiecare efect negativ.
+const int unknownPotionDeadlySetback = 15;
+const int unknownPotionSetback = 6;
+
+/// Cât de mare trebuie să fie avansul liderului față de locul 2 ca poțiunea
+/// „dreptății" să-l teleporteze lângă el, în loc de efectul blând.
+const int unknownPotionKarmaLeadThreshold = 8;
+
+enum UnknownTile {
+  normal,
+  ladder,
+  snake,
+  back3,
+  trap,
+  clover,
+  chest,
+  event,
+  duel,
+  shop,
+  coins,
+  tax,
+  finish,
+  catapult,
+  potion,
+}
 
 /// Scările: de jos → sus.
 const Map<int, int> unknownLadders = {3: 11, 8: 19, 20: 29, 27: 38, 36: 44, 43: 52};
@@ -55,7 +87,7 @@ const Map<int, UnknownTile> _special = {
   12: UnknownTile.clover,
   14: UnknownTile.duel,
   15: UnknownTile.back3,
-  16: UnknownTile.coins,
+  16: UnknownTile.catapult,
   18: UnknownTile.chest,
   21: UnknownTile.coins,
   23: UnknownTile.trap,
@@ -63,20 +95,20 @@ const Map<int, UnknownTile> _special = {
   26: UnknownTile.event,
   31: UnknownTile.back3,
   32: UnknownTile.chest,
-  33: UnknownTile.coins,
+  33: UnknownTile.potion,
   35: UnknownTile.duel,
   39: UnknownTile.clover,
   40: UnknownTile.event,
   42: UnknownTile.shop,
   46: UnknownTile.chest,
   47: UnknownTile.trap,
-  48: UnknownTile.coins,
+  48: UnknownTile.catapult,
   50: UnknownTile.duel,
   51: UnknownTile.event,
   53: UnknownTile.back3,
   54: UnknownTile.tax,
   55: UnknownTile.chest,
-  56: UnknownTile.coins,
+  56: UnknownTile.potion,
   58: UnknownTile.coins,
   59: UnknownTile.tax,
 };
@@ -163,13 +195,14 @@ String unknownRelicDesc(UnknownRelic r) => switch (r) {
 
 // ─── Obiecte (consumabile, maxim 2) ─────────────────────────────────────
 
-enum UnknownItem { extraDie, bigStep, shield, swap }
+enum UnknownItem { extraDie, bigStep, shield, swap, stun }
 
 int unknownItemPrice(UnknownItem i) => switch (i) {
       UnknownItem.extraDie => 6,
       UnknownItem.bigStep => 7,
       UnknownItem.shield => 8,
       UnknownItem.swap => 12,
+      UnknownItem.stun => 10,
     };
 
 String unknownItemEmoji(UnknownItem i) => switch (i) {
@@ -177,6 +210,7 @@ String unknownItemEmoji(UnknownItem i) => switch (i) {
       UnknownItem.bigStep => '👟',
       UnknownItem.shield => '🛡️',
       UnknownItem.swap => '🔀',
+      UnknownItem.stun => '💫',
     };
 
 String unknownItemName(UnknownItem i) => switch (i) {
@@ -184,6 +218,7 @@ String unknownItemName(UnknownItem i) => switch (i) {
       UnknownItem.bigStep => tr('Cizme de 7 leghe', 'Seven-League Boots'),
       UnknownItem.shield => tr('Scutul', 'The Shield'),
       UnknownItem.swap => tr('Schimbul', 'The Swap'),
+      UnknownItem.stun => tr('Vraja de stun', 'Stun Charm'),
     };
 
 String unknownItemDesc(UnknownItem i) => switch (i) {
@@ -191,6 +226,35 @@ String unknownItemDesc(UnknownItem i) => switch (i) {
       UnknownItem.bigStep => tr('+3 pași la mutare', '+3 steps on your move'),
       UnknownItem.shield => tr('Imunitate la următorul șarpe sau capcană', 'Immune to the next snake or trap'),
       UnknownItem.swap => tr('Schimbi locul cu cel din fața ta', 'Swap places with the player ahead'),
+      UnknownItem.stun => tr('Cel din fața ta stă o tură', 'Whoever is ahead of you skips their next turn'),
+    };
+
+// ─── Poțiuni misterioase (câmpul „?🧪") ─────────────────────────────────
+
+enum UnknownPotionEffect { deadly, sleep, setback, karma }
+
+String unknownPotionEmoji(UnknownPotionEffect e) => switch (e) {
+      UnknownPotionEffect.deadly => '💀',
+      UnknownPotionEffect.sleep => '😴',
+      UnknownPotionEffect.setback => '⬅️',
+      UnknownPotionEffect.karma => '🔮',
+    };
+
+String unknownPotionName(UnknownPotionEffect e) => switch (e) {
+      UnknownPotionEffect.deadly => tr('Poțiunea neagră', 'The Black Potion'),
+      UnknownPotionEffect.sleep => tr('Poțiunea somnului', 'The Sleeping Potion'),
+      UnknownPotionEffect.setback => tr('Poțiunea încurcată', 'The Muddled Potion'),
+      UnknownPotionEffect.karma => tr('Poțiunea dreptății', 'The Potion of Justice'),
+    };
+
+String unknownPotionDesc(UnknownPotionEffect e) => switch (e) {
+      UnknownPotionEffect.deadly => tr('Te trimite mult înapoi', 'Sends you way back'),
+      UnknownPotionEffect.sleep => tr('Stai o tură', 'Skip your next turn'),
+      UnknownPotionEffect.setback => tr('Câțiva pași înapoi', 'A few steps back'),
+      UnknownPotionEffect.karma => tr(
+          'La început: puțin trist. Dacă ești mult în față: te aduce lângă locul 2',
+          "Early on: a little sad. If you're way ahead: brings you level with 2nd place",
+        ),
     };
 
 // ─── Evenimente (câmpul „?") ────────────────────────────────────────────
@@ -222,7 +286,19 @@ String unknownEventDesc(UnknownEvent e) => switch (e) {
 
 // ─── Ce s-a întâmplat pe câmp (textul îl face fiecare ecran în limba lui) ─
 
-enum UnknownNote { ladder, snake, snakeBlocked, back3, back3Blocked, trap, trapBlocked, clover, cloverCoins, skipped }
+enum UnknownNote {
+  ladder,
+  snake,
+  snakeBlocked,
+  back3,
+  back3Blocked,
+  trap,
+  trapBlocked,
+  clover,
+  cloverCoins,
+  skipped,
+  catapult,
+}
 
 String unknownNoteText(UnknownNote n, int from, int to) => switch (n) {
       UnknownNote.ladder => tr('🪜 Scara! $from → $to', '🪜 A ladder! $from → $to'),
@@ -235,6 +311,7 @@ String unknownNoteText(UnknownNote n, int from, int to) => switch (n) {
       UnknownNote.clover => tr('🍀 Trifoi: imunitate la următorul necaz', '🍀 Clover: immune to the next trouble'),
       UnknownNote.cloverCoins => tr('🍀 Trifoi: avea deja imunitate, +3 🪙', '🍀 Clover: already immune, +3 🪙'),
       UnknownNote.skipped => tr('⏸️ Stă o tură (capcana)', '⏸️ Sits this one out (the trap)'),
+      UnknownNote.catapult => tr('🚀 Catapulta! $from → $to', '🚀 Catapult! $from → $to'),
     };
 
 // ─── Starea jocului ─────────────────────────────────────────────────────
@@ -395,7 +472,7 @@ class UnknownRoll {
 
 /// Cum ajunge pionul pe [UnknownHop.tile]: pas cu pas, pe scară, pe șarpe
 /// sau dintr-un salt (înapoi 3, vânt, schimb de locuri).
-enum UnknownHopKind { walk, ladder, snake, jump }
+enum UnknownHopKind { walk, ladder, snake, jump, catapult }
 
 class UnknownHop {
   const UnknownHop(this.tile, this.kind, [this.fx = const []]);
@@ -413,7 +490,7 @@ class UnknownHop {
       );
 }
 
-enum UnknownLandingKind { none, chest, shop, duel, goldenQuestion }
+enum UnknownLandingKind { none, chest, shop, duel, goldenQuestion, potion }
 
 class UnknownLanding {
   const UnknownLanding({
@@ -426,6 +503,8 @@ class UnknownLanding {
     this.note,
     this.noteFrom = 0,
     this.noteTo = 0,
+    this.potionOffers = const [],
+    this.collisionOpponentId,
   });
 
   final UnknownLandingKind kind;
@@ -439,6 +518,14 @@ class UnknownLanding {
   final UnknownNote? note;
   final int noteFrom;
   final int noteTo;
+
+  /// Cele 2 poțiuni misterioase oferite (efectul real, ascuns de ecran până
+  /// la alegere).
+  final List<UnknownPotionEffect> potionOffers;
+
+  /// Cine mai era pe câmpul ăsta: se decide la coliziune la întrebarea
+  /// următoare — independent de [kind] (poate coexista cu un cufăr/magazin).
+  final String? collisionOpponentId;
 
   String? get noteText => note == null ? null : unknownNoteText(note!, noteFrom, noteTo);
 }
@@ -491,6 +578,8 @@ class UnknownMoveLog {
       if (l.note != null) 'n': l.note!.name,
       'nf': l.noteFrom,
       'nt': l.noteTo,
+      if (l.potionOffers.isNotEmpty) 'po': [for (final p in l.potionOffers) p.name],
+      if (l.collisionOpponentId != null) 'col': l.collisionOpponentId,
       'a': _snapJson(after),
     };
   }
@@ -518,6 +607,8 @@ class UnknownMoveLog {
           note: _byName(UnknownNote.values, j['n']),
           noteFrom: (j['nf'] as num?)?.toInt() ?? 0,
           noteTo: (j['nt'] as num?)?.toInt() ?? 0,
+          potionOffers: _enumList(UnknownPotionEffect.values, j['po']),
+          collisionOpponentId: j['col'] as String?,
         ),
       ),
       after: _snapFrom(j['a']),
@@ -527,7 +618,15 @@ class UnknownMoveLog {
 
 /// Alegerea făcută la cufăr sau la magazin (null = nimic).
 class UnknownChoiceLog {
-  const UnknownChoiceLog({required this.playerId, required this.chest, this.relic, this.drop, this.item});
+  const UnknownChoiceLog({
+    required this.playerId,
+    required this.chest,
+    this.relic,
+    this.drop,
+    this.item,
+    this.potion,
+    this.fx = const [],
+  });
 
   final String playerId;
   final bool chest;
@@ -535,12 +634,18 @@ class UnknownChoiceLog {
   final UnknownRelic? drop;
   final UnknownItem? item;
 
+  /// Poțiunea băută (null = a refuzat pe amândouă).
+  final UnknownPotionEffect? potion;
+  final List<UnknownFx> fx;
+
   Map<String, dynamic> toJson() => {
         'id': playerId,
         'c': chest,
         if (relic != null) 'r': relic!.name,
         if (drop != null) 'x': drop!.name,
         if (item != null) 'i': item!.name,
+        if (potion != null) 'p': potion!.name,
+        if (fx.isNotEmpty) 'fx': _fxJson(fx),
       };
 
   factory UnknownChoiceLog.fromJson(Map<String, dynamic> j) => UnknownChoiceLog(
@@ -549,6 +654,8 @@ class UnknownChoiceLog {
         relic: _byName(UnknownRelic.values, j['r']),
         drop: _byName(UnknownRelic.values, j['x']),
         item: _byName(UnknownItem.values, j['i']),
+        potion: _byName(UnknownPotionEffect.values, j['p']),
+        fx: _fxFrom(j['fx']),
       );
 }
 
@@ -578,6 +685,7 @@ class UnknownRoundLog {
     required this.round,
     required this.choices,
     required this.duels,
+    required this.collisions,
     required this.golden,
     required this.answerFx,
     required this.prelude,
@@ -587,6 +695,10 @@ class UnknownRoundLog {
   final int round;
   final List<UnknownChoiceLog> choices;
   final List<UnknownDuelLog> duels;
+
+  /// Coliziunile decise acum (cine a pică pe cine la runda trecută),
+  /// separate de dueluri: aici învinsul pierde pași, nu monede.
+  final List<UnknownDuelLog> collisions;
 
   /// Întrebările de aur decise acum: id → a nimerit.
   final Map<String, bool> golden;
@@ -600,6 +712,7 @@ class UnknownRoundLog {
         'r': round,
         'ch': [for (final c in choices) c.toJson()],
         'du': [for (final d in duels) d.toJson()],
+        'co': [for (final c in collisions) c.toJson()],
         'go': golden,
         'afx': _fxJson(answerFx),
         'pre': _snapJson(prelude),
@@ -610,6 +723,7 @@ class UnknownRoundLog {
         round: (j['r'] as num?)?.toInt() ?? 0,
         choices: [for (final c in (j['ch'] as List? ?? const [])) UnknownChoiceLog.fromJson(Map<String, dynamic>.from(c as Map))],
         duels: [for (final d in (j['du'] as List? ?? const [])) UnknownDuelLog.fromJson(Map<String, dynamic>.from(d as Map))],
+        collisions: [for (final c in (j['co'] as List? ?? const [])) UnknownDuelLog.fromJson(Map<String, dynamic>.from(c as Map))],
         golden: {for (final e in (j['go'] as Map? ?? const {}).entries) e.key as String: e.value as bool},
         answerFx: _fxFrom(j['afx']),
         prelude: _snapFrom(j['pre']),
@@ -679,6 +793,14 @@ class UnknownGame {
   /// următorul [resolveRound]).
   final Map<String, UnknownOffer> pendingOffers = {};
 
+  /// Coliziuni decise de următoarea întrebare: (cel care a picat, cel deja
+  /// acolo). Independent de [pendingDuels] — aici învinsul pierde pași.
+  final List<(String, String)> pendingCollisions = [];
+
+  /// Cele 2 poțiuni oferite fiecărui jucător care a picat pe [UnknownTile.potion],
+  /// în așteptare până la alegere (se aplică la următorul [resolveRound]).
+  final Map<String, List<UnknownPotionEffect>> pendingPotions = {};
+
   /// Meciul se încheie la finalul rundei în care a ajuns primul — ceilalți
   /// își termină mutarea din runda aia (au răspuns la aceeași întrebare).
   /// Sau când a rămas un singur jucător la masă (ceilalți au plecat).
@@ -699,6 +821,8 @@ class UnknownGame {
         'duels': [for (final (a, d) in pendingDuels) {'a': a, 'd': d}],
         'golden': pendingGolden,
         'offers': {for (final e in pendingOffers.entries) e.key: e.value.toJson()},
+        'collisions': [for (final (a, d) in pendingCollisions) {'a': a, 'd': d}],
+        'potions': {for (final e in pendingPotions.entries) e.key: [for (final p in e.value) p.name]},
       };
 
   factory UnknownGame.fromJson(Map<String, dynamic> j) {
@@ -716,6 +840,13 @@ class UnknownGame {
     g.pendingGolden.addAll(List<String>.from(j['golden'] as List? ?? const []));
     for (final e in (j['offers'] as Map? ?? const {}).entries) {
       g.pendingOffers[e.key as String] = UnknownOffer.fromJson(Map<String, dynamic>.from(e.value as Map));
+    }
+    for (final c in (j['collisions'] as List? ?? const [])) {
+      final pair = Map<String, dynamic>.from(c as Map);
+      g.pendingCollisions.add((pair['a'] as String, pair['d'] as String));
+    }
+    for (final e in (j['potions'] as Map? ?? const {}).entries) {
+      g.pendingPotions[e.key as String] = _enumList(UnknownPotionEffect.values, e.value);
     }
     return g;
   }
@@ -752,7 +883,7 @@ class UnknownGame {
     return best;
   }
 
-  /// Cel mai apropiat jucător din fața lui [p] (pentru Schimb).
+  /// Cel mai apropiat jucător din fața lui [p] (pentru Schimb și Stun).
   UnknownPlayer? nearestAhead(UnknownPlayer p) {
     UnknownPlayer? best;
     for (final q in players) {
@@ -760,6 +891,15 @@ class UnknownGame {
       if (best == null || q.pos < best.pos) best = q;
     }
     return best;
+  }
+
+  /// Cel mai bine clasat, fără [p] (pentru poțiunea „dreptății"): dacă [p] e
+  /// liderul, ăsta e chiar locul 2.
+  UnknownPlayer? _bestOther(UnknownPlayer p) {
+    for (final q in standings()) {
+      if (q.id != p.id && q.racing) return q;
+    }
+    return null;
   }
 
   void _gain(UnknownPlayer p, int amount, List<UnknownFx> fx, String label) {
@@ -776,6 +916,16 @@ class UnknownGame {
     fx.add(UnknownFx(from.id, label, coins: -taken));
     fx.add(UnknownFx(to.id, label, coins: taken));
     return taken;
+  }
+
+  /// Cine mai era pe câmpul lui [p] (altcineva încă pe drum) — declanșează
+  /// coliziunea, indiferent de tipul câmpului.
+  String? _collisionOpponent(UnknownPlayer p) {
+    if (p.pos <= 0 || p.pos >= unknownFinish) return null;
+    for (final q in players) {
+      if (q.id != p.id && q.racing && q.pos == p.pos) return q.id;
+    }
+    return null;
   }
 
   // ─── Runda întreagă ────────────────────────────────────────────────────
@@ -810,6 +960,17 @@ class UnknownGame {
     }
     pendingDuels.clear();
 
+    final collisionLogs = <UnknownDuelLog>[];
+    for (final (a, d) in pendingCollisions) {
+      final one = player(a);
+      final two = player(d);
+      if (one.left || two.left) continue;
+      const miss = UnknownAnswer(correct: false, ms: 1 << 30);
+      final res = resolveCollision(one, two, answers[a] ?? miss, answers[d] ?? miss);
+      collisionLogs.add(UnknownDuelLog(attackerId: a, defenderId: d, winnerId: res.winnerId, fx: res.fx));
+    }
+    pendingCollisions.clear();
+
     final golden = <String, bool>{};
     for (final id in pendingGolden) {
       final p = player(id);
@@ -835,8 +996,13 @@ class UnknownGame {
           pendingDuels.add((id, m.landing.opponentId!));
         case UnknownLandingKind.goldenQuestion:
           pendingGolden.add(id);
+        case UnknownLandingKind.potion:
+          pendingPotions[id] = m.landing.potionOffers;
         case UnknownLandingKind.none:
           break;
+      }
+      if (m.landing.collisionOpponentId != null) {
+        pendingCollisions.add((id, m.landing.collisionOpponentId!));
       }
       moves.add(UnknownMoveLog(roll: roll, move: m, after: _snapshot(players)));
     }
@@ -845,6 +1011,7 @@ class UnknownGame {
       round: round,
       choices: choiceLogs,
       duels: duelLogs,
+      collisions: collisionLogs,
       golden: golden,
       answerFx: res.fx,
       prelude: prelude,
@@ -875,7 +1042,61 @@ class UnknownGame {
       }
     }
     pendingOffers.clear();
+
+    for (final p in players) {
+      final offers = pendingPotions[p.id];
+      if (offers == null) continue;
+      final c = choices[p.id] ?? UnknownChoice.none;
+      final idx = int.tryParse(c.take ?? '');
+      UnknownPotionEffect? effect;
+      if (idx != null && idx >= 0 && idx < offers.length) effect = offers[idx];
+      final pfx = effect == null ? const <UnknownFx>[] : _applyPotion(p, effect);
+      out.add(UnknownChoiceLog(playerId: p.id, chest: false, potion: effect, fx: pfx));
+    }
+    pendingPotions.clear();
+
     return out;
+  }
+
+  /// Amestecă 2 efecte diferite din cele 4 posibile, ascunse până la
+  /// alegere ([UnknownChoice.take] = „0” sau „1”).
+  List<UnknownPotionEffect> _potionOffers() {
+    final pool = List.of(UnknownPotionEffect.values);
+    final out = <UnknownPotionEffect>[];
+    while (out.length < 2 && pool.isNotEmpty) {
+      out.add(pool.removeAt(_rng.nextInt(pool.length)));
+    }
+    return out;
+  }
+
+  /// Aplică poțiunea aleasă. Poțiunea „dreptății”: la începutul meciului
+  /// (sau fără avans clar) e blândă; cu un avans mare de lider, îl aduce
+  /// lângă locul 2 — răsplată pentru cei rămași în urmă.
+  List<UnknownFx> _applyPotion(UnknownPlayer p, UnknownPotionEffect effect) {
+    final fx = <UnknownFx>[];
+    switch (effect) {
+      case UnknownPotionEffect.deadly:
+        p.pos = max(1, p.pos - unknownPotionDeadlySetback);
+        fx.add(UnknownFx(p.id, unknownPotionEmoji(effect)));
+      case UnknownPotionEffect.sleep:
+        p.skipNext = true;
+        fx.add(UnknownFx(p.id, unknownPotionEmoji(effect)));
+      case UnknownPotionEffect.setback:
+        p.pos = max(1, p.pos - unknownPotionSetback);
+        fx.add(UnknownFx(p.id, unknownPotionEmoji(effect)));
+      case UnknownPotionEffect.karma:
+        final rival = _bestOther(p);
+        final isLeader = rival == null || p.pos > rival.pos;
+        final lead = rival == null ? 0 : p.pos - rival.pos;
+        if (isLeader && rival != null && lead >= unknownPotionKarmaLeadThreshold) {
+          p.pos = max(1, rival.pos - 1);
+          fx.add(UnknownFx(p.id, '🔮'));
+        } else {
+          p.pos = max(1, p.pos - 1);
+          fx.add(UnknownFx(p.id, '😢'));
+        }
+    }
+    return fx;
   }
 
   // ─── Faza de răspuns → zaruri ──────────────────────────────────────────
@@ -902,6 +1123,9 @@ class UnknownGame {
   ({Map<String, UnknownRoll> rolls, List<UnknownFx> fx}) resolveAnswers(Map<String, UnknownAnswer> answers) {
     final fx = <UnknownFx>[];
     final tailwind = tailwindPlayer();
+    // Ținte de stun: aplicate DUPĂ toată bucla, ca ordinea din `players` să
+    // nu decidă dacă efectul prinde runda asta sau pe următoarea.
+    final stunTargets = <String>[];
     String? fastestId;
     var best = 1 << 30;
     for (final p in players) {
@@ -966,6 +1190,15 @@ class UnknownGame {
           } else {
             p.items.add(UnknownItem.swap);
           }
+        case UnknownItem.stun:
+          final ahead = nearestAhead(p);
+          if (ahead != null) {
+            stunTargets.add(ahead.id);
+            fx.add(UnknownFx(p.id, '💫'));
+            fx.add(UnknownFx(ahead.id, '😵'));
+          } else {
+            p.items.add(UnknownItem.stun);
+          }
         case null:
           break;
       }
@@ -987,6 +1220,10 @@ class UnknownGame {
         dice.add(d);
       }
       rolls[p.id] = UnknownRoll(playerId: p.id, dice: dice, bonus: bonus, labels: labels, fastest: fastest);
+    }
+    // Stunul prinde abia la runda VIITOARE (ca o capcană), nu la asta.
+    for (final id in stunTargets) {
+      player(id).skipNext = true;
     }
     return (rolls: rolls, fx: fx);
   }
@@ -1066,6 +1303,12 @@ class UnknownGame {
           p.shielded = true;
           note = UnknownNote.clover;
         }
+      case UnknownTile.catapult:
+        final launch = unknownCatapultMin + _rng.nextInt(unknownCatapultMax - unknownCatapultMin + 1);
+        to = min(unknownFinish - 1, p.pos + launch);
+        p.pos = to;
+        hops.add(UnknownHop(to, UnknownHopKind.catapult));
+        note = UnknownNote.catapult;
       default:
         break;
     }
@@ -1084,6 +1327,10 @@ class UnknownGame {
   }
 
   UnknownLanding _land(UnknownPlayer p, List<UnknownFx> fx, UnknownNote? note, int from, int to) {
+    // Independent de tipul câmpului: cine mai era deja acolo declanșează
+    // coliziunea, chiar dacă tile-ul mai face și altceva (cufăr, monede...).
+    final collisionWith = _collisionOpponent(p);
+
     UnknownLanding plain({
       UnknownLandingKind kind = UnknownLandingKind.none,
       List<UnknownRelic> relics = const [],
@@ -1091,6 +1338,7 @@ class UnknownGame {
       String? opp,
       UnknownEvent? event,
       List<UnknownFx>? effects,
+      List<UnknownPotionEffect> potions = const [],
     }) =>
         UnknownLanding(
           kind: kind,
@@ -1102,6 +1350,8 @@ class UnknownGame {
           note: note,
           noteFrom: from,
           noteTo: to,
+          potionOffers: potions,
+          collisionOpponentId: collisionWith,
         );
 
     final echo = p.has(UnknownRelic.echo) ? 2 : 1;
@@ -1121,6 +1371,8 @@ class UnknownGame {
         final (event, efx) = _event(p);
         if (event == UnknownEvent.goldenQuestion) return plain(kind: UnknownLandingKind.goldenQuestion, event: event);
         return plain(event: event, effects: [...fx, ...efx]);
+      case UnknownTile.potion:
+        return plain(kind: UnknownLandingKind.potion, potions: _potionOffers());
       default:
         break;
     }
@@ -1263,6 +1515,32 @@ class UnknownGame {
     return true;
   }
 
+  /// Coliziunea: cine a picat pe cine, decisă de aceeași întrebare de masă.
+  /// Diferit de [resolveDuel]: învinsul pierde pași, nu monede — nimeni nu
+  /// fură nimic.
+  ({String? winnerId, List<UnknownFx> fx}) resolveCollision(
+    UnknownPlayer one,
+    UnknownPlayer two,
+    UnknownAnswer a,
+    UnknownAnswer b,
+  ) {
+    final fx = <UnknownFx>[];
+    UnknownPlayer? winner;
+    if (a.correct && !b.correct) {
+      winner = one;
+    } else if (b.correct && !a.correct) {
+      winner = two;
+    } else if (a.correct && b.correct) {
+      winner = a.ms <= b.ms ? one : two;
+    }
+    if (winner == null) return (winnerId: null, fx: fx);
+    final loser = winner == one ? two : one;
+    loser.pos = max(1, loser.pos - unknownCollisionPushback);
+    fx.add(UnknownFx(winner.id, '🤺'));
+    fx.add(UnknownFx(loser.id, '💢'));
+    return (winnerId: winner.id, fx: fx);
+  }
+
   void endRound() => round++;
 }
 
@@ -1323,6 +1601,7 @@ UnknownItem? unknownBotArmChoice(UnknownGame g, UnknownPlayer p) {
       final ahead = g.nearestAhead(p);
       if (ahead == null || ahead.pos - p.pos < 6) continue;
     }
+    if (item == UnknownItem.stun && g.nearestAhead(p) == null) continue;
     return item;
   }
   return null;
@@ -1332,4 +1611,12 @@ UnknownItem? unknownBotArmChoice(UnknownGame g, UnknownPlayer p) {
 void unknownBotArm(UnknownGame g, UnknownPlayer p) {
   final item = unknownBotArmChoice(g, p);
   if (item != null) g.arm(p, item);
+}
+
+/// Botul bea o poțiune misterioasă doar din runda 2 încolo (la început nu
+/// riscă „trist"/„omoară" degeaba) și alege la întâmplare între cele 2 —
+/// nu știe efectul, la fel ca un jucător real.
+UnknownChoice unknownBotPotionChoice(UnknownGame g, List<UnknownPotionEffect> offers, Random rnd) {
+  if (g.round < 2 || offers.isEmpty) return UnknownChoice.none;
+  return UnknownChoice(take: '${rnd.nextInt(offers.length)}');
 }

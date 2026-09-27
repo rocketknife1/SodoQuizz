@@ -42,6 +42,8 @@ Color unknownTileColor(UnknownTile t) => switch (t) {
       UnknownTile.coins => const Color(0xFF3B82F6),
       UnknownTile.tax => const Color(0xFFB91C1C),
       UnknownTile.finish => const Color(0xFFFFD700),
+      UnknownTile.catapult => const Color(0xFFFF9F1C),
+      UnknownTile.potion => const Color(0xFF7B2CBF),
     };
 
 IconData? unknownTileIcon(UnknownTile t) => switch (t) {
@@ -55,6 +57,8 @@ IconData? unknownTileIcon(UnknownTile t) => switch (t) {
       UnknownTile.coins => Icons.add_circle_rounded,
       UnknownTile.tax => Icons.remove_circle_rounded,
       UnknownTile.finish => Icons.emoji_events_rounded,
+      UnknownTile.catapult => Icons.rocket_launch_rounded,
+      UnknownTile.potion => Icons.science_rounded,
       _ => null,
     };
 

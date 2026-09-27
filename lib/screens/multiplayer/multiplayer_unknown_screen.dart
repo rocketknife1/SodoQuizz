@@ -51,7 +51,7 @@ class MultiplayerUnknownScreen extends StatefulWidget {
 /// atingă `setState`.
 class _Stop implements Exception {}
 
-enum _Panel { log, question, reveal, chest, chestDrop, shop }
+enum _Panel { log, question, reveal, chest, chestDrop, shop, potion }
 
 class _HopAnim {
   _HopAnim(this.pawn, this.from, this.to, this.start, this.dur, this.arc, this.done, this.path);
@@ -146,6 +146,11 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
   int _myOfferRound = -1;
   bool _myOfferSent = false;
   UnknownRelic? _pendingRelic;
+
+  /// Cele 2 poțiuni misterioase, când am picat pe [UnknownTile.potion]
+  /// (același ceas ca [_myOfferRound]/[_myOfferSent] — un jucător primește
+  /// ori ofertă de cufăr/magazin, ori poțiuni, niciodată pe amândouă odată).
+  List<UnknownPotionEffect>? _myPotionOffers;
   final _rnd = Random();
 
   List<CultureQuestion> _buildPool() {
@@ -508,8 +513,19 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
     });
     _focusOn(null);
 
-    // 2. Alegerile de la cufăr/magazin din runda trecută.
+    // 2. Alegerile de la cufăr/magazin/poțiune din runda trecută.
     for (final c in log.choices) {
+      final potion = c.potion;
+      if (potion != null) {
+        _floaterText(c.playerId, unknownPotionEmoji(potion), Colors.white, big: true);
+        for (final f in c.fx) {
+          _floater(f);
+        }
+        _set(token, () => _log = tr('${_who(c.playerId)}: ${unknownPotionEmoji(potion)} ${unknownPotionName(potion)} — ${unknownPotionDesc(potion)}',
+            '${_who(c.playerId)}: ${unknownPotionEmoji(potion)} ${unknownPotionName(potion)} — ${unknownPotionDesc(potion)}'));
+        await _wait(1300, token);
+        continue;
+      }
       final what = c.chest
           ? (c.relic == null ? null : '${unknownRelicEmoji(c.relic!)} ${unknownRelicName(c.relic!)}')
           : (c.item == null ? null : '${unknownItemEmoji(c.item!)} ${unknownItemName(c.item!)}');
@@ -531,6 +547,19 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
               ? tr('⚔️ Ai câștigat duelul!', '⚔️ You won the duel!')
               : tr('⚔️ ${_nameOf(d.winnerId!)} câștigă duelul!', '⚔️ ${_nameOf(d.winnerId!)} wins the duel!'));
       if (d.winnerId == _me) Sfx.rewardPop();
+      await _wait(1600, token);
+    }
+    for (final c in log.collisions) {
+      await _showBanner('💥 ${_who(c.attackerId)} vs ${_who(c.defenderId)}', token, ms: 1300);
+      for (final f in c.fx) {
+        _floater(f);
+      }
+      _set(token, () => _log = c.winnerId == null
+          ? tr('💥 Niciunul n-a nimerit — fără efect.', '💥 Neither got it — no effect.')
+          : c.winnerId == _me
+              ? tr('💥 Ai câștigat coliziunea!', '💥 You won the collision!')
+              : tr('💥 ${_nameOf(c.winnerId!)} câștigă coliziunea!', '💥 ${_nameOf(c.winnerId!)} wins the collision!'));
+      if (c.winnerId == _me) Sfx.rewardPop();
       await _wait(1600, token);
     }
     for (final e in log.golden.entries) {
@@ -558,8 +587,10 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
     _focusOn(null);
     final game = _game;
     final offers = game?.pendingOffers ?? const <String, UnknownOffer>{};
-    if (offers.isNotEmpty) {
-      final waitingFor = offers.keys.where((id) => _playerById.containsKey(id)).toList();
+    final potionOffers = game?.pendingPotions ?? const <String, List<UnknownPotionEffect>>{};
+    if (offers.isNotEmpty || potionOffers.isNotEmpty) {
+      final waitingFor =
+          {...offers.keys, ...potionOffers.keys}.where((id) => _playerById.containsKey(id)).toList();
       var left = _choiceWindowMs;
       while (left > 0) {
         final chosen = _info?.roundChoices ?? const {};
@@ -575,6 +606,7 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
     }
     _set(token, () {
       _myOffer = null;
+      _myPotionOffers = null;
       if (_panel != _Panel.question) _panel = _Panel.log;
       _log = '';
     });
@@ -624,6 +656,11 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
           _hideDice(token);
           await _showNote(id, landing.noteText, token);
           await _hopTo(pawn, hop.tile, seconds: 0.7, arc: 90);
+        case UnknownHopKind.catapult:
+          _hideDice(token);
+          await _showNote(id, landing.noteText, token);
+          await _hopTo(pawn, hop.tile, seconds: 0.9, arc: 70);
+          Sfx.rewardPop();
       }
       _alive(token);
       pawn.tile = hop.tile;
@@ -663,6 +700,14 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
       await _wait(900, token);
     }
 
+    final collisionWith = landing.collisionOpponentId;
+    if (collisionWith != null) {
+      await _showBanner('💥 ${_who(id)} vs ${_who(collisionWith)}', token, ms: 1300);
+      _set(token, () => _log = tr('💥 Coliziune! Se decide la următoarea întrebare — cine pierde dă înapoi pași.',
+          '💥 Collision! Settled by the next question — the loser falls back.'));
+      await _wait(1200, token);
+    }
+
     switch (landing.kind) {
       case UnknownLandingKind.none:
         break;
@@ -697,6 +742,22 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
         _set(token, () => _log = tr('✨ ${_who(id)}: la următoarea întrebare, corect = +4 câmpuri.',
             '✨ ${_who(id)}: on the next question, right = +4 spaces.'));
         await _wait(1600, token);
+      case UnknownLandingKind.potion:
+        if (id == _me) {
+          final offers = _game?.pendingPotions[_me];
+          if (offers != null) {
+            Sfx.rewardPop();
+            _set(token, () {
+              _myPotionOffers = offers;
+              _myOfferRound = _info?.roundIndex ?? 0;
+              _myOfferSent = false;
+              _panel = _Panel.potion;
+            });
+          }
+        } else {
+          _set(token, () => _log = tr('🧪 ${_nameOf(id)} a găsit 2 poțiuni misterioase…', '🧪 ${_nameOf(id)} found 2 mystery potions…'));
+          await _wait(1400, token);
+        }
     }
   }
 
@@ -1273,6 +1334,7 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
           onSkip: () => _sendChoice(UnknownChoice.none),
         ),
       _Panel.shop when offer != null => _shopPanel(offer),
+      _Panel.potion when _myPotionOffers != null => _potionPanel(_myPotionOffers!),
       _ => _logPanel(),
     };
     return AnimatedSize(
@@ -1307,6 +1369,25 @@ class _MultiplayerUnknownScreenState extends State<MultiplayerUnknownScreen> wit
           ),
       ],
       skipLabel: tr('Plec', 'Leave'),
+      onSkip: () => _sendChoice(UnknownChoice.none),
+    );
+  }
+
+  /// Poțiunile sunt mistere adevărate: nici jucătorul nu vede efectul
+  /// înainte de a bea — doar „Poțiunea 1"/„Poțiunea 2".
+  Widget _potionPanel(List<UnknownPotionEffect> offers) {
+    return _choicePanel(
+      title: tr('🧪 2 poțiuni misterioase — bei una?', '🧪 2 mystery potions — drink one?'),
+      cards: [
+        for (var i = 0; i < offers.length; i++)
+          _ChoiceCard(
+            emoji: '🧪',
+            title: tr('Poțiunea ${i + 1}', 'Potion ${i + 1}'),
+            body: tr('Efect necunoscut până bei', "Unknown effect until you drink it"),
+            onTap: () => _sendChoice(UnknownChoice(take: '$i')),
+          ),
+      ],
+      skipLabel: tr('Nu beau nimic', "I won't drink"),
       onSkip: () => _sendChoice(UnknownChoice.none),
     );
   }
