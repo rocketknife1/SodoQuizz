@@ -238,8 +238,8 @@ class _MultiplayerFlashScreenState extends State<MultiplayerFlashScreen> {
           child: Row(
             children: [
               IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white70), onPressed: _leave),
-              const Expanded(
-                child: Text('⚡ Fulgerul', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+              Expanded(
+                child: Text(tr('⚡ Fulgerul', '⚡ Flash'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
               ),
               Text(tr('Runda ${info.roundIndex + 1} din $flashRounds', 'Round ${info.roundIndex + 1} of $flashRounds'),
                   style: const TextStyle(color: Colors.white38, fontSize: 12)),

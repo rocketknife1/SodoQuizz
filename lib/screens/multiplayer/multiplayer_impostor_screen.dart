@@ -232,8 +232,8 @@ class _MultiplayerImpostorScreenState extends State<MultiplayerImpostorScreen> {
       child: Row(
         children: [
           IconButton(icon: const Icon(Icons.close_rounded, color: Colors.white70), onPressed: _leave),
-          const Expanded(
-            child: Text('🎭 Impostorul', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+          Expanded(
+            child: Text(tr('🎭 Impostorul', '🎭 The Impostor'), style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
           ),
           Text(tr('Runda ${info.roundIndex + 1} din $impostorRounds', 'Round ${info.roundIndex + 1} of $impostorRounds'),
               style: const TextStyle(color: Colors.white38, fontSize: 12)),

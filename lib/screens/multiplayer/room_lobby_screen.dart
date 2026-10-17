@@ -774,8 +774,8 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
         MatchGameMode.rockPaperScissors => tr('Piatră-Hârtie-Foarfecă', 'Rock-Paper-Scissors'),
         MatchGameMode.electricChair => tr('Scaunul Electric', 'Electric Chair'),
         MatchGameMode.unknown => 'Unknown',
-        MatchGameMode.flash => 'Fulgerul',
-        MatchGameMode.impostor => 'Impostorul',
+        MatchGameMode.flash => tr('Fulgerul', 'Flash'),
+        MatchGameMode.impostor => tr('Impostorul', 'The Impostor'),
       };
 
   /// Gazda schimbă modul FĂRĂ să închidă camera — asta ține un grup împreună
