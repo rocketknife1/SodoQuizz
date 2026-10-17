@@ -44,6 +44,7 @@ library;
 
 import 'multiplayer_round.dart';
 import 'powerups.dart';
+import 'stable_hash.dart';
 
 /// Câți jucători încap într-o cameră de Scaunul Electric. Urcat de la 5 la
 /// 10 prin decizie de design (toate modurile trebuie să accepte
@@ -174,7 +175,24 @@ enum ChairVerdict {
   /// fiecare pierde o viață, iar victima NU ia puncte de apărare
   /// (n-a răspuns, doar a avut noroc de power-up).
   reflected,
+
+  /// A greșit, dar scaunul a făcut scurtcircuit ([chairShortCircuit]):
+  /// nu pierde nimic, dar nici nu ia puncte de apărare.
+  shortCircuit,
 }
+
+/// Șansa ca scaunul să facă scurtcircuit când ar trebui să electrocuteze.
+const double electricChairShortCircuitChance = 0.25;
+
+/// Zarul de scurtcircuit al unei victime, determinist pe meci + rundă +
+/// jucător — o tranzacție reîncercată ajunge la același rezultat.
+bool chairShortCircuit({
+  required String matchId,
+  required int roundIndex,
+  required String victimId,
+}) =>
+    StableRandom(stableHash('$matchId|$roundIndex|$victimId|scurtcircuit')).nextDouble() <
+    electricChairShortCircuitChance;
 
 /// Decide verdictul unei victime, PUR — vezi
 /// MultiplayerService.resolveElectricChairRound pentru cine aplică efectiv
@@ -192,9 +210,11 @@ ChairVerdict chairVerdict({
   required bool allyShielded,
   required bool anyAttackerPiercing,
   required bool hasReflect,
+  bool luckyShortCircuit = false,
 }) {
   if (answeredCorrectly) return ChairVerdict.survived;
   if (!anyAttackerPiercing && (hasShield || allyShielded)) return ChairVerdict.survived;
   if (hasReflect) return ChairVerdict.reflected;
+  if (luckyShortCircuit) return ChairVerdict.shortCircuit;
   return ChairVerdict.shocked;
 }

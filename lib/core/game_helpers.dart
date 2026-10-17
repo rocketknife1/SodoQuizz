@@ -79,6 +79,25 @@ int multiplayerHintPenalty(int maxPoints) => (7 + maxPoints * 0.23).round();
 /// meciul.
 int multiplayerWrongPenalty(int maxPoints) => (13 + maxPoints * 0.37).round();
 
+/// Zarul aruncat la o greșeală în Clasic: penalizarea nu mai e fixă.
+enum WrongPenaltyRoll { lucky, normal, doubled }
+
+/// 25% scapi fără nimic, 50% penalizarea normală, 25% dublă. Media rămâne
+/// exact [multiplayerWrongPenalty], deci ghicitul orb tot pierde în medie —
+/// doar momentul devine imprevizibil.
+WrongPenaltyRoll rollWrongPenalty(Random rnd) {
+  final r = rnd.nextDouble();
+  if (r < 0.25) return WrongPenaltyRoll.lucky;
+  if (r < 0.75) return WrongPenaltyRoll.normal;
+  return WrongPenaltyRoll.doubled;
+}
+
+int wrongPenaltyMultiplier(WrongPenaltyRoll roll) => switch (roll) {
+      WrongPenaltyRoll.lucky => 0,
+      WrongPenaltyRoll.normal => 1,
+      WrongPenaltyRoll.doubled => 2,
+    };
+
 // ─── Recompensa unui răspuns corect ────────────────────────────────────────
 // XP-ul NU mai e egal cu punctele întrebării (era 140-200 XP per răspuns,
 // motivul real pentru care se ajungea la nivelul 5 în 16 răspunsuri corecte —

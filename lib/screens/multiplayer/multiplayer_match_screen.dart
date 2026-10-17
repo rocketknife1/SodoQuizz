@@ -88,6 +88,10 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
   Timer? _autoNext;
   bool _lastCorrect = false;
 
+  /// Zarul penalizării la ultima greșeală (null după un răspuns corect).
+  WrongPenaltyRoll? _lastPenaltyRoll;
+  final Random _penaltyRnd = Random();
+
   /// Eveniment/power-up determinist (core/powerups.dart), la fel ca-n
   /// celelalte moduri — aici „runda" e chiar întrebarea curentă, fiindcă
   /// Classic n-are rundă sincronizată prin Firestore (fiecare merge în
@@ -231,10 +235,14 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     final q = _current;
     final correct = opt == q.answer;
     final mult = _event == RoundEvent.doubleOrNothing ? 2 : 1;
+    final roll = correct ? null : rollWrongPenalty(_penaltyRnd);
     setState(() {
       _answered = true;
       _selectedAnswer = opt;
-      _myScore += correct ? q.maxPoints * mult : -multiplayerWrongPenalty(q.maxPoints) * mult;
+      _lastPenaltyRoll = roll;
+      _myScore += correct
+          ? q.maxPoints * mult
+          : -multiplayerWrongPenalty(q.maxPoints) * mult * wrongPenaltyMultiplier(roll!);
       if (correct) _maybeGrantPowerUp();
       _lastCorrect = correct;
     });
@@ -404,6 +412,14 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
                               key: ValueKey('auto-next-$_qIndex'),
                               correct: _lastCorrect,
                               duration: _lastCorrect ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong,
+                              note: switch (_lastPenaltyRoll) {
+                                WrongPenaltyRoll.lucky => tr('🍀 Noroc! Nu pierzi puncte', '🍀 Lucky! No points lost'),
+                                WrongPenaltyRoll.doubled => tr('💥 Ghinion! Penalizare dublă', '💥 Unlucky! Double penalty'),
+                                _ => null,
+                              },
+                              noteColor: _lastPenaltyRoll == WrongPenaltyRoll.lucky
+                                  ? const Color(0xFF5DCAA5)
+                                  : const Color(0xFFE24B4A),
                             )
                           else
                             _buildHintButton(q),

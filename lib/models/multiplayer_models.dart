@@ -282,6 +282,10 @@ class MatchInfo {
   /// ecranul doar animează, la fel ca [roundShots] la Quizz Tanks.
   final Map<String, bool> roundChairOutcomes;
 
+  /// Victimele scăpate prin scurtcircuit (noroc, nu răspuns) — subset din
+  /// cele cu `true` în [roundChairOutcomes].
+  final List<String> roundChairLucky;
+
   /// Doar [MatchGameMode.unknown]: starea întregului joc (poziții, monede,
   /// artefacte, oferte în așteptare, generatorul aleator) — vezi
   /// `UnknownGame.toJson`. Scrisă doar de tranzacția care închide runda.
@@ -335,6 +339,7 @@ class MatchInfo {
     this.roundChairAssignments = const {},
     this.roundChairAnswers = const {},
     this.roundChairOutcomes = const {},
+    this.roundChairLucky = const [],
     this.unknownState,
     this.unknownLog,
     this.roundAnswerMs = const {},
@@ -402,6 +407,7 @@ class MatchInfo {
         for (final e in (data['roundChairOutcomes'] as Map? ?? const {}).entries)
           e.key as String: e.value as bool,
       },
+      roundChairLucky: List<String>.from(data['roundChairLucky'] as List? ?? const []),
       unknownState: data['unknown'] == null ? null : Map<String, dynamic>.from(data['unknown'] as Map),
       unknownLog: data['unknownLog'] == null ? null : Map<String, dynamic>.from(data['unknownLog'] as Map),
       roundAnswerMs: {
@@ -439,6 +445,7 @@ class MatchInfo {
         'roundChairAssignments': <String, Map<String, dynamic>>{},
         'roundChairAnswers': <String, String>{},
         'roundChairOutcomes': <String, bool>{},
+        'roundChairLucky': <String>[],
       };
 }
 

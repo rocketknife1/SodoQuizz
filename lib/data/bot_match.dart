@@ -475,7 +475,9 @@ class BotMatch {
         }
         final q = questions[i];
         final correct = _rnd.nextDouble() < botAccuracy(settings.difficulty);
-        score += correct ? q.maxPoints : -multiplayerWrongPenalty(q.maxPoints);
+        score += correct
+            ? q.maxPoints
+            : -multiplayerWrongPenalty(q.maxPoints) * wrongPenaltyMultiplier(rollWrongPenalty(_rnd));
       }
       if (!halfTaken) halfScore = score;
       final finalScore = score;

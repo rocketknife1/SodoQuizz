@@ -94,6 +94,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
   Timer? _autoNextTimer;
   bool _lastAnswerCorrect = false;
 
+  /// Rezultatul zarului la ultima greșeală: true = a costat o viață,
+  /// false = noroc, null = nu s-a aruncat (răspuns corect / vieți nelimitate).
+  bool? _wrongLifeLost;
+
   GameMode get mode => gameModeById(widget.gameModeId);
   Question get currentQ => questions.isNotEmpty
       ? questions[qIndex]
@@ -362,9 +366,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // chiar dacă ecranul s-a închis între timp: cine ieșea imediat după un
     // răspuns greșit scăpa de penalizare. Doar plafon inferior — vieți peste
     // 5 (bonusuri) nu se retează înapoi; cu vieți nelimitate nu scade deloc.
-    // O viață se pierde doar la fiecare a doua greșeală (contor salvat pe
-    // disc, deci ieșirea din joc nu-l resetează).
-    if (!correct && !unlimited && await StorageService.registerWrongAnswer()) {
+    // Fiecare greșeală aruncă zarul: cu noroc nu pierzi nimic.
+    final lostLife =
+        !correct && !unlimited && StorageService.rollWrongAnswerLifeLoss();
+    if (lostLife) {
       lives = lives > 0 ? lives - 1 : 0;
       await StorageService.setLives(lives);
     }
@@ -381,6 +386,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         _shakeController.forward(from: 0);
       }
       _lastAnswerCorrect = correct;
+      _wrongLifeLost = correct || unlimited ? null : lostLife;
     });
     _scheduleAutoNext(correct);
 
@@ -1044,6 +1050,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                             key: ValueKey('auto-next-$qIndex'),
                             correct: _lastAnswerCorrect,
                             duration: _lastAnswerCorrect ? autoAdvanceAfterCorrect : autoAdvanceAfterWrong,
+                            note: switch (_wrongLifeLost) {
+                              true => tr('💔 −1 viață', '💔 −1 life'),
+                              false => tr('🍀 Noroc! Nu pierzi nicio viață', '🍀 Lucky! No life lost'),
+                              null => null,
+                            },
+                            noteColor: _wrongLifeLost == false
+                                ? const Color(0xFF5DCAA5)
+                                : const Color(0xFFE24B4A),
                           ),
                         ],
                         if (hintsUsed > 0 && !answered) ...[

@@ -1305,6 +1305,7 @@ class MultiplayerService {
             'roundWinnerIds': attackers,
             'roundChairAssignments': <String, Map<String, dynamic>>{},
             'roundChairOutcomes': <String, bool>{},
+            'roundChairLucky': <String>[],
             if (aliveCount <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
           });
           return;
@@ -1482,6 +1483,7 @@ class MultiplayerService {
         // se scriu o singură dată — două `tx.update` pe `lives`, calculate
         // fiecare din valoarea de la începutul rundei, se suprascriau.
         final lifeDelta = <String, int>{};
+        final lucky = <String>[];
         for (final entry in assignments.entries) {
           final victimId = entry.key;
           final assignment = entry.value;
@@ -1496,10 +1498,15 @@ class MultiplayerService {
             allyShielded: allyShielded(victimId),
             anyAttackerPiercing: assignment.attackerIds.any((a) => powerUpOf(a) == PowerUp.piercingShock),
             hasReflect: powerUpOf(victimId) == PowerUp.reflect,
+            luckyShortCircuit: chairShortCircuit(matchId: matchId, roundIndex: roundIndex, victimId: victimId),
           );
           final survived = verdict != ChairVerdict.shocked;
           final reflected = verdict == ChairVerdict.reflected;
           outcomes[victimId] = survived;
+          if (verdict == ChairVerdict.shortCircuit) {
+            lucky.add(victimId);
+            continue; // noroc curat: fără viață pierdută, fără puncte
+          }
           if (reflected) {
             for (final attackerId in assignment.attackerIds) {
               final aDoc = docs[attackerId];
@@ -1557,6 +1564,7 @@ class MultiplayerService {
         tx.update(matchRef, {
           'roundPhase': RoundPhase.revealed.name,
           'roundChairOutcomes': outcomes,
+          'roundChairLucky': lucky,
           if (aliveCount <= 1 || outOfRounds) 'status': MatchStatus.finished.name,
         });
       });
@@ -1589,6 +1597,7 @@ class MultiplayerService {
           'roundChairAssignments': <String, Map<String, dynamic>>{},
           'roundChairAnswers': <String, String>{},
           'roundChairOutcomes': <String, bool>{},
+          'roundChairLucky': <String>[],
           // NU 'shields': scutul de aliat ține 2 runde — vezi
           // [useElectricChairAllyShield] — deci harta aia trebuie să
           // supraviețuiască peste granița asta, spre deosebire de

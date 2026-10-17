@@ -981,6 +981,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         name: p?.name ?? '?',
         color: color,
         survived: outcomes[id] ?? true,
+        lucky: info.roundChairLucky.contains(id),
         livesAfter: p?.lives ?? 0,
         question: question?.text ?? '',
         answer: question == null ? '' : question.label(question.answer),
@@ -1021,7 +1022,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                           border: Border.all(color: (verdicts[i].survived ? AppColors.play : AppColors.danger).withAlpha(150)),
                         ),
                         child: Text(
-                          '${verdicts[i].survived ? '✅' : '⚡'} ${verdicts[i].name}',
+                          '${verdicts[i].lucky ? '🍀' : verdicts[i].survived ? '✅' : '⚡'} ${verdicts[i].name}',
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w800),
                         ),
                       ),

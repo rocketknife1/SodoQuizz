@@ -15,7 +15,18 @@ const Duration autoAdvanceAfterWrong = Duration(milliseconds: 2500);
 class AutoAdvanceBar extends StatelessWidget {
   final Duration duration;
   final bool correct;
-  const AutoAdvanceBar({super.key, required this.duration, required this.correct});
+
+  /// Un mesaj scurt în locul îndemnului „Atinge…” (ex. rezultatul zarului
+  /// pentru viață după o greșeală).
+  final String? note;
+  final Color? noteColor;
+  const AutoAdvanceBar({
+    super.key,
+    required this.duration,
+    required this.correct,
+    this.note,
+    this.noteColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +47,20 @@ class AutoAdvanceBar extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          tr('Atinge ca să treci mai departe', 'Tap to continue'),
-          style: const TextStyle(color: Colors.white38, fontSize: 11),
-        ),
+        if (note != null)
+          Text(
+            note!,
+            style: TextStyle(
+              color: noteColor ?? Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          )
+        else
+          Text(
+            tr('Atinge ca să treci mai departe', 'Tap to continue'),
+            style: const TextStyle(color: Colors.white38, fontSize: 11),
+          ),
       ],
     );
   }

@@ -261,22 +261,17 @@ class StorageService {
   /// zi/game-over) — nu e impus aici, ca vieți câștigate ca bonus (vezi
   /// [addLivesUncapped]) să nu fie retezate la următorul apel cu o valoare
   /// deja calculată de apelant (ex: decrementul dintr-un răspuns greșit).
-  static const _wrongStrikeKey = 'wrong_strike';
+  /// Șansa ca un răspuns greșit să coste o viață. E o aruncare de zar la
+  /// fiecare greșeală, nu un contor fix: uneori scapi de două ori la rând,
+  /// alteori pierzi trei inimi din trei. În medie tot o viață la două
+  /// greșeli, ca înainte, doar că nu mai e previzibil.
+  static const double wrongAnswerLifeLossChance = 0.5;
 
-  /// Câte răspunsuri greșite costă o viață.
-  static const int wrongAnswersPerLife = 2;
+  static final Random _lifeRng = Random();
 
-  /// Numără o greșeală; întoarce true când e cea care costă o viață.
-  static Future<bool> registerWrongAnswer() async {
-    final prefs = await SharedPreferences.getInstance();
-    final n = (prefs.getInt(_wrongStrikeKey) ?? 0) + 1;
-    if (n >= wrongAnswersPerLife) {
-      await prefs.setInt(_wrongStrikeKey, 0);
-      return true;
-    }
-    await prefs.setInt(_wrongStrikeKey, n);
-    return false;
-  }
+  /// Aruncă zarul pentru o greșeală; true = pierde o viață.
+  static bool rollWrongAnswerLifeLoss() =>
+      _lifeRng.nextDouble() < wrongAnswerLifeLossChance;
 
   static Future<void> setLives(int lives) async {
     final prefs = await SharedPreferences.getInstance();

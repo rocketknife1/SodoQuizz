@@ -26,6 +26,9 @@ class ChairShowdownVerdict {
   final Color color;
   final bool survived;
 
+  /// A scăpat prin scurtcircuit (noroc), nu prin răspuns.
+  final bool lucky;
+
   /// Viețile de DUPĂ verdict — la „a picat" inima care se sparge e a
   /// (livesAfter + 1)-a.
   final int livesAfter;
@@ -37,6 +40,7 @@ class ChairShowdownVerdict {
     required this.name,
     required this.color,
     required this.survived,
+    this.lucky = false,
     required this.livesAfter,
     required this.question,
     required this.answer,
@@ -325,7 +329,11 @@ class _ChairOverlayPainter extends CustomPainter {
     // verdictul și viețile
     if (verdictT >= 0) {
       final pop = Curves.elasticOut.transform((verdictT / 0.6).clamp(0.0, 1.0));
-      final label = v.survived ? tr('A SCĂPAT!', 'SURVIVED!') : tr('⚡ −1 VIAȚĂ', '⚡ −1 LIFE');
+      final label = v.lucky
+          ? tr('🍀 SCURTCIRCUIT!', '🍀 SHORT CIRCUIT!')
+          : v.survived
+              ? tr('A SCĂPAT!', 'SURVIVED!')
+              : tr('⚡ −1 VIAȚĂ', '⚡ −1 LIFE');
       canvas.save();
       canvas.translate(w / 2, h * 0.11);
       canvas.scale(0.6 + 0.4 * pop);
