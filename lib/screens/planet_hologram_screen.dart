@@ -74,11 +74,13 @@ class _PlanetQuestion {
       );
 
   factory _PlanetQuestion.fromCulture(CultureQuestion q, Color color) =>
+      // Rularea e locală (un singur jucător), deci se poate lucra direct pe
+      // textul în limba lui — nu e nimic de comparat cu alt telefon.
       _PlanetQuestion(
-        prompt: q.question,
+        prompt: q.text,
         imageAssetPath: null,
-        choices: q.choices,
-        answer: q.answer,
+        choices: [for (final c in q.choices) q.label(c)],
+        answer: q.label(q.answer),
         color: color,
         badge: tr('Cultură Generală', 'General Knowledge'),
       );

@@ -231,14 +231,14 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     int? lastCorrectIndex;
     final out = <CultureQuestion>[];
     for (final q in questions) {
-      List<String> choices;
+      List<int> order;
       int correctIndex;
       do {
-        choices = List.of(q.choices)..shuffle(rnd);
-        correctIndex = choices.indexOf(q.answer);
-      } while (choices.length > 1 && correctIndex == lastCorrectIndex);
+        order = [for (var i = 0; i < q.choices.length; i++) i]..shuffle(rnd);
+        correctIndex = order.indexOf(q.choices.indexOf(q.answer));
+      } while (q.choices.length > 1 && correctIndex == lastCorrectIndex);
       lastCorrectIndex = correctIndex;
-      out.add(CultureQuestion(question: q.question, choices: choices, answer: q.answer));
+      out.add(q.reordered(order));
     }
     return out;
   }
@@ -553,7 +553,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
         ),
         const SizedBox(height: 8),
         Text(
-          q.question,
+          q.text,
           textAlign: TextAlign.center,
           // fără maxLines/ellipsis — panoul nu mai e limitat la înălțimea
           // butoanelor din stânga, deci întrebările lungi se pot afișa
@@ -594,7 +594,7 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
                 decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10), border: Border.all(color: border, width: adminHint ? 2.2 : 1)),
                 child: Text(
-                  opt,
+                  q.label(opt),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,

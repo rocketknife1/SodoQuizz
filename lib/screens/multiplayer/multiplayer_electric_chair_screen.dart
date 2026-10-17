@@ -718,13 +718,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
             style: const TextStyle(color: Colors.white54, fontSize: 11.5),
           ),
           const SizedBox(height: 10),
-          _QuestionCard(text: question.question, accent: AppColors.coin),
+          _QuestionCard(text: question.text, accent: AppColors.coin),
           const SizedBox(height: 16),
           for (final c in choices)
             Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: _AnswerButton(
-                text: c,
+                text: question.label(c),
                 onTap: answered ? null : () => _answerOwnQuestion(info, c),
                 selected: info.roundAnswers[me] == c,
                 adminHint: !answered && adminAnswerRevealOn && c == question.answer,
@@ -815,7 +815,7 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
                 for (var i = 0; i < candidates.length; i++)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _QuestionPickTile(text: candidates[i].question, onTap: () => _pickQuestion(info, info.roundIndex, i)),
+                    child: _QuestionPickTile(text: candidates[i].text, onTap: () => _pickQuestion(info, info.roundIndex, i)),
                   ),
               ],
             ),
@@ -883,13 +883,13 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
             Text(tr('Răspunde corect ca să scapi.', 'Answer correctly to survive.'),
                 textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54, fontSize: 11.5)),
             const SizedBox(height: 12),
-            _QuestionCard(text: question.question, accent: AppColors.danger),
+            _QuestionCard(text: question.text, accent: AppColors.danger),
             const SizedBox(height: 16),
             for (final c in choices)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _AnswerButton(
-                  text: c,
+                  text: question.label(c),
                   onTap: answered ? null : () => _answerChairQuestion(info, c),
                   selected: info.roundChairAnswers[me] == c,
                   danger: true,
@@ -982,8 +982,8 @@ class _MultiplayerElectricChairScreenState extends State<MultiplayerElectricChai
         color: color,
         survived: outcomes[id] ?? true,
         livesAfter: p?.lives ?? 0,
-        question: question?.question ?? '',
-        answer: question?.answer ?? '',
+        question: question?.text ?? '',
+        answer: question == null ? '' : question.label(question.answer),
         isMe: id == _myId,
       ));
       avatars.add(Avatar(

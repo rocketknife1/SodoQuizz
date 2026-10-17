@@ -703,7 +703,7 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
           CountdownRing(secondsLeft: _secondsLeftFor(info), totalSeconds: _roundTotalSeconds, size: 36),
           const SizedBox(height: 8),
           Text(
-            question.question,
+            question.text,
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
           ),
@@ -764,10 +764,10 @@ class _MultiplayerObbyScreenState extends State<MultiplayerObbyScreen> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                Expanded(child: _choiceButton(visible[i], visible[i] == correct, () => _selectAnswer(info, myPlayer, players, visible[i]))),
+                Expanded(child: _choiceButton(_questionFor(info.roundIndex).label(visible[i]), visible[i] == correct, () => _selectAnswer(info, myPlayer, players, visible[i]))),
                 if (i + 1 < visible.length) ...[
                   const SizedBox(width: 10),
-                  Expanded(child: _choiceButton(visible[i + 1], visible[i + 1] == correct, () => _selectAnswer(info, myPlayer, players, visible[i + 1]))),
+                  Expanded(child: _choiceButton(_questionFor(info.roundIndex).label(visible[i + 1]), visible[i + 1] == correct, () => _selectAnswer(info, myPlayer, players, visible[i + 1]))),
                 ],
               ],
             ),

@@ -1446,7 +1446,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            question.question,
+            question.text,
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
@@ -1465,7 +1465,7 @@ class _MultiplayerTanksScreenState extends State<MultiplayerTanksScreen> with Si
                 padding: EdgeInsets.only(bottom: i == 3 ? 0 : 6),
                 child: _AnswerButton(
                   letter: String.fromCharCode(65 + i),
-                  text: choice,
+                  text: question.label(choice),
                   picked: myAnswer == choice,
                   // Răspunsul corect se arată abia în faza de foc — până
                   // atunci nimeni nu vede nimic, nici măcar propria greșeală.
@@ -1751,7 +1751,7 @@ class _TargetingView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            question.question,
+            question.text,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
