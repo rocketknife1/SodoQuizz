@@ -110,7 +110,8 @@ List<String> botNames(int count, Random rnd) {
 const int botRewardedMatchesPerDay = 5;
 
 /// Recompensa unui meci cu boți, după locul ocupat (0 = primul). Mult sub un
-/// meci real: nu există miză, deci nici risc. Nimic pentru ultimul loc.
+/// meci real: nu există miză, deci nici risc. Ultimul loc primește puțin,
+/// dar nu nimic — cine pierde tot avansează, doar mai încet.
 ({int coins, int xp}) botMatchReward({
   required int place,
   required int totalPlayers,
@@ -119,8 +120,10 @@ const int botRewardedMatchesPerDay = 5;
 }) {
   final d = _clampDifficulty(difficulty);
   final bots = botCount.clamp(botMinCount, botMaxCount);
-  if (totalPlayers > 1 && place >= totalPlayers - 1) return (coins: 0, xp: 4);
   final full = (coins: 3 * d + 2 * bots, xp: 6 + 3 * d + bots);
+  if (totalPlayers > 1 && place >= totalPlayers - 1) {
+    return (coins: max(1, (full.coins * 0.3).round()), xp: max(4, (full.xp * 0.3).round()));
+  }
   if (place == 0) return full;
   return (coins: full.coins ~/ 2, xp: full.xp ~/ 2);
 }

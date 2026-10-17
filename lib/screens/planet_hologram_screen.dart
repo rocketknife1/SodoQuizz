@@ -97,6 +97,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
 
   int _index = 0;
   int _correct = 0;
+  int _wrong = 0;
   int _heartsLeft = planetHearts;
   bool _answered = false;
   String? _picked;
@@ -234,6 +235,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
         _correct++;
       } else {
         _heartsLeft--;
+        _wrong++;
       }
     });
     correct ? Sfx.coinHit() : Sfx.tileSelect();
@@ -271,7 +273,7 @@ class _PlanetHologramScreenState extends State<PlanetHologramScreen> {
       _jackpot = won;
       _reward = won
           ? planetJackpotReward(level)
-          : planetConsolationReward(_correct, level);
+          : planetConsolationReward(_correct, level, wrong: _wrong);
     });
     Sfx.rewardPop();
 

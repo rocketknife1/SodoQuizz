@@ -137,6 +137,11 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
         _coinsEarned +=
             (coinsForCorrectAnswer(_current.maxPoints) * rate).round();
       });
+    } else {
+      setState(() {
+        _xpEarned += xpForWrongAnswer(_current.maxPoints);
+        _coinsEarned += coinsForWrongAnswer(_current.maxPoints);
+      });
     }
 
     await Future.delayed(const Duration(milliseconds: 1000));

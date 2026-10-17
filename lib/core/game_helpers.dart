@@ -89,6 +89,16 @@ int xpForCorrectAnswer(int maxPoints) => (4 + maxPoints * 0.033).round();
 
 int coinsForCorrectAnswer(int maxPoints) => (3 + maxPoints * 0.043).round();
 
+/// Cât din recompensa unui răspuns corect primește un răspuns greșit: cine nu
+/// știe tot avansează, doar mai încet — niciodată la fel ca un răspuns corect.
+const double wrongAnswerRewardFraction = 0.3;
+
+int xpForWrongAnswer(int maxPoints) =>
+    max(1, (xpForCorrectAnswer(maxPoints) * wrongAnswerRewardFraction).round());
+
+int coinsForWrongAnswer(int maxPoints) =>
+    max(1, (coinsForCorrectAnswer(maxPoints) * wrongAnswerRewardFraction).round());
+
 /// Multiplicator pe serie de răspunsuri corecte consecutive, aplicat ȘI pe
 /// monede ȘI pe XP — plătește priceperea fără să ridice podeaua economiei
 /// (cine greșește des rămâne exact pe baza de mai sus).

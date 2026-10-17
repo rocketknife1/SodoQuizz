@@ -144,6 +144,11 @@ int categoryExitReward(int correctCount, int feePaid) {
 const int multiplayerWinXpBonus = 47;
 const int multiplayerParticipationXpBonus = 13;
 
+/// Monede mici, primite de ORICINE termină un meci multiplayer real (pe lângă
+/// partea din mize). Cine pierde tot pleacă cu ceva; cine câștigă are mereu
+/// mai mult, fiindcă primește și premiul din mize.
+const int multiplayerParticipationCoins = 5;
+
 /// Bonus fix, o dată pe zi, la prima victorie multiplayer a zilei — vezi
 /// StorageService.canClaimFirstWinOfDay. Singurele monede "din partea casei"
 /// rămase în multiplayer, exact ca să existe un motiv să joci primul meci.
@@ -242,12 +247,15 @@ PlanetReward planetJackpotReward(int level) {
 /// Ce primești când zarul nu a căzut bine — sau când n-ai atins nici pragul
 /// minim. Proporțională cu câte ai nimerit, ca o rulare bună fără noroc să
 /// nu iasă pe zero. Fără gems: aceia rămân exclusiv la recompensa mare.
-PlanetReward planetConsolationReward(int correct, int level) {
-  if (correct <= 0) return const PlanetReward();
+PlanetReward planetConsolationReward(int correct, int level, {int wrong = 0}) {
+  // Greșelile contează și ele, dar cam o treime cât un răspuns corect
+  // (aceeași fracție ca wrongAnswerRewardFraction din game_helpers.dart).
+  final effective = correct + wrong * 0.3;
+  if (effective <= 0) return const PlanetReward();
   final g = economyGrowth(level);
   return PlanetReward(
-    coins: (8 * correct * g).round(),
-    xp: (4 * correct * g).round(),
+    coins: (8 * effective * g).round(),
+    xp: (4 * effective * g).round(),
     hearts: correct >= planetGreatRunCorrect ? 1 : 0,
     hints: correct >= planetGoodRunCorrect ? 2 : 0,
   );

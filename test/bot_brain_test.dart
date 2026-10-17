@@ -75,7 +75,9 @@ void main() {
     final second = botMatchReward(place: 1, totalPlayers: 4, difficulty: 3, botCount: 3);
     final last = botMatchReward(place: 3, totalPlayers: 4, difficulty: 3, botCount: 3);
     expect(first.coins, greaterThan(second.coins));
-    expect(last.coins, 0);
+    // ultimul primește puțin, dar nu nimic — și mereu mai puțin decât al doilea
+    expect(last.coins, greaterThan(0));
+    expect(last.coins, lessThan(second.coins));
     expect(botMatchReward(place: 0, totalPlayers: 2, difficulty: 5, botCount: 1).coins,
         greaterThan(botMatchReward(place: 0, totalPlayers: 2, difficulty: 1, botCount: 1).coins));
     // plafon de sanatate pentru economie

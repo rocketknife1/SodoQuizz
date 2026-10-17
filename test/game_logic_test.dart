@@ -319,4 +319,22 @@ void main() {
       expect(multiplayerXpForScore(0, won: false), multiplayerParticipationXpBonus);
     });
   });
+
+  group('răspuns greșit: mai puțin decât corect, dar mai mult decât nimic', () {
+    test('monede, XP și puncte', () {
+      for (final maxPoints in [100, 200, 300, 400, 700, 1000]) {
+        expect(coinsForWrongAnswer(maxPoints), greaterThan(0));
+        expect(coinsForWrongAnswer(maxPoints), lessThan(coinsForCorrectAnswer(maxPoints)));
+        expect(xpForWrongAnswer(maxPoints), greaterThan(0));
+        expect(xpForWrongAnswer(maxPoints), lessThan(xpForCorrectAnswer(maxPoints)));
+      }
+    });
+
+    test('planeta: o rulare plină de greșeli tot plătește ceva, sub una cu corecte', () {
+      final onlyWrong = planetConsolationReward(0, 5, wrong: 10);
+      final someRight = planetConsolationReward(5, 5, wrong: 5);
+      expect(onlyWrong.coins, greaterThan(0));
+      expect(onlyWrong.coins, lessThan(someRight.coins));
+    });
+  });
 }

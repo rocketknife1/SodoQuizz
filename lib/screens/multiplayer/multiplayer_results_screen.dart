@@ -237,7 +237,7 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
       _myBet = stake;
       _myPlace = myIndex + 1;
       _pot = matchPot(stake: stake, players: sorted.length);
-      _coinsEarned = prizes[myIndex];
+      _coinsEarned = prizes[myIndex] + multiplayerParticipationCoins;
       _xpEarned = multiplayerXpForScore(myScore, won: won);
       await StorageService.addCoins(_coinsEarned);
       await StorageService.addXp(_xpEarned);

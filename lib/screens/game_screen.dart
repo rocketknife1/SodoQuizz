@@ -348,10 +348,10 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         (event != null && eventCounts) ? event.coinBonus : 1.0;
     final coinsEarned = correct
         ? (coinsForCorrectAnswer(q.maxPoints) * multiplier * eventBonus).round()
-        : 0;
+        : coinsForWrongAnswer(q.maxPoints);
     final xpEarned = correct
         ? (xpForCorrectAnswer(q.maxPoints) * multiplier).round()
-        : 0;
+        : xpForWrongAnswer(q.maxPoints);
     // verificat live (nu cache-uit la intrarea în ecran) — dacă bonusul de
     // 24h expiră la mijlocul sesiunii, următorul răspuns greșit trebuie deja
     // să scadă viața din nou.
@@ -362,7 +362,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // chiar dacă ecranul s-a închis între timp: cine ieșea imediat după un
     // răspuns greșit scăpa de penalizare. Doar plafon inferior — vieți peste
     // 5 (bonusuri) nu se retează înapoi; cu vieți nelimitate nu scade deloc.
-    if (!correct && !unlimited) {
+    // O viață se pierde doar la fiecare a doua greșeală (contor salvat pe
+    // disc, deci ieșirea din joc nu-l resetează).
+    if (!correct && !unlimited && await StorageService.registerWrongAnswer()) {
       lives = lives > 0 ? lives - 1 : 0;
       await StorageService.setLives(lives);
     }
@@ -436,6 +438,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
       await StorageService.updateHighScore(score);
       await StorageService.updateModeHighScore(widget.gameModeId, score);
       await _checkAchievements();
+    } else {
+      // Greșit: tot primești ceva (mai puțin) — dar fără puncte de clasament,
+      // ca spam-ul pe variante să nu urce pe nimeni în top.
+      await StorageService.addCoins(coinsEarned);
+      await StorageService.addXp(xpEarned);
+      if (mounted) setState(() => coinsBalance += coinsEarned);
+      if (mounted) await bumpQuestMetric(context, 'coins_earned', coinsEarned);
     }
     await _checkSessionMilestone();
   }

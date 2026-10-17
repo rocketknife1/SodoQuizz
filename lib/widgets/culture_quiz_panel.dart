@@ -198,9 +198,9 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
     }
     final round = playsSoFar + 1;
     // sesiune nouă = alt set aleatoriu din pool-ul global unic de întrebări.
-    _questions = (List.of(cultureQuestions)..shuffle(Random()))
+    _questions = _withShuffledChoices((List.of(cultureQuestions)..shuffle(Random()))
         .take(cultureQuizQuestionCount)
-        .toList();
+        .toList());
     setState(() {
       _phase = _Phase.playing;
       qIndex = 0;
@@ -220,6 +220,27 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
       _roundSlotRecorded = false;
     });
     _initQuestion();
+  }
+
+  /// Amestecă variantele FIECĂREI întrebări (nu doar ordinea întrebărilor):
+  /// altfel răspunsul corect stă mereu pe poziția scrisă în cod, iar cine
+  /// joacă des învață să dea pe 2/3 fără să citească. Evită și repetarea
+  /// aceleiași poziții corecte de două ori la rând.
+  List<CultureQuestion> _withShuffledChoices(List<CultureQuestion> questions) {
+    final rnd = Random();
+    int? lastCorrectIndex;
+    final out = <CultureQuestion>[];
+    for (final q in questions) {
+      List<String> choices;
+      int correctIndex;
+      do {
+        choices = List.of(q.choices)..shuffle(rnd);
+        correctIndex = choices.indexOf(q.answer);
+      } while (choices.length > 1 && correctIndex == lastCorrectIndex);
+      lastCorrectIndex = correctIndex;
+      out.add(CultureQuestion(question: q.question, choices: choices, answer: q.answer));
+    }
+    return out;
   }
 
   void _initQuestion() {
@@ -289,6 +310,11 @@ class _CultureQuizPanelState extends State<CultureQuizPanel> {
           _livesEarned++;
         }
       }
+    } else if (opt != null) {
+      // Greșit (dar a ales ceva, nu a lăsat timpul să expire): tot primește
+      // o parte, mereu mai puțin decât la răspunsul corect.
+      _coinsEarned += max(1, (cultureCoinsPerCorrect * wrongAnswerRewardFraction).round());
+      _xpEarned += max(1, (cultureXpPerCorrect * wrongAnswerRewardFraction).round());
     }
 
     await Future.delayed(const Duration(milliseconds: 900));

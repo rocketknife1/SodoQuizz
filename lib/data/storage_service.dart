@@ -260,6 +260,23 @@ class StorageService {
   /// zi/game-over) — nu e impus aici, ca vieți câștigate ca bonus (vezi
   /// [addLivesUncapped]) să nu fie retezate la următorul apel cu o valoare
   /// deja calculată de apelant (ex: decrementul dintr-un răspuns greșit).
+  static const _wrongStrikeKey = 'wrong_strike';
+
+  /// Câte răspunsuri greșite costă o viață.
+  static const int wrongAnswersPerLife = 2;
+
+  /// Numără o greșeală; întoarce true când e cea care costă o viață.
+  static Future<bool> registerWrongAnswer() async {
+    final prefs = await SharedPreferences.getInstance();
+    final n = (prefs.getInt(_wrongStrikeKey) ?? 0) + 1;
+    if (n >= wrongAnswersPerLife) {
+      await prefs.setInt(_wrongStrikeKey, 0);
+      return true;
+    }
+    await prefs.setInt(_wrongStrikeKey, n);
+    return false;
+  }
+
   static Future<void> setLives(int lives) async {
     final prefs = await SharedPreferences.getInstance();
     final clamped = lives < 0 ? 0 : lives;
