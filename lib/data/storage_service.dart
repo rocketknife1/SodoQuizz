@@ -7,6 +7,7 @@ import '../core/async_challenge.dart';
 import '../core/category_mastery.dart';
 import '../core/game_helpers.dart';
 import '../core/gamemodes.dart';
+import '../core/lang.dart';
 import '../core/progression.dart';
 import 'device_notification_service.dart';
 import 'shop.dart';
@@ -2546,7 +2547,7 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     final existing = prefs.getString(_displayNameKey);
     if (existing != null && existing.isNotEmpty) return existing;
-    final generated = 'Jucator${100 + DateTime.now().millisecondsSinceEpoch % 900}';
+    final generated = '${tr('Jucator', 'Player')}${100 + DateTime.now().millisecondsSinceEpoch % 900}';
     await prefs.setString(_displayNameKey, generated);
     return generated;
   }

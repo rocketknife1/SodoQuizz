@@ -61,7 +61,7 @@ class _FriendChatScreenState extends State<FriendChatScreen> {
     _controller.clear();
     if (containsProfanity(raw) && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mesajul a fost trimis cu cuvintele nepotrivite acoperite.')),
+        SnackBar(content: Text(tr('Mesajul a fost trimis cu cuvintele nepotrivite acoperite.', 'Your message was sent with the bad words covered.'))),
       );
     }
     await FriendChatService.instance.sendMessage(widget.friend.uid, raw);

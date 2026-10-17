@@ -1041,8 +1041,8 @@ class _MultiplayerResultsScreenState extends State<MultiplayerResultsScreen> {
                                 switch (widget.gameMode) {
                                   MatchGameMode.quizzTanks => '${p.damageDealt} dmg',
                                   MatchGameMode.unknown => p.score >= unknownFinish ? '🏁' : '📍${p.score}',
-                                  MatchGameMode.flash || MatchGameMode.impostor => '${p.score} pct',
-                                  _ => '${p.score} pct',
+                                  MatchGameMode.flash || MatchGameMode.impostor => tr('${p.score} pct', '${p.score} pts'),
+                                  _ => tr('${p.score} pct', '${p.score} pts'),
                                 },
                                 style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800),
                               ),

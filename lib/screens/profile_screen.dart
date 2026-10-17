@@ -415,7 +415,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Expanded(child: _StatTile(icon: Icons.percent_rounded, color: AppColors.play, label: 'Winrate', value: '$winratePct%')),
             const SizedBox(width: 12),
-            Expanded(child: _StatTile(icon: Icons.sports_esports_rounded, color: AppColors.blue, label: 'Meciuri', value: '${p.matchesPlayed}')),
+            Expanded(child: _StatTile(icon: Icons.sports_esports_rounded, color: AppColors.blue, label: tr('Meciuri', 'Matches'), value: '${p.matchesPlayed}')),
           ],
         ),
         const SizedBox(height: 12),
@@ -430,7 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _StatTile(
           icon: Icons.local_fire_department_rounded,
           color: AppColors.orange,
-          label: 'Cel mai lung streak de victorii',
+          label: tr('Cel mai lung streak de victorii', 'Longest win streak'),
           value: '${p.longestStreak}',
           wide: true,
         ),

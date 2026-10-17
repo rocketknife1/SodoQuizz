@@ -191,7 +191,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
             Text(tr('Ai ghicit corect de $_streak ori la rând.', 'You guessed right $_streak times in a row.'), style: const TextStyle(color: Colors.white70)),
             if (_coinsEarned > 0) ...[
               const SizedBox(height: 8),
-              Text('+$_coinsEarned monede  •  +$_xpEarned XP',
+              Text(tr('+$_coinsEarned monede  •  +$_xpEarned XP', '+$_coinsEarned coins  •  +$_xpEarned XP'),
                   style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800, fontSize: 13)),
             ],
             const SizedBox(height: 8),

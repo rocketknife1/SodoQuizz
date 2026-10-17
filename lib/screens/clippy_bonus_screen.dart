@@ -300,7 +300,7 @@ class _ClippyBonusScreenState extends State<ClippyBonusScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        const Text('Cine / ce este?', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+        Text(tr('Cine / ce este?', 'Who / what is it?'), style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
         const SizedBox(height: 10),
         ...List.generate(opts.length, (i) {
           final opt = opts[i];

@@ -907,7 +907,7 @@ class _RoomLobbyScreenState extends State<RoomLobbyScreen> with SingleTickerProv
     _chatController.clear();
     if (text != raw.trim() && containsProfanity(raw)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mesajul a fost trimis cu cuvintele nepotrivite acoperite.')),
+        SnackBar(content: Text(tr('Mesajul a fost trimis cu cuvintele nepotrivite acoperite.', 'Your message was sent with the bad words covered.'))),
       );
     }
     await MultiplayerService.instance.sendChatMessage(matchId: widget.matchId, senderName: _displayName, text: text);

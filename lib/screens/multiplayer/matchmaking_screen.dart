@@ -134,12 +134,12 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     // diferența negativă se întoarce integral în balanță.
     final bool ok;
     if (room.gameMode == MatchGameMode.quizzTanks) {
-      ok = await confirmTanksRoom(context, title: 'Camera lui ${room.hostName ?? '?'}');
+      ok = await confirmTanksRoom(context, title: tr('Camera lui ${room.hostName ?? '?'}', "${room.hostName ?? '?'}'s room"));
     } else {
       ok = await confirmMatchStake(
         context,
         stake: room.stake,
-        title: 'Camera lui ${room.hostName ?? '?'}',
+        title: tr('Camera lui ${room.hostName ?? '?'}', "${room.hostName ?? '?'}'s room"),
         subtitle: tr(
             'Miza e stabilită de cine a făcut camera. Cu cât intră mai '
                 'mulți, cu atât premiile cresc.',
@@ -157,7 +157,7 @@ class _MatchmakingScreenState extends State<MatchmakingScreen> with TickerProvid
     if (diff > 0 && !await StorageService.spendCoins(diff)) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nu ai destule monede pentru camera asta.')),
+        SnackBar(content: Text(tr('Nu ai destule monede pentru camera asta.', "You don't have enough coins for this room."))),
       );
       await _resumeQueue();
       return;

@@ -394,7 +394,7 @@ class _ModeScoreRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
-          Text('$score pct', style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
+          Text(tr('$score pct', '$score pts'), style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -484,7 +484,7 @@ class _PlayerRow extends StatelessWidget {
                 ],
               ),
             ),
-            Text('$seasonPts pct', style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
+            Text(tr('$seasonPts pct', '$seasonPts pts'), style: const TextStyle(color: AppColors.coin, fontWeight: FontWeight.w800)),
           ],
         ),
       ),

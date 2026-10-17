@@ -707,7 +707,7 @@ class _FriendRow extends StatelessWidget {
                       children: [
                         Icon(league.icon, color: league.color, size: 12),
                         const SizedBox(width: 4),
-                        Text('${league.name} · $seasonPts pct', style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
+                        Text(tr('${league.name} · $seasonPts pct', '${league.name} · $seasonPts pts'), style: TextStyle(color: league.color, fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   Row(

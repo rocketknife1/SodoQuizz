@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import '../core/game_helpers.dart';
 import '../data/questions.dart';
+import '../core/lang.dart';
 import '../models/question.dart';
 import '../widgets/blur_image.dart';
 import '../widgets/next_button.dart';
@@ -231,7 +232,7 @@ class _TestImagesScreenState extends State<TestImagesScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
-          'Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%',
+          tr('Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%', 'Clarity: ${(resolveHintExposure(hintsUsed) * 100).round()}%'),
           style: const TextStyle(color: Colors.white70, fontSize: 12),
         ),
         if (!answered)

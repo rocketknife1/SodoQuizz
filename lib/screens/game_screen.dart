@@ -735,9 +735,9 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                 _loadQuestions();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Nu ai destule gems.'),
-                      duration: Duration(milliseconds: 1400)),
+                  SnackBar(
+                      content: Text(tr('Nu ai destule gems.', "You don't have enough gems.")),
+                      duration: const Duration(milliseconds: 1400)),
                 );
               }
             },
@@ -1166,7 +1166,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                           color: Color(0xFFEF9F27), fontSize: 13)),
                 ),
               const SizedBox(width: 8),
-              Text('$score pct',
+              Text(tr('$score pct', '$score pts'),
                   style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -1251,7 +1251,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
         // rămâne, ca butoanele din dreapta să nu sară de pe loc.
         if (q.formula == null)
           Text(
-            'Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%',
+            tr('Claritate: ${(resolveHintExposure(hintsUsed) * 100).round()}%', 'Clarity: ${(resolveHintExposure(hintsUsed) * 100).round()}%'),
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           )
         else
