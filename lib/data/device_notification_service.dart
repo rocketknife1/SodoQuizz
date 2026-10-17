@@ -113,12 +113,13 @@ class DeviceNotificationService {
       for (final old in _retiredChannelIds) {
         await android?.deleteNotificationChannel(old);
       }
-      await android?.createNotificationChannel(const AndroidNotificationChannel(
+      await android?.createNotificationChannel(AndroidNotificationChannel(
         _channelId,
-        _channelName,
-        description: 'Când roata, planeta, questurile sau Clippy sunt din nou gata.',
+        tr(_channelName, 'Game events'),
+        description: tr('Când roata, planeta, questurile sau Clippy sunt din nou gata.',
+            'When the wheel, planet, quests or Clippy are ready again.'),
         importance: Importance.high, // banner peste ecran, nu doar în bară
-        sound: RawResourceAndroidNotificationSound('sodo_notify'),
+        sound: const RawResourceAndroidNotificationSound('sodo_notify'),
         playSound: true,
         enableVibration: true,
       ));

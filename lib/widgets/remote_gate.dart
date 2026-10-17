@@ -34,11 +34,14 @@ class RemoteGate extends StatefulWidget {
       fullscreenDialog: true,
       builder: (_) => Stack(
         children: [
-          const _BlockingScreen(
+          _BlockingScreen(
             emoji: '🛠️',
-            title: 'Revenim imediat',
-            body: 'Facem niște treburi la joc. Nu dura mult — încearcă din nou '
-                'peste câteva minute.',
+            title: tr('Revenim imediat', 'Back in a moment'),
+            body: tr(
+                'Facem niște treburi la joc. Nu dura mult — încearcă din nou '
+                    'peste câteva minute.',
+                "We're doing some work on the game. It won't take long — try again "
+                    'in a few minutes.'),
             showProgress: true,
           ),
           // DOAR în preview: o cale de ieșire. Jucătorul real n-are.

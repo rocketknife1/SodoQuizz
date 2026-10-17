@@ -1,5 +1,6 @@
 
 import 'package:flutter/material.dart';
+import 'lang.dart';
 import 'stable_hash.dart';
 
 /// Formula de nivel/XP: curbă mixtă pătratică+cubică, deliberat mai severă
@@ -359,6 +360,7 @@ class Quest {
     final n = targetAt(level);
     final lastTwo = n % 100;
     final needsDe = lastTwo == 0 || lastTwo >= 20;
+    if (L10n.isEn) return progressionText(_titleTemplate).replaceAll('{n}', '$n');
     return _titleTemplate.replaceAll('{n}', needsDe ? '$n de' : '$n');
   }
 
@@ -1548,8 +1550,10 @@ List<Quest> todaysQuests([DateTime? now]) =>
 /// valorează acum de ~15 ori mai mult decât înainte, vezi [xpForLevel].
 class Achievement {
   final String id;
-  final String title;
-  final String description;
+  final String _title;
+  final String _description;
+  String get title => progressionText(_title);
+  String get description => progressionText(_description);
   final int target;
   final int coinReward;
   final int xpReward;
@@ -1560,8 +1564,8 @@ class Achievement {
 
   const Achievement({
     required this.id,
-    required this.title,
-    required this.description,
+    required String title,
+    required String description,
     required this.target,
     this.coinReward = 0,
     this.xpReward = 0,
@@ -1569,7 +1573,8 @@ class Achievement {
     this.heartReward = 0,
     this.hintReward = 0,
     required this.icon,
-  });
+  })  : _title = title,
+        _description = description;
 }
 
 /// Numărul de gamemoduri deblocate (folosit de "all_modes" mai jos) — ține-l
@@ -1815,3 +1820,113 @@ const List<Achievement> achievements = [
     icon: Icons.workspace_premium_rounded,
   ),
 ];
+
+/// Quest-urile și realizările sunt scrise în română în catalog; aici e
+/// varianta în engleză, pe textul românesc (cu `{n}` neînlocuit). Un text
+/// care lipsește rămâne în română — nu se strică nimic.
+String progressionText(String ro) => L10n.isEn ? (_progressionEn[ro] ?? ro) : ro;
+
+const Map<String, String> _progressionEn = {
+  'Ieși de pe planetă cu inimi rămase': 'Leave the planet with hearts to spare',
+  'Răspunde corect la {n} întrebări': 'Answer {n} questions correctly',
+  'Răspunde corect la {n} întrebări de Cultură Generală': 'Answer {n} General Knowledge questions correctly',
+  'Joacă în 2 gamemoduri diferite': 'Play 2 different game modes',
+  'Folosește {n} hint-uri': 'Use {n} hints',
+  'Folosește {n} hint': 'Use {n} hint',
+  'Ghicește corect {n} întrebări fără niciun hint': 'Get {n} questions right without any hint',
+  'Strânge {n} monede jucând': 'Earn {n} coins by playing',
+  'Obține o serie de 3 răspunsuri corecte la rând': 'Get a streak of 3 correct answers in a row',
+  'Termină Daily Challenge': 'Finish the Daily Challenge',
+  'Termină un bonus de la Clippy': 'Finish a Clippy bonus',
+  'Ghicește 12 holograme pe Planeta hologramelor': 'Guess 12 holograms on the Hologram Planet',
+  'Învârte Roata norocului': 'Spin the Lucky Wheel',
+  'Revendică recompensa zilnică de vieți': 'Claim the daily lives reward',
+  'Cumpără un pachet de hints din Magazin': 'Buy a hint pack in the Shop',
+  'Cumpără o viață din Magazin': 'Buy a life in the Shop',
+  'Termină 4 bonusuri de la Clippy': 'Finish 4 Clippy bonuses',
+  'Termină 4 loturi de Cultură Generală': 'Finish 4 General Knowledge rounds',
+  'Obține o serie de 5 răspunsuri corecte, de 3 ori în aceeași zi': 'Get a 5-answer streak 3 times in one day',
+  'Termină un lot de Cultură Generală': 'Finish a General Knowledge round',
+  'Ghicește 7 holograme pe Planeta hologramelor': 'Guess 7 holograms on the Hologram Planet',
+  'Joacă într-un gamemod, oricare': 'Play any game mode',
+  'Aterizează o dată pe Planeta hologramelor': 'Land once on the Hologram Planet',
+  'Termină 5 bonusuri de la Clippy': 'Finish 5 Clippy bonuses',
+  'Termină 3 bonusuri de la Clippy perfect (3/3)': 'Finish 3 Clippy bonuses perfectly (3/3)',
+  'Joacă în 3 gamemoduri diferite': 'Play 3 different game modes',
+  'Obține o serie de 5 răspunsuri corecte la rând': 'Get a streak of 5 correct answers in a row',
+  'Obține o serie de 3 răspunsuri corecte, de 2 ori în aceeași zi': 'Get a 3-answer streak twice in one day',
+  'Termină 2 loturi de Cultură Generală': 'Finish 2 General Knowledge rounds',
+  'Termină 2 bonusuri de la Clippy': 'Finish 2 Clippy bonuses',
+  'Ghicește 17 holograme pe Planeta hologramelor': 'Guess 17 holograms on the Hologram Planet',
+  'Revendică o recompensă de nivel': 'Claim a level reward',
+  'Cheltuie monede sau gems în Magazin': 'Spend coins or gems in the Shop',
+  'Intră de 3 ori pe Planeta hologramelor': 'Visit the Hologram Planet 3 times',
+  'Ghicește 23 de holograme pe Planeta hologramelor': 'Guess 23 holograms on the Hologram Planet',
+  'Termină 3 bonusuri de la Clippy': 'Finish 3 Clippy bonuses',
+  'Cumpără 2 pachete de hints din Magazin': 'Buy 2 hint packs in the Shop',
+  'Cumpără 2 vieți din Magazin': 'Buy 2 lives in the Shop',
+  'Cheltuie de 2 ori în Magazin sau la Deblocare': 'Spend twice in the Shop or on Unlocks',
+  'Obține o serie de 5 răspunsuri corecte, de 2 ori în aceeași zi': 'Get a 5-answer streak twice in one day',
+  'Joacă un meci multiplayer cu pariu': 'Play a multiplayer match with a stake',
+  'Intră de 2 ori pe Planeta hologramelor': 'Visit the Hologram Planet twice',
+  'Ieși de pe planetă cu cel puțin $planetGoodRunCorrect din $planetQuestionCount': 'Leave the planet with at least $planetGoodRunCorrect of $planetQuestionCount',
+  'Câștigă un meci multiplayer': 'Win a multiplayer match',
+  'Obține o serie de 8 răspunsuri corecte la rând': 'Get a streak of 8 correct answers in a row',
+  'Termină un bonus de la Clippy perfect (3/3)': 'Finish a Clippy bonus perfectly (3/3)',
+  'Deblochează un lot nou de întrebări': 'Unlock a new batch of questions',
+  'Joacă în 4 gamemoduri diferite': 'Play 4 different game modes',
+  'Termină 3 loturi de Cultură Generală': 'Finish 3 General Knowledge rounds',
+  'Revendică alte 6 quest-uri': 'Claim 6 more quests',
+  'Câștigă {n} meciuri multiplayer': 'Win {n} multiplayer matches',
+  'Obține o serie de 10 răspunsuri corecte la rând': 'Get a streak of 10 correct answers in a row',
+  'Joacă în 5 gamemoduri diferite': 'Play 5 different game modes',
+  'Ghicește 29 de holograme pe Planeta hologramelor': 'Guess 29 holograms on the Hologram Planet',
+  'Termină un bonus de la Clippy perfect (3/3), de 2 ori în aceeași zi': 'Finish a Clippy bonus perfectly (3/3) twice in one day',
+  'Revendică alte 9 quest-uri': 'Claim 9 more quests',
+  'Ieși de pe planetă cu cel puțin $planetGreatRunCorrect din $planetQuestionCount': 'Leave the planet with at least $planetGreatRunCorrect of $planetQuestionCount',
+  'Rulare perfectă pe planetă: $planetQuestionCount din $planetQuestionCount': 'Perfect planet run: $planetQuestionCount of $planetQuestionCount',
+  'Câștigă 2 meciuri multiplayer': 'Win 2 multiplayer matches',
+  'Termină un bonus de la Clippy perfect (3/3), de {n} ori în aceeași zi': 'Finish a Clippy bonus perfectly (3/3) {n} times in one day',
+  'Cunoscător': 'Connoisseur',
+  '50 de răspunsuri corecte, vreodată': '50 correct answers, all time',
+  '150 de răspunsuri corecte, vreodată': '150 correct answers, all time',
+  'Maestru al cunoașterii': 'Master of Knowledge',
+  '400 de răspunsuri corecte, vreodată': '400 correct answers, all time',
+  'În ascensiune': 'On the Rise',
+  'Ajungi la nivelul 5': 'Reach level 5',
+  'Ajungi la nivelul 15': 'Reach level 15',
+  'Exploratorul': 'The Explorer',
+  'Joacă în toate gamemodurile deblocate': 'Play every unlocked game mode',
+  'Detectivul': 'The Detective',
+  'Folosește 50 de hint-uri în total': 'Use 50 hints in total',
+  'Muncitor harnic': 'Hard Worker',
+  'Revendică 25 de quest-uri zilnice': 'Claim 25 daily quests',
+  'Rutina de zi': 'Daily Routine',
+  'Termină Daily Challenge de 10 ori': 'Finish the Daily Challenge 10 times',
+  'Susținător': 'Supporter',
+  'Cumpără Pachetul de Start din Magazin': 'Buy the Starter Pack in the Shop',
+  'Lună fără pauză': 'A Month Without a Break',
+  'Intră în joc 30 de zile la rând': 'Play 30 days in a row',
+  'Curtezanul norocului': 'Fortune Seeker',
+  'Învârte Roata norocului de 28 de ori (una la 24h)': 'Spin the Lucky Wheel 28 times (once every 24h)',
+  'Spaima mesei': 'Terror of the Table',
+  'Câștigă 23 de meciuri multiplayer': 'Win 23 multiplayer matches',
+  'Ochi liber': 'Sharp Eye',
+  '250 de răspunsuri corecte fără niciun hint': '250 correct answers without any hint',
+  'Aruncătorul de mănuși': 'Gauntlet Thrower',
+  'Câștigă 15 provocări trimise prietenilor': 'Win 15 challenges sent to friends',
+  'Colecționar de diplome': 'Diploma Collector',
+  'Stăpânește 3 categorii (60 de întrebări, 60%+ corect)': 'Master 3 categories (60 questions, 60%+ correct)',
+  'Enciclopedia ambulantă': 'Walking Encyclopedia',
+  '600 de răspunsuri corecte la Cultură Generală': '600 correct General Knowledge answers',
+  'Cel mai bun prieten al agrafei': "Paperclip's Best Friend",
+  '47 de bonusuri de la Clippy terminate perfect (3/3)': '47 Clippy bonuses finished perfectly (3/3)',
+  'Colecționarul': 'The Collector',
+  'Deblochează 3 loturi noi de întrebări cu gems': 'Unlock 3 new batches of questions with gems',
+  'Stăpânul hologramelor': 'Master of Holograms',
+  '5 rulări perfecte pe Planeta hologramelor': '5 perfect runs on the Hologram Planet',
+  'Bancherul': 'The Banker',
+  'Strânge 37.000 de monede jucând': 'Earn 37,000 coins by playing',
+  'Neobositul': 'The Tireless',
+  'Revendică 180 de quest-uri zilnice': 'Claim 180 daily quests',
+};

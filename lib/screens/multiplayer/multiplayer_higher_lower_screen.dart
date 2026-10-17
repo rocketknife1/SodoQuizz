@@ -525,7 +525,7 @@ class _MultiplayerHigherLowerScreenState extends State<MultiplayerHigherLowerScr
           Text(item.emoji, style: const TextStyle(fontSize: 40)),
           const SizedBox(height: 8),
           Text(
-            item.name,
+            item.label,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

@@ -27,12 +27,13 @@ enum AppLanguage {
 /// texte într-o singură limbă-sursă, tabelul de chei ar fi adus doar
 /// bookkeeping.
 ///
-/// CE NU E TRADUS, deliberat: conținutul de joc — întrebările și răspunsurile
-/// din poze, Cultura Generală, Higher or Lower, catalogul de quest-uri. Alea
-/// sunt date, nu interfață, și sunt scrise în română. Un jucător străin
-/// navighează perfect prin joc, dar întrebările îi apar tot în română — vezi
-/// [contentLanguageNotice], avertismentul arătat la alegerea englezei, ca
-/// asta să nu fie o surpriză.
+/// CONȚINUTUL DE JOC are traducerea alături, nu prin [tr]: întrebările cu
+/// poze au `intrebari_en.json` lângă `intrebari.json` (vezi
+/// data/questions.dart), Cultura Generală are câmpurile `en`/`choicesEn`
+/// (data/culture_questions.dart), iar quest-urile trec prin
+/// `progressionText` (core/progression.dart). Logica rămâne pe textul
+/// românesc acolo unde jucători în limbi diferite trebuie să se înțeleagă
+/// (multiplayer).
 ///
 /// Panoul de Admin rămâne în română: îl vede un singur cont (vezi
 /// admin_screen.dart), al proprietarului jocului.
@@ -65,12 +66,6 @@ class L10n {
     language.value = value;
     await StorageService.setLanguageCode(value.code);
   }
-
-  /// Textul arătat la trecerea pe engleză — vezi nota din capul clasei.
-  static String get contentLanguageNotice =>
-      'The menus, buttons and multiplayer are in English. The quiz questions '
-      'themselves (picture answers, General Knowledge, Higher or Lower) are '
-      'still written in Romanian.';
 }
 
 /// Alege varianta potrivită limbii curente. Vezi [L10n] pentru de ce

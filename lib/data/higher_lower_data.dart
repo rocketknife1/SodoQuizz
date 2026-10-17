@@ -1,3 +1,5 @@
+import '../core/lang.dart';
+
 /// Dataset pentru modul "Higher or Lower" — perechi aleatorii de subiecte
 /// comparate după un singur criteriu: cât de mult se caută pe internet.
 /// Fără nicio logică de "ce merge cu ce" (un animal poate fi comparat cu un
@@ -15,7 +17,28 @@ class HigherLowerItem {
   final String emoji;
   final double popularity;
   const HigherLowerItem(this.name, this.emoji, this.popularity);
+
+  /// Numele afișat, în limba jucătorului; [name] rămâne cheia (comparații,
+  /// rapoarte), aceeași pe orice telefon.
+  String get label => L10n.isEn ? (_higherLowerEn[name] ?? name) : name;
 }
+
+const Map<String, String> _higherLowerEn = {
+  'Inteligența Artificială': 'Artificial Intelligence', 'Papa Francisc': 'Pope Francis', 'SUA': 'USA', 'Brazilia': 'Brazil',
+  'Germania': 'Germany', 'Franța': 'France', 'Marea Britanie': 'United Kingdom', 'Japonia': 'Japan', 'Rusia': 'Russia',
+  'România': 'Romania', 'Italia': 'Italy', 'Spania': 'Spain', 'Mexic': 'Mexico', 'Coreea de Sud': 'South Korea',
+  'Turcia': 'Turkey', 'Egipt': 'Egypt', 'Grecia': 'Greece', 'Portugalia': 'Portugal',
+  'Câine': 'Dog', 'Pisică': 'Cat', 'Leu': 'Lion', 'Tigru': 'Tiger', 'Elefant': 'Elephant', 'Rechin': 'Shark', 'Vultur': 'Eagle',
+  'Lup': 'Wolf', 'Cal': 'Horse', 'Iepure': 'Rabbit', 'Șarpe': 'Snake', 'Păianjen': 'Spider', 'Pinguin': 'Penguin', 'Delfin': 'Dolphin',
+  'Gorilă': 'Gorilla', 'Girafă': 'Giraffe', 'Cangur': 'Kangaroo', 'Papagal': 'Parrot', 'Găină': 'Chicken', 'Vacă': 'Cow', 'Porc': 'Pig',
+  'Albină': 'Bee', 'Furnică': 'Ant', 'Fluture': 'Butterfly', 'Caracatiță': 'Octopus', 'Balenă': 'Whale',
+  'Paste': 'Pasta', 'Ciocolată': 'Chocolate', 'Cafea': 'Coffee', 'Ceai': 'Tea', 'Înghețată': 'Ice cream', 'Sandviș': 'Sandwich',
+  'Salată': 'Salad', 'Pâine': 'Bread', 'Brânză': 'Cheese', 'Vin': 'Wine', 'Bere': 'Beer', 'Măr': 'Apple (fruit)', 'Banană': 'Banana',
+  'Pepene verde': 'Watermelon', 'Shaorma': 'Shawarma', 'Fotbal': 'Football', 'Baschet': 'Basketball', 'Tenis': 'Tennis', 'Box': 'Boxing',
+  'Jocurile Olimpice': 'Olympic Games', 'Cupa Mondială FIFA': 'FIFA World Cup', 'Înot': 'Swimming', 'Volei': 'Volleyball',
+  'Vremea': 'Weather', 'Dragoste': 'Love', 'Muzică': 'Music', 'Filme': 'Movies', 'Știri': 'News', 'Rețete': 'Recipes', 'Glume': 'Jokes',
+  'Meme': 'Memes', 'Horoscop': 'Horoscope', 'Loto': 'Lottery', 'Semnificația viselor': 'Dream meanings', 'Astrologie': 'Astrology',
+};
 
 /// Id opac folosit peste tot unde acest mod se comportă ca un "gamemod"
 /// pentru infrastructura existentă (high score per mod + puncte de
@@ -28,13 +51,15 @@ const String higherLowerModeId = 'higher_lower';
 String formatSearchVolume(double millions) {
   if (millions >= 1000) {
     final b = millions / 1000;
-    return '${b.toStringAsFixed(b >= 10 ? 0 : 1)} mld/lună';
+    final v = b.toStringAsFixed(b >= 10 ? 0 : 1);
+    return tr('$v mld/lună', '$v bn/month');
   }
   if (millions >= 1) {
-    return '${millions >= 10 ? millions.round() : millions.toStringAsFixed(1)} mil/lună';
+    final v = millions >= 10 ? '${millions.round()}' : millions.toStringAsFixed(1);
+    return tr('$v mil/lună', '$v M/month');
   }
   final k = millions * 1000;
-  return '${k.round()} mii/lună';
+  return tr('${k.round()} mii/lună', '${k.round()}K/month');
 }
 
 const List<HigherLowerItem> higherLowerItems = [

@@ -373,7 +373,7 @@ class _HigherLowerScreenState extends State<HigherLowerScreen> with SingleTicker
             Text(item.emoji, style: const TextStyle(fontSize: 40)),
             const SizedBox(height: 8),
             Text(
-              item.name,
+              item.label,
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,

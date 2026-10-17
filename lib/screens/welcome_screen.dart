@@ -240,8 +240,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       art: _HintArt(),
                       text: 'Nu știi? Cere un hint.',
                       textEn: 'Stuck? Buy a hint.',
-                      sub: 'Costă monede și limpezește poza. O viață se pierde la răspuns greșit.',
-                      subEn: 'It costs coins and clears the photo. A wrong answer costs a life.',
+                      sub: 'Costă monede și limpezește poza. La fiecare a doua greșeală pierzi o viață.',
+                      subEn: 'It costs coins and clears the photo. Every second wrong answer costs a life.',
                     ),
                     // ── Ce e pe ecranul principal (3) ──
                     _Step(

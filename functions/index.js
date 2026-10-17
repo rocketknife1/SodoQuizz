@@ -108,7 +108,9 @@ async function adminUid() {
  * `data` ajunge in aplicatie si la tap — de acolo se decide unde se navigheaza
  * (ex. `type: "room_invite"` + `matchId`).
  */
-async function sendToUser(uid, { title, body, data = {} }) {
+// `titleEn`/`bodyEn`: varianta în engleză; telefonul o alege pe cea a
+// jucătorului (push_service.dart). Lipsă = se arată textul în română.
+async function sendToUser(uid, { title, body, titleEn, bodyEn, data = {} }) {
   const snap = await db.collection("users").doc(uid).collection("fcm_tokens").get();
   const tokens = snap.docs.map((d) => d.id).filter(Boolean);
   if (tokens.length === 0) {
@@ -135,7 +137,7 @@ async function sendToUser(uid, { title, body, data = {} }) {
     // Tot ce ii trebuie aplicatiei ca sa deseneze notificarea SI sa stie unde
     // sa navigheze la tap. Toate valorile STRING — FCM refuza numerele.
     data: Object.fromEntries(
-      Object.entries({ title, body, channelId: CHANNEL_ID, ...data })
+      Object.entries({ title, body, ...(titleEn ? { titleEn } : {}), ...(bodyEn ? { bodyEn } : {}), channelId: CHANNEL_ID, ...data })
         .map(([k, v]) => [k, String(v)])
     ),
     android: { priority: "high" },
@@ -211,6 +213,7 @@ exports.onFriendMessage = onDocumentCreated(
     await sendToUser(recipient, {
       title: `💬 ${name}`,
       body: text || "Ti-a trimis un mesaj.",
+      bodyEn: text || "Sent you a message.",
       data: { type: "chat", withUid: senderId },
     });
   }
@@ -229,6 +232,8 @@ exports.onFriendRequest = onDocumentCreated(
     await sendToUser(uid, {
       title: "👋 Cerere de prietenie",
       body: `${name} vrea sa te adauge.`,
+      titleEn: "👋 Friend request",
+      bodyEn: `${name} wants to add you.`,
       data: { type: "friend_request", fromUid },
     });
   }
@@ -266,6 +271,8 @@ exports.onRoomInvite = onDocumentCreated(
     await sendToUser(inv.toUid, {
       title: "🎮 Te-a invitat la o partida",
       body: `${name} te asteapta in camera. Apasa ca sa intri.`,
+      titleEn: "🎮 You're invited to a match",
+      bodyEn: `${name} is waiting in the room. Tap to join.`,
       data: {
         type: "room_invite",
         matchId: inv.matchId,
@@ -305,6 +312,8 @@ exports.onAdminMessage = onDocumentCreated(
       await sendToUser(playerUid, {
         title: "✉️ Raspuns de la administrator",
         body: text || "Ti-a raspuns la mesaj.",
+        titleEn: "✉️ Reply from the admin",
+        bodyEn: text || "Replied to your message.",
         // Fara `withUid`: jucatorul deschide PROPRIUL fir, nu al altcuiva.
         data: { type: "admin_chat" },
       });
@@ -349,9 +358,12 @@ exports.onChallengeAnswered = onDocumentUpdated(
     const my = asInt(after.creatorScore);
     const their = asInt(after.opponentScore);
     const verdict = their > my ? "te-a intrecut" : their < my ? "n-a reusit" : "egalitate";
+    const verdictEn = their > my ? "beat you" : their < my ? "couldn't beat you" : "tied with you";
     await sendToUser(creator, {
       title: "⚔️ Raspuns la provocarea ta",
       body: `${oppName} ${verdict}: ${their} vs ${my}.`,
+      titleEn: "⚔️ Your challenge was answered",
+      bodyEn: `${oppName} ${verdictEn}: ${their} vs ${my}.`,
       data: { type: "challenge", challengeId: event.params.id },
     });
   }

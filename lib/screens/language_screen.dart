@@ -72,34 +72,6 @@ class _LanguageScreenState extends State<LanguageScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.blue.withAlpha(24),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.blue.withAlpha(80)),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.info_outline_rounded, color: AppColors.blue, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            // Spus din capul locului, nu descoperit după
-                            // instalare: meniurile sunt traduse, întrebările nu.
-                            tr(
-                              'Meniurile, butoanele și multiplayer-ul se traduc. Întrebările din joc '
-                              '(răspunsurile la poze, Cultura Generală, Higher or Lower) rămân scrise în română.',
-                              L10n.contentLanguageNotice,
-                            ),
-                            style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),

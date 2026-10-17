@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import '../core/lang.dart';
 
 import '../firebase_options.dart';
 import 'device_notification_service.dart';
@@ -109,9 +110,13 @@ class PushService {
       'system' => 'system',
       _ => null,
     };
+    // Serverul trimite textul în ambele limbi; în fundal limba nu e încă
+    // încărcată, de-aia se citește aici.
+    await L10n.load();
+    final en = L10n.isEn;
     await DeviceNotificationService.instance.show(
-      title: d['title'] ?? 'SodoQuizz',
-      body: d['body'] ?? '',
+      title: (en ? d['titleEn'] : null) ?? d['title'] ?? 'SodoQuizz',
+      body: (en ? d['bodyEn'] : null) ?? d['body'] ?? '',
       payload: _encodePayload(d),
       collapseId: collapse,
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../data/storage_service.dart';
+import 'lang.dart';
 import 'leagues.dart';
 import 'theme.dart';
 
@@ -141,15 +142,15 @@ FrameStyle frameStyle(Frame f) => switch (f) {
 /// Etichetă scurtă pentru pickerul de rame — altfel inelele colorate
 /// (aur/argint/diamant/nivel) nu se pot deosebi între ele.
 String frameLabel(Frame f) => switch (f) {
-      Frame.none => 'Fără',
-      Frame.bronze => 'Bronz',
-      Frame.silver => 'Argint',
-      Frame.gold => 'Aur',
-      Frame.platinum => 'Platină',
-      Frame.diamond => 'Diamant',
-      Frame.lvl10 => 'Nivel 10',
-      Frame.lvl25 => 'Nivel 25',
-      Frame.lvl50 => 'Nivel 50',
+      Frame.none => tr('Fără', 'None'),
+      Frame.bronze => tr('Bronz', 'Bronze'),
+      Frame.silver => tr('Argint', 'Silver'),
+      Frame.gold => tr('Aur', 'Gold'),
+      Frame.platinum => tr('Platină', 'Platinum'),
+      Frame.diamond => tr('Diamant', 'Diamond'),
+      Frame.lvl10 => tr('Nivel 10', 'Level 10'),
+      Frame.lvl25 => tr('Nivel 25', 'Level 25'),
+      Frame.lvl50 => tr('Nivel 50', 'Level 50'),
     };
 
 (String ro, String en) titleLabel(PlayerTitle t) => switch (t) {
