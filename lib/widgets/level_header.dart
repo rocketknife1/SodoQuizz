@@ -6,6 +6,7 @@ import '../core/theme.dart';
 import 'avatar.dart';
 import 'cosmetic_title.dart';
 import 'notification_bell.dart';
+import 'pressable.dart';
 
 /// Header cu avatar + nivel + bară de progres XP (stânga) și pastilă de
 /// monede (dreapta) — folosit în capul fiecărui ecran principal.
@@ -350,7 +351,7 @@ class _LevelHeaderState extends State<LevelHeader> with TickerProviderStateMixin
         children: [
           Icon(icon, color: color, size: 16),
           const SizedBox(width: 6),
-          Text('$value', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+          CountUpText(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
           if (trailingIcon != null) ...[
             const SizedBox(width: 4),
             Icon(trailingIcon, color: AppColors.play, size: 16),

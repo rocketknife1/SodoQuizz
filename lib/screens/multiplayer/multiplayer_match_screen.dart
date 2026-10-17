@@ -23,6 +23,8 @@ import '../../widgets/powerup_inventory.dart';
 import '../../widgets/round_event_banner.dart';
 import 'multiplayer_results_screen.dart';
 import '../../core/breadcrumbs.dart';
+import '../../core/haptics.dart';
+import '../../widgets/pressable.dart';
 
 /// Meciul live 1 vs 1 (matchmaking public) sau cu prietenii (cameră privată
 /// — identic din acest punct încolo). Fără alegere de categorie — toate
@@ -236,6 +238,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
     final correct = opt == q.answer;
     final mult = _event == RoundEvent.doubleOrNothing ? 2 : 1;
     final roll = correct ? null : rollWrongPenalty(_penaltyRnd);
+    correct ? Haptics.medium() : Haptics.heavy();
     setState(() {
       _answered = true;
       _selectedAnswer = opt;
@@ -639,7 +642,7 @@ class _MultiplayerMatchScreenState extends State<MultiplayerMatchScreen> {
 
         return Padding(
           padding: EdgeInsets.only(bottom: i == visible.length - 1 ? 0 : 6),
-          child: GestureDetector(
+          child: Pressable(
             onTap: _answered ? null : () => _selectAnswer(opt),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),

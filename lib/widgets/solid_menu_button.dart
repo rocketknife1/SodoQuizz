@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'pressable.dart';
+
 /// Buton mare, solid, cu iconiță într-un cerc alb-transparent fixat la
 /// marginea stângă și eticheta imediat după — încadrare left-aligned,
 /// nu centrată ca un bloc (stilul de meniu tip "quiz app" din referință).
@@ -42,7 +44,8 @@ class SolidMenuButton extends StatelessWidget {
     if (subtitle != null) {
       return _buildCardVariant(context);
     }
-    return GestureDetector(
+    return Pressable(
+      scale: 0.95,
       onTap: onTap,
       child: Container(
         width: double.infinity,
@@ -96,7 +99,8 @@ class SolidMenuButton extends StatelessWidget {
   }
 
   Widget _buildCardVariant(BuildContext context) {
-    return GestureDetector(
+    return Pressable(
+      scale: 0.95,
       onTap: onTap,
       child: Container(
         width: double.infinity,

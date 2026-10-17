@@ -8,6 +8,7 @@ import '../core/review_prompt.dart';
 import '../core/audio.dart';
 import '../core/game_helpers.dart';
 import '../core/game_pause.dart';
+import '../core/haptics.dart';
 import '../core/gamemodes.dart';
 import '../core/remote_flags.dart';
 import '../core/lang.dart';
@@ -26,6 +27,7 @@ import '../widgets/category_unlock_animation.dart';
 import '../widgets/formula_card.dart';
 import '../widgets/in_app_notification.dart';
 import '../widgets/next_button.dart';
+import '../widgets/pressable.dart';
 import '../widgets/report_question_button.dart';
 import 'achievements_screen.dart';
 import 'home_screen.dart';
@@ -324,6 +326,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
     // Blocat SINCRON, înainte de primul await: două apăsări rapide pe variante
     // diferite treceau amândouă de verificare (−2 vieți, sau monede + penalizare).
     answered = true;
+    correct ? Haptics.medium() : Haptics.heavy();
     // Fixate ACUM: trecerea automată poate schimba întrebarea curentă în timp
     // ce scrierile de mai jos încă așteaptă, iar atunci `currentQ`, momentul
     // afișării și hint-urile ar fi deja ale întrebării următoare.
@@ -1166,7 +1169,14 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
               _buildHintsDisplay(),
               const Spacer(),
               if (streak > 1)
-                Container(
+                // la fiecare răspuns corect în serie, flacăra „pocnește”
+                TweenAnimationBuilder<double>(
+                  key: ValueKey('streak-$streak'),
+                  tween: Tween(begin: 1.35, end: 1.0),
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.elasticOut,
+                  builder: (context, s, child) => Transform.scale(scale: s, child: child),
+                  child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -1178,6 +1188,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   child: Text('🔥 $streak',
                       style: const TextStyle(
                           color: Color(0xFFEF9F27), fontSize: 13)),
+                  ),
                 ),
               const SizedBox(width: 8),
               Text(tr('$score pct', '$score pts'),
@@ -1400,8 +1411,13 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
 
         return Padding(
           padding: EdgeInsets.only(bottom: i == opts.length - 1 ? 0 : 6),
-          child: GestureDetector(
+          child: Pressable(
             onTap: answered ? null : () => _selectAnswer(opt),
+            // varianta corectă „sare” puțin când se dezvăluie
+            child: AnimatedScale(
+            scale: answered && opt == q.answer ? 1.03 : 1.0,
+            duration: const Duration(milliseconds: 550),
+            curve: Curves.elasticOut,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
               width: double.infinity,
@@ -1438,6 +1454,7 @@ class _GameScreenState extends State<GameScreen> with TickerProviderStateMixin {
                   ),
                 ],
               ),
+            ),
             ),
           ),
         );

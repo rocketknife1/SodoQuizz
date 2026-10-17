@@ -665,6 +665,16 @@ class _GuessItAppState extends State<GuessItApp> with WidgetsBindingObserver {
             ),
             useMaterial3: true,
             fontFamily: 'Roboto',
+            // Ecranul nou alunecă și apare lin (tranziția de la Android 14)
+            // peste fundalul jocului, nu peste griul implicit al temei. Pe
+            // Android rămâne și animația gestului „înapoi” (predictive back).
+            pageTransitionsTheme: const PageTransitionsTheme(builders: {
+              TargetPlatform.android: PredictiveBackPageTransitionsBuilder(fallbackColor: Color(0xFF0F172A)),
+              TargetPlatform.iOS: FadeForwardsPageTransitionsBuilder(backgroundColor: Color(0xFF0F172A)),
+              TargetPlatform.windows: FadeForwardsPageTransitionsBuilder(backgroundColor: Color(0xFF0F172A)),
+              TargetPlatform.linux: FadeForwardsPageTransitionsBuilder(backgroundColor: Color(0xFF0F172A)),
+              TargetPlatform.macOS: FadeForwardsPageTransitionsBuilder(backgroundColor: Color(0xFF0F172A)),
+            }),
             scaffoldBackgroundColor: const Color(0xFF0F172A),
             textTheme: const TextTheme(
               bodyMedium: TextStyle(color: Colors.white),

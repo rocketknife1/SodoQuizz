@@ -1,6 +1,7 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import '../data/storage_service.dart';
+import 'haptics.dart';
 import 'music_tracks.dart';
 
 /// Contextul audio global (Android/iOS), comun pentru [Music] și [Sfx] —
@@ -244,12 +245,30 @@ class Sfx {
     }
   }
 
-  static void next() => _play(_next);
-  static void rewardPop() => _play(_reward);
-  static void coinHit() => _play(_coin);
-  static void tileSelect() => _play(_tile);
-  static void xpHit() => _play(_xp);
-  static void heartHit() => _play(_heart);
+  static void next() {
+    Haptics.tap();
+    _play(_next);
+  }
+  static void rewardPop() {
+    Haptics.light();
+    _play(_reward);
+  }
+  static void coinHit() {
+    Haptics.tap();
+    _play(_coin);
+  }
+  static void tileSelect() {
+    Haptics.tap();
+    _play(_tile);
+  }
+  static void xpHit() {
+    Haptics.tap();
+    _play(_xp);
+  }
+  static void heartHit() {
+    Haptics.heavy();
+    _play(_heart);
+  }
 }
 
 /// Sunetele modului multiplayer Quizz Tanks — ținute separat de [Sfx]
@@ -320,9 +339,15 @@ class TankSfx {
   /// zgomot, nu bătălie. Explozia rămâne cea mai tare — e evenimentul care
   /// chiar contează.
   static void fire() => _play(_fire, 0.75);
-  static void hit() => _play(_hit, 0.9);
+  static void hit() {
+    Haptics.medium();
+    _play(_hit, 0.9);
+  }
   static void dodge() => _play(_dodge, 0.55);
-  static void explode() => _play(_explode, 1.0);
+  static void explode() {
+    Haptics.heavy();
+    _play(_explode, 1.0);
+  }
   static void lock() => _play(_lock, 0.7);
   static void alarm() => _play(_alarm, 0.6);
 }
@@ -389,6 +414,12 @@ class ObbySfx {
   /// cursei sunt deznodăminte (tare).
   static void pick() => _play(_pick, 0.55);
   static void jump() => _play(_jump, 0.8);
-  static void fall() => _play(_fall, 0.95);
-  static void finish() => _play(_finish, 1.0);
+  static void fall() {
+    Haptics.medium();
+    _play(_fall, 0.95);
+  }
+  static void finish() {
+    Haptics.light();
+    _play(_finish, 1.0);
+  }
 }
